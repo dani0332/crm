@@ -626,7 +626,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
                     $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-                    $members = $listQuotePlan->memberPremiumBreakdown;
+                    $members = isset($listQuotePlan->memberPremiumBreakdown) ? $listQuotePlan->memberPremiumBreakdown : [];
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                         $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                     }
