@@ -82,7 +82,7 @@
                                                 <span class='required'>*</span>
                                                 @endif
                                             </span>
-                                            <select @if(strpos($value, 'multiple')) multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}" >
+                                            <select @if(strpos($value, 'multiple')) data-mdb-filter="true" multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}" >
                                                 @if(strpos($value, 'title'))
                                                     <option value="">{{"Please select ".$customTitles[$property] }}</option>
                                                 @else
