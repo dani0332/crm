@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 class QuoteDocumentService extends BaseService
 {
     /**
-     * get list of active document types can be presented to customer to upload documents
+     * get list of active document types can be presented to customer to upload documents.
      *
      * @param $quoteTypeId
      * @return mixed
@@ -49,7 +49,7 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
-     * upload quote document and store document record in db
+     * upload quote document and store document record in db.
      *
      * @param $file
      * @param $documentTypeCode
@@ -113,7 +113,8 @@ class QuoteDocumentService extends BaseService
         }
 
         if (! isset($record->policy_number) || ! isset($record->policy_issuance_date) || ! isset($record->policy_start_date) ||
-            ! isset($record->premium) || ! isset($record->renewal_expiry_date) || $record->advisor_id != auth()->user()->id) {
+            ! isset($record->premium) || ! isset($record->renewal_expiry_date) || ! isset($record->plan_id) ||
+            $record->advisor_id != auth()->user()->id) {
             return 0;
         }
 
