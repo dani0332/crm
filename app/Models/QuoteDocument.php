@@ -13,7 +13,7 @@ class QuoteDocument extends Model
     protected $table = 'quote_documents';
     protected $guarded = [];
     protected $dates = ['deleted_at'];
-    protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id'];
+    protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name'];
     protected $hidden = [''];
 
     public function getCreatedAtAttribute($table)
