@@ -25,6 +25,7 @@ class CreateUpdateContactService extends BaseService
                 'CDBID' => isset($data['cbdid']) ? $data['cbdid'] : null,
                 'QUOTEPLANLINK' => isset($data['link']) ? $data['link'] : null,
                 'HEALTH_WEBHOOK_URL' => isset($data['sibHealthCallBack']) ? $data['sibHealthCallBack'] : null,
+                'ADVISORLANDLINE' => isset($data['advisorLandline']) ? $data['advisorLandline'] : null,
             ],
             'listIds' => [(int) $listId],
             'updateEnabled' => true,
