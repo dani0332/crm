@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\LeadAllocationRuleProperties;
 use Illuminate\Database\Seeder;
+
 class addAllocationRuleProperties extends Seeder
 {
     /**
