@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 class TierService extends BaseService
 {
     protected $query;
-
+    protected $searchPrefix = 't.';
     public function __construct()
     {
         $this->query = DB::table('tiers as t')
@@ -33,36 +33,14 @@ class TierService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('t.id', $id)->first();
+        return $this->query->where($this->searchPrefix . 'id', $id)->first();
     }
 
     public function getGridData($model, $request)
     {
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $columnName = $request->get('columns')[$column]['name'];
-
-            return $this->query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
-        } else {
-            return $this->query->orderBy('t.created_at', 'DESC');
-        }
-    }
-    private function getSortingColumnNameWithPrefix($columnName)
-    {
-        switch ($columnName) {
-            case 'created_at':
-                return 't.created_at';
-                break;
-            case 'updated_at':
-                return 't.updated_at';
-                break;
-            case 'next_followup_date':
-                return 'cqrd.next_followup_date';
-                break;
-            default:
-                break;
-        }
+        $this->query = addSearchClauses($model, $request, $this->query, $this->searchPrefix);
+        $this->query = addOrderByClauses($request,$this->query, $this->searchPrefix);
+        return $this->query;
     }
 
     public function saveTier(Request $request)
@@ -124,11 +102,12 @@ class TierService extends BaseService
     {
         return [
             'id' => 'readonly|none',
-            'name' => 'input|title|required',
-            'min_price' => 'input|number|title|required',
-            'max_price' => 'input|number|title|required',
-            'cost_per_lead' => 'input|number|title',
-            'tier_users' => 'select|multiple',
+            'created_at' => 'input|title|date|range|dateRange',
+            'name' => 'input|title|required|likeSearch',
+            'min_price' => 'input|number|title|required|equalSearch',
+            'max_price' => 'input|number|title|required|equalSearch',
+            'cost_per_lead' => 'input|number|title|equalSearch',
+            'tier_users' => 'select|multiple|multiSearch',
             'is_tpl' => 'input|checkbox|title',
             'is_auto_assignment_enabled' => 'input|checkbox|title',
             'is_active' => 'input|checkbox|title',
@@ -160,6 +139,9 @@ class TierService extends BaseService
             case 'is_active':
                 $title = 'Is Active ?';
                 break;
+            case 'created_at':
+                $title = 'Created Date';
+                break;
             default:
                 break;
         }
@@ -179,6 +161,6 @@ class TierService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['name', 'min_price', 'max_price'];
+        return ['name', 'min_price', 'max_price', 'created_at'];
     }
 }

@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\IMCRMSearchTypesEnum;
 use App\Models\CustomerAdditionalInfo;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 if (! function_exists('generate_code')) {
@@ -312,4 +314,64 @@ function getUniqueCode($limit)
 function get_dob_date_format()
 {
     return 'Y-m-d';
+}
+
+/**
+ * Add search clause to any model's built-in query
+ *
+ * @param $model
+ * @param $request
+ * @param $query
+ * @param $searchPrefix
+ */
+function addSearchClauses($model, $request, $query, $searchPrefix)
+{
+    $searchProperties = $model->searchProperties;
+    foreach($searchProperties as $searchProperty)
+    {
+        if(isset($request->$searchProperty)){
+            $propertyMetaData = $model->properties[$searchProperty];
+            switch ($propertyMetaData)
+            {
+                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::LikeSearch):
+                    $query = $query->where($searchPrefix . $searchProperty, 'like', '%' . $request->$searchProperty. '%');
+                    break;
+                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::EqualSearch):
+                    $query = $query->where($searchPrefix . $searchProperty, $request->$searchProperty);
+                    break;
+                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::DateRange):
+                    $dateFrom = Carbon::createFromFormat('Y-m-d', $request[$searchProperty])->startOfDay()->toDateTimeString();
+                    $dateTo = Carbon::createFromFormat('Y-m-d', $request[$searchProperty. '_end'])->endOfDay()->toDateTimeString();
+                    $query = $query->whereBetween($searchPrefix . $searchProperty, [$dateFrom, $dateTo]);
+                    break;
+                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::MultiSearch):
+                    $query = $query->whereIn($searchPrefix . $searchProperty, $request->$searchProperty);
+                    break;
+                default;
+                    break;
+            }
+        }
+    }
+    return $query;
+}
+
+
+
+/**
+ * Add orderBy clause to any model's built-in query
+ *
+ * @param $request
+ * @param $query
+ * @param $searchPrefix
+ */
+function addOrderByClauses($request, $query, $searchPrefix)
+{
+    $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+    $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+    if ($column != '' && $column != 0 && $direction != '') {
+        $columnName = $request->get('columns')[$column]['name'];
+        return $query->orderBy($searchPrefix . $columnName, $direction);
+    } else {
+        return $query->orderBy($searchPrefix . 'created_at', 'DESC');
+    }
 }
