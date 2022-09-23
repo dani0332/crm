@@ -119,6 +119,7 @@ class GenericCrudController extends Controller
         if ($request->has('id')) {
             $id = $request->id;
         }
+
         return view('generic.add', compact('model', 'dropdownSource', 'customTitles', 'id'));
     }
 
@@ -232,6 +233,7 @@ class GenericCrudController extends Controller
                 $customLists[$property] = $data;
             }
         }
+
         return view('generic.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists']));
     }
 
@@ -303,7 +305,6 @@ class GenericCrudController extends Controller
         if (strpos($url, 'la-advisor-assignment')) {
             $this->genericModel->modelType = 'LAAdvisorAssignment';
         }
-
     }
 
     private function fillModelByModelType($type, Request $request)

@@ -66,8 +66,13 @@ class QuadrantService extends BaseService
             'name' => $request->name,
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
         ]);
-        if (isset($request->quad_tiers)) $this->addTiersAgainstQuad($request->quad_tiers, $quad->id);
-        if (isset($request->quad_users)) $this->addUserAgainstQuadAndTiers($request->quad_users, $quad->id);
+        if (isset($request->quad_tiers)) {
+            $this->addTiersAgainstQuad($request->quad_tiers, $quad->id);
+        }
+        if (isset($request->quad_users)) {
+            $this->addUserAgainstQuadAndTiers($request->quad_users, $quad->id);
+        }
+
         return $quad;
     }
 
@@ -88,7 +93,7 @@ class QuadrantService extends BaseService
     {
         foreach ($userIds as $userId) {
             $quadUsers = DB::table('quad_users')->where('quad_id', $quadId)->where('user_id', $userId)->get();
-            if(count($quadUsers) == 0){
+            if (count($quadUsers) == 0) {
                 DB::table('quad_users')->insert([
                     'quad_id' => $quadId,
                     'user_id' => $userId,
@@ -98,9 +103,9 @@ class QuadrantService extends BaseService
             }
 
             $quadTierIds = DB::table('quad_tiers')->where('quad_id', $quadId)->pluck('tier_id');
-            foreach($quadTierIds as $quadTierId) {
+            foreach ($quadTierIds as $quadTierId) {
                 $tierUserId = DB::table('tier_users')->where('tier_id', $quadTierId)->where('user_id', $userId)->get();
-                if(count($tierUserId) == 0){
+                if (count($tierUserId) == 0) {
                     DB::table('tier_users')->insert([
                         'tier_id' => $quadTierId,
                         'user_id' => $userId,
@@ -118,8 +123,12 @@ class QuadrantService extends BaseService
         $quad->name = $request->name;
         $quad->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $quad->save();
-        if (isset($request->quad_tiers)) $this->addTiersAgainstQuad($request->quad_tiers, $quad->id);
-        if (isset($request->quad_users)) $this->addUserAgainstQuadAndTiers($request->quad_users, $quad->id);
+        if (isset($request->quad_tiers)) {
+            $this->addTiersAgainstQuad($request->quad_tiers, $quad->id);
+        }
+        if (isset($request->quad_users)) {
+            $this->addUserAgainstQuadAndTiers($request->quad_users, $quad->id);
+        }
 
         return $quad;
     }

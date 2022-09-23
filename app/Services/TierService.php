@@ -28,7 +28,7 @@ class TierService extends BaseService
             )
             ->leftJoin('tier_users as tu', 'tu.tier_id', 't.id')
             ->leftJoin('users as u', 'u.id', 'tu.user_id')
-            ->groupBy('t.id','t.name');
+            ->groupBy('t.id', 't.name');
     }
 
     public function getEntity($id)
@@ -77,11 +77,10 @@ class TierService extends BaseService
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
         ]);
 
-        if(isset($request->tier_users))
-        {
+        if (isset($request->tier_users)) {
             DB::table('tier_users')->where('tier_id', $tier->id)->delete();
             $userIds = $request->tier_users;
-            foreach($userIds as $userId){
+            foreach ($userIds as $userId) {
                 DB::table('tier_users')->insert([
                     'tier_id' => $tier->id,
                     'user_id' => $userId,
@@ -105,11 +104,10 @@ class TierService extends BaseService
         $tier->is_auto_assignment_enabled = $request->has('is_auto_assignment_enabled') && $request->is_auto_assignment_enabled == 'on' ? 1 : 0;
         $tier->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $tier->save();
-        if(isset($request->tier_users))
-        {
+        if (isset($request->tier_users)) {
             DB::table('tier_users')->where('tier_id', $tier->id)->delete();
             $userIds = $request->tier_users;
-            foreach($userIds as $userId){
+            foreach ($userIds as $userId) {
                 DB::table('tier_users')->insert([
                     'tier_id' => $tier->id,
                     'user_id' => $userId,
