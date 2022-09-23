@@ -117,9 +117,9 @@ class CRUDService extends BaseService
             $modelType = 'Corpline';
         }
         $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($modelType) {
-            if (strtolower($item) != strtolower($modelType)) {
+            //if (strtolower($item) != strtolower($modelType)) {
                 return $item;
-            }
+            //}
         });
         foreach ($allowedLeadTypes as $leadType) {
             $leadType = strtolower($leadType);
@@ -129,9 +129,9 @@ class CRUDService extends BaseService
             $duplicateRecord = $this->{strtolower($leadType).'QuoteService'}->getDuplicateEntityByCode($leadCode);
             if ($duplicateRecord) {
                 $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($leadType) {
-                    if ($item != $leadType) {
+                    //if ($item != $leadType && $leadType) {
                         return $item;
-                    }
+                    //}
                 });
             }
         }

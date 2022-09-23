@@ -2376,6 +2376,7 @@ $(document).ready(function () {
     allowClear: true,
     width: '100%',
   });
+
   $('.vehiclevalue-data-table').DataTable({
     ordering: false,
     info: false,

@@ -60,6 +60,7 @@
                                 <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
                             @endif
                         @endcannot
+                        <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType)) }}"
                                 class="btn btn-warning btn-sm">{{ (str_contains(strtolower($model->modelType), 'team')? 'Team': (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': $model->modelType)) . ' List' }}</a>
                         </li>
@@ -323,10 +324,15 @@
                             </button>
                         </div>
                         <div class="modal-body" style="height: 138px;">
-                            <select class="form-control select2" multiple="multiple" id="lob_team" name="lob_team[]">
+                            <select class="form-control select2" onchange="toggleSubDropDown(this)" multiple="multiple" id="lob_team" name="lob_team[]">
                                 @foreach ($allowedDuplicateLOB as $item)
                                     <option value="{{ $item }}">{{ $item }}</option>
                                 @endforeach
+                            </select>
+                            <select class="form-control" style="display:none;" id="lob_team_sub_selection" name="lob_team_sub_selection">
+                            <option value="" disabled selected>Select your option</option>    
+                            <option value="New enquiry">New enquiry</option>
+                                <option value="Record purposes only">Record purposes only</option>
                             </select>
                         </div>
                         <div class="modal-footer" style="justify-content: center; padding : 0px !important;">
@@ -494,4 +500,14 @@
             </button>
         </div>
     @endcan
+    <script>
+        function toggleSubDropDown(el){
+            var selectedLobs = $("#lob_team").val();
+            if(selectedLobs.length > 0) {
+                if(selectedLobs.includes('<?php echo quoteTypeCode::Health ?>')) {
+                    console.log("dasd");
+                }
+            }
+        }
+    </script>
 @endsection
