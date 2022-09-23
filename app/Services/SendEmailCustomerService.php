@@ -124,7 +124,7 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
             $content = json_decode($response->getBody()->getContents());
-            if ($content && isset($content->count) && $content->count > 0) {
+            if ($content && isset($content->count) && $content->count > 0 && isset($content->transactionalEmails[0])) {
                 $emailSubject = $content->transactionalEmails[0]->subject;
             } else {
                 $emailSubject = null;
