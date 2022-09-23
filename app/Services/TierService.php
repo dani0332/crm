@@ -33,13 +33,14 @@ class TierService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where($this->searchPrefix . 'id', $id)->first();
+        return $this->query->where($this->searchPrefix.'id', $id)->first();
     }
 
     public function getGridData($model, $request)
     {
         $this->query = addSearchClauses($model, $request, $this->query, $this->searchPrefix);
-        $this->query = addOrderByClauses($request,$this->query, $this->searchPrefix);
+        $this->query = addOrderByClauses($request, $this->query, $this->searchPrefix);
+
         return $this->query;
     }
 

@@ -327,35 +327,32 @@ function get_dob_date_format()
 function addSearchClauses($model, $request, $query, $searchPrefix)
 {
     $searchProperties = $model->searchProperties;
-    foreach($searchProperties as $searchProperty)
-    {
-        if(isset($request->$searchProperty)){
+    foreach ($searchProperties as $searchProperty) {
+        if (isset($request->$searchProperty)) {
             $propertyMetaData = $model->properties[$searchProperty];
-            switch ($propertyMetaData)
-            {
+            switch ($propertyMetaData) {
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::LikeSearch):
-                    $query = $query->where($searchPrefix . $searchProperty, 'like', '%' . $request->$searchProperty. '%');
+                    $query = $query->where($searchPrefix.$searchProperty, 'like', '%'.$request->$searchProperty.'%');
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::EqualSearch):
-                    $query = $query->where($searchPrefix . $searchProperty, $request->$searchProperty);
+                    $query = $query->where($searchPrefix.$searchProperty, $request->$searchProperty);
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::DateRange):
                     $dateFrom = Carbon::createFromFormat('Y-m-d', $request[$searchProperty])->startOfDay()->toDateTimeString();
-                    $dateTo = Carbon::createFromFormat('Y-m-d', $request[$searchProperty. '_end'])->endOfDay()->toDateTimeString();
-                    $query = $query->whereBetween($searchPrefix . $searchProperty, [$dateFrom, $dateTo]);
+                    $dateTo = Carbon::createFromFormat('Y-m-d', $request[$searchProperty.'_end'])->endOfDay()->toDateTimeString();
+                    $query = $query->whereBetween($searchPrefix.$searchProperty, [$dateFrom, $dateTo]);
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::MultiSearch):
-                    $query = $query->whereIn($searchPrefix . $searchProperty, $request->$searchProperty);
+                    $query = $query->whereIn($searchPrefix.$searchProperty, $request->$searchProperty);
                     break;
-                default;
-                    break;
+                default:
+                break;
             }
         }
     }
+
     return $query;
 }
-
-
 
 /**
  * Add orderBy clause to any model's built-in query
@@ -370,8 +367,9 @@ function addOrderByClauses($request, $query, $searchPrefix)
     $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
     if ($column != '' && $column != 0 && $direction != '') {
         $columnName = $request->get('columns')[$column]['name'];
-        return $query->orderBy($searchPrefix . $columnName, $direction);
+
+        return $query->orderBy($searchPrefix.$columnName, $direction);
     } else {
-        return $query->orderBy($searchPrefix . 'created_at', 'DESC');
+        return $query->orderBy($searchPrefix.'created_at', 'DESC');
     }
 }
