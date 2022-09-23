@@ -33,6 +33,7 @@ if (!isset($modelName)) {
 		$isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
 		$insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : ''; // Insurer Quote No.
 		$isManualUpdate = isset($listQuotePlan->isManualUpdate) ? $listQuotePlan->isManualUpdate : 0;
+		$isManualPlan = isset($listQuotePlan->isManualPlan) ? $listQuotePlan->isManualPlan : 0;
 		$shouldReviseQuote  = isset($listQuotePlan->shouldReviseQuote ) ? $listQuotePlan->shouldReviseQuote  : 0;
 		$ancillaryExcess  = isset($listQuotePlan->ancillaryExcess ) ? $listQuotePlan->ancillaryExcess  : 0;
 		$listQuotePlanAddonss = $listQuotePlan->addons;
@@ -847,7 +848,8 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td>
 									<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
 										<input type="checkbox" class="success" id="is_manual_update"
-											name="is_manual_update" @if($isManualUpdate=="true" ) checked="checked" @endif>
+											name="is_manual_update" @if($isManualUpdate=="true" ) checked="checked" @endif
+											{{ $isManualPlan || $isManualUpdate ? "disabled" : "" }}>
 										<span class="slider round"></span>
 								</td>
 							</tr>
