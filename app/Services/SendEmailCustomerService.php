@@ -62,6 +62,7 @@ class SendEmailCustomerService extends BaseService
                     'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
                     'advisorLandlineNo' => isset($emailData->advisorLandlineNo) ? $emailData->advisorLandlineNo : null,
                     'advisorMobileNo' => isset($emailData->advisorMobileNo) ? $emailData->advisorMobileNo : null,
+                    'providerSupportNumber' => isset($emailData->providerSupportNumber) ? $emailData->providerSupportNumber : null,
                 ],
                 'tags' => [
                     $tag,
