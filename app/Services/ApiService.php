@@ -66,16 +66,15 @@ class ApiService
             $quoteData = HealthQuote::where('uuid', $request->quoteUID)->where('quote_status_id', $request->QuoteStatus)->first();
             if ($quoteData) {
                 $data = [
-                    'customerName' => $quoteData->full_name,
-                    'advisorName' => $quoteData->advisor->name,
-                    'advisorEmail' => $quoteData->advisor->email,
-                    'advisorMobile' => $quoteData->advisor->mobile_no,
-                    'customerLastName' => $quoteData->last_name,
-                    'customerFirstName' => $quoteData->first_name,
-                    'leadStatus' => $quoteData->quoteStatus->text,
-                    'cbdid' => $quoteData->code,
+                    'customerName' => isset($quoteData->full_name) ? $quoteData->full_name : null,
+                    'advisorName' => isset($quoteData->advisor) ? $quoteData->advisor->name : null,
+                    'advisorEmail' => isset($quoteData->advisor) ? $quoteData->advisor->email : null,
+                    'advisorMobile' => isset($quoteData->advisor) ? $quoteData->advisor->mobile_no : null,
+                    'customerLastName' => isset($quoteData->last_name) ? $quoteData->last_name : null,
+                    'customerFirstName' => isset($quoteData->first_name) ? $quoteData->first_name : null,
+                    'leadStatus' => isset($quoteData->quoteStatus) ? $quoteData->quoteStatus->text : null,
+                    'cbdid' => isset($quoteData->code) ? $quoteData->code : null,
                     'link' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteData->uuid,
-                    'sibHealthCallBack' => config('constants.APP_URL').'/api/imcrm/sib-health-callback/'.$quoteData->uuid,
                     'advisorLandline' => isset($quoteData->advisor) ? $quoteData->advisor->landline_no : null
                 ];
 
