@@ -15,10 +15,10 @@ class SendPolicyApplicationStorageSeeder extends Seeder
      */
     public function run()
     {
-        $sibCarTemplateId = ApplicationStorage::where('key_name', 'SIB_CAR_SEND_POLICY_TEMPLATE_ID2')->first();
+        $sibCarTemplateId = ApplicationStorage::where('key_name', 'SIB_CAR_SEND_POLICY_TEMPLATE_ID')->first();
         if (! $sibCarTemplateId) {
             DB::table('application_storage')->insert([
-                'key_name' => 'SIB_CAR_SEND_POLICY_TEMPLATE_ID2',
+                'key_name' => 'SIB_CAR_SEND_POLICY_TEMPLATE_ID',
                 'value' => '389',
                 'is_active' => 1,
                 'created_at' => now(),
