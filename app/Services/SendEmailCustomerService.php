@@ -98,24 +98,24 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
         // addEmailStatus is for quote modules only
-        if (isset($messageId) && isset($emailData->quoteTypeId) && isset($emailData->quoteId)) {
-            $emailSubject = $this->getEmailSubjectFromSib($emailTemplateId, $emailData->quoteCdbId);
+        if (isset($messageId)) {
+            $emailSubject = $this->getEmailSubjectFromSib($messageId);
             $this->emailStatusService->addEmailStatus($emailData, $messageId, $emailSubject);
         }
 
         return $responseCode;
     }
 
-    public function getEmailSubjectFromSib($templateId, $quoteCdbId)
+    public function getEmailSubjectFromSib($messageId)
     {
         $apiKey = config('constants.SENDINBLUE_KEY');
         $url = config('constants.SIB_URL');
-
+        sleep(7);
         try {
             $client = new \GuzzleHttp\Client();
             $response = $client->request(
                 'GET',
-                $url.'s?templateId='.$templateId.'&sort=desc&limit=1&offset=0',
+                $url.'s?messageId='.$messageId.'&sort=desc&limit=1&offset=0',
                 [
                     'headers' => [
                         'Accept' => 'application/json',
@@ -124,10 +124,14 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
             $content = json_decode($response->getBody()->getContents());
-            $emailSubject = $content->transactionalEmails[0]->subject;
+            if ($content && isset($content->count) && $content->count > 0) {
+                $emailSubject = $content->transactionalEmails[0]->subject;
+            } else {
+                $emailSubject = null;
+            }
         } catch (Exception $ex) {
             $emailSubject = null;
-            $responseDetail = 'SIB Get Email Subject: Code/Message: '.$ex->getCode().'/'.$ex->getMessage().' templateId: '.$templateId.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            $responseDetail = 'SIB Get Email Subject: Code/Message: '.$ex->getCode().'/'.$ex->getMessage().' messageId: '.$messageId.' Class: '.get_class();
             Log::error($responseDetail);
         }
 
