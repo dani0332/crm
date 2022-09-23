@@ -75,7 +75,7 @@ class ApiService
                     'leadStatus' => isset($quoteData->quoteStatus) ? $quoteData->quoteStatus->text : null,
                     'cbdid' => isset($quoteData->code) ? $quoteData->code : null,
                     'link' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteData->uuid,
-                    'advisorLandline' => isset($quoteData->advisor) ? $quoteData->advisor->landline_no : null
+                    'advisorLandline' => isset($quoteData->advisor) ? $quoteData->advisor->landline_no : null,
                 ];
 
                 return CreateUpdateContactService::contactCreateUpdate(config('constants.SIB_HEALTH_EBP_LIST_ID'), $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
