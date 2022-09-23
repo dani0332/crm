@@ -341,6 +341,7 @@ class CRUDController extends Controller
         $isQuoteDocumentEnabled = $this->quoteDocumentService->isEnabled($model->modelType);
         $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($model->modelType, $record->id);
         $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
+        $customerAdditionalContacts = $this->customerService->getAddtionalContacts($record->customer_id);
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
@@ -357,7 +358,8 @@ class CRUDController extends Controller
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
-                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton',
+                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments',
+                'displaySendPolicyButton', 'customerAdditionalContacts',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
@@ -381,7 +383,7 @@ class CRUDController extends Controller
                 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
-                'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton',
+                'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -405,13 +407,14 @@ class CRUDController extends Controller
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'membersDetail', 'memberCategories', 'salaryBands', 'autoAllocationDisabled', 'ecomDetails', 'ecomHealthInsuranceQuoteUrl',
-                'quoteType', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton',
+                'quoteType', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
             ]));
         } else {
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton',
+                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
+                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType',
             ]));
         }
     }
@@ -623,7 +626,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
                     $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-                    $members = $listQuotePlan->memberPremiumBreakdown;
+                    $members = isset($listQuotePlan->memberPremiumBreakdown) ? $listQuotePlan->memberPremiumBreakdown : [];
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                         $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                     }
@@ -915,21 +918,6 @@ class CRUDController extends Controller
         $document->delete();
 
         return redirect()->back()->with('message', 'Document has been deleted.');
-    }
-
-    public function storeDocument(Request $request)
-    {
-        $quoteModel = $this->getQuoteObject($this->genericModel->modelType, $request->quote_id);
-        if (! $request->hasFile('file') && ! $quoteModel) {
-            return response()->json(['success' => false]);
-        }
-
-        $file = $request->file('file');
-        $fileNameOriginal = $file->getClientOriginalName();
-        $fileMimeType = $file->getClientMimeType();
-        $fileNameAzure = uniqid().'_'.$request->quote_uuid.'_'.$fileNameOriginal;
-        $filePathAzure = $request->file('file')->storeAs('documents/'.$request->folder_path, $fileNameAzure, 'azureIM');
-        $this->quoteDocumentService->createQuoteDocumentRecord($request->document_type_code, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel);
     }
 
     public function storePayment(Request $request)

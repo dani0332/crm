@@ -247,6 +247,9 @@ class DropdownSourceService extends BaseService
             case 'car_model_detail_id':
                 $data = [];
                 break;
+            case 'currently_insured_with_id':
+                $data = $lookUpService->getActiveInsuranceProviders();
+                break;
             default:
                 break;
         }

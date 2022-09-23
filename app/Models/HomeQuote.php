@@ -38,9 +38,4 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->hasOne(HomeQuoteRequestDetail::class, 'home_quote_request_id', 'id');
     }
-
-    public function customerAdditionalInfo()
-    {
-        return $this->hasMany(CustomerAdditionalInfo::class, 'quote_request_id', 'id');
-    }
 }

@@ -6,9 +6,30 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Support\Facades\Log;
 
 class QuoteDocumentService extends BaseService
 {
+    use GenericQueriesAllLobs;
+
+    /**
+     * get list of active document types can be presented to customer to upload documents
+     *
+     * @param $quoteTypeId
+     * @return mixed
+     */
+    public function getQuoteDocumentsToReceive($quoteTypeId)
+    {
+        return DocumentType::where([
+            'is_active' => 1,
+            'receive_from_customer' => 1,
+            'quote_type_id' => $quoteTypeId,
+        ])
+        ->orderBy('sort_order')
+        ->get();
+    }
+
     public function isEnabled($quoteModelType)
     {
         if (! auth()->user()->hasRole(RolesEnum::BetaUser)) {
@@ -30,31 +51,79 @@ class QuoteDocumentService extends BaseService
         ->get();
     }
 
-    public function createQuoteDocumentRecord($documentTypeCode, $fileNameOriginal, $filePathAzure, $fileMimeType, $quoteModel)
+    /**
+     * @param $quoteType
+     * @param $data doc_name, doc_uuid
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteQuoteDocument($quoteType, $data)
     {
-        $documentTypeCode_ = DocumentType::where('code', $documentTypeCode)->where('is_active', 1)->first();
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
-        if (! $documentTypeCode_) {
-            return false;
+        //load quote document with provided detail
+        $quote->load(['documents' => function ($q) use ($data) {
+            $q->where([
+                'doc_name' => $data['doc_name'],
+                'doc_uuid' => $data['doc_uuid'],
+            ]);
+        }]);
+
+        //check for document and delete if found
+        if (($document = $quote->documents->first())) {
+            $document->delete();
+            Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
+
+            return response()->json(['message' => 'document deleted successfully']);
         }
 
-        $docUuid = uniqid();
+        vAbort('Invalid document detail provided.');
+    }
 
-        while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
-            $docUuid = uniqid().rand(1, 100);
+    /**
+     * upload quote document and store document record in db
+     *
+     * @param $file
+     * @param $documentTypeCode
+     * @param $uuid
+     * @param $quote
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadQuoteDocument($file, $data, $quote)
+    {
+        if (! ($documentType = DocumentType::where('code', $data['document_type_code'])->first())) {
+            return response()->json(['error' => 'Invalid document type code provided'], 500);
         }
 
-        $quoteDocument = QuoteDocument::create([
-            'doc_name' => $fileNameOriginal,
-            'doc_url' => $filePathAzure,
-            'doc_mime_type' => $fileMimeType,
-            'document_type_code' => $documentTypeCode_->code,
-            'document_type_text' => $documentTypeCode_->text,
-            'doc_uuid' => $docUuid,
-            'created_by_id' => auth()->id(),
-        ]);
+        try {
+            $originalName = $file->getClientOriginalName();
+            $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+            $fileMimeType = $file->getClientMimeType();
 
-        $quoteModel->documents()->save($quoteDocument);
+            //upload file to azure
+            $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+            $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+
+            //generate unique uuid
+            $docUuid = uniqid();
+            while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
+                $docUuid = uniqid().rand(1, 100);
+            }
+
+            return $quote->documents()->create([
+                'doc_name' => $docName,
+                'original_name' => $originalName,
+                'doc_url' => $filePathAzure,
+                'doc_mime_type' => $fileMimeType,
+                'document_type_code' => $documentType->code,
+                'document_type_text' => $documentType->text,
+                'doc_uuid' => $docUuid,
+                'created_by_id' => auth()->id(),
+            ]);
+        } catch (\Exception $exception) {
+            Log::info('CL: '.get_class().'FN: uploadQuoteDocument  UUID: '.$data['quote_uuid'].' Error Code/Message: '.$exception->getCode().'/'.$exception->getMessage());
+
+            return response()->json(['error' => 'Document upload failed, please try again'], 500);
+        }
     }
 
     public function getQuoteDocumentUrl($id)
