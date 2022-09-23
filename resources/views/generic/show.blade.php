@@ -60,7 +60,7 @@
                                             if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), 'yes')))
                                                 $propertyValue = $record->$property ? 'Yes' : 'No' ;
                                             else if(str_contains($value, 'static') && !str_contains(strtolower($value), 'yes'))
-                                                $propertyValue = $record->property;
+                                                $propertyValue = $record->$property;
                                             else
                                                 $propertyValue = $record->$property;
                                         @endphp

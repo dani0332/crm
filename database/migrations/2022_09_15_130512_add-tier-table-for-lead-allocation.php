@@ -34,8 +34,17 @@ class AddTierTableForLeadAllocation extends Migration
                 $table->timestamps();
             });
         }
-        if (! Schema::hasTable('tier_users')) {
-            Schema::create('tier_users', function (Blueprint $table) {
+        if (! Schema::hasTable('quad_tiers')) {
+            Schema::create('quad_tiers', function (Blueprint $table) {
+                $table->unsignedBigInteger('tier_id')->nullable();
+                $table->unsignedBigInteger('quad_id')->nullable();
+                $table->foreign('quad_id')->references('id')->on('quadrants')->onDelete('no action');
+                $table->foreign('tier_id')->references('id')->on('tiers')->onDelete('no action');
+                $table->timestamps();
+            });
+        }
+        if (! Schema::hasTable('quad_users')) {
+            Schema::create('quad_users', function (Blueprint $table) {
                 $table->unsignedBigInteger('user_id')->nullable();
                 $table->unsignedBigInteger('quad_id')->nullable();
                 $table->foreign('quad_id')->references('id')->on('quadrants')->onDelete('no action');
@@ -43,11 +52,15 @@ class AddTierTableForLeadAllocation extends Migration
                 $table->timestamps();
             });
         }
-
-        Schema::table('tiers', function (Blueprint $table) {
-            $table->unsignedBigInteger('quad_id')->nullable();
-            $table->foreign('quad_id')->references('id')->on('quadrants');
-        });
+        if (! Schema::hasTable('tier_users')) {
+            Schema::create('tier_users', function (Blueprint $table) {
+                $table->unsignedBigInteger('tier_id')->nullable();
+                $table->unsignedBigInteger('user_id')->nullable();
+                $table->foreign('tier_id')->references('id')->on('tiers')->onDelete('no action');
+                $table->foreign('user_id')->references('id')->on('users')->onDelete('no action');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

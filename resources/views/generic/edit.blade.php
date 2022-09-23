@@ -118,6 +118,8 @@
                                                     @elseif (str_contains($record->$property, ','))
                                                         @if(str_contains($record->$property, $itemName))
                                                         <option value="{{$item->id}}" selected="selected">{{ $itemName }}</option>
+                                                        @else
+                                                        <option value="{{$item->id}}">{{ $itemName }}</option>
                                                         @endif
                                                     @else
                                                         <option value="{{$item->id}}" {{ $itemName == old($itemName, $record->$property) ? 'selected' : ''}}>{{ $itemName }}</option>

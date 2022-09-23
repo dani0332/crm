@@ -25,6 +25,7 @@ use App\Models\MartialStatus;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
+use App\Models\Quadrants;
 use App\Models\QuoteStatus;
 use App\Models\Regions;
 use App\Models\Team;
@@ -127,11 +128,23 @@ class DropdownSourceService extends BaseService
             case 'tier_users':
                 $data = User::select('id', 'name')->where('is_active', true)->get();
                 break;
+            case 'quad_users':
+                $data = User::select('id', 'name')->where('is_active', true)->get();
+                break;
             case 'team_users':
                 $data = User::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'quad_tiers':
                 $data = Tier::select('id', 'name')->where('is_active', true)->get();
+                break;
+            case 'tiers':
+                $data = Tier::select('id', 'name')->where('is_active', true)->get();
+                break;
+            case 'quadrants':
+                $data = Quadrants::select('id', 'name')->where('is_active', true)->get();
+                break;
+            case 'users':
+                $data = User::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'car_make_id':
                 $data = CarMake::select('code as id', 'text')->where('is_active', true)->get();

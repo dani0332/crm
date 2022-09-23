@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Quadrants;
-use App\Models\Tier;
 use DB;
 use Illuminate\Http\Request;
 
@@ -20,10 +19,14 @@ class QuadrantService extends BaseService
                 'q.is_active',
                 'q.updated_at',
                 'q.created_at',
-                DB::raw('group_concat(t.name) as quad_tiers'),
+                DB::raw('GROUP_CONCAT(DISTINCT t.name ORDER BY t.id SEPARATOR ",") AS quad_tiers'),
+                DB::raw('GROUP_CONCAT(DISTINCT u.name ORDER BY u.id SEPARATOR ",") AS quad_users'),
             )
-            ->leftJoin('tiers as t', 't.quad_id', 'q.id')
-            ->groupBy('q.id');
+            ->leftJoin('quad_tiers as qt', 'qt.quad_id', 'q.id')
+            ->leftJoin('tiers as t', 't.id', 'qt.tier_id')
+            ->leftJoin('quad_users as qu', 'qu.quad_id', 'q.id')
+            ->leftJoin('users as u', 'u.id', 'qu.user_id')
+            ->groupBy('q.id', 'q.name');
     }
 
     public function getEntity($id)
@@ -63,16 +66,50 @@ class QuadrantService extends BaseService
             'name' => $request->name,
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
         ]);
-        if (isset($request->quad_tiers)) {
-            $tierIds = $request->quad_tiers;
-            foreach ($tierIds as $tierId) {
-                $tier = Tier::where('id', $tierId)->first();
-                $tier->quad_id = $quad->id;
-                $tier->save();
+        if (isset($request->quad_tiers)) $this->addTiersAgainstQuad($request->quad_tiers, $quad->id);
+        if (isset($request->quad_users)) $this->addUserAgainstQuadAndTiers($request->quad_users, $quad->id);
+        return $quad;
+    }
+
+    private function addTiersAgainstQuad($tierIds, $quadId)
+    {
+        DB::table('quad_tiers')->where('quad_id', $quadId)->delete();
+        foreach ($tierIds as $tierId) {
+            DB::table('quad_tiers')->insert([
+                'quad_id' => $quadId,
+                'tier_id' => $tierId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function addUserAgainstQuadAndTiers($userIds, $quadId)
+    {
+        foreach ($userIds as $userId) {
+            $quadUsers = DB::table('quad_users')->where('quad_id', $quadId)->where('user_id', $userId)->get();
+            if(count($quadUsers) == 0){
+                DB::table('quad_users')->insert([
+                    'quad_id' => $quadId,
+                    'user_id' => $userId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $quadTierIds = DB::table('quad_tiers')->where('quad_id', $quadId)->pluck('tier_id');
+            foreach($quadTierIds as $quadTierId) {
+                $tierUserId = DB::table('tier_users')->where('tier_id', $quadTierId)->where('user_id', $userId)->get();
+                if(count($tierUserId) == 0){
+                    DB::table('tier_users')->insert([
+                        'tier_id' => $quadTierId,
+                        'user_id' => $userId,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
         }
-
-        return $quad;
     }
 
     public function updateQuadrant(Request $request, $id)
@@ -81,19 +118,8 @@ class QuadrantService extends BaseService
         $quad->name = $request->name;
         $quad->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $quad->save();
-        $tiers = Tier::where('quad_id', $quad->id)->get();
-        foreach ($tiers as $tier) {
-            $tier->quad_id = null;
-            $tier->save();
-        }
-        if (isset($request->quad_tiers)) {
-            $tierIds = $request->quad_tiers;
-            foreach ($tierIds as $tierId) {
-                $tier = Tier::where('id', $tierId)->first();
-                $tier->quad_id = $quad->id;
-                $tier->save();
-            }
-        }
+        if (isset($request->quad_tiers)) $this->addTiersAgainstQuad($request->quad_tiers, $quad->id);
+        if (isset($request->quad_users)) $this->addUserAgainstQuadAndTiers($request->quad_users, $quad->id);
 
         return $quad;
     }
@@ -106,6 +132,7 @@ class QuadrantService extends BaseService
             'is_active' => 'input|checkbox|title',
             'updated_at' => 'input|date',
             'quad_tiers' => 'select|title||multiple',
+            'quad_users' => 'select|multiple',
             'created_at' => 'input|date',
         ];
     }
@@ -134,9 +161,9 @@ class QuadrantService extends BaseService
     {
         return [
             'create' => 'created_at,updated_at',
-            'list' => 'quad_tiers',
+            'list' => '',
             'update' => 'id,created_at,updated_at',
-            'show' => 'updated_at,quad_tiers',
+            'show' => 'updated_at,quad_tiers,quad_users',
         ];
     }
 

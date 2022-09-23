@@ -294,11 +294,12 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/teams') }}">Teams</a></li>
                             @endcan
-                            <li><a href="{{ url('generic/tier') }}">Tiers</a></li>
-                            <li><a href="{{ url('generic/quadrant') }}">Quadrants</a></li>
-                            {{-- @can(PermissionsEnum::TeamsList)
-                            <li><a href="{{ url('generic/leadstatus') }}">Lead Status</a></li>
-                            @endcan --}}
+                            <li><a>Allocation Config<span class="fa fa-chevron-down" style="color: white;"></span></a>
+                                <ul class="nav child_menu">
+                                    <li><a href="{{ url('generic/tier') }}">Tiers</a></li>
+                                    <li><a href="{{ url('generic/quadrant') }}">Quadrants</a></li>
+                                </ul>
+                            </li>
                             @can(PermissionsEnum::InsuranceProviderList)
                             <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
                             @endcan

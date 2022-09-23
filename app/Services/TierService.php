@@ -24,7 +24,11 @@ class TierService extends BaseService
                 't.is_active',
                 't.updated_at',
                 't.created_at',
-            );
+                DB::raw('group_concat(u.name) AS tier_users'),
+            )
+            ->leftJoin('tier_users as tu', 'tu.tier_id', 't.id')
+            ->leftJoin('users as u', 'u.id', 'tu.user_id')
+            ->groupBy('t.id','t.name');
     }
 
     public function getEntity($id)
@@ -73,6 +77,20 @@ class TierService extends BaseService
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
         ]);
 
+        if(isset($request->tier_users))
+        {
+            DB::table('tier_users')->where('tier_id', $tier->id)->delete();
+            $userIds = $request->tier_users;
+            foreach($userIds as $userId){
+                DB::table('tier_users')->insert([
+                    'tier_id' => $tier->id,
+                    'user_id' => $userId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
         return $tier;
     }
 
@@ -87,6 +105,19 @@ class TierService extends BaseService
         $tier->is_auto_assignment_enabled = $request->has('is_auto_assignment_enabled') && $request->is_auto_assignment_enabled == 'on' ? 1 : 0;
         $tier->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $tier->save();
+        if(isset($request->tier_users))
+        {
+            DB::table('tier_users')->where('tier_id', $tier->id)->delete();
+            $userIds = $request->tier_users;
+            foreach($userIds as $userId){
+                DB::table('tier_users')->insert([
+                    'tier_id' => $tier->id,
+                    'user_id' => $userId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
 
         return $tier;
     }
@@ -99,6 +130,7 @@ class TierService extends BaseService
             'min_price' => 'input|number|title|required',
             'max_price' => 'input|number|title|required',
             'cost_per_lead' => 'input|number|title',
+            'tier_users' => 'select|multiple',
             'is_tpl' => 'input|checkbox|title',
             'is_auto_assignment_enabled' => 'input|checkbox|title',
             'is_active' => 'input|checkbox|title',
@@ -125,7 +157,7 @@ class TierService extends BaseService
                 $title = 'Is TPL ?';
                 break;
             case 'is_auto_assignment_enabled':
-                $title = 'Auto Assign Enabled ?';
+                $title = 'Auto Assign ?';
                 break;
             case 'is_active':
                 $title = 'Is Active ?';
