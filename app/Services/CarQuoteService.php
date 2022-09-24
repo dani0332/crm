@@ -851,6 +851,10 @@ class CarQuoteService extends BaseService
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
             'lang' => 'en',
+            'url' => strval(url()->current()),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => auth()->id(),
         ];
 
         $client = new \GuzzleHttp\Client();
@@ -963,7 +967,6 @@ class CarQuoteService extends BaseService
                 ],
             ],
         ];
-        dd($carPlanData);
 
         $apiCreds = [
             'apiEndPoint' => $apiEndPoint,
