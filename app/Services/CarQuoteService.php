@@ -943,6 +943,10 @@ class CarQuoteService extends BaseService
         $carPlanData = [
             'quoteUID' => $request->car_quote_uuid,
             'update' => $isUpdate,
+            'url' => strval($request->current_url),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => auth()->id(),
             'plans' => [
                 [
                     'planId' => (int) $request->car_plan_id,
@@ -959,6 +963,7 @@ class CarQuoteService extends BaseService
                 ],
             ],
         ];
+        dd($carPlanData);
 
         $apiCreds = [
             'apiEndPoint' => $apiEndPoint,

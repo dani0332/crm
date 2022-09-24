@@ -26,12 +26,13 @@
                 @if(session()->has('message'))
                 <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
-                <form id="car-create-quote-form" method='post' action="{{ route('CarPlanManualProcess') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                <form id="car-create-quote-form" method='post' action="{{ route('carPlanManualProcess') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                     {{csrf_field()}}
                     <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteUuId }}">
                     <input type="hidden" id="is_disabled" name="is_disabled" value="0">
                     <input type="hidden" id="is_create" name="is_create" value="1">
                     <input type="hidden" id="repair_type_comp" name="repair_type_comp" value="{{ CarPlanType::COMP }}">
+                    <input type = "hidden" id="current_url" name="current_url" value="{{ url()->current() }}">
                     <div class="item form-group">
                         <div class="col-md-6 col-sm-6">
                             <div class="row">
