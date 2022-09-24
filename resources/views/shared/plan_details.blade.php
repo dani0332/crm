@@ -847,8 +847,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td>
 									<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
 										<input type="checkbox" class="success" id="is_manual_update"
-											name="is_manual_update" @if(isset($isManualUpdate) && $isManualUpdate=="true" ) checked="checked" @endif
-											{{ $isManualUpdate ? "disabled" : "" }}>
+											name="is_manual_update" @if(isset($isManualUpdate) && $isManualUpdate=="true" ) checked="checked" @endif>
 										<span class="slider round"></span>
 								</td>
 							</tr>
