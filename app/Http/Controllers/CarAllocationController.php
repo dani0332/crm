@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use DataTables;
 
 class CarAllocationController extends Controller
 {

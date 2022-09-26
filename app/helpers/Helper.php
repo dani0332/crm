@@ -346,7 +346,7 @@ function addSearchClauses($model, $request, $query, $searchPrefix)
                     $query = $query->whereIn($searchPrefix.$searchProperty, $request->$searchProperty);
                     break;
                 default:
-                break;
+                    break;
             }
         }
     }
