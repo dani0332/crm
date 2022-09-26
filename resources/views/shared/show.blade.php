@@ -60,7 +60,6 @@
                                 <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
                             @endif
                         @endcannot
-                        <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType)) }}"
                                 class="btn btn-warning btn-sm">{{ (str_contains(strtolower($model->modelType), 'team')? 'Team': (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': $model->modelType)) . ' List' }}</a>
                         </li>
@@ -305,7 +304,7 @@
             aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
 
-                <div class="modal-content" style="display: grid;    height: 260px !important;">
+                <div class="modal-content" style="display: grid;">
                     <form method="post" action="/quotes/createDuplicate" autocomplete="off">
                         {{ csrf_field() }}
                         @method('POST')
@@ -323,16 +322,16 @@
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
-                        <div class="modal-body" style="height: 138px;">
+                        <div class="modal-body" style="">
                             <select class="form-control select2" onchange="toggleSubDropDown(this)" multiple="multiple" id="lob_team" name="lob_team[]">
                                 @foreach ($allowedDuplicateLOB as $item)
                                     <option value="{{ $item }}">{{ $item }}</option>
                                 @endforeach
                             </select>
-                            <select class="form-control" style="display:none;" id="lob_team_sub_selection" name="lob_team_sub_selection">
+                            <select class="form-control" style="display:none;margin-top:10px" id="lob_team_sub_selection" name="lob_team_sub_selection">
                             <option value="" disabled selected>Select your option</option>    
-                            <option value="New enquiry">New enquiry</option>
-                                <option value="Record purposes only">Record purposes only</option>
+                            <option value="new_enquiry">New enquiry</option>
+                            <option value="record_only">Record purposes only</option>
                             </select>
                         </div>
                         <div class="modal-footer" style="justify-content: center; padding : 0px !important;">
@@ -504,9 +503,9 @@
         function toggleSubDropDown(el){
             var selectedLobs = $("#lob_team").val();
             if(selectedLobs.length > 0) {
-                if(selectedLobs.includes('<?php echo quoteTypeCode::Health ?>')) {
-                    console.log("dasd");
-                }
+                $("#lob_team_sub_selection").css('display','block');
+            }else {
+                $("#lob_team_sub_selection").css('display','none');
             }
         }
     </script>

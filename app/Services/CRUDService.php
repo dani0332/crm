@@ -13,9 +13,10 @@ use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
+use App\Traits\GenericQueriesAllLobs;
 class CRUDService extends BaseService
 {
+    use GenericQueriesAllLobs;
     protected $healthQuoteService;
     protected $carQuoteService;
     protected $teamsService;
@@ -143,16 +144,21 @@ class CRUDService extends BaseService
     {
         $lobTeams = $request->lob_team;
         $parentType = $request->parentType;
+
         if (strtolower($parentType) == strtolower(quoteTypeCode::CORPLINE) || strtolower($parentType) == strtolower(quoteTypeCode::GroupMedical)) {
             $parentType = 'Business';
         }
         $parentRecord = $this->{strtolower($request->parentType).'QuoteService'}->getEntityPlain($request->entityId);
+        if ($request->has('lob_team_sub_selection') && isset($request->lob_team_sub_selection)) {
+            $parentRecord['enquiryType'] = $request->lob_team_sub_selection;
+        }
         if (! empty($lobTeams)) {
             foreach ($lobTeams as $lobTeam) {
                 if (strtolower($lobTeam) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lobTeam) == strtolower(quoteTypeCode::GroupMedical)) {
                     $lobTeam = 'Business';
                 }
-                $this->{strtolower($lobTeam).'QuoteService'}->createDuplicate($parentRecord);
+                $this->createDuplicateRecord($lobTeam, $parentRecord);
+                // $this->{strtolower($lobTeam).'QuoteService'}->createDuplicate($parentRecord);
             }
         }
     }

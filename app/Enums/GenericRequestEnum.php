@@ -21,4 +21,5 @@ final class GenericRequestEnum extends Enum
     public const NotApplicable = 'N/A';
     public const EMAIL = 'email';
     public const MOBILE_NO = 'mobile_no';
+    public const RECORD_PURPOSE = 'record_only';
 }
