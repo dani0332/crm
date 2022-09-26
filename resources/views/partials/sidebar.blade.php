@@ -30,9 +30,13 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @endcan
                 @can(PermissionsEnum::LeadAllocationView)
+
                 <ul class="nav side-menu">
-                    <li>
-                        <a href="{{ url('/lead-allocation') }}"><i class="fa fa-paper-plane"></i>Lead Allocation</a>
+                    <li><a><i class="fa fa-paper-plane"></i>Lead Allocation<span class="fa fa-chevron-down" style="color: white;"></span></a>
+                        <ul class="nav child_menu">
+                            <li><a href="{{ url('lead-allocation') }}">Health</a></li>
+                            <li><a href="{{ url('generic/quadrant') }}">Car</a></li>
+                        </ul>
                     </li>
                 </ul>
                 @endcan
