@@ -14,19 +14,22 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align">Type <span class="required">*</span></label>
-                    <div class="col-md-6 col-sm-6 ">
-                        <select name="additional_contact_type" id="additional_contact_type" class="form-control">
-                            <option value="email">Email</option>
-                            <option value="mobile_no">Mobile Number</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="item form-group">
-                    <label class="col-form-label col-md-3 col-sm-3 label-align">Value <span class="required">*</span></label>
-                    <div class="col-md-6 col-sm-6 ">
-                        <input type="text" id="additional_contact" name="additional_contact" class="form-control">
+                    <div class="col-md-12">
+                        <div class="col">
+                            <div class="input-group">
+                                <label class="col-form-label col-md-3 col-sm-3 label-align">Type <span class="required">*</span></label>
+                                <select name="additional_contact_type" id="additional_contact_type" class="form-control">
+                                    <option value="email">Email</option>
+                                    <option value="mobile_no">Mobile Number</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="input-group">
+                                <label class="col-form-label col-md-3 col-sm-3 label-align">Value <span class="required">*</span></label>
+                                <input type="text" id="additional_contact" name="additional_contact" class="form-control">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer" style="justify-content: center;">
