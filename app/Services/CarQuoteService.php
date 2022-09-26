@@ -854,7 +854,7 @@ class CarQuoteService extends BaseService
             'url' => strval(url()->current()),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
-            'userId' => auth()->id(),
+            'userId' => strval(auth()->id()),
         ];
 
         $client = new \GuzzleHttp\Client();
