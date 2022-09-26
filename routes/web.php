@@ -206,7 +206,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
         Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
         Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
-        Route::post('{quoteType}/plans-export-pdf', [CRUDController::class, 'plansExportPdf'])->name('plansExportPdf');
+        Route::post('{quoteType}/export-plans-pdf', [CRUDController::class, 'exportPlansPdf'])->name('exportPlansPdf');
     });
 
     Route::group(['prefix' => 'generic'], function () {

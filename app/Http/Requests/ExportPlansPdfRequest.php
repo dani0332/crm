@@ -3,9 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Enums\quoteTypeCode;
+use App\Rules\ValidateQuoteObject;
 use Illuminate\Foundation\Http\FormRequest;
 
-class PlanPdfRequest extends FormRequest
+class ExportPlansPdfRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,7 +23,7 @@ class PlanPdfRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        $this->replace(array_merge($this->all(), ['plan_pdf_ids' => explode(',', $this->plan_pdf_ids)]));
+        $this->replace(array_merge($this->all(), ['plan_ids' => explode(',', $this->plan_ids)]));
     }
 
     /**
@@ -33,20 +34,18 @@ class PlanPdfRequest extends FormRequest
     public function rules()
     {
         return [
-            'quote_pdf_uuid' => 'required|exists:car_quote_request,uuid',
-            'plan_pdf_ids' => 'required|array|max:6',
+            'quote_uuid' => ['required', new ValidateQuoteObject],
+            'plan_ids' => 'required|array|min:3|max:6',
         ];
     }
 
     /**
-     * validate quote record and maximum number of alread uploaded files
-     *
+     * allowed for car quote only
      * @param $validator
      */
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            //validate car quote type
             if (empty(request()->quoteType) || ucwords(request()->quoteType) != quoteTypeCode::Car) {
                 $validator->errors()->add('type', 'Invalid quote type provided');
             }
@@ -56,7 +55,8 @@ class PlanPdfRequest extends FormRequest
     public function messages()
     {
         return [
-            'plan_pdf_ids.max' => 'Maximum 6 plans are allowed to select',
+            'plan_ids.max' => 'Maximum 6 plans are allowed to select',
+            'plan_ids.min' => 'Minimum 3 plans should be selected',
         ];
     }
 }

@@ -8,7 +8,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Http\Requests\PlanPdfRequest;
+use App\Http\Requests\ExportPlansPdfRequest;
 use App\Models\GenericModel;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -916,11 +916,11 @@ class CRUDController extends Controller
      * @param $quoteType
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function plansExportPdf(PlanPdfRequest $request, $quoteType)
+    public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request,)
     {
-        $quoteId = $request->quote_pdf_uuid;
+        $quoteId = $request->quote_uuid;
 
-        $planIds = $request->plan_pdf_ids;
+        $planIds = $request->plan_ids;
 
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
 

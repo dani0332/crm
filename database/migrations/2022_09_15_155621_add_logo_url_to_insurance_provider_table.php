@@ -14,18 +14,10 @@ class AddLogoUrlToInsuranceProviderTable extends Migration
     public function up()
     {
         Schema::table('insurance_provider', function (Blueprint $table) {
-            if (! Schema::hasColumn('insurance_provider', 'logo_url')) {
+            if (Schema::hasTable('insurance_provider') && !Schema::hasColumn('insurance_provider', 'logo_url')) {
                 $table->string('logo_url')->nullable();
             }
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-    }
 }

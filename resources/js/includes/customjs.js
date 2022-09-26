@@ -2560,6 +2560,28 @@ $(document).ready(function () {
             $(self).text('Copy');
         }, 2000);
     });
+
+  $('#btn_download_plan_pdf').on('click', function () 
+  {
+  
+    if($("input[name='toggle_plans_checkbox']:checked").length < 3) {
+      alert("Please seelct atleast 3 plans.");return false;
+    }
+
+    if($("input[name='toggle_plans_checkbox']:checked").length > 6) {
+      alert("Maximum of 6 plans are allowed to select.");return false;
+    }
+
+    var planIds = [];
+
+    $.each($("input[name='toggle_plans_checkbox']:checked"), function () {
+      planIds.push($(this).val());
+    });
+
+    $('#plan_ids').val(planIds);
+    $('#form_plans_pdf').submit();
+
+  });
 });
 
 $('#renewals-upload-button').click(function () {
@@ -2804,12 +2826,10 @@ function deleteQuoteDocument(el) {
 $('#toggle-plans-div').hide();
 $('#flowcheckall').click(function (e) {
   if ($(this).hasClass('checkedAll')) {
-    $("#span_pdf_download").fadeOut("fast");
     $('#toggle-plans-div').hide(200);
     $('.car_plans_checkbox').prop('checked', false);
     $(this).removeClass('checkedAll');
   } else {
-    $("#span_pdf_download").fadeIn("fast");
     $('.car_plans_checkbox').prop('checked', true);
     $(this).addClass('checkedAll');
     $('#toggle-plans-div').show(300);
@@ -2867,34 +2887,3 @@ function sendQuoteDocumentsToCustomer(el) {
     return false;
   }
 }
-
-
-$(document).ready(function () {
-  $(document).on("change", ".car_plans_checkbox", function () {
-
-    let $checkbox = $(this);
-    let pkg_id = $checkbox.val();
-    if($checkbox.is(":checked")){
-        selectedPkgIds.add(pkg_id);
-    }else{
-        selectedPkgIds.delete(pkg_id);
-    }
-    if(selectedPkgIds.size){
-        $("#span_pdf_download").fadeIn("fast");
-    }else{
-        $("#span_pdf_download").fadeOut("fast");
-    }
-
-    $(".total_packages").html(selectedPkgIds.size);
-  });
-  $('#toggle_plan_pdf_download').on('click', function () {
-    
-    var planIds = [];
-    $.each($("input[name='toggle_plans_checkbox']:checked"), function () {
-      planIds.push($(this).val());
-    });
-    $('#plan_pdf_ids').val(planIds);
-    $('#toggle_plan_pdf').submit();
-    
-  });
-});
