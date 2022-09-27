@@ -2548,29 +2548,29 @@ $(document).ready(function () {
       },
     });
   });
-  $('.payment-link-copy').on('click', function(){
-        var planId = $(this).attr('data-planId');
-        var quoteUUID = $(this).attr('data-quoteUUId');
-        var providerCode = $(this).attr('data-providerCode');
-        var websiteURL = $(this).attr('data-websiteURL');
-        var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-        navigator.clipboard.writeText(paymentLink);
-        var self = this;
-        $(this).text('Copied !');
-        setTimeout(function(){
-            $(self).text('Copy');
-        }, 2000);
-    });
+  $('.payment-link-copy').on('click', function () {
+    var planId = $(this).attr('data-planId');
+    var quoteUUID = $(this).attr('data-quoteUUId');
+    var providerCode = $(this).attr('data-providerCode');
+    var websiteURL = $(this).attr('data-websiteURL');
+    var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
+    navigator.clipboard.writeText(paymentLink);
+    var self = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(self).text('Copy');
+    }, 2000);
+  });
 
-  $('#btn_download_plan_pdf').on('click', function () 
-  {
-  
-    if($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-      alert("Please seelct atleast 3 plans.");return false;
+  $('#btn_download_plan_pdf').on('click', function () {
+    if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
+      alert('Please seelct atleast 3 plans.');
+      return false;
     }
 
-    if($("input[name='toggle_plans_checkbox']:checked").length > 6) {
-      alert("Maximum of 6 plans are allowed to select.");return false;
+    if ($("input[name='toggle_plans_checkbox']:checked").length > 6) {
+      alert('Maximum of 6 plans are allowed to select.');
+      return false;
     }
 
     var plan_ids = [];
@@ -2578,10 +2578,9 @@ $(document).ready(function () {
     $.each($("input[name='toggle_plans_checkbox']:checked"), function () {
       plan_ids.push($(this).val());
     });
-    
+
     $('#plan_ids').val(plan_ids);
     $('#form_plans_pdf').submit();
-
   });
 });
 
@@ -2881,7 +2880,7 @@ function sendQuoteDocumentsToCustomer(el) {
         $('#email-send-success').show();
         setTimeout(function () {
           window.location.reload();
-        }, 5000);
+        }, 10000);
       },
     });
   } else {

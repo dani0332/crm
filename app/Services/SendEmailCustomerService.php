@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\EnvEnum;
+use App\Jobs\UpdateSendPolicySubjectJob;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -99,8 +100,7 @@ class SendEmailCustomerService extends BaseService
 
         // addEmailStatus is for quote modules only
         if (isset($messageId)) {
-            $emailSubject = $this->getEmailSubjectFromSib($messageId);
-            $this->emailStatusService->addEmailStatus($emailData, $messageId, $emailSubject);
+            UpdateSendPolicySubjectJob::dispatch($emailData, $messageId)->delay(now()->addSeconds(7));
         }
 
         return $responseCode;
@@ -110,7 +110,6 @@ class SendEmailCustomerService extends BaseService
     {
         $apiKey = config('constants.SENDINBLUE_KEY');
         $url = config('constants.SIB_URL');
-        sleep(7);
         try {
             $client = new \GuzzleHttp\Client();
             $response = $client->request(
