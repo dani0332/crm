@@ -9,7 +9,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class updateSendPolicySubjectJob implements ShouldQueue
 {
@@ -29,7 +28,6 @@ class updateSendPolicySubjectJob implements ShouldQueue
      */
     public function __construct($emailData, $messageId)
     {
-        Log::info('Job Constructor Triggered');
         $this->emailData = $emailData;
         $this->messageId = $messageId;
     }
