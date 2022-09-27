@@ -331,6 +331,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 		function getPremiumWithVat(percent, total) {
 			return ((percent / 100) * total).toFixed(2)
 		}
+		function updatePremium() {
+			var memberIdArray = $('.member_id').map((i, e) => e.value).get();
+			var memberPremiumArray = $('.member_premium').map((i, e) => e.value).get();
+			console.log(memberIdArray,memberPremiumArray);
+		};
 	});
 </script>
 @php
@@ -621,7 +626,9 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 					</div>
 
 					<div class="tab-pane fade show" id="members" role="tabpanel" aria-labelledby="members-tab">
-						<table cellpadding="3" cellspacing="3">
+						{{csrf_field()}}
+						<input type="hidden" id="health_plan_id" name="health_plan_id" value="{{ $planId }}">	
+					<table cellpadding="3" cellspacing="3">
 							@foreach($members as $i => $member)
 							<tr>
 								<td style="width: 100px;font-weight: bold;">Member {{$i+1}}:</td>
@@ -634,9 +641,25 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td style="width: 50px;font-weight: bold;">Gender</td>
 								<td style="width: 120px;">{{$member->gender}}</td>
 								<td style="width: 50px;font-weight: bold;">Premium</td>
-								<td style="width: 120px;">{{$member->premium}}</td>
+								<td style="width: 120px;">
+								<input type="hidden" id="" name="member_id" value="{{ $member->memberId }}">
+								<input type="number" name="member_premium" value="{{$member->premium}}" class="form-control"></td>
 							</tr>
 							@endforeach
+							<tr>
+								<td></td>
+								<td>
+								</td>
+								<td valign="top"></td>
+								<td align="right">
+									<button type="submit" class="btn btn-warning btn-sm" onclick="updatePremium()">Update</button>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="4">
+									<div class="car-quote-plan-validation-div"></div>
+								</td>
+							</tr>
 						</table>
 					</div>
 
