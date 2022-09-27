@@ -2572,13 +2572,13 @@ $(document).ready(function () {
       alert("Maximum of 6 plans are allowed to select.");return false;
     }
 
-    var planIds = [];
+    var plan_ids = [];
 
     $.each($("input[name='toggle_plans_checkbox']:checked"), function () {
-      planIds.push($(this).val());
+      plan_ids.push($(this).val());
     });
-
-    $('#plan_ids').val(planIds);
+    
+    $('#plan_ids').val(plan_ids);
     $('#form_plans_pdf').submit();
 
   });

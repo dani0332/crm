@@ -15,7 +15,7 @@ class AddLogoUrlToInsuranceProviderTable extends Migration
     {
         Schema::table('insurance_provider', function (Blueprint $table) {
             if (Schema::hasTable('insurance_provider') && !Schema::hasColumn('insurance_provider', 'logo_url')) {
-                $table->string('logo_url')->nullable();
+                $table->string('logo_url', 255)->nullable();
             }
         });
     }
