@@ -931,6 +931,7 @@ class CRUDController extends Controller
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans',  'planIds', 'quote'));
 
+        // generate pdf with file name e.g. car-rgujxlk4_plans.pdf
         $pdf_name = strtolower($quote->code).'_plans'.'.pdf';
 
         return $pdf->download($pdf_name);
