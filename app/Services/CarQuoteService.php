@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -980,24 +979,6 @@ class CarQuoteService extends BaseService
     public function getDuplicateEntityByCode($code)
     {
         return CarQuote::where('parent_duplicate_quote_id', $code)->first();
-    }
-
-    public function createDuplicate($parentRecord)
-    {
-        $quote = new CarQuote();
-        $quote->parent_duplicate_quote_id = $parentRecord->code;
-        $response = CapiRequestService::getUUID(QuoteTypeId::Car);
-        if ($response) {
-            $quote->uuid = $response->uuid;
-            $quote->code = 'CAR-'.$response->uuid;
-        }
-        $quote->quote_status_id = QuoteStatusEnum::NewLead;
-        $quote->first_name = $parentRecord->first_name;
-        $quote->last_name = $parentRecord->last_name;
-        $quote->email = $parentRecord->email;
-        $quote->mobile_no = $parentRecord->mobile_no;
-        $quote->advisor_id = Auth::user()->id;
-        $quote->save();
     }
 
     public function getPlans($id)
