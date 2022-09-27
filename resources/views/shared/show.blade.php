@@ -335,7 +335,7 @@
                             </select>
                         </div>
                         <div class="modal-footer" style="justify-content: center; padding : 0px !important;">
-                            <button type="submit" style="margin-top: 13px;" class="btn btn-sm btn-success">Create
+                            <button type="submit" style="margin-top: 13px;" class="btn btn-sm btn-success" onClick="this.form.submit(); this.disabled=true; this.innerHTML='Duplicating…';">Create
                                 Duplicate</button>
                         </div>
                     </form>
