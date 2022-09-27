@@ -281,7 +281,7 @@
                 @foreach($planIds as $planId)
                     <td>
                         <p class="text-center">
-                            <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quoteId .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
+                            <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
                         </p>
                     </td>
                 @endforeach

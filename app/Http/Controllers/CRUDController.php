@@ -918,20 +918,18 @@ class CRUDController extends Controller
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request,)
     {
-        $quoteId = $request->quote_uuid;
-
         $planIds = $request->plan_ids;
 
-        $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
+        $quotePlans = $this->carQuoteService->getQuotePlans($request->quote_uuid);
 
         if (! isset($quotePlans->quotes->plans)) {
             return redirect()->back()->with('message', 'Quote plans not available');
         }
 
-        $quote = $this->getQuoteObject($quoteType, $quoteId);
+        $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
         $quote->load(['carMake', 'carModel']);
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'quoteId', 'planIds', 'quote'));
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans',  'planIds', 'quote'));
 
         $pdf_name = strtolower($quote->code).'_plans'.'.pdf';
 
