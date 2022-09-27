@@ -9,14 +9,16 @@ use App\Enums\RolesEnum;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
+use App\Traits\GenericQueriesAllLobs;
 use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Traits\GenericQueriesAllLobs;
+
 class CRUDService extends BaseService
 {
     use GenericQueriesAllLobs;
+
     protected $healthQuoteService;
     protected $carQuoteService;
     protected $teamsService;
@@ -117,9 +119,9 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == 'business') {
             $modelType = 'Corpline';
         }
-        $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($modelType) {
+        $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
             //if (strtolower($item) != strtolower($modelType)) {
-                return $item;
+            return $item;
             //}
         });
         foreach ($allowedLeadTypes as $leadType) {
@@ -129,9 +131,9 @@ class CRUDService extends BaseService
             }
             $duplicateRecord = $this->{strtolower($leadType).'QuoteService'}->getDuplicateEntityByCode($leadCode);
             if ($duplicateRecord) {
-                $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($leadType) {
+                $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
                     //if ($item != $leadType && $leadType) {
-                        return $item;
+                    return $item;
                     //}
                 });
             }
