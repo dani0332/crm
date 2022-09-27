@@ -41,6 +41,7 @@ class ExportPlansPdfRequest extends FormRequest
 
     /**
      * allowed for car quote only
+     *
      * @param $validator
      */
     public function withValidator($validator)

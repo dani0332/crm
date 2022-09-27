@@ -916,7 +916,7 @@ class CRUDController extends Controller
      * @param $quoteType
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request,)
+    public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
         $planIds = $request->plan_ids;
 
@@ -929,7 +929,7 @@ class CRUDController extends Controller
         $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
         $quote->load(['carMake', 'carModel']);
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans',  'planIds', 'quote'));
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
 
         // generate pdf with file name e.g. car-rgujxlk4_plans.pdf
         $pdf_name = strtolower($quote->code).'_plans'.'.pdf';
