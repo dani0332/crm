@@ -6,7 +6,6 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Models\LifeQuote;
 use App\Models\LifeQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
@@ -705,24 +704,6 @@ class LifeQuoteService extends BaseService
     public function getDuplicateEntityByCode($code)
     {
         return LifeQuote::where('parent_duplicate_quote_id', $code)->first();
-    }
-
-    public function createDuplicate($parentRecord)
-    {
-        $quote = new LifeQuote();
-        $quote->parent_duplicate_quote_id = $parentRecord->code;
-        $response = CapiRequestService::getUUID(QuoteTypeId::Life);
-        if ($response) {
-            $quote->uuid = $response->uuid;
-            $quote->code = 'LIF-'.$response->uuid;
-        }
-        $quote->quote_status_id = QuoteStatusEnum::NewLead;
-        $quote->first_name = $parentRecord->first_name;
-        $quote->last_name = $parentRecord->last_name;
-        $quote->email = $parentRecord->email;
-        $quote->advisor_id = Auth::user()->id;
-        $quote->mobile_no = $parentRecord->mobile_no;
-        $quote->save();
     }
 
     public function processManualLeadAssignment($request): array

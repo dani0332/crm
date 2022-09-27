@@ -8,6 +8,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Http\Requests\ExportPlansPdfRequest;
 use App\Models\GenericModel;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -40,6 +41,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use PDF;
 
 class CRUDController extends Controller
 {
@@ -358,8 +360,7 @@ class CRUDController extends Controller
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
-                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments',
-                'displaySendPolicyButton', 'customerAdditionalContacts',
+                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
@@ -413,8 +414,7 @@ class CRUDController extends Controller
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
-                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType',
+                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
             ]));
         }
     }
@@ -626,7 +626,7 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
                     $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-                    $members = isset($listQuotePlan->memberPremiumBreakdown) ? $listQuotePlan->memberPremiumBreakdown : [];
+                    $members = $listQuotePlan->memberPremiumBreakdown;
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                         $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                     }
@@ -907,6 +907,34 @@ class CRUDController extends Controller
         }
     }
 
+    /**
+     * export selected plans to PDF
+     *
+     * @param  Request  $request
+     * @param $quoteType
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
+    {
+        $planIds = $request->plan_ids;
+
+        $quotePlans = $this->carQuoteService->getQuotePlans($request->quote_uuid);
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return redirect()->back()->with('message', 'Quote plans not available');
+        }
+
+        $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+        $quote->load(['carMake', 'carModel']);
+
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
+
+        // generate pdf with file name e.g. car-rgujxlk4_plans.pdf
+        $pdf_name = strtolower($quote->code).'_plans'.'.pdf';
+
+        return $pdf->download($pdf_name);
+    }
+
     public function destroyDocument($quoteType, $quoteUuId, $id)
     {
         $document = QuoteDocument::find($id);
@@ -926,7 +954,7 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-        $code = 'P-'.strtoupper(substr(uniqid('', ), 0, 8));
+        $code = 'P-'.strtoupper(substr(uniqid(''), 0, 8));
         $paymentInformation = [
             'code' => $code,
             'collection_type' => $request->collection_type,

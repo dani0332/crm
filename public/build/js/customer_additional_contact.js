@@ -8,6 +8,7 @@ $(function()  {
     // Make additional email primary
     $('.additional-email-make-primary-btn').on('click', function(){
         if (confirm('Are you sure to make this primary email address?')) {
+            $('.loader').show();
             var id = $(this).attr('data-record-id');
             var quote_id = $(this).attr('data-quote-id');
             var key = $(this).attr('data-key');
@@ -24,6 +25,7 @@ $(function()  {
                     _token: $('input[name=_token]').val(),
                 },
                 success: function (data) {
+                    $('.loader').hide();
                     alert('Primary Contact Updated.');
                     location.reload(); 
                 },
@@ -36,6 +38,7 @@ $(function()  {
     // Delete additional email
     $('.additional-contact-delete-btn').on('click', function(){
         if (confirm('Are you sure to delete?')) {
+            $('.loader').show();
             var customer_id = $(this).attr('data-customer-additional-contact-id');
             $.ajax({
                 url: '/customer-additional-contact/' + customer_id + '/delete',
@@ -44,6 +47,7 @@ $(function()  {
                     _token: $('input[name=_token]').val(),
                 },
                 success: function (data) {
+                    $('.loader').hide();
                     alert(data.data.message);
                     location.reload();
                 },
@@ -73,6 +77,7 @@ $(function()  {
             return false;
         }
         else {
+            $('.loader').show();
             validation_div_text('#additional-contact-modal-validation-msg', '', '');
             $.ajax({
                 url: '/customer-additional-contact/add',
@@ -86,6 +91,7 @@ $(function()  {
                     _token: $('input[name=_token]').val(),
                 },
                 success: function (data) {
+                    $('.loader').hide();
                     if(data.error && data.error.message) {
                         validation_div_text('#additional-contact-modal-validation-msg', data.error.message, 'red');
                     }

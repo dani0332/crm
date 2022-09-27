@@ -1,3 +1,5 @@
+var selectedPkgIds = new Set();
+
 $(document).ready(function () {
   $('#ebp_dob').datepicker({
     changeMonth: true,
@@ -2376,6 +2378,7 @@ $(document).ready(function () {
     allowClear: true,
     width: '100%',
   });
+
   $('.vehiclevalue-data-table').DataTable({
     ordering: false,
     info: false,
@@ -2558,6 +2561,28 @@ $(document).ready(function () {
             $(self).text('Copy');
         }, 2000);
     });
+
+  $('#btn_download_plan_pdf').on('click', function () 
+  {
+  
+    if($("input[name='toggle_plans_checkbox']:checked").length < 3) {
+      alert("Please seelct atleast 3 plans.");return false;
+    }
+
+    if($("input[name='toggle_plans_checkbox']:checked").length > 6) {
+      alert("Maximum of 6 plans are allowed to select.");return false;
+    }
+
+    var plan_ids = [];
+
+    $.each($("input[name='toggle_plans_checkbox']:checked"), function () {
+      plan_ids.push($(this).val());
+    });
+    
+    $('#plan_ids').val(plan_ids);
+    $('#form_plans_pdf').submit();
+
+  });
 });
 
 $('#renewals-upload-button').click(function () {
