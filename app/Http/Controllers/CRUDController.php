@@ -8,6 +8,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Http\Requests\ExportPlansPdfRequest;
 use App\Models\GenericModel;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -40,6 +41,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use PDF;
 
 class CRUDController extends Controller
 {
@@ -907,6 +909,34 @@ class CRUDController extends Controller
         }
     }
 
+    /**
+     * export selected plans to PDF
+     *
+     * @param  Request  $request
+     * @param $quoteType
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
+    {
+        $planIds = $request->plan_ids;
+
+        $quotePlans = $this->carQuoteService->getQuotePlans($request->quote_uuid);
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return redirect()->back()->with('message', 'Quote plans not available');
+        }
+
+        $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+        $quote->load(['carMake', 'carModel']);
+
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
+
+        // generate pdf with file name e.g. car-rgujxlk4_plans.pdf
+        $pdf_name = strtolower($quote->code).'_plans'.'.pdf';
+
+        return $pdf->download($pdf_name);
+    }
+
     public function destroyDocument($quoteType, $quoteUuId, $id)
     {
         $document = QuoteDocument::find($id);
@@ -926,7 +956,7 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-        $code = 'P-'.strtoupper(substr(uniqid('', ), 0, 8));
+        $code = 'P-'.strtoupper(substr(uniqid(''), 0, 8));
         $paymentInformation = [
             'code' => $code,
             'collection_type' => $request->collection_type,

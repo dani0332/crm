@@ -1,0 +1,36 @@
+{
+    "fontawesome": {
+        "normal": "fontawesome_normal_98ba43c5288785d68524e2de74fccc87"
+    },
+    "font awesome 6 brands": {
+        "normal": "font_awesome_6_brands_normal_31636509732b4298588040c87c3592c6"
+    },
+    "font awesome 6 free": {
+        "normal": "\/var\/www\/html\/blanka\/storage\/fonts\/font_awesome_6_free_normal_1321bfcfa727e01fd6f51a5f5864a82b",
+        "900": "font_awesome_6_free_900_a4b7023c0a078a27002a27fd500f100e"
+    },
+    "font awesome 5 brands": {
+        "normal": "font_awesome_5_brands_normal_31636509732b4298588040c87c3592c6"
+    },
+    "font awesome 5 free": {
+        "900": "\/var\/www\/html\/blanka\/storage\/fonts\/font_awesome_5_free_900_a4b7023c0a078a27002a27fd500f100e",
+        "normal": "font_awesome_5_free_normal_1321bfcfa727e01fd6f51a5f5864a82b"
+    },
+    "open sans": {
+        "normal": "\/var\/www\/html\/blanka\/storage\/fonts\/open_sans_normal_0de70c49c12ad3d5b30897be0764f760",
+        "600": "\/var\/www\/html\/blanka\/storage\/fonts\/open_sans_600_80b344cbabc13253146884f38d4f451d",
+        "bold": "open_sans_bold_307c8b05e5c1ebed4511274cd14c5aa1"
+    },
+    "roboto": {
+        "300": "\/var\/www\/html\/blanka\/storage\/fonts\/roboto_300_21960201651f2ea862182ff34dfd5ead",
+        "normal": "\/var\/www\/html\/blanka\/storage\/fonts\/roboto_normal_9fa47a070a8b30b595086d70bb7ac78c",
+        "500": "\/var\/www\/html\/blanka\/storage\/fonts\/roboto_500_d0dcda9e813eb9b854a1cc044831f6fe",
+        "bold": "roboto_bold_3d0ad20d45ace845335f9e6c390a09d9"
+    },
+    "ubuntu": {
+        "300": "\/var\/www\/html\/blanka\/storage\/fonts\/ubuntu_300_6853395806f26ea96622b7d7ed589eef",
+        "normal": "\/var\/www\/html\/blanka\/storage\/fonts\/ubuntu_normal_de3bd9cac4dd30ea4cc4e73c24e9f8d8",
+        "500": "\/var\/www\/html\/blanka\/storage\/fonts\/ubuntu_500_a2b721aa8b573ae4e993309d614d3d20",
+        "bold": "ubuntu_bold_102fbdc70ebc97d5aacdcb5ef9ac8de3"
+    }
+}
