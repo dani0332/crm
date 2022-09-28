@@ -1067,22 +1067,22 @@ class HealthQuoteService extends BaseService
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
-        if ($request->planId && !empty($request->planDetails)) {
+        if ($request->planId && ! empty($request->planDetails)) {
             $membersBreakDown = [];
             $plansArray = [
                 'planId' => (int) $request->planId,
                 'isManualUpdate' => true,
-                'memberPremiumBreakdown' => ''
+                'memberPremiumBreakdown' => '',
             ];
-            foreach($request->planDetails as $value) {
+            foreach ($request->planDetails as $value) {
                 $array = [
-                        'memberId' => (int)$value['memberId'],
-                        'dob'=> $value['dob'],
-                        'gender'=> $value['gender'],
-                        'memberCategoryText'=> $value['memberCategoryText'],
-                        'premium'=> (int)$value['premium'],
-                        'basmah'=> (int)$value['basmah'],
-                        'vat'=> (int)$value['vat'],
+                    'memberId' => (int) $value['memberId'],
+                    'dob' => $value['dob'],
+                    'gender' => $value['gender'],
+                    'memberCategoryText' => $value['memberCategoryText'],
+                    'premium' => (int) $value['premium'],
+                    'basmah' => (int) $value['basmah'],
+                    'vat' => (int) $value['vat'],
                 ];
                 array_push($membersBreakDown, $array);
             }

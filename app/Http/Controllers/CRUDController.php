@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use PDF;
+
 class CRUDController extends Controller
 {
     protected $genericModel;
@@ -639,7 +640,7 @@ class CRUDController extends Controller
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
                 'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover',
-                'listQuotePlanBenefitsMaternityCover', 'members','planId','quoteId'
+                'listQuotePlanBenefitsMaternityCover', 'members', 'planId', 'quoteId',
             ]));
         }
     }

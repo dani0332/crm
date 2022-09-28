@@ -10,14 +10,16 @@ use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
+use App\Services\HealthQuoteService;
 use App\Services\NetworkPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Services\HealthQuoteService;
+
 class AjaxController extends Controller
 {
     use GenericQueriesAllLobs;
+
     protected $healthQuoteService;
     public function __construct(HealthQuoteService $healthQuoteService)
     {
