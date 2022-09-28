@@ -647,7 +647,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<input type="number" value="{{$member->premium}}" class="member_premium form-control" @if($member->premium != 0) disabled @endif></td>
 							</tr>
 							@endforeach
-							@if($member->premium === 0)
+							@if($member->premium === 0 && auth()->user()->hasRole(RolesEnum::BetaUser))
 							<tr>
 								<td colspan="7"></td>
 								<td align="right">
