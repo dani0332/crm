@@ -29,14 +29,16 @@ class HealthQuoteService extends BaseService
 {
     protected $query;
     protected $leadAllocationService;
+    protected $httpService;
 
     use GetUserTree;
     use RolePermissionConditions;
     use AddPremiumAllLobs;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
+        $this->httpService = $httpService;
         $this->query = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
             'hqr.uuid',
@@ -1056,5 +1058,50 @@ class HealthQuoteService extends BaseService
         }
 
         return $response;
+    }
+
+    public function healthPlanModify($request)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plans';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+        if ($request->planId && ! empty($request->planDetails)) {
+            $membersBreakDown = [];
+            $plansArray = [
+                'planId' => (int) $request->planId,
+                'isManualUpdate' => true,
+                'memberPremiumBreakdown' => '',
+            ];
+            foreach ($request->planDetails as $value) {
+                $array = [
+                    'memberId' => (int) $value['memberId'],
+                    'dob' => $value['dob'],
+                    'gender' => $value['gender'],
+                    'memberCategoryText' => $value['memberCategoryText'],
+                    'premium' => (int) $value['premium'],
+                    'basmah' => (int) $value['basmah'],
+                    'vat' => (int) $value['vat'],
+                ];
+                array_push($membersBreakDown, $array);
+            }
+            $plansArray['memberPremiumBreakdown'] = $membersBreakDown;
+            $dataArray = [
+                'quoteUID' => $request->quoteUID,
+                'update' => true,
+                'plans' => [$plansArray],
+            ];
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+
+            return $response;
+        }
     }
 }
