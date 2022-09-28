@@ -843,10 +843,8 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 					_token: '{{ csrf_token() }}'
 				}),
 				success: function(result) {
-					console.log(result);
 					$(".loader").hide();
 					validationDivText('green', '.health-quote-plan-validation-div', result);
-					location.reload();
 				},
 				error: function(jqXhr, textStatus, errorMessage) {
 					$(".loader").hide();
