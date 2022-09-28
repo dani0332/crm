@@ -1067,7 +1067,7 @@ class HealthQuoteService extends BaseService
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
-        if ($request->planId) {
+        if ($request->planId && !empty($request->planDetails)) {
             $membersBreakDown = [];
             $plansArray = [
                 'planId' => (int) $request->planId,
