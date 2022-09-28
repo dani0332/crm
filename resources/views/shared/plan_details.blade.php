@@ -644,9 +644,10 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<input type="hidden" class="member_category_text" value="{{ $member->memberCategoryText }}">
 								<input type="hidden" class="member_basmah" value="{{ $member->basmah }}">
 								<input type="hidden" class="member_vat" value="{{ $member->vat }}">
-								<input type="number" value="{{$member->premium}}" class="member_premium form-control"></td>
+								<input type="number" value="{{$member->premium}}" class="member_premium form-control" @if($member->premium != 0) disabled @endif></td>
 							</tr>
 							@endforeach
+							@if($member->premium === 0)
 							<tr>
 								<td colspan="7"></td>
 								<td align="right">
@@ -654,10 +655,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								</td>
 							</tr>
 							<tr>
-								<td colspan="7">
+								<td colspan="4">
 									<div class="health-quote-plan-validation-div"></div>
 								</td>
 							</tr>
+							@endif
 						</table>
 					</div>
 

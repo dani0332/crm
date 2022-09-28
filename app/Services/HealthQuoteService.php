@@ -1070,19 +1070,19 @@ class HealthQuoteService extends BaseService
         if ($request->planId) {
             $membersBreakDown = [];
             $plansArray = [
-                'planId' => $request->planId,
+                'planId' => (int) $request->planId,
                 'isManualUpdate' => true,
                 'memberPremiumBreakdown' => ''
             ];
             foreach($request->planDetails as $value) {
                 $array = [
-                        'memberId' => $value['memberId'],
+                        'memberId' => (int)$value['memberId'],
                         'dob'=> $value['dob'],
                         'gender'=> $value['gender'],
                         'memberCategoryText'=> $value['memberCategoryText'],
-                        'premium'=> $value['premium'],
-                        'basmah'=> $value['basmah'],
-                        'vat'=> $value['vat'],
+                        'premium'=> (int)$value['premium'],
+                        'basmah'=> (int)$value['basmah'],
+                        'vat'=> (int)$value['vat'],
                 ];
                 array_push($membersBreakDown, $array);
             }
@@ -1099,7 +1099,6 @@ class HealthQuoteService extends BaseService
                 'apiUserName' => $apiUserName,
                 'apiPassword' => $apiPassword,
             ];
-
             $response = $this->httpService->processRequest($dataArray, $apiCreds);
 
             return $response;
