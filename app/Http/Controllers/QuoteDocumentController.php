@@ -125,10 +125,10 @@ class QuoteDocumentController extends Controller
 
         if (! $providerSupportNumber) {
             if (request()->ajax()) {
-                return response()->json(['error' => 'Error sending Quote Policy. Provide Support Number not configured.']);
+                return response()->json(['error' => 'Error sending Quote Policy. Provider Support Number not configured.']);
             }
 
-            return redirect()->back()->with('error', 'Error sending Quote Policy. Provide Support Number not configured.');
+            return redirect()->back()->with('error', 'Error sending Quote Policy. Provider Support Number not configured.');
         }
 
         $quoteDocuments = $this->getQuoteUploadedDocuments($quoteType, $quoteUuId);
