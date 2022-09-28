@@ -148,7 +148,7 @@ class CRUDService extends BaseService
         }
         $parentRecord = $this->{strtolower($request->parentType).'QuoteService'}->getEntityPlain($request->entityId);
         if ($request->has('lob_team_sub_selection') && isset($request->lob_team_sub_selection)) {
-            $parentRecord['enquiryType'] = $request->lob_team_sub_selection;
+            $parentRecord['enquiryType'] = 'record_only';//$request->lob_team_sub_selection;
         }
         if (! empty($lobTeams)) {
             foreach ($lobTeams as $lobTeam) {

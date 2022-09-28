@@ -502,11 +502,11 @@
     <script>
         function toggleSubDropDown(el){
             var selectedLobs = $("#lob_team").val();
-            if(selectedLobs.length > 0) {
-                $("#lob_team_sub_selection").css('display','block');
-            }else {
-                $("#lob_team_sub_selection").css('display','none');
-            }
+            // if(selectedLobs.length > 0) {
+            //     $("#lob_team_sub_selection").css('display','block');
+            // }else {
+            //     $("#lob_team_sub_selection").css('display','none');
+            // }
         }
     </script>
 @endsection

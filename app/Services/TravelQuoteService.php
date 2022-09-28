@@ -517,15 +517,18 @@ class TravelQuoteService extends BaseService
         $travelQuote = TravelQuote::where('uuid', $id)->first();
         $travelQuote->first_name = $request->first_name;
         $travelQuote->last_name = $request->last_name;
-        $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
         $travelQuote->nationality_id = $request->nationality_id;
-        $travelQuote->days_cover_for = $request->days_cover_for;
         $travelQuote->premium = $request->premium;
         $travelQuote->destination = $request->destination;
-        $travelQuote->region_cover_for_id = $request->region_cover_for_id;
-        $travelQuote->currently_located_in_id = $request->currently_located_in_id;
-        $travelQuote->destination_id = $request->destination_id;
         $travelQuote->dob = $request->dob;
+        if ($travelQuote->days_cover_for != $request->days_cover_for || $travelQuote->destination_id != $request->destination_id || $travelQuote->currently_located_in_id != $request->currently_located_in_id || $travelQuote->travel_cover_for_id != $request->travel_cover_for_id || $travelQuote->region_cover_for_id != $request->region_cover_for_id) {
+            $travelQuote->quote_updated_at = Carbon::now();
+        }
+        $travelQuote->days_cover_for = $request->days_cover_for;
+        $travelQuote->destination_id = $request->destination_id;
+        $travelQuote->currently_located_in_id = $request->currently_located_in_id;
+        $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
+        $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->save();
 
         if (isset($request->return_to_view)) {
