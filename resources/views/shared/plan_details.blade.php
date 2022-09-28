@@ -331,11 +331,6 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 		function getPremiumWithVat(percent, total) {
 			return ((percent / 100) * total).toFixed(2)
 		}
-		function updatePremium() {
-			var memberIdArray = $('.member_id').map((i, e) => e.value).get();
-			var memberPremiumArray = $('.member_premium').map((i, e) => e.value).get();
-			console.log(memberIdArray,memberPremiumArray);
-		};
 	});
 </script>
 @php
@@ -627,8 +622,9 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 
 					<div class="tab-pane fade show" id="members" role="tabpanel" aria-labelledby="members-tab">
 						{{csrf_field()}}
-						<input type="hidden" id="health_plan_id" name="health_plan_id" value="{{ $planId }}">	
-					<table cellpadding="3" cellspacing="3">
+						<input type="hidden" id="healthplanId" name="planId" value="{{ $planId }}">	
+						<input type="hidden" id="healthquoteUID" name="quoteUID" value="{{ $quoteId }}">	
+						<table cellpadding="3" cellspacing="3">
 							@foreach($members as $i => $member)
 							<tr>
 								<td style="width: 100px;font-weight: bold;">Member {{$i+1}}:</td>
@@ -642,8 +638,13 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td style="width: 120px;">{{$member->gender}}</td>
 								<td style="width: 50px;font-weight: bold;">Premium</td>
 								<td style="width: 120px;">
-								<input type="hidden" id="" name="member_id" value="{{ $member->memberId }}">
-								<input type="number" name="member_premium" value="{{$member->premium}}" class="form-control"></td>
+								<input type="hidden" class="member_id" value="{{ $member->memberId }}">
+								<input type="hidden" class="member_dob" value="{{ $member->dob }}">
+								<input type="hidden" class="member_gender" value="{{ $member->gender }}">
+								<input type="hidden" class="member_category_text" value="{{ $member->memberCategoryText }}">
+								<input type="hidden" class="member_basmah" value="{{ $member->basmah }}">
+								<input type="hidden" class="member_vat" value="{{ $member->vat }}">
+								<input type="number" value="{{$member->premium}}" class="member_premium form-control"></td>
 							</tr>
 							@endforeach
 							<tr>
@@ -652,7 +653,12 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								</td>
 								<td valign="top"></td>
 								<td align="right">
-									<button type="submit" class="btn btn-warning btn-sm" onclick="updatePremium()">Update</button>
+									<button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="4">
+									<div class="health-quote-plan-validation-div"></div>
 								</td>
 							</tr>
 							<tr>
@@ -811,6 +817,48 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 		</div>
 	</div>
 </div>
+<script>
+	$("#updatePremium").click(function(){
+		var details = $('.member_id').map(function() {
+			return {
+				memberId: $(this).val(),
+				dob: $(this).parent().find('.member_dob').val(),
+				gender: $(this).parent().find('.member_gender').val(),
+				memberCategoryText: $(this).parent().find('.member_category_text').val(),
+				premium: $(this).parent().find('.member_premium').val(),
+				basmah: $(this).parent().find('.member_basmah').val(),
+				vat: $(this).parent().find('.member_vat').val(),
+			};
+			}).get();
+
+			$(".loader").show();
+			$.ajax({
+				url: "{{ url('/health-plan-manual-update-process') }}",
+				type: 'post',
+				contentType: "application/json; charset=utf-8",
+				data: JSON.stringify({
+					quoteUID: $('#healthquoteUID').val(),
+					planId: $('#healthplanId').val(),
+					planDetails: details,
+					_token: '{{ csrf_token() }}'
+				}),
+				success: function(result) {
+					console.log(result);
+					$(".loader").hide();
+					validationDivText('green', '.health-quote-plan-validation-div', result);
+					location.reload();
+				},
+				error: function(jqXhr, textStatus, errorMessage) {
+					$(".loader").hide();
+					validationDivText('red', '.health-quote-plan-validation-div', jqXhr
+						.responseText);
+				}
+			});
+			function validationDivText(color, className, text) {
+				$(className).text(text).attr('style', 'font-weight:bold;text-align:right;width:700px;color:' + color);
+			}
+	});
+</script>
 @else
 <div class="row">
 	<div class="col-md-12 col-sm-12 admin-detail">

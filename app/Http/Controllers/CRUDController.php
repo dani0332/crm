@@ -638,7 +638,7 @@ class CRUDController extends Controller
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
                 'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover',
-                'listQuotePlanBenefitsMaternityCover', 'members','planId'
+                'listQuotePlanBenefitsMaternityCover', 'members','planId','quoteId'
             ]));
         }
     }

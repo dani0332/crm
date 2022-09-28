@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\CarMake;
@@ -13,10 +14,16 @@ use App\Services\NetworkPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-
+use App\Services\HealthQuoteService;
 class AjaxController extends Controller
 {
     use GenericQueriesAllLobs;
+    protected $healthQuoteService;
+    public function __construct(HealthQuoteService $healthQuoteService)
+    {
+        $this->healthQuoteService = $healthQuoteService;
+    }
+
     public function carModelBasedOnCarMake(Request $request)
     {
         $carmodel = CarModel::activeWithCode($request->make_code)
@@ -155,5 +162,24 @@ class AjaxController extends Controller
                 return 'API failed';
             }
         }
+    }
+
+    public function healthPlanUpdateManualProcess(Request $request)
+    {
+        $response = $this->healthQuoteService->healthPlanModify($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Plan has been updated';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Plan has not been updated '.$responseMessage;
+        }
+
+        return $message;
     }
 }
