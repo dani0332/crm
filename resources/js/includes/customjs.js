@@ -2877,10 +2877,15 @@ function sendQuoteDocumentsToCustomer(el) {
       },
       success: function (data) {
         $('.loader').hide();
-        $('#email-send-success').show();
-        setTimeout(function () {
-          window.location.reload();
-        }, 10000);
+        if (data.error) {
+          $('#document-delete-success').text(data.error);
+          $('#document-delete-success').show();
+        } else {
+          $('#email-send-success').show();
+          setTimeout(function () {
+            window.location.reload();
+          }, 10000);
+        }
       },
     });
   } else {

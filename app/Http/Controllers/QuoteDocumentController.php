@@ -116,10 +116,18 @@ class QuoteDocumentController extends Controller
             $providerSupportNumber = $this->applicationStorageService->getValueByKey(strtoupper($quotePlan->code).'_CUSTOMER_SUPPORT_NUMBER');
         }
         if ($emailTemplateId == false) {
+            if (request()->ajax()) {
+                return response()->json(['error' => 'Error sending Quote Policy. Email Template not configured.']);
+            }
+
             return redirect()->back()->with('error', 'Error sending Quote Policy. Email Template not configured.');
         }
 
         if (! $providerSupportNumber) {
+            if (request()->ajax()) {
+                return response()->json(['error' => 'Error sending Quote Policy. Provide Support Number not configured.']);
+            }
+
             return redirect()->back()->with('error', 'Error sending Quote Policy. Provide Support Number not configured.');
         }
 
@@ -149,10 +157,17 @@ class QuoteDocumentController extends Controller
 
         if ($response == 201) {
             $this->crudService->updateQuoteStatusbyModel($quoteModel, QuoteStatusEnum::PolicyIssued);
+            if (request()->ajax()) {
+                return response()->json(['success' => 'Quote Policy has been sent.']);
+            }
 
             return redirect()->back()->with('success', 'Quote Policy has been sent.');
         } else {
-            return redirect()->back()->with('error', 'Error sending Quote Policy. '.$response);
+            if (request()->ajax()) {
+                return response()->json(['success' => 'Error sending Quote Policy.']);
+            }
+
+            return redirect()->back()->with('error', 'Error sending Quote Policy.');
         }
     }
 
