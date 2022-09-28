@@ -648,31 +648,14 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 							@endforeach
 							<tr>
-								<td></td>
-								<td>
-								</td>
-								<td>
-								</td>
-								<td>
-								</td>
-								<td>
-								</td>
-								<td>
-								</td>
-								<td>
-								</td>
+								<td colspan="7"></td>
 								<td align="right">
 									<button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>
 								</td>
 							</tr>
 							<tr>
-								<td colspan="4">
+								<td colspan="7">
 									<div class="health-quote-plan-validation-div"></div>
-								</td>
-							</tr>
-							<tr>
-								<td colspan="4">
-									<div class="car-quote-plan-validation-div"></div>
 								</td>
 							</tr>
 						</table>
@@ -862,7 +845,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 				}
 			});
 			function validationDivText(color, className, text) {
-				$(className).text(text).attr('style', 'font-weight:bold;text-align:right;width:700px;color:' + color);
+				$(className).text(text).attr('style', 'font-weight:bold;text-align:right;color:' + color);
 			}
 	});
 </script>
