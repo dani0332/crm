@@ -323,7 +323,7 @@
                             </button>
                         </div>
                         <div class="modal-body" style="">
-                            <select class="form-control select2" onchange="toggleSubDropDown(this)" multiple="multiple" id="lob_team" name="lob_team[]">
+                            <select class="form-control select2" @if(auth()->user()->hasRole(RolesEnum::BetaUser)) onchange="toggleSubDropDown(this)" @endif multiple="multiple" id="lob_team" name="lob_team[]">
                                 @foreach ($allowedDuplicateLOB as $item)
                                     <option value="{{ $item }}">{{ $item }}</option>
                                 @endforeach
