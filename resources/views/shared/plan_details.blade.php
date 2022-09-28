@@ -651,7 +651,16 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td></td>
 								<td>
 								</td>
-								<td valign="top"></td>
+								<td>
+								</td>
+								<td>
+								</td>
+								<td>
+								</td>
+								<td>
+								</td>
+								<td>
+								</td>
 								<td align="right">
 									<button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>
 								</td>
