@@ -1,3 +1,6 @@
+@php
+    use App\Enums\GenericRequestEnum;
+@endphp
 <div class="modal fade" id="addHealthMemberModal" name="addHealthMemberModal" tabindex="-1" role="dialog"
         aria-labelledby="activityModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -22,8 +25,9 @@
                                     <label class="col-form-label col-md-3 col-sm-3 label-align">Gender</label>
                                         <select name="gender" id="ebp_gender" class="form-control">
                                             <option>Please Select Gender</option>
-                                            <option value="Male">Male</option>
-                                            <option value="Female">Female</option>
+                                            <option value="{{GenericRequestEnum::MALE_SINGLE_VALUE}}">{{GenericRequestEnum::MALE_SINGLE}}</option>
+                                            <option value="{{GenericRequestEnum::FEMALE_SINGLE_VALUE}}">{{GenericRequestEnum::FEMALE_SINGLE}}</option>
+                                            <option value="{{GenericRequestEnum::FEMALE_MARRIED_VALUE}}">{{GenericRequestEnum::FEMALE_MARRIED}}</option>
                                         </select>
                                     </div>
                                 </div>
