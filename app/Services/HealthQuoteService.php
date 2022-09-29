@@ -949,6 +949,7 @@ class HealthQuoteService extends BaseService
             Log::info('Assigning lead to GM');
             $this->convertLeadToGM($lead);
             $lead->health_team_type = quoteTypeCode::GM;
+            $lead->quote_updated_at = Carbon::now();
             $lead->save();
         } else {
             Log::info('Assigning lead to '.$selectedTeam.' team');
@@ -956,6 +957,7 @@ class HealthQuoteService extends BaseService
             if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
                 $lead->wcu_id = null;
             }
+            $lead->quote_updated_at = Carbon::now();
             $lead->save();
         }
         //check if team is assigned,must have plans and status not qualified yet so mark it qualified.
