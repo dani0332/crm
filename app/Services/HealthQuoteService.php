@@ -618,7 +618,7 @@ class HealthQuoteService extends BaseService
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
 
-            'gender' => '|static|Male,Female',
+            'gender' => '|static|Male,Female-Single,Female-Married',
             'renewal_batch' => 'input|none',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
