@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\DatabaseColumnsString;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\BusinessQuote;
@@ -531,13 +532,13 @@ class BusinessQuoteService extends BaseService
             'business_type_of_insurance_id' => 'select|title|required',
             'brief_details' => 'textarea|required',
             'previous_quote_id' => 'readonly|title',
-            'is_renewal' => 'static|Yes,No',
+            'is_renewal' => 'static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'renewal_expiry_date' => 'input|date|title|range',
             'renewal_batch' => 'input|none',
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_number' => 'input|title',
             'previous_quote_policy_premium' => 'input|title',
-            'gender' => '|static|Male,Female',
+            'gender' => '|static|'.GenericRequestEnum::MALE.','.GenericRequestEnum::FEMALE_SINGLE_VALUE.'',
             'parent_duplicate_quote_id' => 'input|title',
         ];
     }

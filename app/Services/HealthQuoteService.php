@@ -615,11 +615,10 @@ class HealthQuoteService extends BaseService
             'emirate_of_your_visa_id' => 'select|title|required',
             'previous_quote_id' => 'readonly|title',
             'renewal_expiry_date' => 'input|date|title|range',
-            'is_renewal' => '|static|Yes,No',
+            'is_renewal' => '|static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
-
-            'gender' => '|static|Male,Female-Single,Female-Married',
+            'gender' => '|static|'.GenericRequestEnum::MALE.','.GenericRequestEnum::FEMALE_SINGLE.','.GenericRequestEnum::FEMALE_MARRIED.'',
             'renewal_batch' => 'input|none',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',

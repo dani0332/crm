@@ -26,4 +26,5 @@ final class GenericRequestEnum extends Enum
     public const FEMALE_MARRIED = 'Female-Married';
     public const FEMALE_SINGLE_VALUE = 'Female';
     public const FEMALE_MARRIED_VALUE = 'Female_Married';
+    public const MALE = 'Male';
 }
