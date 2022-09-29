@@ -538,7 +538,7 @@ class BusinessQuoteService extends BaseService
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_number' => 'input|title',
             'previous_quote_policy_premium' => 'input|title',
-            'gender' => '|static|'.GenericRequestEnum::MALE.','.GenericRequestEnum::FEMALE_SINGLE_VALUE.'',
+            'gender' => '|static|'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE_SINGLE.','.GenericRequestEnum::FEMALE_MARRIED.'',
             'parent_duplicate_quote_id' => 'input|title',
         ];
     }
