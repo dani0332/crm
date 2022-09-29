@@ -110,10 +110,10 @@ class QuoteDocumentController extends Controller
         }
 
         $quotePlan = $quoteModel->plan;
-        if (! $quotePlan && ! isset($quotePlan->code)) {
+        if (! $quotePlan || ! $quotePlan->insuranceProvider || ! $quotePlan->insuranceProvider->code) {
             $providerSupportNumber = false;
         } else {
-            $providerSupportNumber = $this->applicationStorageService->getValueByKey(strtoupper($quotePlan->code).'_CUSTOMER_SUPPORT_NUMBER');
+            $providerSupportNumber = $this->applicationStorageService->getValueByKey(strtoupper($quotePlan->insuranceProvider->code).'_CUSTOMER_SUPPORT_NUMBER');
         }
         if ($emailTemplateId == false) {
             if (request()->ajax()) {
