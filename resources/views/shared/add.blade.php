@@ -9,6 +9,7 @@
 </style>
 <?php
     use App\Enums\quoteTypeCode;
+	use App\Enums\GenericRequestEnum;
 
 ?>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -366,7 +367,13 @@
 									class="form-control select2 select-roles" @else class="form-control"
 									name="{{$property}}" @endif id="{{$property}}">
 									@foreach($staticOptions as $item)
-									<option value="{{$item}}" {{ $item==old($property) ? 'selected' : '' }}>{{ $item }}
+									@if($item == GenericRequestEnum::FEMALE_SINGLE)
+										<option value="{{ GenericRequestEnum::FEMALE_SINGLE_VALUE }}" {{ $item == old(GenericRequestEnum::FEMALE_SINGLE_VALUE) ? 'selected' : ''}}>{{ $item }}</option>
+									@elseif($item == GenericRequestEnum::FEMALE_MARRIED)
+										<option value="{{ GenericRequestEnum::FEMALE_MARRIED_VALUE }}" {{ $item == old(GenericRequestEnum::FEMALE_MARRIED_VALUE) ? 'selected' : ''}}>{{ $item }}</option>
+									@else
+										<option value="{{$item}}" {{ $item==old($property) ? 'selected' : '' }}>{{ $item }}
+									@endif
 									</option>
 									@endforeach
 								</select>

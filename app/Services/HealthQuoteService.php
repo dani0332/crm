@@ -618,7 +618,7 @@ class HealthQuoteService extends BaseService
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
 
-            'gender' => '|static|Male,Female',
+            'gender' => '|static|Male,Female-Single,Female-Married',
             'renewal_batch' => 'input|none',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
@@ -949,15 +949,15 @@ class HealthQuoteService extends BaseService
             Log::info('Assigning lead to GM');
             $this->convertLeadToGM($lead);
             $lead->health_team_type = quoteTypeCode::GM;
-            $lead->save();
         } else {
             Log::info('Assigning lead to '.$selectedTeam.' team');
             $lead->health_team_type = $selectedTeam;
             if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
                 $lead->wcu_id = null;
             }
-            $lead->save();
         }
+        $lead->quote_updated_at = Carbon::now();
+        $lead->save();
         //check if team is assigned,must have plans and status not qualified yet so mark it qualified.
         if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
             HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
