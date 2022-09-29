@@ -162,8 +162,12 @@ class CRUDController extends Controller
             }
         }
         $model = $this->genericModel;
+        $gridDataResults = $gridData->get();
+        foreach ($gridDataResults as $quote) {
+            $quote->quote_link = $this->getEComQuoteLink(strtolower($this->genericModel->modelType), $quote);
+        }
         if ($request->ajax()) {
-            return DataTables::of($gridData)
+            return DataTables::of($gridDataResults)
                 ->addIndexColumn()
                 ->make(true);
 
@@ -908,7 +912,7 @@ class CRUDController extends Controller
     }
 
     /**
-     * export selected plans to PDF
+     * export selected plans to PDF.
      *
      * @param  Request  $request
      * @param $quoteType
