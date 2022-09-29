@@ -1,3 +1,6 @@
+@php
+    use App\Enums\GenericRequestEnum;
+@endphp
 <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
@@ -26,7 +29,11 @@
                                             <td>Member {{$key+1}}</td>
                                             <td>@if($member->memberCategory){{$member->memberCategory->text}}@endif</td>
                                             <td>{{\Carbon\Carbon::createFromTimestamp(strtotime($member->dob))->format('d-m-Y')}}</td>
-                                            <td>{{$member->gender}}</td>
+                                            <td>@if($member->gender ==GenericRequestEnum::MALE_SINGLE_VALUE ){{GenericRequestEnum::MALE_SINGLE}}@endif
+                                            @if($member->gender ==GenericRequestEnum::FEMALE_SINGLE_VALUE ){{GenericRequestEnum::FEMALE_SINGLE}}@endif
+                                            @if($member->gender ==GenericRequestEnum::FEMALE_MARRIED_VALUE ){{GenericRequestEnum::FEMALE_MARRIED}}@endif
+
+                                            </td>
                                             <td>@if($member->salaryBand){{$member->salaryBand->text}}@endif</td>
                                             <td><button id="member-details-edit-btn" class="btn btn-sm btn-warning" onclick="editMemberDetail('{{$member->id}}')">Edit</button>
                                             <button id="member-details-delete-btn" class="btn btn-sm btn-warning" onclick="deleteMemberDetail('{{$member->id}}')">Delete</button>
