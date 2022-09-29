@@ -375,7 +375,6 @@ class HealthQuoteService extends BaseService
         $healthQuote->preference = $request->preference;
         $healthQuote->source = $sourceName;
         $healthQuote->marital_status_id = $request->marital_status_id;
-        $healthQuote->dob = $request->dob;
         $healthQuote->cover_for_id = $request->cover_for_id;
         $healthQuote->nationality_id = $request->nationality_id;
         $healthQuote->is_ebp_renewal = $request->is_ebp_renewal == 'on' ? true : false;
@@ -384,7 +383,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->premium = $request->premium;
         //check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
-        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id) {
+        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id || $healthQuote->dob != $request->dob) {
             $healthQuote->quote_updated_at = Carbon::now();
             if ($healthQuote->primary_member_id) {
                 $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
@@ -396,6 +395,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->currently_insured_with_id = $request->currently_insured_with_id;
         $healthQuote->gender = $request->gender;
+        $healthQuote->dob = $request->dob;
         $healthQuote->save();
 
         if (isset($request->return_to_view)) {
