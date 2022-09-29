@@ -5,7 +5,7 @@ use App\Enums\CarPlanType;
 use App\Enums\CarPlanAddons;
 use App\Enums\InsuranceProviders;
 use App\Enums\PermissionsEnum;
-
+use App\Enums\RolesEnum;
 
 if (!isset($modelName)) {
 
