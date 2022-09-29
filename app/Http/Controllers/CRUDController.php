@@ -163,8 +163,8 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
         $gridDataResults = $gridData->get();
-        foreach ($gridDataResults as $carQuoteRequest) {
-            $carQuoteRequest->quote_link = $carQuoteRequest->uuid ? config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuoteRequest->uuid : null;
+        foreach ($gridDataResults as $quote) {
+            $quote->quote_link = $this->getEComQuoteLink(strtolower($this->genericModel->modelType), $quote);
         }
         if ($request->ajax()) {
             return DataTables::of($gridDataResults)
