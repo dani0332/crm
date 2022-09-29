@@ -23,8 +23,8 @@
                     <select name="gender" id="" class="form-control">
                         <option>Please Select Gender</option>
                         <option value="{{GenericRequestEnum::MALE_SINGLE_VALUE}}" @if($data->gender == GenericRequestEnum::MALE_SINGLE_VALUE) selected @endif>{{GenericRequestEnum::MALE_SINGLE}}</option>
-                        <option value="{{GenericRequestEnum::FEMALE_SINGLE_VALUE}}" @if($data->gender == GenericRequestEnum::FEMALE_SINGLE_VALUE)>{{GenericRequestEnum::FEMALE_SINGLE}}</option>
-                        <option value="{{GenericRequestEnum::FEMALE_MARRIED_VALUE}}" @if($data->gender == GenericRequestEnum::FEMALE_MARRIED_VALUE)>{{GenericRequestEnum::FEMALE_MARRIED}}</option>
+                        <option value="{{GenericRequestEnum::FEMALE_SINGLE_VALUE}}" @if($data->gender == GenericRequestEnum::FEMALE_SINGLE_VALUE) selected @endif>{{GenericRequestEnum::FEMALE_SINGLE}}</option>
+                        <option value="{{GenericRequestEnum::FEMALE_MARRIED_VALUE}}" @if($data->gender == GenericRequestEnum::FEMALE_MARRIED_VALUE) selected @endif>{{GenericRequestEnum::FEMALE_MARRIED}}</option>
                     </select>
                 </div>
             </div>
