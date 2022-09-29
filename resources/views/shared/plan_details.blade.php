@@ -6,71 +6,59 @@ use App\Enums\CarPlanAddons;
 use App\Enums\InsuranceProviders;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
-
 if (!isset($modelName)) {
-
-$carQuoteEditDisable = $isPlanUpdateActive == ApplicationStorageEnums::INACTIVE ? 'disabled' : '';
-
-foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
-
-if(!isset($listQuotePlan->id)) {
-continue;
+	$carQuoteEditDisable = $isPlanUpdateActive == ApplicationStorageEnums::INACTIVE ? 'disabled' : '';
+	foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
+		if(!isset($listQuotePlan->id)) {
+			continue;
+		}
+	if ($listQuotePlan->id == $planId) {
+		$listQuotePlanName = $listQuotePlan->name;
+		$providerCode = $listQuotePlan->providerCode;
+		$providerName = $listQuotePlan->providerName;
+		$repairType = isset($listQuotePlan->repairType) ? $listQuotePlan->repairType : '';
+		$actualPremium = isset($listQuotePlan->actualPremium) ? $listQuotePlan->actualPremium : 0;
+		$discountPremium = isset($listQuotePlan->discountPremium) ? $listQuotePlan->discountPremium : 0;
+		$vat = isset($listQuotePlan->vat) ? $listQuotePlan->vat : 0;
+		$carValueLowerLimit = isset($listQuotePlan->carValueLowerLimit) ? $listQuotePlan->carValueLowerLimit : 0;
+		$carValueUpperLimit = isset($listQuotePlan->carValueUpperLimit) ? $listQuotePlan->carValueUpperLimit : 0;
+		$excess = isset($listQuotePlan->excess) ? $listQuotePlan->excess : 0;
+		$carValue = isset($listQuotePlan->carValue) ? $listQuotePlan->carValue : 0;
+		$isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
+		$insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : ''; // Insurer Quote No.
+		$isManualUpdate = isset($listQuotePlan->isManualUpdate) ? $listQuotePlan->isManualUpdate : 0;
+		$shouldReviseQuote  = isset($listQuotePlan->shouldReviseQuote ) ? $listQuotePlan->shouldReviseQuote  : 0;
+		$ancillaryExcess  = isset($listQuotePlan->ancillaryExcess ) ? $listQuotePlan->ancillaryExcess  : 0;
+		$listQuotePlanAddonss = $listQuotePlan->addons;
+		$listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+		$listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+		$listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+		$listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
+		$listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+		$listQuotePlanAddons = [];
+		foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
+			$listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
+		}
+		$listQuotePlanBenefitsPolicyDetailLink = '';
+		foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+			$listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+		}
+		$totalSelectedAddonsPriceWithVat = 0;
+		foreach ($listQuotePlanAddons as $listQuotePlanAddon) {
+			foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption) {
+				if (isset($carAddonOption->isSelected)) {
+					if ($carAddonOption->isSelected == 1) {
+						$totalSelectedAddonsPriceWithVat += $carAddonOption->price + $carAddonOption->vat;
+					}
+				}
+			}
+		}
+		$totalPremium = $discountPremium + $vat + $totalSelectedAddonsPriceWithVat;
+		$insurerAvailableTrims = isset($listQuotePlan->insurerAvailableTrims) ? $listQuotePlan->insurerAvailableTrims : [];
+		$insurerSelectedTrim = isset($listQuotePlan->insurerTrimId) ? $listQuotePlan->insurerTrimId : null;
+	}
 }
-
-if ($listQuotePlan->id == $planId) {
-
-$listQuotePlanName = $listQuotePlan->name;
-$providerCode = $listQuotePlan->providerCode;
-$providerName = $listQuotePlan->providerName;
-$repairType = isset($listQuotePlan->repairType) ? $listQuotePlan->repairType : '';
-$actualPremium = isset($listQuotePlan->actualPremium) ? $listQuotePlan->actualPremium : 0;
-$discountPremium = isset($listQuotePlan->discountPremium) ? $listQuotePlan->discountPremium : 0;
-$vat = isset($listQuotePlan->vat) ? $listQuotePlan->vat : 0;
-$carValueLowerLimit = isset($listQuotePlan->carValueLowerLimit) ? $listQuotePlan->carValueLowerLimit : 0;
-$carValueUpperLimit = isset($listQuotePlan->carValueUpperLimit) ? $listQuotePlan->carValueUpperLimit : 0;
-$excess = isset($listQuotePlan->excess) ? $listQuotePlan->excess : 0;
-$carValue = isset($listQuotePlan->carValue) ? $listQuotePlan->carValue : 0;
-$isDisabled = isset($listQuotePlan->isDisabled) ? $listQuotePlan->isDisabled : 0;
-$insurerQuoteNo = isset($listQuotePlan->insurerQuoteNo) ? $listQuotePlan->insurerQuoteNo : ''; // Insurer Quote No.
-$isManualUpdate = isset($listQuotePlan->isManualUpdate) ? $listQuotePlan->isManualUpdate : 0;
-$shouldReviseQuote = isset($listQuotePlan->shouldReviseQuote ) ? $listQuotePlan->shouldReviseQuote : 0;
-$ancillaryExcess = isset($listQuotePlan->ancillaryExcess ) ? $listQuotePlan->ancillaryExcess : 0;
-$listQuotePlanAddonss = $listQuotePlan->addons;
-$listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
-$listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
-$listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
-$listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
-$listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-
-$listQuotePlanAddons = [];
-foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
-$listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
-}
-
-$listQuotePlanBenefitsPolicyDetailLink = '';
-foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
-$listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
-}
-
-$totalSelectedAddonsPriceWithVat = 0;
-foreach ($listQuotePlanAddons as $listQuotePlanAddon) {
-foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption) {
-if (isset($carAddonOption->isSelected)) {
-if ($carAddonOption->isSelected == 1) {
-$totalSelectedAddonsPriceWithVat += $carAddonOption->price + $carAddonOption->vat;
-}
-}
-}
-}
-
-$totalPremium = $discountPremium + $vat + $totalSelectedAddonsPriceWithVat;
-$insurerAvailableTrims = isset($listQuotePlan->insurerAvailableTrims) ? $listQuotePlan->insurerAvailableTrims : [];
-$insurerSelectedTrim = isset($listQuotePlan->insurerTrimId) ? $listQuotePlan->insurerTrimId : null;
-}
-}
-
 $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
-
 @endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ asset('js/bootstrap-toggle.min.js') }}"></script>
