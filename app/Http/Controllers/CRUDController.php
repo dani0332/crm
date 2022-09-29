@@ -162,8 +162,12 @@ class CRUDController extends Controller
             }
         }
         $model = $this->genericModel;
+        $gridDataResults = $gridData->get();
+        foreach ($gridDataResults as $quote) {
+            $quote->quote_link = $this->getEComQuoteLink(strtolower($this->genericModel->modelType), $quote);
+        }
         if ($request->ajax()) {
-            return DataTables::of($gridData)
+            return DataTables::of($gridDataResults)
                 ->addIndexColumn()
                 ->make(true);
 
@@ -557,7 +561,7 @@ class CRUDController extends Controller
     public function carQuotePlanDetails($quoteId, $planId)
     {
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
-        $isPlanUpdateActive = $this->applicationStorageService->getKeyValue('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
+        $isPlanUpdateActive = $this->applicationStorageService->getIsActiveByKey('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
 
@@ -626,10 +630,11 @@ class CRUDController extends Controller
                     $listQuotePlanBenefitsRegionCover = $listQuotePlan->benefits->regionCover;
                     $listQuotePlanBenefitsMaternityCover = $listQuotePlan->benefits->maternityCover;
                     $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-                    $members = $listQuotePlan->memberPremiumBreakdown;
+                    $members = isset($listQuotePlan->memberPremiumBreakdown) ? $listQuotePlan->memberPremiumBreakdown : [];
                     foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
                         $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
                     }
+                    $isManualPlan = isset($listQuotePlan->isManualPlan) ? $listQuotePlan->isManualPlan : false;
                 }
             }
             $modelName = quoteTypeCode::Health;
@@ -640,7 +645,7 @@ class CRUDController extends Controller
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
                 'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover',
-                'listQuotePlanBenefitsMaternityCover', 'members',
+                'listQuotePlanBenefitsMaternityCover', 'members', 'planId', 'quoteId','isManualPlan'
             ]));
         }
     }
@@ -908,7 +913,7 @@ class CRUDController extends Controller
     }
 
     /**
-     * export selected plans to PDF
+     * export selected plans to PDF.
      *
      * @param  Request  $request
      * @param $quoteType

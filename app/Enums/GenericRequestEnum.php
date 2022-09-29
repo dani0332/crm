@@ -22,4 +22,8 @@ final class GenericRequestEnum extends Enum
     public const EMAIL = 'email';
     public const MOBILE_NO = 'mobile_no';
     public const RECORD_PURPOSE = 'record_only';
+    public const FEMALE_SINGLE ='Female-Single';
+    public const FEMALE_MARRIED ='Female-Married';
+    public const FEMALE_SINGLE_VALUE ='Female';
+    public const FEMALE_MARRIED_VALUE ='Female_Married';
 }

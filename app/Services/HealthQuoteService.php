@@ -29,14 +29,16 @@ class HealthQuoteService extends BaseService
 {
     protected $query;
     protected $leadAllocationService;
+    protected $httpService;
 
     use GetUserTree;
     use RolePermissionConditions;
     use AddPremiumAllLobs;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
+        $this->httpService = $httpService;
         $this->query = DB::table('health_quote_request as hqr')->select(
             'hqr.id',
             'hqr.uuid',
@@ -374,7 +376,6 @@ class HealthQuoteService extends BaseService
         $healthQuote->preference = $request->preference;
         $healthQuote->source = $sourceName;
         $healthQuote->marital_status_id = $request->marital_status_id;
-        $healthQuote->dob = $request->dob;
         $healthQuote->cover_for_id = $request->cover_for_id;
         $healthQuote->nationality_id = $request->nationality_id;
         $healthQuote->is_ebp_renewal = $request->is_ebp_renewal == 'on' ? true : false;
@@ -383,7 +384,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->has_home = $request->has_home == 'on' ? true : false;
         $healthQuote->premium = $request->premium;
         //check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
-        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id) {
+        if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id || $healthQuote->dob != $request->dob) {
             $healthQuote->quote_updated_at = Carbon::now();
             if ($healthQuote->primary_member_id) {
                 $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
@@ -395,6 +396,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->emirate_of_your_visa_id = $request->emirate_of_your_visa_id;
         $healthQuote->currently_insured_with_id = $request->currently_insured_with_id;
         $healthQuote->gender = $request->gender;
+        $healthQuote->dob = $request->dob;
         $healthQuote->save();
 
         if (isset($request->return_to_view)) {
@@ -617,7 +619,7 @@ class HealthQuoteService extends BaseService
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
 
-            'gender' => '|static|Male,Female',
+            'gender' => '|static|Male,Female-Single,Female-Married',
             'renewal_batch' => 'input|none',
             'previous_quote_policy_number' => 'input|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
@@ -951,15 +953,15 @@ class HealthQuoteService extends BaseService
             Log::info('Assigning lead to GM');
             $this->convertLeadToGM($lead);
             $lead->health_team_type = quoteTypeCode::GM;
-            $lead->save();
         } else {
             Log::info('Assigning lead to '.$selectedTeam.' team');
             $lead->health_team_type = $selectedTeam;
             if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
                 $lead->wcu_id = null;
             }
-            $lead->save();
         }
+        $lead->quote_updated_at = Carbon::now();
+        $lead->save();
         //check if team is assigned,must have plans and status not qualified yet so mark it qualified.
         if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
             HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
@@ -1060,5 +1062,50 @@ class HealthQuoteService extends BaseService
         }
 
         return $response;
+    }
+
+    public function healthPlanModify($request)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plans';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+        if ($request->planId && ! empty($request->planDetails)) {
+            $membersBreakDown = [];
+            $plansArray = [
+                'planId' => (int) $request->planId,
+                'isManualUpdate' => true,
+                'memberPremiumBreakdown' => '',
+            ];
+            foreach ($request->planDetails as $value) {
+                $array = [
+                    'memberId' => (int) $value['memberId'],
+                    'dob' => $value['dob'],
+                    'gender' => $value['gender'],
+                    'memberCategoryText' => $value['memberCategoryText'],
+                    'premium' => (int) $value['premium'],
+                    'basmah' => (int) $value['basmah'],
+                    'vat' => (int) $value['vat'],
+                ];
+                array_push($membersBreakDown, $array);
+            }
+            $plansArray['memberPremiumBreakdown'] = $membersBreakDown;
+            $dataArray = [
+                'quoteUID' => $request->quoteUID,
+                'update' => true,
+                'plans' => [$plansArray],
+            ];
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+
+            return $response;
+        }
     }
 }

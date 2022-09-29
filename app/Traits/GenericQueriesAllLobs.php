@@ -21,7 +21,7 @@ trait GenericQueriesAllLobs
     }
 
     /**
-     * get quote object by quote type
+     * get quote object by quote type.
      *
      * @param $quoteType e.g car, health etc
      * @param $id can be id or uuid
@@ -72,5 +72,10 @@ trait GenericQueriesAllLobs
                 $record->save();
             }
         }
+    }
+
+    public function getEComQuoteLink($lob, $quoteRequest)
+    {
+        return $quoteRequest->uuid ? config('constants.AFIA_WEBSITE_DOMAIN').'/'.$lob.'-insurance/quote/'.$quoteRequest->uuid : null;
     }
 }
