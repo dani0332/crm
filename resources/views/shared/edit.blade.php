@@ -9,6 +9,7 @@
 </style>
 <?php
     use App\Enums\quoteTypeCode;
+    use App\Enums\GenericRequestEnum;
     ?>
 <script>
     function getCarMakes(id)
@@ -357,6 +358,10 @@
                                             @foreach($staticOptions as $item)
                                                 @if($item == quoteTypeCode::yesText && $record->$property == 1 || $item == quoteTypeCode::noText && $record->$property == 0)
                                                     <option value="{{ $item }}" {{ $item == old($item, $item) ? 'selected' : ''}}>{{ $item }}</option>
+                                                @elseif($item == GenericRequestEnum::FEMALE_SINGLE)
+                                                    <option value="{{ GenericRequestEnum::FEMALE_SINGLE_VALUE }}" {{ $item == old(GenericRequestEnum::FEMALE_SINGLE_VALUE, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
+                                                @elseif($item == GenericRequestEnum::FEMALE_MARRIED)
+                                                    <option value="{{ GenericRequestEnum::FEMALE_MARRIED_VALUE }}" {{ $item == old(GenericRequestEnum::FEMALE_MARRIED_VALUE, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
                                                 @else
                                                     <option value="{{ $item }}" {{ $item == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
                                                 @endif
