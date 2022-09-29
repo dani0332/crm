@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\quoteTypeCode;
 use App\Services\CapiRequestService;
 
 trait GenericQueriesAllLobs
@@ -58,6 +59,9 @@ trait GenericQueriesAllLobs
             'referenceUrl' => config('constants.APP_URL'),
             'source' => config('constants.SOURCE_NAME'),
         ];
+        if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
+            $dataArr['business_type_of_insurance_id'] = 5;
+        }
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-'.strtolower($lob).'-quote', $dataArr);
         if (isset($response->message) && str_contains($response->message, 'Error')) {
             return false;

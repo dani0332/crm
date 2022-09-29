@@ -155,9 +155,6 @@ class CRUDService extends BaseService
 
         if (! empty($lobTeams)) {
             foreach ($lobTeams as $lobTeam) {
-                if (strtolower($lobTeam) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lobTeam) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $lobTeam = 'Business';
-                }
                 $this->createDuplicateRecord($lobTeam, $parentRecord);
             }
         }
