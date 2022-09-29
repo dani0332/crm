@@ -37,10 +37,10 @@ class SendPolicyApplicationStorageSeeder extends Seeder
             ]);
         }
 
-        $gigContactNumber = ApplicationStorage::where('key_name', 'GIG_CUSTOMER_SUPPORT_NUMBER')->first();
-        if (! $gigContactNumber) {
+        $axaContactNumber = ApplicationStorage::where('key_name', 'AXA_CUSTOMER_SUPPORT_NUMBER')->first();
+        if (! $axaContactNumber) {
             DB::table('application_storage')->insert([
-                'key_name' => 'GIG_CUSTOMER_SUPPORT_NUMBER',
+                'key_name' => 'AXA_CUSTOMER_SUPPORT_NUMBER',
                 'value' => '800 292',
                 'is_active' => 1,
                 'created_at' => now(),
