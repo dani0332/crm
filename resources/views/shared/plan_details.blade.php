@@ -644,7 +644,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<input type="hidden" class="member_category_text" value="{{ $member->memberCategoryText }}">
 								<input type="hidden" class="member_basmah" value="{{ $member->basmah }}">
 								<input type="hidden" class="member_vat" value="{{ $member->vat }}">
-								<input type="number" value="{{$member->premium}}" class="member_premium form-control" @if($member->premium != 0) disabled @endif></td>
+								<input type="number" value="{{$member->premium}}" class="member_premium form-control" @if($member->premium != 0 && !$isManualPlan) disabled @endif></td>
 							</tr>
 							@endforeach
 							@if(($member->premium === 0 && auth()->user()->hasRole(RolesEnum::BetaUser)) || ($isManualPlan && auth()->user()->hasRole(RolesEnum::BetaUser)))
@@ -839,6 +839,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 				success: function(result) {
 					$(".loader").hide();
 					validationDivText('green', '.health-quote-plan-validation-div', result);
+					setTimeout(() => window.location.reload(), 5000);
 				},
 				error: function(jqXhr, textStatus, errorMessage) {
 					$(".loader").hide();
