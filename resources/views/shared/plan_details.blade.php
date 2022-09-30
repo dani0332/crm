@@ -6,19 +6,13 @@ use App\Enums\CarPlanAddons;
 use App\Enums\InsuranceProviders;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
-
 if (!isset($modelName)) {
-
 	$carQuoteEditDisable = $isPlanUpdateActive == ApplicationStorageEnums::INACTIVE ? 'disabled' : '';
-
 	foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
-
 		if(!isset($listQuotePlan->id)) {
 			continue;
 		}
-
 	if ($listQuotePlan->id == $planId) {
-
 		$listQuotePlanName = $listQuotePlan->name;
 		$providerCode = $listQuotePlan->providerCode;
 		$providerName = $listQuotePlan->providerName;
@@ -41,17 +35,14 @@ if (!isset($modelName)) {
 		$listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
 		$listQuotePlanBenefitsRsas = $listQuotePlan->benefits->roadSideAssistance;
 		$listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
-
 		$listQuotePlanAddons = [];
 		foreach ($listQuotePlanAddonss as $listQuotePlanAddon) {
 			$listQuotePlanAddons[] = $listQuotePlanAddon; // Get Addons Names
 		}
-
 		$listQuotePlanBenefitsPolicyDetailLink = '';
 		foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
 			$listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
 		}
-
 		$totalSelectedAddonsPriceWithVat = 0;
 		foreach ($listQuotePlanAddons as $listQuotePlanAddon) {
 			foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption) {
@@ -62,15 +53,12 @@ if (!isset($modelName)) {
 				}
 			}
 		}
-
 		$totalPremium = $discountPremium + $vat + $totalSelectedAddonsPriceWithVat;
 		$insurerAvailableTrims = isset($listQuotePlan->insurerAvailableTrims) ? $listQuotePlan->insurerAvailableTrims : [];
 		$insurerSelectedTrim = isset($listQuotePlan->insurerTrimId) ? $listQuotePlan->insurerTrimId : null;
 	}
 }
-
 $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
-
 @endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ asset('js/bootstrap-toggle.min.js') }}"></script>
@@ -104,7 +92,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 
 			if (repair_type == carPlanTypeComp) { // if non-tpl
 				// Car Value should be within the given min/max range
-				if (is_manual_update == false && 
+				if (is_manual_update == false &&
 					(parseInt(car_value) < parseInt(car_value_lower_limit) || parseInt(car_value) > parseInt(car_value_upper_limit))) {
 					validationDivText('red', '.car-quote-plan-validation-div',
 						'Car Value should be within the displayed acceptable range.');
@@ -221,8 +209,8 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 		conditionallyLockFields(shouldReviseQuote);
 
 		// For manual plan if actualPremium changed, copy value to discountPremium
-		$('#actual_premium').change(function(){
-			if($('#is_manual_update').is(':checked') == true) {
+		$('#actual_premium').change(function() {
+			if ($('#is_manual_update').is(':checked') == true) {
 				$('#discounted_premium').val($('#actual_premium').val());
 			}
 		});
@@ -278,6 +266,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 		function hide_element(div_id) {
 			$(div_id).hide();
 		}
+
 		function show_element(div_id) {
 			$(div_id).show();
 		}
@@ -349,28 +338,22 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 			<div class="x_content">
 				<ul class="nav nav-tabs" id="myTab" role="tablist" style="font-weight: bold;">
 					<li class="nav-item">
-						<a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab"
-							aria-controls="general" aria-selected="true">General Info</a>
+						<a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General Info</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="members-tab" data-toggle="tab" href="#members" role="tab"
-							aria-controls="members" aria-selected="false">Members</a>
+						<a class="nav-link" id="members-tab" data-toggle="tab" href="#members" role="tab" aria-controls="members" aria-selected="false">Members</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion"
-							role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusions</a>
+						<a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion" role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusions</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="benefits-exclusion-tab" data-toggle="tab" href="#benefits-exclusion"
-							role="tab" aria-controls="benefits-exclusion" aria-selected="false">Exclusions</a>
+						<a class="nav-link" id="benefits-exclusion-tab" data-toggle="tab" href="#benefits-exclusion" role="tab" aria-controls="benefits-exclusion" aria-selected="false">Exclusions</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="covid-tab" data-toggle="tab" href="#covid" role="tab"
-							aria-controls="covid" aria-selected="false">COVID-19 Cover</a>
+						<a class="nav-link" id="covid-tab" data-toggle="tab" href="#covid" role="tab" aria-controls="covid" aria-selected="false">COVID-19 Cover</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="policy-detail-tab" data-toggle="tab" href="#policy-detail" role="tab"
-							aria-controls="policy-detail" aria-selected="false">Policy Detail</a>
+						<a class="nav-link" id="policy-detail-tab" data-toggle="tab" href="#policy-detail" role="tab" aria-controls="policy-detail" aria-selected="false">Policy Detail</a>
 					</li>
 				</ul>
 
@@ -424,8 +407,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 						</table>
 					</div>
 
-					<div class="tab-pane fade" id="benefits-inclusion" role="tabpanel"
-						aria-labelledby="benefits-inclusion-tab">
+					<div class="tab-pane fade" id="benefits-inclusion" role="tabpanel" aria-labelledby="benefits-inclusion-tab">
 						<table cellpadding="3" cellspacing="3">
 							<tr>
 								<td>
@@ -499,8 +481,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 						</table>
 					</div>
-					<div class="tab-pane fade" id="benefits-exclusion" role="tabpanel"
-						aria-labelledby="benefits-exclusion-tab">
+					<div class="tab-pane fade" id="benefits-exclusion" role="tabpanel" aria-labelledby="benefits-exclusion-tab">
 						<table cellpadding="3" cellspacing="3">
 							<tr>
 								<td>
@@ -537,12 +518,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 					</div>
 					<div class="tab-pane fade" id="policy-detail" role="tabpanel" aria-labelledby="policy-detail-tab">
 						<table cellpadding="3" cellspacing="3">
+							@foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail)
 							<tr>
 								<td>
-									<a href="{{ $listQuotePlanBenefitsPolicyDetailLink }}" target="_blank">Click
-										here</a>
+									<a href="{{ $listQuotePlanBenefitsPolicyDetail->link }}" target="_blank" title="click to open">
+										📃 {{ $listQuotePlanBenefitsPolicyDetail->text }}
+									</a>
 								</td>
 							</tr>
+							@endforeach
 						</table>
 					</div>
 				</div>
@@ -562,39 +546,30 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 			<div class="x_content">
 				<ul class="nav nav-tabs" id="myTab" role="tablist" style="font-weight: bold;">
 					<li class="nav-item">
-						<a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab"
-							aria-controls="general" aria-selected="true">General Info</a>
+						<a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General Info</a>
 					</li>
 					<li class="nav-item">
-                        <a class="nav-link" id="members-tab" data-toggle="tab" href="#members" role="tab" aria-controls="members" aria-selected="true">Members</a>
-                    </li>
-					<li class="nav-item">
-						<a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion"
-							role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusions</a>
+						<a class="nav-link" id="members-tab" data-toggle="tab" href="#members" role="tab" aria-controls="members" aria-selected="true">Members</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="benefits-coInsurance-tab" data-toggle="tab" href="#benefits-coInsurance"
-							role="tab" aria-controls="benefits-coInsurance"
-							aria-selected="false">Co-pay/Co-insurance</a>
+						<a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion" role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusions</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="benefits-regionCover-tab" data-toggle="tab" href="#benefits-regionCover"
-							role="tab" aria-controls="benefits-regionCover" aria-selected="false">Region coverage &
+						<a class="nav-link" id="benefits-coInsurance-tab" data-toggle="tab" href="#benefits-coInsurance" role="tab" aria-controls="benefits-coInsurance" aria-selected="false">Co-pay/Co-insurance</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link" id="benefits-regionCover-tab" data-toggle="tab" href="#benefits-regionCover" role="tab" aria-controls="benefits-regionCover" aria-selected="false">Region coverage &
 							Network list</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="benefits-maternityCover-tab" data-toggle="tab"
-							href="#benefits-maternityCover" role="tab" aria-controls="benefits-maternityCover"
-							aria-selected="false">Maternity cover</a>
+						<a class="nav-link" id="benefits-maternityCover-tab" data-toggle="tab" href="#benefits-maternityCover" role="tab" aria-controls="benefits-maternityCover" aria-selected="false">Maternity cover</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="benefits-exclusion-tab" data-toggle="tab" href="#benefits-exclusion"
-							role="tab" aria-controls="benefits-exclusion" aria-selected="false">Exclusions</a>
+						<a class="nav-link" id="benefits-exclusion-tab" data-toggle="tab" href="#benefits-exclusion" role="tab" aria-controls="benefits-exclusion" aria-selected="false">Exclusions</a>
 					</li>
 
 					<li class="nav-item">
-						<a class="nav-link" id="policy-detail-tab" data-toggle="tab" href="#policy-detail" role="tab"
-							aria-controls="policy-detail" aria-selected="false">Policy Detail</a>
+						<a class="nav-link" id="policy-detail-tab" data-toggle="tab" href="#policy-detail" role="tab" aria-controls="policy-detail" aria-selected="false">Policy Detail</a>
 					</li>
 				</ul>
 
@@ -622,8 +597,8 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 
 					<div class="tab-pane fade show" id="members" role="tabpanel" aria-labelledby="members-tab">
 						{{csrf_field()}}
-						<input type="hidden" id="healthplanId" name="planId" value="{{ $planId }}">	
-						<input type="hidden" id="healthquoteUID" name="quoteUID" value="{{ $quoteId }}">	
+						<input type="hidden" id="healthplanId" name="planId" value="{{ $planId }}">
+						<input type="hidden" id="healthquoteUID" name="quoteUID" value="{{ $quoteId }}">
 						<table cellpadding="3" cellspacing="3">
 							@foreach($members as $i => $member)
 							<tr>
@@ -638,13 +613,14 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td style="width: 120px;">{{$member->gender}}</td>
 								<td style="width: 50px;font-weight: bold;">Premium</td>
 								<td style="width: 120px;">
-								<input type="hidden" class="member_id" value="{{ $member->memberId }}">
-								<input type="hidden" class="member_dob" value="{{ $member->dob }}">
-								<input type="hidden" class="member_gender" value="{{ $member->gender }}">
-								<input type="hidden" class="member_category_text" value="{{ $member->memberCategoryText }}">
-								<input type="hidden" class="member_basmah" value="{{ $member->basmah }}">
-								<input type="hidden" class="member_vat" value="{{ $member->vat }}">
-								<input type="number" value="{{$member->premium}}" class="member_premium form-control" @if($member->premium != 0 && !$isManualPlan) disabled @endif></td>
+									<input type="hidden" class="member_id" value="{{ $member->memberId }}">
+									<input type="hidden" class="member_dob" value="{{ $member->dob }}">
+									<input type="hidden" class="member_gender" value="{{ $member->gender }}">
+									<input type="hidden" class="member_category_text" value="{{ $member->memberCategoryText }}">
+									<input type="hidden" class="member_basmah" value="{{ $member->basmah }}">
+									<input type="hidden" class="member_vat" value="{{ $member->vat }}">
+									<input type="number" value="{{$member->premium}}" class="member_premium form-control" @if($member->premium != 0 && !$isManualPlan) disabled @endif>
+								</td>
 							</tr>
 							@endforeach
 							@if(($member->premium === 0 && auth()->user()->hasRole(RolesEnum::BetaUser)) || ($isManualPlan && auth()->user()->hasRole(RolesEnum::BetaUser)))
@@ -663,8 +639,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 						</table>
 					</div>
 
-					<div class="tab-pane fade" id="benefits-inclusion" role="tabpanel"
-						aria-labelledby="benefits-inclusion-tab">
+					<div class="tab-pane fade" id="benefits-inclusion" role="tabpanel" aria-labelledby="benefits-inclusion-tab">
 						<table cellpadding="3" cellspacing="3">
 							<tr>
 								<td>
@@ -697,8 +672,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 						</table>
 					</div>
 
-					<div class="tab-pane fade" id="benefits-coInsurance" role="tabpanel"
-						aria-labelledby="benefits-coInsurance-tab">
+					<div class="tab-pane fade" id="benefits-coInsurance" role="tabpanel" aria-labelledby="benefits-coInsurance-tab">
 						<table cellpadding="3" cellspacing="3">
 							<tr>
 								<td>
@@ -717,8 +691,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 						</table>
 					</div>
 
-					<div class="tab-pane fade" id="benefits-regionCover" role="tabpanel"
-						aria-labelledby="benefits-regionCover-tab">
+					<div class="tab-pane fade" id="benefits-regionCover" role="tabpanel" aria-labelledby="benefits-regionCover-tab">
 						<table cellpadding="3" cellspacing="3">
 							<tr>
 								<td>
@@ -737,8 +710,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 						</table>
 					</div>
 
-					<div class="tab-pane fade" id="benefits-maternityCover" role="tabpanel"
-						aria-labelledby="benefits-maternityCover-tab">
+					<div class="tab-pane fade" id="benefits-maternityCover" role="tabpanel" aria-labelledby="benefits-maternityCover-tab">
 						<table cellpadding="3" cellspacing="3">
 							<tr>
 								<td>
@@ -757,8 +729,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 						</table>
 					</div>
 
-					<div class="tab-pane fade" id="benefits-exclusion" role="tabpanel"
-						aria-labelledby="benefits-exclusion-tab">
+					<div class="tab-pane fade" id="benefits-exclusion" role="tabpanel" aria-labelledby="benefits-exclusion-tab">
 						<table cellpadding="3" cellspacing="3">
 							<tr>
 								<td>
@@ -776,8 +747,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 						</table>
 					</div>
-					<div class="tab-pane fade" id="benefits-exclusion" role="tabpanel"
-						aria-labelledby="benefits-exclusion-tab">
+					<div class="tab-pane fade" id="benefits-exclusion" role="tabpanel" aria-labelledby="benefits-exclusion-tab">
 						<table cellpadding="3" cellspacing="3">
 							<tr>
 								<td>
@@ -798,12 +768,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 
 					<div class="tab-pane fade" id="policy-detail" role="tabpanel" aria-labelledby="policy-detail-tab">
 						<table cellpadding="3" cellspacing="3">
+							@foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail)
 							<tr>
 								<td>
-									<a href="{{ $listQuotePlanBenefitsPolicyDetailLink }}" target="_blank">Click
-										here</a>
+									<a href="{{ $listQuotePlanBenefitsPolicyDetail->link }}" target="_blank" title="click to open">
+										📃 {{ $listQuotePlanBenefitsPolicyDetail->text }}
+									</a>
 								</td>
 							</tr>
+							@endforeach
 						</table>
 					</div>
 				</div>
@@ -812,7 +785,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 	</div>
 </div>
 <script>
-	$("#updatePremium").click(function(){
+	$("#updatePremium").click(function() {
 		var details = $('.member_id').map(function() {
 			return {
 				memberId: $(this).val(),
@@ -823,33 +796,34 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 				basmah: $(this).parent().find('.member_basmah').val(),
 				vat: $(this).parent().find('.member_vat').val(),
 			};
-			}).get();
+		}).get();
 
-			$(".loader").show();
-			$.ajax({
-				url: "{{ url('/health-plan-manual-update-process') }}",
-				type: 'post',
-				contentType: "application/json; charset=utf-8",
-				data: JSON.stringify({
-					quoteUID: $('#healthquoteUID').val(),
-					planId: $('#healthplanId').val(),
-					planDetails: details,
-					_token: '{{ csrf_token() }}'
-				}),
-				success: function(result) {
-					$(".loader").hide();
-					validationDivText('green', '.health-quote-plan-validation-div', result);
-					setTimeout(() => window.location.reload(), 5000);
-				},
-				error: function(jqXhr, textStatus, errorMessage) {
-					$(".loader").hide();
-					validationDivText('red', '.health-quote-plan-validation-div', jqXhr
-						.responseText);
-				}
-			});
-			function validationDivText(color, className, text) {
-				$(className).text(text).attr('style', 'font-weight:bold;text-align:right;color:' + color);
+		$(".loader").show();
+		$.ajax({
+			url: "{{ url('/health-plan-manual-update-process') }}",
+			type: 'post',
+			contentType: "application/json; charset=utf-8",
+			data: JSON.stringify({
+				quoteUID: $('#healthquoteUID').val(),
+				planId: $('#healthplanId').val(),
+				planDetails: details,
+				_token: '{{ csrf_token() }}'
+			}),
+			success: function(result) {
+				$(".loader").hide();
+				validationDivText('green', '.health-quote-plan-validation-div', result);
+				setTimeout(() => window.location.reload(), 5000);
+			},
+			error: function(jqXhr, textStatus, errorMessage) {
+				$(".loader").hide();
+				validationDivText('red', '.health-quote-plan-validation-div', jqXhr
+					.responseText);
 			}
+		});
+
+		function validationDivText(color, className, text) {
+			$(className).text(text).attr('style', 'font-weight:bold;text-align:right;color:' + color);
+		}
 	});
 </script>
 @else
@@ -863,28 +837,22 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 			<div class="x_content">
 				<ul class="nav nav-tabs" id="myTab" role="tablist" style="font-weight: bold;">
 					<li class="nav-item">
-						<a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab"
-							aria-controls="general" aria-selected="true">General Info</a>
+						<a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General Info</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="addons-tab" data-toggle="tab" href="#addons" role="tab"
-							aria-controls="addons" aria-selected="false">Addons</a>
+						<a class="nav-link" id="addons-tab" data-toggle="tab" href="#addons" role="tab" aria-controls="addons" aria-selected="false">Addons</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion"
-							role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusions</a>
+						<a class="nav-link" id="benefits-inclusion-tab" data-toggle="tab" href="#benefits-inclusion" role="tab" aria-controls="benefits-inclusion" aria-selected="false">Inclusions</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="benefits-exclusion-tab" data-toggle="tab" href="#benefits-exclusion"
-							role="tab" aria-controls="benefits-exclusion" aria-selected="false">Exclusions</a>
+						<a class="nav-link" id="benefits-exclusion-tab" data-toggle="tab" href="#benefits-exclusion" role="tab" aria-controls="benefits-exclusion" aria-selected="false">Exclusions</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="rsa-tab" data-toggle="tab" href="#rsa" role="tab" aria-controls="rsa"
-							aria-selected="false">Road Side Assistance</a>
+						<a class="nav-link" id="rsa-tab" data-toggle="tab" href="#rsa" role="tab" aria-controls="rsa" aria-selected="false">Road Side Assistance</a>
 					</li>
 					<li class="nav-item">
-						<a class="nav-link" id="policy-detail-tab" data-toggle="tab" href="#policy-detail" role="tab"
-							aria-controls="policy-detail" aria-selected="false">Policy Detail</a>
+						<a class="nav-link" id="policy-detail-tab" data-toggle="tab" href="#policy-detail" role="tab" aria-controls="policy-detail" aria-selected="false">Policy Detail</a>
 					</li>
 				</ul>
 				<div class="tab-content" style="padding-top: 20px;">
@@ -892,10 +860,8 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 						{{csrf_field()}}
 						<input type="hidden" id="car_plan_id" name="car_plan_id" value="{{ $planId }}">
 						<input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteId }}">
-						<input type="hidden" id="car_value_lower_limit" name="car_value_lower_limit"
-							value="{{ $carValueLowerLimit }}">
-						<input type="hidden" id="car_value_upper_limit" name="car_value_upper_limit"
-							value="{{ $carValueUpperLimit }}">
+						<input type="hidden" id="car_value_lower_limit" name="car_value_lower_limit" value="{{ $carValueLowerLimit }}">
+						<input type="hidden" id="car_value_upper_limit" name="car_value_upper_limit" value="{{ $carValueUpperLimit }}">
 						<input type="hidden" id="repair_type" name="repair_type" value="{{ $repairType }}">
 						<input type="hidden" id="is_create" name="is_create" value="0">
 						<table cellpadding="10" cellspacing="10">
@@ -903,16 +869,13 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td>Hide Plan?</td>
 								<td>
 									<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
-										<input type="checkbox" class="success" id="is_disabled"
-											name="is_disabled" @if($isDisabled=="false" ) checked="checked" @endif>
+										<input type="checkbox" class="success" id="is_disabled" name="is_disabled" @if($isDisabled=="false" ) checked="checked" @endif>
 										<span class="slider round"></span>
 								</td>
 								<td>Manual</td>
 								<td>
 									<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
-										<input type="checkbox" class="success" id="is_manual_update"
-											name="is_manual_update" @if(isset($isManualUpdate) && $isManualUpdate=="true" ) checked="checked" @endif
-											{{ !$shouldReviseQuote && $isManualUpdate ? "disabled" : "" }}>
+										<input type="checkbox" class="success" id="is_manual_update" name="is_manual_update" @if(isset($isManualUpdate) && $isManualUpdate=="true" ) checked="checked" @endif {{ !$shouldReviseQuote && $isManualUpdate ? "disabled" : "" }}>
 										<span class="slider round"></span>
 								</td>
 							</tr>
@@ -924,45 +887,36 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 							<tr>
 								<td>Insurer Quote No.:</td>
-								<td><input type="text" id="insurer_quote_no" name="insurer_quote_no"
-										value="{{ $insurerQuoteNo }}" class="form-control"></td>
+								<td><input type="text" id="insurer_quote_no" name="insurer_quote_no" value="{{ $insurerQuoteNo }}" class="form-control"></td>
 								<td>Actual Premium:</td>
-								<td><input type="text" id="actual_premium" name="actual_premium"
-										value="{{ $actualPremium }}" class="form-control"
-										onkeypress="return isNumberKey(event,this)"></td>
+								<td><input type="text" id="actual_premium" name="actual_premium" value="{{ $actualPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)"></td>
 							</tr>
 							<tr>
 								<td>Discounted Premium:</td>
 								<td>
-									<input type="text" id="discounted_premium" name="discounted_premium"
-										value="{{ $discountPremium }}" class="form-control"
-										onkeypress="return isNumberKey(event,this)">
+									<input type="text" id="discounted_premium" name="discounted_premium" value="{{ $discountPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)">
 									<input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
 								</td>
 								<td>Car value:</td>
-								<td><input type="text" id="car_value" name="car_value" value="{{ $carValue }}"
-										class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+								<td><input type="text" id="car_value" name="car_value" value="{{ $carValue }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 									<span id="car-value-range-validation-text" style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} -
 										Max: AED {{ number_format($carValueUpperLimit) }}</span>
 								</td>
 							</tr>
 							<tr>
 								<td>Excess:</td>
-								<td><input type="text" id="excess" name="excess" value="{{ $excess }}"
-										class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+								<td><input type="text" id="excess" name="excess" value="{{ $excess }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 								</td>
 								<td>Ancillary Excess:</td>
 								<td><select class="form-control" id='ancillary_excess' name="ancillary_excess">
-									@for ($i = 0; $i <= 20; $i++)
-										<option value="{{$i}}" {{ $i == $ancillaryExcess ? 'selected="selected"' : '' }}>{{$i}}%</option>
-									@endfor
+										@for ($i = 0; $i <= 20; $i++) <option value="{{$i}}" {{ $i == $ancillaryExcess ? 'selected="selected"' : '' }}>{{$i}}%</option>
+											@endfor
 									</select>
 								</td>
 							</tr>
 							<tr>
 								<td>Car Trim</td>
-								<td><select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim'
-										name="insurerTrim">
+								<td><select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim' name="insurerTrim">
 										@foreach($insurerAvailableTrims as $trim)
 										<option value="{{$trim->admeId}}" {{ $trim->admeId == $insurerSelectedTrim ?
 											'selected="selected"' : '' }}>{{$trim->description}}</option>
@@ -1008,31 +962,24 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td>
 									<table cellpadding="3" cellspacing="3">
 										@foreach ($listQuotePlanAddons as $listQuotePlanAddon)
-											@foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption)
-												<tr>
-													<td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddon->text) }}</td>
-													<td style="width: 800px;height: 30px;">{{ ucwords($carAddonOption->value) }}</td>
-													<td style="width: 430px;height: 30px;">
-														<input type="text" id="addon_price" name="addon_price"
-															value="{{ $carAddonOption->price }}" style="width: 100px;"
-															onkeypress="return isNumberKey(event,this)" 
-															class="form-control addon_price">
-														<input type="hidden" id="addon_vat" name="addon_vat"
-															value="{{ $carAddonOption->vat }}" class="addon_vat">
-														<input type="hidden" id="addon_id" name="addon_id"
-															value="{{ $listQuotePlanAddon->id }}" class="addon_id">
-														<input type="hidden" id="addon_option_id" name="addon_option_id"
-															value="{{ $carAddonOption->id }}" class="addon_option_id">
-													</td>
-													<td style="width: 430px;height: 30px;" id="plan_addons">
-														<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
-														<input type="checkbox" class="success addon_is_selected" id="addon_is_selected"
-														name="addon_is_selected" @if(isset($carAddonOption->isSelected) &&
-																$carAddonOption->isSelected==true ) checked="checked" @endif>
-														<span class="slider round"></span>
-													</td>
-												</tr>
-											@endforeach
+										@foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption)
+										<tr>
+											<td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddon->text) }}</td>
+											<td style="width: 800px;height: 30px;">{{ ucwords($carAddonOption->value) }}</td>
+											<td style="width: 430px;height: 30px;">
+												<input type="text" id="addon_price" name="addon_price" value="{{ $carAddonOption->price }}" style="width: 100px;" onkeypress="return isNumberKey(event,this)" class="form-control addon_price">
+												<input type="hidden" id="addon_vat" name="addon_vat" value="{{ $carAddonOption->vat }}" class="addon_vat">
+												<input type="hidden" id="addon_id" name="addon_id" value="{{ $listQuotePlanAddon->id }}" class="addon_id">
+												<input type="hidden" id="addon_option_id" name="addon_option_id" value="{{ $carAddonOption->id }}" class="addon_option_id">
+											</td>
+											<td style="width: 430px;height: 30px;" id="plan_addons">
+												<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
+													<input type="checkbox" class="success addon_is_selected" id="addon_is_selected" name="addon_is_selected" @if(isset($carAddonOption->isSelected) &&
+													$carAddonOption->isSelected==true ) checked="checked" @endif>
+													<span class="slider round"></span>
+											</td>
+										</tr>
+										@endforeach
 										@endforeach
 										<tr>
 											<td colspan="3"> </td>
@@ -1043,14 +990,12 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 											<td align="center"> </td>
 										</tr>
 										<tr>
-											<td colspan="4" align="right"><button type="submit"
-													class="btn btn-warning btn-sm update-car-quote-plan-button" {{
+											<td colspan="4" align="right"><button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{
 													$carQuoteEditDisable }}>Update</button></td>
 										</tr>
 										<tr>
 											<td colspan="5">
-												<div class="car-quote-plan-validation-div"
-													style="color:red;font-weight:bold;text-align:right;"></div>
+												<div class="car-quote-plan-validation-div" style="color:red;font-weight:bold;text-align:right;"></div>
 											</td>
 										</tr>
 										<tr>
@@ -1061,8 +1006,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 						</table>
 					</div>
-					<div class="tab-pane fade" id="benefits-inclusion" role="tabpanel"
-						aria-labelledby="benefits-inclusion-tab">
+					<div class="tab-pane fade" id="benefits-inclusion" role="tabpanel" aria-labelledby="benefits-inclusion-tab">
 						<table cellpadding="3" cellspacing="3">
 							<tr>
 								<td>
@@ -1080,8 +1024,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 						</table>
 					</div>
-					<div class="tab-pane fade" id="benefits-exclusion" role="tabpanel"
-						aria-labelledby="benefits-exclusion-tab">
+					<div class="tab-pane fade" id="benefits-exclusion" role="tabpanel" aria-labelledby="benefits-exclusion-tab">
 						<table cellpadding="3" cellspacing="3">
 							<tr>
 								<td>
@@ -1118,12 +1061,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 					</div>
 					<div class="tab-pane fade" id="policy-detail" role="tabpanel" aria-labelledby="policy-detail-tab">
 						<table cellpadding="3" cellspacing="3">
+							@foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail)
 							<tr>
 								<td>
-									<a href="{{ $listQuotePlanBenefitsPolicyDetailLink }}" target="_blank">Click
-										here</a>
+									<a href="{{ $listQuotePlanBenefitsPolicyDetail->link }}" target="_blank" title="click to open">
+										📃 {{ $listQuotePlanBenefitsPolicyDetail->text }}
+									</a>
 								</td>
 							</tr>
+							@endforeach
 						</table>
 					</div>
 				</div>

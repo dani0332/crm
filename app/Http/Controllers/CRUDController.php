@@ -604,7 +604,7 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName', 'travelType',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures', 'listQuotePlanBenefitsCovid19',
-                'listQuotePlanBenefitsPolicyDetailLink', 'modelName', 'listQuotePlansMembers',
+                'listQuotePlanBenefitsPolicyDetails', 'listQuotePlanBenefitsPolicyDetailLink', 'modelName', 'listQuotePlansMembers',
                 'listQuotePlanBenefitstravelInconvenienceCover', 'listQuotePlanBenefitsemergencyMedicalCover',
             ]));
         }
@@ -643,7 +643,7 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
-                'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
+                'listQuotePlanBenefitsPolicyDetails', 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
                 'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover',
                 'listQuotePlanBenefitsMaternityCover', 'members', 'planId', 'quoteId', 'isManualPlan',
             ]));
