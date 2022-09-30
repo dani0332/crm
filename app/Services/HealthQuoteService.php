@@ -98,7 +98,8 @@ class HealthQuoteService extends BaseService
             'hqr.customer_id',
             'hqr.currently_insured_with_id',
             'ins_provider.TEXT as currently_insured_with_id_text',
-            'hqr.parent_duplicate_quote_id'
+            'hqr.parent_duplicate_quote_id',
+            'hqr.is_ecommerce'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -1105,6 +1106,12 @@ class HealthQuoteService extends BaseService
             $response = $this->httpService->processRequest($dataArray, $apiCreds);
 
             return $response;
+        }
+    }
+
+    public function updateQuoteStatus($lead) {
+        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified) {
+            HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
     }
 }

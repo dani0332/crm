@@ -402,6 +402,7 @@ class CRUDController extends Controller
                     $listQuotePlans = $quotePlans;
                 }
             }
+            $this->healthQuoteService->updateQuoteStatus($record);
             $membersDetail = $this->healthQuoteService->getMembersDetail($record->id);
             $memberCategories = $this->lookupService->getMemberCategories();
             $salaryBands = $this->lookupService->getSalaryBands();
