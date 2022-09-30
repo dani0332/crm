@@ -643,7 +643,7 @@ class CRUDController extends Controller
                 'listQuotePlanName', 'providerCode', 'providerName',
                 'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
-                'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
+                'listQuotePlanBenefitsPolicyDetails', 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
                 'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover',
                 'listQuotePlanBenefitsMaternityCover', 'members', 'planId', 'quoteId', 'isManualPlan',
             ]));
