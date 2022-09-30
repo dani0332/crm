@@ -28,7 +28,7 @@
                                         <tr>
                                             <td>Member {{$key+1}}</td>
                                             <td>@if($member->memberCategory){{$member->memberCategory->text}}@endif</td>
-                                            <td>@if($member->dob){{\Carbon\Carbon::createFromTimestamp(strtotime($member->dob))->format('d-m-Y')}}@endif</td>
+                                            <td>@isset($member->dob){{\Carbon\Carbon::createFromTimestamp(strtotime($member->dob))->format('d-m-Y')}}@endisset</td>
                                             <td>@if($member->gender ==GenericRequestEnum::MALE_SINGLE_VALUE ){{GenericRequestEnum::MALE_SINGLE}}@endif
                                             @if($member->gender ==GenericRequestEnum::FEMALE_SINGLE_VALUE ){{GenericRequestEnum::FEMALE_SINGLE}}@endif
                                             @if($member->gender ==GenericRequestEnum::FEMALE_MARRIED_VALUE ){{GenericRequestEnum::FEMALE_MARRIED}}@endif
