@@ -39,6 +39,7 @@
     use App\Enums\QuoteStatusEnum;
     use App\Enums\PermissionsEnum;
     use App\Enums\DatabaseColumnsString;
+    use App\Enums\GenericRequestEnum;
     @endphp
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -224,7 +225,9 @@
                                             @php
                                                 $propertyName = $property . '_text';
                                             @endphp
-                                            <p class="label-align-center">{{ $record->$propertyName }}</p>
+                                            <p class="label-align-center">
+                                            {{ $record->$propertyName }}
+                                            </p>
                                         </div>
                                     @endif
                                 @else
@@ -241,7 +244,11 @@
                                                 @if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), 'yes')))
                                                 {{ $record->$property ? 'Yes' : 'No' }}
                                                 @elseif( (str_contains($value, 'static') && !str_contains(strtolower($value), 'yes')))
-                                                {{ $record->$property }}
+                                                    @if($record->$property == GenericRequestEnum::MALE_SINGLE_VALUE) {{GenericRequestEnum::MALE_SINGLE}}
+                                                    @elseif($record->$property == GenericRequestEnum::FEMALE_SINGLE_VALUE) {{GenericRequestEnum::FEMALE_SINGLE}}
+                                                    @elseif($record->$property == GenericRequestEnum::FEMALE_MARRIED_VALUE) {{GenericRequestEnum::FEMALE_MARRIED}}
+                                                    @else {{ $record->$property }}
+                                                    @endif
                                                 @elseif($property == 'previous_quote_id')
                                                     @php
                                                         $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
