@@ -613,14 +613,13 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td style="width: 120px;">{{$member->gender}}</td>
 								<td style="width: 50px;font-weight: bold;">Premium</td>
 								<td style="width: 120px;">
-									<input type="hidden" class="member_id" value="{{ $member->memberId }}">
-									<input type="hidden" class="member_dob" value="{{ $member->dob }}">
-									<input type="hidden" class="member_gender" value="{{ $member->gender }}">
-									<input type="hidden" class="member_category_text" value="{{ $member->memberCategoryText }}">
-									<input type="hidden" class="member_basmah" value="{{ $member->basmah }}">
-									<input type="hidden" class="member_vat" value="{{ $member->vat }}">
-									<input type="number" value="{{$member->premium}}" class="member_premium form-control" @if($member->premium != 0) disabled @endif>
-								</td>
+								<input type="hidden" class="member_id" value="{{ $member->memberId }}">
+								<input type="hidden" class="member_dob" value="{{ $member->dob }}">
+								<input type="hidden" class="member_gender" value="{{ $member->gender }}">
+								<input type="hidden" class="member_category_text" value="{{ $member->memberCategoryText }}">
+								<input type="hidden" class="member_basmah" value="{{ $member->basmah }}">
+								<input type="hidden" class="member_vat" value="{{ $member->vat }}">
+								<input type="number" value="{{$member->premium}}" class="member_premium form-control" @if($member->premium != 0 && !$isManualPlan) disabled @endif></td>
 							</tr>
 							@endforeach
 							@if(($member->premium === 0 && auth()->user()->hasRole(RolesEnum::BetaUser)) || ($isManualPlan && auth()->user()->hasRole(RolesEnum::BetaUser)))
@@ -794,26 +793,31 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 				vat: $(this).parent().find('.member_vat').val(),
 			};
 		}).get();
-
-		$(".loader").show();
-		$.ajax({
-			url: "{{ url('/health-plan-manual-update-process') }}",
-			type: 'post',
-			contentType: "application/json; charset=utf-8",
-			data: JSON.stringify({
-				quoteUID: $('#healthquoteUID').val(),
-				planId: $('#healthplanId').val(),
-				planDetails: details,
-				_token: '{{ csrf_token() }}'
-			}),
-			success: function(result) {
-				$(".loader").hide();
-				validationDivText('green', '.health-quote-plan-validation-div', result);
-			},
-			error: function(jqXhr, textStatus, errorMessage) {
-				$(".loader").hide();
-				validationDivText('red', '.health-quote-plan-validation-div', jqXhr
-					.responseText);
+    
+			$(".loader").show();
+			$.ajax({
+				url: "{{ url('/health-plan-manual-update-process') }}",
+				type: 'post',
+				contentType: "application/json; charset=utf-8",
+				data: JSON.stringify({
+					quoteUID: $('#healthquoteUID').val(),
+					planId: $('#healthplanId').val(),
+					planDetails: details,
+					_token: '{{ csrf_token() }}'
+				}),
+				success: function(result) {
+					$(".loader").hide();
+					validationDivText('green', '.health-quote-plan-validation-div', result);
+					setTimeout(() => window.location.reload(), 5000);
+				},
+				error: function(jqXhr, textStatus, errorMessage) {
+					$(".loader").hide();
+					validationDivText('red', '.health-quote-plan-validation-div', jqXhr
+						.responseText);
+				}
+			});
+			function validationDivText(color, className, text) {
+				$(className).text(text).attr('style', 'font-weight:bold;text-align:right;color:' + color);
 			}
 		});
 

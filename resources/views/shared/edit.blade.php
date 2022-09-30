@@ -362,6 +362,8 @@
                                                     <option value="{{ GenericRequestEnum::FEMALE_SINGLE_VALUE }}" {{ $item == old(GenericRequestEnum::FEMALE_SINGLE_VALUE, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
                                                 @elseif($item == GenericRequestEnum::FEMALE_MARRIED)
                                                     <option value="{{ GenericRequestEnum::FEMALE_MARRIED_VALUE }}" {{ $item == old(GenericRequestEnum::FEMALE_MARRIED_VALUE, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
+                                                @elseif($item == GenericRequestEnum::MALE_SINGLE && $model->modelType == quoteTypeCode::Health)
+                                                    <option value="{{ GenericRequestEnum::MALE_SINGLE_VALUE }}" {{ $item == old(GenericRequestEnum::MALE_SINGLE_VALUE, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
                                                 @else
                                                     <option value="{{ $item }}" {{ $item == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
                                                 @endif
