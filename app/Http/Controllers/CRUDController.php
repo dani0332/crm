@@ -745,7 +745,7 @@ class CRUDController extends Controller
         return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 
-    public function CarPlanManualProcess(Request $request)
+    public function carPlanManualProcess(Request $request)
     {
         $response = $this->carQuoteService->carPlanModify($request);
 

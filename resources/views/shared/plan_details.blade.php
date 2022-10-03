@@ -171,6 +171,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 					insurer_quote_no: $("#insurer_quote_no").val(),
 					is_manual_update: $('#is_manual_update').is(':checked'),
 					ancillary_excess: $("#ancillary_excess").val(),
+					current_url: $('#current_url').val(),
 				}),
 				success: function(result) {
 					$(".loader").hide();
@@ -864,10 +865,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 						<input type="hidden" id="car_value_upper_limit" name="car_value_upper_limit" value="{{ $carValueUpperLimit }}">
 						<input type="hidden" id="repair_type" name="repair_type" value="{{ $repairType }}">
 						<input type="hidden" id="is_create" name="is_create" value="0">
+						<input type = "hidden" id="current_url" name="current_url" value="{{ url()->current() }}">
 						<table cellpadding="10" cellspacing="10">
 							<tr>
 								<td>Hide Plan?</td>
-								<td>
+								<td style="width: 10%;">
 									<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
 										<input type="checkbox" class="success" id="is_disabled" name="is_disabled" @if($isDisabled=="false" ) checked="checked" @endif>
 										<span class="slider round"></span>

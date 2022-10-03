@@ -856,6 +856,10 @@ class CarQuoteService extends BaseService
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
             'lang' => 'en',
+            'url' => strval(url()->current()),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => strval(auth()->id()),
         ];
 
         $client = new \GuzzleHttp\Client();
@@ -948,6 +952,10 @@ class CarQuoteService extends BaseService
         $carPlanData = [
             'quoteUID' => $request->car_quote_uuid,
             'update' => $isUpdate,
+            'url' => strval($request->current_url),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => strval(auth()->id()),
             'plans' => [
                 [
                     'planId' => (int) $request->car_plan_id,
@@ -974,7 +982,6 @@ class CarQuoteService extends BaseService
         ];
 
         $response = $this->httpService->processRequest($carPlanData, $apiCreds);
-
         if ($response == 200) {
             $this->lockCarQuote($request->car_quote_uuid);
         }
