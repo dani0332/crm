@@ -26,7 +26,7 @@
                 @if(session()->has('message'))
                 <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
-                <form id="car-create-quote-form" method='post' action="{{ route('carPlanManualProcess') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                <form id="car-create-quote-form" method='post' action="car-plan-manual-process" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                     {{csrf_field()}}
                     <input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteUuId }}">
                     <input type="hidden" id="is_disabled" name="is_disabled" value="0">
