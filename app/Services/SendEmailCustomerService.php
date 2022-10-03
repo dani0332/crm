@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\EnvEnum;
+use App\Jobs\UpdateSendPolicySubjectJob;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -62,6 +63,7 @@ class SendEmailCustomerService extends BaseService
                     'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
                     'advisorLandlineNo' => isset($emailData->advisorLandlineNo) ? $emailData->advisorLandlineNo : null,
                     'advisorMobileNo' => isset($emailData->advisorMobileNo) ? $emailData->advisorMobileNo : null,
+                    'providerSupportNumber' => isset($emailData->providerSupportNumber) ? $emailData->providerSupportNumber : null,
                 ],
                 'tags' => [
                     $tag,
@@ -97,24 +99,22 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
         // addEmailStatus is for quote modules only
-        if (isset($messageId) && isset($emailData->quoteTypeId) && isset($emailData->quoteId)) {
-            $emailSubject = $this->getEmailSubjectFromSib($emailTemplateId, $emailData->quoteCdbId);
-            $this->emailStatusService->addEmailStatus($emailData, $messageId, $emailSubject);
+        if (isset($messageId)) {
+            UpdateSendPolicySubjectJob::dispatch($emailData, $messageId)->delay(now()->addSeconds(7));
         }
 
         return $responseCode;
     }
 
-    public function getEmailSubjectFromSib($templateId, $quoteCdbId)
+    public function getEmailSubjectFromSib($messageId)
     {
         $apiKey = config('constants.SENDINBLUE_KEY');
         $url = config('constants.SIB_URL');
-
         try {
             $client = new \GuzzleHttp\Client();
             $response = $client->request(
                 'GET',
-                $url.'s?templateId='.$templateId.'&sort=desc&limit=1&offset=0',
+                $url.'s?messageId='.$messageId.'&sort=desc&limit=1&offset=0',
                 [
                     'headers' => [
                         'Accept' => 'application/json',
@@ -123,10 +123,14 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
             $content = json_decode($response->getBody()->getContents());
-            $emailSubject = $content->transactionalEmails[0]->subject;
+            if ($content && isset($content->count) && $content->count > 0 && isset($content->transactionalEmails[0])) {
+                $emailSubject = $content->transactionalEmails[0]->subject;
+            } else {
+                $emailSubject = null;
+            }
         } catch (Exception $ex) {
             $emailSubject = null;
-            $responseDetail = 'SIB Get Email Subject: Code/Message: '.$ex->getCode().'/'.$ex->getMessage().' templateId: '.$templateId.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            $responseDetail = 'SIB Get Email Subject: Code/Message: '.$ex->getCode().'/'.$ex->getMessage().' messageId: '.$messageId.' Class: '.get_class();
             Log::error($responseDetail);
         }
 

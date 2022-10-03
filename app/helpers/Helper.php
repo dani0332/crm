@@ -313,3 +313,10 @@ function get_dob_date_format()
 {
     return 'Y-m-d';
 }
+
+function formatAmount($value, $decimals = 2, $appendPrefix = true)
+{
+    $value = number_format($value, $decimals);
+
+    return ($appendPrefix) ? 'AED '.$value : $value;
+}

@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
@@ -80,7 +79,8 @@ class TravelQuoteService extends BaseService
             'tqr.previous_quote_policy_premium',
             'tqr.policy_issuance_date',
             'tqr.policy_start_date',
-            'tqr.customer_id'
+            'tqr.customer_id',
+            'tqr.parent_duplicate_quote_id'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -518,15 +518,18 @@ class TravelQuoteService extends BaseService
         $travelQuote = TravelQuote::where('uuid', $id)->first();
         $travelQuote->first_name = $request->first_name;
         $travelQuote->last_name = $request->last_name;
-        $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
         $travelQuote->nationality_id = $request->nationality_id;
-        $travelQuote->days_cover_for = $request->days_cover_for;
         $travelQuote->premium = $request->premium;
         $travelQuote->destination = $request->destination;
-        $travelQuote->region_cover_for_id = $request->region_cover_for_id;
-        $travelQuote->currently_located_in_id = $request->currently_located_in_id;
-        $travelQuote->destination_id = $request->destination_id;
         $travelQuote->dob = $request->dob;
+        if ($travelQuote->days_cover_for != $request->days_cover_for || $travelQuote->destination_id != $request->destination_id || $travelQuote->currently_located_in_id != $request->currently_located_in_id || $travelQuote->travel_cover_for_id != $request->travel_cover_for_id || $travelQuote->region_cover_for_id != $request->region_cover_for_id) {
+            $travelQuote->quote_updated_at = Carbon::now();
+        }
+        $travelQuote->days_cover_for = $request->days_cover_for;
+        $travelQuote->destination_id = $request->destination_id;
+        $travelQuote->currently_located_in_id = $request->currently_located_in_id;
+        $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
+        $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->save();
 
         if (isset($request->return_to_view)) {
@@ -572,8 +575,8 @@ class TravelQuoteService extends BaseService
             'renewal_import_code' => 'input|text',
             'previous_policy_expiry_date' => 'input|date|title|range',
             'renewal_batch' => 'input|none',
-            'device' => 'readonly|none',
             'previous_quote_policy_premium' => 'input|title',
+            'parent_duplicate_quote_id' => 'input|title',
 
         ];
     }
@@ -654,6 +657,9 @@ class TravelQuoteService extends BaseService
             case 'premium':
                 $title = 'Premium';
                 break;
+            case 'parent_duplicate_quote_id':
+                $title = 'Parent CDB ID';
+                break;
             default:
                 break;
         }
@@ -664,10 +670,10 @@ class TravelQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'previous_quote_policy_premium,device,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code,renewal_expiry_date,policy_number',
-            'list' => 'previous_quote_policy_premium,device,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,next_followup_date,days_cover_for,renewal_batch,renewal_import_code',
-            'update' => 'previous_quote_policy_premium,device,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code,renewal_expiry_date,policy_number',
-            'show' => 'is_renewal,policy_number,renewal_expiry_date,premium,device',
+            'create' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code,renewal_expiry_date,policy_number',
+            'list' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,next_followup_date,days_cover_for,renewal_batch,renewal_import_code',
+            'update' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code,renewal_expiry_date,policy_number',
+            'show' => 'is_renewal,policy_number,renewal_expiry_date,premium,source',
         ];
     }
 
@@ -680,10 +686,10 @@ class TravelQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'previous_quote_policy_number', 'payment_status_id', 'previous_policy_expiry_date', 'renewal_batch', 'previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
-            'create' => 'premium,previous_quote_policy_premium,device,renewal_expiry_date,policy_number,previous_policy_expiry_date,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code',
-            'list' => 'premium,device,renewal_expiry_date,policy_number,is_ecommerce,is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id,renewal_import_code',
-            'update' => 'premium,previous_quote_policy_premium,device,renewal_expiry_date,policy_number,previous_policy_expiry_date,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code',
-            'show' => 'premium,renewal_expiry_date,policy_number,is_ecommerce,is_renewal',
+            'create' => 'premium,previous_quote_policy_premium,parent_duplicate_quote_id,renewal_expiry_date,policy_number,previous_policy_expiry_date,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code',
+            'list' => 'premium,parent_duplicate_quote_id,renewal_expiry_date,policy_number,is_ecommerce,is_renewal,dob,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,days_cover_for,next_followup_date,lost_reason,source,transapp_code,currently_located_in_id,destination_id,renewal_import_code',
+            'update' => 'premium,previous_quote_policy_premium,parent_duplicate_quote_id,renewal_expiry_date,policy_number,previous_policy_expiry_date,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code',
+            'show' => 'source,premium,renewal_expiry_date,policy_number,is_ecommerce,is_renewal',
         ];
     }
 
@@ -691,10 +697,10 @@ class TravelQuoteService extends BaseService
     {
         $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number', 'premium'];
         $model->newBusinessSkipProperties = [
-            'create' => 'previous_quote_policy_premium,device,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
-            'list' => 'previous_quote_policy_premium,device,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,renewal_expiry_date,previous_quote_id',
-            'update' => 'previous_quote_policy_premium,device,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
-            'show' => 'device,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id',
+            'create' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
+            'list' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,renewal_expiry_date,previous_quote_id',
+            'update' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
+            'show' => 'source,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id',
         ];
     }
 
@@ -764,24 +770,6 @@ class TravelQuoteService extends BaseService
     public function getDuplicateEntityByCode($code)
     {
         return TravelQuote::where('parent_duplicate_quote_id', $code)->first();
-    }
-
-    public function createDuplicate($parentRecord)
-    {
-        $quote = new TravelQuote();
-        $quote->parent_duplicate_quote_id = $parentRecord->code;
-        $response = CapiRequestService::getUUID(QuoteTypeId::Travel);
-        if ($response) {
-            $quote->uuid = $response->uuid;
-            $quote->code = 'TRA-'.$response->uuid;
-        }
-        $quote->quote_status_id = QuoteStatusEnum::NewLead;
-        $quote->first_name = $parentRecord->first_name;
-        $quote->last_name = $parentRecord->last_name;
-        $quote->email = $parentRecord->email;
-        $quote->advisor_id = Auth::user()->id;
-        $quote->mobile_no = $parentRecord->mobile_no;
-        $quote->save();
     }
 
     public function processManualLeadAssignment($request): array
