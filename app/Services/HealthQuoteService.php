@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthMemberDetail;
@@ -963,7 +964,7 @@ class HealthQuoteService extends BaseService
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
         //check if team is assigned,must have plans and status not qualified yet so mark it qualified.
-        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
+        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor() && auth()->user()->hasRole(RolesEnum::BetaUser)) {
             HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
 
@@ -1111,7 +1112,7 @@ class HealthQuoteService extends BaseService
 
     public function updateQuoteStatus($lead)
     {
-        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
+        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor() && auth()->user()->hasRole(RolesEnum::BetaUser)) {
             HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
     }
