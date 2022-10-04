@@ -14,7 +14,7 @@ class AddAdditionInfoToCarQuoteRequestDetailTable extends Migration
     public function up()
     {
         Schema::table('car_quote_request_detail', function (Blueprint $table) {
-            if (! Schema::hasColumn('car_quote_request_detail', 'lost_approval_status')) {
+            if (! Schema::hasColumn('car_quote_request_detail', 'lost_approval_status') && ! Schema::hasColumn('car_quote_request_detail', 'lost_approval_reason')) {
                 $table->string('lost_approval_status', 30)->nullable();
                 $table->string('lost_approval_reason')->nullable();
             }
