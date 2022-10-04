@@ -620,7 +620,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 									<input type="hidden" class="member_category_text" value="{{ $member->memberCategoryText }}">
 									<input type="hidden" class="member_basmah" value="{{ $member->basmah }}">
 									<input type="hidden" class="member_vat" value="{{ $member->vat }}">
-									<input type="number" value="{{$member->premium}}" class="member_premium form-control" @if($member->premium != 0 && !$isManualPlan) disabled @endif>
+									<input type="text" value="{{$member->premium}}" class="member_premium form-control" @if($member->premium != 0 && !$isManualPlan) disabled @endif>
 								</td>
 							</tr>
 							@endforeach
