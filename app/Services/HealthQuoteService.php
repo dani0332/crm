@@ -1084,7 +1084,7 @@ class HealthQuoteService extends BaseService
                     'dob' => $value['dob'],
                     'gender' => $value['gender'],
                     'memberCategoryText' => $value['memberCategoryText'],
-                    'premium' => (int) $value['premium'],
+                    'premium' => (float) $value['premium'],
                     'basmah' => (int) $value['basmah'],
                     'vat' => (int) $value['vat'],
                 ];
