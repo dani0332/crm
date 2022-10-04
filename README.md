@@ -43,4 +43,3 @@ This repository use Laravel Mix to build assets like CSS and JavaScript, use the
 ## Contributing
 - ```develop``` branch is the main coding branch where new branches will be generated from, and PRs will be merged into. Same branch is connected with stage for testing and QA.
 - ```main``` branch is used for production deployments.
-
