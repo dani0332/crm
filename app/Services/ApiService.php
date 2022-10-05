@@ -8,9 +8,12 @@ use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
 use Exception;
 use Log;
+use App\Traits\HealthCreateUpdateSIb;
 
 class ApiService
 {
+    use HealthCreateUpdateSIb;
+
     public function fetchSignupUrl($request)
     {
         try {
@@ -65,20 +68,7 @@ class ApiService
         try {
             $quoteData = HealthQuote::where('uuid', $request->quoteUID)->where('quote_status_id', $request->QuoteStatus)->first();
             if ($quoteData) {
-                $data = [
-                    'customerName' => isset($quoteData->full_name) ? $quoteData->full_name : null,
-                    'advisorName' => isset($quoteData->advisor) ? $quoteData->advisor->name : null,
-                    'advisorEmail' => isset($quoteData->advisor) ? $quoteData->advisor->email : null,
-                    'advisorMobile' => isset($quoteData->advisor) ? $quoteData->advisor->mobile_no : null,
-                    'customerLastName' => isset($quoteData->last_name) ? $quoteData->last_name : null,
-                    'customerFirstName' => isset($quoteData->first_name) ? $quoteData->first_name : null,
-                    'leadStatus' => isset($quoteData->quoteStatus) ? $quoteData->quoteStatus->text : null,
-                    'cbdid' => isset($quoteData->code) ? $quoteData->code : null,
-                    'link' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteData->uuid,
-                    'advisorLandline' => isset($quoteData->advisor) ? $quoteData->advisor->landline_no : null,
-                ];
-
-                return CreateUpdateContactService::contactCreateUpdate(config('constants.SIB_HEALTH_EBP_LIST_ID'), $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
+                $this->sendSibRequest($quoteData);
             }
         } catch (Exception $e) {
             return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
