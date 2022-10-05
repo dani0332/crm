@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\RolesEnum;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
@@ -68,7 +67,7 @@ class ApiService
     {
         try {
             $quoteData = HealthQuote::where('uuid', $request->quoteUID)->where('quote_status_id', $request->QuoteStatus)->first();
-            if ($quoteData && auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            if ($quoteData) {
                 $this->sendSibRequest($quoteData);
             }
         } catch (Exception $e) {
@@ -78,8 +77,6 @@ class ApiService
 
     public function sibHealthQuoteCallBack($code)
     {
-        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            HealthQuote::where('code', $code)->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
-        }
+        HealthQuote::where('code', $code)->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
     }
 }
