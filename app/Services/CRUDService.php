@@ -14,11 +14,11 @@ use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Traits\HealthCreateUpdateSIb;
+use App\Traits\CreateUpdateSIbContact;
 class CRUDService extends BaseService
 {
     use GenericQueriesAllLobs;
-    use HealthCreateUpdateSIb;
+    use CreateUpdateSIbContact;
 
     protected $healthQuoteService;
     protected $carQuoteService;

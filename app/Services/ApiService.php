@@ -8,11 +8,11 @@ use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
 use Exception;
 use Log;
-use App\Traits\HealthCreateUpdateSIb;
+use App\Traits\CreateUpdateSIbContact;
 
 class ApiService
 {
-    use HealthCreateUpdateSIb;
+    use CreateUpdateSIbContact;
 
     public function fetchSignupUrl($request)
     {

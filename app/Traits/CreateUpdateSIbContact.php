@@ -2,7 +2,7 @@
 
 namespace App\Traits;
 use App\Services\CreateUpdateContactService;
-trait HealthCreateUpdateSIb
+trait CreateUpdateSIbContact
 {
     public function sendSibRequest($entity)
     {
