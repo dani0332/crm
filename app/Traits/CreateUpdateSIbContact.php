@@ -1,7 +1,9 @@
 <?php
 
 namespace App\Traits;
+
 use App\Services\CreateUpdateContactService;
+
 trait CreateUpdateSIbContact
 {
     public function sendSibRequest($entity)

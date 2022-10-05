@@ -9,12 +9,13 @@ use App\Enums\RolesEnum;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
+use App\Traits\CreateUpdateSIbContact;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Traits\CreateUpdateSIbContact;
+
 class CRUDService extends BaseService
 {
     use GenericQueriesAllLobs;
@@ -219,8 +220,7 @@ class CRUDService extends BaseService
             $entity->wcu_id = null;
         }
         $entity->save();
-        if(strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus != QuoteStatusEnum::Quoted && auth()->user()->hasRole(RolesEnum::BetaUser))
-        {
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus != QuoteStatusEnum::Quoted && auth()->user()->hasRole(RolesEnum::BetaUser)) {
             $this->sendSibRequest($entity);
         }
         QuoteStatusLog::create([
