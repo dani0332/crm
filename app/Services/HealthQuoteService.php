@@ -965,7 +965,7 @@ class HealthQuoteService extends BaseService
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
         //check if team is assigned,must have plans and status not qualified yet so mark it qualified.
-        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor() && auth()->user()->hasRole(RolesEnum::BetaUser)) {
+        if ($lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor() && auth()->user()->hasRole(RolesEnum::BetaUser)) {
             HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
 
@@ -1108,13 +1108,6 @@ class HealthQuoteService extends BaseService
             $response = $this->httpService->processRequest($dataArray, $apiCreds);
 
             return $response;
-        }
-    }
-
-    public static function updateQuoteStatus($lead)
-    {
-        if ($lead->health_team_type == HealthTeamType::EBP && $lead->advisor_id && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Quoted && auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
         }
     }
 }

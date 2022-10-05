@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -124,12 +125,11 @@ class LeadAllocationService extends BaseService
             try {
                 DB::beginTransaction();
 
-                if ($isManualAssignment && $lead->advisor_id != null) {
+                if ($isManualAssignment && $lead->advisor_id != null && $lead->health_team_type != HealthTeamType::EBP && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
                 $lead->advisor_id = $advisorId;
                 $lead->save();
-                HealthQuoteService::updateQuoteStatus($lead);
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
                     $this->updateLeadAllocationRecord($advisorId);
