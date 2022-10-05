@@ -129,6 +129,7 @@ class LeadAllocationService extends BaseService
                 }
                 $lead->advisor_id = $advisorId;
                 $lead->save();
+                HealthQuoteService::updateQuoteStatus($lead);
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
                     $this->updateLeadAllocationRecord($advisorId);

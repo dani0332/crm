@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -1110,10 +1111,10 @@ class HealthQuoteService extends BaseService
         }
     }
 
-    public function updateQuoteStatus($lead)
+    public static function updateQuoteStatus($lead)
     {
-        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor() && auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
+        if ($lead->health_team_type == HealthTeamType::EBP && $lead->advisor_id && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Quoted && auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Quoted]);
         }
     }
 }
