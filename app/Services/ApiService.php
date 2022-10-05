@@ -6,9 +6,9 @@ use App\Enums\QuoteStatusEnum;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
+use App\Traits\CreateUpdateSIbContact;
 use Exception;
 use Log;
-use App\Traits\CreateUpdateSIbContact;
 
 class ApiService
 {
