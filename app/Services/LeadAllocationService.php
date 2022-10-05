@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Events\AdvisorAssigned;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
@@ -124,7 +125,7 @@ class LeadAllocationService extends BaseService
             info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
             try {
                 DB::beginTransaction();
-
+                AdvisorAssigned::dispatch($lead);
                 if ($isManualAssignment && $lead->advisor_id != null && $lead->health_team_type != HealthTeamType::EBP && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
