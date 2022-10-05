@@ -38,7 +38,8 @@ RUN apt-get update && apt-get install -y \
 # Install node 16
 RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
 RUN bash /tmp/nodesource_setup.sh
-RUN apt install nodejs -y    
+RUN apt install nodejs -y
+RUN apt-get update && apt-get install yarn -y
 
 # Install yarn
 #RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
