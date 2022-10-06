@@ -117,6 +117,8 @@ class LeadAllocationService extends BaseService
     public function assignLead($lead, $advisorId, $isManualAssignment)
     {
         info('assignLead -- started');
+        info('check Manual Assignment'.$isManualAssignment);
+        info('check Advisor ID'.$lead->advisor_id);
         if ($this->checkIfAdvisorCanTakeLead($advisorId)) {
             if ($lead->advisor_id != null) {
                 $this->removeLeadAllocationForOldAdvisor($lead);
@@ -126,7 +128,8 @@ class LeadAllocationService extends BaseService
             try {
                 DB::beginTransaction();
                 AdvisorAssigned::dispatch($lead);
-                if ($isManualAssignment && $lead->advisor_id != null && $lead->health_team_type != HealthTeamType::EBP && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
+                if ($isManualAssignment && $lead->advisor_id != null) {
+                    info('Manual Lead and Advisor Null Check');
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
                 $lead->advisor_id = $advisorId;
