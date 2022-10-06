@@ -162,12 +162,8 @@ class CRUDController extends Controller
             }
         }
         $model = $this->genericModel;
-        $gridDataResults = $gridData->get();
-        foreach ($gridDataResults as $quote) {
-            $quote->quote_link = $this->getEComQuoteLink(strtolower($this->genericModel->modelType), $quote);
-        }
         if ($request->ajax()) {
-            return DataTables::of($gridDataResults)
+            return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
 
