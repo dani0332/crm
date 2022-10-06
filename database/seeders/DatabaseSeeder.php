@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
             DocumentTypeSeeder::class,
             AddRoleForBetaUserSeeder::class,
             CustomerAdditionalContactSeeder::class,
-            addAllocationRuleProperties::class,
+            addRenewalAppSettings::class,
         ]);
     }
 }

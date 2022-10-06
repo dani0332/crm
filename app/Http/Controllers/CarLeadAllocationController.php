@@ -30,7 +30,7 @@ class CarLeadAllocationController extends Controller
             $availableUsers = 0;
             $unAvailableUsers = 0;
             $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
-            $isRenewalLogicWorking = $this->applicationStorageService->getValueByKey('CAR_RENEWAL_LOGIC_SWITCH');
+            $isRenewalLeadAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_RENEWAL_LEAD_ALLOCATION');
             $data = $this->leadAllocationService->getGridData();
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount += $value->allocationCount;
@@ -46,7 +46,7 @@ class CarLeadAllocationController extends Controller
                     ->make(true);
             }
 
-            return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
+            return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking']));
         } else {
             abort(403, 'Unauthorized action.');
         }

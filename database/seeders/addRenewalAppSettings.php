@@ -14,30 +14,29 @@ class addRenewalAppSettings extends Seeder
      */
     public function run()
     {
-        ApplicationStorage::where('')
-        ApplicationStorage::insert([
-            [
-                'key_name' => 'LEAD_ALLOCATION_START_TIME',
-                'value' => '08:00:00',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key_name' => 'LEAD_ALLOCATION_STOP_TIME',
-                'value' => '18:30:00',
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'key_name' => 'LEAD_ALLOCATION_IS_QUEUE_LIFO',
-                'value' => 0,
-                'is_active' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-
-        ]);
+        $carLeadAllocationSwitch = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_JOB_SWITCH')->first();
+        if ($carLeadAllocationSwitch == null) {
+            ApplicationStorage::insert([
+                [
+                    'key_name' => 'CAR_LEAD_ALLOCATION_JOB_SWITCH',
+                    'value' => 1,
+                    'is_active' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ]);
+        }
+        $carLeadAllocationSwitch = ApplicationStorage::where('key_name', 'CAR_RENEWAL_LEAD_ALLOCATION')->first();
+        if ($carLeadAllocationSwitch == null) {
+            ApplicationStorage::insert([
+                [
+                    'key_name' => 'CAR_RENEWAL_LEAD_ALLOCATION',
+                    'value' => 1,
+                    'is_active' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ]);
+        }
     }
 }

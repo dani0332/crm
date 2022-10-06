@@ -229,7 +229,7 @@
                 <span class="status-text"></span>
                 <label class="switch "
                     style="margin-left: 20px;float: left;margin-top: 5px;">
-                    <input type="checkbox" @if($isAutoAllocationWorking=='1' ) checked="checked" @endif
+                    <input type="checkbox" @if($isRenewalLeadAllocationWorking=='1' ) checked="checked" @endif
                         class="leadSwitch success" id="jobSwitch" name="jobSwitch">
                     <span class="slider round"></span>
                 </label>
