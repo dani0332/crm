@@ -36,7 +36,7 @@ trait GenericQueriesAllLobs
             return false;
         }
 
-        $quote = (intval($id)) ? $model::find($id) : $model::where('uuid', $id)->first();
+        $quote = (is_numeric($id)) ? $model::find($id) : $model::where('uuid', $id)->first();
 
         return (isset($quote->id)) ? $quote : false;
     }
