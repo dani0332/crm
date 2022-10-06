@@ -378,9 +378,7 @@
             <tr>
                 <td class="no-border" >
                     <div class="quote-info">
-                        @if(auth()->check())
-                            <p class="">Comparison of Car Insurance Quote For: {{ auth()->user()->name }}</p>
-                        @endif
+                        <p class="">Comparison of Car Insurance Quote For: {{ $quote->customer->first_name  }} {{$quote->customer->last_name}}</p>
                     </div>
                 </td>
                 @foreach($planIds as $planId)
