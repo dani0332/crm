@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Events\AdvisorAssigned;
 use App\Models\ApplicationStorage;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
@@ -114,7 +116,7 @@ class LeadAllocationService extends BaseService
 
     public function assignLead($lead, $advisorId, $isManualAssignment)
     {
-        info('assignLead -- started');
+        info('assignLead -- started with lead : '. $lead->uuid. ' , advisorId : '. $advisorId. ' , isManualAssignment : '. $isManualAssignment);
         if ($this->checkIfAdvisorCanTakeLead($advisorId)) {
             if ($lead->advisor_id != null) {
                 $this->removeLeadAllocationForOldAdvisor($lead);
@@ -123,8 +125,9 @@ class LeadAllocationService extends BaseService
             info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
             try {
                 DB::beginTransaction();
-
+                AdvisorAssigned::dispatch($lead);
                 if ($isManualAssignment && $lead->advisor_id != null) {
+                    info('Manual Lead and Advisor Null Check');
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
                 $lead->advisor_id = $advisorId;

@@ -1,0 +1,42 @@
+<?php
+
+namespace App\Listeners;
+
+use App\Events\AdvisorAssigned;
+use App\Services\HealthQuoteService;
+use Carbon\Carbon;
+
+class AdvisorAssignedListener
+{
+    protected $healthQuoteService;
+    /**
+     * Create the event listener.
+     *
+     * @return void
+     */
+    public function __construct(HealthQuoteService $healthService)
+    {
+        $this->healthQuoteService = $healthService;
+    }
+
+    /**
+     * Handle the event.
+     *
+     * @param  \App\Events\AdvisorAssigned  $event
+     * @return void
+     */
+    public function handle(AdvisorAssigned $event)
+    {
+        info('With in AdvisorAssignedListener');
+        if($event->lead) {
+            $lead = $event->lead;
+            info('Hit the Plans api for '.$lead->uuid);
+            $response = $this->healthQuoteService->getQuotePlans($lead->uuid);
+            if (gettype($response) != 'string') { 
+                info('Updating Quote Updated at');
+                $lead->quote_updated_at = Carbon::now();
+                $lead->save();
+            }
+        }
+    }
+}
