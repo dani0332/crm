@@ -138,7 +138,7 @@ class LeadAllocationService extends BaseService
                     $this->updateLeadAllocationRecord($advisorId);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
-                if ($isManualAssignment) {
+                if ($isManualAssignment && auth()->user()->hasRole(RolesEnum::BetaUser)) {
                     info('Contact upload Request '.$lead->uuid);
                     $this->sendSibRequest($lead);
                 }
