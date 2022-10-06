@@ -49,7 +49,6 @@ class CreateUpdateContactService extends BaseService
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $apiResponse = $e->getResponse()->getStatusCode();
         }
-
         return $apiResponse;
     }
 }
