@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -18,10 +17,12 @@ use App\Traits\GetUserTree;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Log;
+use App\Traits\CreateUpdateSIbContact;
 
 class LeadAllocationService extends BaseService
 {
     use GetUserTree;
+    use CreateUpdateSIbContact;
 
     public function getGridData()
     {
@@ -126,8 +127,8 @@ class LeadAllocationService extends BaseService
             try {
                 DB::beginTransaction();
                 AdvisorAssigned::dispatch($lead);
-                if ($isManualAssignment && $lead->advisor_id != null) {
-                    info('Manual Lead and Advisor Null Check');
+                if ($isManualAssignment && $lead->advisor_id != null && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
+                    info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
                 $lead->advisor_id = $advisorId;
@@ -137,8 +138,11 @@ class LeadAllocationService extends BaseService
                     $this->updateLeadAllocationRecord($advisorId);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
+                if ($isManualAssignment) {
+                    info('Contact upload Request '.$lead->uuid);
+                    $this->sendSibRequest($lead);
+                }
                 DB::commit();
-
                 return true;
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
