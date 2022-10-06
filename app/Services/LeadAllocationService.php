@@ -116,9 +116,7 @@ class LeadAllocationService extends BaseService
 
     public function assignLead($lead, $advisorId, $isManualAssignment)
     {
-        info('assignLead -- started');
-        info('check Manual Assignment'.$isManualAssignment);
-        info('check Advisor ID'.$lead->advisor_id);
+        info('assignLead -- started with lead : '. $lead->uuid. ' , advisorId : '. $advisorId. ' , isManualAssignment : '. $isManualAssignment);
         if ($this->checkIfAdvisorCanTakeLead($advisorId)) {
             if ($lead->advisor_id != null) {
                 $this->removeLeadAllocationForOldAdvisor($lead);
