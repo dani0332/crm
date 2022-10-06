@@ -9,6 +9,7 @@ use App\Enums\RolesEnum;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
+use App\Traits\CreateUpdateSIbContact;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
 use Carbon\Carbon;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 class CRUDService extends BaseService
 {
     use GenericQueriesAllLobs;
+    use CreateUpdateSIbContact;
 
     protected $healthQuoteService;
     protected $carQuoteService;
@@ -155,9 +157,6 @@ class CRUDService extends BaseService
 
         if (! empty($lobTeams)) {
             foreach ($lobTeams as $lobTeam) {
-                if (strtolower($lobTeam) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lobTeam) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $lobTeam = 'Business';
-                }
                 $this->createDuplicateRecord($lobTeam, $parentRecord);
             }
         }
@@ -221,6 +220,9 @@ class CRUDService extends BaseService
             $entity->wcu_id = null;
         }
         $entity->save();
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus != QuoteStatusEnum::Quoted && auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            $this->sendSibRequest($entity);
+        }
         QuoteStatusLog::create([
             'quote_type_id' => QuoteTypeId::Car,
             'quote_request_id' => $entity->id,

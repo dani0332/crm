@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\quoteTypeCode;
 use App\Services\CapiRequestService;
 
 trait GenericQueriesAllLobs
@@ -20,7 +21,7 @@ trait GenericQueriesAllLobs
     }
 
     /**
-     * get quote object by quote type
+     * get quote object by quote type.
      *
      * @param $quoteType e.g car, health etc
      * @param $id can be id or uuid
@@ -35,7 +36,7 @@ trait GenericQueriesAllLobs
             return false;
         }
 
-        $quote = (intval($id)) ? $model::find($id) : $model::where('uuid', $id)->first();
+        $quote = (is_numeric($id)) ? $model::find($id) : $model::where('uuid', $id)->first();
 
         return (isset($quote->id)) ? $quote : false;
     }
@@ -58,6 +59,9 @@ trait GenericQueriesAllLobs
             'referenceUrl' => config('constants.APP_URL'),
             'source' => config('constants.SOURCE_NAME'),
         ];
+        if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
+            $dataArr['business_type_of_insurance_id'] = 5;
+        }
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-'.strtolower($lob).'-quote', $dataArr);
         if (isset($response->message) && str_contains($response->message, 'Error')) {
             return false;
@@ -68,5 +72,10 @@ trait GenericQueriesAllLobs
                 $record->save();
             }
         }
+    }
+
+    public function getEComQuoteLink($lob, $quoteRequest)
+    {
+        return $quoteRequest->uuid ? config('constants.AFIA_WEBSITE_DOMAIN').'/'.$lob.'-insurance/quote/'.$quoteRequest->uuid : null;
     }
 }

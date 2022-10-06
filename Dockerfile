@@ -34,12 +34,17 @@ RUN apt-get update && apt-get install -y \
     nginx \
     wget \
     gnupg
-    
+   
+# Install node 16
+RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
+RUN bash /tmp/nodesource_setup.sh
+RUN apt install nodejs -y
+
 # Install yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 RUN apt update 
-RUN apt install yarn npm -y
+RUN apt install yarn -y
 
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 
@@ -89,7 +94,7 @@ RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 
 RUN \
-  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.1.0.313-linux.tar.gz | tar -C /tmp -zx && \
+  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.2.0.314-linux.tar.gz | tar -C /tmp -zx && \
   export NR_INSTALL_USE_CP_NOT_LN=1 && \
   export NR_INSTALL_SILENT=1 && \
   /tmp/newrelic-php5-*/newrelic-install install && \

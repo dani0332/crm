@@ -1,3 +1,6 @@
+@php
+    use App\Enums\GenericRequestEnum;
+@endphp
 <form method="post" action="{{ route('members.update', $data->id) }}" autocomplete="off">
     {{ csrf_field() }}
     {{ method_field('PUT') }}
@@ -19,8 +22,9 @@
                 <label class="col-form-label col-md-3 col-sm-3 label-align">Gender</label>
                     <select name="gender" id="" class="form-control">
                         <option>Please Select Gender</option>
-                        <option value="Male" @if($data->gender == "Male") selected @endif>Male</option>
-                        <option value="Female"  @if($data->gender == "Female") selected @endif>Female</option>
+                        <option value="{{GenericRequestEnum::MALE_SINGLE_VALUE}}" @if($data->gender == GenericRequestEnum::MALE_SINGLE_VALUE) selected @endif>{{GenericRequestEnum::MALE_SINGLE}}</option>
+                        <option value="{{GenericRequestEnum::FEMALE_SINGLE_VALUE}}" @if($data->gender == GenericRequestEnum::FEMALE_SINGLE_VALUE) selected @endif>{{GenericRequestEnum::FEMALE_SINGLE}}</option>
+                        <option value="{{GenericRequestEnum::FEMALE_MARRIED_VALUE}}" @if($data->gender == GenericRequestEnum::FEMALE_MARRIED_VALUE) selected @endif>{{GenericRequestEnum::FEMALE_MARRIED}}</option>
                     </select>
                 </div>
             </div>

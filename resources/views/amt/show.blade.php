@@ -206,6 +206,17 @@
                         </div>
                     </div>
                     @endif
+                    <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_batch"><b>Parent CDB ID</b></label>
+                            <div class="col-md-6 col-sm-6 ">
+                            <p class="label-align-center">{{$record->parent_duplicate_quote_id}}</p>
+                            </div>
+                        </div>
+                        <div class="col">
+
+                        </div>
+                    </div>
                     <div class="ln_solid"></div>
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
