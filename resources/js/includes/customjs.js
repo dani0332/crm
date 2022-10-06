@@ -2566,11 +2566,11 @@ $(document).ready(function () {
   {
   
     if($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-      alert("Please seelct atleast 3 plans.");return false;
+      alert("Please select atleast 3 plan.");return false;
     }
 
-    if($("input[name='toggle_plans_checkbox']:checked").length > 6) {
-      alert("Maximum of 6 plans are allowed to select.");return false;
+    if($("input[name='toggle_plans_checkbox']:checked").length > 5) {
+      alert("Maximum of 5 plans are allowed to select.");return false;
     }
 
     var plan_ids = [];

@@ -924,13 +924,14 @@ class CRUDController extends Controller
             return redirect()->back()->with('message', 'Quote plans not available');
         }
 
+        //dd($quotePlans->quotes->plans);
         $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
-        $quote->load(['carMake', 'carModel']);
+        $quote->load(['carMake', 'carModel', 'advisor', 'customer']);
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
 
-        // generate pdf with file name e.g. car-rgujxlk4_plans.pdf
-        $pdf_name = strtolower($quote->code).'_plans'.'.pdf';
+        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
+        $pdf_name = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->customer->first_name.'.pdf';
 
         return $pdf->download($pdf_name);
     }

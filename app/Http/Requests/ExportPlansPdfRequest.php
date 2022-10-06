@@ -35,7 +35,7 @@ class ExportPlansPdfRequest extends FormRequest
     {
         return [
             'quote_uuid' => ['required', new ValidateQuoteObject],
-            'plan_ids' => 'required|array|min:3|max:6',
+            'plan_ids' => 'required|array|min:3|max:5',
         ];
     }
 
