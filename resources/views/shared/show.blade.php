@@ -453,7 +453,9 @@
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id"
             :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
-        <x-health-quote-members-detail :members="$membersDetail" />
+        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+            <x-health-quote-members-detail :members="$membersDetail" />
+        @endif
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
