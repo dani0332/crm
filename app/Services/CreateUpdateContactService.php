@@ -50,7 +50,7 @@ class CreateUpdateContactService extends BaseService
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $apiResponse = $e->getResponse()->getStatusCode();
         }
-        info("Contact upload Service end  ".$data);
+        info("Contact upload Service end");
         return $apiResponse;
     }
 }
