@@ -19,8 +19,8 @@ class TierService extends BaseService
                 't.min_price',
                 't.max_price',
                 't.cost_per_lead',
-                't.is_tpl',
-                't.is_auto_assignment_enabled',
+                't.can_handle_null_value',
+                't.can_handle_ecommerce',
                 't.is_active',
                 't.updated_at',
                 't.created_at',
@@ -51,8 +51,8 @@ class TierService extends BaseService
             'min_price' => $request->min_price,
             'max_price' => $request->max_price,
             'cost_per_lead' => $request->cost_per_lead,
-            'is_tpl' => $request->has('is_tpl') && $request->is_tpl == 'on' ? 1 : 0,
-            'is_auto_assignment_enabled' => $request->has('is_auto_assignment_enabled') && $request->is_auto_assignment_enabled == 'on' ? 1 : 0,
+            'can_handle_null_value' => $request->has('can_handle_null_value') && $request->can_handle_null_value == 'on' ? 1 : 0,
+            'can_handle_ecommerce' => $request->has('can_handle_ecommerce') && $request->can_handle_ecommerce == 'on' ? 1 : 0,
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
         ]);
 
@@ -79,8 +79,8 @@ class TierService extends BaseService
         $tier->min_price = $request->min_price;
         $tier->max_price = $request->max_price;
         $tier->cost_per_lead = $request->cost_per_lead;
-        $tier->is_tpl = $request->has('is_tpl') && $request->is_tpl == 'on' ? 1 : 0;
-        $tier->is_auto_assignment_enabled = $request->has('is_auto_assignment_enabled') && $request->is_auto_assignment_enabled == 'on' ? 1 : 0;
+        $tier->can_handle_null_value = $request->has('can_handle_null_value') && $request->can_handle_null_value == 'on' ? 1 : 0;
+        $tier->can_handle_ecommerce = $request->has('can_handle_ecommerce') && $request->can_handle_ecommerce == 'on' ? 1 : 0;
         $tier->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $tier->save();
         if (isset($request->tier_users)) {
@@ -109,8 +109,8 @@ class TierService extends BaseService
             'max_price' => 'input|number|title|required|equalSearch',
             'cost_per_lead' => 'input|number|title|equalSearch',
             'tier_users' => 'select|multiple|multiSearch',
-            'is_tpl' => 'input|checkbox|title',
-            'is_auto_assignment_enabled' => 'input|checkbox|title',
+            'can_handle_ecommerce' => 'input|checkbox|title',
+            'can_handle_null_value' => 'input|checkbox|title',
             'is_active' => 'input|checkbox|title',
         ];
     }
@@ -131,11 +131,11 @@ class TierService extends BaseService
             case 'cost_per_lead':
                 $title = 'Cost Per Lead';
                 break;
-            case 'is_tpl':
-                $title = 'Is TPL ?';
+            case 'can_handle_ecommerce':
+                $title = 'Handle Ecommerce ?';
                 break;
-            case 'is_auto_assignment_enabled':
-                $title = 'Auto Assign ?';
+            case 'can_handle_null_value':
+                $title = 'Handle Null Value ?';
                 break;
             case 'is_active':
                 $title = 'Is Active ?';

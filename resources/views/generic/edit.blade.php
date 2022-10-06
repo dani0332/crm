@@ -57,9 +57,7 @@
                                             </span>
                                             <input
                                                 @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
-                                                @if(explode("|", $value)[1] != 'date')
-                                                    type={{ explode("|", $value)[1]  }}
-                                                    @endif id={{$property}}
+                                                    type={{ explode("|", $value)[1]  }} id={{$property}}
                                                     @if(strpos($value, 'min') !== false)
                                                         min="{{explode(":", $value)[1]}}"
                                                     @endif

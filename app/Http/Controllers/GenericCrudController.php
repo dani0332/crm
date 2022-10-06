@@ -14,6 +14,7 @@ use App\Services\DropdownSourceService;
 use App\Services\InsuranceProviderService;
 use App\Services\LeadStatusService;
 use App\Services\QuadrantService;
+use App\Services\RuleService;
 use App\Services\TeamService;
 use App\Services\TierService;
 use DataTables;
@@ -34,6 +35,7 @@ class GenericCrudController extends Controller
     protected $leadStatusService;
     protected $tierService;
     protected $quadrantService;
+    protected $ruleService;
 
     public function __construct(
         InsuranceProviderService $insuranceProviderService,
@@ -48,7 +50,8 @@ class GenericCrudController extends Controller
         TeamService $teamsService,
         LeadStatusService $leadStatusService,
         TierService $tierService,
-        QuadrantService $quadrantService
+        QuadrantService $quadrantService,
+        RuleService $ruleService
     ) {
         $this->genericModel = new GenericModel();
         $this->crudService = $crudService;
@@ -63,6 +66,7 @@ class GenericCrudController extends Controller
         $this->leadStatusService = $leadStatusService;
         $this->tierService = $tierService;
         $this->quadrantService = $quadrantService;
+        $this->ruleService = $ruleService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -302,8 +306,8 @@ class GenericCrudController extends Controller
         if (strpos($url, 'quadrant')) {
             $this->genericModel->modelType = 'Quadrant';
         }
-        if (strpos($url, 'la-advisor-assignment')) {
-            $this->genericModel->modelType = 'LAAdvisorAssignment';
+        if (strpos($url, 'rule')) {
+            $this->genericModel->modelType = 'Rule';
         }
     }
 

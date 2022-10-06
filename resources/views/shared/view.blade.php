@@ -435,7 +435,6 @@
                 $(this).addClass("active");
                 $(".toggle-btn").removeClass("active");
             });
-
         });
 
         var ENDPOINT = "{{ url('/') }}";

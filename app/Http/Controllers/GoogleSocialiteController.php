@@ -35,8 +35,8 @@ class GoogleSocialiteController extends Controller
                     ],
                 ]);
         }
-        $isExisted = User::where('email', $socialUser->getEmail())->get();
-        if (count($isExisted) == 0) {
+        $requestingUser = User::where('email', $socialUser->getEmail())->first();
+        if (! $requestingUser) {
             return redirect()->route('login')
                 ->withErrors([
                     'email' => [
@@ -45,7 +45,10 @@ class GoogleSocialiteController extends Controller
                 ]);
         }
 
-        auth()->login($isExisted[0]);
+        auth()->login($requestingUser);
+
+        $requestingUser->last_login = now();
+        $requestingUser->save();
 
         return redirect()->intended('/leadsearch');
     }

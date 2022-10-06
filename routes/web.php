@@ -8,6 +8,7 @@ use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
+use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CarQuoteController;
 use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
@@ -73,6 +74,8 @@ Route::get('/', function () {
     return redirect('login');
 });
 
+Route::post('logout', [UserController::class, 'logout'])->name('logout');
+
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
@@ -132,6 +135,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/customer-additional-contact/add', [CustomerController::class, 'addAdditionalContact']);
 
     Route::resource('lead-allocation', LeadAllocationController::class);
+    Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
     Route::post('/lead-allocation/setLeadAllocationJobStatus', [LeadAllocationController::class, 'setLeadAllocationJobStatus']);
 
@@ -219,6 +223,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('leadstatus', GenericCrudController::class);
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);
+        Route::resource('rule', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });

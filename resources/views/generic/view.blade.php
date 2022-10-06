@@ -71,7 +71,7 @@
                                 }
                         }
                 }
-          
+
             var disableSortColumns = [];
             var genericDataTable = $("#dtBasicExample").DataTable({
                 ordering: true,
@@ -224,7 +224,7 @@
                     @if (count($model->searchProperties) > 0)
                         <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
                             data-parsley-validate="" novalidate="" autocomplete="off">
-                           
+
                             @foreach ($model->properties as $property => $value)
                                 @foreach ($model->searchProperties as $searchProperty)
                                     @if ($searchProperty == $property)
@@ -298,7 +298,7 @@
                                                             {{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property)) }}
                                                         </option>
                                                     @endif
-                                                   
+
                                                     @foreach ($dropdownSource[$property] as $item)
                                                         <option value="{{ $item->id }}">
                                                             {{ $item->text ?? $item->name }}
@@ -341,7 +341,7 @@
                                                                 {{ $item }}
                                                             </option>
                                                             @endif
-                                                        
+
                                                     @endforeach
                                                 </select>
                                                 @if ($errors->has($property))
@@ -366,7 +366,7 @@
                             width="100%">
                             <thead>
                                 <tr>
-                                    
+
                                     @foreach ($model->properties as $property => $value)
                                         @if (!in_array($property, explode(',', $model->skipProperties['list'])))
                                             <th data-type="{{ explode('|', $value)[1] }}">

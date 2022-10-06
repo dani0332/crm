@@ -34,12 +34,17 @@ class LeadAllocationJob implements ShouldQueue
     {
         try {
             Log::info('Lead Allocation Job Started');
+            $leadAllocationService->setAdvisorsToUnavailable();
+            if (! $leadAllocationService->carLeadAllocationSwitchStatus()) {
+                info('CAR Lead Allocation Job Switch is OFF');
+            } else {
+                $leadAllocationService->processCarLeads();
+            }
             if (! $leadAllocationService->leadAllocationSwitchStatus()) {
                 info('Lead Allocation Job Switch is OFF');
 
                 return;
             } else {
-                $leadAllocationService->setAdvisorsToUnavailable();
                 $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();
                 if (count($unAllocatedLeads) > 0) {
                     $availableUsers = $leadAllocationService->getAvailableAdvisors();

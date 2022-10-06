@@ -203,6 +203,7 @@
                 activitiesDataTable: "{{ route('activities.index') }}",
                 renewals_batches_datatable_route: "{{ url('renewals/batches') }}",
                 lead_allocation_index_route: "{{ route('lead-allocation.index') }}",
+                car_lead_allocation_index_route: "{{ route('car-lead-allocation.index') }}",
             },
             _token: "{{ csrf_token() }}",
             image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}",

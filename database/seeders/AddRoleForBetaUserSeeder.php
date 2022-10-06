@@ -52,8 +52,7 @@ class AddRoleForBetaUserSeeder extends Seeder
             $carAdvisorRoleId = Role::where('name', 'CAR_ADVISOR')->pluck('id');
             $carAdvisorPermissionIds = DB::table('role_has_permissions')->where('role_id', $carAdvisorRoleId)->pluck('permission_id');
             foreach ($paymentPermissionIds as $id) {
-                DB::table('role_has_permissions')->insert([
-                    'role_id' => $betaUserRoleId,
+                DB::table('role_has_permissions')->insert(['role_id' => $betaUserRoleId,
                     'permission_id' => $id,
                 ]);
             }

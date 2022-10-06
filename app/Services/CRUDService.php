@@ -35,6 +35,7 @@ class CRUDService extends BaseService
     protected $applicationstorageService;
     protected $tierService;
     protected $quadrantService;
+    protected $ruleService;
 
     public function __construct(
         HealthQuoteService $healthQuoteService,
@@ -53,7 +54,8 @@ class CRUDService extends BaseService
         CarPlanAddOnOptionService $carplanaddonoptionService,
         ApplicationStorageService $applicationstorageService,
         TierService $tierService,
-        QuadrantService $quadrantService
+        QuadrantService $quadrantService,
+        RuleService $ruleService,
     ) {
         $this->healthQuoteService = $healthQuoteService;
         $this->carQuoteService = $carQuoteService;
@@ -72,6 +74,7 @@ class CRUDService extends BaseService
         $this->applicationstorageService = $applicationstorageService;
         $this->tierService = $tierService;
         $this->quadrantService = $quadrantService;
+        $this->ruleService = $ruleService;
         $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car', 'pet'];
     }
 

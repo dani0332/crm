@@ -35,7 +35,7 @@ use App\Enums\PermissionsEnum;
                     <li><a><i class="fa fa-paper-plane"></i>Lead Allocation<span class="fa fa-chevron-down" style="color: white;"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('lead-allocation') }}">Health</a></li>
-                            <li><a href="{{ url('generic/quadrant') }}">Car</a></li>
+                            <li><a href="{{ url('car-lead-allocation') }}">Car</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -302,6 +302,7 @@ use App\Enums\PermissionsEnum;
                                 <ul class="nav child_menu">
                                     <li><a href="{{ url('generic/tier') }}">Tiers</a></li>
                                     <li><a href="{{ url('generic/quadrant') }}">Quadrants</a></li>
+                                    <li><a href="{{ url('generic/rule') }}">Rules</a></li>
                                 </ul>
                             </li>
                             @can(PermissionsEnum::InsuranceProviderList)

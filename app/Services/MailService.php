@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Mail;
 class MailService extends BaseService
 {
     public static function sendEmail($templateName, $templateParams, $subject, $to)
-    //public static function sendEmail($templateName, $templateParams, $subject , $to, )
     {
         $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
         $fromName = Config::get('constants.MAIL_FROM_NAME');
