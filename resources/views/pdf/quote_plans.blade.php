@@ -125,7 +125,7 @@
             padding: 3px;
         }
         .quote-info {
-            text-align: right;padding-right: 0;vertical-align: middle;
+            text-align: right;padding-right: 0;vertical-align: bottom;
         }
         div.quote-info  {
             margin-top: -1px;
@@ -335,7 +335,7 @@
             <thead>
             <tr>
 
-                <th class="quote-info" style="">
+                <th class="quote-info" rowspan="3">
                     <img style="" src="{{public_path('images/alfred.png')}}" />
                 </th>
 
@@ -354,11 +354,7 @@
             <tbody>
 
             <tr>
-                <td class="no-border" >
-                    <div class="quote-info">
-                        <p class="">Comparison of Car Insurance Quote For: {{ auth()->user()->name }}</p>
-                    </div>
-                </td>
+
                 @foreach($planIds as $planId)
                     <td>
                         <p class="text-center">
@@ -369,7 +365,6 @@
             </tr>
 
             <tr>
-                <td class="no-border" >&nbsp;</td>
                 @foreach($planIds as $planId)
                     <td>
                         <p class="text-center">
@@ -381,12 +376,20 @@
 
             {{-- buy now row --}}
             <tr>
-                <td class="no-border">&nbsp;</td>
+                <td class="no-border" >
+                    <div class="quote-info">
+                        @if(auth()->check())
+                            <p class="">Comparison of Car Insurance Quote For: {{ auth()->user()->name }}</p>
+                        @endif
+                    </div>
+                </td>
                 @foreach($planIds as $planId)
                     <td>
                         <p class="text-center">
                             @if($plans[$planId]->discountPremium)
                                 <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
+                            @else
+                                N/A
                             @endif
                         </p>
                     </td>
@@ -440,6 +443,8 @@
 
                                     @if($plans[$planId]->discountPremium)
                                         <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
+                                    @else
+                                        N/A
                                     @endif
 
                                 @elseif(is_array($feature['type']))

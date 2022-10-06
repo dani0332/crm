@@ -23,7 +23,9 @@ class ExportPlansPdfRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        $this->replace(array_merge($this->all(), ['plan_ids' => explode(',', $this->plan_ids)]));
+        if (is_string($this->plan_ids)) {
+            $this->replace(array_merge($this->all(), ['plan_ids' => explode(',', $this->plan_ids)]));
+        }
     }
 
     /**
@@ -56,7 +58,7 @@ class ExportPlansPdfRequest extends FormRequest
     public function messages()
     {
         return [
-            'plan_ids.max' => 'Maximum 6 plans are allowed to select',
+            'plan_ids.max' => 'Maximum 5 plans are allowed to select',
             'plan_ids.min' => 'Minimum 3 plans should be selected',
         ];
     }

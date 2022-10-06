@@ -916,24 +916,15 @@ class CRUDController extends Controller
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
-        $planIds = $request->plan_ids;
+        $response = $this->carQuoteService->exportPlansPdf($quoteType, $request->validated());
 
-        $quotePlans = $this->carQuoteService->getQuotePlans($request->quote_uuid);
-
-        if (! isset($quotePlans->quotes->plans)) {
-            return redirect()->back()->with('message', 'Quote plans not available');
+        if (isset($response['error'])) {
+            return redirect()->back()->with('message', $response['error']);
         }
 
-        //dd($quotePlans->quotes->plans);
-        $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
-        $quote->load(['carMake', 'carModel', 'advisor', 'customer']);
+        $pdf = $response['pdf'];
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
-
-        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdf_name = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->customer->first_name.'.pdf';
-
-        return $pdf->download($pdf_name);
+        return $pdf->download($response['name']);
     }
 
     public function destroyDocument($quoteType, $quoteUuId, $id)
