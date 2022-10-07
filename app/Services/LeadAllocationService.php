@@ -13,11 +13,11 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
+use App\Traits\CreateUpdateSIbContact;
 use App\Traits\GetUserTree;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Log;
-use App\Traits\CreateUpdateSIbContact;
 
 class LeadAllocationService extends BaseService
 {
@@ -117,7 +117,7 @@ class LeadAllocationService extends BaseService
 
     public function assignLead($lead, $advisorId, $isManualAssignment)
     {
-        info('assignLead -- started with lead : '. $lead->uuid. ' , advisorId : '. $advisorId. ' , isManualAssignment : '. $isManualAssignment);
+        info('assignLead -- started with lead : '.$lead->uuid.' , advisorId : '.$advisorId.' , isManualAssignment : '.$isManualAssignment);
         if ($this->checkIfAdvisorCanTakeLead($advisorId)) {
             if ($lead->advisor_id != null) {
                 $this->removeLeadAllocationForOldAdvisor($lead);
@@ -143,6 +143,7 @@ class LeadAllocationService extends BaseService
                     $this->sendSibRequest($lead);
                 }
                 DB::commit();
+
                 return true;
             } catch (\Exception $e) {
                 Log::error($e->getMessage());

@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
-use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -993,6 +992,12 @@ class HealthQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
+            if (Auth::user()->hasPermissionTo('manual-lead-assignment-QA')) {
+                info('inside the check for manual assignment QA');
+                $lead->advisor_id = $userId;
+                $lead->save();
+                continue;
+            }
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
                 if ($lead->health_team_type == null || $lead->health_team_type == '') {
                     Log::info('Lead with id: '.$leadId.' is not assigned to any health team');

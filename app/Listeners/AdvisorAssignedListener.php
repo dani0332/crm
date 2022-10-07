@@ -28,7 +28,7 @@ class AdvisorAssignedListener
     public function handle(AdvisorAssigned $event)
     {
         info('With in AdvisorAssignedListener');
-        if($event->lead) {
+        if ($event->lead) {
             $lead = $event->lead;
             info('Hit the Plans api for '.$lead->uuid);
             $this->healthQuoteService->getQuotePlans($lead->uuid);
