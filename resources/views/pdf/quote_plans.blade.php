@@ -147,6 +147,18 @@
         .info p {
             font-size: 12px;
         }
+        .btn-all-quotes {
+            background-color: #1d83bc;
+            color: #ffffff;
+            padding: 12px 25px;
+            margin-top: 8px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+        }
         .btn-buy
         {
             background-color: #FE7333;
@@ -205,6 +217,7 @@
         .full-page-image {
             width: 100%;
         }
+        .text-center {text-align: center;}
     </style>
 </head>
 
@@ -378,7 +391,7 @@
             <tr>
                 <td class="no-border" >
                     <div class="quote-info">
-                        <p class="">Comparison of Car Insurance Quote For: {{ $quote->customer->first_name  }} {{$quote->customer->last_name}}</p>
+                        <p class="">Car insurance comparison for: <b>{{ $quote->customer->first_name  }} {{$quote->customer->last_name}}</b></p>
                     </div>
                 </td>
                 @foreach($planIds as $planId)
@@ -466,6 +479,11 @@
                 </tr>
 
             @endforeach
+            <tr>
+                <td colspan="{{sizeof($planIds) + 1}}" class="no-border text-center">
+                    <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid )}}" >View All Quotes</a>
+                </td>
+            </tr>
             </tbody>
         </table>
 

@@ -29,7 +29,8 @@ class ExportPlansPdfRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * quoteType, quoteUuid, and PlanIds are required to run this feature
+     * this request validation is in use to export pdf from IMCRM form and API endPoint
      *
      * @return array
      */
@@ -55,6 +56,9 @@ class ExportPlansPdfRequest extends FormRequest
         });
     }
 
+    /**
+     * @return string[]
+     */
     public function messages()
     {
         return [
