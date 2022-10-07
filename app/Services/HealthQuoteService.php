@@ -992,8 +992,8 @@ class HealthQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            if (Auth::user()->hasPermissionTo('manual-lead-assignment-QA'))
-            {
+            if (Auth::user()->hasPermissionTo('manual-lead-assignment-QA')) {
+                info('inside the check for manual assignment QA');
                 $lead->advisor_id = $userId;
                 $lead->save();
                 continue;
