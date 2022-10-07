@@ -528,7 +528,7 @@ class LeadAllocationService extends BaseService
         } elseif ($carLead->is_ecommerce) {
             $query = $query.' and can_handle_ecommerce = 1 limit 1';
         } else {
-            $query = $query.' and `min_price` <= ? and `max_price` >= ? limit 1';
+            $query = $query.' and (`min_price` <= ? OR min_price is null) and ( `max_price` >= ? or max_price is null ) limit 1';
         }
 
         $selectedTier = DB::select($query, [$carLead, $carLead]);
