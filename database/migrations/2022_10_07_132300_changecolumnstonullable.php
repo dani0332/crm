@@ -14,8 +14,8 @@ class Changecolumnstonullable extends Migration
     public function up()
     {
         Schema::table('tiers', function (Blueprint $table) {
-            $table->float('min_price',16,2)->nullable()->change();
-            $table->float('max_price',16,2)->nullable()->change();
+            $table->float('min_price', 16, 2)->nullable()->change();
+            $table->float('max_price', 16, 2)->nullable()->change();
         });
     }
 
