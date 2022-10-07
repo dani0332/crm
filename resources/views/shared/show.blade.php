@@ -330,7 +330,7 @@
                             </button>
                         </div>
                         <div class="modal-body" style="">
-                            <select class="form-control select2" @if(auth()->user()->hasRole(RolesEnum::BetaUser)) onchange="toggleSubDropDown(this)" @endif multiple="multiple" id="lob_team" name="lob_team[]">
+                            <select class="form-control select2" onchange="toggleSubDropDown(this)" multiple="multiple" id="lob_team" name="lob_team[]">
                                 @foreach ($allowedDuplicateLOB as $item)
                                     <option value="{{ $item }}">{{ $item }}</option>
                                 @endforeach
@@ -453,9 +453,7 @@
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id"
             :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
-        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
             <x-health-quote-members-detail :members="$membersDetail" />
-        @endif
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />

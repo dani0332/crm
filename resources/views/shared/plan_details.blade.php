@@ -627,7 +627,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								</td>
 							</tr>
 							@endforeach
-							@if(($member->premium === 0 && auth()->user()->hasRole(RolesEnum::BetaUser)) || ($isManualPlan && auth()->user()->hasRole(RolesEnum::BetaUser)))
+							@if($member->premium === 0 || $isManualPlan)
 							<tr>
 								<td colspan="7"></td>
 								<td align="right">
