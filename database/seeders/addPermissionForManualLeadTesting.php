@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Permission;
-use Illuminate\Database\Seeder;
 use DB;
+use Illuminate\Database\Seeder;
 
 class addPermissionForManualLeadTesting extends Seeder
 {
@@ -15,9 +15,8 @@ class addPermissionForManualLeadTesting extends Seeder
      */
     public function run()
     {
-
         $permission = Permission::where('name', 'manual-lead-assignment-QA')->first();
-        if($permission == null){
+        if ($permission == null) {
             DB::table('permissions')->insert([
                 'name' => 'manual-lead-assignment-QA',
                 'guard_name' => 'web',
