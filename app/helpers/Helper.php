@@ -373,3 +373,10 @@ function addOrderByClauses($request, $query, $searchPrefix)
         return $query->orderBy($searchPrefix.'created_at', 'DESC');
     }
 }
+
+function formatAmount($value, $decimals = 2, $appendPrefix = true)
+{
+    $value = number_format($value, $decimals);
+
+    return ($appendPrefix) ? 'AED '.$value : $value;
+}

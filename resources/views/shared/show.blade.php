@@ -39,6 +39,7 @@
     use App\Enums\QuoteStatusEnum;
     use App\Enums\PermissionsEnum;
     use App\Enums\DatabaseColumnsString;
+    use App\Enums\GenericRequestEnum;
     @endphp
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -224,7 +225,9 @@
                                             @php
                                                 $propertyName = $property . '_text';
                                             @endphp
-                                            <p class="label-align-center">{{ $record->$propertyName }}</p>
+                                            <p class="label-align-center">
+                                            {{ $record->$propertyName }}
+                                            </p>
                                         </div>
                                     @endif
                                 @else
@@ -241,7 +244,11 @@
                                                 @if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), 'yes')))
                                                 {{ $record->$property ? 'Yes' : 'No' }}
                                                 @elseif( (str_contains($value, 'static') && !str_contains(strtolower($value), 'yes')))
-                                                {{ $record->$property }}
+                                                    @if($record->$property == GenericRequestEnum::MALE_SINGLE_VALUE) {{GenericRequestEnum::MALE_SINGLE}}
+                                                    @elseif($record->$property == GenericRequestEnum::FEMALE_SINGLE_VALUE) {{GenericRequestEnum::FEMALE_SINGLE}}
+                                                    @elseif($record->$property == GenericRequestEnum::FEMALE_MARRIED_VALUE) {{GenericRequestEnum::FEMALE_MARRIED}}
+                                                    @else {{ $record->$property }}
+                                                    @endif
                                                 @elseif($property == 'previous_quote_id')
                                                     @php
                                                         $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
@@ -304,7 +311,7 @@
             aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
 
-                <div class="modal-content" style="display: grid;    height: 260px !important;">
+                <div class="modal-content" style="display: grid;">
                     <form method="post" action="/quotes/createDuplicate" autocomplete="off">
                         {{ csrf_field() }}
                         @method('POST')
@@ -322,15 +329,20 @@
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
-                        <div class="modal-body" style="height: 138px;">
-                            <select class="form-control select2" multiple="multiple" id="lob_team" name="lob_team[]">
+                        <div class="modal-body" style="">
+                            <select class="form-control select2" @if(auth()->user()->hasRole(RolesEnum::BetaUser)) onchange="toggleSubDropDown(this)" @endif multiple="multiple" id="lob_team" name="lob_team[]">
                                 @foreach ($allowedDuplicateLOB as $item)
                                     <option value="{{ $item }}">{{ $item }}</option>
                                 @endforeach
                             </select>
+                            <select class="form-control" style="display:none;margin-top:10px" id="lob_team_sub_selection" name="lob_team_sub_selection">
+                            <option value="" disabled selected>Select your option</option>    
+                            <option value="new_enquiry">New enquiry</option>
+                            <option value="record_only">Record purposes only</option>
+                            </select>
                         </div>
                         <div class="modal-footer" style="justify-content: center; padding : 0px !important;">
-                            <button type="submit" style="margin-top: 13px;" class="btn btn-sm btn-success">Create
+                            <button type="submit" style="margin-top: 13px;" class="btn btn-sm btn-success" onClick="this.form.submit(); this.disabled=true; this.innerHTML='Duplicating…';">Create
                                 Duplicate</button>
                         </div>
                     </form>
@@ -368,7 +380,7 @@
         @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
         <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" />
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
@@ -441,7 +453,9 @@
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id"
             :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
-        <x-health-quote-members-detail :members="$membersDetail" />
+        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+            <x-health-quote-members-detail :members="$membersDetail" />
+        @endif
         <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <pax-quote-policy :record="$record" :quoteType="$quoteType" />
@@ -494,4 +508,14 @@
             </button>
         </div>
     @endcan
+    <script>
+        function toggleSubDropDown(el){
+            var selectedLobs = $("#lob_team").val();
+            if(selectedLobs.length > 0) {
+                $("#lob_team_sub_selection").css('display','block');
+            }else {
+                $("#lob_team_sub_selection").css('display','none');
+            }
+        }
+    </script>
 @endsection

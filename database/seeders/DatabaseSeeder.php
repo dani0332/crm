@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
             AddRoleForBetaUserSeeder::class,
             CustomerAdditionalContactSeeder::class,
             addRenewalAppSettings::class,
+            SendPolicyApplicationStorageSeeder::class,
+            addPermissionForManualLeadTesting::class,
         ]);
     }
 }

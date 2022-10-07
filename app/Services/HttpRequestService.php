@@ -23,7 +23,6 @@ class HttpRequestService extends BaseService
                     'timeout' => $creds['apiTimeout'],
                 ]
             );
-
             $statusCode = $kenRequest->getStatusCode();
 
             return $statusCode;

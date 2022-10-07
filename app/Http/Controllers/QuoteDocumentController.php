@@ -6,6 +6,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Services\ActivitiesService;
+use App\Services\ApplicationStorageService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\QuoteDocumentService;
@@ -32,7 +33,8 @@ class QuoteDocumentController extends Controller
         QuoteDocumentService $quoteDocumentService,
         SendEmailCustomerService $sendEmailCustomerService,
         CustomerService $customerService,
-        UserService $userService
+        UserService $userService,
+        ApplicationStorageService $applicationStorageService,
     ) {
         $this->crudService = $crudService;
         $this->activityService = $activityService;
@@ -40,6 +42,7 @@ class QuoteDocumentController extends Controller
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->customerService = $customerService;
         $this->userService = $userService;
+        $this->applicationStorageService = $applicationStorageService;
     }
 
     /**
@@ -95,8 +98,39 @@ class QuoteDocumentController extends Controller
 
     public function sendPolicyDocument($quoteType, $quoteUuId)
     {
-        $emailTemplateId = (int) config('constants.SIB_TRAVEL_QUOTE_POLICY_TEMPLATE_ID');
         $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
+        switch ($quoteType) {
+            case 'car':
+                $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('SIB_CAR_SEND_POLICY_TEMPLATE_ID');
+
+                break;
+            default:
+                $emailTemplateId = false;
+                break;
+        }
+
+        $quotePlan = $quoteModel->plan;
+        if (! $quotePlan || ! $quotePlan->insuranceProvider || ! $quotePlan->insuranceProvider->code) {
+            $providerSupportNumber = false;
+        } else {
+            $providerSupportNumber = $this->applicationStorageService->getValueByKey(strtoupper($quotePlan->insuranceProvider->code).'_CUSTOMER_SUPPORT_NUMBER');
+        }
+        if ($emailTemplateId == false) {
+            if (request()->ajax()) {
+                return response()->json(['error' => 'Error sending Quote Policy. Email Template not configured.']);
+            }
+
+            return redirect()->back()->with('error', 'Error sending Quote Policy. Email Template not configured.');
+        }
+
+        if (! $providerSupportNumber) {
+            if (request()->ajax()) {
+                return response()->json(['error' => 'Error sending Quote Policy. Provider Support Number not configured.']);
+            }
+
+            return redirect()->back()->with('error', 'Error sending Quote Policy. Provider Support Number not configured.');
+        }
+
         $quoteDocuments = $this->getQuoteUploadedDocuments($quoteType, $quoteUuId);
         $policyWordingDocuments = $this->getPolicyWordingDocuments($quoteType, $quoteModel->plan_id);
         $documentUrl = array_merge($quoteDocuments, $policyWordingDocuments);
@@ -116,16 +150,24 @@ class QuoteDocumentController extends Controller
             'templateId' => $emailTemplateId,
             'customerId' => $customer->id,
             'documentUrl' => $documentUrl,
+            'providerSupportNumber' => $providerSupportNumber,
         ];
 
         $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'policy-documents-'.$quoteType.'-quote');
 
         if ($response == 201) {
             $this->crudService->updateQuoteStatusbyModel($quoteModel, QuoteStatusEnum::PolicyIssued);
+            if (request()->ajax()) {
+                return response()->json(['success' => 'Quote Policy has been sent.']);
+            }
 
             return redirect()->back()->with('success', 'Quote Policy has been sent.');
         } else {
-            return redirect()->back()->with('error', 'Error sending Quote Policy. '.$response);
+            if (request()->ajax()) {
+                return response()->json(['success' => 'Error sending Quote Policy.']);
+            }
+
+            return redirect()->back()->with('error', 'Error sending Quote Policy.');
         }
     }
 

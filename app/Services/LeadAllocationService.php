@@ -6,6 +6,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Events\AdvisorAssigned;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -17,6 +18,7 @@ use App\Models\Nationality;
 use App\Models\Team;
 use App\Models\TierUsers;
 use App\Models\User;
+use App\Traits\CreateUpdateSIbContact;
 use App\Traits\GetUserTree;
 use Carbon\Carbon;
 use DB;
@@ -26,6 +28,7 @@ use Illuminate\Support\Facades\Redis;
 class LeadAllocationService extends BaseService
 {
     use GetUserTree;
+    use CreateUpdateSIbContact;
 
     public function getGridData()
     {
@@ -120,7 +123,7 @@ class LeadAllocationService extends BaseService
 
     public function assignLead($lead, $advisorId, $isManualAssignment)
     {
-        info('assignLead -- started');
+        info('assignLead -- started with lead : '.$lead->uuid.' , advisorId : '.$advisorId.' , isManualAssignment : '.$isManualAssignment);
         if ($this->checkIfAdvisorCanTakeLead($advisorId)) {
             if ($lead->advisor_id != null) {
                 $this->removeLeadAllocationForOldAdvisor($lead);
@@ -129,8 +132,9 @@ class LeadAllocationService extends BaseService
             info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
             try {
                 DB::beginTransaction();
-
-                if ($isManualAssignment && $lead->advisor_id != null) {
+                AdvisorAssigned::dispatch($lead);
+                if ($isManualAssignment && $lead->advisor_id != null && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
+                    info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
                 $lead->advisor_id = $advisorId;
@@ -140,6 +144,10 @@ class LeadAllocationService extends BaseService
                     $this->updateLeadAllocationRecord($advisorId);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
+                if ($isManualAssignment && auth()->user()->hasRole(RolesEnum::BetaUser)) {
+                    info('Contact upload Request '.$lead->uuid);
+                    $this->sendSibRequest($lead);
+                }
                 DB::commit();
 
                 return true;

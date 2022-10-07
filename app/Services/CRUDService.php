@@ -9,6 +9,8 @@ use App\Enums\RolesEnum;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
+use App\Traits\CreateUpdateSIbContact;
+use App\Traits\GenericQueriesAllLobs;
 use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -16,6 +18,9 @@ use Illuminate\Support\Facades\DB;
 
 class CRUDService extends BaseService
 {
+    use GenericQueriesAllLobs;
+    use CreateUpdateSIbContact;
+
     protected $healthQuoteService;
     protected $carQuoteService;
     protected $teamsService;
@@ -125,10 +130,8 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == 'business') {
             $modelType = 'Corpline';
         }
-        $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($modelType) {
-            if (strtolower($item) != strtolower($modelType)) {
-                return $item;
-            }
+        $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
+            return $item;
         });
         foreach ($allowedLeadTypes as $leadType) {
             $leadType = strtolower($leadType);
@@ -137,10 +140,8 @@ class CRUDService extends BaseService
             }
             $duplicateRecord = $this->{strtolower($leadType).'QuoteService'}->getDuplicateEntityByCode($leadCode);
             if ($duplicateRecord) {
-                $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) use ($leadType) {
-                    if ($item != $leadType) {
-                        return $item;
-                    }
+                $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
+                    return $item;
                 });
             }
         }
@@ -152,16 +153,20 @@ class CRUDService extends BaseService
     {
         $lobTeams = $request->lob_team;
         $parentType = $request->parentType;
+
         if (strtolower($parentType) == strtolower(quoteTypeCode::CORPLINE) || strtolower($parentType) == strtolower(quoteTypeCode::GroupMedical)) {
             $parentType = 'Business';
         }
         $parentRecord = $this->{strtolower($request->parentType).'QuoteService'}->getEntityPlain($request->entityId);
+        if ($request->has('lob_team_sub_selection') && isset($request->lob_team_sub_selection)) {
+            $parentRecord['enquiryType'] = $request->lob_team_sub_selection;
+        } else {
+            $parentRecord['enquiryType'] = 'record_only';
+        }
+
         if (! empty($lobTeams)) {
             foreach ($lobTeams as $lobTeam) {
-                if (strtolower($lobTeam) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lobTeam) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $lobTeam = 'Business';
-                }
-                $this->{strtolower($lobTeam).'QuoteService'}->createDuplicate($parentRecord);
+                $this->createDuplicateRecord($lobTeam, $parentRecord);
             }
         }
     }
@@ -224,6 +229,9 @@ class CRUDService extends BaseService
             $entity->wcu_id = null;
         }
         $entity->save();
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus != QuoteStatusEnum::Quoted && auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            $this->sendSibRequest($entity);
+        }
         QuoteStatusLog::create([
             'quote_type_id' => QuoteTypeId::Car,
             'quote_request_id' => $entity->id,
