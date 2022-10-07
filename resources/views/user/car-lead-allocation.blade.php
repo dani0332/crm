@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Lead Allocation Management')
+@section('title', 'CAR Lead Allocation Management')
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <link href="{{ asset('css/bootstrap-toggle.css') }}" rel="stylesheet">
@@ -15,7 +15,7 @@
         leadAllocationDataTable = $('.car_lead_allocation_table').DataTable({
                 info: true,
                 serverSide: true,
-                searching: true,
+                searching: false,
                 paging: true,
                 processing: true,
                 ordering: true,
@@ -193,19 +193,43 @@
             });
         });
 
-        $(document).on("change", "input:checkbox.leadSwitch", function() {
-            var ischecked = $(this).is(':checked');
+        $(document).on("change", "input:checkbox.carLeadSwitch", function() {
+            if(confirm("Are you sure you want to change Car Lead Allocation Status?")){
+                var ischecked = $(this).is(':checked');
+                $.ajax({
+                    url: '/lead-allocation/setCarLeadAllocationJobStatus',
+                    type: 'POST',
+                    data : {
+                        '_token': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(data) {
+                        changeAvailabilityInputs(ischecked);
+                    }
+                });
+            }else{
+                $('.carLeadSwitch').prop('checked', $('.carLeadSwitch').val() == 'on' ? true : false);
+                return false;
+            }
+        });
 
-            $.ajax({
-                url: '/lead-allocation/setLeadAllocationJobStatus',
-                type: 'POST',
-                data : {
-                    '_token': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(data) {
-                    changeAvailabilityInputs(ischecked);
-                }
-            });
+        $(document).on("change", "input:checkbox.carRenewalLeadSwitch", function() {
+            if(confirm("Are you sure you want to change Renewal Leads Assignment Status?")){
+                var ischecked = $(this).is(':checked');
+                $.ajax({
+                    url: '/lead-allocation/setRenewalCarLeadAllocationStatus',
+                    type: 'POST',
+                    data : {
+                        '_token': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(data) {
+                        changeAvailabilityInputs(ischecked);
+                    }
+                });
+            }
+            else{
+                $('.carRenewalLeadSwitch').prop('checked', $('.carRenewalLeadSwitch').val() == 'on' ? true : false);
+                return false;
+            }
         });
 </script>
 
@@ -220,17 +244,17 @@
                 <label class="switch "
                     style="margin-left: 20px;float: left;margin-top: 5px;">
                     <input type="checkbox" @if($isAutoAllocationWorking=='1' ) checked="checked" @endif
-                        class="leadSwitch success" id="jobSwitch" name="jobSwitch">
+                        class="carLeadSwitch success" id="jobSwitch" name="jobSwitch">
                     <span class="slider round"></span>
                 </label>
                 @endif
-                <h2>Run Renewal Logic</h2>
+                <h2 style="margin-left:  80px !important">Run Renewal Logic</h2>
                 @if(Auth::user()->isAdmin())
                 <span class="status-text"></span>
                 <label class="switch "
                     style="margin-left: 20px;float: left;margin-top: 5px;">
                     <input type="checkbox" @if($isRenewalLeadAllocationWorking=='1' ) checked="checked" @endif
-                        class="leadSwitch success" id="jobSwitch" name="jobSwitch">
+                        class="carRenewalLeadSwitch success" id="jobSwitch" name="jobSwitch">
                     <span class="slider round"></span>
                 </label>
                 @endif

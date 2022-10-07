@@ -183,18 +183,24 @@
         });
 
         $(document).on("change", "input:checkbox.leadSwitch", function() {
-            var ischecked = $(this).is(':checked');
 
-            $.ajax({
-                url: '/lead-allocation/setLeadAllocationJobStatus',
-                type: 'POST',
-                data : {
-                    '_token': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(data) {
-                    changeAvailabilityInputs(ischecked);
-                }
-            });
+            if(confirm("Are you sure you want to change Leads Assignment Status ?")){
+                var ischecked = $(this).is(':checked');
+                $.ajax({
+                    url: '/lead-allocation/setLeadAllocationJobStatus',
+                    type: 'POST',
+                    data : {
+                        '_token': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(data) {
+                        changeAvailabilityInputs(ischecked);
+                    }
+                });
+            }
+            else{
+                $('.leadSwitch').prop('checked', $('.leadSwitch').val() == 'on' ? true : false);
+                return false;
+            }
         });
 </script>
 

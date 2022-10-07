@@ -185,4 +185,22 @@ class ApplicationStorageService extends BaseService
 
         return true;
     }
+
+    public function updateCarLeadAllocationJobStatus()
+    {
+        $applicationStorage = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_JOB_SWITCH')->first();
+        $applicationStorage->value = $applicationStorage->value == 1 ? 0 : 1;
+        $applicationStorage->save();
+
+        return true;
+    }
+
+    public function updateRenewalCarLeadAllocationStatus()
+    {
+        $applicationStorage = ApplicationStorage::where('key_name', 'CAR_RENEWAL_LEAD_ALLOCATION')->first();
+        $applicationStorage->value = $applicationStorage->value == 1 ? 0 : 1;
+        $applicationStorage->save();
+
+        return true;
+    }
 }

@@ -138,6 +138,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
     Route::post('/lead-allocation/setLeadAllocationJobStatus', [LeadAllocationController::class, 'setLeadAllocationJobStatus']);
+    Route::post('/lead-allocation/setCarLeadAllocationJobStatus', [LeadAllocationController::class, 'setCarLeadAllocationJobStatus']);
+    Route::post('/lead-allocation/setRenewalCarLeadAllocationStatus', [LeadAllocationController::class, 'setRenewalCarLeadAllocationStatus']);
 
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
