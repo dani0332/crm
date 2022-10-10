@@ -7,7 +7,6 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\RolesEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthMemberDetail;
@@ -783,16 +782,16 @@ class HealthQuoteService extends BaseService
         $businessLead->uuid = $uuid;
         $businessLead->code = 'BUS-'.$uuid;
         $businessLead->customer_id = $lead->customer_id;
+        $healthQuotePlan = HealthQuotePlan::where('health_quote_request_id', $lead->id)->first();
+        if (isset($healthQuotePlan)) {
+            $healthQuotePlan->health_quote_request_id = null;
+            $healthQuotePlan->save();
+        }
+        $lead->primary_member_id = null;
+        $lead->plan_id = null;
+        $lead->save();
         $healthMemberIds = HealthMemberDetail::where('health_quote_request_id', $lead->id)->pluck('id');
         foreach ($healthMemberIds as $id) {
-            $healthQuotePlan = HealthQuotePlan::where('health_quote_request_id', $lead->id)->first();
-            if (isset($healthQuotePlan)) {
-                $healthQuotePlan->health_quote_request_id = null;
-                $healthQuotePlan->save();
-            }
-            $lead->primary_member_id = null;
-            $lead->plan_id = null;
-            $lead->save();
             HealthMemberDetail::findOrFail($id)->delete();
         }
         $businessLead->save();
