@@ -2566,7 +2566,7 @@ $(document).ready(function () {
   {
   
     if($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-      alert("Please select atleast 3 plan.");return false;
+      alert("Please select at least 3 plan.");return false;
     }
 
     if($("input[name='toggle_plans_checkbox']:checked").length > 5) {
