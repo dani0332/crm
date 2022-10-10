@@ -964,7 +964,7 @@ class HealthQuoteService extends BaseService
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
         //check if team is assigned and status not qualified yet so mark it qualified.
-        if ($lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor() && auth()->user()->hasRole(RolesEnum::BetaUser)) {
+        if ($lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
             HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
 
