@@ -21,11 +21,13 @@ class CarQuoteRequestController extends Controller
         $response = $carQuoteService->exportPlansPdf($quoteType, $request->validated());
 
         //return error if any
-        if (isset($response['error'])) vAbort($response['error']);
+        if (isset($response['error'])) {
+            vAbort($response['error']);
+        }
 
         $pdf = $response['pdf'];
 
         //encode PDF as base64 and return
-        return response()->json(['data' => 'data:application/pdf;base64,'. base64_encode($pdf->stream())]);
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream())]);
     }
 }

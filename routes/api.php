@@ -1,8 +1,8 @@
 <?php
 
 use App\Http\Controllers\API\ApiController;
-use App\Http\Controllers\API\V1\QuoteDocumentController;
 use App\Http\Controllers\API\V1\CarQuoteRequestController;
+use App\Http\Controllers\API\V1\QuoteDocumentController;
 use Illuminate\Support\Facades\Route;
 
 /*
