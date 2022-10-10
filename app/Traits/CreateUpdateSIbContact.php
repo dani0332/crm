@@ -8,6 +8,7 @@ trait CreateUpdateSIbContact
 {
     public function sendSibRequest($entity)
     {
+        info('Contact upload trait '.$entity->code);
         $data = [
             'customerName' => isset($entity->full_name) ? $entity->full_name : null,
             'advisorName' => isset($entity->advisor) ? $entity->advisor->name : null,

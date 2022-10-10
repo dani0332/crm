@@ -21,7 +21,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         AdvisorAssigned::class => [
             AdvisorAssignedListener::class,
-        ]
+        ],
     ];
 
     /**
