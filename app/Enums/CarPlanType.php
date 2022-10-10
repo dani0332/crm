@@ -13,9 +13,5 @@ final class CarPlanType extends Enum
 {
     const TPL = 'TPL';
     const COMP = 'COMP';
-
-    public static function getCompLabel()
-    {
-        return 'NON-AGENCY';
-    }
+    const NONAGENCY = 'NON-AGENCY';
 }
