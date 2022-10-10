@@ -221,14 +221,16 @@ class CRUDService extends BaseService
 
         $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
         $previousQuoteStatus = $entity->quote_status_id;
-        $entity->quote_status_id = $request->leadStatus;
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $previousQuoteStatus == QuoteStatusEnum::Quoted) {
+            $entity->quote_status_id = QuoteStatusEnum::Quoted;
+        }else {
+            $entity->quote_status_id = $request->leadStatus;
+        }
         if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
             $entity->wcu_id = null;
         }
         $entity->save();
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::Quoted) {
-            $this->sendSibRequest($entity);
-        }
+        
         QuoteStatusLog::create([
             'quote_type_id' => QuoteTypeId::Car,
             'quote_request_id' => $entity->id,
