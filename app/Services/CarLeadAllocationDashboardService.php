@@ -28,6 +28,7 @@ class CarLeadAllocationDashboardService extends BaseService
                 $users = $users->where('users.manager_id', auth()->user()->id);
             }
             DB::commit();
+
             return $users->get();
         } catch (\Exception $e) {
             Log::error($e->getMessage());

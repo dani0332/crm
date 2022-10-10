@@ -47,13 +47,13 @@ class TierService extends BaseService
 
     public function saveTier(Request $request)
     {
-        if (!isset($request->min_price)  && Tier::whereNull('min_price')->get() != null) {
+        if (! isset($request->min_price) && Tier::whereNull('min_price')->get() != null) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as minimum price';
 
             return $errorResponse;
         }
-        if (!isset($request->min_price)  && Tier::whereNull('max_price')->get() != null) {
+        if (! isset($request->min_price) && Tier::whereNull('max_price')->get() != null) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as maximum price';
 
@@ -87,14 +87,16 @@ class TierService extends BaseService
 
     public function updateTier(Request $request, $id)
     {
-        if (!isset($request->min_price)  && Tier::whereNull('min_price')->where('id', '!=', $id)->get() != null) {
+        if (! isset($request->min_price) && Tier::whereNull('min_price')->where('id', '!=', $id)->get() != null) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as minimum price';
+
             return $errorResponse;
         }
-        if (!isset($request->min_price)  && Tier::whereNull('max_price')->where('id', '!=', $id)->get() != null) {
+        if (! isset($request->min_price) && Tier::whereNull('max_price')->where('id', '!=', $id)->get() != null) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as maximum price';
+
             return $errorResponse;
         }
         $tier = Tier::where('id', $id)->first();
