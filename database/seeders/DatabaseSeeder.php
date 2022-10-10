@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             CustomerAdditionalContactSeeder::class,
             SendPolicyApplicationStorageSeeder::class,
             AddRoleForMarketingSeeder::class,
+            addPermissionForManualLeadTesting::class,
         ]);
     }
 }

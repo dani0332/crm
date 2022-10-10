@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthMemberDetail;
@@ -962,8 +963,8 @@ class HealthQuoteService extends BaseService
         }
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
-        //check if team is assigned,must have plans and status not qualified yet so mark it qualified.
-        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
+        //check if team is assigned and status not qualified yet so mark it qualified.
+        if ($lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
             HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
 
@@ -991,6 +992,12 @@ class HealthQuoteService extends BaseService
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
+            if (Auth::user()->hasPermissionTo('manual-lead-assignment-QA')) {
+                info('inside the check for manual assignment QA');
+                $lead->advisor_id = $userId;
+                $lead->save();
+                continue;
+            }
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
                 if ($lead->health_team_type == null || $lead->health_team_type == '') {
                     Log::info('Lead with id: '.$leadId.' is not assigned to any health team');
@@ -1106,13 +1113,6 @@ class HealthQuoteService extends BaseService
             $response = $this->httpService->processRequest($dataArray, $apiCreds);
 
             return $response;
-        }
-    }
-
-    public function updateQuoteStatus($lead)
-    {
-        if ($lead->health_team_type && $lead->is_ecommerce == 1 && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
-            HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
     }
 }

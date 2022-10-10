@@ -99,7 +99,7 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
         // addEmailStatus is for quote modules only
-        if (isset($messageId)) {
+        if (isset($messageId) && isset($emailData->quoteTypeId) && isset($emailData->quoteId)) {
             UpdateSendPolicySubjectJob::dispatch($emailData, $messageId)->delay(now()->addSeconds(7));
         }
 

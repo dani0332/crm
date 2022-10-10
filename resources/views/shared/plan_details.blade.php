@@ -6,6 +6,7 @@ use App\Enums\CarPlanAddons;
 use App\Enums\InsuranceProviders;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
+use App\Enums\GenericRequestEnum;
 if (!isset($modelName)) {
 	$carQuoteEditDisable = $isPlanUpdateActive == ApplicationStorageEnums::INACTIVE ? 'disabled' : '';
 	foreach ($listQuotePlans as $listQuotePlan) { // Car quote plans
@@ -611,7 +612,9 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td style="width: 50px;font-weight: bold;">DOB</td>
 								<td style="width: 120px;">{{\Carbon\Carbon::createFromTimestamp(strtotime($member->dob))->format('d-m-Y')}}</td>
 								<td style="width: 50px;font-weight: bold;">Gender</td>
-								<td style="width: 120px;">{{$member->gender}}</td>
+								<td style="width: 120px;">@if($member->gender ==GenericRequestEnum::MALE_SINGLE_VALUE ){{GenericRequestEnum::MALE_SINGLE}}@endif
+                                            @if($member->gender ==GenericRequestEnum::FEMALE_SINGLE_VALUE ){{GenericRequestEnum::FEMALE_SINGLE}}@endif
+                                            @if($member->gender ==GenericRequestEnum::FEMALE_MARRIED_VALUE ){{GenericRequestEnum::FEMALE_MARRIED}}@endif</td>
 								<td style="width: 50px;font-weight: bold;">Premium</td>
 								<td style="width: 120px;">
 									<input type="hidden" class="member_id" value="{{ $member->memberId }}">
@@ -624,7 +627,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								</td>
 							</tr>
 							@endforeach
-							@if(($member->premium === 0 && auth()->user()->hasRole(RolesEnum::BetaUser)) || ($isManualPlan && auth()->user()->hasRole(RolesEnum::BetaUser)))
+							@if($member->premium === 0 || $isManualPlan)
 							<tr>
 								<td colspan="7"></td>
 								<td align="right">
