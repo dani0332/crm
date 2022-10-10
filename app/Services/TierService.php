@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Tier;
 use DB;
 use Illuminate\Http\Request;
+use stdClass;
 
 class TierService extends BaseService
 {
@@ -46,10 +47,22 @@ class TierService extends BaseService
 
     public function saveTier(Request $request)
     {
+        if (!isset($request->min_price)  && Tier::whereNull('min_price')->get() != null) {
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Only one tier can have null as minimum price';
+
+            return $errorResponse;
+        }
+        if (!isset($request->min_price)  && Tier::whereNull('max_price')->get() != null) {
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Only one tier can have null as maximum price';
+
+            return $errorResponse;
+        }
         $tier = Tier::create([
             'name' => $request->name,
-            'min_price' => $request->min_price,
-            'max_price' => $request->max_price,
+            'min_price' => isset($request->min_price) ? $request->min_price : null,
+            'max_price' => isset($request->max_price) ? $request->max_price : null,
             'cost_per_lead' => $request->cost_per_lead,
             'can_handle_null_value' => $request->has('can_handle_null_value') && $request->can_handle_null_value == 'on' ? 1 : 0,
             'can_handle_ecommerce' => $request->has('can_handle_ecommerce') && $request->can_handle_ecommerce == 'on' ? 1 : 0,
@@ -74,6 +87,16 @@ class TierService extends BaseService
 
     public function updateTier(Request $request, $id)
     {
+        if (!isset($request->min_price)  && Tier::whereNull('min_price')->where('id', '!=', $id)->get() != null) {
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Only one tier can have null as minimum price';
+            return $errorResponse;
+        }
+        if (!isset($request->min_price)  && Tier::whereNull('max_price')->where('id', '!=', $id)->get() != null) {
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Only one tier can have null as maximum price';
+            return $errorResponse;
+        }
         $tier = Tier::where('id', $id)->first();
         $tier->name = $request->name;
         $tier->min_price = $request->min_price;
