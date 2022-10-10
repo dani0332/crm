@@ -46,10 +46,16 @@
         strong {
             font-weight: bolder;
         }
+        table.tbl-dec {
+           border: none;
+        }
+        table.tbl-dec tr td {border: none;}
         table {
+            min-width: 1140px;
+            width: 1140px;
             text-indent: 0;
             border-color: #bfbfbf;
-            max-width: 960px;
+            max-width: 1140px;
             margin: 30px auto;
             border-spacing: 0;
         }
@@ -58,9 +64,23 @@
             color: #ffffff;
             font-size: 19px;
             text-align: center;
-            padding: 10px 0;
+            padding: 10px 10px;
             width: 100%;
+            height: 70px;
+            max-height: 70px;
         }
+        .header .logo {
+            float: left;
+            background-color: white;
+            border-radius: 5px;
+            padding: 3px;
+        }
+        .header h2 {
+            float: right;
+            text-align: right;
+            padding-right: 18px;
+        }
+
         tbody > tr > td {
             border: 1px solid #bfbfbf;
         }
@@ -73,7 +93,7 @@
             text-align: left;
         }
         .text-xs {
-            font-size: 12px;
+            font-size: 13px;
         }
         .text-sm {
             font-size: 14px;
@@ -102,23 +122,20 @@
             height: 50px;
         }
         .spacer {
-            padding: 16px;
+            padding: 3px;
         }
         .quote-info {
-            vertical-align: top;
+            text-align: right;padding-right: 0;vertical-align: bottom;
         }
-        .quote-info div {
+        div.quote-info  {
             margin-top: -1px;
             border: 1px solid #bfbfbf;
             background: #EFF6FF;
             font-size: 14px;
             text-align: left;
             padding: 8px;
-            max-width: 90%;
+            max-width: 100%;
             font-weight: normal;
-        }
-        .info {
-            margin: 0 0 20px 0;
         }
         .info h5 {
             background: #1d83bc;
@@ -129,6 +146,18 @@
         }
         .info p {
             font-size: 12px;
+        }
+        .btn-all-quotes {
+            background-color: #1d83bc;
+            color: #ffffff;
+            padding: 12px 25px;
+            margin-top: 8px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
         }
         .btn-buy
         {
@@ -160,25 +189,88 @@
         {
             padding: 0px 50px;
         }
-        .text-summary {
-            color: #1d83bc;
-        }
         .no-border {border: none;}
+        footer {
+            position: fixed;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+            padding: 0px;
+            margin: 0px;
+            background-color: #1d83bc;
+            color: black;
+            text-align: center;
+        }
+        table.tbl-footer {
+            padding: 16px 12px;
+            margin: 0;
+            width: 100%;
+            border: none;
+        }
+        table.tbl-footer tr td, table.tbl-footer tr td a {
+            color: #ffffff;
+            border: none;
+            font-size: 17px;
+        }
+        .text-left {text-align: left;}
+        .text-right {text-align: right;}
+        .full-page-image {
+            width: 100%;
+        }
+        .text-center {text-align: center;}
     </style>
 </head>
 
 <body>
+
+<img src="{{public_path('images/quote_plans_pages/p1.jpg')}}" class="full-page-image" />
+
+<footer>
+    <table class="tbl-footer">
+        <tr>
+            <td class="text-left"><h4>AFIA Insurance Brokerage Services LLC</h4></td>
+            <td class="text-right">&nbsp;</td>
+        </tr>
+        <tr>
+            <td class="text-left">27th Floor, Control Tower, Motor City,</td>
+            <td class="text-right">Tel: <a href="tel:+97144215819">+971 4 421 5819</a> </td>
+        </tr>
+        <tr>
+            <td class="text-left">Dubai, United Arab Emirates, P.O Box 26423</td>
+            <td class="text-right">Fax: +971 4 421 5984</td>
+        </tr>
+        <tr>
+            <td class="text-left">Ministry of Economy and Commerce - Registration number 85</td>
+            <td class="text-right">Email: <a href="mailto:hello@afia.ae">hello@afia.ae</a> </td>
+        </tr>
+        <tr>
+            <td class="text-left"><a href="https://afia.ae/">www.afia.ae</a>, <a href="https://insurancemarket.ae/">www.insurancemarket.ae</a> </td>
+            <td class="text-right">
+                @if(isset($quote->advisor->email))
+                    Email: <a href="mailto:{{$quote->advisor->email}}">{{$quote->advisor->email}}</a>
+                @endif
+            </td>
+        </tr>
+    </table>
+</footer>
+
 <div class="font">
+
     <div class="header">
+        <div class="logo">
+            <img class="im-logo" src="{{public_path('images/logo.png')}}" />
+        </div>
         <h2>Your Tailor Made <br />Car Insurance Comparison Table</h2>
     </div>
 
     @php
+
         $websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
 
         $plans = [];
         foreach ($quotePlans->quotes->plans as $quotePlan)
         {
+            //dd($quotePlan);
             if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
                 continue;
             }
@@ -190,23 +282,41 @@
             $quotePlan->addons = json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
             foreach ($quotePlan->addons as &$addon) {
-                $addon->value = $addon->carAddonOption[0]->value;
+
+                //set default value to excluded
+                $addon->value = "&cross;";
+                if(sizeof($addon->carAddonOption)) {
+                    //replace exclude with selected value if found
+                    foreach ($addon->carAddonOption as $index => $carAddonOption) {
+
+                        if($carAddonOption->isSelected) {
+
+                            $addon->value = $carAddonOption->value;
+                            if($carAddonOption->price) {
+                               $addon->value .= ' (' . formatAmount($carAddonOption->price, 0) . ')';
+                            }
+
+                            break;//only one value will be selected
+                        }
+                    }
+                }
+
             }
 
+            $quotePlan->repairTypeInfo = ($quotePlan->repairType == \App\Enums\CarPlanType::COMP) ? \App\Enums\CarPlanType::NONAGENCY : $quotePlan->repairType;
             $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
             $plans[$quotePlan->id] = $quotePlan;
         }
 
         $features = [
             ["code" => "heading", "title" => "BENEFITS"],
-            ["code" => "damage", "title" => "Loss or Damage to the Insured Vehicle", "type" => ["inclusion", "exclusion"]],
+            ["code" => "damageLimit", "title" => "Loss or Damage to the Insured Vehicle", "type" => "feature"],
             ["code" => "liability", "title" => "Third Party Property Liability", "type" => "feature"],
             ["code" => "bloodMoney", "title" => "Blood Money", "type" => ["inclusion", "exclusion"]],
             ["code" => "fireAndTheft", "title" => "Fire and Theft Cover", "type" => ["inclusion", "exclusion"]],
             ["code" => "stormAndFlood", "title" => "Storm, Flood", "type" => ["inclusion", "exclusion"]],
-            ["code" => "perils", "title" => "Natural Perils", "type" => ["inclusion", "exclusion"]],
             ["code" => "riotAndStrike", "title" => "Natural Perils Riot and Strike", "type" => ["inclusion", "exclusion"]],
-            ["code" => "repairs", "title" => "Repairs", "type" => ["inclusion", "exclusion"]],
+            ["code" => "repairTypeInfo", "title" => "Repairs", "type" => "prop"],
             ["code" => "emergencyMedicalExpenses", "title" => "Emergency Medical Expenses", "type" => ["inclusion", "exclusion"]],
             ["code" => "personalBelongings", "title" => "Personal belongings", "type" => ["inclusion", "exclusion"]],
             ["code" => "omanCover", "title" => "Oman Cover (Orange card not Included)", "type" => "addons"],
@@ -218,25 +328,28 @@
             ["code" => "heading", "title" => "Optional Covers", "type" => ""],
             ["code" => "driverCover", "title" => "Driver Cover", "type" => "addons"],
             ["code" => "passengerCover", "title" => "Passengers Cover", "type" => "addons"],
-            ["code" => "carHire", "title" => "Hire car Benefit", "type" => ["inclusion", "exclusion"]],
+            ["code" => "carHire", "title" => "Hire car Benefit", "type" => "addons"],
             ["code" => "spacer"],
-            ["code" => "discountPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading"],
-            ["code" => "vat", "title" => "VAT Amount", "type" => "info",  "heading_class" => "text-heading"],
-            ["code" => "total", "title" => "Total", "type" => "info",  "heading_class" => "text-heading"],
-            ["code" => "excess", "title" => "Excess", "type" => "info",  "heading_class" => "text-heading"]
+            ["code" => "discountPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+            ["code" => "spacer"],
+            ["code" => "vat", "title" => "VAT Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+            ["code" => "spacer"],
+            ["code" => "total", "title" => "Payable Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+            ["code" => "spacer"],
+            ["type" => "buy", "heading_class" => "no-border"],
+            ["code" => "spacer"],
+            ["code" => "excess", "title" => "Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing']
         ];
 
     @endphp
 
-    <div class="container ">
-        <table class="table-fixed text-center">
+    <div class="container">
+        <table class="table-fixed text-center tbl-plans">
             <thead>
             <tr>
 
-                <th class="quote-info">
-                    <div>
-                        <p class="">Comparison of Car Insurance Quote For: {{ auth()->user()->name }}</p>
-                    </div>
+                <th class="quote-info" rowspan="3">
+                    <img style="" src="{{public_path('images/alfred.png')}}" />
                 </th>
 
                 @foreach($planIds as $planId)
@@ -254,7 +367,7 @@
             <tbody>
 
             <tr>
-                <td class="no-border" >&nbsp;</td>
+
                 @foreach($planIds as $planId)
                     <td>
                         <p class="text-center">
@@ -265,7 +378,6 @@
             </tr>
 
             <tr>
-                <td class="no-border" >&nbsp;</td>
                 @foreach($planIds as $planId)
                     <td>
                         <p class="text-center">
@@ -277,11 +389,19 @@
 
             {{-- buy now row --}}
             <tr>
-                <td class="no-border">&nbsp;</td>
+                <td class="no-border" >
+                    <div class="quote-info">
+                        <p class="">Car insurance comparison for: <b>{{ $quote->customer->first_name  }} {{$quote->customer->last_name}}</b></p>
+                    </div>
+                </td>
                 @foreach($planIds as $planId)
                     <td>
                         <p class="text-center">
-                            <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
+                            @if($plans[$planId]->discountPremium)
+                                <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
+                            @else
+                                N/A
+                            @endif
                         </p>
                     </td>
                 @endforeach
@@ -298,7 +418,7 @@
             @foreach($features as $feature)
 
                 {{-- heading row --}}
-                @if($feature['code'] == 'heading')
+                @if(@$feature['code'] == 'heading')
                     <tr>
                         <td colspan="1">
                             <p class="text-left text-heading">{{$feature['title']}}</p>
@@ -309,22 +429,34 @@
                 @endif
 
                 {{-- spacer row --}}
-                @if($feature['code'] == 'spacer')
+                @if(@$feature['code'] == 'spacer')
                     <tr>
-                        <td colspan="{{ sizeof($planIds) + 1 }}"><div class="spacer"></div></td>
+                        <td class="no-border" colspan="{{ sizeof($planIds) + 1 }}"><div class="spacer"></div></td>
                     </tr>
                     @php continue; @endphp
                 @endif
 
                 {{-- feature rows --}}
-                <tr class="{{($feature['row_class'] ?? "")}}">
-                    <td class="{{@$feature['heading_class']}}"><p class="text-left">{{$feature['title']}}</p></td>
+                <tr class="{{ ($feature['row_class'] ?? "")}}" style="">
+                    <td class="{{@$feature['heading_class']}}"><p class="text-left">{{@$feature['title']}}</p></td>
                     @foreach($planIds as $planId)
                         <td class="{{@$feature['col_class']}}">
                             <p>
                                 @if($feature['type'] == 'info')
 
-                                    {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : formatAmount(0) !!}
+                                    {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
+
+                                @elseif($feature['type'] == 'prop')
+
+                                    {!!  $plans[$planId]->{$feature['code']} !!}
+
+                               @elseif($feature['type'] == 'buy')
+
+                                    @if($plans[$planId]->discountPremium)
+                                        <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
+                                    @else
+                                        N/A
+                                    @endif
 
                                 @elseif(is_array($feature['type']))
 
@@ -347,18 +479,32 @@
                 </tr>
 
             @endforeach
+            <tr>
+                <td colspan="{{sizeof($planIds) + 1}}" class="no-border text-center">
+                    <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid )}}" >View All Quotes</a>
+                </td>
+            </tr>
             </tbody>
         </table>
 
-        <div class="info">
-            <h5>MATERIAL INFORMATION DECLARATION</h5>
-            <p>All quotes we provide are indicative and based on the information that you, as a proposer, have provided to us. It is important that this information accurately reflects your
-                position and needs and before you purchase your policy, you are advised to check all the details relevant to the risk to be insured have been supplied. Failure to provide all material information
-                may result in the insurer declining future claims on the ground of misrepresentation.</p>
-        </div>
+        <table class="tbl-dec">
+            <tbody>
+                <tr>
+                    <td class="text-heading text-justify"><h5>MATERIAL INFORMATION DECLARATION</h5></td>
+                </tr>
+                <tr>
+                    <td>
+                        <p class="text-left text-xs">All quotes we provide are indicative and based on the information that you, as a proposer, have provided to us. It is important that this information accurately reflects your
+                            position and needs and before you purchase your policy, you are advised to check all the details relevant to the risk to be insured have been supplied. Failure to provide all material information
+                            may result in the insurer declining future claims on the ground of misrepresentation.</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
     </div>
 </div>
 
-</body>
-
+    <img src="{{public_path('images/quote_plans_pages/p3.jpg')}}" class="full-page-image"  />
+    </body>
 </html>

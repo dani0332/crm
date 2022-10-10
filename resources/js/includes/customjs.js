@@ -2562,15 +2562,15 @@ $(document).ready(function () {
     }, 2000);
   });
 
-  $('#btn_download_plan_pdf').on('click', function () {
-    if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-      alert('Please seelct atleast 3 plans.');
-      return false;
+  $('#btn_download_plan_pdf').on('click', function () 
+  {
+  
+    if($("input[name='toggle_plans_checkbox']:checked").length < 3) {
+      alert("Please select at least three (3) plans.");return false;
     }
 
-    if ($("input[name='toggle_plans_checkbox']:checked").length > 6) {
-      alert('Maximum of 6 plans are allowed to select.');
-      return false;
+    if($("input[name='toggle_plans_checkbox']:checked").length > 5) {
+      alert("A maximum of five (5) plans are allowed to be selected.");return false;
     }
 
     var plan_ids = [];

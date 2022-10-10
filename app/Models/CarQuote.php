@@ -193,6 +193,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
     }
 
+    public function advisor()
+    {
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
+    }
+
     public function oe_id()
     {
         return $this->hasOne(User::class, 'id', 'oe_id')->select(['id', 'email', 'name']);
