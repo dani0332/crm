@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\LostReasons;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,26 @@ class AddRoleForMarketingSeeder extends Seeder
                     'permission_id' => $id,
                 ]);
             }
+        }
+
+        $lostReasonsCarSold = LostReasons::where('text', 'Car sold')->first();
+        if (! $lostReasonsCarSold) {
+            DB::table('lost_reasons')->insert([
+                'text' => 'Car sold',
+                'text_ar' => 'Car sold',
+                'is_active' => 1,
+                'is_deleted' => 0,
+            ]);
+        }
+
+        $lostReasonsUncontactable = LostReasons::where('text', 'Uncontactable')->first();
+        if (! $lostReasonsCarSold) {
+            DB::table('lost_reasons')->insert([
+                'text' => 'Uncontactable',
+                'text_ar' => 'Uncontactable',
+                'is_active' => 1,
+                'is_deleted' => 0,
+            ]);
         }
     }
 }
