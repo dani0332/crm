@@ -426,7 +426,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
-            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->whereIn('qs.text', ['Followed Up', '  Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('hqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
             ->where('hqr.advisor_id', Auth::user()->id);
 
@@ -782,16 +782,16 @@ class HealthQuoteService extends BaseService
         $businessLead->uuid = $uuid;
         $businessLead->code = 'BUS-'.$uuid;
         $businessLead->customer_id = $lead->customer_id;
+        $healthQuotePlan = HealthQuotePlan::where('health_quote_request_id', $lead->id)->first();
+        if (isset($healthQuotePlan)) {
+            $healthQuotePlan->health_quote_request_id = null;
+            $healthQuotePlan->save();
+        }
+        $lead->primary_member_id = null;
+        $lead->plan_id = null;
+        $lead->save();
         $healthMemberIds = HealthMemberDetail::where('health_quote_request_id', $lead->id)->pluck('id');
         foreach ($healthMemberIds as $id) {
-            $healthQuotePlan = HealthQuotePlan::where('health_quote_request_id', $lead->id)->first();
-            if (isset($healthQuotePlan)) {
-                $healthQuotePlan->health_quote_request_id = null;
-                $healthQuotePlan->save();
-            }
-            $lead->primary_member_id = null;
-            $lead->plan_id = null;
-            $lead->save();
             HealthMemberDetail::findOrFail($id)->delete();
         }
         $businessLead->save();
