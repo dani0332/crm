@@ -220,7 +220,7 @@ class CRUDService extends BaseService
             $entity->wcu_id = null;
         }
         $entity->save();
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus != QuoteStatusEnum::Quoted) {
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $request->leadStatus == QuoteStatusEnum::Quoted) {
             $this->sendSibRequest($entity);
         }
         QuoteStatusLog::create([
