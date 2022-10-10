@@ -8,5 +8,5 @@
 ?>
 localStorage.setItem("session", JSON.stringify(<?php echo $user;?>));
 </script>
-<p style="text-align: center;">Welcome to My Alfred CRM</p>
+<p style="text-align: center;">Welcome to My IMCRM</p>
 @endsection
