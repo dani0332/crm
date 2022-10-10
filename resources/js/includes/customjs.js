@@ -2570,7 +2570,7 @@ $(document).ready(function () {
     }
 
     if($("input[name='toggle_plans_checkbox']:checked").length > 5) {
-      alert("Maximum of 5 plans are allowed to select.");return false;
+      alert("A maximum of 5 plans are allowed to select.");return false;
     }
 
     var plan_ids = [];
