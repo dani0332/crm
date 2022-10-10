@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -138,8 +139,10 @@ class LeadAllocationService extends BaseService
                     $this->updateLeadAllocationRecord($advisorId);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
-                info('Contact upload Request '.$lead->uuid);
-                $this->sendSibRequest($lead);
+                if ($lead->health_team_type == HealthTeamType::EBP) {
+                    info('Contact upload Request '.$lead->uuid);
+                    $this->sendSibRequest($lead);
+                }
                 DB::commit();
                 return true;
             } catch (\Exception $e) {
