@@ -141,7 +141,7 @@
                                 <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Approval Status</b> <span
                                         class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <select class="form-control" name="lost_approval_status" @if(!auth()->user()->hasRole('MARKETING_OPERATIONS') )disabled @endif>
+                                        <select class="form-control" name="lost_approval_status" @if(!auth()->user()->hasRole('MARKETING_OPERATIONS'))disabled @endif>
                                                 <option @if($lead->lost_approval_status == GenericRequestEnum::PENDING) selected @endif value="{{ GenericRequestEnum::PENDING }}">{{ GenericRequestEnum::PENDING }}</option>
                                                 <option @if($lead->lost_approval_status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
                                                 <option @if($lead->lost_approval_status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
@@ -168,8 +168,9 @@
                         </div>
                         <div class="col">
                             @cannot(PermissionsEnum::ApprovePayments)
-                            <button type="submit" style="float: right;" @if($lead->quote_status_id ==
-                                QuoteStatusEnum::TransactionApproved) disabled @endif class="btn btn-success
+                            <button type="submit" style="float: right;" @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved 
+                                || $lead->quote_status_id == QuoteStatusEnum::Lost && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole('MARKETING_OPERATIONS')
+                                || $lead->quote_status_id == QuoteStatusEnum::Lost && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole('MARKETING_OPERATIONS')) disabled @endif class="btn btn-success
                                 btn-sm" id="lead-change-status-btn">Change Status</button>
                             @endcannot
                         </div>
