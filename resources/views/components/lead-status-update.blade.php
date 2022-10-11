@@ -136,7 +136,7 @@
                                     @endif
                                 </div>
                                 </div>
-                                @if($modeltype == quoteTypeCode::Car && isset($selectedlostreason) && ($lostreasons->where('id', $selectedlostreason)->first()->text == 'Car sold' || $lostreasons->where('id', $selectedlostreason)->first()->text == 'Uncontactable'))
+                                @if($modeltype == quoteTypeCode::Car && isset($selectedlostreason) && ($lostreasons->where('id', $selectedlostreason)->first()?->text == 'Car sold' || $lostreasons->where('id', $selectedlostreason)->first()?->text == 'Uncontactable'))
                                 <div class="item form-group">
                                 <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Approval Status</b> <span
                                         class='required'>*</span></label>
