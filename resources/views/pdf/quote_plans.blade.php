@@ -73,7 +73,7 @@
             float: left;
             background-color: white;
             border-radius: 5px;
-            padding: 3px;
+            padding: 5px 10px 5px 0px;
         }
         .header h2 {
             float: right;
@@ -258,7 +258,7 @@
 
     <div class="header">
         <div class="logo">
-            <img class="im-logo" src="{{public_path('images/logo.png')}}" />
+            <img class="im-logo" src="{{public_path('images/im_logo.png')}}" />
         </div>
         <h2>Your Tailor Made <br />Car Insurance Comparison Table</h2>
     </div>
@@ -310,7 +310,7 @@
 
         $features = [
             ["code" => "heading", "title" => "BENEFITS"],
-            ["code" => "damageLimit", "title" => "Loss or Damage to the Insured Vehicle", "type" => "feature"],
+            ["code" => "damage", "title" => "Loss or Damage to the Insured Vehicle", "type" => ["feature", "inclusion", "exclusion"]],
             ["code" => "liability", "title" => "Third Party Property Liability", "type" => "feature"],
             ["code" => "bloodMoney", "title" => "Blood Money", "type" => ["inclusion", "exclusion"]],
             ["code" => "fireAndTheft", "title" => "Fire and Theft Cover", "type" => ["inclusion", "exclusion"]],
@@ -319,10 +319,10 @@
             ["code" => "repairTypeInfo", "title" => "Repairs", "type" => "prop"],
             ["code" => "emergencyMedicalExpenses", "title" => "Emergency Medical Expenses", "type" => ["inclusion", "exclusion"]],
             ["code" => "personalBelongings", "title" => "Personal belongings", "type" => ["inclusion", "exclusion"]],
-            ["code" => "omanCover", "title" => "Oman Cover (Orange card not Included)", "type" => "addons"],
+            ["code" => "omanCover", "title" => "Oman Cover (Orange card not Included)", "type" => ["inclusion", "exclusion"]],//also exists in addons, discussed with mujeeb to show from include/exclusion
             ["code" => "offRoadCover", "title" => "Off-road Cover", "type" => "roadSideAssistance"],
             ["code" => "guaranteedRepairs", "title" => "Guaranteed Repairs", "type" => ["inclusion", "exclusion"]],
-            ["code" => "breakdownRecovery", "title" => "24 Hour Accident and Breakdown Recovery", "type" => ["inclusion", "exclusion"]],//** inclusion or ROAD_SIDE_ASSISTANCE */
+            ["code" => "breakdownRecovery", "title" => "24 Hour Accident and Breakdown Recovery", "type" => "roadSideAssistance"],//** exists in ["inclusion", "exclusion"] as well, discussed with mujeeb to show from roadSideAssistance
             ["code" => "ambulanceCover", "title" => "Ambulance Cover", "type" => ["inclusion", "exclusion"]],
             ["code" => "excessForWindscreenDamage", "title" => "Excess for Windscreen Damage", "type" => ["inclusion", "exclusion"]],
             ["code" => "heading", "title" => "Optional Covers", "type" => ""],
@@ -411,7 +411,9 @@
             <tr class="bg-light-blue">
                 <td><p>EXACT VEHICLE AND VALUE (INSURER SPECIFIC)</p></td>
                 @foreach($planIds as $planId)
-                    <td><p class="text-center">{{$quote->carMake->text . ' ' . $quote->carModel->text . ' ' . $quote->year_of_manufacture . ' ' . formatAmount($quote->car_value) }}</p></td>
+                    <td>
+                        <p class="text-center">{!! $quote->carMake->text . ' ' . $quote->carModel->text . ' ' . $quote->year_of_manufacture . '<br/>' . formatAmount(1500000, 0) !!}</p>
+                    </td>
                 @endforeach
             </tr>
 
