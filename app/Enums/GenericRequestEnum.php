@@ -28,4 +28,7 @@ final class GenericRequestEnum extends Enum
     public const FEMALE_MARRIED_VALUE = 'FM';
     public const MALE_SINGLE = 'Male';
     public const MALE_SINGLE_VALUE = 'M';
+    public const PENDING = 'Pending';
+    public const APPROVED = 'Approved';
+    public const REJECTED = 'Rejected';
 }
