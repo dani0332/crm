@@ -1,3 +1,6 @@
+@php
+$websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
+@endphp
 <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
@@ -32,12 +35,23 @@
                                                 <td>{{ ucwords($quotePlan->name) }}</td>
                                                 <td>{{ $quotePlan->actualPremium + $quotePlan->basmah }}</td>
                                                 <td> {{ $quotePlan->actualPremium + $quotePlan->vat + $quotePlan->basmah}}</td>
-                                                <td><a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}"
-                                                    data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">View</a></td>
+                                                <td>
+                                                    <a href="#" planDetailUrl="{{ $uuidModal }}/plan_details/{{ $quotePlan->id }}"
+                                                    data-toggle="modal" data-target="#quotePlanModal" class="btn btn-warning btn-sm quotePlanModalPopup">View</a>
+                                                    <button
+                                                    class="btn btn-success btn-sm health-plan-link-copy"
+                                                    data-planId="{{$quotePlan->id}}"
+                                                    data-quoteUUId="{{$record->uuid}}"
+                                                    data-providerCode="{{$quotePlan->providerCode}}"
+                                                    data-websiteURL="{{$websiteURL}}"
+                                                    >Copy</button>
+                                                </td>
                                             </tr>
                                     @endforeach
                                     </tbody>
                                 </table>
+                                <span class="alert alert-success" id="health-plan-link-copy"
+                style="display: none;float:right;position: absolute;z-index: 1;top: -16px;right: 0;">Copied</span>
                             @else
                             <table id="" class="table table-striped jambo_table" style="width:100%">
                                 <thead>
