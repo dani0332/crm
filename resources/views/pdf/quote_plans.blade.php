@@ -356,7 +356,15 @@
                     <th class="provider">
                         <div class="rounded-full">
                             <p class="relative top-[40%] m-auto text-xs">
-                                <img class="provider-logo" alt="" src="{{public_path('images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png')}}" />
+                                @php
+                                    $providerLogoImage = public_path('images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png');
+
+                                    if(!file_exists($providerLogoImage)) {
+                                        $providerLogoImage = public_path('images/insurance_providers/default.png');
+                                    }
+
+                                @endphp
+                                <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
                             </p>
                         </div>
                     </th>
@@ -409,10 +417,26 @@
 
             {{-- vehicle detail / exact value --}}
             <tr class="bg-light-blue">
-                <td><p>EXACT VEHICLE AND VALUE (INSURER SPECIFIC)</p></td>
+                <td><p>EXACT VEHICLE (INSURER SPECIFIC)</p></td>
                 @foreach($planIds as $planId)
                     <td>
-                        <p class="text-center">{!! $quote->carMake->text . ' ' . $quote->carModel->text . ' ' . $quote->year_of_manufacture . '<br/>' . formatAmount(1500000, 0) !!}</p>
+
+                        <p class="text-center">{!! $quote->carMake->text . ' ' . $quote->carModel->text . ' ' . $quote->year_of_manufacture  !!}</p>
+                    </td>
+                @endforeach
+            </tr>
+
+            <tr class="bg-light-blue">
+                <td><p>VEHICLE VALUE</p></td>
+                @foreach($planIds as $planId)
+                    <td>
+                        @php
+                            $plan = $plans[$planId];
+                            $carValue = formatAmount($plan->carValue, 0);
+                            if($plan->repairType == \App\Enums\CarPlanType::TPL) $carValue = 'N/A';
+                        @endphp
+
+                        <p class="text-center">{!! $carValue !!}</p>
                     </td>
                 @endforeach
             </tr>
