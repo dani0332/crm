@@ -210,10 +210,10 @@ class CRUDService extends BaseService
         if (isset($request->nextFollowUpDate) && $request->nextFollowUpDate != '') {
             $quoteDetailEntity->next_followup_date = $request->nextFollowUpDate;
         }
-        if (isset($request->lost_approval_status) && $request->lost_approval_status != '' && auth()->user()->hasRole('MARKETING_OPERATIONS')) {
+        if (isset($request->lost_approval_status) && $request->lost_approval_status != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
             $quoteDetailEntity->lost_approval_status = $request->lost_approval_status;
         }
-        if (isset($request->lost_approval_reason) && $request->lost_approval_reason != '' && auth()->user()->hasRole('MARKETING_OPERATIONS')) {
+        if (isset($request->lost_approval_reason) && $request->lost_approval_reason != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
             $quoteDetailEntity->lost_approval_reason = $request->lost_approval_reason;
         }
 
