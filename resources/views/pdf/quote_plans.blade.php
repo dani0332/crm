@@ -56,7 +56,7 @@
             text-indent: 0;
             border-color: #bfbfbf;
             max-width: 1140px;
-            margin: 30px auto;
+            margin: 10px 12px auto;
             border-spacing: 0;
         }
         .header {
