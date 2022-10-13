@@ -221,13 +221,26 @@
                     data : {
                         '_token': $('meta[name="csrf-token"]').attr('content')
                     },
-                    success: function(data) {
-                        changeAvailabilityInputs(ischecked);
-                    }
                 });
             }
             else{
                 $('.carRenewalLeadSwitch').prop('checked', $('.carRenewalLeadSwitch').val() == 'on' ? true : false);
+                return false;
+            }
+        });
+        $(document).on("change", "input:checkbox.carLeadFIFOSwitch", function() {
+            if(confirm("Are you sure you want to change CAR LEAD PICKUP FIFO Status?")){
+                var ischecked = $(this).is(':checked');
+                $.ajax({
+                    url: '/lead-allocation/setCarLeadFetchSequence',
+                    type: 'POST',
+                    data : {
+                        '_token': $('meta[name="csrf-token"]').attr('content')
+                    },
+                });
+            }
+            else{
+                $('.carLeadFIFOSwitch').prop('checked', $('.carLeadFIFOSwitch').val() == 'on' ? true : false);
                 return false;
             }
         });
@@ -255,6 +268,17 @@
                     style="margin-left: 20px;float: left;margin-top: 5px;">
                     <input type="checkbox" @if($isRenewalLeadAllocationWorking=='1' ) checked="checked" @endif
                         class="carRenewalLeadSwitch success" id="jobSwitch" name="jobSwitch">
+                    <span class="slider round"></span>
+                </label>
+                @endif
+
+                <h2 style="margin-left:  80px !important">Pickup Sequence : FIFO</h2>
+                @if(Auth::user()->isAdmin())
+                <span class="status-text"></span>
+                <label class="switch "
+                    style="margin-left: 20px;float: left;margin-top: 5px;">
+                    <input type="checkbox" @if($isFIFO=='1' ) checked="checked" @endif
+                        class="carLeadFIFOSwitch success">
                     <span class="slider round"></span>
                 </label>
                 @endif

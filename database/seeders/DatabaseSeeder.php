@@ -13,13 +13,15 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call([PaymentMethodsSeeder::class,
+        $this->call([
+            PaymentMethodsSeeder::class,
             DocumentTypeSeeder::class,
             AddRoleForBetaUserSeeder::class,
             CustomerAdditionalContactSeeder::class,
             addRenewalAppSettings::class,
             SendPolicyApplicationStorageSeeder::class,
             addPermissionForManualLeadTesting::class,
+            addPermissionForCarAllocation::class,
         ]);
     }
 }

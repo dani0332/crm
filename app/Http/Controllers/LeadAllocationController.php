@@ -144,4 +144,8 @@ class LeadAllocationController extends Controller
     {
         $this->applicationStorageService->updateRenewalCarLeadAllocationStatus();
     }
+    public function setCarLeadFetchSequence()
+    {
+        $this->applicationStorageService->updateCarLeadFetchSequence();
+    }
 }

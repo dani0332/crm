@@ -25,6 +25,8 @@ class TierService extends BaseService
                 't.is_active',
                 't.updated_at',
                 't.created_at',
+                't.can_handle_tpl',
+                't.is_tpl_renewals',
                 DB::raw('group_concat(u.name) AS tier_users'),
             )
             ->leftJoin('tier_users as tu', 'tu.tier_id', 't.id')
@@ -66,6 +68,8 @@ class TierService extends BaseService
             'cost_per_lead' => $request->cost_per_lead,
             'can_handle_null_value' => $request->has('can_handle_null_value') && $request->can_handle_null_value == 'on' ? 1 : 0,
             'can_handle_ecommerce' => $request->has('can_handle_ecommerce') && $request->can_handle_ecommerce == 'on' ? 1 : 0,
+            'can_handle_tpl' => $request->has('can_handle_tpl') && $request->can_handle_tpl == 'on' ? 1 : 0,
+            'is_tpl_renewals' => $request->has('is_tpl_renewals') && $request->is_tpl_renewals == 'on' ? 1 : 0,
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
         ]);
 
@@ -106,6 +110,8 @@ class TierService extends BaseService
         $tier->cost_per_lead = $request->cost_per_lead;
         $tier->can_handle_null_value = $request->has('can_handle_null_value') && $request->can_handle_null_value == 'on' ? 1 : 0;
         $tier->can_handle_ecommerce = $request->has('can_handle_ecommerce') && $request->can_handle_ecommerce == 'on' ? 1 : 0;
+        $tier->can_handle_tpl = $request->has('can_handle_tpl') && $request->can_handle_tpl == 'on' ? 1 : 0;
+        $tier->is_tpl_renewals = $request->has('is_tpl_renewals') && $request->is_tpl_renewals == 'on' ? 1 : 0;
         $tier->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $tier->save();
         if (isset($request->tier_users)) {
@@ -136,6 +142,8 @@ class TierService extends BaseService
             'tier_users' => 'select|multiple|multiSearch',
             'can_handle_ecommerce' => 'input|checkbox|title',
             'can_handle_null_value' => 'input|checkbox|title',
+            'can_handle_tpl' => 'input|checkbox|title',
+            'is_tpl_renewals' => 'input|checkbox|title',
             'is_active' => 'input|checkbox|title',
         ];
     }
@@ -159,11 +167,17 @@ class TierService extends BaseService
             case 'can_handle_ecommerce':
                 $title = 'Handle Ecommerce ?';
                 break;
+            case 'can_handle_tpl':
+                $title = 'IsTPL ?';
+                break;
             case 'can_handle_null_value':
                 $title = 'Handle Null Value ?';
                 break;
             case 'is_active':
                 $title = 'Is Active ?';
+                break;
+            case 'is_tpl_renewals':
+                $title = 'Handle Renewal Leads ?';
                 break;
             case 'created_at':
                 $title = 'Created Date';
@@ -180,7 +194,7 @@ class TierService extends BaseService
         return [
             'create' => 'created_at,updated_at',
             'list' => 'tier_users',
-            'update' => 'id,created_at,updated_at',
+            'update' => 'created_at,updated_at',
             'show' => 'created_at,updated_at,tier_users',
         ];
     }

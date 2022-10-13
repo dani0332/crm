@@ -106,6 +106,80 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
+    public function sendEmailThroughSIB($emailTemplateId, $emailData, $tag, $emailTo)
+    {
+        try {
+            $apiKey = config('constants.SENDINBLUE_KEY');
+            $url = config('constants.SIB_URL');
+            $appEnv = config('constants.APP_ENV');
+
+            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+            ];
+
+            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
+
+            if ($emailAttachments) {
+                $attachments = [];
+                foreach ($emailAttachments as $emailAttachment) {
+                    $attachments[] = [
+                        'url' => $emailAttachment,
+                        'name' => basename($emailAttachment),
+                    ];
+                }
+            }
+
+            $body = json_encode([
+                'to' => [[
+                    'email' => $emailTo,
+                ]],
+                'templateId' => $emailTemplateId,
+                'params' => $emailData,
+                'tags' => [
+                    $tag,
+                ],
+                'attachment' => isset($attachments) ? $attachments : null,
+            ], JSON_UNESCAPED_SLASHES);
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10000,
+                ]
+            );
+
+            $messageId = json_decode($clientRequest->getBody()->getContents())->messageId;
+            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $responseCode = $clientRequest->getStatusCode();
+
+            if ($responseCode == 201) {
+                $isEmailSent = 1;
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->quoteCdbId.' Class: '.get_class();
+            Log::error($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $isEmailSent = 0;
+        }
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
+
+        // addEmailStatus is for quote modules only
+        if (isset($messageId) && isset($emailData->quoteTypeId) && isset($emailData->quoteId)) {
+            UpdateSendPolicySubjectJob::dispatch($emailData, $messageId)->delay(now()->addSeconds(7));
+        }
+
+        return $responseCode;
+    }
+
     public function getEmailSubjectFromSib($messageId)
     {
         $apiKey = config('constants.SENDINBLUE_KEY');
