@@ -216,6 +216,7 @@ class ApplicationStorageService extends BaseService
         $applicationStorage = ApplicationStorage::where('key_name', 'CAR_LEAD_PICKUP_FIFO')->first();
         $applicationStorage->value = $applicationStorage->value == 1 ? 0 : 1;
         $applicationStorage->save();
+
         return true;
     }
 }

@@ -43,6 +43,7 @@ class LeadAllocationJob implements ShouldQueue
             }
             if (! $leadAllocationService->leadAllocationSwitchStatus()) {
                 info('Lead Allocation Job Switch is OFF');
+
                 return;
             } else {
                 $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();

@@ -351,8 +351,8 @@ class LeadAllocationService extends BaseService
             $timeForStart = Carbon::parse(ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_TIME')->first()->value)->toTimeString();
             $sundayResetTime = Carbon::parse(ApplicationStorage::where('key_name', 'SUNDAY_CAP_RESET_TIME')->first()->value)->toTimeString();
             $normalResetTime = Carbon::parse(ApplicationStorage::where('key_name', 'NORMAL_CAP_RESET_TIME')->first()->value)->toTimeString();
-            info('carLeadSwitch : '. $carLeadAllocationSwitch . ' , End Time : '. $timeForEnd. ' , Start Time : '. $timeForStart. ', SundayResetTime :'. $sundayResetTime . ', Normal ResetTime : '. $normalResetTime. ' , time right now : '. $dateTimeNow);
-            info('Time for advisor start in app storage is '.$timeForStart . ' and end is :'. $timeForEnd . ' and the switch right now is : '. $carLeadAllocationSwitch);
+            info('carLeadSwitch : '.$carLeadAllocationSwitch.' , End Time : '.$timeForEnd.' , Start Time : '.$timeForStart.', SundayResetTime :'.$sundayResetTime.', Normal ResetTime : '.$normalResetTime.' , time right now : '.$dateTimeNow);
+            info('Time for advisor start in app storage is '.$timeForStart.' and end is :'.$timeForEnd.' and the switch right now is : '.$carLeadAllocationSwitch);
             if ($dateTimeNow >= $timeForStart && $carLeadAllocationSwitch == 0) {
                 ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_JOB_SWITCH')->update([
                     'value' => 1,
@@ -364,11 +364,10 @@ class LeadAllocationService extends BaseService
                     'value' => 0,
                 ]);
             }
-            if($currentDay == DaysNameEnum::Sunday && $dateTimeNow >= $sundayResetTime){
-
+            if ($currentDay == DaysNameEnum::Sunday && $dateTimeNow >= $sundayResetTime) {
                 $this->updateUserMaxCapacity();
             }
-            if($currentDay != DaysNameEnum::Sunday && $dateTimeNow >= $normalResetTime){
+            if ($currentDay != DaysNameEnum::Sunday && $dateTimeNow >= $normalResetTime) {
                 info('setMaxCapAndAllocationStatus - going to update normal reset cap');
                 $this->updateUserMaxCapacity();
             }
@@ -394,12 +393,11 @@ class LeadAllocationService extends BaseService
                                 'la.allocation_count as allocationCount', 'la.last_allocated as lastAllocation', 'la.max_capacity as maxCapacity', 'la.is_available as isAvailable',
                                 'users.last_login as lastLogin', 'la.id as id'
                             )->get();
-        foreach($users as $user)
-        {
+        foreach ($users as $user) {
             LeadAllocation::where('user_id', $user->userId)->update([
                 'max_capacity' => str_contains($user->quads, '1') ? 4 : 5,
                 'allocation_count' => 0,
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
         }
     }
@@ -494,8 +492,10 @@ class LeadAllocationService extends BaseService
             $carUnAllocatedLead = $this->getCarUnallocatedLeads($from);
             foreach ($carUnAllocatedLead as $carLead) {
                 if ($this->checkIfLeadIsRenewal($carLead)) {
-                    info('car lead allocation sending renewal email for uuid : ' . $carLead->uuid);
-                    if(!$carLead->is_renewal_tier_email_sent) $this->sendRenewalLeadEmail($carLead);
+                    info('car lead allocation sending renewal email for uuid : '.$carLead->uuid);
+                    if (! $carLead->is_renewal_tier_email_sent) {
+                        $this->sendRenewalLeadEmail($carLead);
+                    }
                     continue;
                 }
                 info('trying to check tier against the current lead : '.$carLead->uuid);
@@ -544,6 +544,7 @@ class LeadAllocationService extends BaseService
         info('Car leads fetch start date is :'.$from);
         $to = now();
         $isFIFO = ApplicationStorage::where('key_name', 'CAR_LEAD_PICKUP_FIFO')->first()->value;
+
         return CarQuote::whereNull('advisor_id')
             ->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
@@ -566,7 +567,7 @@ class LeadAllocationService extends BaseService
     {
         $dateFrom = Carbon::now()->addDays(-30);
         $dateTo = Carbon::now()->addDays(90);
-        info('car lead allocation renewal date from : ' . $dateFrom . ' and date to : '. $dateTo);
+        info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
         $renewalQuote = CarQuote::where('source', LeadSourceEnum::RENEWALUPLOAD)
         ->whereBetween('renewal_expiry_date', [$dateFrom, $dateTo])
         ->where(function ($query) use ($lead) {
@@ -575,10 +576,12 @@ class LeadAllocationService extends BaseService
         })
         ->get();
         if (count($renewalQuote) > 0) {
-            info('car lead allocation found a renewal quote with uuid : '. $renewalQuote->first()->uuid);
+            info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid);
+
             return true;
         } else {
             info('car lead allocation did-not found a renewal');
+
             return false;
         }
     }
@@ -588,9 +591,9 @@ class LeadAllocationService extends BaseService
         info('Inside send car lead allocation renewal lead email');
 
         $renewalEmailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
-        $subject = ucwords(config('constants.APP_ENV')). ' - ' . $lead->first_name.' '.$lead->last_name.' has approached Alfred';
+        $subject = ucwords(config('constants.APP_ENV')).' - '.$lead->first_name.' '.$lead->last_name.' has approached Alfred';
 
-        info('car lead allocation renewal lead email subject is : '. $subject);
+        info('car lead allocation renewal lead email subject is : '.$subject);
         $emailData = [
             'clientFullName' => $lead->first_name.' '.$lead->last_name,
             'email' => $lead->email,
@@ -605,56 +608,60 @@ class LeadAllocationService extends BaseService
             'quoteLink' => config('constants.APP_URL').'/quotes/car/'.$lead->uuid,
         ];
 
-        info('car lead allocation renewal lead email data is : '. json_encode($emailData));
+        info('car lead allocation renewal lead email data is : '.json_encode($emailData));
         $templateId = (int) config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
         $this->sendEmailUsingSIB($templateId, $emailData, '1', $renewalEmailRecipients);
-        info('Sending email done, going to work on car quote update for lead id : '. $lead->id);
+        info('Sending email done, going to work on car quote update for lead id : '.$lead->id);
         CarQuote::where('id', $lead->id)->update([
-            'is_renewal_tier_email_sent' => 1
+            'is_renewal_tier_email_sent' => 1,
         ]);
     }
 
     public function getTierForValue($carLead)
     {
         $tiers = Tier::where('is_active', 1)->get();
-        if($carLead->car_value == null) {
+        if ($carLead->car_value == null) {
             info('get Tier inside the null value filter');
             $tiers = $tiers->filter(function ($value) {
-                return $value->can_handle_null_value == 1 ;
+                return $value->can_handle_null_value == 1;
             });
         }
-        if($carLead->is_ecommerce == 1) {
+        if ($carLead->is_ecommerce == 1) {
             info('get Tier inside the ecommerce filter');
             $tiers = $tiers->filter(function ($value) {
-                return $value->can_handle_ecommerce == 1 ;
+                return $value->can_handle_ecommerce == 1;
             });
         }
-        if($carLead->car_type_insurance_id == 2) {
+        if ($carLead->car_type_insurance_id == 2) {
             info('get Tier inside the can handle tpl filter');
             $tiers = $tiers->filter(function ($value) {
-                return $value->can_handle_tpl == 1 ;
+                return $value->can_handle_tpl == 1;
             });
         }
-        if($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2){
+        if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
             info('get Tier inside the car value filter');
             $tiers = $tiers->filter(function ($value) use ($carLead) {
-                return $value->min_price <= $carLead->car_value && $value->max_price >= $carLead->car_value ;
+                return $value->min_price <= $carLead->car_value && $value->max_price >= $carLead->car_value;
             });
         }
-        if($carLead->source == LeadSourceEnum::TPL_RENEWALS){
+        if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
             info('get Tier inside the car value filter');
-            $tiers = $tiers->filter(function ($value){
-                return $value->is_tpl_renewals == 1 ;
+            $tiers = $tiers->filter(function ($value) {
+                return $value->is_tpl_renewals == 1;
             });
         }
-        info('get tier the first tier after filter is : '. json_encode($tiers->first()));
-        if ($tiers != null) return $tiers->first();
+        info('get tier the first tier after filter is : '.json_encode($tiers->first()));
+        if ($tiers != null) {
+            return $tiers->first();
+        }
+
         return null;
     }
 
     public function getTierUsersWithLeadAllocationRecord($tierId)
     {
         $tierUsers = TierUsers::where('tier_id', $tierId)->get()->pluck('user_id');
+
         return LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                     ->where('lead_allocation.is_available', 1)
                     ->where(function ($query) {

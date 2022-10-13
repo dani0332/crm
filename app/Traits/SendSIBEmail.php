@@ -12,7 +12,7 @@ trait SendSIBEmail
     public function sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailTo)
     {
         info('sendEmailUsingSIB -- start');
-        info('sendEmailUsingSIB data : '. json_encode($emailData). ' , templateId :'. $emailTemplateId . ' , email To : '. $emailTo);
+        info('sendEmailUsingSIB data : '.json_encode($emailData).' , templateId :'.$emailTemplateId.' , email To : '.$emailTo);
         try {
             $apiKey = config('constants.SENDINBLUE_KEY');
             $url = config('constants.SIB_URL');
@@ -75,16 +75,15 @@ trait SendSIBEmail
             $isEmailSent = 0;
         }
         info('sendEmailUsingSIB - email sent');
-        if(str_contains($emailTo, ',')){
+        if (str_contains($emailTo, ',')) {
             $emails = explode(',', $emailTo);
             info('sendEmailUsingSIB - emails contain comma');
-            foreach($emails as $email)
-            {
-                info('sendEmailUsingSIB - current email is : '. $email);
+            foreach ($emails as $email) {
+                info('sendEmailUsingSIB - current email is : '.$email);
                 $this->addEmailActivity($response, $isEmailSent, $email);
             }
-        }else{
-            info('sendEmailUsingSIB - email is : '. $emailTo);
+        } else {
+            info('sendEmailUsingSIB - email is : '.$emailTo);
             $this->addEmailActivity($response, $isEmailSent, $emailTo);
         }
 
