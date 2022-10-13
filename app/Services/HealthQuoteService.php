@@ -198,7 +198,7 @@ class HealthQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
-            HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => HealthTeamType::EBP]);
+            HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => auth()->user()->getUserMainTeam()]);
         }
 
         return $response;

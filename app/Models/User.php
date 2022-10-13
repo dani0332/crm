@@ -234,4 +234,12 @@ class User extends Authenticatable implements AuditableContract
 
         return $isAdvisor;
     }
+
+    public function getUserMainTeam()
+    {
+        $team = Team::find(auth()->user()->team_id);
+        if($team) {
+            return $team->name;
+        }
+    }
 }
