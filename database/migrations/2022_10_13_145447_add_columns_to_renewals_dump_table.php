@@ -33,7 +33,7 @@ class AddColumnsToRenewalsDumpTable extends Migration
 
         Schema::table('renewals_dump', function (Blueprint $table) {
             if (! Schema::hasColumn('renewals_dump', 'validation_errors')) {
-                $table->json('validation_errors')->nullable()->after('batch');
+                $table->json('validation_errors')->nullable()->after('email_sent');
             }
         });
     }
