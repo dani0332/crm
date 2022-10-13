@@ -238,8 +238,10 @@ class User extends Authenticatable implements AuditableContract
     public function getUserMainTeam()
     {
         $team = Team::find(auth()->user()->team_id);
-        if($team) {
+        if ($team) {
             return $team->name;
+        } else {
+            return null;
         }
     }
 }

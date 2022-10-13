@@ -477,6 +477,7 @@ class CRUDController extends Controller
                 }
             }
         }
+        dd($validateArray);
         $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
