@@ -466,18 +466,18 @@ class CRUDController extends Controller
     {
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $modelType = json_decode($request->all()['modelType'], true);
-        $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $validateArray = [];
         if ($modelType == 'Home') {
+            $modelSkipPropertiesList = (json_decode($request->get('modelSkipProperties'), true)) ? json_decode($request->get('modelSkipProperties'), true) : $request->get('modelSkipProperties');
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
+            $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
             foreach ($modelPropertiesList as $property => $value) {
                 if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && ! strpos($modelSkipPropertiesList['update'], $property)) {
                     $validateArray[$property] = 'required';
                 }
             }
         }
-        dd($validateArray);
         $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);

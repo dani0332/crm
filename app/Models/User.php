@@ -70,6 +70,11 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsToMany(Role::class, 'model_has_roles', 'model_id');
     }
 
+    public function team(){
+
+        return $this->hasOne(Team::class,'id','team_id');
+    }
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = env('DATETIME_FORMAT');
@@ -235,13 +240,4 @@ class User extends Authenticatable implements AuditableContract
         return $isAdvisor;
     }
 
-    public function getUserMainTeam()
-    {
-        $team = Team::find(auth()->user()->team_id);
-        if ($team) {
-            return $team->name;
-        } else {
-            return null;
-        }
-    }
 }
