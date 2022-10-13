@@ -2562,6 +2562,20 @@ $(document).ready(function () {
     }, 2000);
   });
 
+  $('.health-plan-link-copy').on('click', function () {
+    var planId = $(this).attr('data-planId');
+    var quoteUUID = $(this).attr('data-quoteUUId');
+    var providerCode = $(this).attr('data-providerCode');
+    var websiteURL = $(this).attr('data-websiteURL');
+    var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
+    navigator.clipboard.writeText(paymentLink);
+    var self = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(self).text('Copy');
+    }, 2000);
+  });
+
   $('#btn_download_plan_pdf').on('click', function () 
   {
   

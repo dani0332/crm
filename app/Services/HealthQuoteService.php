@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -197,6 +198,7 @@ class HealthQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
+            HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => HealthTeamType::EBP]);
         }
 
         return $response;
