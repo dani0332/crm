@@ -19,11 +19,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 					<div class="col-auto">
 						<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"
 							value="{{ $ecomUrl }}">
-                        @if(auth()->user()->hasRole(\App\Enums\RolesEnum::BetaUser))
                             <span id="span_pdf_download">
                                 <button id="btn_download_plan_pdf" type="button" class="btn btn-success btn-sm">Download PDF</button>
                             </span>
-                        @endif
 						@can('car-quotes-plans-create')
 						<a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
 							class="btn btn-primary btn-sm">Create Quote</a>

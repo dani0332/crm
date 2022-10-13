@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\HealthTeamType;
 use App\Events\AdvisorAssigned;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -148,7 +149,9 @@ class LeadAllocationService extends BaseService
                     $this->updateLeadAllocationRecord($advisorId);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
-                if ($isManualAssignment && auth()->user()->hasRole(RolesEnum::BetaUser)) {
+                $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
+                $leadCreated = Carbon::parse($lead->created_at)->timestamp;
+                if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate) {
                     info('Contact upload Request '.$lead->uuid);
                     $this->sendSibRequest($lead);
                 }

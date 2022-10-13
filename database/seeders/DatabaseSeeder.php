@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             CustomerAdditionalContactSeeder::class,
             addRenewalAppSettings::class,
             SendPolicyApplicationStorageSeeder::class,
+            AddRoleForMarketingSeeder::class,
             addPermissionForManualLeadTesting::class,
             addPermissionForCarAllocation::class,
         ]);
