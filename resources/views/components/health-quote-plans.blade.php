@@ -1,6 +1,3 @@
-@php
-$websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
-@endphp
 <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
@@ -43,7 +40,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                                     data-planId="{{$quotePlan->id}}"
                                                     data-quoteUUId="{{$record->uuid}}"
                                                     data-providerCode="{{$quotePlan->providerCode}}"
-                                                    data-websiteURL="{{$websiteURL}}"
+                                                    data-websiteURL="{{config('constants.AFIA_WEBSITE_DOMAIN')}}"
                                                     >Copy</button>
                                                 </td>
                                             </tr>
