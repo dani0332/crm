@@ -12,10 +12,8 @@ use App\Models\CarQuote;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
-use Auth;
-use Config;
-use DataTables;
 use Illuminate\Http\Request;
+use Yajra\Datatables\Datatables;
 
 class RenewalsUploadController extends Controller
 {
@@ -27,11 +25,11 @@ class RenewalsUploadController extends Controller
     }
 
     /**
-     * renew the quote against the customer
+     * renew the quote against the customer.
      *
      * @param  \Illuminate\Http\Request  $request
      */
-    public function processRenewalsCSV(Request $request)
+    public function renewalsUploadProcess(Request $request)
     {
         // validate the file extension
         $this->validate($request, [
@@ -39,7 +37,6 @@ class RenewalsUploadController extends Controller
         ]);
 
         if ($request->hasFile('file_name')) {
-
             // Check if file already uploaded
             $existingFile = RenewalsUploadLeads::where('file_name', $request->file_name->getClientOriginalName())->first();
 
@@ -120,22 +117,22 @@ class RenewalsUploadController extends Controller
 
     private function createRenewalUploadLeadRecord($fileName, $filePathAzure)
     {
-        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
-        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
         $renewalsUploadLead = new RenewalsUploadLeads();
         $renewalsUploadLead->file_name = $fileName;
         $renewalsUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
         $renewalsUploadLead->status = ProcessStatusCode::IN_PROGRESS;
         $renewalsUploadLead->good = 0;
-        $renewalsUploadLead->created_by_id = Auth::user()->id;
+        $renewalsUploadLead->created_by_id = auth()->id();
         $renewalsUploadLead->save();
     }
 
     public function uploadRenewals()
     {
-        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
-        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
         return view('renewals.upload', compact('azureStorageUrl', 'azureStorageContainer'));
     }
@@ -174,8 +171,8 @@ class RenewalsUploadController extends Controller
 
     public function updateRenewals()
     {
-        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
-        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
         $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', RenewalsUploadType::CREATE_LEADS)
         ->where('renewal_import_code', '!=', '')
@@ -230,7 +227,7 @@ class RenewalsUploadController extends Controller
         $renewalsBatchStatus->total_leads = $batchLeadsCount;
         $renewalsBatchStatus->total_sent = 0;
         $renewalsBatchStatus->total_bounced = 0;
-        $renewalsBatchStatus->created_by_id = Auth::user()->id;
+        $renewalsBatchStatus->created_by_id = auth()->id();
         $renewalsBatchStatus->save();
 
         foreach ($batchLeads as $batchLead) {
