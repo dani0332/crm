@@ -681,7 +681,7 @@ class CarQuoteService extends BaseService
                     } elseif ($item == 'quote_status_id' && is_array($request[$item]) && ! empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
-                        $searchedValue = str_contains($request[$item], 'Yes') || str_contains($request[$item], 'No') ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
+                        $searchedValue = preg_match("/\b". "Yes" ."\b/i", $request[$item]) || preg_match("/\b". "No" ."\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                         if ($item == 'policy_number') {
                             $this->query->where('previous_quote_policy_number', $searchedValue);
                         } else {
@@ -828,7 +828,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'currently_insured_with'];
     }
 
     public function fillRenewalProperties($model)
