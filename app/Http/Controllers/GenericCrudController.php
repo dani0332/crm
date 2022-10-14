@@ -277,7 +277,7 @@ class GenericCrudController extends Controller
     private function setModelType(Request $request)
     {
         $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
-        if (strpos($url, GenericModelTypeEnum::INSURANCE_PROVIDER )) {
+        if (strpos($url, GenericModelTypeEnum::INSURANCE_PROVIDER)) {
             $this->genericModel->modelType = 'InsuranceProvider';
         }
         if (strpos($url, GenericModelTypeEnum::CAR_PLAN)) {
@@ -298,7 +298,7 @@ class GenericCrudController extends Controller
         if (strpos($url, GenericModelTypeEnum::TEAMS)) {
             $this->genericModel->modelType = 'Teams';
         }
-        if (strpos($url,GenericModelTypeEnum::LEAD_STATUS)) {
+        if (strpos($url, GenericModelTypeEnum::LEAD_STATUS)) {
             $this->genericModel->modelType = 'LeadStatus';
         }
         if (strpos($url, GenericModelTypeEnum::TIER)) {
