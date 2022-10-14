@@ -29,7 +29,7 @@ class AddTierTableForLeadAllocation extends Migration
                 $table->float('max_price')->nullable(false);
                 $table->float('cost_per_lead')->nullable();
                 $table->boolean('is_tpl')->default(false);
-                $table->boolean('is_auto_assignment_enabled')->default(true);
+                $table->boolean('is_auto_assignment_enabled')->default(false);
                 $table->boolean('is_active')->default(true);
                 $table->timestamps();
             });
