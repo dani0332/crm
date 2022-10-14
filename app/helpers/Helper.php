@@ -332,18 +332,18 @@ function addSearchClauses($model, $request, $query, $searchPrefix)
         if (isset($request->$searchProperty)) {
             $propertyMetaData = $model->properties[$searchProperty];
             switch ($propertyMetaData) {
-                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::LikeSearch):
+                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::LIKE_SEARCH):
                     $query = $query->where($searchPrefix.$searchProperty, 'like', '%'.$request->$searchProperty.'%');
                     break;
-                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::EqualSearch):
+                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::EQUAL_SEARCH):
                     $query = $query->where($searchPrefix.$searchProperty, $request->$searchProperty);
                     break;
-                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::DateRange):
+                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::DATE_RANGE):
                     $dateFrom = Carbon::createFromFormat($dateFormat, $request[$searchProperty])->startOfDay()->toDateTimeString();
                     $dateTo = Carbon::createFromFormat($dateFormat, $request[$searchProperty.'_end'])->endOfDay()->toDateTimeString();
                     $query = $query->whereBetween($searchPrefix.$searchProperty, [$dateFrom, $dateTo]);
                     break;
-                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::MultiSearch):
+                case str_contains($propertyMetaData, IMCRMSearchTypesEnum::MULTI_SEARCH):
                     $query = $query->whereIn($searchPrefix.$searchProperty, $request->$searchProperty);
                     break;
                 default:
