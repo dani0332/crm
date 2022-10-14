@@ -108,7 +108,7 @@ class LeadAllocationService extends BaseService
             DB::beginTransaction();
             $unAllocatedLeads = [];
             $to = now();
-            $from = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
+            $from = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             info('from date : '.$from.' to date : '.$to);
             $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
                 ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
@@ -137,7 +137,7 @@ class LeadAllocationService extends BaseService
             info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
             try {
                 DB::beginTransaction();
-                //AdvisorAssigned::dispatch($lead);
+                AdvisorAssigned::dispatch($lead);
                 if ($isManualAssignment && $lead->advisor_id != null && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
                     info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
@@ -320,7 +320,7 @@ class LeadAllocationService extends BaseService
             info('setAdvisorsToUnavailable -- started');
             $dateTimeNow = now()->toTimeString();
             info('Current time is '.$dateTimeNow);
-            $timeForUnavailability = Carbon::parse(ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_UNAVAILABILITY_TIME')->first()->value)->toTimeString();
+            $timeForUnavailability = Carbon::parse($this->getAppStorageValueByKey('LEAD_ALLOCATION_UNAVAILABILITY_TIME'))->toTimeString();
             info('Time for advisor unavailability in app storage is '.$timeForUnavailability);
             if ($dateTimeNow >= $timeForUnavailability) {
                 info('Current time before unavailable is '.$dateTimeNow);
@@ -349,28 +349,22 @@ class LeadAllocationService extends BaseService
             $currentDay = Carbon::parse(now())->format('l');
             info('Current time is '.$dateTimeNow);
 
-            $carLeadAllocationSwitch = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_JOB_SWITCH')->first()->value;
-            $timeForEnd = Carbon::parse(ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_END_TIME')->first()->value)->toTimeString();
-            $timeForStart = Carbon::parse(ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_TIME')->first()->value)->toTimeString();
-            $sundayResetTime = Carbon::parse(ApplicationStorage::where('key_name', 'SUNDAY_CAP_RESET_TIME')->first()->value)->toTimeString();
-            $normalResetTime = Carbon::parse(ApplicationStorage::where('key_name', 'NORMAL_CAP_RESET_TIME')->first()->value)->toTimeString();
+            $carLeadAllocationSwitch =  $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
+            $timeForEnd = Carbon::parse($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_END_TIME'))->toTimeString();
+            $timeForStart = Carbon::parse($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME'))->toTimeString();
+            $sundayResetTime = Carbon::parse($this->getAppStorageValueByKey('SUNDAY_CAP_RESET_TIME'))->toTimeString();
+            $normalResetTime = Carbon::parse($this->getAppStorageValueByKey('NORMAL_CAP_RESET_TIME'))->toTimeString();
             info('carLeadSwitch : '.$carLeadAllocationSwitch.' , End Time : '.$timeForEnd.' , Start Time : '.$timeForStart.', SundayResetTime :'.$sundayResetTime.', Normal ResetTime : '.$normalResetTime.' , time right now : '.$dateTimeNow);
             info('Time for advisor start in app storage is '.$timeForStart.' and end is :'.$timeForEnd.' and the switch right now is : '.$carLeadAllocationSwitch);
-            if ($dateTimeNow >= $timeForStart && $carLeadAllocationSwitch == 0) {
-                ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_JOB_SWITCH')->update([
-                    'value' => 1,
-                ]);
-            }
+            if ($dateTimeNow >= $timeForStart && $carLeadAllocationSwitch == 0) $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
             if ($dateTimeNow >= $timeForEnd && $carLeadAllocationSwitch == 1) {
                 info('setMaxCapAndAllocationStatus - going to shutdown the car lead allocation switch');
-                ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_JOB_SWITCH')->update([
-                    'value' => 0,
-                ]);
+                $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
             }
-            if ($currentDay == DaysNameEnum::Sunday && $dateTimeNow >= $sundayResetTime) {
+            if ($currentDay == DaysNameEnum::SUNDAY && $dateTimeNow >= $sundayResetTime) {
                 $this->updateUserMaxCapacity();
             }
-            if ($currentDay != DaysNameEnum::Sunday && $dateTimeNow >= $normalResetTime) {
+            if ($currentDay != DaysNameEnum::SUNDAY && $dateTimeNow >= $normalResetTime) {
                 info('setMaxCapAndAllocationStatus - going to update normal reset cap');
                 $this->updateUserMaxCapacity();
             }
@@ -407,29 +401,11 @@ class LeadAllocationService extends BaseService
 
     public function carLeadAllocationSwitchStatus()
     {
-        try {
-            DB::beginTransaction();
-            $leadAllocationSwitch = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_JOB_SWITCH')->first();
-            DB::commit();
-
-            return $leadAllocationSwitch && $leadAllocationSwitch->value == '1';
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            DB::rollback();
-        }
+        return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') == '1';
     }
     public function leadAllocationSwitchStatus()
     {
-        try {
-            DB::beginTransaction();
-            $leadAllocationSwitch = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_JOB_SWITCH')->first();
-            DB::commit();
-
-            return $leadAllocationSwitch && $leadAllocationSwitch->value == '1';
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-            DB::rollback();
-        }
+        return $this->getAppStorageValueByKey('LEAD_ALLOCATION_JOB_SWITCH') == '1';
     }
 
     public function getLeadAllocationRecordByUserId($userId)
@@ -491,7 +467,7 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            $from = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
+            $from = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             $carUnAllocatedLead = $this->getCarUnallocatedLeads($from);
             foreach ($carUnAllocatedLead as $carLead) {
                 if ($this->checkIfLeadIsRenewal($carLead)) {
@@ -521,7 +497,6 @@ class LeadAllocationService extends BaseService
                     }
 
                     info('common users at this point are '.$commonUserIds);
-
                     $userId = $commonUserIds->first();
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
@@ -546,7 +521,7 @@ class LeadAllocationService extends BaseService
     {
         info('Car leads fetch start date is :'.$from);
         $to = now();
-        $isFIFO = ApplicationStorage::where('key_name', 'CAR_LEAD_PICKUP_FIFO')->first()->value;
+        $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
 
         return CarQuote::whereNull('advisor_id')
             ->whereBetween('created_at', [$from, $to])
@@ -571,7 +546,7 @@ class LeadAllocationService extends BaseService
         $dateFrom = Carbon::now()->addDays(-30);
         $dateTo = Carbon::now()->addDays(90);
         info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
-        $renewalQuote = CarQuote::where('source', LeadSourceEnum::RENEWALUPLOAD)
+        $renewalQuote = CarQuote::where('source', LeadSourceEnum::RENEWAL_UPLOAD)
         ->whereBetween('renewal_expiry_date', [$dateFrom, $dateTo])
         ->where(function ($query) use ($lead) {
             $query->where('email', $lead->email)
@@ -678,5 +653,23 @@ class LeadAllocationService extends BaseService
                     ->select('u.id', 'u.name', 'u.email', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity',
                         'lead_allocation.last_allocated')
                     ->orderBy('lead_allocation.last_allocated', 'asc')->get();
+    }
+
+    public function getAppStorageValueByKey($keyName)
+    {
+        $query = ApplicationStorage::select('value')
+        ->where('key_name', $keyName)
+        ->first();
+
+        if (! $query) {
+            return false;
+        }
+
+        return $query->value;
+    }
+
+    public function updateAppStorageValueByKey($keyName, $value)
+    {
+        ApplicationStorage::where('key_name', $keyName)->update(['value' => $value]);
     }
 }

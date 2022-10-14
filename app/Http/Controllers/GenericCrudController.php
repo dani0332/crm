@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\GenericModelTypeEnum;
 use App\Enums\InsuranceProvderConstants;
 use App\Models\GenericModel;
 use App\Services\ApplicationStorageService;
@@ -276,37 +277,37 @@ class GenericCrudController extends Controller
     private function setModelType(Request $request)
     {
         $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
-        if (strpos($url, 'insuranceprovider')) {
+        if (strpos($url, GenericModelTypeEnum::INSURANCE_PROVIDER )) {
             $this->genericModel->modelType = 'InsuranceProvider';
         }
-        if (strpos($url, 'carplan')) {
+        if (strpos($url, GenericModelTypeEnum::CAR_PLAN)) {
             $this->genericModel->modelType = 'CarPlan';
         }
-        if (strpos($url, 'carplancoverage')) {
+        if (strpos($url, GenericModelTypeEnum::CAR_PLAN_COVERAGE)) {
             $this->genericModel->modelType = 'CarPlanCoverage';
         }
-        if (strpos($url, 'carplanaddon')) {
+        if (strpos($url, GenericModelTypeEnum::CAR_PLAN_ADDON)) {
             $this->genericModel->modelType = 'CarPlanAddOn';
         }
-        if (strpos($url, 'carplanaddonoption')) {
+        if (strpos($url, GenericModelTypeEnum::CAR_PLAN_ADDON_OPTION)) {
             $this->genericModel->modelType = 'CarPlanAddOnOption';
         }
-        if (strpos($url, 'applicationstorage')) {
+        if (strpos($url, GenericModelTypeEnum::APPLICATION_STORAGE)) {
             $this->genericModel->modelType = 'ApplicationStorage';
         }
-        if (strpos($url, 'teams')) {
+        if (strpos($url, GenericModelTypeEnum::TEAMS)) {
             $this->genericModel->modelType = 'Teams';
         }
-        if (strpos($url, 'leadstatus')) {
+        if (strpos($url,GenericModelTypeEnum::LEAD_STATUS)) {
             $this->genericModel->modelType = 'LeadStatus';
         }
-        if (strpos($url, 'tier')) {
+        if (strpos($url, GenericModelTypeEnum::TIER)) {
             $this->genericModel->modelType = 'Tier';
         }
-        if (strpos($url, 'quadrant')) {
+        if (strpos($url, GenericModelTypeEnum::QUADRANT)) {
             $this->genericModel->modelType = 'Quadrant';
         }
-        if (strpos($url, 'rule')) {
+        if (strpos($url, GenericModelTypeEnum::RULE)) {
             $this->genericModel->modelType = 'Rule';
         }
     }

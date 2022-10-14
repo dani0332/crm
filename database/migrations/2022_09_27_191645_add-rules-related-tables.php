@@ -17,7 +17,7 @@ class AddRulesRelatedTables extends Migration
             Schema::create('lead_sources', function (Blueprint $table) {
                 $table->id();
                 $table->string('name', 500)->nullable(false);
-                $table->string('code')->nullable();
+                $table->string('code', 255)->nullable();
                 $table->boolean('is_active')->default(true);
                 $table->timestamps();
             });

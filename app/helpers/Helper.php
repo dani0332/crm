@@ -326,6 +326,7 @@ function get_dob_date_format()
  */
 function addSearchClauses($model, $request, $query, $searchPrefix)
 {
+    $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
     $searchProperties = $model->searchProperties;
     foreach ($searchProperties as $searchProperty) {
         if (isset($request->$searchProperty)) {
@@ -338,8 +339,8 @@ function addSearchClauses($model, $request, $query, $searchPrefix)
                     $query = $query->where($searchPrefix.$searchProperty, $request->$searchProperty);
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::DateRange):
-                    $dateFrom = Carbon::createFromFormat('Y-m-d', $request[$searchProperty])->startOfDay()->toDateTimeString();
-                    $dateTo = Carbon::createFromFormat('Y-m-d', $request[$searchProperty.'_end'])->endOfDay()->toDateTimeString();
+                    $dateFrom = Carbon::createFromFormat($dateFormat, $request[$searchProperty])->startOfDay()->toDateTimeString();
+                    $dateTo = Carbon::createFromFormat($dateFormat, $request[$searchProperty.'_end'])->endOfDay()->toDateTimeString();
                     $query = $query->whereBetween($searchPrefix.$searchProperty, [$dateFrom, $dateTo]);
                     break;
                 case str_contains($propertyMetaData, IMCRMSearchTypesEnum::MultiSearch):
