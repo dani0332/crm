@@ -969,7 +969,11 @@ class HealthQuoteService extends BaseService
         $lead->save();
         //check if team is assigned and status not qualified yet so mark it qualified.
         if ($lead && $lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
-            HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
+            $health = HealthQuote::find($lead->id);
+            if($health) {
+                $health->quote_status_id = QuoteStatusEnum::Qualified;
+                $health->save();
+            }  
         }
 
         return true;
