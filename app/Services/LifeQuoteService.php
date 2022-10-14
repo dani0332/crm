@@ -102,6 +102,7 @@ class LifeQuoteService extends BaseService
             'mobileNo' => $request->mobile_no,
             'dob' => $request->dob,
             'sumInsuredValue' => $request->sum_insured_value,
+            'nationalityId' => $request->nationality_id,
             'sumInsuredCurrencyId' => $request->sum_insured_currency_id,
             'maritalStatusId' => $request->marital_status_id,
             'purposeOfInsuranceId' => $request->purpose_of_insurance_id,
@@ -359,6 +360,7 @@ class LifeQuoteService extends BaseService
         $lifeQuote->sum_insured_value = $request->sum_insured_value;
         $lifeQuote->sum_insured_currency_id = $request->sum_insured_currency_id;
         $lifeQuote->marital_status_id = $request->marital_status_id;
+        $lifeQuote->nationality_id = $request->nationality_id;
         $lifeQuote->purpose_of_insurance_id = $request->purpose_of_insurance_id;
         $lifeQuote->children_id = $request->children_id;
         $lifeQuote->premium = $request->premium;

@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
-use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -198,7 +197,11 @@ class HealthQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
-            HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => HealthTeamType::EBP]);
+            $subTeam = null;
+            if (auth()->user()->subTeam) {
+                $subTeam = auth()->user()->subTeam->name;
+            }
+            HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => $subTeam]);
         }
 
         return $response;
@@ -965,8 +968,8 @@ class HealthQuoteService extends BaseService
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
         //check if team is assigned and status not qualified yet so mark it qualified.
-        if ($lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
-            HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
+        if ($lead && $lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
+            HealthQuote::where('id', $lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
 
         return true;
