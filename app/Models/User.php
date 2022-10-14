@@ -72,7 +72,7 @@ class User extends Authenticatable implements AuditableContract
 
     public function team(){
 
-        return $this->hasOne(Team::class,'id','team_id');
+        return $this->belongsTo(Team::class);
     }
 
     public function getCreatedAtAttribute($table)
