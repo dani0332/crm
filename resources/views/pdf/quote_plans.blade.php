@@ -1,4 +1,4 @@
-<!DOCTYPE html>
++<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -47,16 +47,16 @@
             font-weight: bolder;
         }
         table.tbl-dec {
-           border: none;
+            border: none;
         }
-        table.tbl-dec tr td {border: none;}
+        table.tbl-dec tr td, table.tbl-dec tr td a {border: none;color: #1d83bc;}
         table {
-            min-width: 1140px;
-            width: 1140px;
+            min-width: 1150px;
+            width: 1150px;
             text-indent: 0;
             border-color: #bfbfbf;
-            max-width: 1140px;
-            margin: 10px 12px auto;
+            max-width: 1150px;
+            margin: 7px 12px auto;
             border-spacing: 0;
         }
         .header {
@@ -64,23 +64,28 @@
             color: #ffffff;
             font-size: 19px;
             text-align: center;
-            padding: 10px 10px;
+            padding: 8px 10px;
             width: 100%;
-            height: 70px;
-            max-height: 70px;
+            height: 60px;
+            max-height: 60px;
         }
         .header .logo {
             float: left;
             background-color: white;
             border-radius: 5px;
             padding: 5px 10px 5px 0px;
+            height: 50px;
+            max-height: 50px;
         }
-        .header h2 {
+        .header .logo img {
+            max-height: 50px;
+            height: 50px;
+        }
+        .header h3 {
             float: right;
             text-align: right;
             padding-right: 18px;
         }
-
         tbody > tr > td {
             border: 1px solid #bfbfbf;
         }
@@ -124,18 +129,20 @@
         .spacer {
             padding: 3px;
         }
+        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;}
         .quote-info {
-            text-align: right;padding-right: 0;vertical-align: bottom;
-        }
-        div.quote-info  {
+            text-align: right;
+            vertical-align: bottom;
             margin-top: -1px;
-            border: 1px solid #bfbfbf;
             background: #EFF6FF;
             font-size: 14px;
             text-align: left;
             padding: 8px;
             max-width: 100%;
             font-weight: normal;
+        }
+        div.quote-info  {
+
         }
         .info h5 {
             background: #1d83bc;
@@ -150,14 +157,15 @@
         .btn-all-quotes {
             background-color: #1d83bc;
             color: #ffffff;
-            padding: 12px 25px;
-            margin-top: 8px;
+            padding: 8px 25px;
+            margin-top: 6px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             border-radius: 5px;
+            margin-bottom: 0px;
         }
         .btn-buy
         {
@@ -202,7 +210,7 @@
             text-align: center;
         }
         table.tbl-footer {
-            padding: 16px 12px;
+            padding: 7px 12px;
             margin: 0;
             width: 100%;
             border: none;
@@ -210,7 +218,7 @@
         table.tbl-footer tr td, table.tbl-footer tr td a {
             color: #ffffff;
             border: none;
-            font-size: 17px;
+            font-size: 16px;
         }
         .text-left {text-align: left;}
         .text-right {text-align: right;}
@@ -260,7 +268,7 @@
         <div class="logo">
             <img class="im-logo" src="{{public_path('images/im_logo.png')}}" />
         </div>
-        <h2>Your Tailor Made <br />Car Insurance Comparison Table</h2>
+        <h3>Your Tailor Made <br />Car Insurance Comparison Table</h3>
     </div>
 
     @php
@@ -348,7 +356,7 @@
             <thead>
             <tr>
 
-                <th class="quote-info" rowspan="3">
+                <th class="alfred" rowspan="3">
                     <img style="" src="{{public_path('images/alfred.png')}}" />
                 </th>
 
@@ -397,10 +405,8 @@
 
             {{-- buy now row --}}
             <tr>
-                <td class="no-border" >
-                    <div class="quote-info">
-                        <p class="">Car insurance comparison for: <b>{{ $quote->customer->first_name  }} {{$quote->customer->last_name}}</b></p>
-                    </div>
+                <td class="bg-light-blue" >
+                    <p class="quote-info">Car insurance comparison for: <b>{{ $quote->customer->first_name  }} {{$quote->customer->last_name}}</b></p>
                 </td>
                 @foreach($planIds as $planId)
                     <td>
@@ -446,8 +452,8 @@
                 {{-- heading row --}}
                 @if(@$feature['code'] == 'heading')
                     <tr>
-                        <td colspan="1">
-                            <p class="text-left text-heading">{{$feature['title']}}</p>
+                        <td colspan="1" class="text-heading">
+                            <p class="text-left">{{$feature['title']}}</p>
                         </td>
                         <td  colspan="{{ sizeof($planIds) }}" class=""></td>
                     </tr>
@@ -476,7 +482,7 @@
 
                                     {!!  $plans[$planId]->{$feature['code']} !!}
 
-                               @elseif($feature['type'] == 'buy')
+                                @elseif($feature['type'] == 'buy')
 
                                     @if($plans[$planId]->discountPremium)
                                         <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
@@ -515,22 +521,24 @@
 
         <table class="tbl-dec">
             <tbody>
-                <tr>
-                    <td class="text-heading text-justify"><h5>MATERIAL INFORMATION DECLARATION</h5></td>
-                </tr>
-                <tr>
-                    <td>
-                        <p class="text-left text-xs">All quotes we provide are indicative and based on the information that you, as a proposer, have provided to us. It is important that this information accurately reflects your
-                            position and needs and before you purchase your policy, you are advised to check all the details relevant to the risk to be insured have been supplied. Failure to provide all material information
-                            may result in the insurer declining future claims on the ground of misrepresentation.</p>
-                    </td>
-                </tr>
+            <tr>
+                <td>
+                    <span class="text-sm"><b>MATERIAL INFORMATION DECLARATION</b></span>
+                    <p class="text-left text-xs">All quotes we provide are indicative and based on the information you have provided to us.</p>
+                    <span class="text-sm"><b>DISCLAIMER</b></span>
+                    <p class="text-left text-xs">
+                        Whilst we try to ensure the currency and accuracy of the details in the comparison table, there may occasion where there are differences in the covers provided. In such cases, the covers detailed in the insurer's policy wordings and schedules will supersede the details provided by us.<br/><br/>
+                        To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>, please refer to the <a href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid )}}"><b>quote</b></a>.
+                    </p>
+
+                </td>
+            </tr>
             </tbody>
         </table>
 
     </div>
 </div>
 
-    <img src="{{public_path('images/quote_plans_pages/p3.jpg')}}" class="full-page-image"  />
-    </body>
+<img src="{{public_path('images/quote_plans_pages/p3.jpg')}}" class="full-page-image"  />
+</body>
 </html>
