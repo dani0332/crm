@@ -49,7 +49,7 @@
         table.tbl-dec {
             border: none;
         }
-        table.tbl-dec tr td, table.tbl-dec tr td a {border: none;color: #1d83bc;}
+        table.tbl-dec tr td, table.tbl-dec tr td a {border: none;}
         table {
             min-width: 1150px;
             width: 1150px;
@@ -116,6 +116,7 @@
             color: #333393;
             text-align: left;
         }
+        .text-black{color: #000000;}
         .provider {
             border: 1px solid #bfbfbf;
             font-size: 15px;
@@ -528,7 +529,7 @@
                     <span class="text-sm"><b>DISCLAIMER</b></span>
                     <p class="text-left text-xs">
                         Whilst we try to ensure the currency and accuracy of the details in the comparison table, there may occasion where there are differences in the covers provided. In such cases, the covers detailed in the insurer's policy wordings and schedules will supersede the details provided by us.<br/><br/>
-                        To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>, please refer to the <a href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid )}}"><b>quote</b></a>.
+                        To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>, please refer to the <a class="text-black" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid )}}"><b>quote</b></a>.
                     </p>
 
                 </td>
