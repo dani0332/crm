@@ -8,6 +8,7 @@
 </style>
 <?php
     use App\Enums\InsuranceProvderConstants;
+    use App\Enums\GenericRequestEnum;
 ?>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -57,9 +58,9 @@
                                     @else
                                         @php
                                             $propertyValue = '';
-                                            if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), 'yes')))
-                                                $propertyValue = $record->$property ? 'Yes' : 'No' ;
-                                            else if(str_contains($value, 'static') && !str_contains(strtolower($value), 'yes'))
+                                            if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), strtowlower(GenericRequestEnum::Yes))))
+                                                $propertyValue = $record->$property ? GenericRequestEnum::Yes : GenericRequestEnum::No ;
+                                            else if(str_contains($value, 'static') && !str_contains(strtolower($value), strtowlower(GenericRequestEnum::Yes)))
                                                 $propertyValue = $record->$property;
                                             else
                                                 $propertyValue = $record->$property;

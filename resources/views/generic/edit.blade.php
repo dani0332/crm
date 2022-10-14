@@ -94,13 +94,13 @@
                                                             $selectedItemName = $selectedItem->text ?? $selectedItem->name;
                                                         @endphp
                                                             @if(str_contains($selectedItemName, ','))
-                                                                <option  value="{{$item->id}}" data-a="{{$selectedItemName}}"  @if (preg_match("/\b". $itemName ."\b/i", $selectedItemName)) selected="selected" @endif> {{ $itemName }} </option>
+                                                                <option value="{{$item->id}}" @if (preg_match("/\b". $itemName ."\b/i", $selectedItemName)) selected="selected" @endif> {{ $itemName }} </option>
                                                             @elseif ($selectedItem->id == $item->id)
-                                                                <option data-a="{{$selectedItemName}}"  value="{{$item->id}}" selected="selected">
+                                                                <option value="{{$item->id}}" selected="selected">
                                                                 {{ $itemName }}
                                                                 </option>
                                                             @else
-                                                                <option data-a="{{$selectedItemName}}"  value="{{$item->id}}">
+                                                                <option value="{{$item->id}}">
                                                                 {{ $itemName }}
                                                                 </option>
                                                             @endif
