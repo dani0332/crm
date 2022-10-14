@@ -223,14 +223,14 @@ class CRUDService extends BaseService
         $previousQuoteStatus = $entity->quote_status_id;
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $previousQuoteStatus == QuoteStatusEnum::Quoted) {
             $entity->quote_status_id = QuoteStatusEnum::Quoted;
-        }else {
+        } else {
             $entity->quote_status_id = $request->leadStatus;
         }
         if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
             $entity->wcu_id = null;
         }
         $entity->save();
-        
+
         QuoteStatusLog::create([
             'quote_type_id' => QuoteTypeId::Car,
             'quote_request_id' => $entity->id,

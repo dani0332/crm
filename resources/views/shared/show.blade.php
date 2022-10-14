@@ -449,6 +449,7 @@
         </div>
         <x-health-quote-ecom-details :data="$ecomDetails" />
         <x-health-quote-plans
+            :record="$record"
             :listQuotePlans="$listQuotePlans"
             :uuidModal="$record->uuid"
             :quoteRequestId="$record->id"

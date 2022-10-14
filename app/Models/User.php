@@ -70,6 +70,16 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsToMany(Role::class, 'model_has_roles', 'model_id');
     }
 
+    public function team()
+    {
+        return $this->belongsTo(Team::class);
+    }
+
+    public function subTeam()
+    {
+        return $this->belongsTo(Team::class, 'sub_team_id', 'id');
+    }
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = env('DATETIME_FORMAT');
