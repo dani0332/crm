@@ -40,7 +40,7 @@ class AddRulesRelatedTables extends Migration
                 $table->unsignedBigInteger('rule_id')->nullable();
                 $table->foreign('rule_id')->references('id')->on('rules')->onDelete('no action');
 
-                $table->integer('lead_source_id')->nullable();
+                $table->unsignedBigInteger('lead_source_id')->nullable();
                 $table->foreign('lead_source_id')->references('id')->on('lead_sources')->onDelete('no action');
 
                 $table->unsignedBigInteger('user_id')->nullable();
