@@ -23,11 +23,14 @@ class ExportPlansPdfRequest extends FormRequest
      */
     protected function prepareForValidation()
     {
-        $this->replace(array_merge($this->all(), ['plan_ids' => explode(',', $this->plan_ids)]));
+        if (is_string($this->plan_ids)) {
+            $this->replace(array_merge($this->all(), ['plan_ids' => explode(',', $this->plan_ids)]));
+        }
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * quoteType, quoteUuid, and PlanIds are required to run this feature
+     * this request validation is in use to export pdf from IMCRM form and API endPoint
      *
      * @return array
      */
@@ -35,7 +38,7 @@ class ExportPlansPdfRequest extends FormRequest
     {
         return [
             'quote_uuid' => ['required', new ValidateQuoteObject],
-            'plan_ids' => 'required|array|min:3|max:6',
+            'plan_ids' => 'required|array|min:3|max:5',
         ];
     }
 
@@ -53,10 +56,13 @@ class ExportPlansPdfRequest extends FormRequest
         });
     }
 
+    /**
+     * @return string[]
+     */
     public function messages()
     {
         return [
-            'plan_ids.max' => 'Maximum 6 plans are allowed to select',
+            'plan_ids.max' => 'Maximum 5 plans are allowed to select',
             'plan_ids.min' => 'Minimum 3 plans should be selected',
         ];
     }

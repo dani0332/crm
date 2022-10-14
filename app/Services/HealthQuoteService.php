@@ -197,6 +197,11 @@ class HealthQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
+            $subTeam = null;
+            if (auth()->user()->subTeam) {
+                $subTeam = auth()->user()->subTeam->name;
+            }
+            HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => $subTeam]);
         }
 
         return $response;
@@ -426,7 +431,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
-            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
+            ->whereIn('qs.text', ['Followed Up', '  Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
             ->where('hqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
             ->where('hqr.advisor_id', Auth::user()->id);
 
@@ -963,8 +968,8 @@ class HealthQuoteService extends BaseService
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
         //check if team is assigned and status not qualified yet so mark it qualified.
-        if ($lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
-            HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
+        if ($lead && $lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
+            HealthQuote::where('id', $lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
 
         return true;
