@@ -197,11 +197,11 @@ class HealthQuoteService extends BaseService
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::HealthQuote, $request, $response);
-            $team = null;
-            if(auth()->user()->team) {
-                $team = auth()->user()->team->name;
+            $subTeam = null;
+            if(auth()->user()->subTeam) {
+                $subTeam = auth()->user()->subTeam->name;
             }
-            HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => $team]);
+            HealthQuote::where('uuid', $response->quoteUID)->update(['health_team_type' => $subTeam]);
         }
 
         return $response;
@@ -968,7 +968,7 @@ class HealthQuoteService extends BaseService
         $lead->quote_updated_at = Carbon::now();
         $lead->save();
         //check if team is assigned and status not qualified yet so mark it qualified.
-        if ($lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
+        if ($lead && $lead->health_team_type && $lead->quote_status_id != QuoteStatusEnum::Qualified && auth()->user()->isHealthWCUAdvisor()) {
             HealthQuote::find($lead->id)->update(['quote_status_id' => QuoteStatusEnum::Qualified]);
         }
 
