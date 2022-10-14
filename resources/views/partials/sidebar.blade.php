@@ -30,14 +30,14 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @endcan
                 @can(PermissionsEnum::LeadAllocationView)
-                @canany([PermissionsEnum::CarLeadAllocationDashboard, PermissionsEnum::HealthLeadAllocationDashboard])
+                @canany([PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD, PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-paper-plane"></i>Lead Allocation<span class="fa fa-chevron-down" style="color: white;"></span></a>
                         <ul class="nav child_menu">
-                            @can(PermissionsEnum::HealthLeadAllocationDashboard)
+                            @can(PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD)
                             <li><a href="{{ url('lead-allocation') }}">Health</a></li>
                             @endcan
-                            @can(PermissionsEnum::CarLeadAllocationDashboard)
+                            @can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD)
                             <li><a href="{{ url('car-lead-allocation') }}">Car</a></li>
                             @endcan
                         </ul>
@@ -303,16 +303,16 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/teams') }}">Teams</a></li>
                             @endcan
-                            @canany([PermissionsEnum::RuleConfigList, PermissionsEnum::QuadConfigList , PermissionsEnum::TierConfigList])
+                            @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST])
                             <li><a>Allocation Config<span class="fa fa-chevron-down" style="color: white;"></span></a>
                                 <ul class="nav child_menu">
-                                    @can(PermissionsEnum::TierConfigList)
+                                    @can(PermissionsEnum::TIER_CONFIG_LIST)
                                         <li><a href="{{ url('generic/tier') }}">Tiers</a></li>
                                     @endcan
-                                    @can(PermissionsEnum::QuadConfigList)
+                                    @can(PermissionsEnum::QUAD_CONFIG_LIST)
                                         <li><a href="{{ url('generic/quadrant') }}">Quadrants</a></li>
                                     @endcan
-                                    @can(PermissionsEnum::RuleConfigList)
+                                    @can(PermissionsEnum::RULE_CONFIG_LIST)
                                         <li><a href="{{ url('generic/rule') }}">Rules</a></li>
                                     @endcan
                                 </ul>

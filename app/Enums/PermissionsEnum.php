@@ -174,9 +174,9 @@ final class PermissionsEnum extends Enum
     const PaymentsList = 'payment-list';
     const PaymentsCreate = 'payment-create';
     const PaymentsEdit = 'payment-edit';
-    const CarLeadAllocationDashboard = 'car-lead-allocation-dashboard';
-    const HealthLeadAllocationDashboard = 'health-lead-allocation-dashboard';
-    const RuleConfigList = 'rule-config-list';
-    const QuadConfigList = 'quad-config-list';
-    const TierConfigList = 'tier-config-list';
+    const CAR_LEAD_ALLOCATION_DASHBOARD = 'car-lead-allocation-dashboard';
+    const HEALTH_LEAD_ALLOCATION_DASHBOARD = 'health-lead-allocation-dashboard';
+    const RULE_CONFIG_LIST = 'rule-config-list';
+    const QUAD_CONFIG_LIST = 'quad-config-list';
+    const TIER_CONFIG_LIST = 'tier-config-list';
 }
