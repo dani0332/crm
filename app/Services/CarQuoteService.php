@@ -1155,7 +1155,7 @@ class CarQuoteService extends BaseService
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '. $quote->customer->first_name.' ' . $quote->customer->last_name.'.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->customer->first_name.' '.$quote->customer->last_name.'.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
