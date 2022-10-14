@@ -549,7 +549,7 @@ class LeadAllocationService extends BaseService
         $isFIFO = ApplicationStorage::where('key_name', 'CAR_LEAD_PICKUP_FIFO')->first()->value;
 
         return CarQuote::whereNull('advisor_id')
-            ->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
+            ->whereBetween('created_at', [$from, $to])
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
             ->skip(0)->take(20)->get();
     }
@@ -613,7 +613,8 @@ class LeadAllocationService extends BaseService
 
         info('car lead allocation renewal lead email data is : '.json_encode($emailData));
         $templateId = (int) config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
-        $this->sendEmailUsingSIB($templateId, $emailData, '1', $renewalEmailRecipients);
+        $tag = config('constants.APP_ENV') . ' - motor allocation renewal';
+        $this->sendEmailUsingSIB($templateId, $emailData, $tag, $renewalEmailRecipients);
         info('Sending email done, going to work on car quote update for lead id : '.$lead->id);
         CarQuote::where('id', $lead->id)->update([
             'is_renewal_tier_email_sent' => 1,
