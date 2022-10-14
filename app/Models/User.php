@@ -75,6 +75,11 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsTo(Team::class);
     }
 
+    public function subTeam(){
+
+        return $this->belongsTo(Team::class,'sub_team_id','id');
+    }
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = env('DATETIME_FORMAT');
