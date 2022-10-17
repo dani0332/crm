@@ -477,7 +477,7 @@ class LeadAllocationService extends BaseService
                     if (! $carLead->is_renewal_tier_email_sent) {
                         $this->sendRenewalLeadEmail($carLead);
                         $tierTR = Tier::where('name', 'TR')->first();
-                        if(isset($tierTR)){
+                        if (isset($tierTR)) {
                             $carLead->tier_id = $tierTR->id;
                             $carLead->save();
                         }
