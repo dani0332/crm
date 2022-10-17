@@ -4,9 +4,8 @@ use App\Models\CustomerAdditionalInfo;
 use Illuminate\Support\Facades\DB;
 
 if (! function_exists('generate_code')) {
-
     /**
-     * Checks if a value exists in an array in a case-insensitive manner
+     * Checks if a value exists in an array in a case-insensitive manner.
      *
      * @param  string  $prefix
      * The searched value
@@ -20,6 +19,23 @@ if (! function_exists('generate_code')) {
         $year = substr($now->year, 2);
 
         return $prefix.$year.$month.$day;
+    }
+}
+
+if (! function_exists('vAbort')) {
+    /**
+     * abort script execution and return errors in validation format with http status 422
+     *
+     * @param $messages message string or array of messages
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    function vAbort($messages, $field = 'error')
+    {
+        if (! is_array($messages)) {
+            $messages = [$field => [$messages]];
+        }
+        throw Illuminate\Validation\ValidationException::withMessages($messages);
     }
 }
 
@@ -296,4 +312,11 @@ function getUniqueCode($limit)
 function get_dob_date_format()
 {
     return 'Y-m-d';
+}
+
+function formatAmount($value, $decimals = 2, $appendPrefix = true)
+{
+    $value = number_format($value, $decimals);
+
+    return ($appendPrefix) ? 'AED '.$value : $value;
 }

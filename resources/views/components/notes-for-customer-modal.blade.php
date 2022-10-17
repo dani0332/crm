@@ -38,7 +38,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div class="col-md-12" id="followup-div">
+                        <div class="col-md-12">
                         <div class="col">
                             <div class="input-group">
                                 <textarea id="txtDescription" name="description" class="form-control" placeholder="Type here..." maxlength="500" rows="10"></textarea>                                </div>

@@ -89,6 +89,7 @@
             @include('partials.sidebar')
             @include('partials.topnav')
             <div class="right_col" role="main">
+                @include('partials.messages')
                 @yield('content')
             </div>
 

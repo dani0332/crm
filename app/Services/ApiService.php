@@ -6,11 +6,14 @@ use App\Enums\QuoteStatusEnum;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
+use App\Traits\CreateUpdateSIbContact;
 use Exception;
 use Log;
 
 class ApiService
 {
+    use CreateUpdateSIbContact;
+
     public function fetchSignupUrl($request)
     {
         try {
@@ -65,28 +68,15 @@ class ApiService
         try {
             $quoteData = HealthQuote::where('uuid', $request->quoteUID)->where('quote_status_id', $request->QuoteStatus)->first();
             if ($quoteData) {
-                $data = [
-                    'customerName' => $quoteData->full_name,
-                    'advisorName' => $quoteData->advisor->name,
-                    'advisorEmail' => $quoteData->advisor->email,
-                    'advisorMobile' => $quoteData->advisor->mobile_no,
-                    'customerLastName' => $quoteData->last_name,
-                    'customerFirstName' => $quoteData->first_name,
-                    'leadStatus' => $quoteData->quoteStatus->text,
-                    'cbdid' => $quoteData->code,
-                    'link' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$quoteData->uuid,
-                    'sibHealthCallBack' => config('constants.APP_URL').'/api/imcrm/sib-health-callback/'.$quoteData->uuid,
-                ];
-
-                return CreateUpdateContactService::contactCreateUpdate(config('constants.SIB_HEALTH_EBP_LIST_ID'), $quoteData->first_name, $quoteData->last_name, $quoteData->email, false, $data);
+                $this->sendSibRequest($quoteData);
             }
         } catch (Exception $e) {
             return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
         }
     }
 
-    public function sibHealthQuoteCallBack($uuid)
+    public function sibHealthQuoteCallBack($code)
     {
-        HealthQuote::where('uuid', $uuid)->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
+        HealthQuote::where('code', $code)->update(['quote_status_id' => QuoteStatusEnum::InNegotiation]);
     }
 }

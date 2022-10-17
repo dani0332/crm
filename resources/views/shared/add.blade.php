@@ -9,6 +9,7 @@
 </style>
 <?php
     use App\Enums\quoteTypeCode;
+	use App\Enums\GenericRequestEnum;
 
 ?>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -258,22 +259,10 @@
 									value="{{ old($property) }}" @if($property=='seat_capacity' || $property=='cylinder'
 									) data-toggle="tooltip" data-placement="top" title="{{$title}}" @endif
 									class="form-control">
-								@if($property == "mobile_no")
-								<a href="javascript:void(0);" class="remove_additional_btn" id="add_additional_btn"
-									title="Add field" style="padding-top: 5px;float:right"><img
-										src="/image/add-icon.png" /></a>
-								@endif
 								@if ($errors->has($property))
 								<span class="text-danger">{{ $errors->first($property) }}</span>
 								@endif
 							</div>
-					</div>
-					@endif
-					@if($property == "mobile_no")
-					<div class="col-md-12">
-						<div class="col">
-							<div id="additional_info"></div>
-						</div>
 					</div>
 					@endif
 					@if(strpos($value, 'select') !== false)
@@ -378,7 +367,15 @@
 									class="form-control select2 select-roles" @else class="form-control"
 									name="{{$property}}" @endif id="{{$property}}">
 									@foreach($staticOptions as $item)
-									<option value="{{$item}}" {{ $item==old($property) ? 'selected' : '' }}>{{ $item }}
+									@if($item == GenericRequestEnum::FEMALE_SINGLE)
+										<option value="{{ GenericRequestEnum::FEMALE_SINGLE_VALUE }}" {{ $item == old(GenericRequestEnum::FEMALE_SINGLE_VALUE) ? 'selected' : ''}}>{{ $item }}</option>
+									@elseif($item == GenericRequestEnum::FEMALE_MARRIED)
+										<option value="{{ GenericRequestEnum::FEMALE_MARRIED_VALUE }}" {{ $item == old(GenericRequestEnum::FEMALE_MARRIED_VALUE) ? 'selected' : ''}}>{{ $item }}</option>
+									@elseif($item == GenericRequestEnum::MALE_SINGLE && $model->modelType == quoteTypeCode::Health)
+										<option value="{{ GenericRequestEnum::MALE_SINGLE_VALUE }}" {{ $item == old(GenericRequestEnum::MALE_SINGLE_VALUE) ? 'selected' : ''}}>{{ $item }}</option>
+									@else
+										<option value="{{$item}}" {{ $item==old($property) ? 'selected' : '' }}>{{ $item }}
+									@endif
 									</option>
 									@endforeach
 								</select>

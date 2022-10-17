@@ -79,4 +79,10 @@ class LookupService extends BaseService
     {
         return PaymentMethod::select('code', 'name', 'parent_code')->orderBy('name')->get();
     }
+
+    public function getActiveInsuranceProviders()
+    {
+        return InsuranceProvider::select('id', 'text')
+        ->where('is_active', true)->orderBy('text', 'asc')->get();
+    }
 }

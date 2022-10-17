@@ -9,6 +9,7 @@
 </style>
 <?php
     use App\Enums\quoteTypeCode;
+    use App\Enums\GenericRequestEnum;
     ?>
 <script>
     function getCarMakes(id)
@@ -263,11 +264,7 @@
                                                     @endif id={{$property}}
                                                 name={{$property}}
                                                 @if($property == 'email' || $property == 'mobile_no') disabled="disabled" @endif
-                                                value="{{ old($property, $record->$property) }}"
-                                            class="form-control">
-                                            @if($property == "mobile_no")
-                                                <a href="javascript:void(0);" class="remove_additional_btn" id="add_additional_btn" title="Add field" style="padding-top: 5px;float:right"><img src="/image/add-icon.png"/></a>
-                                            @endif
+                                                value="{{ old($property, $record->$property) }}" class="form-control">
                                             @if ($errors->has($property))
                                                 <span class="text-danger">{{ $errors->first($property) }}</span>
                                             @endif
@@ -361,6 +358,12 @@
                                             @foreach($staticOptions as $item)
                                                 @if($item == quoteTypeCode::yesText && $record->$property == 1 || $item == quoteTypeCode::noText && $record->$property == 0)
                                                     <option value="{{ $item }}" {{ $item == old($item, $item) ? 'selected' : ''}}>{{ $item }}</option>
+                                                @elseif($item == GenericRequestEnum::FEMALE_SINGLE_VALUE || $item == GenericRequestEnum::FEMALE_SINGLE)
+                                                    <option value="{{ GenericRequestEnum::FEMALE_SINGLE_VALUE }}" {{ GenericRequestEnum::FEMALE_SINGLE_VALUE == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
+                                                @elseif($item == GenericRequestEnum::FEMALE_MARRIED_VALUE || $item == GenericRequestEnum::FEMALE_MARRIED)
+                                                    <option value="{{ GenericRequestEnum::FEMALE_MARRIED_VALUE }}" {{ GenericRequestEnum::FEMALE_MARRIED_VALUE  == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
+                                                @elseif(($item == GenericRequestEnum::MALE_SINGLE_VALUE && $model->modelType == quoteTypeCode::Health) || ($item == GenericRequestEnum::MALE_SINGLE && $model->modelType == quoteTypeCode::Health))
+                                                    <option value="{{ GenericRequestEnum::MALE_SINGLE_VALUE }}" {{ GenericRequestEnum::MALE_SINGLE_VALUE == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
                                                 @else
                                                     <option value="{{ $item }}" {{ $item == old($item, $record->$property) ? 'selected' : ''}}>{{ $item }}</option>
                                                 @endif
@@ -368,28 +371,6 @@
                                         </select>
                                     @endif
                                     </div>
-                                    @if($property == "mobile_no")
-                                    <div class="col-md-12"> <div class="col">
-                                        <div id="additional_info">
-                                        @if(count(getAdditionalInfo($model->modelType, $record->id)) > 0)
-                                            @foreach(getAdditionalInfo($model->modelType, $record->id) as $info)
-                                                <div class="item form-group">
-                                                    <div class="col">
-                                                        <span class="col-form-label col-md-6 col-sm-6"><b> Email Address (Optional)</b> </span>
-                                                        <input type="email" name="emails[]" class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter email address" value="{{$info->email_address}}">
-                                                    </div>
-                                                    <div class="col">
-                                                        <span class="col-form-label col-md-6 col-sm-6"><b>Phone number (Optional)</b> </span>
-                                                        <input type="text" name="phones[]"class="form-control" data-toggle="tooltip" data-placement="top" title="Please enter 11 digit phone number. Example: 0563264418"  value="{{$info->mobile_no}}">
-                                                    </div>
-                                                    <a href="javascript:void(0);" class="remove_additional_btn" title="Add field"><img src="/image/remove-icon.png"/></a>
-                                                </div>
-                                            @endforeach
-                                            @endif
-                                        </div>
-                                        </div>
-                                    </div>
-                                    @endif
                                 @endif
                             @endif
                             @php

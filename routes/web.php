@@ -55,6 +55,7 @@ use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -72,10 +73,6 @@ Route::get('/', function () {
     return redirect('login');
 });
 
-Route::get('/debug-sentry', function () {
-    throw new Exception('My first Sentry error!');
-});
-
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
@@ -84,6 +81,13 @@ Route::middleware(['auth'])->get('/home', function () {
 });
 
 Route::group(['middleware' => ['auth']], function () {
+    Route::get('/clear-cache', function () {
+        Artisan::call('cache:clear');
+        Artisan::call('view:cache');
+        Artisan::call('config:cache');
+
+        return '<h1>All cache cleared and optimized</h1>';
+    });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::resource('myleads', MyLeadsController::class);
@@ -123,6 +127,9 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
+    Route::post('/customer-additional-contact/{id}/delete', [CustomerController::class, 'deleteAdditionalContact']);
+    Route::post('/customer-additional-contact/{id}/make-primary', [CustomerController::class, 'makeAdditionalContactPrimary']);
+    Route::post('/customer-additional-contact/add', [CustomerController::class, 'addAdditionalContact']);
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
@@ -193,12 +200,13 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('records', [CRUDController::class, 'loadMoreRecords'])->name('loadMoreRecords');
         Route::post('records/search', [CRUDController::class, 'searchLead'])->name('searchLead');
         Route::get('getLeadHistory', [CRUDController::class, 'getLeadHistory'])->name('getLeadHistory');
-        Route::post('car/CarPlanManualProcess', [CRUDController::class, 'CarPlanManualProcess'])->name('CarPlanManualProcess');
+        Route::post('{quoteType}/{quoteId}/car-plan-manual-process', [CRUDController::class, 'carPlanManualProcess'])->name('carPlanManualProcess');
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
         Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
         Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
+        Route::post('{quoteType}/export-plans-pdf', [CRUDController::class, 'exportPlansPdf'])->name('exportPlansPdf');
     });
 
     Route::group(['prefix' => 'generic'], function () {
@@ -295,6 +303,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
+    Route::post('/health-plan-manual-update-process', [AjaxController::class, 'healthPlanUpdateManualProcess']);
 });
 
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])

@@ -4,27 +4,26 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\User;
-use App\Traits\CustomerAdditionalInfo as CustomerAdditionalInfoTrait;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use PDF;
 
 class CarQuoteService extends BaseService
 {
-    use CustomerAdditionalInfoTrait;
-
     protected $query;
     protected $httpService;
     protected $childUserIds = [];
     protected $leadAllocationService;
+
+    use GenericQueriesAllLobs;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
@@ -92,6 +91,8 @@ class CarQuoteService extends BaseService
                 'cqrd.next_followup_date',
                 'cqrd.transapp_code',
                 'cqrd.notes',
+                'cqrd.lost_approval_status',
+                'cqrd.lost_approval_reason',
                 'vt.text as vehicle_type_id_text',
                 'cqr.currently_insured_with',
                 'cqr.currently_insured_with as currently_insured_with_text',
@@ -110,7 +111,9 @@ class CarQuoteService extends BaseService
                 'cqr.back_home_license_held_for_id',
                 'ulhfs.TEXT as back_home_license_held_for_id_text',
                 'cqr.policy_start_date',
-                'cqr.policy_issuance_date'
+                'cqr.policy_issuance_date',
+                'cqr.customer_id',
+                'cqr.parent_duplicate_quote_id'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -161,17 +164,12 @@ class CarQuoteService extends BaseService
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
         ];
+
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
-
-        if (isset($response->quoteUID) && isset($request->email)) {
-            $this->createUpdateCustomerInfo($request, $request->email, $response->quoteUID, quoteTypeCode::CarQuote);
-
-            return $response;
-        }
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
 
     public function updateCarQuote(Request $request, $id)
@@ -201,10 +199,6 @@ class CarQuoteService extends BaseService
         $carQuote->is_quote_locked = true;
         $carQuote->car_model_detail_id = $request->trim;
         $carQuote->save();
-
-        if (isset($carQuote->id) && isset($carQuote->email)) {
-            $this->createUpdateCustomerInfo($request, $carQuote->email, $carQuote->uuid, quoteTypeCode::CarQuote);
-        }
 
         if (isset($request->return_to_view)) {
             return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
@@ -321,6 +315,7 @@ class CarQuoteService extends BaseService
             'plan_id' => 'select|title',
             'car_plan_provider_id' => 'select|title',
             'car_model_detail_id' => 'select|title',
+            'parent_duplicate_quote_id' => 'input|title',
         ];
     }
 
@@ -444,6 +439,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'car_model_detail_id':
                 $title = 'Trim';
+                break;
+            case 'parent_duplicate_quote_id':
+                $title = 'Parent CDB ID';
                 break;
             default:
                 break;
@@ -827,10 +825,10 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
-            'list' => 'trim,additional_notes,email,mobile_no,paid_at,renewal_batch,renewal_expiry_date,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,next_followup_date,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
-            'update' => 'id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_batch,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,quote_status_id,car_model_detail_id',
-            'show' => 'trim,device',
+            'create' => 'parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
+            'list' => 'parent_duplicate_quote_id,trim,additional_notes,email,mobile_no,paid_at,renewal_batch,renewal_expiry_date,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,next_followup_date,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
+            'update' => 'parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_batch,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,quote_status_id,car_model_detail_id',
+            'show' => 'trim',
         ];
     }
 
@@ -843,10 +841,10 @@ class CarQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'vehicle_type_id', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'car_type_insurance_id', 'currently_insured_with', 'previous_quote_policy_number'];
         $model->renewalSkipProperties = [
-            'create' => 'id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
-            'list' => 'trim,additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,transapp_code,is_ecommerce,payment_status_id,policy_number,renewal_expiry_date,premium,car_model_detail_id',
-            'update' => 'id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,source,transapp_code,quote_status_id,renewal_batch,policy_number,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
-            'show' => 'trim,device',
+            'create' => 'parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,renewal_batch,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
+            'list' => 'parent_duplicate_quote_id,trim,additional_notes,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,source,seat_capacity,cylinder,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,transapp_code,is_ecommerce,payment_status_id,policy_number,renewal_expiry_date,premium,car_model_detail_id',
+            'update' => 'parent_duplicate_quote_id,id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,source,transapp_code,quote_status_id,renewal_batch,policy_number,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
+            'show' => 'trim',
         ];
     }
 
@@ -863,6 +861,10 @@ class CarQuoteService extends BaseService
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
             'lang' => 'en',
+            'url' => strval(url()->current()),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => strval(auth()->id()),
         ];
 
         $client = new \GuzzleHttp\Client();
@@ -955,6 +957,10 @@ class CarQuoteService extends BaseService
         $carPlanData = [
             'quoteUID' => $request->car_quote_uuid,
             'update' => $isUpdate,
+            'url' => strval($request->current_url),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => strval(auth()->id()),
             'plans' => [
                 [
                     'planId' => (int) $request->car_plan_id,
@@ -981,7 +987,6 @@ class CarQuoteService extends BaseService
         ];
 
         $response = $this->httpService->processRequest($carPlanData, $apiCreds);
-
         if ($response == 200) {
             $this->lockCarQuote($request->car_quote_uuid);
         }
@@ -992,24 +997,6 @@ class CarQuoteService extends BaseService
     public function getDuplicateEntityByCode($code)
     {
         return CarQuote::where('parent_duplicate_quote_id', $code)->first();
-    }
-
-    public function createDuplicate($parentRecord)
-    {
-        $quote = new CarQuote();
-        $quote->parent_duplicate_quote_id = $parentRecord->code;
-        $response = CapiRequestService::getUUID(QuoteTypeId::Car);
-        if ($response) {
-            $quote->uuid = $response->uuid;
-            $quote->code = 'CAR-'.$response->uuid;
-        }
-        $quote->quote_status_id = QuoteStatusEnum::NewLead;
-        $quote->first_name = $parentRecord->first_name;
-        $quote->last_name = $parentRecord->last_name;
-        $quote->email = $parentRecord->email;
-        $quote->mobile_no = $parentRecord->mobile_no;
-        $quote->advisor_id = Auth::user()->id;
-        $quote->save();
     }
 
     public function getPlans($id)
@@ -1143,5 +1130,33 @@ class CarQuoteService extends BaseService
         $carQuote->save();
 
         return $carQuote->id;
+    }
+
+    /**
+     * generate PDF for car quote plan and return
+     *
+     * @param $quoteType
+     * @param $data
+     * @return array|string[]
+     */
+    public function exportPlansPdf($quoteType, $data)
+    {
+        $planIds = $data['plan_ids'];
+
+        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote->load(['carMake', 'carModel', 'advisor', 'customer']);
+
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
+
+        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
+        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '. $quote->first_name.' ' . $quote->last_name.'.pdf';
+
+        return ['pdf' => $pdf, 'name' => $pdfName];
     }
 }

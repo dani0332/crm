@@ -8,6 +8,7 @@ class CreateUpdateContactService extends BaseService
 {
     public static function contactCreateUpdate($listId, $firstName, $lastName, $email, $signupLink, $data = [])
     {
+        info('Contact upload Service '.json_encode($data));
         $endPointUrl = Config::get('constants.SIB_CONTACTS_API_ENDPOINT_URL');
         $apiKey = Config::get('constants.SENDINBLUE_KEY');
 
@@ -24,7 +25,8 @@ class CreateUpdateContactService extends BaseService
                 'LEAD_STATUS' => isset($data['leadStatus']) ? $data['leadStatus'] : null,
                 'CDBID' => isset($data['cbdid']) ? $data['cbdid'] : null,
                 'QUOTEPLANLINK' => isset($data['link']) ? $data['link'] : null,
-                'HEALTH_WEBHOOK_URL' => isset($data['sibHealthCallBack']) ? $data['sibHealthCallBack'] : null,
+                'HEALTH_WEBHOOK_URL' => null,
+                'ADVISORLANDLINE' => isset($data['advisorLandline']) ? $data['advisorLandline'] : null,
             ],
             'listIds' => [(int) $listId],
             'updateEnabled' => true,
@@ -48,6 +50,7 @@ class CreateUpdateContactService extends BaseService
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $apiResponse = $e->getResponse()->getStatusCode();
         }
+        info('Contact upload Service end');
 
         return $apiResponse;
     }

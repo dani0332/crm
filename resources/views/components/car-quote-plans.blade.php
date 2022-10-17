@@ -19,6 +19,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 					<div class="col-auto">
 						<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"
 							value="{{ $ecomUrl }}">
+                            <span id="span_pdf_download">
+                                <button id="btn_download_plan_pdf" type="button" class="btn btn-success btn-sm">Download PDF</button>
+                            </span>
 						@can('car-quotes-plans-create')
 						<a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
 							class="btn btn-primary btn-sm">Create Quote</a>
@@ -34,8 +37,14 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 						@endif
 					</div>
 				</div>
-				@if(gettype($listQuotePlans) != 'string')
-				<form method="post" action={{route('manualPlanToggle')}} class="form-horizontal form-label-left"
+				@if(gettype($listQuotePlans) != \App\Enums\GenericRequestEnum::TypeString)
+				<form method="post" action="{{route('exportPlansPdf', $quoteType)}}" class="form-horizontal form-label-left"
+					role="form" id="form_plans_pdf" data-parsley-validate="" novalidate="" autocomplete="off">
+					{{ csrf_field() }}
+					<input type="hidden" id="plan_ids" name="plan_ids" value="">
+					<input type="hidden" id="quote_uuid" name="quote_uuid" value="{{$record->uuid}}">
+				</form>
+				<form method="post" action="{{route('manualPlanToggle')}}" class="form-horizontal form-label-left"
 					role="form" id="togglePlanForm" data-parsley-validate="" novalidate="" autocomplete="off">
 					{{ csrf_field() }}
 					<div class="row" id="toggle-plans-div">
