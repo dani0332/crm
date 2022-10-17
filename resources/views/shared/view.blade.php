@@ -697,7 +697,7 @@
                                     <option value="null">UnAssigned</option>
                                     @endif
                                     @foreach ($dropdownSource[$property] as $item)
-                                    <option value="{{ $property == 'currently_insured_with' ? $item->text : $item->id }}">
+                                    <option value="{{ str_contains($model->properties[$property], 'idAsText') ? $item->text : $item->id }}">
                                         {{ $item->text ?? $item->name }}
                                     </option>
                                     @endforeach

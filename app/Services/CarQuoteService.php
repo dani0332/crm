@@ -269,7 +269,7 @@ class CarQuoteService extends BaseService
             'last_name' => 'input|text|required',
             'previous_quote_policy_number' => 'input|text|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
-            'currently_insured_with' => 'select|title|required',
+            'currently_insured_with' => 'select|title|required|idAsText',
             'car_type_insurance_id' => 'select|title|required',
             'quote_status_id' => 'select|title|multiple',
             'car_make_id' => 'select|title|required',
