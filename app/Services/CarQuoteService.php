@@ -113,7 +113,8 @@ class CarQuoteService extends BaseService
                 'cqr.policy_start_date',
                 'cqr.policy_issuance_date',
                 'cqr.customer_id',
-                'cqr.parent_duplicate_quote_id'
+                'cqr.parent_duplicate_quote_id',
+                'cqr.quote_link',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -168,8 +169,13 @@ class CarQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-
-        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
+        $result = CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
+        if(isset($result) && $result->quoteUID){
+            $quote = CarQuote::where('uuid', $result->quoteUID)->get()->first();
+            $quote->quote_link = $this->getEComQuoteLink('car',$quote->uuid );
+            $quote->save();
+        }
+        return $result;
     }
 
     public function updateCarQuote(Request $request, $id)
@@ -316,6 +322,7 @@ class CarQuoteService extends BaseService
             'car_plan_provider_id' => 'select|title',
             'car_model_detail_id' => 'select|title',
             'parent_duplicate_quote_id' => 'input|title',
+            'quote_link' => 'readonly|none'
         ];
     }
 
@@ -442,6 +449,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'parent_duplicate_quote_id':
                 $title = 'Parent CDB ID';
+                break;
+            case 'quote_link':
+                $title = 'Quote Link';
                 break;
             default:
                 break;
@@ -825,10 +835,10 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
+            'create' => 'quote_link,parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
             'list' => 'parent_duplicate_quote_id,trim,additional_notes,email,mobile_no,paid_at,renewal_batch,renewal_expiry_date,plan_id,car_plan_provider_id,payment_gateway,currently_insured_with,promo_code,next_followup_date,car_make_id,car_model_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,nationality_id,dob,year_of_manufacture,uae_license_held_for_id,car_value,emirate_of_registration_id,claim_history_id,car_type_insurance_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id',
-            'update' => 'parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_batch,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,quote_status_id,car_model_detail_id',
-            'show' => 'trim',
+            'update' => 'quote_link,parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_batch,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,quote_status_id,car_model_detail_id',
+            'show' => 'trim,quote_link',
         ];
     }
 
