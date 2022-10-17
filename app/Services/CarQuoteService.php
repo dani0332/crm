@@ -8,11 +8,13 @@ use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\User;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use PDF;
 
 class CarQuoteService extends BaseService
 {
@@ -20,6 +22,8 @@ class CarQuoteService extends BaseService
     protected $httpService;
     protected $childUserIds = [];
     protected $leadAllocationService;
+
+    use GenericQueriesAllLobs;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
@@ -87,6 +91,8 @@ class CarQuoteService extends BaseService
                 'cqrd.next_followup_date',
                 'cqrd.transapp_code',
                 'cqrd.notes',
+                'cqrd.lost_approval_status',
+                'cqrd.lost_approval_reason',
                 'vt.text as vehicle_type_id_text',
                 'cqr.currently_insured_with',
                 'cqr.currently_insured_with as currently_insured_with_text',
@@ -1124,5 +1130,33 @@ class CarQuoteService extends BaseService
         $carQuote->save();
 
         return $carQuote->id;
+    }
+
+    /**
+     * generate PDF for car quote plan and return
+     *
+     * @param $quoteType
+     * @param $data
+     * @return array|string[]
+     */
+    public function exportPlansPdf($quoteType, $data)
+    {
+        $planIds = $data['plan_ids'];
+
+        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+
+        if (! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote->load(['carMake', 'carModel', 'advisor', 'customer']);
+
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
+
+        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
+        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '. $quote->first_name.' ' . $quote->last_name.'.pdf';
+
+        return ['pdf' => $pdf, 'name' => $pdfName];
     }
 }

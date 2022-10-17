@@ -466,11 +466,12 @@ class CRUDController extends Controller
     {
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $modelType = json_decode($request->all()['modelType'], true);
-        $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $validateArray = [];
         if ($modelType == 'Home') {
+            $modelSkipPropertiesList = (json_decode($request->get('modelSkipProperties'), true)) ? json_decode($request->get('modelSkipProperties'), true) : $request->get('modelSkipProperties');
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
+            $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
             foreach ($modelPropertiesList as $property => $value) {
                 if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && ! strpos($modelSkipPropertiesList['update'], $property)) {
                     $validateArray[$property] = 'required';
@@ -917,23 +918,15 @@ class CRUDController extends Controller
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
-        $planIds = $request->plan_ids;
+        $response = $this->carQuoteService->exportPlansPdf($quoteType, $request->validated());
 
-        $quotePlans = $this->carQuoteService->getQuotePlans($request->quote_uuid);
-
-        if (! isset($quotePlans->quotes->plans)) {
-            return redirect()->back()->with('message', 'Quote plans not available');
+        if (isset($response['error'])) {
+            return redirect()->back()->with('message', $response['error']);
         }
 
-        $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
-        $quote->load(['carMake', 'carModel']);
+        $pdf = $response['pdf'];
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
-
-        // generate pdf with file name e.g. car-rgujxlk4_plans.pdf
-        $pdf_name = strtolower($quote->code).'_plans'.'.pdf';
-
-        return $pdf->download($pdf_name);
+        return $pdf->download($response['name']);
     }
 
     public function destroyDocument($quoteType, $quoteUuId, $id)
