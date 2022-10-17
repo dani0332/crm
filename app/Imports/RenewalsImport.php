@@ -275,128 +275,128 @@ class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOn
     {
         return [
             '*.0' => function ($attribute, $value, $onFailure) { // Customer Name
-            if (! $value) {
-                $onFailure('Customer Name is required');
-            }
+                if (! $value) {
+                    $onFailure('Customer Name is required');
+                }
                 if (strlen($value) > 100) {
                     $onFailure('Customer Name should not exceed length of 100 characters');
                 }
             },
             '*.1' => function ($attribute, $value, $onFailure) { // Customer Email
-            if (! $value) {
-                $onFailure('Customer Email is required');
-            }
+                if (! $value) {
+                    $onFailure('Customer Email is required');
+                }
                 if (strlen($value) > 255) {
                     $onFailure('Customer Email should not exceed length of 255 characters');
                 }
             },
             '*.2' => function ($attribute, $value, $onFailure) { // Type
-            if (! $value) {
-                $onFailure('Type of quote is required');
-            }
+                if (! $value) {
+                    $onFailure('Type of quote is required');
+                }
                 if (strlen($value) > 4) {
                     $onFailure('Type of quote should not exceed length of 4 characters');
                 }
             },
             '*.3' => function ($attribute, $value, $onFailure) { // Insurer
-            if (! $value) {
-                $onFailure('Insurer is required');
-            }
+                if (! $value) {
+                    $onFailure('Insurer is required');
+                }
                 if (strlen($value) > 100) {
                     $onFailure('Insurer should not exceed length of 100 characters');
                 }
             },
             '*.4' => function ($attribute, $value, $onFailure) { // Product
-            if (! $value) {
-                $onFailure('Product is required');
-            }
+                if (! $value) {
+                    $onFailure('Product is required');
+                }
                 if (strlen($value) > 100) {
                     $onFailure('Product should not exceed length of 100 characters');
                 }
             },
             '*.5' => function ($attribute, $value, $onFailure) { // Product Type
-            if (strlen($value) > 100) {
-                $onFailure('Product Type should not exceed length of 100 characters');
-            }
+                if (strlen($value) > 100) {
+                    $onFailure('Product Type should not exceed length of 100 characters');
+                }
                 if (strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
                     //$onFailure('Product Type should be either Comprehensive or Third Party  Only');
                 }
             },
             '*.6' => function ($attribute, $value, $onFailure) { // Sales Channel
-            if (strlen($value) > 100) {
-                $onFailure('Sales Channel should not exceed length of 100 characters');
-            }
+                if (strlen($value) > 100) {
+                    $onFailure('Sales Channel should not exceed length of 100 characters');
+                }
             },
             '*.7' => function ($attribute, $value, $onFailure) { // Customer Mobile
-            if (strlen($value) > 100) {
-                $onFailure('Customer Mobile should not exceed length of 100 characters');
-            }
+                if (strlen($value) > 100) {
+                    $onFailure('Customer Mobile should not exceed length of 100 characters');
+                }
             },
             '*.8' => function ($attribute, $value, $onFailure) { // Advisor Email
-            if (strlen($value) > 100) {
-                $onFailure('Advisor Email should not exceed length of 100 characters');
-            }
+                if (strlen($value) > 100) {
+                    $onFailure('Advisor Email should not exceed length of 100 characters');
+                }
             },
             '*.9' => function ($attribute, $value, $onFailure) { // Previous Advisor Email
-            if (strlen($value) > 100) {
-                $onFailure('Previous Advisor Email should not exceed length of 100 characters');
-            }
+                if (strlen($value) > 100) {
+                    $onFailure('Previous Advisor Email should not exceed length of 100 characters');
+                }
             },
             '*.10' => function ($attribute, $value, $onFailure) { // Policy
-            if (! $value) {
-                $onFailure('Policy is required');
-            }
+                if (! $value) {
+                    $onFailure('Policy is required');
+                }
                 if (strlen($value) > 100) {
                     $onFailure('Policy should not exceed length of 100 characters');
                 }
             },
             '*.11' => function ($attribute, $value, $onFailure) { // Batch
-            if (strlen($value) > 25) {
-                $onFailure('Batch should not exceed length of 25 characters');
-            }
+                if (strlen($value) > 25) {
+                    $onFailure('Batch should not exceed length of 25 characters');
+                }
             },
             '*.12' => function ($attribute, $value, $onFailure) { // Start Date
-            if (strlen($value) > 10) {
-                $onFailure('Start Date should not exceed length of 10 characters');
-            }
+                if (strlen($value) > 10) {
+                    $onFailure('Start Date should not exceed length of 10 characters');
+                }
             },
             '*.13' => function ($attribute, $value, $onFailure) { // End Date
-            if (! $value) {
-                $onFailure('End Date is required');
-            }
+                if (! $value) {
+                    $onFailure('End Date is required');
+                }
                 if (strlen($value) > 10) {
                     $onFailure('End Date should not exceed length of 10 characters');
                 }
             },
             '*.14' => function ($attribute, $value, $onFailure) { // Object
-            if (strlen($value) > 200) {
-                $onFailure('Object should not exceed length of 200 characters');
-            }
+                if (strlen($value) > 200) {
+                    $onFailure('Object should not exceed length of 200 characters');
+                }
             },
             '*.15' => function ($attribute, $value, $onFailure) { // Premium
-            if (strlen($value) > 25) {
-                $onFailure('Gross Premium should not exceed length of 25 characters');
-            }
+                if (strlen($value) > 25) {
+                    $onFailure('Gross Premium should not exceed length of 25 characters');
+                }
             },
             '*.16' => function ($attribute, $value, $onFailure) { // Notes
-            if (strlen($value) > 200) {
-                $onFailure('Notes should not exceed length of 200 characters');
-            }
+                if (strlen($value) > 200) {
+                    $onFailure('Notes should not exceed length of 200 characters');
+                }
             },
             '*.17' => function ($attribute, $value, $onFailure) { // Make
-            if (strlen($value) > 50) {
-                $onFailure('Car Make should not exceed length of 50 characters');
-            }
+                if (strlen($value) > 50) {
+                    $onFailure('Car Make should not exceed length of 50 characters');
+                }
             },
             '*.18' => function ($attribute, $value, $onFailure) { // Model
-            if (strlen($value) > 50) {
-                $onFailure('Car Model should not exceed length of 50 characters');
-            }
+                if (strlen($value) > 50) {
+                    $onFailure('Car Model should not exceed length of 50 characters');
+                }
             },
             '*.19' => function ($attribute, $value, $onFailure) { // Year
-            if (strlen($value) > 4) {
-                $onFailure('Year of Manufacture should not exceed length of 4 characters');
-            }
+                if (strlen($value) > 4) {
+                    $onFailure('Year of Manufacture should not exceed length of 4 characters');
+                }
             },
         ];
     }
