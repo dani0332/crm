@@ -928,6 +928,7 @@ class HealthQuoteService extends BaseService
             if ($this->isLeadTransactionApproved($lead)) {
                 Log::info('Cannot assign WCU as lead is in Transaction Approved state , lead id: '.$leadId);
                 array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
+
                 continue;
             } elseif ($lead) {
                 $lead->advisor_id = null;
@@ -1000,6 +1001,7 @@ class HealthQuoteService extends BaseService
                 info('inside the check for manual assignment QA');
                 $lead->advisor_id = $userId;
                 $lead->save();
+
                 continue;
             }
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
@@ -1007,6 +1009,7 @@ class HealthQuoteService extends BaseService
                     Log::info('Lead with id: '.$leadId.' is not assigned to any health team');
                     $msg = 'Health team is missing please select health team first';
                     array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
+
                     continue;
                 }
                 if ($this->leadAllocationService->checkIfAdvisorCanTakeLead($userId)) {
@@ -1017,6 +1020,7 @@ class HealthQuoteService extends BaseService
                         Log::info('Advisor : '.$userId.' can take lead: '.$leadId.' but he is not assigned to the correct health team');
                         $msg = 'User sub team mismatch with lead health team';
                         array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
+
                         continue;
                     }
                     $this->leadAllocationService->assignLead($lead, $userId, true);
@@ -1026,6 +1030,7 @@ class HealthQuoteService extends BaseService
                     Log::info('Advisor : '.$userId.' cannot take lead: '.$leadId);
                     $msg = 'Advisor is not allowed to take lead with CDBID : '.$lead->code;
                     array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
+
                     continue;
                 }
             } else {
