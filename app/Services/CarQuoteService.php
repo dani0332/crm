@@ -170,11 +170,12 @@ class CarQuoteService extends BaseService
             $dataArr['advisorId'] = Auth::user()->id;
         }
         $result = CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
-        if(isset($result) && $result->quoteUID){
+        if (isset($result) && $result->quoteUID) {
             $quote = CarQuote::where('uuid', $result->quoteUID)->get()->first();
-            $quote->quote_link = $this->getEComQuoteLink('car',$quote->uuid );
+            $quote->quote_link = $this->getEComQuoteLink('car', $quote->uuid);
             $quote->save();
         }
+
         return $result;
     }
 
@@ -322,7 +323,7 @@ class CarQuoteService extends BaseService
             'car_plan_provider_id' => 'select|title',
             'car_model_detail_id' => 'select|title',
             'parent_duplicate_quote_id' => 'input|title',
-            'quote_link' => 'readonly|none'
+            'quote_link' => 'readonly|none',
         ];
     }
 
@@ -1165,7 +1166,7 @@ class CarQuoteService extends BaseService
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '. $quote->first_name.' ' . $quote->last_name.'.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
