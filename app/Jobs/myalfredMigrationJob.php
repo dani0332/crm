@@ -43,7 +43,6 @@ class myalfredMigrationJob implements ShouldQueue
 
         // loop on chunk
         foreach ($this->flatCustomerArray as $item) {
-
             //check if user exists
             $customer = MyAlFredUser::where('customer_id', $item->id)->first();
 

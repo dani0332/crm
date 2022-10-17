@@ -345,7 +345,6 @@ class TmLeadController extends Controller
         $tmLeadID = $this->teleMarketingLeadsService->tmLeadStatusNotesUpdate($request);
 
         if (Auth::user()->hasRole('TM_ADVISOR')) { // advisors redirection
-
             //$currentUserID = 27;
             $currentUserID = Auth::user()->id;
 

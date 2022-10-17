@@ -97,63 +97,63 @@ class RenewalsImportUpdate implements OnEachRow, WithStartRow, WithValidation, S
     {
         return [
             '*.0' => function ($attribute, $value, $onFailure) { // Type
-                if (! $value) {
-                    $onFailure('Type of quote is required');
-                }
+            if (! $value) {
+                $onFailure('Type of quote is required');
+            }
                 if (strlen($value) > 4) {
                     $onFailure('Type of quote should not exceed length of 4 characters');
                 }
             },
             '*.1' => function ($attribute, $value, $onFailure) { // Product Type
-                if (strlen($value) > 50) {
-                    $onFailure('Product Type should not exceed length of 50 characters');
-                }
+            if (strlen($value) > 50) {
+                $onFailure('Product Type should not exceed length of 50 characters');
+            }
                 if (strlen($value) > 0 && $value != 'Comprehensive' && $value != 'Third Party Only') {
                     $onFailure('Product Type should be either Comprehensive or Third Party  Only');
                 }
             },
             '*.2' => function ($attribute, $value, $onFailure) { // Advisor Email
-                if (strlen($value) > 100) {
-                    $onFailure('Advisor Email should not exceed length of 100 characters');
-                }
+            if (strlen($value) > 100) {
+                $onFailure('Advisor Email should not exceed length of 100 characters');
+            }
             },
             '*.3' => function ($attribute, $value, $onFailure) { // Previous Advisor Email
-                if (strlen($value) > 100) {
-                    $onFailure('Previous Advisor Email should not exceed length of 100 characters');
-                }
+            if (strlen($value) > 100) {
+                $onFailure('Previous Advisor Email should not exceed length of 100 characters');
+            }
             },
             '*.4' => function ($attribute, $value, $onFailure) { // Policy
-                if (! $value) {
-                    $onFailure('Policy is required');
-                }
+            if (! $value) {
+                $onFailure('Policy is required');
+            }
                 if (strlen($value) > 100) {
                     $onFailure('Policy should not exceed length of 100 characters');
                 }
             },
             '*.5' => function ($attribute, $value, $onFailure) { // Batch
-                if (strlen($value) > 25) {
-                    $onFailure('Batch should not exceed length of 25 characters');
-                }
+            if (strlen($value) > 25) {
+                $onFailure('Batch should not exceed length of 25 characters');
+            }
             },
             '*.6' => function ($attribute, $value, $onFailure) { // Notes
-                if (strlen($value) > 200) {
-                    $onFailure('Notes should not exceed length of 200 characters');
-                }
+            if (strlen($value) > 200) {
+                $onFailure('Notes should not exceed length of 200 characters');
+            }
             },
             '*.7' => function ($attribute, $value, $onFailure) { // Make
-                if (strlen($value) > 50) {
-                    $onFailure('Car Make should not exceed length of 50 characters');
-                }
+            if (strlen($value) > 50) {
+                $onFailure('Car Make should not exceed length of 50 characters');
+            }
             },
             '*.8' => function ($attribute, $value, $onFailure) { // Model
-                if (strlen($value) > 50) {
-                    $onFailure('Car Model should not exceed length of 50 characters');
-                }
+            if (strlen($value) > 50) {
+                $onFailure('Car Model should not exceed length of 50 characters');
+            }
             },
             '*.9' => function ($attribute, $value, $onFailure) { // Year
-                if (strlen($value) > 4) {
-                    $onFailure('Year of Manufacture should not exceed length of 4 characters');
-                }
+            if (strlen($value) > 4) {
+                $onFailure('Year of Manufacture should not exceed length of 4 characters');
+            }
             },
         ];
     }
