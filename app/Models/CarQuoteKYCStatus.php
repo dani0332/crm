@@ -48,7 +48,6 @@ class CarQuoteKYCStatus extends BaseModel
             $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'pa_id' => Auth::user()->id])->first();
             $status = $request->input('status', 0);
             if ($status == '1') { // request additional document
-
                 if ($carQuote) {
                     $templateParams = [
                         'notes' => $request->input('notes', ''),

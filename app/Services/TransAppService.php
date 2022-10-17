@@ -43,7 +43,6 @@ class TransAppService extends BaseService
 
             if ($existingCustomer != null) { // Existing customer
                 if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
-
                     $responseExtend = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
                     $listId = Config::get('constants.SIB_MYALFRED_CONTACTS_LIST_ID');

@@ -297,19 +297,13 @@
                 if(sizeof($addon->carAddonOption)) {
                     //replace exclude with selected value if found
                     foreach ($addon->carAddonOption as $index => $carAddonOption) {
-
                         if($carAddonOption->isSelected) {
-
                             $addon->value = $carAddonOption->value;
-                            if($carAddonOption->price) {
-                               $addon->value .= ' (' . formatAmount($carAddonOption->price, 0) . ')';
-                            }
-
                             break;//only one value will be selected
                         }
                     }
                 }
-
+                
             }
 
             $quotePlan->repairTypeInfo = ($quotePlan->repairType == \App\Enums\CarPlanType::COMP) ? \App\Enums\CarPlanType::NONAGENCY : $quotePlan->repairType;
@@ -331,7 +325,7 @@
             ["code" => "omanCover", "title" => "Oman Cover (Orange card not Included)", "type" => ["inclusion", "exclusion"]],//also exists in addons, discussed with mujeeb to show from include/exclusion
             ["code" => "offRoadCover", "title" => "Off-road Cover", "type" => "roadSideAssistance"],
             ["code" => "guaranteedRepairs", "title" => "Guaranteed Repairs", "type" => ["inclusion", "exclusion"]],
-            ["code" => "breakdownRecovery", "title" => "24 Hour Accident and Breakdown Recovery", "type" => "roadSideAssistance"],//** exists in ["inclusion", "exclusion"] as well, discussed with mujeeb to show from roadSideAssistance
+            ["code" => "breakdownCover", "title" => "24 Hour Accident and Breakdown Recovery", "type" => "addons"],
             ["code" => "ambulanceCover", "title" => "Ambulance Cover", "type" => ["inclusion", "exclusion"]],
             ["code" => "excessForWindscreenDamage", "title" => "Excess for Windscreen Damage", "type" => ["inclusion", "exclusion"]],
             ["code" => "heading", "title" => "Optional Covers", "type" => ""],

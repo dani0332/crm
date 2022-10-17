@@ -1,12 +1,12 @@
 @extends('layouts.app')
 @section('title', 'View ' . $model->modelType)
 @section('content')
-<?php
+@php
     use App\Enums\quoteTypeCode;
     use App\Enums\RolesEnum;
     use App\Enums\QuoteStatusEnum;
     use App\Enums\PermissionsEnum;
-    ?>
+@endphp
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -530,8 +530,6 @@
                     (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': $model->modelType) }}
                     List</h2>
                 @cannot(PermissionsEnum::ApprovePayments)
-
-
                 <ul class="nav navbar-right panel_toolbox">
                     @if (str_contains(strtolower($model->modelType), 'teams') ||
                     str_contains(strtolower($model->modelType), 'leadstatus'))
@@ -699,7 +697,7 @@
                                     <option value="null">UnAssigned</option>
                                     @endif
                                     @foreach ($dropdownSource[$property] as $item)
-                                    <option value="{{ $item->id }}">
+                                    <option value="{{ str_contains($model->properties[$property], 'idAsText') ? $item->text : $item->id }}">
                                         {{ $item->text ?? $item->name }}
                                     </option>
                                     @endforeach
