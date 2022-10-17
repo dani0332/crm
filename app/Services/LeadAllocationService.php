@@ -482,6 +482,7 @@ class LeadAllocationService extends BaseService
                             $carLead->save();
                         }
                     }
+
                     continue;
                 }
                 info('trying to check tier against the current lead : '.$carLead->uuid);
