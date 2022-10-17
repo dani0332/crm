@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Quadrants;
+use App\Models\Quadrant;
 use DB;
 use Illuminate\Http\Request;
 
@@ -62,7 +62,7 @@ class QuadrantService extends BaseService
 
     public function saveQuadrant(Request $request)
     {
-        $quad = Quadrants::create([
+        $quad = Quadrant::create([
             'name' => $request->name,
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
         ]);
@@ -119,7 +119,7 @@ class QuadrantService extends BaseService
 
     public function updateQuadrant(Request $request, $id)
     {
-        $quad = Quadrants::where('id', $id)->first();
+        $quad = Quadrant::where('id', $id)->first();
         $quad->name = $request->name;
         $quad->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $quad->save();

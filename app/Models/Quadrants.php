@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class Quadrants extends Model implements AuditableContract
+class Quadrant extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
 

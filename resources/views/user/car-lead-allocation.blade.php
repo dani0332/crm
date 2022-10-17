@@ -197,7 +197,7 @@
             if(confirm("Are you sure you want to change Car Lead Allocation Status?")){
                 var ischecked = $(this).is(':checked');
                 $.ajax({
-                    url: '/lead-allocation/setCarLeadAllocationJobStatus',
+                    url: '/lead-allocation/toggle-car-lead-allocation-job-status',
                     type: 'POST',
                     data : {
                         '_token': $('meta[name="csrf-token"]').attr('content')
@@ -216,7 +216,7 @@
             if(confirm("Are you sure you want to change Renewal Leads Assignment Status?")){
                 var ischecked = $(this).is(':checked');
                 $.ajax({
-                    url: '/lead-allocation/setRenewalCarLeadAllocationStatus',
+                    url: '/lead-allocation/toggle-renewal-car-lead-allocation-status',
                     type: 'POST',
                     data : {
                         '_token': $('meta[name="csrf-token"]').attr('content')
@@ -232,7 +232,7 @@
             if(confirm("Are you sure you want to change CAR LEAD PICKUP FIFO Status?")){
                 var ischecked = $(this).is(':checked');
                 $.ajax({
-                    url: '/lead-allocation/setCarLeadFetchSequence',
+                    url: '/lead-allocation/toggle-car-lead-fetch-sequence',
                     type: 'POST',
                     data : {
                         '_token': $('meta[name="csrf-token"]').attr('content')

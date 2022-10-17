@@ -476,6 +476,11 @@ class LeadAllocationService extends BaseService
                     info('car lead allocation sending renewal email for uuid : '.$carLead->uuid);
                     if (! $carLead->is_renewal_tier_email_sent) {
                         $this->sendRenewalLeadEmail($carLead);
+                        $tierTR = Tier::where('name', 'TR')->first();
+                        if(isset($tierTR)){
+                            $carLead->tier_id = $tierTR->id;
+                            $carLead->save();
+                        }
                     }
                     continue;
                 }
@@ -527,6 +532,7 @@ class LeadAllocationService extends BaseService
 
         return CarQuote::whereNull('advisor_id')
             ->whereBetween('created_at', [$from, $to])
+            ->whereNotNull('tier_id')
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
             ->skip(0)->take(20)->get();
     }

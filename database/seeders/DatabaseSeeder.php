@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             AddRoleForMarketingSeeder::class,
             addPermissionForManualLeadTesting::class,
             addPermissionForCarAllocation::class,
+            addLeadSourcesForAllocation::class,
         ]);
     }
 }
