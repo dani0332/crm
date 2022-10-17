@@ -26,7 +26,7 @@ class Partner extends Model implements AuditableContract
         parent::boot();
 
         static::deleting(function ($partner) { // before delete() method call this
-            $partner->rewards->each->delete();
+        $partner->rewards->each->delete();
             // do the rest of the cleanup...
         });
     }
