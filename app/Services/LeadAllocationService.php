@@ -19,7 +19,7 @@ use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\Team;
 use App\Models\Tier;
-use App\Models\TierUsers;
+use App\Models\TierUser;
 use App\Models\User;
 use App\Traits\CreateUpdateSIbContact;
 use App\Traits\GetUserTree;
@@ -647,7 +647,7 @@ class LeadAllocationService extends BaseService
 
     public function getTierUsersWithLeadAllocationRecord($tierId)
     {
-        $tierUsers = TierUsers::where('tier_id', $tierId)->get()->pluck('user_id');
+        $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
 
         return LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                     ->where('lead_allocation.is_available', 1)

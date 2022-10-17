@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\LeadSources;
+use App\Models\LeadSource;
 use Illuminate\Database\Seeder;
 
 class addLeadSourcesForAllocation extends Seeder
@@ -14,7 +14,7 @@ class addLeadSourcesForAllocation extends Seeder
      */
     public function run()
     {
-        $leadSources = LeadSources::all()->count();
+        $leadSources = LeadSource::all()->count();
         if ($leadSources == 0) {
             DB::table('lead_sources')->insert([[
                 'name' => 'TPL_COMP',

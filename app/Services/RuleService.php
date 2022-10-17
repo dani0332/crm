@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Rule;
-use App\Models\RuleLeadSources;
+use App\Models\RuleLeadSource;
 use DB;
 use Illuminate\Http\Request;
 use stdClass;
@@ -49,7 +49,7 @@ class RuleService extends BaseService
     public function saveRule(Request $request)
     {
         if (isset($request->name) && isset($request->lead_source_id)) {
-            $existingRuleLeadSource = RuleLeadSources::where('lead_source_id', $request->lead_source_id);
+            $existingRuleLeadSource = RuleLeadSource::where('lead_source_id', $request->lead_source_id);
             if ($existingRuleLeadSource != null) {
                 $errorResponse = new stdClass();
                 $errorResponse->message = 'Error: Rule against same Lead Source already exists';
@@ -66,7 +66,7 @@ class RuleService extends BaseService
         if (isset($request->rule_users) && isset($request->lead_source_id)) {
             $userIds = $request->rule_users;
             foreach ($userIds as $userId) {
-                RuleLeadSources::create([
+                RuleLeadSource::create([
                     'lead_source_id' => $request->lead_source_id,
                     'rule_id' => $rule->id,
                     'user_id' => $userId,
@@ -92,10 +92,10 @@ class RuleService extends BaseService
         $rule->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $rule->save();
         if (isset($request->rule_users) && isset($request->lead_source_id)) {
-            RuleLeadSources::where('rule_id', $rule->id)->delete();
+            RuleLeadSource::where('rule_id', $rule->id)->delete();
             $userIds = $request->rule_users;
             foreach ($userIds as $userId) {
-                RuleLeadSources::create([
+                RuleLeadSource::create([
                     'lead_source_id' => $request->lead_source_id,
                     'rule_id' => $rule->id,
                     'user_id' => $userId,
