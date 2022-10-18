@@ -6,6 +6,7 @@ use App\Enums\PermissionsEnum;
         <div class="x_panel">
             <div class="x_title">
                 <h2>Documents</h2>
+
                 @cannot(PermissionsEnum::ApprovePayments)
                     <a href="{{ url('quotes/'.$quoteType.'/'.$record->uuid.'/documents') }}" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</a>
                     @if(isset($displaySendPolicyButton) && $displaySendPolicyButton)
@@ -16,6 +17,8 @@ use App\Enums\PermissionsEnum;
                         <div class="alert alert-danger" id="document-delete-success" style="display:none;">Document deleted. Page will be refresh now.</div>
                     @endif
                 @endcannot
+                @php $docUploadUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid . '/thankyou'; @endphp
+                <button id="btn_copy_doc_upload_link" data-label="Copy Upload Link" data-doc-upload-url="{{ $docUploadUrl }}" class="btn btn-success btn-sm pull-right">Copy Upload Link</button>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
