@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -221,7 +222,8 @@ class CRUDService extends BaseService
 
         $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
         $previousQuoteStatus = $entity->quote_status_id;
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $previousQuoteStatus == QuoteStatusEnum::Quoted) {
+        //if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $previousQuoteStatus == QuoteStatusEnum::Quoted && $request->leadStatus == QuoteStatusEnum::Qualified) {
             $entity->quote_status_id = QuoteStatusEnum::Quoted;
         } else {
             $entity->quote_status_id = $request->leadStatus;
@@ -230,6 +232,10 @@ class CRUDService extends BaseService
             $entity->wcu_id = null;
         }
         $entity->save();
+        //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $request->leadStatus == QuoteStatusEnum::Quoted) {
+            $this->sendSibRequest($entity);
+        }
 
         QuoteStatusLog::create([
             'quote_type_id' => QuoteTypeId::Car,
