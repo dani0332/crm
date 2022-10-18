@@ -15,7 +15,7 @@ class addRenewalEmailTemplateID extends Seeder
     public function run()
     {
         $renewalEmailTemplateID = ApplicationStorage::where('key_name', 'RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID')->first();
-        if($renewalEmailTemplateID == null){
+        if ($renewalEmailTemplateID == null) {
             ApplicationStorage::insert([
                 'key_name' => 'RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID',
                 'value' => 390,
