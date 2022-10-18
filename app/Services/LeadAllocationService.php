@@ -596,7 +596,7 @@ class LeadAllocationService extends BaseService
         ];
 
         info('car lead allocation renewal lead email data is : '.json_encode($emailData));
-        $templateId = (int) config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
+        $templateId = (int) $this->getAppStorageValueByKey('RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
         $tag = config('constants.APP_ENV').' - motor allocation renewal';
         $this->sendEmailUsingSIB($templateId, $emailData, $tag, $renewalEmailRecipients);
         info('Sending email done, going to work on car quote update for lead id : '.$lead->id);
