@@ -19,6 +19,8 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 					<span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
 					<div class="col-auto">
 						<button class="btn btn-warning btn-sm" id="send-one-click-buy-email-btn" 
+						{{ $record->advisor_id != auth()->id() || 
+							!$record->previous_quote_policy_number ? 'disabled' : '' }}
 						data-quote-type="{{ $quoteType }}"
 						data-quote-uuid="{{ $record->uuid }}"
 						data-quote-customer-id="{{ $record->customer_id }}"

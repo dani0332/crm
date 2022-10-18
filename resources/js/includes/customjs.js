@@ -2906,3 +2906,33 @@ function sendQuoteDocumentsToCustomer(el) {
     return false;
   }
 }
+
+// Button: Send One click buy email - Start
+$('#send-one-click-buy-email-btn').on('click', function () {
+  if (confirm('Are you sure send email to customer?')) {
+    var quote_type = $(this).attr('data-quote-type');
+    var quote_uuid = $(this).attr('data-quote-uuid');
+    var customer_id = $(this).attr('data-quote-customer-id');
+    var quote_cdbid = $(this).attr('data-quote-cdb-id');
+    var quote_type_id = $(this).attr('data-quote-type-id');
+    var quote_id = $(this).attr('data-quote-id');
+    $.ajax({
+      url: '/quotes/' + quote_type + '/'+ quote_uuid +'/send-email-one-click-buy',
+      method: 'POST',
+      data: {
+        customer_id : customer_id,
+        quote_cdbid : quote_cdbid,
+        quote_type_id : quote_type_id,
+        quote_id : quote_id,
+        _token : $('input[name=_token]').val(),
+      },
+      success: function (data) {
+        //alert('Primary Contact Updated.');
+        //location.reload(); 
+      },
+    });
+  } else {
+    return false;
+  }
+});
+// Button: Send One click buy email - End
