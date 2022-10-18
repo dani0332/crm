@@ -169,14 +169,7 @@ class CarQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-        $result = CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
-        if (isset($result) && $result->quoteUID) {
-            $quote = CarQuote::where('uuid', $result->quoteUID)->get()->first();
-            $quote->quote_link = $this->getEComQuoteLink('car', $quote->uuid);
-            $quote->save();
-        }
-
-        return $result;
+        return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
 
     public function updateCarQuote(Request $request, $id)
