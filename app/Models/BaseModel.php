@@ -153,7 +153,6 @@ class BaseModel extends Model implements AuditableContract
 
     public function scopeRelationWhere($query, $isGetList, $filters)
     {
-
         // $query->whereHas('insurance_coverage', function($q) {
         //     // Query the name field in status table
         //     $q->where('car_quote_id', '=', 1377); // '=' is optional
@@ -192,7 +191,6 @@ class BaseModel extends Model implements AuditableContract
                             } else {
                                 $query->where($key, $value['op'], $value['val']);
                             }
-
                     }
                 } else {
                     $query->where($key, $value);
