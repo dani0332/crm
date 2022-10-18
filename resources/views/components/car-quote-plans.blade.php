@@ -3,6 +3,7 @@ use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanType;
+use App\Enums\QuoteStatusEnum;
 $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 @endphp
 <div class="row">
@@ -17,6 +18,14 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 					<div class="col-auto mr-auto"></div>
 					<span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
 					<div class="col-auto">
+						<button class="btn btn-warning btn-sm" id="send-one-click-buy-email-btn" 
+						data-quote-type="{{ $quoteType }}"
+						data-quote-uuid="{{ $record->uuid }}"
+						data-quote-customer-id="{{ $record->customer_id }}"
+						data-quote-cdb-id="{{ $record->code }}"
+						data-quote-type-id="{{ $quoteTypeId }}"
+						data-quote-id="{{ $record->id }}">
+						Send OCB Email to customer</button>
 						<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"
 							value="{{ $ecomUrl }}">
                             <span id="span_pdf_download">

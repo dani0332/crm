@@ -385,6 +385,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'quoteTypeId'
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -409,12 +410,14 @@ class CRUDController extends Controller
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'membersDetail', 'memberCategories', 'salaryBands', 'autoAllocationDisabled', 'ecomDetails', 'ecomHealthInsuranceQuoteUrl',
                 'quoteType', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'quoteTypeId'
             ]));
         } else {
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType',
+                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments', 
+                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId'
             ]));
         }
     }
