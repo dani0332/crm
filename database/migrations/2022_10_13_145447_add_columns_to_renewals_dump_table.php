@@ -27,13 +27,19 @@ class AddColumnsToRenewalsDumpTable extends Migration
 
         Schema::table('renewals_dump', function (Blueprint $table) {
             if (! Schema::hasColumn('renewals_dump', 'email_sent')) {
-                $table->boolean('email_sent')->default(false)->after('batch');
+                $table->unsignedTinyInteger('email_sent')->default(0)->after('batch');
             }
         });
 
         Schema::table('renewals_dump', function (Blueprint $table) {
             if (! Schema::hasColumn('renewals_dump', 'validation_errors')) {
                 $table->json('validation_errors')->nullable()->after('email_sent');
+            }
+        });
+
+        Schema::table('renewals_dump', function (Blueprint $table) {
+            if (! Schema::hasColumn('renewals_dump', 'plans_fetched')) {
+                $table->boolean('plans_fetched')->default(false)->after('validation_errors');
             }
         });
     }
@@ -66,6 +72,12 @@ class AddColumnsToRenewalsDumpTable extends Migration
         Schema::table('renewals_dump', function (Blueprint $table) {
             if (Schema::hasColumn('renewals_dump', 'validation_errors')) {
                 $table->dropColumn('validation_errors');
+            }
+        });
+
+        Schema::table('renewals_dump', function (Blueprint $table) {
+            if (Schema::hasColumn('renewals_dump', 'plans_fetched')) {
+                $table->dropColumn('plans_fetched');
             }
         });
     }
