@@ -118,7 +118,7 @@ class RuleService extends BaseService
             'lead_source_id' => 'select|title|required',
             'rule_users' => 'select|multiple|required|multiSearch',
             'is_active' => 'input|checkbox|title',
-            'created_at' => 'input|date',
+            'created_at' => 'input|title|date|range|dateRange',
             'updated_at' => 'input|date',
         ];
     }
@@ -161,15 +161,15 @@ class RuleService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'created_at,updated_at',
-            'list' => '',
-            'update' => 'id,created_at',
-            'show' => 'id',
+            'create' => 'created_at,updated_at,rule_start_date,rule_end_date',
+            'list' => 'rule_start_date,rule_end_date',
+            'update' => 'id,created_at,updated_at,rule_start_date,rule_end_date',
+            'show' => 'id,rule_start_date,rule_end_date',
         ];
     }
 
     public function fillModelSearchProperties()
     {
-        return ['name', 'min_price', 'max_price', 'created_at'];
+        return ['name', 'created_at'];
     }
 }

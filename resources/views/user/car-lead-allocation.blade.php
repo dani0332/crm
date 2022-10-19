@@ -261,16 +261,6 @@
                     <span class="slider round"></span>
                 </label>
                 @endif
-                <h2 style="margin-left:  80px !important">Run Renewal Logic</h2>
-                @if(Auth::user()->isAdmin())
-                <span class="status-text"></span>
-                <label class="switch "
-                    style="margin-left: 20px;float: left;margin-top: 5px;">
-                    <input type="checkbox" @if($isRenewalLeadAllocationWorking=='1' ) checked="checked" @endif
-                        class="carRenewalLeadSwitch success" id="jobSwitch" name="jobSwitch">
-                    <span class="slider round"></span>
-                </label>
-                @endif
 
                 <h2 style="margin-left:  80px !important">Pickup Sequence : FIFO</h2>
                 @if(Auth::user()->isAdmin())

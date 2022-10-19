@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 class QuadrantService extends BaseService
 {
     protected $query;
-
+    protected $searchPrefix = 'q.';
     public function __construct()
     {
         $this->query = DB::table('quadrants as q')
@@ -36,28 +36,9 @@ class QuadrantService extends BaseService
 
     public function getGridData($model, $request)
     {
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $columnName = $request->get('columns')[$column]['name'];
-
-            return $this->query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
-        } else {
-            return $this->query->orderBy('t.created_at', 'DESC');
-        }
-    }
-    private function getSortingColumnNameWithPrefix($columnName)
-    {
-        switch ($columnName) {
-            case 'created_at':
-                return 'q.created_at';
-                break;
-            case 'updated_at':
-                return 'q.updated_at';
-                break;
-            default:
-                break;
-        }
+        $this->query = addSearchClauses($model, $request, $this->query, $this->searchPrefix);
+        $this->query = addOrderByClauses($request, $this->query, $this->searchPrefix);
+        return $this->query;
     }
 
     public function saveQuadrant(Request $request)
@@ -137,7 +118,7 @@ class QuadrantService extends BaseService
     {
         return [
             'id' => 'readonly|none',
-            'name' => 'input|title|required',
+            'name' => 'input|title|required|likeSearch',
             'is_active' => 'input|checkbox|title',
             'updated_at' => 'input|date',
             'quad_tiers' => 'select|title||multiple',
