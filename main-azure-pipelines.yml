@@ -20,12 +20,12 @@ steps:
   name: fullchain
   displayName: 'Download cert file'
   inputs:
-    secureFile: 'crm_fullchain.pem'
+    secureFile: 'imcrm_fullchain.pem'
 - task: DownloadSecureFile@1
   name: privkey
   displayName: 'Download cert file'
   inputs:
-    secureFile: 'crm_privkey.pem'    
+    secureFile: 'imcrm_privkey.pem'    
 - script: |
     cp $(fullchain.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
     cp $(privkey.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
