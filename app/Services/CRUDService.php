@@ -402,7 +402,7 @@ class CRUDService extends BaseService
 
     public function getOcbCustomerEmailTemplate($quotePlansCount)
     {
-        if($quotePlansCount == 1) {
+        if ($quotePlansCount == 1) {
             $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE';
         } elseif ($quotePlansCount > 1) {
             $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE';
