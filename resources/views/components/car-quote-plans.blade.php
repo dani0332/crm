@@ -19,15 +19,24 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 					<span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
 					<div class="col-auto">
 						<button class="btn btn-warning btn-sm" id="send-one-click-buy-email-btn" 
-						{{ $record->advisor_id != auth()->id() || 
-							!$record->previous_quote_policy_number ? 'disabled' : '' }}
-						data-quote-type="{{ $quoteType }}"
-						data-quote-uuid="{{ $record->uuid }}"
-						data-quote-customer-id="{{ $record->customer_id }}"
-						data-quote-cdb-id="{{ $record->code }}"
+						{{ $record->advisor_id != auth()->id() || !$record->previous_quote_policy_number ? 'disabled' : '' }}
 						data-quote-type-id="{{ $quoteTypeId }}"
-						data-quote-id="{{ $record->id }}">
-						Send OCB Email to customer</button>
+						data-quote-type="{{ $quoteType }}"
+						data-quote-id="{{ $record->id }}"
+						data-quote-uuid="{{ $record->uuid }}"
+						data-quote-cdb-id="{{ $record->code }}"
+						data-quote-plans-count="{{ count($listQuotePlans) }}"
+						data-quote-previous-expiry-date="{{ $record->previous_policy_expiry_date }}"
+						data-quote-currently-insured-with="{{ $record->currently_insured_with }}"
+						data-quote-car-make="{{ $carMakeText }}"
+						data-quote-car-model="{{ $carModelText }}"
+						data-quote-previous-policy-number="{{ $record->previous_quote_policy_number }}"
+						data-quote-customer-name="{{ $record->first_name }} {{ $record->last_name }}"
+						data-quote-customer-email="{{ $record->email }}"
+						data-quote-advisor-name="{{ $advisor->name }}"
+						data-quote-advisor-email="{{ $advisor->email }}"
+						data-quote-advisor-mobile-no="{{ $advisor->mobile_no }}">
+						Send OCB email to customer</button>
 						<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"
 							value="{{ $ecomUrl }}">
                             <span id="span_pdf_download">
