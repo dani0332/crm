@@ -38,6 +38,7 @@ class QuadrantService extends BaseService
     {
         $this->query = addSearchClauses($model, $request, $this->query, $this->searchPrefix);
         $this->query = addOrderByClauses($request, $this->query, $this->searchPrefix);
+
         return $this->query;
     }
 
