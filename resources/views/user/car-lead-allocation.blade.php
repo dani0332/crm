@@ -197,7 +197,7 @@
             if(confirm("Are you sure you want to change Car Lead Allocation Status?")){
                 var ischecked = $(this).is(':checked');
                 $.ajax({
-                    url: '/lead-allocation/setCarLeadAllocationJobStatus',
+                    url: '/lead-allocation/toggle-car-lead-allocation-job-status',
                     type: 'POST',
                     data : {
                         '_token': $('meta[name="csrf-token"]').attr('content')
@@ -216,7 +216,7 @@
             if(confirm("Are you sure you want to change Renewal Leads Assignment Status?")){
                 var ischecked = $(this).is(':checked');
                 $.ajax({
-                    url: '/lead-allocation/setRenewalCarLeadAllocationStatus',
+                    url: '/lead-allocation/toggle-renewal-car-lead-allocation-status',
                     type: 'POST',
                     data : {
                         '_token': $('meta[name="csrf-token"]').attr('content')
@@ -232,7 +232,7 @@
             if(confirm("Are you sure you want to change CAR LEAD PICKUP FIFO Status?")){
                 var ischecked = $(this).is(':checked');
                 $.ajax({
-                    url: '/lead-allocation/setCarLeadFetchSequence',
+                    url: '/lead-allocation/toggle-car-lead-fetch-sequence',
                     type: 'POST',
                     data : {
                         '_token': $('meta[name="csrf-token"]').attr('content')
@@ -258,16 +258,6 @@
                     style="margin-left: 20px;float: left;margin-top: 5px;">
                     <input type="checkbox" @if($isAutoAllocationWorking=='1' ) checked="checked" @endif
                         class="carLeadSwitch success" id="jobSwitch" name="jobSwitch">
-                    <span class="slider round"></span>
-                </label>
-                @endif
-                <h2 style="margin-left:  80px !important">Run Renewal Logic</h2>
-                @if(Auth::user()->isAdmin())
-                <span class="status-text"></span>
-                <label class="switch "
-                    style="margin-left: 20px;float: left;margin-top: 5px;">
-                    <input type="checkbox" @if($isRenewalLeadAllocationWorking=='1' ) checked="checked" @endif
-                        class="carRenewalLeadSwitch success" id="jobSwitch" name="jobSwitch">
                     <span class="slider round"></span>
                 </label>
                 @endif

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class LeadSources extends Model implements AuditableContract
+class LeadSource extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
 

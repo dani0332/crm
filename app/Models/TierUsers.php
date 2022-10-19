@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class TierUsers extends Model implements AuditableContract
+class TierUser extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
 

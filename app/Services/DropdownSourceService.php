@@ -17,7 +17,7 @@ use App\Models\HealthCoverFor;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\InsuranceProvider;
-use App\Models\LeadSources;
+use App\Models\LeadSource;
 use App\Models\LifeChildren;
 use App\Models\LifeInsuranceTenure;
 use App\Models\LifeNumberOfYears;
@@ -133,7 +133,7 @@ class DropdownSourceService extends BaseService
                 $data = User::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'lead_source_id':
-                $data = LeadSources::select('id', 'name')->where('is_active', true)->get();
+                $data = LeadSource::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'rule_users':
                 $data = User::select('id', 'name')->where('is_active', true)->get();

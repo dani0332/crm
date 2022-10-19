@@ -187,7 +187,7 @@
             if(confirm("Are you sure you want to change Leads Assignment Status ?")){
                 var ischecked = $(this).is(':checked');
                 $.ajax({
-                    url: '/lead-allocation/setLeadAllocationJobStatus',
+                    url: '/lead-allocation/toggle-lead-allocation-job-status',
                     type: 'POST',
                     data : {
                         '_token': $('meta[name="csrf-token"]').attr('content')

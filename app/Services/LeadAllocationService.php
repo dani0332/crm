@@ -19,7 +19,7 @@ use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\Team;
 use App\Models\Tier;
-use App\Models\TierUsers;
+use App\Models\TierUser;
 use App\Models\User;
 use App\Traits\CreateUpdateSIbContact;
 use App\Traits\GetUserTree;
@@ -151,7 +151,7 @@ class LeadAllocationService extends BaseService
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
                 $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
                 $leadCreated = Carbon::parse($lead->created_at)->timestamp;
-                if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate) {
+                if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
                     info('Contact upload Request '.$lead->uuid);
                     $this->sendSibRequest($lead);
                 }
@@ -476,7 +476,13 @@ class LeadAllocationService extends BaseService
                     info('car lead allocation sending renewal email for uuid : '.$carLead->uuid);
                     if (! $carLead->is_renewal_tier_email_sent) {
                         $this->sendRenewalLeadEmail($carLead);
+                        $tierTR = Tier::where('name', 'TR')->first();
+                        if (isset($tierTR)) {
+                            $carLead->tier_id = $tierTR->id;
+                            $carLead->save();
+                        }
                     }
+
                     continue;
                 }
                 info('trying to check tier against the current lead : '.$carLead->uuid);
@@ -527,6 +533,7 @@ class LeadAllocationService extends BaseService
 
         return CarQuote::whereNull('advisor_id')
             ->whereBetween('created_at', [$from, $to])
+            ->whereNull('tier_id')
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
             ->skip(0)->take(20)->get();
     }
@@ -589,7 +596,7 @@ class LeadAllocationService extends BaseService
         ];
 
         info('car lead allocation renewal lead email data is : '.json_encode($emailData));
-        $templateId = (int) config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
+        $templateId = (int) $this->getAppStorageValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
         $tag = config('constants.APP_ENV').' - motor allocation renewal';
         $this->sendEmailUsingSIB($templateId, $emailData, $tag, $renewalEmailRecipients);
         info('Sending email done, going to work on car quote update for lead id : '.$lead->id);
@@ -641,7 +648,7 @@ class LeadAllocationService extends BaseService
 
     public function getTierUsersWithLeadAllocationRecord($tierId)
     {
-        $tierUsers = TierUsers::where('tier_id', $tierId)->get()->pluck('user_id');
+        $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
 
         return LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                     ->where('lead_allocation.is_available', 1)

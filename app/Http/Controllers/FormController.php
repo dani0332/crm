@@ -95,7 +95,6 @@ class FormController extends ApiController
     public function getFormDetail(Request $request)
     {
         try {
-
             //sleep(1);
             $parentFormModelColl = collect(config('form-models')[$request->form]);
             $form_id = $request->form_id;

@@ -137,10 +137,10 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
-    Route::post('/lead-allocation/setLeadAllocationJobStatus', [LeadAllocationController::class, 'setLeadAllocationJobStatus']);
-    Route::post('/lead-allocation/setCarLeadAllocationJobStatus', [LeadAllocationController::class, 'setCarLeadAllocationJobStatus']);
-    Route::post('/lead-allocation/setRenewalCarLeadAllocationStatus', [LeadAllocationController::class, 'setRenewalCarLeadAllocationStatus']);
-    Route::post('/lead-allocation/setCarLeadFetchSequence', [LeadAllocationController::class, 'setCarLeadFetchSequence']);
+    Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
+    Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
+    Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
+    Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
