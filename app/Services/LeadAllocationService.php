@@ -533,7 +533,7 @@ class LeadAllocationService extends BaseService
 
         return CarQuote::whereNull('advisor_id')
             ->whereBetween('created_at', [$from, $to])
-            ->whereNotNull('tier_id')
+            ->whereNull('tier_id')
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
             ->skip(0)->take(20)->get();
     }
