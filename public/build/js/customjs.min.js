@@ -2912,18 +2912,25 @@ $('#send-one-click-buy-email-btn').on('click', function () {
   if (confirm('Are you sure send email to customer?')) {
     var quote_type = $(this).attr('data-quote-type');
     var quote_uuid = $(this).attr('data-quote-uuid');
-    var customer_id = $(this).attr('data-quote-customer-id');
-    var quote_cdbid = $(this).attr('data-quote-cdb-id');
-    var quote_type_id = $(this).attr('data-quote-type-id');
-    var quote_id = $(this).attr('data-quote-id');
     $.ajax({
       url: '/quotes/' + quote_type + '/'+ quote_uuid +'/send-email-one-click-buy',
       method: 'POST',
       data: {
-        customer_id : customer_id,
-        quote_cdbid : quote_cdbid,
-        quote_type_id : quote_type_id,
-        quote_id : quote_id,
+        quote_type_id : $(this).attr('data-quote-type-id'),
+        quote_id : $(this).attr('data-quote-id'),
+        quote_uuid : quote_uuid,
+        quote_cdb_id : $(this).attr('data-quote-cdb-id'),
+        quote_plans_count : $(this).attr('data-quote-plans-count'),
+        quote_previous_expiry_date : $(this).attr('data-quote-previous-expiry-date'),
+        quote_currently_insured_with : $(this).attr('data-quote-currently-insured-with'),
+        quote_car_make : $(this).attr('data-quote-car-make'),
+        quote_car_model : $(this).attr('data-quote-car-model'),
+        quote_previous_policy_number : $(this).attr('data-quote-previous-policy-number'),
+        customer_name : $(this).attr('data-quote-customer-name'),
+        customer_email : $(this).attr('data-quote-customer-email'),
+        advisor_name : $(this).attr('data-quote-advisor-name'),
+        advisor_email : $(this).attr('data-quote-advisor-email'),
+        advisor_mobile_no : $(this).attr('data-quote-advisor-mobile-no'),
         _token : $('input[name=_token]').val(),
       },
       success: function (data) {
