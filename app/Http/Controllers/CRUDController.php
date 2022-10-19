@@ -354,8 +354,8 @@ class CRUDController extends Controller
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
-            $carMakeText = $record->car_make_id_text;
-            $carModelText = $record->car_model_id_text;
+            $carMakeText = $record->car_make_id_text ? $record->car_make_id_text : '';
+            $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
@@ -1010,8 +1010,6 @@ class CRUDController extends Controller
 
     public function sendEmailOneClickBuy(Request $request)
     {
-        $customer = $this->customerService->getCustomerById($request->customer_id);
-
         // CHECK NUMBER OF PLANS, SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $emailTemplateId = $this->crudService->getOcbCustomerEmailTemplate($request->quote_plans_count);
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid);
@@ -1026,7 +1024,7 @@ class CRUDController extends Controller
             'quoteId' => $request->quote_id,
             'listQuotePlans' => count($listQuotePlans) > 0 ? $listQuotePlans : 0,
         ];
-        dd($request->quote_uuid, $request->all(), $emailData, $listQuotePlans);
+
         $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
     }
 }
