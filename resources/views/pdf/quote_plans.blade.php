@@ -232,32 +232,126 @@
 
 <body>
 
+@php
+
+    $websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
+
+    $plans = [];
+    $addonsPrice = 0;
+    $addonsVat   = 0;
+    foreach ($quotePlans->quotes->plans as &$quotePlan)
+    {
+        //dd($quotePlan);
+        if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
+            continue;
+        }
+
+        $quotePlan->exclusion = json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson());
+        $quotePlan->inclusion = json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson());
+        $quotePlan->feature = json_decode(collect($quotePlan->benefits->feature)->keyBy('code')->toJson());
+        $quotePlan->roadSideAssistance = json_decode(collect($quotePlan->benefits->roadSideAssistance)->keyBy('code')->toJson());
+        $quotePlan->addons = json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+
+
+        $planAddons = (isset($addons[$quotePlan->id])) ? $addons[$quotePlan->id] : $quotePlan->addons;
+
+        foreach ($planAddons as &$addon) {
+            $addon = (object) $addon;
+            //set default value to excluded
+            $addon->value = "&cross;";
+            if(sizeof($addon->carAddonOption)) {
+                //replace exclude with selected value if found
+                foreach ($addon->carAddonOption as $index =>  $carAddonOption) {
+
+                    $carAddonOption = (object) $carAddonOption;
+                    //set default values
+                    $addon->price = 0;
+                    $addon->vat = 0;
+
+                    if($carAddonOption->isSelected) {
+                        $addon->value = $carAddonOption->value;
+                        $addonsPrice += $carAddonOption->price;
+                        $addonsVat += $carAddonOption->vat;
+                        $addon->price = $carAddonOption->price;
+                        $addon->vat   = $carAddonOption->vat;
+                        break;//only one value will be selected
+                    }
+                }
+            }
+        }
+
+        $quotePlan->repairTypeInfo = ($quotePlan->repairType == \App\Enums\CarPlanType::COMP) ? \App\Enums\CarPlanType::NONAGENCY : $quotePlan->repairType;
+        $quotePlan->discountPremium += $addonsPrice;
+        $quotePlan->vat += $addonsVat;
+        $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat;
+        $plans[$quotePlan->id] = $quotePlan;
+    }
+
+    $features = [
+        ["code" => "heading", "title" => "BENEFITS"],
+        ["code" => "damage", "title" => "Loss or Damage to the Insured Vehicle", "type" => ["feature", "inclusion", "exclusion"]],
+        ["code" => "liability", "title" => "Third Party Property Liability", "type" => "feature"],
+        ["code" => "bloodMoney", "title" => "Blood Money", "type" => ["inclusion", "exclusion"]],
+        ["code" => "fireAndTheft", "title" => "Fire and Theft Cover", "type" => ["inclusion", "exclusion"]],
+        ["code" => "stormAndFlood", "title" => "Storm, Flood", "type" => ["inclusion", "exclusion"]],
+        ["code" => "riotAndStrike", "title" => "Natural Perils Riot and Strike", "type" => ["inclusion", "exclusion"]],
+        ["code" => "repairTypeInfo", "title" => "Repairs", "type" => "prop"],
+        ["code" => "emergencyMedicalExpenses", "title" => "Emergency Medical Expenses", "type" => ["inclusion", "exclusion"]],
+        ["code" => "personalBelongings", "title" => "Personal belongings", "type" => ["inclusion", "exclusion"]],
+        ["code" => "omanCover", "title" => "Oman Cover (Orange card not Included)", "type" => ["inclusion", "exclusion"]],//also exists in addons, discussed with mujeeb to show from include/exclusion
+        ["code" => "offRoadCover", "title" => "Off-road Cover", "type" => "roadSideAssistance"],
+        ["code" => "guaranteedRepairs", "title" => "Guaranteed Repairs", "type" => ["inclusion", "exclusion"]],
+        ["code" => "breakdownCover", "title" => "24 Hour Accident and Breakdown Recovery", "type" => "addons"],
+        ["code" => "ambulanceCover", "title" => "Ambulance Cover", "type" => ["inclusion", "exclusion"]],
+        ["code" => "excessForWindscreenDamage", "title" => "Excess for Windscreen Damage", "type" => ["inclusion", "exclusion"]],
+        ["code" => "heading", "title" => "Optional Covers", "type" => ""],
+        ["code" => "driverCover", "title" => "Driver Cover", "type" => "addons"],
+        ["code" => "passengerCover", "title" => "Passengers Cover", "type" => "addons"],
+        ["code" => "carHire", "title" => "Hire car Benefit", "type" => "addons"],
+        ["code" => "spacer"],
+        ["code" => "discountPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "spacer"],
+        ["code" => "vat", "title" => "VAT Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "spacer"],
+        ["code" => "total", "title" => "Payable Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "spacer"],
+        ["type" => "buy", "heading_class" => "no-border"],
+        ["code" => "spacer"],
+        ["code" => "excess", "title" => "Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing']
+    ];
+
+@endphp
+
 <img src="{{public_path('images/quote_plans_pages/p1.jpg')}}" class="full-page-image" />
 
 <footer>
     <table class="tbl-footer">
         <tr>
-            <td class="text-left"><h4>AFIA Insurance Brokerage Services LLC</h4></td>
-            <td class="text-right">&nbsp;</td>
+            <td colspan="2" class="text-center"><h4>InsuranceMarket.ae™by AFIA Insurance Brokerage Services LLC</h4></td>
         </tr>
         <tr>
             <td class="text-left">27th Floor, Control Tower, Motor City,</td>
-            <td class="text-right">Tel: <a href="tel:+97144215819">+971 4 421 5819</a> </td>
+            <td class="text-right">Tel: <a href="tel:+800253733">800 ALFRED (800-253-733)</a> </td>
         </tr>
         <tr>
             <td class="text-left">Dubai, United Arab Emirates, P.O Box 26423</td>
-            <td class="text-right">Fax: +971 4 421 5984</td>
+            <td class="text-right"><a href="mailto:askalfred@insurancemarket.ae">askalfred@insurancemarket.ae</a> | <a href="https://insurancemarket.ae">www.insurancemarket.ae</a> </td>
         </tr>
         <tr>
-            <td class="text-left">Ministry of Economy and Commerce - Registration number 85</td>
-            <td class="text-right">Email: <a href="mailto:hello@afia.ae">hello@afia.ae</a> </td>
-        </tr>
-        <tr>
-            <td class="text-left"><a href="https://afia.ae/">www.afia.ae</a>, <a href="https://insurancemarket.ae/">www.insurancemarket.ae</a> </td>
+            <td class="text-left">Registration No. 85 under Central Bank of UAE (UAE Insurance Authority)</td>
             <td class="text-right">
                 @if(isset($quote->advisor->email))
-                    Email: <a href="mailto:{{$quote->advisor->email}}">{{$quote->advisor->email}}</a>
+                    Advisor Email: <a href="mailto:{{$quote->advisor->email}}">{{$quote->advisor->email}}</a>
                 @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="text-left">Holder of HIIP from HA, Intermediary ID No. BRK-00003</td>
+            <td class="text-right">
+                @if(!empty($quote->advisor->mobile_no) || !empty($quote->advisor->landline_no)) Advisor Phone: @endif
+                @if(isset($quote->advisor->mobile_no)) <a href="tel:{{$quote->advisor->mobile_no}}">{{$quote->advisor->mobile_no}}</a> @endif
+                @if(!empty($quote->advisor->mobile_no) && !empty($quote->advisor->landline_no)) | @endif
+                @if(!empty($quote->advisor->landline_no)) <a href="tel:{{$quote->advisor->landline_no}}">{{$quote->advisor->landline_no}}</a> @endif
             </td>
         </tr>
     </table>
@@ -272,79 +366,7 @@
         <h3>Your Tailor Made <br />Car Insurance Comparison Table</h3>
     </div>
 
-    @php
 
-        $websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
-
-        $plans = [];
-        foreach ($quotePlans->quotes->plans as $quotePlan)
-        {
-            //dd($quotePlan);
-            if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
-                continue;
-            }
-
-            $quotePlan->exclusion = json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson());
-            $quotePlan->inclusion = json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson());
-            $quotePlan->feature = json_decode(collect($quotePlan->benefits->feature)->keyBy('code')->toJson());
-            $quotePlan->roadSideAssistance = json_decode(collect($quotePlan->benefits->roadSideAssistance)->keyBy('code')->toJson());
-            $quotePlan->addons = json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
-
-            foreach ($quotePlan->addons as &$addon) {
-
-                //set default value to excluded
-                $addon->value = "&cross;";
-                if(sizeof($addon->carAddonOption)) {
-                    //replace exclude with selected value if found
-                    foreach ($addon->carAddonOption as $index => $carAddonOption) {
-                        if($carAddonOption->isSelected) {
-                            $addon->value = $carAddonOption->value;
-                            break;//only one value will be selected
-                        }
-                    }
-                }
-                
-            }
-
-            $quotePlan->repairTypeInfo = ($quotePlan->repairType == \App\Enums\CarPlanType::COMP) ? \App\Enums\CarPlanType::NONAGENCY : $quotePlan->repairType;
-            $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
-            $plans[$quotePlan->id] = $quotePlan;
-        }
-
-        $features = [
-            ["code" => "heading", "title" => "BENEFITS"],
-            ["code" => "damage", "title" => "Loss or Damage to the Insured Vehicle", "type" => ["feature", "inclusion", "exclusion"]],
-            ["code" => "liability", "title" => "Third Party Property Liability", "type" => "feature"],
-            ["code" => "bloodMoney", "title" => "Blood Money", "type" => ["inclusion", "exclusion"]],
-            ["code" => "fireAndTheft", "title" => "Fire and Theft Cover", "type" => ["inclusion", "exclusion"]],
-            ["code" => "stormAndFlood", "title" => "Storm, Flood", "type" => ["inclusion", "exclusion"]],
-            ["code" => "riotAndStrike", "title" => "Natural Perils Riot and Strike", "type" => ["inclusion", "exclusion"]],
-            ["code" => "repairTypeInfo", "title" => "Repairs", "type" => "prop"],
-            ["code" => "emergencyMedicalExpenses", "title" => "Emergency Medical Expenses", "type" => ["inclusion", "exclusion"]],
-            ["code" => "personalBelongings", "title" => "Personal belongings", "type" => ["inclusion", "exclusion"]],
-            ["code" => "omanCover", "title" => "Oman Cover (Orange card not Included)", "type" => ["inclusion", "exclusion"]],//also exists in addons, discussed with mujeeb to show from include/exclusion
-            ["code" => "offRoadCover", "title" => "Off-road Cover", "type" => "roadSideAssistance"],
-            ["code" => "guaranteedRepairs", "title" => "Guaranteed Repairs", "type" => ["inclusion", "exclusion"]],
-            ["code" => "breakdownCover", "title" => "24 Hour Accident and Breakdown Recovery", "type" => "addons"],
-            ["code" => "ambulanceCover", "title" => "Ambulance Cover", "type" => ["inclusion", "exclusion"]],
-            ["code" => "excessForWindscreenDamage", "title" => "Excess for Windscreen Damage", "type" => ["inclusion", "exclusion"]],
-            ["code" => "heading", "title" => "Optional Covers", "type" => ""],
-            ["code" => "driverCover", "title" => "Driver Cover", "type" => "addons"],
-            ["code" => "passengerCover", "title" => "Passengers Cover", "type" => "addons"],
-            ["code" => "carHire", "title" => "Hire car Benefit", "type" => "addons"],
-            ["code" => "spacer"],
-            ["code" => "discountPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-            ["code" => "spacer"],
-            ["code" => "vat", "title" => "VAT Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-            ["code" => "spacer"],
-            ["code" => "total", "title" => "Payable Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-            ["code" => "spacer"],
-            ["type" => "buy", "heading_class" => "no-border"],
-            ["code" => "spacer"],
-            ["code" => "excess", "title" => "Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing']
-        ];
-
-    @endphp
 
     <div class="container">
         <table class="table-fixed text-center tbl-plans">
