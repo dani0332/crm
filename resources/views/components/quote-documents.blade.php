@@ -17,8 +17,10 @@ use App\Enums\PermissionsEnum;
                         <div class="alert alert-danger" id="document-delete-success" style="display:none;">Document deleted. Page will be refresh now.</div>
                     @endif
                 @endcannot
-                @php $docUploadUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid . '/thankyou'; @endphp
-                <button id="btn_copy_doc_upload_link" data-label="Copy Upload Link" data-doc-upload-url="{{ $docUploadUrl }}" class="btn btn-success btn-sm pull-right">Copy Upload Link</button>
+                @if($record->payment_status_id == \App\Enums\PaymentStatusEnum::AUTHORISED)
+                    @php $docUploadUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid . '/thankyou'; @endphp
+                    <button id="btn_copy_doc_upload_link" data-label="Copy Upload Link" data-doc-upload-url="{{ $docUploadUrl }}" class="btn btn-success btn-sm pull-right">Copy Upload Link</button>
+                @endif
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
