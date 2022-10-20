@@ -153,7 +153,7 @@
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Rejection Reason</b><span
                                         class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <input class="form-control" type="text" name="lost_approval_reason" value="{{ $lead->lost_approval_reason ?? null }}" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations) )disabled @endif>
+                                        <input class="form-control" type="text" name="lost_approval_reason" required value="{{ $lead->lost_approval_reason ?? null }}" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations) )disabled @endif>
                                         @if ($errors->has('lostReason'))
                                             <span class="text-danger">{{ $errors->first('lostReason') }}</span>
                                         @endif
