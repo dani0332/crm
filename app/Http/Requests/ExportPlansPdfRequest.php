@@ -39,7 +39,7 @@ class ExportPlansPdfRequest extends FormRequest
         return [
             'quote_uuid' => ['required', new ValidateQuoteObject],
             'plan_ids' => 'required|array|min:3|max:5',
-            'addons' => 'nullable|array'
+            'addons' => 'nullable|array',
         ];
     }
 

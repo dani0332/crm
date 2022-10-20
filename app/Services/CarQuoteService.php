@@ -1156,7 +1156,7 @@ class CarQuoteService extends BaseService
         }
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
-        $quote->load(['carMake', 'carModel', 'advisor' => function($q) {
+        $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
         }, 'customer']);
 
