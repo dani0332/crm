@@ -343,7 +343,7 @@ class AMLController extends Controller
             return redirect()->route('aml.details')->with('message', 'Not Found!');
         }
 
-        if ($quoteRequest->quote_status_id && $quoteRequest->quote_status_id != '') {
+        if ($quoteRequest && $quoteRequest->quote_status_id && $quoteRequest->quote_status_id != '') {
             $quoteStatus = QuoteStatus::where('id', '=', $quoteRequest->quote_status_id)->get(['code']);
             $quoteStatusCode = $quoteStatus[0]->code;
         } else {

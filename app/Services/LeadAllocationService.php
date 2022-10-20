@@ -141,7 +141,7 @@ class LeadAllocationService extends BaseService
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
                 $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
                 $leadCreated = Carbon::parse($lead->created_at)->timestamp;
-                if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate) {
+                if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
                     info('Contact upload Request '.$lead->uuid);
                     $this->sendSibRequest($lead);
                 }
