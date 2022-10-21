@@ -115,7 +115,7 @@ class TransAppService extends BaseService
 
             $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
 
-            if ($customerMobile != null) {
+            if ($customerMobile != null && $isCustomerExisting->isEmpty()) {
                 if ($isSmsTestingEnabled == 0) {
                     $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail);
                 } else {
