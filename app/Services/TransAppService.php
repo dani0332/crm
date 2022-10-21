@@ -18,17 +18,22 @@ use Carbon\Carbon;
 use Config;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use LookUpModel;
 
 class TransAppService extends BaseService
 {
     protected $sendEmailCustomerService;
+    protected $sendSmsCustomerService;
+    protected $applicationStorageService;
 
     public function __construct(
-        SendEmailCustomerService $sendEmailCustomerService
+        SendEmailCustomerService $sendEmailCustomerService,
+        SendSmsCustomerService $sendSmsCustomerService,
+        ApplicationStorageService $applicationStorageService,
     ) {
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->sendSmsCustomerService = $sendSmsCustomerService;
+        $this->applicationStorageService = $applicationStorageService;
     }
 
     public function createTransaction(Request $request)
@@ -51,7 +56,7 @@ class TransAppService extends BaseService
                     if ($responseContact != 201 && $responseContact != 204) {
                         $message = 'myAlfred signup link to issued policy cases (SIB API)<br>
                         Customer Email: '.$request->email;
-                        Log::info($message);
+                        info($message);
                     }
 
                     if ($responseExtend != 201) {
@@ -59,7 +64,7 @@ class TransAppService extends BaseService
                         $message = 'Customer trying to extend subscription but not exist in myAflred<br>
                         Customer Email: '.$request->email.'<br>
                         Token: '.$customerToken;
-                        Log::info($message);
+                        info($message);
                     }
                 }
             }
@@ -101,10 +106,25 @@ class TransAppService extends BaseService
 
             $expiryDate = Carbon::now()->addMonths(12);
             $customer = CustomerService::getCustomerById($customerId);
+            $customerEmail = $customer->email;
+            $customerMobile = $customer->mobile_no;
             $customer->myalfred_expiry_date = $expiryDate;
             $customer->save();
 
             $isCustomerExisting = MyAlFredUser::where('customer_id', '=', $customerId)->get();
+
+            $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
+
+            if ($customerMobile != null) {
+                if ($isSmsTestingEnabled == 0) {
+                    $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail);
+                } else {
+                    $isAfiaTester = $this->isAfiaEmail($customerEmail);
+                    if ($isAfiaTester) {
+                        $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail);
+                    }
+                }
+            }
 
             if ($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && $isCustomerExisting->isEmpty()) {
                 $this->sendWelcomeEmail($customerId, $WEGenerateUrlResponse, 'transapp-myalfred-we');
@@ -140,6 +160,23 @@ class TransAppService extends BaseService
             $newMyAlFredUser->code = $code;
             $newMyAlFredUser->source = 'TRANSAPP';
             $newMyAlFredUser->save();
+        }
+    }
+
+    public function sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail)
+    {
+        if (preg_match('/^(?:971|\+971|0)?(?:50|51|52|55|56|58|2|3|4|6|7|9)\d{7}$/', $customerMobile)) {
+            $mobileNumber = preg_replace('/^(?:971|\+971|0)/', '971', $customerMobile);
+        } else {
+            $mobileNumber = null;
+        }
+
+        if ($mobileNumber != null) {
+            $shortUrl = $this->sendSmsCustomerService->getShortUrl($WEGenerateUrlResponse);
+            $smsMessage = 'As a valued customer of InsuranceMarket.ae, you can avail offers from over 100 brands on myAlfred. Click '.$shortUrl.' to enjoy the offers! optoutMA 4741';
+            $this->sendSmsCustomerService->sendSms($mobileNumber, $smsMessage);
+        } else {
+            info('Invalid mobile number: '.$customerMobile.' | email: '.$customerEmail.' | class: '.get_class());
         }
     }
 
@@ -336,5 +373,18 @@ class TransAppService extends BaseService
             ->first();
 
         return $approvalCode->approval_code;
+    }
+
+    public function isAfiaEmail($email)
+    {
+        $isAfiaEmail = false;
+
+        $acceptedDomains = ['afia.ae', 'insurancemarket.ae'];
+
+        if (in_array(substr($email, strrpos($email, '@') + 1), $acceptedDomains)) {
+            $isAfiaEmail = true;
+        }
+
+        return $isAfiaEmail;
     }
 }
