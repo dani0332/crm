@@ -114,19 +114,21 @@ class TransAppService extends BaseService
             $isCustomerExisting = MyAlFredUser::where('customer_id', '=', $customerId)->get();
 
             $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
-            if ($customerMobile != null && $isCustomerExisting->isEmpty()) {
-                if ($isSmsTestingEnabled == 0) {
-                    $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $transaction->id);
-                } else {
-                    $isAfiaTester = $this->isAfiaEmail($customerEmail);
-                    if ($isAfiaTester) {
-                        $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $transaction->id);
-                    }
-                }
-            }
 
             if ($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && $isCustomerExisting->isEmpty()) {
                 $this->sendWelcomeEmail($customerId, $WEGenerateUrlResponse, 'transapp-myalfred-we');
+
+                // Send SMS to customer
+                if ($customerMobile != null) {
+                    if ($isSmsTestingEnabled == 0) {
+                        $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $transaction->id);
+                    } else {
+                        $isAfiaTester = $this->isAfiaEmail($customerEmail);
+                        if ($isAfiaTester) {
+                            $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $transaction->id);
+                        }
+                    }
+                }
             }
 
             return $approvalCode;
