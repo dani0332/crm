@@ -2878,6 +2878,14 @@ $('#dob_div #dob').datepicker({
   yearRange: '-80:+00',
 });
 
+$('#policy_start_date').prop('type', 'text');
+$('#policy_start_date').datepicker({
+  changeMonth: true,
+  changeYear: true,
+  dateFormat: 'dd/mm/yy',
+  yearRange: '-80:+00',
+});
+
 function sendQuoteDocumentsToCustomer(el) {
   if (confirm('Are you sure you want to send documents to customer?')) {
     var quoteType = $(el).attr('data-quote-type');
