@@ -8,6 +8,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalsUploadType;
+use App\Imports\UploadAndCreateImport;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarMake;
@@ -29,6 +30,7 @@ use App\Models\YachtQuote;
 use Carbon\Carbon;
 use Config;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class RenewalsUploadService
@@ -55,6 +57,81 @@ class RenewalsUploadService
         if ($response) {
             return $response->uuid;
         }
+    }
+
+    /**
+     * upload renewal file to azure
+     * @return array
+     */
+    public function uploadRenewalsFile()
+    {
+        // Getting original file name
+        $fileName = request()->file('file_name')->getClientOriginalName();
+
+        // Generating name for file for azure usage
+        $azureFileName = get_guid().'_'.$fileName;
+
+        // Uploading file to Azure
+        $azureFilePath = request()->file('file_name')->storeAs('renewals', $azureFileName, 'azureIM');
+
+        return [
+            'file_name' => $fileName,
+            'azure_file_path' => $azureFilePath,
+        ];
+    }
+
+    /**
+     * @param $uploadedFile
+     * @return RenewalsUploadLeads
+     */
+    public function createRenewalsLead($uploadedFile)
+    {
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
+
+        $leadData = [
+            'renewal_import_code' => $this->generateRandomString(),
+            'file_name' => $uploadedFile['file_name'],
+            'file_path' => $azureStorageUrl.$azureStorageContainer.'/'.$uploadedFile['azure_file_path'],
+            'status' => ProcessStatusCode::IN_PROGRESS,
+            'good' => 0,
+            'created_by_id' => auth()->user()->id
+        ];
+
+        $renewalsUploadLead = new RenewalsUploadLeads();
+        $renewalsUploadLead->create($leadData);
+
+        return $renewalsUploadLead;
+    }
+
+    /**
+     * renewals upload and create
+     *
+     * @param $data
+     * @return mixed
+     */
+    public function renewalsUploadCreate($data)
+    {
+        return DB::transaction(function() use($data)
+        {
+            $uploadedFile = $this->uploadRenewalsFile();
+
+            $renewalsUploadLead = $this->createRenewalsLead($uploadedFile);
+
+            $renewalsUpload = new UploadAndCreateImport($this);
+            $renewalsUpload->import(request()->file('file_name'));
+
+            // todo: confirm if we can ignore these now, temp code
+            /*$countRows = $renewalsUpload->getRowCount();
+            $countErrors = $renewalsUpload->failures()->count();
+            $renewalsUploadLead->cannot_upload = $countErrors;
+            $renewalsUploadLead->good = $countRows;
+            $renewalsUploadLead->total_records =  $countRows + $countErrors;
+            $renewalsUploadLead->update();*/
+
+            return true;
+
+        });
     }
 
     /*
