@@ -342,9 +342,9 @@
                         if (checkboxIndexes.includes(i)) {
                             const element = columns[i];
                             if ($(element).text() == '1') {
-                                $(element).text('True');
+                                $(element).text('Yes');
                             } else if ($(element).text() == '0') {
-                                $(element).text('False');
+                                $(element).text('No');
                             }
                         }
                     }
