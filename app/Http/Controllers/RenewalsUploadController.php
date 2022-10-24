@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\RenewalsUploadType;
+use App\Http\Requests\RenewalsUploadRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\RenewalBatchEmailJob;
@@ -22,6 +23,12 @@ class RenewalsUploadController extends Controller
     public function __construct(RenewalsUploadService $renewalsUploadFileService)
     {
         $this->renewalsUploadFileService = $renewalsUploadFileService;
+    }
+
+    public function renewalsUploadCreate(RenewalsUploadRequest $request)
+    {
+        $result = $this->renewalsUploadFileService->renewalsUploadCreate($request->validated());
+        return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
     }
 
     /**

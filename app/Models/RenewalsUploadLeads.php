@@ -12,6 +12,7 @@ class RenewalsUploadLeads extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
 
+    protected $fillable = ['file_name', 'file_path', 'total_records', 'good', 'status', 'renewal_import_code', 'created_by_id'];
     protected $table = 'renewals_upload_leads';
 
     public function getCreatedAtAttribute($table)
