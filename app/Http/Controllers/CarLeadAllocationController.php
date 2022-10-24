@@ -35,14 +35,13 @@ class CarLeadAllocationController extends Controller
             $data = $this->leadAllocationService->getGridData();
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount += $value->allocationCount;
-                $value->is_available == 1 ? $availableUsers++ : $unAvailableUsers++;
+                $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
             }
             if ($request->ajax()) {
                 return Datatables::of($data)
                     ->addIndexColumn()
                     ->make(true);
             }
-
             return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO']));
         } else {
             abort(403, 'Unauthorized action.');
