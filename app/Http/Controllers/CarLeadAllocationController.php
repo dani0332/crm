@@ -42,6 +42,7 @@ class CarLeadAllocationController extends Controller
                     ->addIndexColumn()
                     ->make(true);
             }
+
             return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO']));
         } else {
             abort(403, 'Unauthorized action.');
