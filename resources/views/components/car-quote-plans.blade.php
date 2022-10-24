@@ -30,11 +30,13 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 						data-quote-currently-insured-with="{{ $record->currently_insured_with }}"
 						data-quote-car-make="{{ $carMakeText }}"
 						data-quote-car-model="{{ $carModelText }}"
+						data-quote-car-year-of-manufacture="{{ $record->year_of_manufacture }}"
 						data-quote-previous-policy-number="{{ $record->previous_quote_policy_number }}"
 						data-quote-customer-name="{{ $record->first_name }} {{ $record->last_name }}"
 						data-quote-customer-email="{{ $record->email }}"
 						data-quote-advisor-name="{{ $advisor->name }}"
 						data-quote-advisor-email="{{ $advisor->email }}"
+						data-quote-advisor-landline-no="{{ $advisor->landline_no }}"
 						data-quote-advisor-mobile-no="{{ $advisor->mobile_no }}">
 						Send OCB email to customer</button>
 						<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"

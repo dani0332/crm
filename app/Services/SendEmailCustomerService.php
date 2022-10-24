@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\EnvEnum;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use Exception;
-use Illuminate\Support\Facades\Log;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -59,11 +58,18 @@ class SendEmailCustomerService extends BaseService
                     'signUpButtonUrl' => isset($emailData->signUpButtonUrl) ? $emailData->signUpButtonUrl : null,
                     'buttonUrl' => isset($emailData->buttonUrl) ? $emailData->buttonUrl : null,
                     'cdbId' => isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null,
-                    'notesForCustomer' => isset($emailData->notesForCustomer) ? nl2br(htmlentities(str_replace('<br />', '', $emailData->notesForCustomer))) : null,
                     'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
                     'advisorLandlineNo' => isset($emailData->advisorLandlineNo) ? $emailData->advisorLandlineNo : null,
                     'advisorMobileNo' => isset($emailData->advisorMobileNo) ? $emailData->advisorMobileNo : null,
+                    'advisorEmailAddress' => isset($emailData->advisorEmailAddress) ? $emailData->advisorEmailAddress : null,
+                    'notesForCustomer' => isset($emailData->notesForCustomer) ? nl2br(htmlentities(str_replace('<br />', '', $emailData->notesForCustomer))) : null,
                     'providerSupportNumber' => isset($emailData->providerSupportNumber) ? $emailData->providerSupportNumber : null,
+                    'previousPolicyExpiryDate' => isset($emailData->previousPolicyExpiryDate) ? date('l', strtotime($emailData->previousPolicyExpiryDate)).', '.date('d-M-Y', strtotime($emailData->previousPolicyExpiryDate)) : null,
+                    'currentlyInsuredWith' => isset($emailData->currentlyInsuredWith) ? $emailData->currentlyInsuredWith : null,
+                    'carMake' => isset($emailData->carMake) ? $emailData->carMake : null,
+                    'carModel' => isset($emailData->carModel) ? $emailData->carModel : null,
+                    'carManufactureYear' => isset($emailData->carManufactureYear) ? $emailData->carManufactureYear : null,
+                    'previousPolicyNumber' => isset($emailData->previousPolicyNumber) ? $emailData->previousPolicyNumber : null,
                 ],
                 'tags' => [
                     $tag,
@@ -91,7 +97,7 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->quoteCdbId.' Class: '.get_class();
-            Log::error($responseDetail);
+            info($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
         }
@@ -131,7 +137,7 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $emailSubject = null;
             $responseDetail = 'SIB Get Email Subject: Code/Message: '.$ex->getCode().'/'.$ex->getMessage().' messageId: '.$messageId.' Class: '.get_class();
-            Log::error($responseDetail);
+            info($responseDetail);
         }
 
         return $emailSubject;

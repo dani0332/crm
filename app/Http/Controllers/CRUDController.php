@@ -1010,21 +1010,37 @@ class CRUDController extends Controller
 
     public function sendEmailOneClickBuy(Request $request)
     {
-        // CHECK NUMBER OF PLANS, SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
-        $emailTemplateId = $this->crudService->getOcbCustomerEmailTemplate($request->quote_plans_count);
+        // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
+        $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($request->quote_plans_count);
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid);
 
         $emailData = (object) [
+            'quoteTypeId' => $request->quote_type_id,
+            'quoteId' => $request->quote_id,
+            'templateId' => $emailTemplateId,
             'quoteCdbId' => $request->quote_cdb_id,
             'customerName' => $request->customer_name,
             'customerEmail' => $request->customer_email,
+            'previousPolicyExpiryDate' => $request->quote_previous_expiry_date,
+            'currentlyInsuredWith' => $request->quote_currently_insured_with,
+            'carMake' => $request->quote_car_make,
+            'carModel' => $request->quote_car_model,
+            'carManufactureYear' => $request->quote_car_year_of_manufacture,
+            'previousPolicyNumber' => $request->quote_previous_policy_number,
+            'advisorName' => $request->advisor_name,
+            'advisorEmailAddress' => $request->advisor_email,
+            'advisorMobileNo' => $request->advisor_mobile_no,
+            'advisorLandlineNo' => $request->advisor_landline_no,
             'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$request->quote_uuid,
-            'templateId' => $emailTemplateId,
-            'quoteTypeId' => $request->quote_type_id,
-            'quoteId' => $request->quote_id,
             'listQuotePlans' => count($listQuotePlans) > 0 ? $listQuotePlans : 0,
         ];
 
-        $response = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
+        $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
+
+        if($responseCode == 201) {
+            return response()->json(['success' => 'OCB email sent to customer']);
+        } else {
+            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
+        }
     }
 }
