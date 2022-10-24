@@ -6,7 +6,7 @@ use Exception;
 
 class SendSmsCustomerService extends BaseService
 {
-    public function sendSms($customerMobile, $smsText)
+    public function sendSms($customerMobile, $smsText, $customerEmail, $recordId)
     {
         try {
             $smsEndpoint = config('constants.SMS_ENDPOINT');
@@ -16,18 +16,19 @@ class SendSmsCustomerService extends BaseService
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->request('POST', $smsEndpoint, ['query' => [
-              'username' => $smsUsername,
-              'password' => $smsPassword,
-              'senderid' => $smsSender,
-              'to' => $customerMobile,
-              'text' => $smsText,
-              'type' => 'text',
+                'username' => $smsUsername,
+                'password' => $smsPassword,
+                'senderid' => $smsSender,
+                'to' => $customerMobile,
+                'text' => $smsText,
+                'type' => 'text',
             ]]);
 
             $responseCode = $clientRequest->getStatusCode();
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             info($responseCode);
+            info('Error sending sms - info: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customerEmail.' | record_id: '.$recordId.' | class: '.get_class());
         }
 
         return $responseCode;

@@ -114,14 +114,13 @@ class TransAppService extends BaseService
             $isCustomerExisting = MyAlFredUser::where('customer_id', '=', $customerId)->get();
 
             $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
-
             if ($customerMobile != null && $isCustomerExisting->isEmpty()) {
                 if ($isSmsTestingEnabled == 0) {
-                    $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail);
+                    $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $transaction->id);
                 } else {
                     $isAfiaTester = $this->isAfiaEmail($customerEmail);
                     if ($isAfiaTester) {
-                        $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail);
+                        $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $transaction->id);
                     }
                 }
             }
@@ -163,7 +162,7 @@ class TransAppService extends BaseService
         }
     }
 
-    public function sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail)
+    public function sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $recordId)
     {
         if (preg_match('/^(?:971|\+971|0)?(?:50|51|52|55|56|58|2|3|4|6|7|9)\d{7}$/', $customerMobile)) {
             $mobileNumber = preg_replace('/^(?:971|\+971|0)/', '971', $customerMobile);
@@ -174,9 +173,9 @@ class TransAppService extends BaseService
         if ($mobileNumber != null) {
             $shortUrl = $this->sendSmsCustomerService->getShortUrl($WEGenerateUrlResponse);
             $smsMessage = 'As a valued customer of InsuranceMarket.ae, you can avail offers from over 100 brands on myAlfred. Click '.$shortUrl.' to enjoy the offers! optoutMA 4741';
-            $this->sendSmsCustomerService->sendSms($mobileNumber, $smsMessage);
+            $this->sendSmsCustomerService->sendSms($mobileNumber, $smsMessage, $customerEmail, $recordId);
         } else {
-            info('Invalid mobile number: '.$customerMobile.' | email: '.$customerEmail.' | class: '.get_class());
+            info('Invalid mobile number: '.$customerMobile.' | email: '.$customerEmail.' | record_id: '.$recordId.' | class: '.get_class());
         }
     }
 
