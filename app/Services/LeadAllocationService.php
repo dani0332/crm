@@ -469,7 +469,7 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            $from = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+            $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             $carUnAllocatedLead = $this->getCarUnallocatedLeads($from);
             foreach ($carUnAllocatedLead as $carLead) {
                 if ($this->checkIfLeadIsRenewal($carLead)) {
