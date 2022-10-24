@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             addPermissionForManualLeadTesting::class,
             addPermissionForCarAllocation::class,
             addLeadSourcesForAllocation::class,
+            addCarLeadAllocationFetchStartDate::class,
         ]);
     }
 }
