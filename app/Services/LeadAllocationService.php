@@ -614,7 +614,7 @@ class LeadAllocationService extends BaseService
                 return $value->can_handle_tpl == 1;
             });
             info('get Tier applying the ecommerce filter');
-            $tiers = $tiers->filter(function ($value) use($carLead) {
+            $tiers = $tiers->filter(function ($value) use ($carLead) {
                 return $value->can_handle_ecommerce == $carLead->is_ecommerce;
             });
         }
