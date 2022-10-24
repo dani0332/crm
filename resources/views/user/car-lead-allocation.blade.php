@@ -18,8 +18,8 @@
                 searching: false,
                 paging: true,
                 processing: true,
-                ordering: true,
                 lengthChange: false,
+                ordering: false,
                 ajax: config.routes.car_lead_allocation_index_route,
                 columns: [{
                         data: 'userId',

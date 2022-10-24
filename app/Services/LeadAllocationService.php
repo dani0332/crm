@@ -608,22 +608,20 @@ class LeadAllocationService extends BaseService
     public function getTierForValue($carLead)
     {
         $tiers = Tier::where('is_active', 1)->get();
-        if ($carLead->car_value == null) {
-            info('get Tier inside the null value filter');
-            $tiers = $tiers->filter(function ($value) {
-                return $value->can_handle_null_value == 1;
-            });
-        }
-        if ($carLead->is_ecommerce == 1) {
-            info('get Tier inside the ecommerce filter');
-            $tiers = $tiers->filter(function ($value) {
-                return $value->can_handle_ecommerce == 1;
-            });
-        }
         if ($carLead->car_type_insurance_id == 2) {
             info('get Tier inside the can handle tpl filter');
             $tiers = $tiers->filter(function ($value) {
                 return $value->can_handle_tpl == 1;
+            });
+            info('get Tier applying the ecommerce filter');
+            $tiers = $tiers->filter(function ($value) use($carLead) {
+                return $value->can_handle_ecommerce == $carLead->is_ecommerce;
+            });
+        }
+        if ($carLead->car_value == null) {
+            info('get Tier inside the null value filter');
+            $tiers = $tiers->filter(function ($value) {
+                return $value->can_handle_null_value == 1;
             });
         }
         if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
@@ -634,11 +632,9 @@ class LeadAllocationService extends BaseService
         }
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
             info('get Tier inside the car value filter');
-            $tiers = $tiers->filter(function ($value) {
-                return $value->is_tpl_renewals == 1;
-            });
+            $tiers = $tiers->where('name', 'like', '%TR');
         }
-        info('get tier the first tier after filter is : '.json_encode($tiers->first()));
+        info('First tier after filtration is : '.json_encode($tiers->first()));
         if ($tiers != null) {
             return $tiers->first();
         }
