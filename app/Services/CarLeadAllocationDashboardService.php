@@ -2,8 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Models\ApplicationStorage;
+use App\Models\LeadSource;
+use App\Models\Teams;
+use App\Models\Tier;
 use App\Models\User;
+use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Log;
 
@@ -36,5 +42,33 @@ class CarLeadAllocationDashboardService extends BaseService
             Log::error($e->getMessage());
             DB::rollback();
         }
+    }
+
+    public function generateReportBatches()
+    {
+        $batchStartDate = ApplicationStorage::where('key_name', 'CONVERSATION_REPORT_BATCH_START_DATE')->first()->value;
+        $startDate =  Carbon::parse($batchStartDate);
+        $endDate = Carbon::parse($batchStartDate);
+        $batchList = [];
+        $batchCount = 1;
+        while ($endDate <= now()) {
+            $currentWeek = $startDate->format('Y-m-d');
+            $nextWeek = $startDate->addWeek(1)->addDay(1)->format('Y-m-d');
+            $batchString = 'Batch-'. $batchCount . '-('. $currentWeek . ' to '. $nextWeek. ')';
+            array_push($batchList, [$currentWeek.','.$nextWeek => $batchString]);
+            $endDate = $startDate;
+            $batchCount++;
+        }
+        return $batchList;
+    }
+
+    public function generateAdvisorConversionReportData()
+    {
+        $batchList = $this->generateReportBatches();
+        $carTeamId = Teams::where('name', quoteTypeCode::Car)->first()->id;
+        $teams = Teams::where('parent_team_id', $carTeamId)->get();
+        $leadSources = LeadSource::where('is_active',1)->get();
+        $users = User::where('team_id', $carTeamId)->where('is_active', 1)->get();
+        $tiers = Tier::where('is_active', 1)->get();
     }
 }

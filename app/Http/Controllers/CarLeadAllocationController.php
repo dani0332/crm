@@ -2,21 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\quoteTypeCode;
+use App\Models\LeadSource;
+use App\Models\Team;
+use App\Models\Tier;
+use App\Models\User;
 use App\Services\ApplicationStorageService;
+use App\Services\CacheService;
 use App\Services\CarLeadAllocationDashboardService;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class CarLeadAllocationController extends Controller
 {
     protected $leadAllocationService;
     protected $applicationStorageService;
-
-    public function __construct(CarLeadAllocationDashboardService $leadAllocationService, ApplicationStorageService $applicationStorageService)
+    protected $cacheService;
+    public function __construct(CarLeadAllocationDashboardService $leadAllocationService, ApplicationStorageService $applicationStorageService, CacheService $cacheService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->applicationStorageService = $applicationStorageService;
+        $this->cacheService = $cacheService;
     }
     /**
      * Display a listing of the resource.
@@ -47,5 +56,15 @@ class CarLeadAllocationController extends Controller
         } else {
             abort(403, 'Unauthorized action.');
         }
+    }
+
+    public function renderAdvisorConversionReport()
+    {
+        $carTeamId = Team::where('name', quoteTypeCode::Car)->first()->id;
+        $teams = Team::where('parent_team_id', $carTeamId)->get();
+        $leadSources = $this->cacheService->getLeadSources();
+        $users = User::where('team_id', $carTeamId)->where('is_active', 1)->get();
+        $tiers = Tier::where('is_active', 1)->get();
+        return view('dashboard.advisor-conversion-report', compact([]));
     }
 }
