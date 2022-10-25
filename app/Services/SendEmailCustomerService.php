@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\EnvEnum;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -70,6 +71,9 @@ class SendEmailCustomerService extends BaseService
                     'carModel' => isset($emailData->carModel) ? $emailData->carModel : null,
                     'carManufactureYear' => isset($emailData->carManufactureYear) ? $emailData->carManufactureYear : null,
                     'previousPolicyNumber' => isset($emailData->previousPolicyNumber) ? $emailData->previousPolicyNumber : null,
+                    'listQuotePlans' => isset($emailData->listQuotePlans) ? $emailData->listQuotePlans : null,
+                    'insurerLogoUrl' => config('constants.APP_URL').'/images/insurance_providers/',
+
                 ],
                 'tags' => [
                     $tag,
@@ -97,7 +101,7 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->quoteCdbId.' Class: '.get_class();
-            info($responseDetail);
+            Log::error($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
         }
@@ -137,7 +141,7 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $emailSubject = null;
             $responseDetail = 'SIB Get Email Subject: Code/Message: '.$ex->getCode().'/'.$ex->getMessage().' messageId: '.$messageId.' Class: '.get_class();
-            info($responseDetail);
+            Log::error($responseDetail);
         }
 
         return $emailSubject;
