@@ -2884,6 +2884,7 @@ $('#policy_start_date').datepicker({
   changeYear: true,
   dateFormat: 'dd/mm/yy',
   yearRange: '-80:+00',
+  minDate: new Date()
 });
 
 function sendQuoteDocumentsToCustomer(el) {
