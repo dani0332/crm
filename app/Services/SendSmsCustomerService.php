@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class SendSmsCustomerService extends BaseService
 {
@@ -28,7 +29,7 @@ class SendSmsCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             info($responseCode);
-            info('Error sending sms - info: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customerEmail.' | record_id: '.$recordId.' | class: '.get_class());
+            Log::info('Error sending sms - info: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customerEmail.' | record_id: '.$recordId.' | class: '.get_class());
         }
 
         return $responseCode;
@@ -67,7 +68,7 @@ class SendSmsCustomerService extends BaseService
             $response = $response->short_url;
         } catch (Exception $ex) {
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
-            info($response);
+            Log::info($response);
         }
 
         return $response;
