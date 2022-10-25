@@ -12,8 +12,7 @@ class CacheService extends BaseService
         $value = '';
         if (Cache::has('leadSources')) {
             $value = Cache::get('leadSources');
-        }
-        else{
+        } else {
             $value = Cache::remember('leadSources', 86400, function () {
                 return CarQuote::where('source', '!=', 'test')
                 ->where('source', '!=', 'postman')
@@ -24,6 +23,7 @@ class CacheService extends BaseService
                 ->pluck('source');
             });
         }
+
         return $value;
     }
 }

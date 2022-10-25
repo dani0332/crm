@@ -47,18 +47,19 @@ class CarLeadAllocationDashboardService extends BaseService
     public function generateReportBatches()
     {
         $batchStartDate = ApplicationStorage::where('key_name', 'CONVERSATION_REPORT_BATCH_START_DATE')->first()->value;
-        $startDate =  Carbon::parse($batchStartDate);
+        $startDate = Carbon::parse($batchStartDate);
         $endDate = Carbon::parse($batchStartDate);
         $batchList = [];
         $batchCount = 1;
         while ($endDate <= now()) {
             $currentWeek = $startDate->format('Y-m-d');
             $nextWeek = $startDate->addWeek(1)->addDay(1)->format('Y-m-d');
-            $batchString = 'Batch-'. $batchCount . '-('. $currentWeek . ' to '. $nextWeek. ')';
+            $batchString = 'Batch-'.$batchCount.'-('.$currentWeek.' to '.$nextWeek.')';
             array_push($batchList, [$currentWeek.','.$nextWeek => $batchString]);
             $endDate = $startDate;
             $batchCount++;
         }
+
         return $batchList;
     }
 
@@ -67,7 +68,7 @@ class CarLeadAllocationDashboardService extends BaseService
         $batchList = $this->generateReportBatches();
         $carTeamId = Teams::where('name', quoteTypeCode::Car)->first()->id;
         $teams = Teams::where('parent_team_id', $carTeamId)->get();
-        $leadSources = LeadSource::where('is_active',1)->get();
+        $leadSources = LeadSource::where('is_active', 1)->get();
         $users = User::where('team_id', $carTeamId)->where('is_active', 1)->get();
         $tiers = Tier::where('is_active', 1)->get();
     }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
-use App\Models\LeadSource;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\User;
@@ -12,8 +11,6 @@ use App\Services\CacheService;
 use App\Services\CarLeadAllocationDashboardService;
 use DataTables;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class CarLeadAllocationController extends Controller
@@ -65,6 +62,7 @@ class CarLeadAllocationController extends Controller
         $leadSources = $this->cacheService->getLeadSources();
         $users = User::where('team_id', $carTeamId)->where('is_active', 1)->get();
         $tiers = Tier::where('is_active', 1)->get();
+
         return view('dashboard.advisor-conversion-report', compact([]));
     }
 }
