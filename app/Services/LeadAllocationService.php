@@ -646,7 +646,7 @@ class LeadAllocationService extends BaseService
     public function getTierUsersWithLeadAllocationRecord($tierId)
     {
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
-
+        info('Tier users are :'. json_encode($tierUsers));
         return LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
                     ->where('lead_allocation.is_available', 1)
                     ->where(function ($query) {

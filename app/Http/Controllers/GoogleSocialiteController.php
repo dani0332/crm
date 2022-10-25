@@ -46,7 +46,7 @@ class GoogleSocialiteController extends Controller
         }
 
         auth()->login($requestingUser);
-
+        $requestingUser->logout_at = null;
         $requestingUser->last_login = now();
         $requestingUser->save();
 
