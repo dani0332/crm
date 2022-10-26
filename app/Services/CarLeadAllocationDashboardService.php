@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
+use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\Teams;
 use App\Models\Tier;
@@ -71,5 +74,15 @@ class CarLeadAllocationDashboardService extends BaseService
         $leadSources = LeadSource::where('is_active', 1)->get();
         $users = User::where('team_id', $carTeamId)->where('is_active', 1)->get();
         $tiers = Tier::where('is_active', 1)->get();
+    }
+
+    public function getTodaysCarTotalLeadsCount()
+    {
+        $from = Carbon::now()->startOfDay();
+        $to = Carbon::now()->endOfDay();
+        return CarQuote::whereBetween('created_at', [$from, $to])
+            ->where('quote_status_id' , '!=', QuoteStatusEnum::Fake)
+            ->where('source' , '!=', LeadSourceEnum::IMCRM)
+            ->count();
     }
 }

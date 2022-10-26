@@ -15,12 +15,13 @@ use Illuminate\Support\Facades\Gate;
 
 class CarLeadAllocationController extends Controller
 {
-    protected $leadAllocationService;
+    protected $carLeadAllocationService;
     protected $applicationStorageService;
     protected $cacheService;
-    public function __construct(CarLeadAllocationDashboardService $leadAllocationService, ApplicationStorageService $applicationStorageService, CacheService $cacheService)
+    public function __construct(CarLeadAllocationDashboardService $carLeadAllocationService, ApplicationStorageService $applicationStorageService,
+     CacheService $cacheService)
     {
-        $this->leadAllocationService = $leadAllocationService;
+        $this->carLeadAllocationService = $carLeadAllocationService;
         $this->applicationStorageService = $applicationStorageService;
         $this->cacheService = $cacheService;
     }
@@ -35,10 +36,11 @@ class CarLeadAllocationController extends Controller
             $totalAssignedLeadCount = 0;
             $availableUsers = 0;
             $unAvailableUsers = 0;
+            $todayTotalLeadCount = $this->carLeadAllocationService->getTodaysCarTotalLeadsCount();
             $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
             $isRenewalLeadAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_RENEWAL_LEAD_ALLOCATION');
             $isFIFO = $this->applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
-            $data = $this->leadAllocationService->getGridData();
+            $data = $this->carLeadAllocationService->getGridData();
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount += $value->allocationCount;
                 $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
@@ -49,7 +51,7 @@ class CarLeadAllocationController extends Controller
                     ->make(true);
             }
 
-            return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO']));
+            return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO', 'todayTotalLeadCount']));
         } else {
             abort(403, 'Unauthorized action.');
         }

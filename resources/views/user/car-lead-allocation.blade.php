@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @section('title', 'CAR Lead Allocation Management')
 @section('content')
+@php
+    use App\Enums\RolesEnum;
+@endphp
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <link href="{{ asset('css/bootstrap-toggle.css') }}" rel="stylesheet">
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -251,8 +254,9 @@
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
+
+                @if(Auth::user()->hasRole(RolesEnum::SuperManagerLeadAllocation))
                 <h2>Car Lead Allocation Management</h2>
-                @if(Auth::user()->isAdmin())
                 <span class="status-text"></span>
                 <label class="switch "
                     style="margin-left: 20px;float: left;margin-top: 5px;">
@@ -262,8 +266,9 @@
                 </label>
                 @endif
 
+
+                @if(Auth::user()->hasRole(RolesEnum::SuperManagerLeadAllocation))
                 <h2 style="margin-left:  80px !important">Pickup Sequence : FIFO</h2>
-                @if(Auth::user()->isAdmin())
                 <span class="status-text"></span>
                 <label class="switch "
                     style="margin-left: 20px;float: left;margin-top: 5px;">
@@ -307,6 +312,14 @@
                         <br />
                         <b><span style="color: black;"><label id="availableUsers">{{$availableUsers}} </label> /
                                 <label id="UnavailableUsers">{{$unAvailableUsers}}</label></span></b>
+                    </div>
+                </div>
+                <div class="col-md-12" style="margin-left:8px;">
+                    <div class="col-md-3"
+                        style="border-radius: 10px;float: left;border-left: 3px solid #A1C86B;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
+                        <span style="font-size: 21px">Total Leads Today </span>
+                        <br />
+                        <b><span style="color: black;">{{ $todayTotalLeadCount}}</span></b>
                     </div>
                 </div>
                 <table class="table table-striped jambo_table  car_lead_allocation_table" style="width:100%">
