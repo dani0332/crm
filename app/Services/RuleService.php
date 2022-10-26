@@ -162,7 +162,7 @@ class RuleService extends BaseService
     {
         return [
             'create' => 'created_at,updated_at,rule_start_date,rule_end_date',
-            'list' => 'rule_start_date,rule_end_date',
+            'list' => 'rule_start_date,rule_end_date,updated_at',
             'update' => 'id,created_at,updated_at,rule_start_date,rule_end_date',
             'show' => 'id,rule_start_date,rule_end_date',
         ];
@@ -171,5 +171,10 @@ class RuleService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['name', 'created_at'];
+    }
+
+    public function fillSortingProperties()
+    {
+        return ['name'];
     }
 }

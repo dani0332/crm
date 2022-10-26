@@ -203,4 +203,9 @@ class TierService extends BaseService
     {
         return ['name', 'min_price', 'max_price', 'created_at'];
     }
+
+    public function fillSortingProperties()
+    {
+        return ['name', 'min_price', 'max_price'];
+    }
 }

@@ -322,5 +322,8 @@ class GenericCrudController extends Controller
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
         $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
         $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
+        if(method_exists($this->{$serviceType}, 'fillSortingProperties')){
+            $this->genericModel->sortProperties = $this->{$serviceType}->fillSortingProperties();
+        }
     }
 }

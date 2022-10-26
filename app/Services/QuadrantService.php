@@ -162,4 +162,9 @@ class QuadrantService extends BaseService
     {
         return ['name'];
     }
+
+    public function fillSortingProperties()
+    {
+        return ['name'];
+    }
 }
