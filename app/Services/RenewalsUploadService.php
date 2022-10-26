@@ -1098,7 +1098,7 @@ class RenewalsUploadService
                     $leadValidationErrors->push('advisor', 'Invalid Advisor Email Address');
                 }
                 switch($lead->quote_type) {
-                    case 'CAR':
+                    case strtoupper(quoteTypeCode::Car):
                         if (! CarMake::where('text', $leadData->make)->first()) {
                             $leadValidationErrors->push('make', 'Invalid Car Make');
                         }
