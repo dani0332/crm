@@ -30,7 +30,9 @@ class AddDescriptionToDocumentTypesTable extends Migration
     public function down()
     {
         Schema::table('document_types', function (Blueprint $table) {
-            //
+            if (Schema::hasColumn('document_types', 'description')) {
+                $table->dropColumn('description');
+            }
         });
     }
 }
