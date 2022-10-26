@@ -80,9 +80,10 @@ class CarLeadAllocationDashboardService extends BaseService
     {
         $from = Carbon::now()->startOfDay();
         $to = Carbon::now()->endOfDay();
+
         return CarQuote::whereBetween('created_at', [$from, $to])
-            ->where('quote_status_id' , '!=', QuoteStatusEnum::Fake)
-            ->where('source' , '!=', LeadSourceEnum::IMCRM)
+            ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
             ->count();
     }
 }
