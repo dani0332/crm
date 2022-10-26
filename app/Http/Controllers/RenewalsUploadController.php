@@ -28,6 +28,7 @@ class RenewalsUploadController extends Controller
     public function renewalsUploadCreate(RenewalsUploadRequest $request)
     {
         $result = $this->renewalsUploadFileService->renewalsUploadCreate($request->validated());
+
         return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
     }
 
