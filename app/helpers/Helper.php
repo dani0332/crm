@@ -369,6 +369,7 @@ function addOrderByClauses($request, $query, $searchPrefix)
 
     if ($column != '' && $direction != '') {
         $columnName = $request->get('columns')[$column]['name'];
+
         return $query->orderBy($searchPrefix.$columnName, $direction);
     } else {
         return $query->orderBy($searchPrefix.'created_at', 'DESC');
