@@ -14,7 +14,7 @@
                     <ul class="nav navbar-right panel_toolbox">
                         <li><a href="{{ url()->previous() }}" class="btn btn-warning btn-sm">Back to Previous</a></li>
                         <li><a href="{{ url('generic/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{$model->modelType}} List</a></li>
-                        
+
                     </ul>
                     <div class="clearfix"></div>
                 </div>
@@ -54,9 +54,9 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <input @if(explode("|", $value)[1] == "date") readonly="readonly" @endif  
+                                        <input @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
                                         @if(strpos($value, 'min') !== false)
-                                            
+
                                             min="{{explode(":", $value)[1]}}"
                                         @endif
                                         type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}} value="{{ old($property) }}" class="form-control">
@@ -67,7 +67,7 @@
                                     </div>
                                     @endif
                                     @if(strpos($value, 'select') !== false)
-                                    
+
                                     <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
                                     <div class="col">
                                         <span class="col-form-label col-md-6 col-sm-6" for="name">
@@ -80,7 +80,7 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        
+
                                         <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}">
                                             @if(strpos($value, 'title'))
                                                 <option value="">{{"Please select ".$customTitles[$property] }}</option>
@@ -88,7 +88,7 @@
                                                 <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
                                             @endif
                                             @foreach($dropdownSource[$property] as $item)
-                                            
+
                                                 <option value="{{ $item->id }}" @if(old($property) == $item->id) selected @endif @if($id == $item->id) selected @endif>{{ $item->text ?? $item->name }}</option>
                                             @endforeach
                                         </select>

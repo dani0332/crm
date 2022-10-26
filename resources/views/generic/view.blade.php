@@ -13,6 +13,16 @@
             word-wrap: break-word;
         }
 
+        div.dataTables_wrapper div.dataTables_processing{
+        font-size: 30px !important;
+        border: none !important;
+        background-color: transparent !important;
+        color: #4183BD !important;
+        padding: 0px  !important;
+        height: 110px !important;
+        width: 250px !important;
+    }
+
     </style>
     <script>
         $(document).ready(function() {
@@ -97,6 +107,11 @@
                             d['created_at_end'] = $('#created_at_end').val();
                         }
                     }
+                },
+                language: {
+                    "processing": "<span class='fa-stack fa-lg'>\n\
+                                        <i class='fa fa-spinner fa-spin fa-stack-2x fa-fw'></i>\n\
+                                </span>&emsp;Processing now ...",
                 },
                 columnDefs: [
                     { orderable: false, targets: disableSortColumns }
@@ -290,7 +305,7 @@
                                                         {{ str_replace('_', ' ', strtoupper($property)) }}
                                                     @endif
                                                 </span>
-                                                <input type={{ explode('|', $value)[1] }} id={{ $property }}
+                                                <input @if(str_contains($value, 'number')) min={{ explode('min:', $value)[1] }} @endif type={{ explode('|', $value)[1] }} id={{ $property }}
                                                     name={{ $property }} class="form-control">
                                                 @if ($errors->has($property))
                                                     <span class="text-danger">{{ $errors->first($property) }}</span>
