@@ -249,13 +249,6 @@
                                                     @elseif($record->$property == GenericRequestEnum::FEMALE_MARRIED_VALUE) {{GenericRequestEnum::FEMALE_MARRIED}}
                                                     @else {{ $record->$property }}
                                                     @endif
-                                                @elseif($property == 'previous_quote_id')
-                                                    @php
-                                                        $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
-                                                    @endphp
-                                                    @if($previousQuote)
-                                                        <a href="/quotes/{{strtolower($model->modelType)}}/{{ $previousQuote->uuid }}" target="_blank" style="text-decoration: underline;">{{ $record->$property }}</a>
-                                                    @endif
                                                 @else
                                                     {{ $property==DatabaseColumnsString::CAR_VALUE ? number_format($record->$property, 2) : $record->$property }}
                                                 @endif
