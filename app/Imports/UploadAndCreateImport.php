@@ -6,7 +6,9 @@ use App\Enums\QuoteProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Models\Customer;
 use App\Models\RenewalQuoteProcess;
+use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -38,7 +40,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
      * @param RenewalsUploadService $renewalsUploadService
      * @param $renewalsUploadLead
      */
-    public function __construct(RenewalsUploadService $renewalsUploadService, $renewalsUploadLead)
+    public function __construct(RenewalsUploadService $renewalsUploadService, RenewalsUploadLeads $renewalsUploadLead)
     {
         $this->renewalsUploadService = $renewalsUploadService;
         $this->renewalsUploadLead = $renewalsUploadLead;
