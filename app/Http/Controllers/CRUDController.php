@@ -1022,7 +1022,6 @@ class CRUDController extends Controller
                     $damageLimitFeatureValue = $feature->value;
                 }
             }
-            $freeAddons = [];
             foreach($quotePlan->addons as $addon) {
                 foreach($addon->carAddonOption as $carAddonOption) {
                     if($carAddonOption->price == 0) {
