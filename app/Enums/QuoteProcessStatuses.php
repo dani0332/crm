@@ -4,7 +4,6 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-
 final class QuoteProcessStatuses extends Enum
 {
     const NEW = 'NEW';
