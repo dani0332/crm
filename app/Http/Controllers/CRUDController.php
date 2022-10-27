@@ -1014,6 +1014,23 @@ class CRUDController extends Controller
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($request->quote_plans_count);
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid);
 
+        foreach($listQuotePlans as $quotePlan) {
+            foreach($quotePlan->benefits->feature as $feature) {
+                if($feature->code == 'damageLimit') {
+                    $damageLimitFeatureText = $feature->text;
+                    $damageLimitFeatureValue = $feature->value;
+                }
+            }
+            $freeAddons = [];
+            foreach($quotePlan->addons as $addon) {
+                foreach($addon->carAddonOption as $carAddonOption) {
+                    if($carAddonOption->price == 0) {
+                        $freeAddons[] = $addon;
+                    }
+                }
+            }
+        }
+
         $emailData = (object) [
             'quoteTypeId' => $request->quote_type_id,
             'quoteId' => $request->quote_id,
@@ -1032,7 +1049,15 @@ class CRUDController extends Controller
             'advisorMobileNo' => $request->advisor_mobile_no,
             'advisorLandlineNo' => $request->advisor_landline_no,
             'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$request->quote_uuid,
-            'listQuotePlans' => count($listQuotePlans) > 0 ? $listQuotePlans : 0,
+            'planType' => strtolower($quotePlan->repairType) == 'tpl' ? 'Third Party Liability' : 'Comprehensive',
+            'planName' => $quotePlan->name,
+            'repairType' => $quotePlan->repairType,
+            'providerName' => $quotePlan->providerName,
+            'singleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id,
+            'discountPremium' => $quotePlan->discountPremium,
+            'damageLimitFeatureText' => $damageLimitFeatureText,
+            'damageLimitFeatureValue' => $damageLimitFeatureValue,
+            'freeAddons' => $freeAddons,
         ];
 
         $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');

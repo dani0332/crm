@@ -71,9 +71,15 @@ class SendEmailCustomerService extends BaseService
                     'carModel' => isset($emailData->carModel) ? $emailData->carModel : null,
                     'carManufactureYear' => isset($emailData->carManufactureYear) ? $emailData->carManufactureYear : null,
                     'previousPolicyNumber' => isset($emailData->previousPolicyNumber) ? $emailData->previousPolicyNumber : null,
-                    'listQuotePlans' => isset($emailData->listQuotePlans) ? $emailData->listQuotePlans : null,
-                    'insurerLogoUrl' => config('constants.APP_URL').'/images/insurance_providers/',
-
+                    'planType' => isset($emailData->planType) ? $emailData->planType : null,
+                    'planName' => isset($emailData->planName) ? $emailData->planName : null,
+                    'repairType' => isset($emailData->repairType) ? $emailData->repairType : null,
+                    'providerName' => isset($emailData->providerName) ? $emailData->providerName : null,
+                    'singleQuoteUrl' => isset($emailData->singleQuoteUrl) ? $emailData->singleQuoteUrl : null,
+                    'discountPremium' => isset($emailData->discountPremium) ? $emailData->discountPremium : null,
+                    'damageLimitFeatureText' => isset($emailData->damageLimitFeatureText) ? $emailData->damageLimitFeatureText : null,
+                    'damageLimitFeatureValue' => isset($emailData->damageLimitFeatureValue) ? $emailData->damageLimitFeatureValue : null,
+                    'freeAddons' => isset($emailData->freeAddons) ? $emailData->freeAddons : null,
                 ],
                 'tags' => [
                     $tag,
