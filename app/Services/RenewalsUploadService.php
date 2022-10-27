@@ -26,6 +26,7 @@ use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
 use App\Models\LifeQuote;
 use App\Models\QuoteStatus;
+use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalsDump;
