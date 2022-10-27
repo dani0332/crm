@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CarPlanFeaturesCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\PaymentMethodsEnum;
@@ -339,6 +340,7 @@ class CRUDController extends Controller
         $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $record->id);
         $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);
         $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
+        $advisor = isset($record->advisor_id) ? $this->userService->getUserById((int) $record->advisor_id) : null;
 
         $isQuoteDocumentEnabled = $this->quoteDocumentService->isEnabled($model->modelType);
         $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($model->modelType, $record->id);
@@ -353,6 +355,8 @@ class CRUDController extends Controller
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
+            $carMakeText = $record->car_make_id_text ? $record->car_make_id_text : '';
+            $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
@@ -361,6 +365,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'carMakeText', 'carModelText', 'advisor',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
@@ -385,6 +390,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'quoteTypeId',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -409,12 +415,14 @@ class CRUDController extends Controller
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'membersDetail', 'memberCategories', 'salaryBands', 'autoAllocationDisabled', 'ecomDetails', 'ecomHealthInsuranceQuoteUrl',
                 'quoteType', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'quoteTypeId',
             ]));
         } else {
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType',
+                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
+                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId',
             ]));
         }
     }
@@ -999,5 +1007,66 @@ class CRUDController extends Controller
         $payment->update($paymentInformation);
 
         return back()->with('success', 'Payment has been updated');
+    }
+
+    public function sendEmailOneClickBuy(Request $request)
+    {
+        // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
+        $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($request->quote_plans_count);
+        $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid);
+
+        $freeAddons = [];
+        foreach($listQuotePlans as $quotePlan) { // only damage_limit feature
+            foreach($quotePlan->benefits->feature as $feature) {
+                if(strtolower($feature->code) == strtolower(CarPlanFeaturesCode::DAMAGE_LIMIT)) {
+                    $damageLimitFeatureText = $feature->text;
+                    $damageLimitFeatureValue = $feature->value;
+                }
+            }
+            foreach($quotePlan->addons as $addon) { // Only free addons
+                foreach($addon->carAddonOption as $carAddonOption) {
+                    if($carAddonOption->price == 0) {
+                        $freeAddons[] = $addon;
+                    }
+                }
+            }
+        }
+
+        $emailData = (object) [
+            'quoteTypeId' => $request->quote_type_id,
+            'quoteId' => $request->quote_id,
+            'templateId' => $emailTemplateId,
+            'quoteCdbId' => $request->quote_cdb_id,
+            'customerName' => $request->customer_name,
+            'customerEmail' => $request->customer_email,
+            'previousPolicyExpiryDate' => $request->quote_previous_expiry_date,
+            'currentlyInsuredWith' => $request->quote_currently_insured_with,
+            'carMake' => $request->quote_car_make,
+            'carModel' => $request->quote_car_model,
+            'carManufactureYear' => $request->quote_car_year_of_manufacture,
+            'previousPolicyNumber' => $request->quote_previous_policy_number,
+            'advisorName' => $request->advisor_name,
+            'advisorEmailAddress' => $request->advisor_email,
+            'advisorMobileNo' => $request->advisor_mobile_no,
+            'advisorLandlineNo' => $request->advisor_landline_no,
+            'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$request->quote_uuid,
+            'planType' => strtolower($quotePlan->repairType) == 'tpl' ? 'Third Party Liability' : 'Comprehensive',
+            'planName' => $quotePlan->name,
+            'repairType' => $quotePlan->repairType,
+            'providerName' => $quotePlan->providerName,
+            'singleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id,
+            'discountPremium' => $quotePlan->discountPremium,
+            'damageLimitFeatureText' => $damageLimitFeatureText,
+            'damageLimitFeatureValue' => $damageLimitFeatureValue,
+            'freeAddons' => $freeAddons,
+        ];
+
+        $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
+
+        if($responseCode == 201) {
+            return response()->json(['success' => 'OCB email sent to customer']);
+        } else {
+            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
+        }
     }
 }

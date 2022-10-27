@@ -2,16 +2,11 @@
 
 namespace App\Imports;
 
-use App\Enums\CurrentInsurersEnums;
 use App\Enums\QuoteProcessStatuses;
 use App\Enums\RenewalsUploadType;
-use App\Jobs\RenewalImportJob;
 use App\Models\Customer;
 use App\Models\RenewalQuoteProcess;
-use App\Services\CustomerService;
 use App\Services\RenewalsUploadService;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -66,7 +61,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
             'data' => $quoteData,
             'batch' => $quoteData['batch'],
             'status' => QuoteProcessStatuses::NEW,
-            'type' => RenewalsUploadType::CREATE_LEADS
+            'type' => RenewalsUploadType::CREATE_LEADS,
         ]);
     }
 
@@ -97,12 +92,13 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
     /**
      * create columns schema, with index, title and rules to be validated for each column
+     *
      * @return array[]
      */
     public function getColumns()
     {
         return  [
-            'customer_name' => ['index' => 0, 'title'   => 'Customer Name', 'rules' => 'required|min:3|max:100'],
+            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|min:3|max:100'],
             'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'required|max:255'],
             'quote_type' => ['index' => 2, 'title' => 'Type', 'rules' => 'required|max:4'],
             'insurer' => ['index' => 3, 'title' => 'Insurer', 'rules' => 'required|max:100'],
@@ -127,6 +123,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
     /**
      * map row with keys
+     *
      * @param $row
      * @return array
      */
@@ -154,6 +151,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     public function customValidationAttributes()
     {
         $colums = collect($this->getColumns());
+
         return $colums->pluck('title', 'index')->toArray();
     }
 
@@ -167,8 +165,8 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
         $rules = [];
         $columns = collect($this->getColumns())->pluck('rules', 'index');
 
-        $columns->each(function ($item, $index) use (&$rules){
-            $rules['*.' . $index ] = $item;
+        $columns->each(function ($item, $index) use (&$rules) {
+            $rules['*.'.$index] = $item;
         });
 
         return $rules;
@@ -176,6 +174,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
     /**
      * get all validation errors and store records in db along with errors
+     *
      * @return \Closure[]
      */
     public function registerEvents(): array
@@ -197,7 +196,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
                             'data' => $quoteData,
                             'batch' => $quoteData['batch'],
                             'status' => QuoteProcessStatuses::VALIDATION_FAILED,
-                            'type' => RenewalsUploadType::CREATE_LEADS
+                            'type' => RenewalsUploadType::CREATE_LEADS,
                         ];
                     }
 

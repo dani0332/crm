@@ -2906,3 +2906,47 @@ function sendQuoteDocumentsToCustomer(el) {
     return false;
   }
 }
+
+// Button: Send One click buy email - Start
+$('#send-one-click-buy-email-btn').on('click', function () {
+  if (confirm('Are you sure send email to customer?')) {
+    var quote_type = $(this).attr('data-quote-type');
+    var quote_uuid = $(this).attr('data-quote-uuid');
+    $('.loader').show();
+    $.ajax({
+      url: '/quotes/' + quote_type + '/'+ quote_uuid +'/send-email-one-click-buy',
+      method: 'POST',
+      data: {
+        quote_type_id : $(this).attr('data-quote-type-id'),
+        quote_id : $(this).attr('data-quote-id'),
+        quote_uuid : quote_uuid,
+        quote_cdb_id : $(this).attr('data-quote-cdb-id'),
+        quote_plans_count : $(this).attr('data-quote-plans-count'),
+        quote_previous_expiry_date : $(this).attr('data-quote-previous-expiry-date'),
+        quote_currently_insured_with : $(this).attr('data-quote-currently-insured-with'),
+        quote_car_make : $(this).attr('data-quote-car-make'),
+        quote_car_model : $(this).attr('data-quote-car-model'),
+        quote_car_year_of_manufacture : $(this).attr('data-quote-car-year-of-manufacture'),
+        quote_previous_policy_number : $(this).attr('data-quote-previous-policy-number'),
+        customer_name : $(this).attr('data-quote-customer-name'),
+        customer_email : $(this).attr('data-quote-customer-email'),
+        advisor_name : $(this).attr('data-quote-advisor-name'),
+        advisor_email : $(this).attr('data-quote-advisor-email'),
+        advisor_mobile_no : $(this).attr('data-quote-advisor-mobile-no'),
+        advisor_landline_no : $(this).attr('data-quote-advisor-landline-no'),
+        _token : $('input[name=_token]').val(),
+      },
+      success: function (data) {
+        $('.loader').hide();
+        alert(data.success);
+      },
+      error: function (jqXHR) {
+        $('.loader').hide();
+        alert(jqXHR.responseJSON.error);
+      },
+    });
+  } else {
+    return false;
+  }
+});
+// Button: Send One click buy email - End

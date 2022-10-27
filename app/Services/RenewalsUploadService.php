@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\carTypeInsuranceCode;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteProcessStatuses;
 use App\Enums\quoteStatusCode;
@@ -22,13 +23,14 @@ use App\Models\EmailActivity;
 use App\Models\EmailStatus;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\InsuranceProvider;
 use App\Models\LifeQuote;
 use App\Models\QuoteStatus;
-use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalsDump;
 use App\Models\RenewalsUploadLeads;
+use App\Models\TmInsuranceType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
@@ -71,7 +73,8 @@ class RenewalsUploadService
     }
 
     /**
-     * upload renewal file to azure
+     * upload renewal file to azure.
+     *
      * @return array
      */
     public function uploadRenewalsFile()
@@ -111,7 +114,7 @@ class RenewalsUploadService
     }
 
     /**
-     * renewals upload and create
+     * renewals upload and create.
      *
      * @param $data
      * @return mixed
@@ -739,5 +742,47 @@ class RenewalsUploadService
         }
 
         return $quoteDetail;
+    }
+
+    public function uploadedLeadsValidation()
+    {
+        RenewalQuoteProcess::where('status', QuoteProcessStatuses::NEW)->chunk(50, function ($leads) {
+            foreach ($leads as $lead) {
+                $leadValidationErrors = collect();
+
+                if (! TmInsuranceType::where('code', ucfirst($lead->quote_type))->first()) {
+                    $leadValidationErrors->push('quote_type', 'Invalid Insurance Type Provided');
+                }
+                $leadData = (object) $lead->data;
+                if (! InsuranceProvider::where('code', $leadData->insurer)->first()) {
+                    $leadValidationErrors->push('insurer', 'Invalid Insurance Code Provided');
+                }
+                if ($leadData->advisor && ! User::where('email', $leadData->advisor)->first()) {
+                    $leadValidationErrors->push('advisor', 'Invalid Advisor Email Address');
+                }
+                switch($lead->quote_type) {
+                    case strtoupper(quoteTypeCode::Car):
+                        if (! CarMake::where('text', $leadData->make)->first()) {
+                            $leadValidationErrors->push('make', 'Invalid Car Make');
+                        }
+                        if (! CarModel::where('text', $leadData->model)->first()) {
+                            $leadValidationErrors->push('model', 'Invalid Car Model');
+                        }
+                        if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
+                            $leadValidationErrors->push('product_type', 'Invalid Product Type');
+                        }
+                        break;
+                }
+
+                if ($leadValidationErrors->count() == 0) {
+                    $lead->status = QuoteProcessStatuses::PROCESSED;
+                } else {
+                    $lead->validation_errors = $leadValidationErrors;
+                    $lead->status = QuoteProcessStatuses::VALIDATION_FAILED;
+                }
+
+                $lead->save();
+            }
+        });
     }
 }

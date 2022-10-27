@@ -208,6 +208,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
         Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
         Route::post('{quoteType}/export-plans-pdf', [CRUDController::class, 'exportPlansPdf'])->name('exportPlansPdf');
+        Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
     });
 
     Route::group(['prefix' => 'generic'], function () {
