@@ -1015,6 +1015,7 @@ class CRUDController extends Controller
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($request->quote_plans_count);
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid);
 
+        $freeAddons = [];
         foreach($listQuotePlans as $quotePlan) { // only damage_limit feature
             foreach($quotePlan->benefits->feature as $feature) {
                 if(strtolower($feature->code) == strtolower(CarPlanFeaturesCode::DAMAGE_LIMIT)) {
