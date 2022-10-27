@@ -1016,16 +1016,16 @@ class CRUDController extends Controller
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid);
 
         $freeAddons = [];
-        foreach($listQuotePlans as $quotePlan) { // only damage_limit feature
-            foreach($quotePlan->benefits->feature as $feature) {
-                if(strtolower($feature->code) == strtolower(CarPlanFeaturesCode::DAMAGE_LIMIT)) {
+        foreach ($listQuotePlans as $quotePlan) { // only damage_limit feature
+            foreach ($quotePlan->benefits->feature as $feature) {
+                if (strtolower($feature->code) == strtolower(CarPlanFeaturesCode::DAMAGE_LIMIT)) {
                     $damageLimitFeatureText = $feature->text;
                     $damageLimitFeatureValue = $feature->value;
                 }
             }
-            foreach($quotePlan->addons as $addon) { // Only free addons
-                foreach($addon->carAddonOption as $carAddonOption) {
-                    if($carAddonOption->price == 0) {
+            foreach ($quotePlan->addons as $addon) { // Only free addons
+                foreach ($addon->carAddonOption as $carAddonOption) {
+                    if ($carAddonOption->price == 0) {
                         $freeAddons[] = $addon;
                     }
                 }
@@ -1063,7 +1063,7 @@ class CRUDController extends Controller
 
         $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
 
-        if($responseCode == 201) {
+        if ($responseCode == 201) {
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);

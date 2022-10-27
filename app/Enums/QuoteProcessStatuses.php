@@ -6,9 +6,11 @@ use BenSampo\Enum\Enum;
 
 final class QuoteProcessStatuses extends Enum
 {
-    const NEW = 'NEW';
-    const VALIDATION_FAILED = 'VALIDATION_FAILED';
-    const VALIDATED = 'VALIDATED';
-    const PROCESSED = 'PROCESSED';
-    const EMAIL_SENT = 'EMAIL_SENT';
+    public const NEW = 'NEW';
+    public const VALIDATION_FAILED = 'VALIDATION_FAILED';
+    public const BAD_DATA = 'BAD_DATA';
+    public const VALIDATED = 'VALIDATED';
+    public const PROCESSED = 'PROCESSED';
+    public const PLANS_FETCHED = 'PLANS_FETCHED';
+    public const EMAIL_SENT = 'EMAIL_SENT';
 }
