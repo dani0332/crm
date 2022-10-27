@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CarPlanFeaturesCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\PaymentMethodsEnum;
@@ -1016,7 +1017,7 @@ class CRUDController extends Controller
 
         foreach($listQuotePlans as $quotePlan) {
             foreach($quotePlan->benefits->feature as $feature) {
-                if($feature->code == 'damageLimit') {
+                if(strtolower($feature->code) == strtolower(CarPlanFeaturesCode::DAMAGE_LIMIT)) {
                     $damageLimitFeatureText = $feature->text;
                     $damageLimitFeatureValue = $feature->value;
                 }
