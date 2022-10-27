@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             SendPolicyApplicationStorageSeeder::class,
             AddRoleForMarketingSeeder::class,
             addPermissionForManualLeadTesting::class,
+            QuoteTypeTableSeeder::class,
         ]);
     }
 }

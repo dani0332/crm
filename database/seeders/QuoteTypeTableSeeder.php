@@ -17,8 +17,10 @@ class QuoteTypeTableSeeder extends Seeder
         $quoteTypes = DB::table('quote_type')->get();
 
         foreach ($quoteTypes as $quoteType) {
-            $shortCode = strtoupper(substr($quoteType->code, 0, 3));
-            DB::table('quote_type')->where('id', $quoteType->id)->update(['short_code' => $shortCode]);
+            if (! $quoteType->short_code) {
+                $shortCode = strtoupper(substr($quoteType->code, 0, 3));
+                DB::table('quote_type')->where('id', $quoteType->id)->update(['short_code' => $shortCode]);
+            }
         }
     }
 }
