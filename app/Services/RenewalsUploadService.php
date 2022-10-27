@@ -142,6 +142,8 @@ class RenewalsUploadService
                 'total_records' => $totalRows
             ]);
 
+            $this->uploadedLeadsValidation();
+
             return true;
         });
     }
@@ -343,7 +345,7 @@ class RenewalsUploadService
                $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
            }
 
-           $renewalQuoteProcess->update(['status' => QuoteProcessStatuses::PROCESSED]);
+           $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED]);
 
            return true;
        });
@@ -744,6 +746,16 @@ class RenewalsUploadService
         return $quoteDetail;
     }
 
+    public function createValidatedLeadQuotes()
+    {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::VALIDATED)->chunk(50, function ($leads)
+        {
+            foreach ($leads as $lead) {
+                $this->createQuote($lead);
+            }
+        });
+    }
+
     public function uploadedLeadsValidation()
     {
         RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->chunk(50, function ($leads) {
@@ -793,6 +805,7 @@ class RenewalsUploadService
                 if ($lead->status == RenewalProcessStatuses::VALIDATED) {
                     if ($lead->type == RenewalsUploadType::CREATE_LEADS) {
                         //Insert lead creation function call
+                        $this->createValidatedLeadQuotes();
                     } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
                         //Insert lead update function call
                     }
