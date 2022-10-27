@@ -34,10 +34,10 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 						data-quote-previous-policy-number="{{ $record->previous_quote_policy_number }}"
 						data-quote-customer-name="{{ $record->first_name }} {{ $record->last_name }}"
 						data-quote-customer-email="{{ $record->email }}"
-						data-quote-advisor-name="{{ $advisor->name }}"
-						data-quote-advisor-email="{{ $advisor->email }}"
-						data-quote-advisor-landline-no="{{ $advisor->landline_no }}"
-						data-quote-advisor-mobile-no="{{ $advisor->mobile_no }}">
+						data-quote-advisor-name="{{ isset($advisor->name) ? $advisor->name : null }}"
+						data-quote-advisor-email="{{ isset($advisor->email) ? $advisor->email : null }}"
+						data-quote-advisor-landline-no="{{ isset($advisor->landline_no) ? $advisor->landline_no : null }}"
+						data-quote-advisor-mobile-no="{{ isset($advisor->mobile_no) ? $advisor->mobile_no : null }}">
 						Send OCB email to customer</button>
 						<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"
 							value="{{ $ecomUrl }}">
