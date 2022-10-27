@@ -4,11 +4,11 @@ namespace App\Services;
 
 use App\Enums\carTypeInsuranceCode;
 use App\Enums\ProcessStatusCode;
-use App\Enums\QuoteProcessStatuses;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
+use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Imports\UploadAndCreateImport;
 use App\Models\BikeQuote;
@@ -28,7 +28,6 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalsDump;
 use App\Models\RenewalsUploadLeads;
-use App\Models\TmInsuranceType;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
@@ -1083,13 +1082,19 @@ class RenewalsUploadService
 
     public function uploadedLeadsValidation()
     {
-        RenewalQuoteProcess::where('status', QuoteProcessStatuses::NEW)->chunk(50, function ($leads) {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->chunk(50, function ($leads) {
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
-                if (! TmInsuranceType::where('code', ucfirst($lead->quote_type))->first()) {
+                if ($lead->quote_type != QuoteTypeShortCode::CAR && $lead->quote_type != QuoteTypeShortCode::BIK && $lead->quote_type != QuoteTypeShortCode::BUS &&
+                    $lead->quote_type != QuoteTypeShortCode::HEA && $lead->quote_type != QuoteTypeShortCode::HOM && $lead->quote_type != QuoteTypeShortCode::LIF &&
+                    $lead->quote_type != QuoteTypeShortCode::TRA && $lead->quote_type != QuoteTypeShortCode::YAC && $lead->quote_type != QuoteTypeShortCode::PET) {
                     $leadValidationErrors->push('quote_type', 'Invalid Insurance Type Provided');
                 }
+                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
+                    $leadValidationErrors->push('policy_number', 'Policy Number is mandatory for upload process');
+                }
+
                 $leadData = (object) $lead->data;
                 if (! InsuranceProvider::where('code', $leadData->insurer)->first()) {
                     $leadValidationErrors->push('insurer', 'Invalid Insurance Code Provided');
@@ -1098,7 +1103,10 @@ class RenewalsUploadService
                     $leadValidationErrors->push('advisor', 'Invalid Advisor Email Address');
                 }
                 switch($lead->quote_type) {
-                    case strtoupper(quoteTypeCode::Car):
+                    case QuoteTypeShortCode::CAR:
+                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
+                            $leadValidationErrors->push('policy_number', 'No Quote exists against the Policy Number, either create quote or check policy number');
+                        }
                         if (! CarMake::where('text', $leadData->make)->first()) {
                             $leadValidationErrors->push('make', 'Invalid Car Make');
                         }
@@ -1112,13 +1120,19 @@ class RenewalsUploadService
                 }
 
                 if ($leadValidationErrors->count() == 0) {
-                    $lead->status = QuoteProcessStatuses::PROCESSED;
+                    $lead->status = RenewalProcessStatuses::VALIDATED;
                 } else {
                     $lead->validation_errors = $leadValidationErrors;
-                    $lead->status = QuoteProcessStatuses::VALIDATION_FAILED;
+                    $lead->status = RenewalProcessStatuses::BAD_DATA;
                 }
-
                 $lead->save();
+                if ($lead->status == RenewalProcessStatuses::VALIDATED) {
+                    if ($lead->type == RenewalsUploadType::CREATE_LEADS) {
+                        //Insert lead creation function call
+                    } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
+                        //Insert lead update function call
+                    }
+                }
             }
         });
     }

@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Enums\QuoteProcessStatuses;
+use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Models\Customer;
 use App\Models\RenewalQuoteProcess;
@@ -52,7 +52,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
             'policy_number' => $quoteData['policy_number'],
             'data' => $quoteData,
             'batch' => $quoteData['batch'],
-            'status' => QuoteProcessStatuses::NEW,
+            'status' => RenewalProcessStatuses::NEW,
             'type' => RenewalsUploadType::CREATE_LEADS,
         ]);
     }
@@ -73,7 +73,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     }
 
     /**
-     * create columns schema, with index, title and rules to be validated for each column
+     * create columns schema, with index, title and rules to be validated for each column.
      *
      * @return array[]
      */
@@ -104,7 +104,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     }
 
     /**
-     * map row with keys
+     * map row with keys.
      *
      * @param $row
      * @return array
@@ -122,7 +122,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     }
 
     /**
-     * Attributes Mapping, pluck titles from columns and these will be used in validation as field name
+     * Attributes Mapping, pluck titles from columns and these will be used in validation as field name.
      *
      * @return string[] e.g 0 => Customer Name, 1 => Customer Email
      */
@@ -134,7 +134,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     }
 
     /**
-     * validation rules for every column in a row
+     * validation rules for every column in a row.
      *
      * @return string[]
      */
@@ -151,7 +151,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     }
 
     /**
-     * get all validation errors and store records in db along with errors
+     * get all validation errors and store records in db along with errors.
      *
      * @return \Closure[]
      */
@@ -172,7 +172,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
                             'policy_number' => $quoteData['policy_number'],
                             'data' => $quoteData,
                             'batch' => $quoteData['batch'],
-                            'status' => QuoteProcessStatuses::VALIDATION_FAILED,
+                            'status' => RenewalProcessStatuses::VALIDATION_FAILED,
                             'type' => RenewalsUploadType::CREATE_LEADS,
                         ];
                     }
