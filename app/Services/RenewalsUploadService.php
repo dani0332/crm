@@ -1104,7 +1104,7 @@ class RenewalsUploadService
                 }
                 switch($lead->quote_type) {
                     case QuoteTypeShortCode::CAR:
-                        if ($lead->type == 'update' && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
+                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
                             $leadValidationErrors->push('policy_number', 'No Quote exists against the Policy Number, either create quote or check policy number');
                         }
                         if (! CarMake::where('text', $leadData->make)->first()) {
