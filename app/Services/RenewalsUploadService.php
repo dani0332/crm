@@ -1092,7 +1092,7 @@ class RenewalsUploadService
                     $leadValidationErrors->push('quote_type', 'Invalid Insurance Type Provided');
                 }
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
-                    $leadValidationErrors->push('policy_number', 'Policy Number is manditory for upload process');
+                    $leadValidationErrors->push('policy_number', 'Policy Number is mandatory for upload process');
                 }
 
                 $leadData = (object) $lead->data;
