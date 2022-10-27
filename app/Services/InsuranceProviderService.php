@@ -180,4 +180,14 @@ class InsuranceProviderService extends BaseService
     {
         return ['code', 'text', 'text_ar', 'created_at'];
     }
+
+    /**
+     * get insurance provider by code
+     * @param $code
+     * @return mixed
+     */
+    public function getProviderByCode($code) {
+        return InsuranceProvider::where('code', $code)->first();
+    }
+
 }

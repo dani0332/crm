@@ -15,6 +15,7 @@ class CreateRenewalQuoteProcessesTable extends Migration
     {
         Schema::create('renewal_quote_processes', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('renewals_upload_lead_id');
             $table->string('quote_type')->nullable(true);
             $table->string('policy_number')->nullable(true);
             $table->json('data')->nullable(true);
