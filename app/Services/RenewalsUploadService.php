@@ -4,11 +4,11 @@ namespace App\Services;
 
 use App\Enums\carTypeInsuranceCode;
 use App\Enums\ProcessStatusCode;
-use App\Enums\QuoteProcessStatuses;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
+use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Imports\UploadAndCreateImport;
 use App\Models\BikeQuote;
@@ -1082,7 +1082,7 @@ class RenewalsUploadService
 
     public function uploadedLeadsValidation()
     {
-        RenewalQuoteProcess::where('status', QuoteProcessStatuses::NEW)->chunk(50, function ($leads) {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->chunk(50, function ($leads) {
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
@@ -1091,7 +1091,7 @@ class RenewalsUploadService
                     $lead->quote_type != QuoteTypeShortCode::TRA && $lead->quote_type != QuoteTypeShortCode::YAC && $lead->quote_type != QuoteTypeShortCode::PET) {
                     $leadValidationErrors->push('quote_type', 'Invalid Insurance Type Provided');
                 }
-                if ($lead->type == 'update' && ! $lead->policy_number) {
+                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
                     $leadValidationErrors->push('policy_number', 'Policy Number is manditory for upload process');
                 }
 
@@ -1120,16 +1120,16 @@ class RenewalsUploadService
                 }
 
                 if ($leadValidationErrors->count() == 0) {
-                    $lead->status = QuoteProcessStatuses::VALIDATED;
+                    $lead->status = RenewalProcessStatuses::VALIDATED;
                 } else {
                     $lead->validation_errors = $leadValidationErrors;
-                    $lead->status = QuoteProcessStatuses::BAD_DATA;
+                    $lead->status = RenewalProcessStatuses::BAD_DATA;
                 }
                 $lead->save();
-                if ($lead->status == QuoteProcessStatuses::VALIDATED) {
-                    if ($lead->type == 'create') {
+                if ($lead->status == RenewalProcessStatuses::VALIDATED) {
+                    if ($lead->type == RenewalsUploadType::CREATE_LEADS) {
                         //Insert lead creation function call
-                    } elseif ($lead->type == 'update') {
+                    } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
                         //Insert lead update function call
                     }
                 }

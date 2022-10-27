@@ -4,7 +4,7 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-final class QuoteProcessStatuses extends Enum
+final class RenewalProcessStatuses extends Enum
 {
     public const NEW = 'NEW';
     public const VALIDATION_FAILED = 'VALIDATION_FAILED';
