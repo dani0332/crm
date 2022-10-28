@@ -235,13 +235,13 @@
 @php
 
     $websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
-
     $plans = [];
-    $addonsPrice = 0;
-    $addonsVat   = 0;
+
     foreach ($quotePlans->quotes->plans as &$quotePlan)
     {
-        //dd($quotePlan);
+        $addonsPrice = 0;
+        $addonsVat   = 0;
+
         if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
             continue;
         }
@@ -256,20 +256,25 @@
         $planAddons = (isset($addons[$quotePlan->id])) ? $addons[$quotePlan->id] : $quotePlan->addons;
 
         foreach ($planAddons as &$addon) {
+
             $addon = (object) $addon;
             //set default value to excluded
-            $addon->value = "&cross;";
-            if(sizeof($addon->carAddonOption)) {
+            $addon->value = "Excluded";
+
+            //set default values
+            $addon->price = 0;
+            $addon->vat = 0;
+
+            if(sizeof($addon->carAddonOption))
+            {
                 //replace exclude with selected value if found
+
                 foreach ($addon->carAddonOption as $index =>  $carAddonOption) {
 
                     $carAddonOption = (object) $carAddonOption;
-                    //set default values
-                    $addon->price = 0;
-                    $addon->vat = 0;
 
                     if($carAddonOption->isSelected) {
-                        $addon->value = $carAddonOption->value;
+                        $addon->value = 'Included';
                         $addonsPrice += $carAddonOption->price;
                         $addonsVat += $carAddonOption->vat;
                         $addon->price = $carAddonOption->price;
@@ -366,8 +371,6 @@
         <h3>Your Tailor Made <br />Car Insurance Comparison Table</h3>
     </div>
 
-
-
     <div class="container">
         <table class="table-fixed text-center tbl-plans">
             <thead>
@@ -400,7 +403,6 @@
             <tbody>
 
             <tr>
-
                 @foreach($planIds as $planId)
                     <td>
                         <p class="text-center">
@@ -443,7 +445,6 @@
                 <td><p>EXACT VEHICLE (INSURER SPECIFIC)</p></td>
                 @foreach($planIds as $planId)
                     <td>
-
                         <p class="text-center">{!! $quote->carMake->text . ' ' . $quote->carModel->text . ' ' . $quote->year_of_manufacture  !!}</p>
                     </td>
                 @endforeach
@@ -510,7 +511,7 @@
                                 @elseif(is_array($feature['type']))
 
                                     {{-- we need to check of value is in inclusion or exclusion object, only one value will be printed --}}
-                                    @php $value = "&cross;"; @endphp
+                                    @php $value = "Excluded"; @endphp
                                     @foreach($feature['type'] as $type)
                                         @if(isset($plans[$planId]->{$type}->{$feature['code']}->value))
                                             @php $value = $plans[$planId]->{$type}->{$feature['code']}->value; break; @endphp
@@ -520,7 +521,7 @@
                                     {!! ($value)  !!}
 
                                 @else
-                                    {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? '&cross;' !!}
+                                    {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
                                 @endif
                             </p>
                         </td>
@@ -547,7 +548,6 @@
                         Whilst we try to ensure the currency and accuracy of the details in the comparison table, there may occasion where there are differences in the covers provided. In such cases, the covers detailed in the insurer's policy wordings and schedules will supersede the details provided by us.<br/><br/>
                         To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>, please refer to the <a class="text-black" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid )}}"><b>quote</b></a>.
                     </p>
-
                 </td>
             </tr>
             </tbody>
