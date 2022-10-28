@@ -620,7 +620,8 @@ class CRUDController extends Controller
                     $providerName = $listQuotePlan->providerName;
                     $actualPremium = $listQuotePlan->actualPremium;
                     $discountPremium = $listQuotePlan->discountPremium;
-                    $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                    $listQuotePlanBenefitsInpatient = isset($listQuotePlan->benefits->inpatient) ? $listQuotePlan->benefits->inpatient : [];
+                    $listQuotePlanBenefitsOutpatient = isset($listQuotePlan->benefits->outpatient) ? $listQuotePlan->benefits->outpatient : [];
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                     $listQuotePlanBenefitsCoInsurance = $listQuotePlan->benefits->coInsurance;
@@ -638,11 +639,11 @@ class CRUDController extends Controller
 
             return view('shared.plan_details', compact([
                 'listQuotePlanName', 'providerCode', 'providerName',
-                'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
+                'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInpatient',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetails', 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
                 'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover',
-                'listQuotePlanBenefitsMaternityCover', 'members', 'planId', 'quoteId', 'isManualPlan',
+                'listQuotePlanBenefitsMaternityCover', 'members', 'planId', 'quoteId', 'isManualPlan', 'listQuotePlanBenefitsOutpatient',
             ]));
         }
     }
