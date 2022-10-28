@@ -175,6 +175,6 @@ class RuleService extends BaseService
 
     public function fillSortingProperties()
     {
-        return ['id','name'];
+        return ['id', 'name'];
     }
 }

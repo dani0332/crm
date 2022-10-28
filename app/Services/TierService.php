@@ -213,6 +213,6 @@ class TierService extends BaseService
 
     public function fillSortingProperties()
     {
-        return ['id','name', 'min_price', 'max_price'];
+        return ['id', 'name', 'min_price', 'max_price'];
     }
 }

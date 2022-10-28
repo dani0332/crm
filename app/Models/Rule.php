@@ -12,6 +12,5 @@ class Rule extends Model implements AuditableContract
     use HasFactory, Auditable;
 
     protected $table = 'rules';
-
     protected $fillable = ['name', 'rule_start_date', 'rule_end_date', 'is_active'];
 }
