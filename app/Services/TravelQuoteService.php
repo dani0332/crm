@@ -673,7 +673,7 @@ class TravelQuoteService extends BaseService
             'create' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code,renewal_expiry_date,policy_number',
             'list' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,email,mobile_no,region_cover_for_id,travel_cover_for_id,details,nationality_id,next_followup_date,days_cover_for,renewal_batch,renewal_import_code',
             'update' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_ecommerce,is_renewal,previous_quote_id,created_at,id,code,advisor_id,updated_at,quote_status_id,next_followup_date,lost_reason,source,transapp_code,renewal_batch,payment_status_id,renewal_import_code,renewal_expiry_date,policy_number',
-            'show' => 'is_renewal,policy_number,renewal_expiry_date,premium,source,previous_quote_id,previous_quote_policy_premium,renewal_batch,renewal_import_code,previous_quote_policy_number,previous_policy_expiry_date,payment_status_id,quote_status_id',
+            'show' => 'is_renewal,policy_number,premium,source,previous_quote_id,payment_status_id,quote_status_id',
         ];
     }
 
@@ -700,7 +700,7 @@ class TravelQuoteService extends BaseService
             'create' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
             'list' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,renewal_expiry_date,previous_quote_id',
             'update' => 'previous_quote_policy_premium,parent_duplicate_quote_id,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
-            'show' => 'source,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id,renewal_import_code,payment_status_id,quote_status_id,premium,policy_number,renewal_expiry_date',
+            'show' => 'source,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id,payment_status_id,quote_status_id,premium,policy_number',
         ];
     }
 
