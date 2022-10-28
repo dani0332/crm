@@ -49,6 +49,13 @@ class TierService extends BaseService
 
     public function saveTier(Request $request)
     {
+        if (isset($request->min_price) && isset($request->max_price) && ($request->min_price > $request->max_price)) {
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Min price should be less then Max price';
+
+            return $errorResponse;
+        }
+
         if (! isset($request->min_price) && Tier::whereNull('min_price')->get() != null) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as minimum price';
@@ -165,19 +172,19 @@ class TierService extends BaseService
                 $title = 'Cost Per Lead';
                 break;
             case 'can_handle_ecommerce':
-                $title = 'Handle Ecommerce ?';
+                $title = 'Is Ecommerce ?';
                 break;
             case 'can_handle_tpl':
-                $title = 'IsTPL ?';
+                $title = 'Is TPL ?';
                 break;
             case 'can_handle_null_value':
-                $title = 'Handle Null Value ?';
+                $title = 'Null Value ?';
                 break;
             case 'is_active':
                 $title = 'Is Active ?';
                 break;
             case 'is_tpl_renewals':
-                $title = 'Handle Renewal Leads ?';
+                $title = 'Renewal?';
                 break;
             case 'created_at':
                 $title = 'Created Date';
@@ -206,6 +213,6 @@ class TierService extends BaseService
 
     public function fillSortingProperties()
     {
-        return ['name', 'min_price', 'max_price'];
+        return ['id','name', 'min_price', 'max_price'];
     }
 }

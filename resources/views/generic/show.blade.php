@@ -5,6 +5,12 @@
 #quote-plans table.dataTable thead .sorting_asc:after {
     content: none !important;
 }
+.select2-results__option--selected {
+            display: none;
+        }
+        .select2-results__option[aria-selected=true] {
+            display: none;
+        }
 </style>
 <?php
     use App\Enums\InsuranceProvderConstants;

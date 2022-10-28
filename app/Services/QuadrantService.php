@@ -165,6 +165,6 @@ class QuadrantService extends BaseService
 
     public function fillSortingProperties()
     {
-        return ['name'];
+        return ['id','name'];
     }
 }

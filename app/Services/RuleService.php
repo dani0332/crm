@@ -49,8 +49,8 @@ class RuleService extends BaseService
     public function saveRule(Request $request)
     {
         if (isset($request->name) && isset($request->lead_source_id)) {
-            $existingRuleLeadSource = RuleLeadSource::where('lead_source_id', $request->lead_source_id);
-            if ($existingRuleLeadSource != null) {
+            $existingRuleLeadSource = RuleLeadSource::where('lead_source_id', $request->lead_source_id)->get();
+            if (count($existingRuleLeadSource) > 0) {
                 $errorResponse = new stdClass();
                 $errorResponse->message = 'Error: Rule against same Lead Source already exists';
 
@@ -175,6 +175,6 @@ class RuleService extends BaseService
 
     public function fillSortingProperties()
     {
-        return ['name'];
+        return ['id','name'];
     }
 }

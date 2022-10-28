@@ -23,6 +23,23 @@
         width: 250px !important;
     }
 
+    .dataTables_paginate .paginate_button.active {
+        background: blue !important;
+    }
+
+    .dataTables_paginate .paginate_button.active a {
+        background: #71A1CC !important;
+        border-radius: 3px;
+        color: white;
+    }
+
+    .select2-results__option--selected {
+            display: none;
+        }
+        .select2-results__option[aria-selected=true] {
+            display: none;
+        }
+
     </style>
     <script>
         $(document).ready(function() {
@@ -73,7 +90,7 @@
                                 name: 'id',
                                 render: function(data, type, row) {
                                     var url = '/generic/' + model.modelType.toLowerCase();
-                                    var href = "<a href='" + url + '/' + row.id + "'>" + row.id + "</a>";
+                                    var href = "<a style='font-size: 20px;font-weight: 900;text-decoration: underline;' href='" + url + '/' + row.id + "'>" + row.id + "</a>";
                                     return href;
                                 }
                             });

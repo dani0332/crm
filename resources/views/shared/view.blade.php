@@ -19,6 +19,12 @@
     td {
         word-wrap: break-word;
     }
+    .select2-results__option--selected {
+            display: none;
+        }
+        .select2-results__option[aria-selected=true] {
+            display: none;
+        }
 </style>
 <script>
     function convertObjectToArray(obj) {

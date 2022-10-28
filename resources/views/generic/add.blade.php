@@ -5,6 +5,12 @@
     .form-control:disabled, .form-control[readonly]{
         background-color: white !important;
     }
+    .select2-results__option--selected {
+            display: none;
+        }
+        .select2-results__option[aria-selected=true] {
+            display: none;
+        }
 </style>
     <div class="row">
         <div class="col-md-12 col-sm-12">
