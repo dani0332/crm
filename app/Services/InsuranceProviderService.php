@@ -183,11 +183,12 @@ class InsuranceProviderService extends BaseService
 
     /**
      * get insurance provider by code
+     *
      * @param $code
      * @return mixed
      */
-    public function getProviderByCode($code) {
+    public function getProviderByCode($code)
+    {
         return InsuranceProvider::where('code', $code)->first();
     }
-
 }
