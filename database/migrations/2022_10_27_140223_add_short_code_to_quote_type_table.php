@@ -27,6 +27,5 @@ class AddShortCodeToQuoteTypeTable extends Migration
      */
     public function down()
     {
-
     }
 }

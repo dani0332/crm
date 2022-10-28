@@ -20,7 +20,6 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
-use Maatwebsite\Excel\Events\BeforeImport;
 use Maatwebsite\Excel\Row;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
@@ -37,7 +36,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     private $renewalsUploadLead;
 
     /**
-     * @param RenewalsUploadService $renewalsUploadService
+     * @param  RenewalsUploadService  $renewalsUploadService
      * @param $renewalsUploadLead
      */
     public function __construct(RenewalsUploadService $renewalsUploadService, RenewalsUploadLeads $renewalsUploadLead)
@@ -69,6 +68,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
     /**
      * start import from row 2, first row have titles
+     *
      * @return int
      */
     public function startRow(): int
@@ -112,8 +112,8 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
             'previous_advisor' => ['index' => 9, 'title' => 'Previous Advisor Email', 'rules' => 'max:100'],
             'policy_number' => ['index' => 10, 'title' => 'Policy', 'rules' => 'required|max:100'],
             'batch' => ['index' => 11, 'title' => 'Batch', 'rules' => 'max:25'],
-            'start_date' => ['index' => 12, 'title' => 'Start Date', 'rules' => 'max:25', 'type' => 'date'],//date_format:d/m/Y
-            'end_date' => ['index' => 13, 'title' => 'End Date', 'rules' => 'required|max:25', 'type' => 'date'],//date_format:d/m/Y
+            'start_date' => ['index' => 12, 'title' => 'Start Date', 'rules' => 'max:25', 'type' => 'date'], //date_format:d/m/Y
+            'end_date' => ['index' => 13, 'title' => 'End Date', 'rules' => 'required|max:25', 'type' => 'date'], //date_format:d/m/Y
             'object' => ['index' => 14, 'title' => 'Object', 'rules' => 'max:200'],
             'premium' => ['index' => 15, 'title' => 'Gross Premium', 'rules' => 'max:25'],
             'notes' => ['index' => 16, 'title' => 'Notes', 'rules' => 'max:200'],
@@ -135,11 +135,11 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
         $quoteData = [];
         foreach ($fields as $key => $field) {
-
-            if(!empty($field['type']) && $field['type'] == 'date') {
+            if (! empty($field['type']) && $field['type'] == 'date') {
                 $quoteData[$key] = Carbon::instance(Date::excelToDateTimeObject($row[$field['index']]))->format('d/m/Y');
+            } else {
+                $quoteData[$key] = $row[$field['index']];
             }
-            else $quoteData[$key] = $row[$field['index']];
         }
 
         return $quoteData;
@@ -183,13 +183,10 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     {
         return [
 
-            AfterImport::class => function(AfterImport $event) {
-
+            AfterImport::class => function (AfterImport $event) {
                 $failed = [];
                 foreach ($this->failures() as $failure) {
-
-                    if(!isset($failed[$failure->row()])) {
-
+                    if (! isset($failed[$failure->row()])) {
                         $quoteData = $this->mapQuoteData($failure->values());
                         $failed[$failure->row()] = [
                             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,

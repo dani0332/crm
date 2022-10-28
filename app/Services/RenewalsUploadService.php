@@ -6,14 +6,10 @@ use App\Enums\carTypeInsuranceCode;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
-use App\Enums\ShortQuoteTypeId;
 use App\Imports\UploadAndCreateImport;
-use App\Models\BikeQuote;
-use App\Models\BusinessQuote;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
@@ -21,19 +17,14 @@ use App\Models\CarTypeInsurance;
 use App\Models\Customer;
 use App\Models\EmailActivity;
 use App\Models\EmailStatus;
-use App\Models\HealthQuote;
-use App\Models\HomeQuote;
 use App\Models\InsuranceProvider;
-use App\Models\LifeQuote;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalsDump;
 use App\Models\RenewalsUploadLeads;
-use App\Models\TravelQuote;
 use App\Models\User;
-use App\Models\YachtQuote;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Config;
@@ -109,7 +100,7 @@ class RenewalsUploadService
             'file_path' => $azureStorageUrl.$azureStorageContainer.'/'.$uploadedFile['azure_file_path'],
             'status' => ProcessStatusCode::IN_PROGRESS,
             'good' => 0,
-            'created_by_id' => auth()->user()->id
+            'created_by_id' => auth()->user()->id,
         ]);
     }
 
@@ -121,8 +112,7 @@ class RenewalsUploadService
      */
     public function renewalsUploadCreate($data)
     {
-        return DB::transaction(function() use($data)
-        {
+        return DB::transaction(function () {
             //upload renewal file to azure
             $uploadedFile = $this->uploadRenewalsFile();
 
@@ -138,8 +128,8 @@ class RenewalsUploadService
             $failedRows = $renewalsUpload->failures()->count();
             $renewalsUploadLead->update([
                 'cannot_upload' => $failedRows,
-                'good'  => $totalRows,
-                'total_records' => $totalRows
+                'good' => $totalRows,
+                'total_records' => $totalRows,
             ]);
 
             $this->uploadedLeadsValidation();
@@ -149,7 +139,8 @@ class RenewalsUploadService
     }
 
     /**
-     * create quote object
+     * create quote object.
+     *
      * @param $quoteType
      * @return false|mixed
      */
@@ -157,11 +148,13 @@ class RenewalsUploadService
     {
         $nameSpace = '\\App\\Models\\';
         $model = $nameSpace.ucwords($quoteType).'Quote';
+
         return (class_exists($model)) ? $model::query() : false;
     }
 
     /**
-     * get quote request detail class
+     * get quote request detail class.
+     *
      * @param $quoteType
      * @return string
      */
@@ -171,17 +164,21 @@ class RenewalsUploadService
     }
 
     /**
-     * clean input
+     * clean input.
+     *
      * @param $value
      * @return array|string|string[]
      */
-    public function cleanValue($value) {
+    public function cleanValue($value)
+    {
         $value = preg_replace('/\s/', '', strtolower(trim($value)));
+
         return str_replace([',', ':', '/', ';'], ',', $value);
     }
 
     /**
-     * build customer data
+     * build customer data.
+     *
      * @param $data
      * @return array
      */
@@ -195,7 +192,7 @@ class RenewalsUploadService
         ];
 
         //check if name have last name
-        if(strpos($data['customer_name'], ' ')) {
+        if (strpos($data['customer_name'], ' ')) {
             $nameParts = explode(' ', $data['customer_name']);
             $customerData['first_name'] = $nameParts[0];
             $customerData['last_name'] = $nameParts[1];
@@ -205,7 +202,7 @@ class RenewalsUploadService
         $customerData['email'] = $emails[0];
 
         //check in case of additional emails, and add in notes
-        if(sizeof($emails) > 1) {
+        if (count($emails) > 1) {
             unset($emails[0]);
             $customerData['additional_emails'] = $emails;
         }
@@ -214,7 +211,7 @@ class RenewalsUploadService
         $customerData['mobile_no'] = strtok($mobileNos[0], ',');
 
         //check in case of additional mobile nos, and add in notes
-        if(sizeof($mobileNos) > 1) {
+        if (count($mobileNos) > 1) {
             unset($mobileNos[0]);
             $customerData['additional_mobiles'] = $mobileNos;
         }
@@ -223,7 +220,8 @@ class RenewalsUploadService
     }
 
     /**
-     * create new customer with additional mobiles and email if customer doesn't exist
+     * create new customer with additional mobiles and email if customer doesn't exist.
+     *
      * @param $customerData
      * @return mixed
      */
@@ -232,8 +230,7 @@ class RenewalsUploadService
         $customer = CustomerService::getUniqueCustomerByEmail($customerData['email']);
 
         //create new customer if not exists
-        if(!isset($customer->id)) {
-
+        if (! isset($customer->id)) {
             $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
 
             // create additional emails
@@ -260,98 +257,95 @@ class RenewalsUploadService
     }
 
     /**
-     * create quote for all businesses
-     * @param RenewalQuoteProcess $renewalQuoteProcess
+     * create quote for all businesses.
+     *
+     * @param  RenewalQuoteProcess  $renewalQuoteProcess
      * @return void
      */
     public function createQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
-       return DB::transaction(function() use ($renewalQuoteProcess)
-       {
-           $data = $renewalQuoteProcess->data;
+        return DB::transaction(function () use ($renewalQuoteProcess) {
+            $data = $renewalQuoteProcess->data;
 
-           $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
+            $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
-           $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
+            $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
 
-           $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
+            $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
 
-           //todo: advisor and previous advisors will be ignored when not exists
-           $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
-           $previousAdvisorId = $this->renewalsAddonService->getUserInfo($data['previous_advisor']);
+            //todo: advisor and previous advisors will be ignored when not exists
+            $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
+            $previousAdvisorId = $this->renewalsAddonService->getUserInfo($data['previous_advisor']);
 
-           //todo: should be marked as failed when no response from API
-           $quoteUuid = $this->generateUUID($quoteType->id);
+            //todo: should be marked as failed when no response from API
+            $quoteUuid = $this->generateUUID($quoteType->id);
 
-           $customerData = $this->buildCustomerData($data);
+            $customerData = $this->buildCustomerData($data);
 
-           $customer = $this->getCustomer($customerData);
+            $customer = $this->getCustomer($customerData);
 
-           $quoteData = [
-               'customer_id' => $customer->id,
-               'first_name' => $customerData['first_name'],
-               'last_name' => $customerData['last_name'],
-               'email' => $customerData['email'],
-               'mobile_no' => $customerData['mobile_no'],
-               'uuid' => $quoteUuid,
-               'code' => $renewalQuoteProcess->quote_type . '-' . $quoteUuid,
-               'source' => 'Renewal_upload',
-               'additional_notes' => $data['notes'] . $customerData['notes'],
-               'advisor_id' => $advisorId,
-               'renewal_batch' => $data['batch'],
-               'quote_status_id' => $transApprovedId,
-               'renewal_import_code' => $renewalUploadLead->renewal_import_code,
+            $quoteData = [
+                'customer_id' => $customer->id,
+                'first_name' => $customerData['first_name'],
+                'last_name' => $customerData['last_name'],
+                'email' => $customerData['email'],
+                'mobile_no' => $customerData['mobile_no'],
+                'uuid' => $quoteUuid,
+                'code' => $renewalQuoteProcess->quote_type.'-'.$quoteUuid,
+                'source' => 'Renewal_upload',
+                'additional_notes' => $data['notes'].$customerData['notes'],
+                'advisor_id' => $advisorId,
+                'renewal_batch' => $data['batch'],
+                'quote_status_id' => $transApprovedId,
+                'renewal_import_code' => $renewalUploadLead->renewal_import_code,
 
-               'previous_quote_policy_number' => $data['policy_number'],
-               'previous_policy_expiry_date' => $data['end_date'],
-               'previous_quote_policy_premium' => $data['premium'],
-               'previous_advisor_id' => $previousAdvisorId,
+                'previous_quote_policy_number' => $data['policy_number'],
+                'previous_policy_expiry_date' => $data['end_date'],
+                'previous_quote_policy_premium' => $data['premium'],
+                'previous_advisor_id' => $previousAdvisorId,
 
-               //'renewal_expiry_date' => $quoteData->endDate,
-               //'other_email_addresses' => $quoteData->other_email_ids,
-           ];
+                //'renewal_expiry_date' => $quoteData->endDate,
+                //'other_email_addresses' => $quoteData->other_email_ids,
+            ];
 
-           if($quoteType->code == quoteTypeCode::Car) {
+            if ($quoteType->code == quoteTypeCode::Car) {
+                $make = CarMake::where('text', $data['make'])->first();
+                $model = CarModel::where('text', $data['model'])->first();
+                $vehicleType = $this->renewalsAddonService->getVehicleType($model->vehicle_type_id);
 
-               $make = CarMake::where('text', $data['make'])->first();
-               $model = CarModel::where('text', $data['model'])->first();
-               $vehicleType = $this->renewalsAddonService->getVehicleType($model->vehicle_type_id);
+                $quoteData['car_make_id'] = $make->id;
+                $quoteData['car_model_id'] = $model->id;
+                $quoteData['year_of_manufacture'] = $data['year'];
+                $quoteData['cylinder'] = $model->cylinder ?? null;
+                $quoteData['vehicle_category'] = $vehicleType->category ?? null;
 
-               $quoteData['car_make_id'] = $make->id;
-               $quoteData['car_model_id'] = $model->id;
-               $quoteData['year_of_manufacture'] = $data['year'];
-               $quoteData['cylinder'] = $model->cylinder ?? null;
-               $quoteData['vehicle_category'] = $vehicleType->category ?? null;
+                if (! empty($data['product_type']) && ($carTypeOfInsuranceInstance = $this->renewalsAddonService->getCarTypeOfInsurance($data['product_type']))) {
+                    $quoteData['car_type_insurance_id'] = $carTypeOfInsuranceInstance->id;
+                }
+            }
 
-               if (!empty($data['product_type']) && ($carTypeOfInsuranceInstance = $this->renewalsAddonService->getCarTypeOfInsurance($data['product_type'])) ) {
-                   $quoteData['car_type_insurance_id'] =  $carTypeOfInsuranceInstance->id;
-               }
-           }
+            if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
+                $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
+            }
 
-           if(in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
-               $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
-           }
+            //todo: business type insurance id is pending
 
-           //todo: business type insurance id is pending
+            $quoteObject = $this->createQuoteObject(ucfirst($quoteType->code));
+            $quote = $quoteObject->create($quoteData);
 
-           $quoteObject = $this->createQuoteObject(ucfirst($quoteType->code));
-           $quote = $quoteObject->create($quoteData);
+            //send AML request
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
 
-           //send AML request
-           $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            //update advisor assign date/time
+            if (! empty($advisorId)) {
+                $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
+            }
 
-           //update advisor assign date/time
-           if(!empty($advisorId)) {
-               $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
-           }
+            $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED]);
 
-           $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED]);
-
-           return true;
-       });
-
+            return true;
+        });
     }
-
 
     /*
     * @name createUpdateQuote()
@@ -425,8 +419,6 @@ class RenewalsUploadService
             $record->save();
         }
     }
-
-
 
     public function createRenewalDumpRecord($type, $id, $data)
     {
@@ -711,7 +703,8 @@ class RenewalsUploadService
     }
 
     /**
-     * //$modelName, $quoteRequestIdName
+     * //$modelName, $quoteRequestIdName.
+     *
      * @param $quoteId
      * @param $quoteRequestIdName
      * @param $currentUserId
@@ -720,20 +713,17 @@ class RenewalsUploadService
      */
     public function updateAdvisorAssignedDateTime($quoteType, $quoteId, $currentUserId, $advisorId)
     {
-        $quoteRequestDetail = '\\App\\Models\\' . ucfirst($quoteType) . 'QuoteRequestDetail';
+        $quoteRequestDetail = '\\App\\Models\\'.ucfirst($quoteType).'QuoteRequestDetail';
 
-        $quoteRequestField = strtolower($quoteType) . '_quote_request_id';
+        $quoteRequestField = strtolower($quoteType).'_quote_request_id';
 
         // check if record exists in model_detail table
-        if(($quoteDetail = $quoteRequestDetail::where($quoteRequestField, $quoteId)->first()))
-        {
+        if (($quoteDetail = $quoteRequestDetail::where($quoteRequestField, $quoteId)->first())) {
             $quoteDetail->update([
                 'advisor_assigned_by_id' => $currentUserId,
-                'advisor_assigned_date' => Carbon::now()
+                'advisor_assigned_date' => Carbon::now(),
             ]);
-        }
-        else
-        {
+        } else {
             $quoteDetail = $quoteRequestDetail::create([
                 $quoteRequestField => $quoteId, // i-e: $quoteRequestIdName = car_quote_request_id
                 'created_at' => Carbon::now(),
@@ -752,9 +742,7 @@ class RenewalsUploadService
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
-                if ($lead->quote_type != QuoteTypeShortCode::CAR && $lead->quote_type != QuoteTypeShortCode::BIK && $lead->quote_type != QuoteTypeShortCode::BUS &&
-                    $lead->quote_type != QuoteTypeShortCode::HEA && $lead->quote_type != QuoteTypeShortCode::HOM && $lead->quote_type != QuoteTypeShortCode::LIF &&
-                    $lead->quote_type != QuoteTypeShortCode::TRA && $lead->quote_type != QuoteTypeShortCode::YAC && $lead->quote_type != QuoteTypeShortCode::PET) {
+                if (! QuoteType::where('short_code', $lead->quote_type)->first()) {
                     $leadValidationErrors->push('quote_type', 'Invalid Insurance Type Provided');
                 }
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
