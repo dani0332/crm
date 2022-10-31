@@ -47,6 +47,11 @@
         border-radius: 3px;
         color: white;
     }
+    .select2-results__option--highlighted {
+        background: #4183BD !important;
+        color: #fff;
+        cursor: pointer !important;
+    }
 </style>
 <script>
     function convertObjectToArray(obj) {

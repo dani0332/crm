@@ -405,6 +405,11 @@
         border-radius: 3px;
         color: white;
     }
+    .select2-results__option--highlighted {
+        background: #4183BD !important;
+        color: #fff;
+        cursor: pointer !important;
+    }
     </style>
     <div class="row">
         <div class="col-md-12 col-sm-12 ">

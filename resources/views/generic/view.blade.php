@@ -43,7 +43,11 @@
         .select2-results__option[aria-selected=true] {
             display: none;
         }
-
+        .select2-results__option--highlighted {
+        background: #4183BD !important;
+        color: #fff;
+        cursor: pointer !important;
+    }
     </style>
     <script>
         $(document).ready(function() {

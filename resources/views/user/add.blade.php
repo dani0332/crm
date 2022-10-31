@@ -6,6 +6,28 @@
     .select2-results__option[aria-selected=true] {
         display: none;
     }
+    div.dataTables_wrapper div.dataTables_processing{
+        font-size: 30px !important;
+        border: none !important;
+        background-color: transparent !important;
+        color: #4183BD !important;
+        padding: 0px  !important;
+        height: 110px !important;
+        width: 250px !important;
+    }
+
+    .dataTables_paginate .paginate_button.active {
+        background: blue !important;
+    }
+    .pagination{
+        margin-top: 12px !important;
+    }
+    .dataTables_paginate .paginate_button.active a {
+        background: #71A1CC !important;
+        border-radius: 3px;
+        color: white;
+    }
+
 </style>
 <script>
     function loadAdditionalTeams(additionalTeams, previous_selected_additional_teams){
@@ -67,14 +89,14 @@
         $('#roles').val(previous_selected_roles);
         loadManagerByTeam($("#user-team-select").val(), previous_selected_manager);
         loadSubTeams($("#user-team-select").val(), previous_sub_team_id);
-        
+
         $('#additionalTeams-select').select2({
             placeholder: 'Select teams for MyLeads Tab visiblity',
             width: '100%',
             allowClear: true
         });
 
-        
+
 
         loadAdditionalTeams(additionalTeams, previous_selected_additional_teams);
 
@@ -82,7 +104,7 @@
             $("#additionalTeams-select").empty();
             debugger;
             loadSubTeams(this.value);
-            loadAdditionalTeams(additionalTeams);      
+            loadAdditionalTeams(additionalTeams);
             loadManagerByTeam(this.value);
         });
     });
@@ -210,7 +232,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">LOB Visibility  </label>
                         <div class="col-md-6 col-sm-6 ">
                             <select name="additionalTeams[]" id="additionalTeams-select" class="form-control select2 " multiple="multiple">
-                            </select>    
+                            </select>
                         </div>
                         <div class="col-md-3 col-sm-3">
                             <i class="fa fa-info-circle" id="tooltipGm" style="margin-top: 13px;" title="Additional teams selection helps advisor see leads from selected teams as well" ></i>
