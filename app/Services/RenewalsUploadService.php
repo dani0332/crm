@@ -746,7 +746,7 @@ class RenewalsUploadService
                     $leadValidationErrors->push('quote_type', 'Invalid Insurance Type Provided');
                 }
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
-                    $leadValidationErrors->push('policy_number', 'Policy Number is mandatory for upload process');
+                    $leadValidationErrors->push('policy_number', 'Policy Number is mandatory for update process');
                 }
 
                 $leadData = (object) $lead->data;
@@ -769,6 +769,11 @@ class RenewalsUploadService
                         }
                         if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
                             $leadValidationErrors->push('product_type', 'Invalid Product Type');
+                        }
+                        if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number) {
+                            if (CarQuote::where('policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $lead->end_date)->first()) {
+                                $leadValidationErrors->push('policy_number', 'Policy Number is mandatory for update process');
+                            }
                         }
                         break;
                 }
