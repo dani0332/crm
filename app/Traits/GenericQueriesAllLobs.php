@@ -69,6 +69,7 @@ trait GenericQueriesAllLobs
             $record = $model::where('uuid', $response->quoteUID)->first();
             if ($record) {
                 $record->parent_duplicate_quote_id = $parentRecord->code;
+                $record->advisor_id = auth()->user()->id;
                 $record->save();
             }
         }
