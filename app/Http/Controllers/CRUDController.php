@@ -1032,6 +1032,12 @@ class CRUDController extends Controller
             }
         }
 
+        if(isset($quotePlan->providerCode) && isset($quotePlan->providerCode)) {
+            $singleQuoteUrl = config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id;
+        } else {
+            $singleQuoteUrl = null;
+        }
+
         $emailData = (object) [
             'quoteTypeId' => $request->quote_type_id,
             'quoteId' => $request->quote_id,
@@ -1050,14 +1056,14 @@ class CRUDController extends Controller
             'advisorMobileNo' => $request->advisor_mobile_no,
             'advisorLandlineNo' => $request->advisor_landline_no,
             'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$request->quote_uuid,
-            'planType' => strtolower($quotePlan->repairType) == 'tpl' ? 'Third Party Liability' : 'Comprehensive',
-            'planName' => $quotePlan->name,
-            'repairType' => $quotePlan->repairType,
-            'providerName' => $quotePlan->providerName,
-            'singleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id,
-            'discountPremium' => $quotePlan->discountPremium,
-            'damageLimitFeatureText' => $damageLimitFeatureText,
-            'damageLimitFeatureValue' => $damageLimitFeatureValue,
+            'planType' => isset($quotePlan->repairType) && strtolower($quotePlan->repairType) == 'tpl' ? 'Third Party Liability' : 'Comprehensive',
+            'planName' => isset($quotePlan->name) ? $quotePlan->name : null,
+            'repairType' => isset($quotePlan->repairType) ? $quotePlan->repairType : null,
+            'providerName' => isset($quotePlan->providerName) ? $quotePlan->providerName : null,
+            'singleQuoteUrl' => $singleQuoteUrl,
+            'discountPremium' => isset($quotePlan->discountPremium) ? $quotePlan->discountPremium : null,
+            'damageLimitFeatureText' => isset($damageLimitFeatureText) ? $damageLimitFeatureText : null,
+            'damageLimitFeatureValue' => isset($damageLimitFeatureValue) ? $damageLimitFeatureValue : null,
             'freeAddons' => $freeAddons,
         ];
 

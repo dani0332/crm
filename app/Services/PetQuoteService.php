@@ -74,7 +74,8 @@ class PetQuoteService extends BaseService
                 'pqr.is_mixed_breed',
                 'pqr.has_injury',
                 'pqr.customer_id',
-                'pqr.parent_duplicate_quote_id'
+                'pqr.parent_duplicate_quote_id',
+                'pqr.renewal_import_code'
             )
             ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', 'pqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'pqrd.lost_reason_id')
@@ -237,10 +238,10 @@ class PetQuoteService extends BaseService
 
             if (isset($request->is_renewal) && $request->is_renewal != '') {
                 if ($request->is_renewal == quoteTypeCode::yesText) {
-                    $this->query->whereNotNull('pqr.previous_quote_id');
+                    $this->query->whereNotNull('pqr.previous_quote_policy_number');
                 }
                 if ($request->is_renewal == quoteTypeCode::noText) {
-                    $this->query->whereNull('pqr.previous_quote_id');
+                    $this->query->whereNull('pqr.previous_quote_policy_number');
                 }
             }
             foreach ($searchProperties as $item) {
@@ -460,10 +461,10 @@ class PetQuoteService extends BaseService
             $query->where('pqr.payment_status_id', $request->paymentStatus);
         }
         if (Auth::user()->isRenewalAdvisor()) {
-            $query->whereNotNull('pqr.previous_quote_id');
+            $query->whereNotNull('pqr.previous_quote_policy_number');
         }
         if (Auth::user()->isNewBusinessAdvisor()) {
-            $query->whereNull('pqr.previous_quote_id');
+            $query->whereNull('pqr.previous_quote_policy_number');
         }
         if (isset($request->paymentStatus) && $request->paymentStatus != '') {
             $query->where('pqr.payment_status_id', $request->paymentStatus);
@@ -569,6 +570,7 @@ class PetQuoteService extends BaseService
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_premium' => 'input|title',
             'parent_duplicate_quote_id' => 'input|title',
+            'renewal_import_code' => 'input|text',
         ];
     }
 
@@ -649,10 +651,10 @@ class PetQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code',
-            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,next_followup_date,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info',
-            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code',
-            'show' => 'source,is_renewal',
+            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
+            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,next_followup_date,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,renewal_import_code',
+            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,device,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
+            'show' => 'source,is_renewal,previous_quote_id,quote_status_id,next_followup_date',
         ];
     }
 
@@ -665,10 +667,10 @@ class PetQuoteService extends BaseService
     {
         $model->renewalSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'previous_quote_policy_number', 'previous_policy_expiry_date', 'renewal_batch', 'previous_quote_policy_premium'];
         $model->renewalSkipProperties = [
-            'create' => 'premium,parent_duplicate_quote_id,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code',
-            'list' => 'parent_duplicate_quote_id,premium,policy_number,renewal_expiry_date,is_renewal,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code',
-            'update' => 'premium,parent_duplicate_quote_id,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code',
-            'show' => 'source,premium,id,next_followup_date,lost_reason,is_renewal',
+            'create' => 'premium,parent_duplicate_quote_id,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
+            'list' => 'parent_duplicate_quote_id,premium,policy_number,renewal_expiry_date,is_renewal,email,mobile_no,others_info,dob,sum_insured_value,sum_insured_currency_id,purpose_of_insurance_id,marital_status_id,children_id,tenure_of_insurance_id,number_of_years_id,gender,is_smoker,others_info,next_followup_date,lost_reason,source,transapp_code,previous_quote_id,renewal_import_code',
+            'update' => 'premium,parent_duplicate_quote_id,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,id,advisor_id,quote_status_id,code,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_import_code',
+            'show' => 'source,id,next_followup_date,lost_reason,is_renewal,previous_quote_id,quote_status_id',
         ];
     }
 
@@ -676,10 +678,10 @@ class PetQuoteService extends BaseService
     {
         $model->newBusinessSearchProperties = ['created_at', 'code', 'first_name', 'last_name', 'email', 'mobile_no', 'policy_number'];
         $model->newBusinessSkipProperties = [
-            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
-            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,others_info,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,renewal_expiry_date,previous_quote_id',
-            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date',
-            'show' => 'source,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id',
+            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code',
+            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,others_info,member_category_id,salary_band_id,gender,is_renewal,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,health_team_type,next_followup_date,lost_reason,source,transapp_code,lead_type_id,renewal_expiry_date,previous_quote_id,renewal_import_code',
+            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,member_category_id,salary_band_id,gender,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code',
+            'show' => 'source,member_category_id,salary_band_id,gender,is_renewal,id,next_followup_date,previous_quote_id,quote_status_id',
         ];
     }
 
