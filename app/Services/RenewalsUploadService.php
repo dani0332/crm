@@ -771,7 +771,7 @@ class RenewalsUploadService
                             $leadValidationErrors->push('product_type', 'Invalid Product Type');
                         }
                         if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number) {
-                            if (CarQuote::where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $lead->end_date)->first()) {
+                            if (CarQuote::where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $leadData->end_date)->first()) {
                                 $leadValidationErrors->push('policy_number', 'Quote already generated for this policy number, use upload and update');
                             }
                         }
