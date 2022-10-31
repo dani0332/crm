@@ -56,6 +56,13 @@ class TierService extends BaseService
             return $errorResponse;
         }
 
+        if (isset($request->min_price) && isset($request->max_price) && ($request->max_price < $request->min_price)) {
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Max price should be greater then Min price';
+
+            return $errorResponse;
+        }
+
         if (! isset($request->min_price) && Tier::whereNull('min_price')->get() != null) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as minimum price';
