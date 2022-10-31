@@ -45,7 +45,6 @@ class TeamService extends BaseService
 
     public function getGridData($model, $request)
     {
-
         $this->query = addSearchClauses($model, $request, $this->query, 't.');
         $this->query = addOrderByClauses($request, $this->query, 't.');
 
