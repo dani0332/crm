@@ -23,6 +23,10 @@
         width: 250px !important;
     }
 
+    .pagination{
+        margin-top: 12px !important;
+    }
+
     .dataTables_paginate .paginate_button.active {
         background: blue !important;
     }

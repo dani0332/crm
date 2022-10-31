@@ -60,7 +60,6 @@ class QuadrantService extends BaseService
 
     private function addTiersAgainstQuad($tierIds, $quadId)
     {
-        DB::table('quad_tiers')->where('quad_id', $quadId)->delete();
         foreach ($tierIds as $tierId) {
             DB::table('quad_tiers')->insert([
                 'quad_id' => $quadId,
@@ -105,9 +104,11 @@ class QuadrantService extends BaseService
         $quad->name = $request->name;
         $quad->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $quad->save();
+        DB::table('quad_tiers')->where('quad_id', $quad->id)->delete();
         if (isset($request->quad_tiers)) {
             $this->addTiersAgainstQuad($request->quad_tiers, $quad->id);
         }
+        DB::table('quad_users')->where('quad_id', $quad->id)->delete();
         if (isset($request->quad_users)) {
             $this->addUserAgainstQuadAndTiers($request->quad_users, $quad->id);
         }

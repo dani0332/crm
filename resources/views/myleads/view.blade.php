@@ -241,7 +241,7 @@
                         d.vehicleType = $('#vehicleType').val();
                         d.typeOfCarInsurance = $('#typeOfCarInsurance').val();
                         d.currentlyInsuredWith = $('#currentlyInsuredWith').val();
-                        
+
                     },
                 },
                 columnDefs: [
@@ -383,6 +383,29 @@
             window.localStorage.clear();
         }
     </script>
+    <style>
+    div.dataTables_wrapper div.dataTables_processing{
+        font-size: 30px !important;
+        border: none !important;
+        background-color: transparent !important;
+        color: #4183BD !important;
+        padding: 0px  !important;
+        height: 110px !important;
+        width: 250px !important;
+    }
+
+    .dataTables_paginate .paginate_button.active {
+        background: blue !important;
+    }
+    .pagination{
+        margin-top: 12px !important;
+    }
+    .dataTables_paginate .paginate_button.active a {
+        background: #71A1CC !important;
+        border-radius: 3px;
+        color: white;
+    }
+    </style>
     <div class="row">
         <div class="col-md-12 col-sm-12 ">
             <div class="x_panel" style="overflow:hidden">
@@ -476,7 +499,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="item form-group">
                                 <div class="col">
                                     <label class="col-form-label col-md-4 col-sm-4" for="Start Date">CDB ID</label>
@@ -516,7 +539,7 @@
                                         <label class="col-form-label col-md-4 col-sm-4" for="policy_number"></label>
                                         <div class="col-md-6 col-sm-6">
                                             <div class="input-group">
-                                                
+
                                             </div>
                                         </div>
                                     </div>
@@ -583,7 +606,7 @@
                                             <label class="col-form-label col-md-4 col-sm-4" for="company"></label>
                                             <div class="col-md-6 col-sm-6">
                                                 <div class="input-group">
-                                                   
+
                                                 </div>
                                             </div>
                                         </div>
@@ -765,7 +788,7 @@
                                     @if ($isRenewalAdvisor && $teamName == quoteTypeCode::Car)
                                         <th style="width: 100px !important">Vehicle Type</th>
                                     @endif
-                                   
+
                                     @if ($isRenewalAdvisor)
                                         <th style="width: 100px !important">Previous Policy Premium</th>
                                     @endif
@@ -778,14 +801,14 @@
                                     @if ($isRenewalAdvisor && $teamName == quoteTypeCode::Car)
                                         <th style="width: 100px !important">Lost Reason</th>
                                     @endif
-                                    
+
                                     @if (!$isRenewalAdvisor)
                                         <th style="width: 100px !important">Assigned Date</th>
                                     @endif
                                     @if (!$isRenewalAdvisor)
                                         <th style="width: 100px !important">Assigned By</th>
                                     @endif
-                                 
+
                                     @if (!$isRenewalAdvisor)
                                         <th style="width: 100px !important">Payment Status</th>
                                     @endif
@@ -819,7 +842,7 @@
                             <div id="collapseOne" class="collapse show" style="display:none" aria-labelledby="headingOne"
                                 data-parent="#accordion">
                                 <div class="card-body" style="border: 1px solid #ced4da;margin-bottom: 25px;">
-                                    <table id="overDueFollowups" class="table table-striped jambo_table" 
+                                    <table id="overDueFollowups" class="table table-striped jambo_table"
                                     style="table-layout: fixed;" width="100%">
                                         <thead>
                                             <tr>
@@ -829,7 +852,7 @@
                                                 <th style="width: 100px !important">Created Date</th>
                                                 <th style="width: 100px !important">Assigned Date</th>
                                                 <th style="width: 100px !important">Assigned By</th>
-                                             
+
                                                 <th style="width: 100px !important">Premium</th>
                                             </tr>
                                         </thead>

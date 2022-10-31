@@ -45,20 +45,11 @@ class TeamService extends BaseService
 
     public function getGridData($model, $request)
     {
-        $searchProperties = $model->searchProperties;
-        if ($request->ajax()) {
-            foreach ($searchProperties as $item) {
-                if (! empty($request[$item])) {
-                    if ($request[$item] == 'null') {
-                        $this->query->whereNull($item);
-                    } else {
-                        $this->query->where('t.'.$item, $request[$item]);
-                    }
-                }
-            }
-        }
 
-        return $this->query->orderBy('t.created_at', 'DESC');
+        $this->query = addSearchClauses($model, $request, $this->query, 't.');
+        $this->query = addOrderByClauses($request, $this->query, 't.');
+
+        return $this->query;
     }
 
     public function updateTeams(Request $request, $id)

@@ -121,8 +121,8 @@ class TierService extends BaseService
         $tier->is_tpl_renewals = $request->has('is_tpl_renewals') && $request->is_tpl_renewals == 'on' ? 1 : 0;
         $tier->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $tier->save();
+        DB::table('tier_users')->where('tier_id', $tier->id)->delete();
         if (isset($request->tier_users)) {
-            DB::table('tier_users')->where('tier_id', $tier->id)->delete();
             $userIds = $request->tier_users;
             foreach ($userIds as $userId) {
                 DB::table('tier_users')->insert([

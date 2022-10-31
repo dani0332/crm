@@ -21,10 +21,32 @@
     }
     .select2-results__option--selected {
             display: none;
-        }
-        .select2-results__option[aria-selected=true] {
-            display: none;
-        }
+    }
+    .select2-results__option[aria-selected=true] {
+        display: none;
+    }
+
+    div.dataTables_wrapper div.dataTables_processing{
+        font-size: 30px !important;
+        border: none !important;
+        background-color: transparent !important;
+        color: #4183BD !important;
+        padding: 0px  !important;
+        height: 110px !important;
+        width: 250px !important;
+    }
+
+    .dataTables_paginate .paginate_button.active {
+        background: blue !important;
+    }
+    .pagination{
+        margin-top: 12px !important;
+    }
+    .dataTables_paginate .paginate_button.active a {
+        background: #71A1CC !important;
+        border-radius: 3px;
+        color: white;
+    }
 </style>
 <script>
     function convertObjectToArray(obj) {
@@ -314,6 +336,11 @@
                             d['next_followup_date_end'] = $('#next_followup_date_end').val();
                         }
                     }
+                },
+                language: {
+                    "processing": "<span class='fa-stack fa-lg'>\n\
+                                        <i class='fa fa-spinner fa-spin fa-stack-2x fa-fw'></i>\n\
+                                </span>&emsp;Processing ...",
                 },
                 columnDefs: [{
                     orderable: false,
