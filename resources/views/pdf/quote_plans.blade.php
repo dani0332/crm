@@ -250,12 +250,9 @@
         $quotePlan->inclusion = json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson());
         $quotePlan->feature = json_decode(collect($quotePlan->benefits->feature)->keyBy('code')->toJson());
         $quotePlan->roadSideAssistance = json_decode(collect($quotePlan->benefits->roadSideAssistance)->keyBy('code')->toJson());
-        $quotePlan->addons = json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+        $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
-
-        $planAddons = (isset($addons[$quotePlan->id])) ? $addons[$quotePlan->id] : $quotePlan->addons;
-
-        foreach ($planAddons as &$addon) {
+        foreach ($quotePlan->addons as &$addon) {
 
             $addon = (object) $addon;
             //set default value to excluded
