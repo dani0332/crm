@@ -4,16 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
+use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\RenewalBatchEmailJob;
 use App\Models\CarQuote;
+use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\Datatables\Datatables;
 
 class RenewalsUploadController extends Controller
@@ -243,5 +247,19 @@ class RenewalsUploadController extends Controller
         }
 
         return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
+    }
+
+    public function validationFailed($id)
+    {
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
+
+        return view('renewals.validation_failed', compact('renewalLeads'));
+    }
+
+    public function downloadValidationFailed($id)
+    {
+        $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
+
+        return Excel::download(new RenewalFailedValidationExport($id), 'failed_'.$renewaUploadLead->file_name);
     }
 }

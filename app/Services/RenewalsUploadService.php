@@ -743,36 +743,36 @@ class RenewalsUploadService
                 $leadValidationErrors = collect();
 
                 if (! QuoteType::where('short_code', $lead->quote_type)->first()) {
-                    $leadValidationErrors->push('quote_type', 'Invalid Insurance Type Provided');
+                    $leadValidationErrors->push('Invalid Insurance Type Provided');
                 }
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
-                    $leadValidationErrors->push('policy_number', 'Policy Number is mandatory for update process');
+                    $leadValidationErrors->push('Policy Number is mandatory for update process');
                 }
 
                 $leadData = (object) $lead->data;
                 if (! InsuranceProvider::where('code', $leadData->insurer)->first()) {
-                    $leadValidationErrors->push('insurer', 'Invalid Insurance Code Provided');
+                    $leadValidationErrors->push('Invalid Insurance Code Provided');
                 }
                 if ($leadData->advisor && ! User::where('email', $leadData->advisor)->first()) {
-                    $leadValidationErrors->push('advisor', 'Invalid Advisor Email Address');
+                    $leadValidationErrors->push('Invalid Advisor Email Address');
                 }
                 switch($lead->quote_type) {
                     case QuoteTypeShortCode::CAR:
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
-                            $leadValidationErrors->push('policy_number', 'No Quote exists against the Policy Number, either create quote or check policy number');
+                            $leadValidationErrors->push('No Quote exists against this Policy Number, either create quote or check policy number');
                         }
                         if (! CarMake::where('text', $leadData->make)->first()) {
-                            $leadValidationErrors->push('make', 'Invalid Car Make');
+                            $leadValidationErrors->push('Invalid Car Make');
                         }
                         if (! CarModel::where('text', $leadData->model)->first()) {
-                            $leadValidationErrors->push('model', 'Invalid Car Model');
+                            $leadValidationErrors->push('Invalid Car Model');
                         }
                         if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
-                            $leadValidationErrors->push('product_type', 'Invalid Product Type');
+                            $leadValidationErrors->push('Invalid Product Type');
                         }
                         if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number) {
                             if (CarQuote::where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $leadData->end_date)->first()) {
-                                $leadValidationErrors->push('policy_number', 'Quote already generated for this policy number, use upload and update');
+                                $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
                             }
                         }
                         break;
