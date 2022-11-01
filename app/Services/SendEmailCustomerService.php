@@ -76,7 +76,7 @@ class SendEmailCustomerService extends BaseService
                     'repairType' => isset($emailData->repairType) ? $emailData->repairType : null,
                     'providerName' => isset($emailData->providerName) ? $emailData->providerName : null,
                     'singleQuoteUrl' => isset($emailData->singleQuoteUrl) ? $emailData->singleQuoteUrl : null,
-                    'discountPremium' => isset($emailData->discountPremium) ? $emailData->discountPremium : null,
+                    'discountPremium' => isset($emailData->discountPremium) ? $emailData->discountPremium : 0,
                     'damageLimitFeatureText' => isset($emailData->damageLimitFeatureText) ? $emailData->damageLimitFeatureText : null,
                     'damageLimitFeatureValue' => isset($emailData->damageLimitFeatureValue) ? $emailData->damageLimitFeatureValue : null,
                     'freeAddons' => isset($emailData->freeAddons) ? $emailData->freeAddons : null,
