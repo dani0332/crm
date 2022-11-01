@@ -42,8 +42,8 @@
                                         <td>{{ $lead->quote_type }}</td>
                                         <td>{{ $lead->policy_number }}</td>
                                         <td>{{ $lead->status }}</td>
-                                        <td>@foreach($lead->validation_errors as $key => $error)
-                                                <li></li>
+                                        <td>@foreach($lead->validation_errors as $error)
+                                                <li>@if(!is_array($error)){{ $error }}@endif</li>
                                             @endforeach
                                         </td>
                                         <td>{{ $lead->created_at }}</td>
