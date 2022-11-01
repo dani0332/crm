@@ -10,6 +10,7 @@ use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\RenewalBatchEmailJob;
 use App\Models\CarQuote;
+use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
@@ -243,5 +244,17 @@ class RenewalsUploadController extends Controller
         }
 
         return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
+    }
+
+    public function validationFailed($id)
+    {
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', ['BAD_DATA', 'VALIDATION_FAILED'])->get();
+
+        return view('renewals.validation_failed', compact('renewalLeads'));
+    }
+
+    public function downloadValidationFailed($id)
+    {
+        $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', ['BAD_DATA', 'VALIDATION_FAILED'])->get();
     }
 }
