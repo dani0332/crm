@@ -28,6 +28,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     use Importable, SkipsFailures, RegistersEventListeners;
 
     private $rows = 0;
+    private $failedCount = 0;
     private $renewalsUploadService;
     private $totalRows;
     private $fileName;
@@ -92,6 +93,12 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
         return $this->rows;
     }
 
+    public function getFailedCount() : int
+    {
+        return $this->failedCount;
+    }
+
+
     /**
      * create columns schema, with index, title and rules to be validated for each column.
      *
@@ -100,7 +107,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     public function getColumns()
     {
         return  [
-            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|min:3|max:100'],
+            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
             'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'required|max:255'],
             'quote_type' => ['index' => 2, 'title' => 'Type', 'rules' => 'required|max:4'],
             'insurer' => ['index' => 3, 'title' => 'Insurer', 'rules' => 'required|max:100'],
@@ -184,8 +191,11 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
         return [
 
             AfterImport::class => function (AfterImport $event) {
+
                 $failed = [];
+
                 foreach ($this->failures() as $failure) {
+
                     if (! isset($failed[$failure->row()])) {
                         $quoteData = $this->mapQuoteData($failure->values());
                         $failed[$failure->row()] = [
@@ -197,9 +207,15 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
                             'status' => RenewalProcessStatuses::VALIDATION_FAILED,
                             'type' => RenewalsUploadType::CREATE_LEADS,
                         ];
+
+                        $this->failedCount++;
                     }
 
-                    $failed[$failure->row()]['validation_errors'][$failure->attribute()] = $failure->errors();
+                    //todo: remove code later
+                    //$failed[$failure->row()]['validation_errors'][$failure->attribute()] = $failure->errors();
+                    foreach ($failure->errors() as $error) {
+                        $failed[$failure->row()]['validation_errors'][] = $error;
+                    }
                 }
 
                 //todo: convert this to bulk insert
