@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
+use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
@@ -250,13 +251,15 @@ class RenewalsUploadController extends Controller
 
     public function validationFailed($id)
     {
-        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', ['BAD_DATA', 'VALIDATION_FAILED'])->get();
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
 
         return view('renewals.validation_failed', compact('renewalLeads'));
     }
 
     public function downloadValidationFailed($id)
     {
-        return Excel::download(new RenewalFailedValidationExport($id), 'failed.xlsx');
+        $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
+
+        return Excel::download(new RenewalFailedValidationExport($id), 'failed_'.$renewaUploadLead->file_name);
     }
 }
