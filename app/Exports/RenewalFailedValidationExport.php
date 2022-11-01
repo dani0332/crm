@@ -23,7 +23,11 @@ class RenewalFailedValidationExport implements FromCollection
         $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewalUploadLeadsId)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
         $exportLeads = collect();
         foreach ($failedLeads as $lead) {
-            $exportLeads->push($lead->data);
+            if ($lead->data) {
+                $leadData = $lead->data;
+                $leadData['errors'] = $lead->validation_errors;
+                $exportLeads->push($leadData);
+            }
         }
 
         return $exportLeads;
