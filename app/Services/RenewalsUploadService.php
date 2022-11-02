@@ -12,18 +12,23 @@ use App\Enums\RenewalsUploadType;
 use App\Imports\UploadAndCreateImport;
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\CarTypeInsurance;
+use App\Models\ClaimHistory;
 use App\Models\Customer;
 use App\Models\EmailActivity;
 use App\Models\EmailStatus;
+use App\Models\Emirate;
 use App\Models\InsuranceProvider;
+use App\Models\Nationality;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalsDump;
 use App\Models\RenewalsUploadLeads;
+use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -774,6 +779,38 @@ class RenewalsUploadService
                         }
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
                             $leadValidationErrors->push('No Quote exists against this Policy Number, either create quote or check policy number');
+                        }
+
+                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
+                            $insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->first();
+                            if ($insuranceProvider) {
+                                if (! CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $insuranceProvider->id)->first()) {
+                                    $leadValidationErrors->push('Invalid Insurer Plan Name or Plan Type');
+                                }
+                            } else {
+                                $leadValidationErrors->push('Invalid Provider Name');
+                            }
+                        }
+                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->claim_history) {
+                            if (! ClaimHistory::where('text', $leadData->claim_history)->first()) {
+                                $leadValidationErrors->push('Invalid Claim History');
+                            }
+                        }
+
+                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->nationality) {
+                            if (! Nationality::where('text', $leadData->nationality)->first()) {
+                                $leadValidationErrors->push('Invalid Nationality Text');
+                            }
+                        }
+                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->registration_location) {
+                            if (! Emirate::where('text', $leadData->registration_location)->first()) {
+                                $leadValidationErrors->push('Invalid Emirate');
+                            }
+                        }
+                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->driving_experience) {
+                            if (! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
+                                $leadValidationErrors->push('Invalid Driving Experience');
+                            }
                         }
                         break;
                 }
