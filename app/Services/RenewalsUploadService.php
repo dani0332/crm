@@ -14,7 +14,6 @@ use App\Imports\UploadAndUpdateImport;
 use App\Jobs\GetCarQuotePlansJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
-use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\CarTypeInsurance;
 use App\Models\ClaimHistory;
@@ -309,7 +308,6 @@ class RenewalsUploadService
     public function createQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
         return DB::transaction(function () use ($renewalQuoteProcess) {
-
             $data = $renewalQuoteProcess->data;
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
@@ -394,7 +392,6 @@ class RenewalsUploadService
                 GetCarQuotePlansJob::dispatch($quote->uuid);
             }
 
-
             return $quote;
         });
     }
@@ -412,8 +409,6 @@ class RenewalsUploadService
         })->toArray();
     }
 
-
-
     /**
      * @param  RenewalQuoteProcess  $renewalQuoteProcess
      * @return mixed
@@ -421,7 +416,6 @@ class RenewalsUploadService
     public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
         return DB::transaction(function () use ($renewalQuoteProcess) {
-
             $data = $renewalQuoteProcess->data;
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
@@ -440,7 +434,7 @@ class RenewalsUploadService
                 $vehicleType = $this->renewalsAddonService->getVehicleType($carModel->vehicle_type_id);
             }
 
-            if ($data['product_type'] != null ) {
+            if ($data['product_type'] != null) {
                 $carTypeOfInsurance = $this->renewalsAddonService->getCarTypeOfInsurance($data['product_type']);
             }
 
@@ -492,7 +486,6 @@ class RenewalsUploadService
             }
 
             return true;
-
         });
     }
 

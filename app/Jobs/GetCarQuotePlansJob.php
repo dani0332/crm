@@ -35,6 +35,6 @@ class GetCarQuotePlansJob implements ShouldQueue
      */
     public function handle(CarQuoteService $carQuoteService)
     {
-       return $carQuoteService->getPlans($this->uuid);
+        return $carQuoteService->getPlans($this->uuid);
     }
 }
