@@ -260,6 +260,6 @@ class RenewalsUploadController extends Controller
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
 
-        return Excel::download(new RenewalFailedValidationExport($id), 'failed_'.$renewaUploadLead->file_name);
+        return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
     }
 }
