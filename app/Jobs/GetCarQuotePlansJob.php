@@ -9,6 +9,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
+/**
+ * run this job to after upload & create lead to fetch plans of newly created quote
+ */
 class GetCarQuotePlansJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -32,6 +35,6 @@ class GetCarQuotePlansJob implements ShouldQueue
      */
     public function handle(CarQuoteService $carQuoteService)
     {
-        $carQuoteService->getPlans($this->uuid);
+       return $carQuoteService->getPlans($this->uuid);
     }
 }

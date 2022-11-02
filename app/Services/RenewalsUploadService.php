@@ -14,6 +14,7 @@ use App\Imports\UploadAndUpdateImport;
 use App\Jobs\GetCarQuotePlansJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\CarTypeInsurance;
 use App\Models\ClaimHistory;
@@ -308,6 +309,7 @@ class RenewalsUploadService
     public function createQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
         return DB::transaction(function () use ($renewalQuoteProcess) {
+
             $data = $renewalQuoteProcess->data;
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
@@ -392,7 +394,8 @@ class RenewalsUploadService
                 GetCarQuotePlansJob::dispatch($quote->uuid);
             }
 
-            return true;
+
+            return $quote;
         });
     }
 
@@ -409,6 +412,8 @@ class RenewalsUploadService
         })->toArray();
     }
 
+
+
     /**
      * @param  RenewalQuoteProcess  $renewalQuoteProcess
      * @return mixed
@@ -416,6 +421,7 @@ class RenewalsUploadService
     public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
         return DB::transaction(function () use ($renewalQuoteProcess) {
+
             $data = $renewalQuoteProcess->data;
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
@@ -423,7 +429,6 @@ class RenewalsUploadService
             $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
             $carMake = $this->renewalsAddonService->getCarMake($data['make']);
             $carModel = $this->renewalsAddonService->getCarModel($data['model']);
-            $vehicleType = null;
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $previousAdvisorId = $this->renewalsAddonService->getUserInfo($data['previous_advisor']);
             $claimHistory = $this->getClaimHistory($data['claim_history']);
@@ -431,17 +436,12 @@ class RenewalsUploadService
             $emirate = Emirate::where('text', $data['registration_location'])->first();
             $uaeLicenseHeldFor = UAELicenseHeldFor::where('text', $data['driving_experience'])->first();
 
-            $carTypeOfInsurance = null;
-
             if ($carModel) {
                 $vehicleType = $this->renewalsAddonService->getVehicleType($carModel->vehicle_type_id);
             }
 
-            if ($data['product_type'] != null) {
-                $carTypeOfInsuranceInstance = $this->renewalsAddonService->getCarTypeOfInsurance($data['product_type']);
-                if ($carTypeOfInsuranceInstance) {
-                    $carTypeOfInsurance = $carTypeOfInsuranceInstance->id;
-                }
+            if ($data['product_type'] != null ) {
+                $carTypeOfInsurance = $this->renewalsAddonService->getCarTypeOfInsurance($data['product_type']);
             }
 
             // Previous Car Lead
@@ -454,8 +454,6 @@ class RenewalsUploadService
             $notes = $quote->additional_notes.' - '.$carMakeModel.(! empty($data['previous_advisor']) ? (' - '.$previousAdvisorEmail) : '').' - '.$data['notes'];
 
             $customerData = $this->buildCustomerData($data);
-
-            //$data = $this->getNonEmptyValues($data);
 
             //todo: update customer primary info
             $quoteData = $this->getNonEmptyValues([
@@ -478,7 +476,7 @@ class RenewalsUploadService
                 'car_make_id' => $carMake->id,
                 'car_model_id' => $carModel->id,
                 'cylinder' => $carModel->cylinder,
-                'vehicle_category' => $vehicleType->category,
+                'vehicle_category' => $vehicleType->category ?? null,
                 'year_of_manufacture' => $data['year'] ?? null,
                 'previous_advisor_id' => $previousAdvisorId,
             ]);
@@ -495,7 +493,6 @@ class RenewalsUploadService
 
             return true;
 
-            //todo: call ken/capi api to fetch plans
         });
     }
 
