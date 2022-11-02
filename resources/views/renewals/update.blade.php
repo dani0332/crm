@@ -42,17 +42,17 @@
                 @if(session()->has('message'))
                     <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ url('renewals/upload-process') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                <form id="demo-form2" method='post' action="{{ url('renewals/upload-update') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                 {{csrf_field()}}
                     <div class="item form-group">
-                        <div class="col">
+                        <div class="col-lg-6 offset-lg-3">
                             <span class="col-form-label col-md-6 col-sm-6">File <span class="required">*</span></span>
                             <input type="file" id="file_name" name="file_name" class="form-control form-control-sm" accept='.xlsx' data-toggle="tooltip" data-placement="top" title="Please select .xlsx file to upload" />
                             @if ($errors->has('file_name'))
                                 <span class="text-danger">{{ $errors->first('file_name') }}</span>
                             @endif
                         </div>
-                        <div class="col">
+                        {{--<div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Import Code <span class="required">*</span></span>
                             <select class="form-control" id="renewal_import_code" name="renewal_import_code" data-toggle="tooltip" data-placement="top" title="Please select import code">
                                     <option value="">Select</option>
@@ -67,7 +67,7 @@
                             @if ($errors->has('renewal_import_code'))
                                 <span class="text-danger">{{ $errors->first('renewal_import_code') }}</span>
                             @endif
-                        </div>
+                        </div>--}}
                     </div>
 
                     <div class="item form-group">

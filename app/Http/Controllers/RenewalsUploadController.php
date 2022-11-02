@@ -29,11 +29,29 @@ class RenewalsUploadController extends Controller
         $this->renewalsUploadFileService = $renewalsUploadFileService;
     }
 
+    /**
+     * process upload and create import
+     *
+     * @param  RenewalsUploadRequest  $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
     public function renewalsUploadCreate(RenewalsUploadRequest $request)
     {
         $result = $this->renewalsUploadFileService->renewalsUploadCreate($request->validated());
 
         return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
+    }
+
+    /**
+     * process upload and update import
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function renewalsUploadUpdate()
+    {
+        $result = $this->renewalsUploadFileService->renewalsUploadUpdate(request()->all());
+
+        return redirect('renewals/update')->with('success', 'Uploaded renewals records has been updated');
     }
 
     /**
