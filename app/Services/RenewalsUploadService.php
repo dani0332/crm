@@ -10,20 +10,26 @@ use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Imports\UploadAndCreateImport;
+use App\Imports\UploadAndUpdateImport;
+use App\Jobs\GetCarQuotePlansJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\CarTypeInsurance;
+use App\Models\ClaimHistory;
 use App\Models\Customer;
 use App\Models\EmailActivity;
 use App\Models\EmailStatus;
+use App\Models\Emirate;
 use App\Models\InsuranceProvider;
+use App\Models\Nationality;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalsDump;
 use App\Models\RenewalsUploadLeads;
+use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -89,7 +95,7 @@ class RenewalsUploadService
      * @param $uploadedFile
      * @return RenewalsUploadLeads
      */
-    public function createRenewalsLead($uploadedFile)
+    public function createRenewalsLead($uploadedFile, $renewalImportType)
     {
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
@@ -101,6 +107,7 @@ class RenewalsUploadService
             'status' => ProcessStatusCode::IN_PROGRESS,
             'good' => 0,
             'created_by_id' => auth()->user()->id,
+            'renewal_import_type' => $renewalImportType,
         ]);
     }
 
@@ -117,15 +124,16 @@ class RenewalsUploadService
             $uploadedFile = $this->uploadRenewalsFile();
 
             //create lead record
-            $renewalsUploadLead = $this->createRenewalsLead($uploadedFile);
+            $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::CREATE_LEADS);
 
             //start file import
             $renewalsUpload = new UploadAndCreateImport($this, $renewalsUploadLead);
             $renewalsUpload->import(request()->file('file_name'));
 
             //update counts
+            //todo: correct these values
             $totalRows = $renewalsUpload->getRowCount();
-            $failedRows = $renewalsUpload->failures()->count();
+            $failedRows = $renewalsUpload->getFailedCount();
             $renewalsUploadLead->update([
                 'cannot_upload' => $failedRows,
                 'good' => $totalRows,
@@ -136,6 +144,32 @@ class RenewalsUploadService
 
             return true;
         });
+    }
+
+    public function renewalsUploadUpdate($data)
+    {
+        //upload renewal file to azure
+        $uploadedFile = $this->uploadRenewalsFile();
+
+        //create lead record
+        $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::UPDATE_LEADS);
+
+        //start file import
+        $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
+        $renewalsUpload->import(request()->file('file_name'));
+
+        //todo: correct these values
+        $totalRows = $renewalsUpload->getRowCount();
+        $failedRows = $renewalsUpload->getFailedCount();
+        $renewalsUploadLead->update([
+            'cannot_upload' => $failedRows,
+            'good' => $totalRows,
+            'total_records' => $totalRows,
+        ]);
+
+        $this->uploadedLeadsValidation();
+
+        return true;
     }
 
     /**
@@ -257,6 +291,15 @@ class RenewalsUploadService
     }
 
     /**
+     * @param $claimHistory
+     * @return mixed
+     */
+    public function getClaimHistory($claimHistory)
+    {
+        return ClaimHistory::where('text', $claimHistory)->first();
+    }
+
+    /**
      * create quote for all businesses.
      *
      * @param  RenewalQuoteProcess  $renewalQuoteProcess
@@ -275,6 +318,7 @@ class RenewalsUploadService
 
             //todo: advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
+
             $previousAdvisorId = $this->renewalsAddonService->getUserInfo($data['previous_advisor']);
 
             //todo: should be marked as failed when no response from API
@@ -342,6 +386,104 @@ class RenewalsUploadService
             }
 
             $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED]);
+
+            //todo: verify this, run car quote plans
+            if ($quoteType->code == quoteTypeCode::Car) {
+                GetCarQuotePlansJob::dispatch($quote->uuid);
+            }
+
+            return $quote;
+        });
+    }
+
+    /**
+     * ignore fields having empty/null
+     *
+     * @param $values
+     * @return \Illuminate\Support\Collection
+     */
+    public function getNonEmptyValues($values)
+    {
+        return collect($values)->filter(function ($value) {
+            return $value ?? null;
+        })->toArray();
+    }
+
+    /**
+     * @param  RenewalQuoteProcess  $renewalQuoteProcess
+     * @return mixed
+     */
+    public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
+    {
+        return DB::transaction(function () use ($renewalQuoteProcess) {
+            $data = $renewalQuoteProcess->data;
+
+            $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
+
+            $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
+            $carMake = $this->renewalsAddonService->getCarMake($data['make']);
+            $carModel = $this->renewalsAddonService->getCarModel($data['model']);
+            $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
+            $previousAdvisorId = $this->renewalsAddonService->getUserInfo($data['previous_advisor']);
+            $claimHistory = $this->getClaimHistory($data['claim_history']);
+            $nationality = Nationality::where('text', $data['nationality'])->first();
+            $emirate = Emirate::where('text', $data['registration_location'])->first();
+            $uaeLicenseHeldFor = UAELicenseHeldFor::where('text', $data['driving_experience'])->first();
+
+            if ($carModel) {
+                $vehicleType = $this->renewalsAddonService->getVehicleType($carModel->vehicle_type_id);
+            }
+
+            if ($data['product_type'] != null) {
+                $carTypeOfInsurance = $this->renewalsAddonService->getCarTypeOfInsurance($data['product_type']);
+            }
+
+            // Previous Car Lead
+            $quoteObject = $this->createQuoteObject(ucfirst($quoteType->code));
+            $quote = $quoteObject->where('previous_quote_policy_number', $data['policy_number'])->first();
+
+            $previousAdvisorEmail = 'Previous Advisor Email Id : '.$data['previous_advisor'];
+            $carMakeModel = 'Car Make/Model/Year : '.$data['make'].' '.$data['model'].' '.$data['year'];
+
+            $notes = $quote->additional_notes.' - '.$carMakeModel.(! empty($data['previous_advisor']) ? (' - '.$previousAdvisorEmail) : '').' - '.$data['notes'];
+
+            $customerData = $this->buildCustomerData($data);
+
+            //todo: update customer primary info
+            $quoteData = $this->getNonEmptyValues([
+                'first_name' => $customerData['first_name'],
+                'last_name' => $customerData['last_name'],
+                'email' => $customerData['email'],
+                'mobile_no' => $customerData['mobile_no'],
+                'dob' => (! empty($data['dob'])) ? Carbon::createFromFormat('d/m/Y', $data['dob'])->format('Y-m-d') : null,
+                'car_type_insurance_id' => $carTypeOfInsurance->id ?? null,
+                'claim_history_id' => $claimHistory->id ?? null,
+                'nationality_id' => $nationality->id ?? null,
+                'emirate_of_registration_id' => $emirate->id ?? null,
+                'uae_license_held_for_id' => $uaeLicenseHeldFor,
+                'car_value' => $data['car_value'],
+                'previous_policy_expiry_date' => (! empty($data['end_date'])) ? Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d') : null,
+                'previous_quote_policy_premium' => $data['premium'],
+                'advisor_id' => $advisorId,
+                'renewal_batch' => $data['batch'],
+                'additional_notes' => $notes,
+                'car_make_id' => $carMake->id,
+                'car_model_id' => $carModel->id,
+                'cylinder' => $carModel->cylinder,
+                'vehicle_category' => $vehicleType->category ?? null,
+                'year_of_manufacture' => $data['year'] ?? null,
+                'previous_advisor_id' => $previousAdvisorId,
+            ]);
+
+            if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
+                $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
+            }
+
+            $quote->update($quoteData);
+
+            if (! empty($advisorId)) {
+                $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
+            }
 
             return true;
         });
@@ -743,37 +885,37 @@ class RenewalsUploadService
                 $leadValidationErrors = collect();
 
                 if (! QuoteType::where('short_code', $lead->quote_type)->first()) {
-                    $leadValidationErrors->push('quote_type', 'Invalid Insurance Type Provided');
+                    $leadValidationErrors->push('Invalid Insurance Type Provided');
                 }
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
-                    $leadValidationErrors->push('policy_number', 'Policy Number is mandatory for update process');
+                    $leadValidationErrors->push('Policy Number is mandatory for update process');
                 }
 
                 $leadData = (object) $lead->data;
                 if (! InsuranceProvider::where('code', $leadData->insurer)->first()) {
-                    $leadValidationErrors->push('insurer', 'Invalid Insurance Code Provided');
+                    $leadValidationErrors->push('Invalid Insurance Code Provided');
                 }
                 if ($leadData->advisor && ! User::where('email', $leadData->advisor)->first()) {
-                    $leadValidationErrors->push('advisor', 'Invalid Advisor Email Address');
+                    $leadValidationErrors->push('Invalid Advisor Email Address');
                 }
                 switch($lead->quote_type) {
                     case QuoteTypeShortCode::CAR:
-                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
-                            $leadValidationErrors->push('policy_number', 'No Quote exists against the Policy Number, either create quote or check policy number');
-                        }
                         if (! CarMake::where('text', $leadData->make)->first()) {
-                            $leadValidationErrors->push('make', 'Invalid Car Make');
+                            $leadValidationErrors->push('Invalid Car Make');
                         }
                         if (! CarModel::where('text', $leadData->model)->first()) {
-                            $leadValidationErrors->push('model', 'Invalid Car Model');
+                            $leadValidationErrors->push('Invalid Car Model');
                         }
                         if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
-                            $leadValidationErrors->push('product_type', 'Invalid Product Type');
+                            $leadValidationErrors->push('Invalid Product Type');
                         }
                         if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number) {
                             if (CarQuote::where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $leadData->end_date)->first()) {
-                                $leadValidationErrors->push('policy_number', 'Quote already generated for this policy number, use upload and update');
+                                $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
                             }
+                        }
+                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
+                            $leadValidationErrors->push('No Quote exists against this Policy Number, either create quote or check policy number');
                         }
                         break;
                 }
@@ -791,6 +933,7 @@ class RenewalsUploadService
                         $this->createQuote($lead);
                     } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
                         //Insert lead update function call
+                        $this->updateQuote($lead);
                     }
                 }
             }

@@ -2184,12 +2184,38 @@ $(document).ready(function () {
       { data: 'file_name', name: 'file_name' },
       { data: 'total_records', name: 'total_records' },
       { data: 'good', name: 'good' },
-      { data: 'cannot_upload', name: 'cannot_upload' },
+      {
+        data: 'cannot_upload',
+        name: 'cannot_upload',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.renewal_uploaded_leads +
+            '/' +
+            row.id +
+            "/validation-failed'>" +
+            row.cannot_upload +
+            '</a>'
+          );
+        },
+      },
       { data: 'status', name: 'status' },
       { data: 'uploaded_by', name: 'uploaded_by' },
       { data: 'created_at', name: 'created_at' },
       { data: 'updated_at', name: 'updated_at' },
     ],
+  });
+
+  $('.validation-failed-data-table').DataTable({
+    ordering: false,
+    info: true,
+    searching: false,
+    bLengthChange: false,
+    processing: true,
+    stateSave: true,
+    paging: true,
+    ajax: config.routes.renewal_uploaded_leads,
+    columns: [{ data: 'batch', name: 'batch' }],
   });
 
   var searchLeadsTable = $('.leadSearch-data-table').DataTable({
@@ -2576,15 +2602,15 @@ $(document).ready(function () {
     }, 2000);
   });
 
-  $('#btn_download_plan_pdf').on('click', function () 
-  {
-  
-    if($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-      alert("Please select at least three (3) plans.");return false;
+  $('#btn_download_plan_pdf').on('click', function () {
+    if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
+      alert('Please select at least three (3) plans.');
+      return false;
     }
 
-    if($("input[name='toggle_plans_checkbox']:checked").length > 5) {
-      alert("A maximum of five (5) plans are allowed to be selected.");return false;
+    if ($("input[name='toggle_plans_checkbox']:checked").length > 5) {
+      alert('A maximum of five (5) plans are allowed to be selected.');
+      return false;
     }
 
     var plan_ids = [];
@@ -2914,27 +2940,40 @@ $('#send-one-click-buy-email-btn').on('click', function () {
     var quote_uuid = $(this).attr('data-quote-uuid');
     $('.loader').show();
     $.ajax({
-      url: '/quotes/' + quote_type + '/'+ quote_uuid +'/send-email-one-click-buy',
+      url:
+        '/quotes/' +
+        quote_type +
+        '/' +
+        quote_uuid +
+        '/send-email-one-click-buy',
       method: 'POST',
       data: {
-        quote_type_id : $(this).attr('data-quote-type-id'),
-        quote_id : $(this).attr('data-quote-id'),
-        quote_uuid : quote_uuid,
-        quote_cdb_id : $(this).attr('data-quote-cdb-id'),
-        quote_plans_count : $(this).attr('data-quote-plans-count'),
-        quote_previous_expiry_date : $(this).attr('data-quote-previous-expiry-date'),
-        quote_currently_insured_with : $(this).attr('data-quote-currently-insured-with'),
-        quote_car_make : $(this).attr('data-quote-car-make'),
-        quote_car_model : $(this).attr('data-quote-car-model'),
-        quote_car_year_of_manufacture : $(this).attr('data-quote-car-year-of-manufacture'),
-        quote_previous_policy_number : $(this).attr('data-quote-previous-policy-number'),
-        customer_name : $(this).attr('data-quote-customer-name'),
-        customer_email : $(this).attr('data-quote-customer-email'),
-        advisor_name : $(this).attr('data-quote-advisor-name'),
-        advisor_email : $(this).attr('data-quote-advisor-email'),
-        advisor_mobile_no : $(this).attr('data-quote-advisor-mobile-no'),
-        advisor_landline_no : $(this).attr('data-quote-advisor-landline-no'),
-        _token : $('input[name=_token]').val(),
+        quote_type_id: $(this).attr('data-quote-type-id'),
+        quote_id: $(this).attr('data-quote-id'),
+        quote_uuid: quote_uuid,
+        quote_cdb_id: $(this).attr('data-quote-cdb-id'),
+        quote_plans_count: $(this).attr('data-quote-plans-count'),
+        quote_previous_expiry_date: $(this).attr(
+          'data-quote-previous-expiry-date',
+        ),
+        quote_currently_insured_with: $(this).attr(
+          'data-quote-currently-insured-with',
+        ),
+        quote_car_make: $(this).attr('data-quote-car-make'),
+        quote_car_model: $(this).attr('data-quote-car-model'),
+        quote_car_year_of_manufacture: $(this).attr(
+          'data-quote-car-year-of-manufacture',
+        ),
+        quote_previous_policy_number: $(this).attr(
+          'data-quote-previous-policy-number',
+        ),
+        customer_name: $(this).attr('data-quote-customer-name'),
+        customer_email: $(this).attr('data-quote-customer-email'),
+        advisor_name: $(this).attr('data-quote-advisor-name'),
+        advisor_email: $(this).attr('data-quote-advisor-email'),
+        advisor_mobile_no: $(this).attr('data-quote-advisor-mobile-no'),
+        advisor_landline_no: $(this).attr('data-quote-advisor-landline-no'),
+        _token: $('input[name=_token]').val(),
       },
       success: function (data) {
         $('.loader').hide();

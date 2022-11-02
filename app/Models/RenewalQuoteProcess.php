@@ -20,11 +20,11 @@ class RenewalQuoteProcess extends Model
      */
     public function renewalUploadLead()
     {
-        return $this->belongsTo(RenewalsUploadLeads::class);
+        return $this->belongsTo(RenewalsUploadLeads::class, 'renewals_upload_lead_id');
     }
 
     /**
-     * json encode data
+     * json encode data.
      *
      * @param $value
      * @return void
@@ -35,7 +35,7 @@ class RenewalQuoteProcess extends Model
     }
 
     /**
-     * json encode validation_errors
+     * json encode validation_errors.
      *
      * @param $value
      * @return void

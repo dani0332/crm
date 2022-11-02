@@ -144,12 +144,15 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);
+        Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed']);
+        Route::get('uploaded-leads/{id}/validation-failed/download', [RenewalsUploadController::class, 'downloadValidationFailed']);
         Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals']);
         Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('listRenewalBatches');
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batchDetail');
         Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('runBatchProcess');
         Route::post('upload-process', [RenewalsUploadController::class, 'renewalsUploadProcess']);
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate']);
+        Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
 

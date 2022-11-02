@@ -23,7 +23,7 @@ use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
+class UploadAndUpdateImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
 {
     use Importable, SkipsFailures, RegistersEventListeners;
 
@@ -63,7 +63,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
             'data' => $quoteData,
             'batch' => $quoteData['batch'],
             'status' => RenewalProcessStatuses::NEW,
-            'type' => RenewalsUploadType::CREATE_LEADS,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
         ]);
     }
 
@@ -106,26 +106,33 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     public function getColumns()
     {
         return  [
-            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
-            'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'required|max:255'],
-            'quote_type' => ['index' => 2, 'title' => 'Type', 'rules' => 'required|max:4'],
+            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'max:100'],
+            'advisor' => ['index' => 1, 'title' => 'Advisor Email', 'rules' => 'max:100'],
+            'policy_number' => ['index' => 2, 'title' => 'Policy', 'rules' => 'required|max:100'],
             'insurer' => ['index' => 3, 'title' => 'Insurer', 'rules' => 'required|max:100'],
-            'product' => ['index' => 4, 'title' => 'Product', 'rules' => 'required|max:100'],
-            'product_type' => ['index' => 5, 'title' => 'Product Type', 'rules' => 'max:100'],
-            'source' => ['index' => 6, 'title' => 'Sales Channel', 'rules' => 'max:100'],
-            'mobile_no' => ['index' => 7, 'title' => 'Customer Mobile', 'rules' => 'max:100'],
-            'advisor' => ['index' => 8, 'title' => 'Advisor Email', 'rules' => 'max:100'],
-            'previous_advisor' => ['index' => 9, 'title' => 'Previous Advisor Email', 'rules' => 'max:100'],
-            'policy_number' => ['index' => 10, 'title' => 'Policy', 'rules' => 'required|max:100'],
-            'batch' => ['index' => 11, 'title' => 'Batch', 'rules' => 'required|max:25'],
-            'start_date' => ['index' => 12, 'title' => 'Start Date', 'rules' => 'max:25', 'type' => 'date'], //date_format:d/m/Y
-            'end_date' => ['index' => 13, 'title' => 'End Date', 'rules' => 'required|max:25', 'type' => 'date'], //date_format:d/m/Y
-            'object' => ['index' => 14, 'title' => 'Object', 'rules' => 'max:200'],
-            'premium' => ['index' => 15, 'title' => 'Gross Premium', 'rules' => 'max:25'],
-            'notes' => ['index' => 16, 'title' => 'Notes', 'rules' => 'max:200'],
-            'make' => ['index' => 17, 'title' => 'Make', 'rules' => 'max:50'],
-            'model' => ['index' => 18, 'title' => 'Model', 'rules' => 'max:50'],
-            'year' => ['index' => 19, 'title' => 'Year', 'rules' => 'max:4'],
+            'batch' => ['index' => 4, 'title' => 'Batch', 'rules' => 'max:25'],
+            'end_date' => ['index' => 5, 'title' => 'End Date', 'rules' => 'required|max:10'], //'type' => 'date'
+            'make' => ['index' => 6, 'title' => 'Make', 'rules' => 'max:50'],
+            'model' => ['index' => 7, 'title' => 'Model', 'rules' => 'max:50'],
+            'year' => ['index' => 8, 'title' => 'Year', 'rules' => 'max:4'],
+            'email' => ['index' => 9, 'title' => 'Customer Email', 'rules' => 'max:255'],
+            'mobile_no' => ['index' => 10, 'title' => 'Customer Mobile', 'rules' => 'max:100'],
+            'dob' => ['index' => 11, 'title' => 'Date of Birth', 'rules' => 'max:10'],
+            'driving_experience' => ['index' => 12, 'title' => 'Driving Experience', 'rules' => 'max:10'],
+            'provider_name' => ['index' => 13, 'title' => 'Provider Name', 'rules' => 'max:100'],
+            'plan_name' => ['index' => 14, 'title' => 'Plan Name', 'rules' => 'max:100'],
+            'plan_type' => ['index' => 15, 'title' => 'Plan Type', 'rules' => 'max:100'],
+            'claim_history' => ['index' => 16, 'title' => 'Claim History', 'rules' => 'max:50'],
+            'car_value' => ['index' => 17, 'title' => 'Car Value', 'rules' => 'max:20'],
+            'nationality' => ['index' => 18, 'title' => 'Nationality', 'rules' => 'max:20'],
+            'premium' => ['index' => 19, 'title' => 'Renewal Premium', 'rules' => 'max:20'],
+            'excess' => ['index' => 20, 'title' => 'Excess', 'rules' => 'max:20'],
+            'trim' => ['index' => 21, 'title' => 'Trim', 'rules' => 'max:20'],
+            'quote_type' => ['index' => 22, 'title' => 'Type', 'rules' => 'required|max:4'],
+            'product_type' => ['index' => 23, 'title' => 'Product Type', 'rules' => 'max:100'],
+            'registration_location' => ['index' => 24, 'title' => 'Registration Location', 'rules' => 'max:100'],
+            'previous_advisor' => ['index' => 25, 'title' => 'Previous Advisor Email', 'rules' => 'max:100'],
+            'notes' => ['index' => 26, 'title' => 'Notes', 'rules' => 'max:200'],
         ];
     }
 
@@ -137,14 +144,15 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
      */
     public function mapQuoteData($row)
     {
-        $fields = $this->getColumns();
+        $columns = $this->getColumns();
 
         $quoteData = [];
-        foreach ($fields as $key => $field) {
-            if (! empty($field['type']) && $field['type'] == 'date') {
-                $quoteData[$key] = Carbon::instance(Date::excelToDateTimeObject($row[$field['index']]))->format('d/m/Y');
+        foreach ($columns as $key => $column) {
+            if (! empty($column['type']) && $column['type'] == 'date') {
+                $quoteData[$key] = (isset($row[$column['index']])) ? Carbon::instance(Date::excelToDateTimeObject($row[$column['index']]))->format('d/m/Y') : null;
             } else {
-                $quoteData[$key] = $row[$field['index']];
+                //if(!isset($row[$column['index']])) dd($column['index'], $row, $key);
+                $quoteData[$key] = $row[$column['index']] ?? null;
             }
         }
 
@@ -191,7 +199,6 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
             AfterImport::class => function (AfterImport $event) {
                 $failed = [];
-
                 foreach ($this->failures() as $failure) {
                     if (! isset($failed[$failure->row()])) {
                         $quoteData = $this->mapQuoteData($failure->values());
@@ -202,14 +209,12 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
                             'data' => $quoteData,
                             'batch' => $quoteData['batch'],
                             'status' => RenewalProcessStatuses::VALIDATION_FAILED,
-                            'type' => RenewalsUploadType::CREATE_LEADS,
+                            'type' => RenewalsUploadType::UPDATE_LEADS,
                         ];
 
                         $this->failedCount++;
                     }
 
-                    //todo: remove code later
-                    //$failed[$failure->row()]['validation_errors'][$failure->attribute()] = $failure->errors();
                     foreach ($failure->errors() as $error) {
                         $failed[$failure->row()]['validation_errors'][] = $error;
                     }
