@@ -74,6 +74,7 @@ class SendEmailCustomerService extends BaseService
                     'planType' => isset($emailData->planType) ? $emailData->planType : null,
                     'planName' => isset($emailData->planName) ? $emailData->planName : null,
                     'repairType' => isset($emailData->repairType) ? $emailData->repairType : null,
+                    'providerCode' => isset($emailData->providerCode) ? $emailData->providerCode : null,
                     'providerName' => isset($emailData->providerName) ? $emailData->providerName : null,
                     'singleQuoteUrl' => isset($emailData->singleQuoteUrl) ? $emailData->singleQuoteUrl : null,
                     'discountPremium' => isset($emailData->discountPremium) ? $emailData->discountPremium : 0,
@@ -106,7 +107,8 @@ class SendEmailCustomerService extends BaseService
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->quoteCdbId.' Class: '.get_class();
+            $quoteCdbId = isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null;
+            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
             Log::error($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
