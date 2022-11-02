@@ -1059,6 +1059,7 @@ class CRUDController extends Controller
             'planType' => isset($quotePlan->repairType) && strtolower($quotePlan->repairType) == 'tpl' ? 'Third Party Liability' : 'Comprehensive',
             'planName' => isset($quotePlan->name) ? $quotePlan->name : null,
             'repairType' => isset($quotePlan->repairType) ? $quotePlan->repairType : null,
+            'providerCode' => isset($quotePlan->providerCode) ? $quotePlan->providerCode : null,
             'providerName' => isset($quotePlan->providerName) ? $quotePlan->providerName : null,
             'singleQuoteUrl' => $singleQuoteUrl,
             'discountPremium' => isset($quotePlan->discountPremium) ? $quotePlan->discountPremium : null,
