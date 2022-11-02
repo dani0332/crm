@@ -758,9 +758,6 @@ class RenewalsUploadService
                 }
                 switch($lead->quote_type) {
                     case QuoteTypeShortCode::CAR:
-                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
-                            $leadValidationErrors->push('No Quote exists against this Policy Number, either create quote or check policy number');
-                        }
                         if (! CarMake::where('text', $leadData->make)->first()) {
                             $leadValidationErrors->push('Invalid Car Make');
                         }
@@ -774,6 +771,9 @@ class RenewalsUploadService
                             if (CarQuote::where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $leadData->end_date)->first()) {
                                 $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
                             }
+                        }
+                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
+                            $leadValidationErrors->push('No Quote exists against this Policy Number, either create quote or check policy number');
                         }
                         break;
                 }
