@@ -30,7 +30,7 @@ class RenewalsUploadController extends Controller
     }
 
     /**
-     * process upload and create import
+     * process upload and create import.
      *
      * @param  RenewalsUploadRequest  $request
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
@@ -43,7 +43,7 @@ class RenewalsUploadController extends Controller
     }
 
     /**
-     * process upload and update import
+     * process upload and update import.
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
@@ -279,10 +279,5 @@ class RenewalsUploadController extends Controller
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
 
         return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
-    }
-
-    public function tester()
-    {
-        $this->renewalsUploadFileService->uploadedLeadsValidation();
     }
 }
