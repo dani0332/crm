@@ -519,15 +519,18 @@ class RenewalsUploadService
      */
     public function modifyPlan($data, $quote)
     {
-        $provider = InsuranceProvider::where('text', $data['provider_name'])->with(['carPlan' => function ($q) use ($data) {
-            $q->where([
-                'text' => $data['plan_name'], 'repair_type' => $data['plan_type'],
-            ]);
-        }])->first();
+        $provider = InsuranceProvider::where('text', $data['provider_name'])->first();
+
+        $carPlan  = CarPlan::where([
+            'text' => $data['plan_name'],
+            'repair_type' => $data['plan_type'],
+            'provider_id' => $provider->id
+        ])->first();
+
 
         //todo: get insurerTrimId from car_quote_valuation, also make new model CarQuoteValuation
         $planData = Arr::only($data, ['premium', 'car_value', 'excess']);
-        $planData['plan_id'] = $provider->carPlan->id;
+        $planData['plan_id'] = $carPlan->id;
         $planData['quote_uuid'] = $quote->uuid;
         $planData['created_by'] = $quote->created_by;
 
