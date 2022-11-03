@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Http\Livewire;
+
+use App\Models\SanctionListDownloads;
+use Illuminate\Database\Eloquent\Builder;
+use Rappasoft\LaravelLivewireTables\DataTableComponent;
+use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
+use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+
+class AmlDownloadHistoryTable extends DataTableComponent
+{
+    protected $model = SanctionListDownloads::class;
+    public $url;
+
+    public function configure(): void
+    {
+        $this->setPrimaryKey('id')
+            ->setDefaultSort('updated_at', 'desc')
+            ->setColumnSelectDisabled()
+            ->setUseHeaderAsFooterEnabled()
+            ->setFilterLayoutSlideDown();
+
+        // $this->setDebugEnabled();
+    }
+
+    public function columns(): array
+    {
+        return [
+            Column::make('Id'),
+            Column::make('File Name')
+                ->searchable()
+                ->format(
+                    function ($value, $row, Column $column) {
+                        if ($row->file_name === null) {
+                            return 'NULL';
+                        } else {
+                            return "<a href='".$this->url.'/'.$row->file_name."' title='Download File' target='_blank' class='text-sky-700'>".$row->file_name.'</a>';
+                        }
+                    }
+                )
+                ->html(),
+            Column::make('Source')
+                ->sortable(),
+            Column::make('Total Records'),
+            BooleanColumn::make('Is Processed'),
+            Column::make('Created at'),
+            Column::make('Updated at')
+                ->sortable(),
+        ];
+    }
+
+    public function filters(): array
+    {
+        return [
+            SelectFilter::make('Is Processed')
+                ->options([
+                    '' => 'All',
+                    '1' => 'Yes',
+                    '0' => 'No',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if ($value === '1') {
+                        $builder->where('is_processed', true);
+                    } elseif ($value === '0') {
+                        $builder->where('is_processed', false);
+                    }
+                }),
+        ];
+    }
+}
