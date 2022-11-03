@@ -100,7 +100,7 @@ class SendEmailCustomerService extends BaseService
 
         // addEmailStatus is for quote modules only
         if (isset($messageId) && isset($emailData->quoteTypeId) && isset($emailData->quoteId)) {
-            UpdateSendPolicySubjectJob::dispatch($emailData, $messageId)->delay(now()->addSeconds(7));
+            // UpdateSendPolicySubjectJob::dispatch($emailData, $messageId)->delay(now()->addSeconds(7));
         }
 
         return $responseCode;
