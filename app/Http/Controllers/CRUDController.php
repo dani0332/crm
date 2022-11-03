@@ -1067,6 +1067,7 @@ class CRUDController extends Controller
             'damageLimitFeatureValue' => isset($damageLimitFeatureValue) ? $damageLimitFeatureValue : null,
             'freeAddons' => $freeAddons,
             'listQuotePlans' => $listQuotePlans,
+            'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode=',
         ];
 
         $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
