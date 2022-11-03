@@ -82,6 +82,7 @@ class SendEmailCustomerService extends BaseService
                     'damageLimitFeatureValue' => isset($emailData->damageLimitFeatureValue) ? $emailData->damageLimitFeatureValue : null,
                     'freeAddons' => isset($emailData->freeAddons) ? $emailData->freeAddons : null,
                     'listQuotePlans' => isset($emailData->listQuotePlans) ? $emailData->listQuotePlans : null,
+                    'multipleQuoteUrl' => isset($emailData->multipleQuoteUrl) ? $emailData->multipleQuoteUrl : null,
                 ],
                 'tags' => [
                     $tag,
