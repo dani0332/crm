@@ -51,9 +51,13 @@ class RenewalsUploadService
     protected $insuranceProviderService;
     protected $carQuoteService;
 
-    public function __construct(RenewalsAddonServices $renewalsAddonService, CheckAmlService $checkAMLService,
-                                CapiRequestService $capiRequestService, InsuranceProviderService $insuranceProviderService, CarQuoteService $carQuoteService)
-    {
+    public function __construct(
+        RenewalsAddonServices $renewalsAddonService,
+        CheckAmlService $checkAMLService,
+        CapiRequestService $capiRequestService,
+        InsuranceProviderService $insuranceProviderService,
+        CarQuoteService $carQuoteService
+    ) {
         $this->renewalsAddonService = $renewalsAddonService;
         $this->checkAMLService = $checkAMLService;
         $this->capiRequestService = $capiRequestService;
@@ -403,7 +407,7 @@ class RenewalsUploadService
     }
 
     /**
-     * ignore fields having empty/null
+     * ignore fields having empty/null.
      *
      * @param $values
      * @return \Illuminate\Support\Collection
@@ -416,7 +420,7 @@ class RenewalsUploadService
     }
 
     /**
-     * convert date from d/m/Y to Y-m-d
+     * convert date from d/m/Y to Y-m-d.
      *
      * @param $date
      * @return string
@@ -511,7 +515,7 @@ class RenewalsUploadService
     }
 
     /**
-     * todo: add conditions if before updating plan info
+     * todo: add conditions if before updating plan info.
      *
      * @param $data
      * @param $quote
@@ -521,12 +525,11 @@ class RenewalsUploadService
     {
         $provider = InsuranceProvider::where('text', $data['provider_name'])->first();
 
-        $carPlan  = CarPlan::where([
+        $carPlan = CarPlan::where([
             'text' => $data['plan_name'],
             'repair_type' => $data['plan_type'],
-            'provider_id' => $provider->id
+            'provider_id' => $provider->id,
         ])->first();
-
 
         //todo: get insurerTrimId from car_quote_valuation, also make new model CarQuoteValuation
         $planData = Arr::only($data, ['premium', 'car_value', 'excess']);

@@ -280,4 +280,9 @@ class RenewalsUploadController extends Controller
 
         return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
     }
+
+    public function tester()
+    {
+        $this->renewalsUploadFileService->uploadedLeadsValidation();
+    }
 }
