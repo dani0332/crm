@@ -56,4 +56,17 @@ class InsuranceProvider extends BaseModel implements AuditableContract
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function carPlans()
+    {
+        return $this->hasMany(CarPlan::class, 'provider_id');
+    }
+
+    public function carPlan()
+    {
+        return $this->hasOne(CarPlan::class, 'provider_id');
+    }
 }

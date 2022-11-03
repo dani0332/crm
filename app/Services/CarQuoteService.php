@@ -929,6 +929,62 @@ class CarQuoteService extends BaseService
         return $listCarQuotePlanAddons;
     }
 
+    /**
+     * modify plan during upload & update process
+     *
+     * @param $data
+     * @return false
+     */
+    public function renewalModifyPlan($data)
+    {
+        $carPlanData = [
+            'quoteUID' => $data['quote_uuid'],
+            'update' => true,
+            'url' => strval(request()->current_url),
+            'ipAddress' => request()->ip(),
+            'userAgent' => request()->header('User-Agent'),
+            'userId' => $data['created_by'],
+        ];
+
+        $plan['planId'] = $data['plan_id'];
+
+        if (! empty($data['premium'])) {
+            $plan['actualPremium'] = (float) $data['premium'];
+            $plan['discountPremium'] = (float) $data['premium'];
+        }
+
+        if (! empty($data['car_value'])) {
+            $plan['carValue'] = $data['car_value'];
+        }
+
+        if (! empty($data['excess'])) {
+            $plan['excess'] = (float) $data['excess'];
+        }
+
+        if (! empty($data['trim_id'])) {
+            $plan['insurerTrimId'] = strval($data['trim_id']);
+        }
+
+        $carPlanData['plans'][] = $plan;
+
+        $apiCreds = [
+            'apiEndPoint' => config('constants.KEN_API_ENDPOINT').'/save-manual-car-quote-plan',
+            'apiToken' => config('constants.KEN_API_TOKEN'),
+            'apiTimeout' => config('constants.KEN_API_TIMEOUT'),
+            'apiUserName' => config('constants.KEN_API_USER'),
+            'apiPassword' => config('constants.KEN_API_PWD'),
+        ];
+
+        $response = $this->httpService->processRequest($carPlanData, $apiCreds);
+
+        if ($response == 200) {
+            //todo: confirm if we need to lock car quote
+            return $this->lockCarQuote($data['quote_uuid']);
+        }
+
+        return false;
+    }
+
     public function carPlanModify($request)
     {
         $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-car-quote-plan';
