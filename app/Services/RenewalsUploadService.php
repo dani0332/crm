@@ -16,6 +16,7 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarPlan;
 use App\Models\CarQuote;
+use App\Models\CarQuoteValuation;
 use App\Models\CarTypeInsurance;
 use App\Models\ClaimHistory;
 use App\Models\Customer;
@@ -48,13 +49,16 @@ class RenewalsUploadService
     protected $checkAMLService;
     protected $capiRequestService;
     protected $insuranceProviderService;
+    protected $carQuoteService;
 
-    public function __construct(RenewalsAddonServices $renewalsAddonService, CheckAmlService $checkAMLService, CapiRequestService $capiRequestService, InsuranceProviderService $insuranceProviderService)
+    public function __construct(RenewalsAddonServices $renewalsAddonService, CheckAmlService $checkAMLService,
+                                CapiRequestService $capiRequestService, InsuranceProviderService $insuranceProviderService, CarQuoteService $carQuoteService)
     {
         $this->renewalsAddonService = $renewalsAddonService;
         $this->checkAMLService = $checkAMLService;
         $this->capiRequestService = $capiRequestService;
         $this->insuranceProviderService = $insuranceProviderService;
+        $this->carQuoteService = $carQuoteService;
     }
 
     /*
@@ -135,10 +139,11 @@ class RenewalsUploadService
             //todo: correct these values
             $totalRows = $renewalsUpload->getRowCount();
             $failedRows = $renewalsUpload->getFailedCount();
+
             $renewalsUploadLead->update([
                 'cannot_upload' => $failedRows,
                 'good' => $totalRows,
-                'total_records' => $totalRows,
+                'total_records' => ($totalRows + $failedRows),
             ]);
 
             $this->uploadedLeadsValidation();
@@ -390,7 +395,7 @@ class RenewalsUploadService
 
             //todo: verify this, run car quote plans
             if ($quoteType->code == quoteTypeCode::Car) {
-                GetCarQuotePlansJob::dispatch($quote->uuid);
+                GetCarQuotePlansJob::dispatch($renewalQuoteProcess, $quote->uuid);
             }
 
             return $quote;
@@ -408,6 +413,17 @@ class RenewalsUploadService
         return collect($values)->filter(function ($value) {
             return $value ?? null;
         })->toArray();
+    }
+
+    /**
+     * convert date from d/m/Y to Y-m-d
+     *
+     * @param $date
+     * @return string
+     */
+    public function formatDate($date)
+    {
+        return Carbon::createFromFormat('d/m/Y', $date)->format('Y-m-d');
     }
 
     /**
@@ -456,14 +472,14 @@ class RenewalsUploadService
                 'last_name' => $customerData['last_name'],
                 'email' => $customerData['email'],
                 'mobile_no' => $customerData['mobile_no'],
-                'dob' => (! empty($data['dob'])) ? Carbon::createFromFormat('d/m/Y', $data['dob'])->format('Y-m-d') : null,
+                'dob' => (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null,
                 'car_type_insurance_id' => $carTypeOfInsurance->id ?? null,
                 'claim_history_id' => $claimHistory->id ?? null,
                 'nationality_id' => $nationality->id ?? null,
                 'emirate_of_registration_id' => $emirate->id ?? null,
                 'uae_license_held_for_id' => $uaeLicenseHeldFor,
                 'car_value' => $data['car_value'],
-                'previous_policy_expiry_date' => (! empty($data['end_date'])) ? Carbon::createFromFormat('d/m/Y', $data['end_date'])->format('Y-m-d') : null,
+                'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
                 'previous_quote_policy_premium' => $data['premium'],
                 'advisor_id' => $advisorId,
                 'renewal_batch' => $data['batch'],
@@ -480,17 +496,59 @@ class RenewalsUploadService
                 $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
             }
 
-            $quote->update($quoteData);
+            //todo: uncomment this, having issues
+            //$quote->update($quoteData);
 
             if (! empty($advisorId)) {
                 $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
             }
 
+            //todo: check if this fails
+            $response = $this->modifyPlan($data, $quote);
+
             return true;
         });
     }
 
+    /**
+     * todo: add conditions if before updating plan info
+     *
+     * @param $data
+     * @param $quote
+     * @return void
+     */
+    public function modifyPlan($data, $quote)
+    {
+        $provider = InsuranceProvider::where('text', $data['provider_name'])->first();
+
+        $carPlan  = CarPlan::where([
+            'text' => $data['plan_name'],
+            'repair_type' => $data['plan_type'],
+            'provider_id' => $provider->id
+        ])->first();
+
+
+        //todo: get insurerTrimId from car_quote_valuation, also make new model CarQuoteValuation
+        $planData = Arr::only($data, ['premium', 'car_value', 'excess']);
+        $planData['plan_id'] = $carPlan->id;
+        $planData['quote_uuid'] = $quote->uuid;
+        $planData['created_by'] = $quote->created_by;
+
+        //trim is optional
+        if (! empty($data['trim'])) {
+            $valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first();
+            $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
+            if (! empty($trims[$data['trim']]['admeId'])) {
+                $planData['trim_id'] = $trims[$data['trim']]['admeId'];
+            }
+        }
+
+        //todo: what to do when it fails
+        return $this->carQuoteService->renewalModifyPlan($planData);
+    }
+
     /*
+     * // todo: remove this code
     * @name createUpdateQuote()
     * @params $quoteData - extracted data from excel file, $qouteType - type of quote
     * @returns custom function decalred against each quote type else returns false

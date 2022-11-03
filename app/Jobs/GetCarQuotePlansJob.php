@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\RenewalQuoteProcess;
 use App\Services\CarQuoteService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,7 +24,7 @@ class GetCarQuotePlansJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($uuid)
+    public function __construct(RenewalQuoteProcess $renewalQuoteProcess, $uuid)
     {
         $this->uuid = $uuid;
     }

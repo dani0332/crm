@@ -25,13 +25,23 @@ class RenewalQuoteProcess extends Model
 
     /**
      * json encode data.
+     * todo: fix later as its not preserving order
      *
      * @param $value
      * @return void
      */
     public function setDataAttribute($value)
     {
-        $this->attributes['data'] = json_encode($value);
+        $this->attributes['data'] = json_encode(json_encode($value));
+    }
+
+    /**
+     * @param $data
+     * @return mixed
+     */
+    public function getDataAttribute($data)
+    {
+        return json_decode(json_decode($data, true), true);
     }
 
     /**
