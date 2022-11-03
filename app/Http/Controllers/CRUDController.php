@@ -1066,6 +1066,7 @@ class CRUDController extends Controller
             'damageLimitFeatureText' => isset($damageLimitFeatureText) ? $damageLimitFeatureText : null,
             'damageLimitFeatureValue' => isset($damageLimitFeatureValue) ? $damageLimitFeatureValue : null,
             'freeAddons' => $freeAddons,
+            'listQuotePlans' => $listQuotePlans,
         ];
 
         $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
