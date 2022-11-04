@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\PaymentStatusEnum;
-use App\Rules\ValidateQuoteObject;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -42,15 +41,14 @@ class DeleteQuoteDocumentRequest extends FormRequest
      */
     public function withValidator($validator)
     {
-        $validator->after(function ($validator)
-        {
+        $validator->after(function ($validator) {
             //check for quote records if exists
             if ((! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid))) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
             }
 
             //validate if payment is authorized
-            if(isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
+            if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
                 $validator->errors()->add('type', 'Documents can be deleted once payment is authorized.');
             }
         });

@@ -57,7 +57,7 @@ class QuoteDocumentRequest extends FormRequest
             }
 
             //validate if payment is authorized
-            if(isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
+            if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
                 $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
             }
 
