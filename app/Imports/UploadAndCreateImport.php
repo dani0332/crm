@@ -29,7 +29,6 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
     private $rows = 0;
     private $failedCount = 0;
-
     private $totalRows;
     private $fileName;
     private $renewalImportCode;
