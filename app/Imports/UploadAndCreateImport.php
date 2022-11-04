@@ -29,7 +29,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
     private $rows = 0;
     private $failedCount = 0;
-    private $renewalsUploadService;
+
     private $totalRows;
     private $fileName;
     private $renewalImportCode;
@@ -40,9 +40,8 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
      * @param  RenewalsUploadService  $renewalsUploadService
      * @param $renewalsUploadLead
      */
-    public function __construct(RenewalsUploadService $renewalsUploadService, RenewalsUploadLeads $renewalsUploadLead)
+    public function __construct(RenewalsUploadLeads $renewalsUploadLead)
     {
-        $this->renewalsUploadService = $renewalsUploadService;
         $this->renewalsUploadLead = $renewalsUploadLead;
     }
 

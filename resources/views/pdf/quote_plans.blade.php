@@ -303,12 +303,14 @@
                         }
                     }
                 }
-                
+
             }
 
             $quotePlan->repairTypeInfo = ($quotePlan->repairType == \App\Enums\CarPlanType::COMP) ? \App\Enums\CarPlanType::NONAGENCY : $quotePlan->repairType;
             $quotePlan->total = $quotePlan->discountPremium + $quotePlan->vat;
             $plans[$quotePlan->id] = $quotePlan;
+
+            dd($quotePlan);
         }
 
         $features = [
