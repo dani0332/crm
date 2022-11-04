@@ -16,7 +16,7 @@ use App\Enums\PermissionsEnum;
   </div>
 
   <div class="flex-1 overflow-hidden hover:overflow-y-auto bg-gradient-to-b from-sky-400 to-sky-600 text-white p-2">
-    menu
+    @include('partials.sidebar')
   </div>
 
 </aside>
