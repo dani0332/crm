@@ -139,7 +139,7 @@ class RenewalsUploadService
     }
 
     /**
-     * this will be triggered by job to start import process for upload and create
+     * this will be triggered by job to start import process for upload and create.
      *
      * @param  RenewalsUploadLeads  $renewalsUploadLead
      * @return void
@@ -160,7 +160,7 @@ class RenewalsUploadService
 
             $renewalsUploadLead->update([
                 'cannot_upload' => $failedRows,
-                'good' => $totalRows,
+                'good' => 0,
                 'total_records' => ($totalRows + $failedRows),
             ]);
 
@@ -1067,15 +1067,18 @@ class RenewalsUploadService
                     $lead->status = RenewalProcessStatuses::BAD_DATA;
                 }
                 $lead->save();
+                $renewalUploadLead = $lead->renewalUploadLead;
                 if ($lead->status == RenewalProcessStatuses::VALIDATED) {
+                    $renewalUploadLead->good += 1;
                     if ($lead->type == RenewalsUploadType::CREATE_LEADS) {
-                        //Insert lead creation function call
                         $this->createQuote($lead);
                     } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
-                        //Insert lead update function call
                         $this->updateQuote($lead);
                     }
+                } else {
+                    $renewalUploadLead->cannot_upload += 1;
                 }
+                $renewalUploadLead->save();
             }
         });
     }
