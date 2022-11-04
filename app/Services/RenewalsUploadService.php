@@ -11,7 +11,7 @@ use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
-use App\Jobs\GetCarQuotePlansJob;
+use App\Jobs\ProcessRenewalsUploadCreate;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarPlan;
@@ -107,14 +107,11 @@ class RenewalsUploadService
      */
     public function createRenewalsLead($uploadedFile, $renewalImportType)
     {
-        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
-        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
-
         return RenewalsUploadLeads::create([
             'renewal_import_code' => $this->generateRandomString(),
             'file_name' => $uploadedFile['file_name'],
-            'file_path' => $azureStorageUrl.$azureStorageContainer.'/'.$uploadedFile['azure_file_path'],
-            'status' => ProcessStatusCode::IN_PROGRESS,
+            'file_path' => $uploadedFile['azure_file_path'],
+            'status' => ProcessStatusCode::UPLOADED,
             'good' => 0,
             'created_by_id' => auth()->user()->id,
             'renewal_import_type' => $renewalImportType,
@@ -129,16 +126,32 @@ class RenewalsUploadService
      */
     public function renewalsUploadCreate($data)
     {
-        return DB::transaction(function () {
-            //upload renewal file to azure
-            $uploadedFile = $this->uploadRenewalsFile();
+        //upload renewal file to azure
+        $uploadedFile = $this->uploadRenewalsFile();
 
-            //create lead record
-            $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::CREATE_LEADS);
+        //create lead record
+        $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::CREATE_LEADS);
+
+        //start import process
+        ProcessRenewalsUploadCreate::dispatch($renewalsUploadLead);
+
+        return true;
+    }
+
+    /**
+     * this will be triggered by job to start import process for upload and create
+     *
+     * @param  RenewalsUploadLeads  $renewalsUploadLead
+     * @return void
+     */
+    public function processUploadCreate(RenewalsUploadLeads $renewalsUploadLead)
+    {
+        $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
             //start file import
-            $renewalsUpload = new UploadAndCreateImport($this, $renewalsUploadLead);
-            $renewalsUpload->import(request()->file('file_name'));
+            $renewalsUpload = new UploadAndCreateImport($renewalsUploadLead);
+            $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
 
             //update counts
             //todo: correct these values
@@ -151,9 +164,37 @@ class RenewalsUploadService
                 'total_records' => ($totalRows + $failedRows),
             ]);
 
-            $this->uploadedLeadsValidation();
+            return $renewalsUploadLead;
+        });
 
-            return true;
+        $this->uploadedLeadsValidation();
+        $this->fetchLeadPlans();
+
+        $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+
+        return true;
+    }
+
+    public function fetchLeadPlans()
+    {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::PROCESSED)->where('quote_type', QuoteTypeShortCode::CAR)->chunk(50, function ($leads) {
+            foreach ($leads as $lead) {
+                $leadData = (object) $lead->data;
+
+                $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
+                $quoteObject = $this->createQuoteObject($quoteType->code);
+
+                if ($quoteObject && ($quote = $quoteObject->where([
+                    'previous_quote_policy_number' => $lead->policy_number,
+                    'previous_policy_expiry_date' => $this->formatDate($leadData->end_date),
+                ])->first())) {
+                    $plans = $this->carQuoteService->getPlans($quote->uuid);
+                    if (isset($plans[0]->id)) {
+                        //update status to plans fetched
+                        $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED]);
+                    }
+                }
+            }
         });
     }
 
@@ -355,7 +396,7 @@ class RenewalsUploadService
                 'renewal_import_code' => $renewalUploadLead->renewal_import_code,
 
                 'previous_quote_policy_number' => $data['policy_number'],
-                'previous_policy_expiry_date' => $data['end_date'],
+                'previous_policy_expiry_date' => $this->formatDate($data['end_date']),
                 'previous_quote_policy_premium' => $data['premium'],
                 'previous_advisor_id' => $previousAdvisorId,
 
@@ -385,7 +426,7 @@ class RenewalsUploadService
 
             //todo: business type insurance id is pending
 
-            $quoteObject = $this->createQuoteObject(ucfirst($quoteType->code));
+            $quoteObject = $this->createQuoteObject($quoteType->code);
             $quote = $quoteObject->create($quoteData);
 
             //send AML request
@@ -397,11 +438,6 @@ class RenewalsUploadService
             }
 
             $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED]);
-
-            //todo: verify this, run car quote plans
-            if ($quoteType->code == quoteTypeCode::Car) {
-                GetCarQuotePlansJob::dispatch($renewalQuoteProcess, $quote->uuid);
-            }
 
             return $quote;
         });

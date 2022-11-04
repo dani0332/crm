@@ -2,31 +2,28 @@
 
 namespace App\Jobs;
 
-use App\Models\RenewalQuoteProcess;
-use App\Services\CarQuoteService;
+use App\Models\RenewalsUploadLeads;
+use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-/**
- * run this job to after upload & create lead to fetch plans of newly created quote
- */
-class GetCarQuotePlansJob implements ShouldQueue
+class ProcessRenewalsUploadCreate //implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $uuid;
+    protected $renewalsUploadLead;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(RenewalQuoteProcess $renewalQuoteProcess, $uuid)
+    public function __construct(RenewalsUploadLeads $renewalsUploadLead)
     {
-        $this->uuid = $uuid;
+        $this->renewalsUploadLead = $renewalsUploadLead;
     }
 
     /**
@@ -34,8 +31,8 @@ class GetCarQuotePlansJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle(CarQuoteService $carQuoteService)
+    public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        return $carQuoteService->getPlans($this->uuid);
+        return $renewalsUploadService->processUploadCreate($this->renewalsUploadLead);
     }
 }
