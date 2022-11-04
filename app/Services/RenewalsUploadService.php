@@ -36,6 +36,7 @@ use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Config;
+use DateTime;
 use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -960,6 +961,15 @@ class RenewalsUploadService
                 if ($leadData->advisor && ! User::where('email', $leadData->advisor)->first()) {
                     $leadValidationErrors->push('Invalid Advisor Email Address');
                 }
+                if (isset($leadData->start_date) && $leadData->start_date && ! $this->validateDate($leadData->start_date)) {
+                    $leadValidationErrors->push('Invalid Start Date');
+                }
+                if (isset($leadData->end_date) && $leadData->end_date && ! $this->validateDate($leadData->start_date)) {
+                    $leadValidationErrors->push('Invalid End Date');
+                }
+                if (isset($leadData->dob) && $leadData->dob && ! $this->validateDate($leadData->dob)) {
+                    $leadValidationErrors->push('Invalid Date of Birth');
+                }
                 switch($lead->quote_type) {
                     case QuoteTypeShortCode::CAR:
                         if (! CarMake::where('text', $leadData->make)->first()) {
@@ -1032,5 +1042,12 @@ class RenewalsUploadService
                 }
             }
         });
+    }
+
+    private function validateDate($date, $format = 'd/m/Y')
+    {
+        $d = DateTime::createFromFormat($format, $date);
+
+        return $d && $d->format($format) === $date;
     }
 }
