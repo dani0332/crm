@@ -1,5 +1,4 @@
 const mix = require('laravel-mix');
-const tailwindcss = require('tailwindcss');
 mix.options({
   terser: {
     extractComments: false,
@@ -18,9 +17,7 @@ mix.options({
 
 mix
   .js('resources/js/alpine/alpine.js', 'public/js')
-  .postCss('resources/css/livewire.css', 'public/css', [
-    require('tailwindcss'),
-  ]);
+  .postCss('resources/css/livewire.css', 'public/css', []);
 // mix
 //   .js('resources/js/app.js', 'public/js')
 //   .react()
