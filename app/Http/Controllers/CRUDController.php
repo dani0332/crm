@@ -229,7 +229,7 @@ class CRUDController extends Controller
             }
         }
         $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
-
+        $request->policy_start_date = isset($request->policy_start_date) ? Carbon::createFromFormat('d/m/Y', $request->policy_start_date)->format(get_dob_date_format()) : null;
         if ($request->has('email')) {
             $this->validate($request, [
                 'email' => 'required|email:rfc,dns|max:150',
@@ -339,7 +339,7 @@ class CRUDController extends Controller
         $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $record->id);
         $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);
         $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
-
+        $record->policy_start_date = isset($record->policy_start_date) ? date('d/m/Y', strtotime($record->policy_start_date)) : null;
         $isQuoteDocumentEnabled = $this->quoteDocumentService->isEnabled($model->modelType);
         $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($model->modelType, $record->id);
         $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
@@ -451,6 +451,7 @@ class CRUDController extends Controller
         }
 
         $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
+        $record->policy_start_date = isset($record->policy_start_date) ? date('d/m/Y', strtotime($record->policy_start_date)) : null;
 
         return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));
     }
@@ -479,6 +480,7 @@ class CRUDController extends Controller
             }
         }
         $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
+        $request->policy_start_date = isset($request->policy_start_date) ? Carbon::createFromFormat('d/m/Y', $request->policy_start_date)->format(get_dob_date_format()) : null;
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
@@ -620,7 +622,8 @@ class CRUDController extends Controller
                     $providerName = $listQuotePlan->providerName;
                     $actualPremium = $listQuotePlan->actualPremium;
                     $discountPremium = $listQuotePlan->discountPremium;
-                    $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                    $listQuotePlanBenefitsInpatient = isset($listQuotePlan->benefits->inpatient) ? $listQuotePlan->benefits->inpatient : [];
+                    $listQuotePlanBenefitsOutpatient = isset($listQuotePlan->benefits->outpatient) ? $listQuotePlan->benefits->outpatient : [];
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                     $listQuotePlanBenefitsCoInsurance = $listQuotePlan->benefits->coInsurance;
@@ -638,11 +641,11 @@ class CRUDController extends Controller
 
             return view('shared.plan_details', compact([
                 'listQuotePlanName', 'providerCode', 'providerName',
-                'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
+                'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInpatient',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetails', 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
                 'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover',
-                'listQuotePlanBenefitsMaternityCover', 'members', 'planId', 'quoteId', 'isManualPlan',
+                'listQuotePlanBenefitsMaternityCover', 'members', 'planId', 'quoteId', 'isManualPlan', 'listQuotePlanBenefitsOutpatient',
             ]));
         }
     }
