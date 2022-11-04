@@ -965,7 +965,7 @@ class RenewalsUploadService
                     $leadValidationErrors->push('Invalid Start Date');
                 }
                 if (isset($leadData->end_date) && $leadData->end_date && ! $this->validateDate($leadData->start_date)) {
-                    $leadValidationErrors->push('Invalid Start Date');
+                    $leadValidationErrors->push('Invalid End Date');
                 }
                 if (isset($leadData->dob) && $leadData->dob && ! $this->validateDate($leadData->dob)) {
                     $leadValidationErrors->push('Invalid Date of Birth');
