@@ -351,7 +351,7 @@ class CRUDController extends Controller
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
-            $listQuotePlans = $this->carQuoteService->getPlans($id);
+            $listQuotePlans = $this->carQuoteService->getPlans($id, false);
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
@@ -565,7 +565,7 @@ class CRUDController extends Controller
 
     public function carQuotePlanDetails($quoteId, $planId)
     {
-        $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
+        $quotePlans = $this->carQuoteService->getQuotePlans($quoteId, false);
         $isPlanUpdateActive = $this->applicationStorageService->getIsActiveByKey('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
@@ -698,7 +698,7 @@ class CRUDController extends Controller
     {
         $quoteUuId = $request->quoteUuId;
         $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
-        $listQuotePlans = $this->carQuoteService->getPlans($quoteUuId);
+        $listQuotePlans = $this->carQuoteService->getPlans($quoteUuId, false);
 
         return view('components.car-quote-add-plan', compact('quoteUuId', 'insuranceProviders', 'listQuotePlans'));
     }
@@ -1013,7 +1013,7 @@ class CRUDController extends Controller
     {
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($request->quote_plans_count);
-        $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid);
+        $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true);
 
         $freeAddons = [];
         foreach ($listQuotePlans as $quotePlan) { // only damage_limit feature

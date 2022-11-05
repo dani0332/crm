@@ -419,7 +419,7 @@ class ClaimController extends Controller
         $insuranceProviderId = $request->insuranceProviderId;
         $quoteUuId = $request->quoteUuId;
 
-        $quotePlans = $this->carQuoteService->getQuotePlans($quoteUuId);
+        $quotePlans = $this->carQuoteService->getQuotePlans($quoteUuId, false);
 
         $quotePlanId = [];
         $listQuotePlans = [];
