@@ -1008,10 +1008,10 @@ class RenewalsUploadService
                 }
                 switch($lead->quote_type) {
                     case QuoteTypeShortCode::CAR:
-                        if (! CarMake::where('text', $leadData->make)->first()) {
+                        if ($leadData->make && ! CarMake::where('text', $leadData->make)->first()) {
                             $leadValidationErrors->push('Invalid Car Make');
                         }
-                        if (! CarModel::where('text', $leadData->model)->first()) {
+                        if ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
                             $leadValidationErrors->push('Invalid Car Model');
                         }
                         if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
