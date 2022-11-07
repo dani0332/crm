@@ -67,6 +67,22 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
 
+RUN \
+  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.3.0.315-linux.tar.gz | tar -C /tmp -zx && \
+  export NR_INSTALL_USE_CP_NOT_LN=1 && \
+  export NR_INSTALL_SILENT=1 && \
+  /tmp/newrelic-php5-*/newrelic-install install && \
+  rm -rf /tmp/newrelic-php5-* /tmp/nrinstall* && \
+  sed -i \
+      -e 's/"REPLACE_WITH_REAL_KEY"/"${NEW_RELIC_LICENSE_KEY}"/' \
+      -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
+      -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
+      -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
+      /usr/local/etc/php/conf.d/newrelic.ini
+
+EXPOSE 80
+EXPOSE 443
+
 # Copy code to /var/www
 ARG CACHEBUST=1
 COPY --chown=www:www-data . /var/www
@@ -94,19 +110,4 @@ RUN yarn
 RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 
-RUN \
-  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.3.0.315-linux.tar.gz | tar -C /tmp -zx && \
-  export NR_INSTALL_USE_CP_NOT_LN=1 && \
-  export NR_INSTALL_SILENT=1 && \
-  /tmp/newrelic-php5-*/newrelic-install install && \
-  rm -rf /tmp/newrelic-php5-* /tmp/nrinstall* && \
-  sed -i \
-      -e 's/"REPLACE_WITH_REAL_KEY"/"${NEW_RELIC_LICENSE_KEY}"/' \
-      -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
-      -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
-      -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
-      /usr/local/etc/php/conf.d/newrelic.ini
-
-EXPOSE 80
-EXPOSE 443
 ENTRYPOINT ["/var/www/docker/run.sh"]
