@@ -68,6 +68,7 @@ RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
 
 # Copy code to /var/www
+ARG CACHEBUST=1
 COPY --chown=www:www-data . /var/www
 
 # add root to www group
