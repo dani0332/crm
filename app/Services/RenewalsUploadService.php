@@ -30,7 +30,6 @@ use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
-use App\Models\RenewalsDump;
 use App\Models\RenewalsUploadLeads;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
@@ -219,13 +218,12 @@ class RenewalsUploadService
     }
 
     /**
-     * @param RenewalsUploadLeads $renewalsUploadLead
+     * @param  RenewalsUploadLeads  $renewalsUploadLead
      * @return bool
      */
     public function processUploadUpdate(RenewalsUploadLeads $renewalsUploadLead)
     {
-        $renewalsUploadLead = DB::transaction(function() use($renewalsUploadLead)
-        {
+        $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
             $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
             //start file import
@@ -248,6 +246,7 @@ class RenewalsUploadService
         $this->uploadedLeadsValidation();
 
         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+
         return true;
     }
 
@@ -347,19 +346,18 @@ class RenewalsUploadService
             $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
 
             // create additional emails
-            if(sizeof($customerData['additional_emails'])) {
+            if (count($customerData['additional_emails'])) {
                 foreach ($customerData['additional_emails'] as $additionalEmail) {
                     $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);
                 }
             }
 
             // create additional mobile nos
-            if(sizeof($customerData['additional_mobiles'])) {
+            if (count($customerData['additional_mobiles'])) {
                 foreach ($customerData['additional_mobiles'] as $additionalMobile) {
                     $customer->additionalContactInfo()->create(['key' => 'mobile_no', 'value' => $additionalMobile]);
                 }
             }
-
         }
 
         return $customer;
@@ -368,6 +366,7 @@ class RenewalsUploadService
     /**
      * update customer detail if required
      * todo: test its working
+     *
      * @param $customerData
      * @return void
      */
@@ -377,28 +376,30 @@ class RenewalsUploadService
         $customer = CustomerService::getCustomerById($customerId);
 
         //update primary email if changed
-        if(!empty($customerData['email']) && $customer->email != $customerData['email'] && !($exists = CustomerService::getCustomerByEmail($customerData['email'])) ) {
+        if (! empty($customerData['email']) && $customer->email != $customerData['email'] && ! ($exists = CustomerService::getCustomerByEmail($customerData['email']))) {
             $customer->email = $customerData['email'];
             $update = true;
         }
 
         //update primary mobile no if changed
-        if(!empty($customerData['mobile_no']) && $customer->mobile_no != $customerData['mobile_no'] && !($exists = CustomerService::getUniqueCustomerByMobileNo($customerData['mobile_no'])) ) {
+        if (! empty($customerData['mobile_no']) && $customer->mobile_no != $customerData['mobile_no'] && ! ($exists = CustomerService::getUniqueCustomerByMobileNo($customerData['mobile_no']))) {
             $customer->mobile_no = $customerData['mobile_no'];
             $update = true;
         }
 
-        if($update) $customer->save();
+        if ($update) {
+            $customer->save();
+        }
 
         //add additional emails or ignore
-        if(isset($customerData['additional_emails']) && sizeof($customerData['additional_emails'])) {
+        if (isset($customerData['additional_emails']) && count($customerData['additional_emails'])) {
             foreach ($customerData['additional_emails'] as $additionalEmail) {
                 $customer->additionalContactInfo()->firstOrCreate(['key' => 'email', 'value' => $additionalEmail]);
             }
         }
 
         //add additional mobile numbers or ignore
-        if(isset($customerData['additional_mobiles']) && sizeof($customerData['additional_mobiles'])) {
+        if (isset($customerData['additional_mobiles']) && count($customerData['additional_mobiles'])) {
             foreach ($customerData['additional_mobiles'] as $additionalMobile) {
                 $customer->additionalContactInfo()->firstOrCreate(['key' => 'mobile_no', 'value' => $additionalMobile]);
             }
@@ -491,8 +492,8 @@ class RenewalsUploadService
             }
 
             //set business type insurance id
-            if(!empty($data['product_type'] && $quoteType->code == quoteTypeCode::Business )) {
-                if( ($businessSubline = $this->renewalsAddonService->getBusinessSublineInsurance($data['product_type'])) ){
+            if (! empty($data['product_type'] && $quoteType->code == quoteTypeCode::Business)) {
+                if (($businessSubline = $this->renewalsAddonService->getBusinessSublineInsurance($data['product_type']))) {
                     $quoteData['business_type_of_insurance_id'] = $businessSubline->id;
                 }
             }
@@ -504,7 +505,7 @@ class RenewalsUploadService
             $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
 
             //update advisor assign date/time
-            if (!empty($advisorId)) {
+            if (! empty($advisorId)) {
                 $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
             }
 
@@ -545,7 +546,6 @@ class RenewalsUploadService
     public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
         return DB::transaction(function () use ($renewalQuoteProcess) {
-
             $data = $renewalQuoteProcess->data;
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
@@ -599,7 +599,6 @@ class RenewalsUploadService
                 'previous_advisor_id' => $previousAdvisorId,
             ]);
 
-
             if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
                 $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
             }
@@ -636,7 +635,6 @@ class RenewalsUploadService
             'provider_id' => $provider->id,
         ])->first();
 
-
         $planData = Arr::only($data, ['premium', 'car_value', 'excess']);
         $planData['plan_id'] = $carPlan->id;
         $planData['quote_uuid'] = $quote->uuid;
@@ -654,8 +652,6 @@ class RenewalsUploadService
         //todo: what to do when it fails
         return $this->carQuoteService->renewalModifyPlan($planData);
     }
-
-
 
     public function getquoteStatusIdbyCode($quoteStatus)
     {

@@ -1019,7 +1019,7 @@ class CRUDController extends Controller
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($request->quote_plans_count);
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true);
 
-        if(is_array($listQuotePlans)) {
+        if (is_array($listQuotePlans)) {
             $freeAddons = [];
             foreach ($listQuotePlans as $quotePlan) { // only damage_limit feature
                 foreach ($quotePlan->benefits->feature as $feature) {
@@ -1036,7 +1036,7 @@ class CRUDController extends Controller
                     }
                 }
             }
-    
+
             if (isset($quotePlan->providerCode) && isset($quotePlan->providerCode)) {
                 $singleQuoteUrl = config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id;
             } else {

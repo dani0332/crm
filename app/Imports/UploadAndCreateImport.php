@@ -11,7 +11,6 @@ use App\Services\RenewalsUploadService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
@@ -47,7 +46,7 @@ class UploadAndCreateImport implements ToModel, WithBatchInserts, WithStartRow, 
     }
 
     /**
-     * @param array $row
+     * @param  array  $row
      * @return User
      */
     public function model(array $row)
