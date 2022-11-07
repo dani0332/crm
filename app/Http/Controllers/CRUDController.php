@@ -351,7 +351,7 @@ class CRUDController extends Controller
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
-            $listQuotePlans = $this->carQuoteService->getPlans($id, false);
+            $listQuotePlans = $this->carQuoteService->getPlans($id);
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
@@ -565,7 +565,7 @@ class CRUDController extends Controller
 
     public function carQuotePlanDetails($quoteId, $planId)
     {
-        $quotePlans = $this->carQuoteService->getQuotePlans($quoteId, false);
+        $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
         $isPlanUpdateActive = $this->applicationStorageService->getIsActiveByKey('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
@@ -698,7 +698,7 @@ class CRUDController extends Controller
     {
         $quoteUuId = $request->quoteUuId;
         $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
-        $listQuotePlans = $this->carQuoteService->getPlans($quoteUuId, false);
+        $listQuotePlans = $this->carQuoteService->getPlans($quoteUuId);
 
         return view('components.car-quote-add-plan', compact('quoteUuId', 'insuranceProviders', 'listQuotePlans'));
     }
