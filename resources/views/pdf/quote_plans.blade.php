@@ -292,7 +292,7 @@
     $features = [
         ["code" => "heading", "title" => "BENEFITS"],
         ["code" => "damage", "title" => "Loss or Damage to the Insured Vehicle", "type" => ["feature", "inclusion", "exclusion"]],
-        ["code" => "liability", "title" => "Third Party Property Liability", "type" => "feature"],
+        ["code" => "damageLimit", "title" => "Third Party Property Liability", "type" => "feature"],
         ["code" => "bloodMoney", "title" => "Blood Money", "type" => ["inclusion", "exclusion"]],
         ["code" => "fireAndTheft", "title" => "Fire and Theft Cover", "type" => ["inclusion", "exclusion"]],
         ["code" => "stormAndFlood", "title" => "Storm, Flood", "type" => ["inclusion", "exclusion"]],
