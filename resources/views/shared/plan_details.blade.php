@@ -253,6 +253,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 				$('#insurer_quote_no').val($('#insurer_quote_no').data('value'));
 				$('#actual_premium').val($('#actual_premium').data('value'));
 				$('#excess').val($('#excess').data('value'));
+				$('#discounted_premium').val($('#discounted_premium').data('value'));
 
 				show_element("#car-value-range-validation-text");
 				lock_addons([addon_price, addon_is_selected]);
@@ -915,7 +916,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td>Discounted Premium:</td>
 								<td>
-									<input type="text" id="discounted_premium" name="discounted_premium" value="{{ $discountPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)">
+									<input type="text" id="discounted_premium" name="discounted_premium" value="{{ $discountPremium }}" data-value="{{ $discountPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)">
 									<input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
 								</td>
 								<td>Car value:</td>
