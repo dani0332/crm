@@ -15,6 +15,8 @@ use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStartRow;
@@ -23,11 +25,11 @@ use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class UploadAndUpdateImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
+class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
 {
     use Importable, SkipsFailures, RegistersEventListeners;
 
-    private $rows = 0;
+    private $validCount = 0;
     private $failedCount = 0;
     private $renewalsUploadService;
     private $totalRows;
@@ -46,17 +48,13 @@ class UploadAndUpdateImport implements OnEachRow, WithStartRow, WithValidation, 
         $this->renewalsUploadLead = $renewalsUploadLead;
     }
 
-    /**
-     * @param  Row  $row
-     */
-    public function onRow(Row $row)
+    public function model(array $row)
     {
-        $this->rows++;
-        $row = $row->toArray();
+        $this->validCount++;
 
         $quoteData = $this->mapQuoteData($row);
 
-        RenewalQuoteProcess::create([
+        return new RenewalQuoteProcess([
             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
             'quote_type' => $quoteData['quote_type'],
             'policy_number' => $quoteData['policy_number'],
@@ -65,6 +63,14 @@ class UploadAndUpdateImport implements OnEachRow, WithStartRow, WithValidation, 
             'status' => RenewalProcessStatuses::NEW,
             'type' => RenewalsUploadType::UPDATE_LEADS,
         ]);
+    }
+
+    /**
+     * @return int
+     */
+    public function batchSize(): int
+    {
+        return 500;
     }
 
     /**
@@ -88,9 +94,9 @@ class UploadAndUpdateImport implements OnEachRow, WithStartRow, WithValidation, 
     /**
      * @return int
      */
-    public function getRowCount(): int
+    public function getValidCount(): int
     {
-        return $this->rows;
+        return $this->validCount;
     }
 
     public function getFailedCount(): int

@@ -989,7 +989,6 @@ class CarQuoteService extends BaseService
         $response = $this->httpService->processRequest($carPlanData, $apiCreds);
 
         if ($response == 200) {
-            //todo: confirm if we need to lock car quote
             return $this->lockCarQuote($data['quote_uuid']);
         }
 
