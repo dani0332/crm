@@ -66,35 +66,10 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Add user for laravel application
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
-
-# Copy code to /var/www
-COPY --chown=www:www-data . /var/www
-
-# add root to www group
-RUN chmod -R ugo+w /var/www/storage
-
-# Copy nginx/php/supervisor configs
-RUN cp docker/supervisor.conf /etc/supervisord.conf
-RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
-RUN cp docker/info.php /var/www/public/
-RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
-RUN cp -r docker/*.pem /etc/nginx/conf.d/
-RUN cp docker/log_files.yml /etc/
-
 RUN doppler configure set token ${IMCRM_TOKEN}
 
-# PHP Error Log Files
-RUN mkdir /var/log/php
-RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
-
-# Deployment steps
-RUN composer install --optimize-autoloader --no-dev
-RUN yarn 
-RUN yarn run prod
-RUN chmod +x /var/www/docker/run.sh
-
 RUN \
-  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.2.0.314-linux.tar.gz | tar -C /tmp -zx && \
+  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.3.0.315-linux.tar.gz | tar -C /tmp -zx && \
   export NR_INSTALL_USE_CP_NOT_LN=1 && \
   export NR_INSTALL_SILENT=1 && \
   /tmp/newrelic-php5-*/newrelic-install install && \
@@ -108,4 +83,30 @@ RUN \
 
 EXPOSE 80
 EXPOSE 443
+
+# Copy code to /var/www
+ARG CACHEBUST=1
+COPY --chown=www:www-data . /var/www
+
+# add root to www group
+RUN chmod -R ugo+w /var/www/storage
+
+# Copy nginx/php/supervisor configs
+RUN cp docker/supervisor.conf /etc/supervisord.conf
+RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
+RUN cp docker/info.php /var/www/public/
+RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
+RUN cp -r docker/*.pem /etc/nginx/conf.d/
+RUN cp docker/log_files.yml /etc/
+
+# PHP Error Log Files
+RUN mkdir /var/log/php
+RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
+
+# Deployment steps
+RUN composer install --optimize-autoloader --no-dev
+RUN yarn 
+RUN yarn run prod
+RUN chmod +x /var/www/docker/run.sh
+
 ENTRYPOINT ["/var/www/docker/run.sh"]

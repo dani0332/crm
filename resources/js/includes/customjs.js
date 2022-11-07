@@ -2576,6 +2576,16 @@ $(document).ready(function () {
     }, 2000);
   });
 
+  $('#btn_copy_doc_upload_link').on('click', function () {
+    var doc_upload_url = $(this).data('doc-upload-url')
+    navigator.clipboard.writeText(doc_upload_url);
+    var obj = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(obj).text($(obj).data('label'));
+    }, 2000);
+  });
+
   $('#btn_download_plan_pdf').on('click', function () 
   {
   
