@@ -864,7 +864,7 @@ class CarQuoteService extends BaseService
         ];
     }
 
-    public function getQuotePlans($id, $isRenewalSort=false)
+    public function getQuotePlans($id, $isRenewalSort = false)
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
@@ -1075,7 +1075,7 @@ class CarQuoteService extends BaseService
         return CarQuote::where('parent_duplicate_quote_id', $code)->first();
     }
 
-    public function getPlans($id, $isRenewalSort=false)
+    public function getPlans($id, $isRenewalSort = false)
     {
         $quotePlans = $this->getQuotePlans($id, $isRenewalSort);
 
