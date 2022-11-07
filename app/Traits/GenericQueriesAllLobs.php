@@ -73,9 +73,4 @@ trait GenericQueriesAllLobs
             }
         }
     }
-
-    public function getEComQuoteLink($lob, $quoteRequest)
-    {
-        return $quoteRequest->uuid ? config('constants.AFIA_WEBSITE_DOMAIN').'/'.$lob.'-insurance/quote/'.$quoteRequest->uuid : null;
-    }
 }
