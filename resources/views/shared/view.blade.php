@@ -614,33 +614,6 @@ use App\Enums\PermissionsEnum;
                     @if (count($searchProperties) > 0)
                     <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
                         data-parsley-validate="" novalidate="" autocomplete="off">
-                        {{-- <div class="col-md-12">
-                            <div class="col-md-6">
-                                <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
-                                    Search By
-                                </span>
-                                <select class="form-control">
-                                    <option value="">Select SearchBy Field</option>
-                                    @foreach ($searchProperties as $searchProp)
-                                    @php
-                                    $optionLabel = '';
-                                    if(array_key_exists($searchProp, $customTitles)){
-                                    $optionLabel = $customTitles[$searchProp];
-                                    }else{
-                                    $optionLabel = ucwords(str_replace('_', ' ', $searchProp));
-                                    }
-                                    @endphp
-                                    <option value="{{$searchProp}}" >{{ $optionLabel }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
-                                    Search Value
-                                </span>
-                                <input type="date"  class="form-control">
-                            </div>
-                        </div> --}}
                         @foreach ($model->properties as $property => $value)
                         @foreach ($searchProperties as $searchProperty)
                         @if ($searchProperty == $property)
