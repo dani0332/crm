@@ -585,6 +585,7 @@ class LeadAllocationService extends BaseService
         $emailData = [
             'clientFullName' => $lead->first_name.' '.$lead->last_name,
             'email' => $lead->email,
+            'customerEmail' => $lead->email,
             'phone' => $lead->mobile_no,
             'nationality' => $lead->nationality_id != null ? Nationality::where('id', $lead->nationality_id)->first()->text : '',
             'dob' => $lead->dob,
