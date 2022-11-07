@@ -1032,7 +1032,7 @@ class CRUDController extends Controller
             }
         }
 
-        if(isset($quotePlan->providerCode) && isset($quotePlan->providerCode)) {
+        if (isset($quotePlan->providerCode) && isset($quotePlan->providerCode)) {
             $singleQuoteUrl = config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id;
         } else {
             $singleQuoteUrl = null;
