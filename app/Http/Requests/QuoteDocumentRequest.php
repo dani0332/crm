@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\PaymentStatusEnum;
 use App\Models\DocumentType;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
@@ -53,6 +54,11 @@ class QuoteDocumentRequest extends FormRequest
             //check for quote records if exists
             if ((! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid))) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
+            }
+
+            //validate if payment is authorized
+            if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
+                $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
             }
 
             //check for maximum number of files uploaded against selected quote and document type
