@@ -2602,6 +2602,16 @@ $(document).ready(function () {
     }, 2000);
   });
 
+  $('#btn_copy_doc_upload_link').on('click', function () {
+    var doc_upload_url = $(this).data('doc-upload-url');
+    navigator.clipboard.writeText(doc_upload_url);
+    var obj = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(obj).text($(obj).data('label'));
+    }, 2000);
+  });
+
   $('#btn_download_plan_pdf').on('click', function () {
     if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
       alert('Please select at least three (3) plans.');
@@ -2902,6 +2912,15 @@ $('#dob_div #dob').datepicker({
   changeYear: true,
   dateFormat: 'dd/mm/yy',
   yearRange: '-80:+00',
+});
+
+$('#policy_start_date').prop('type', 'text');
+$('#policy_start_date').datepicker({
+  changeMonth: true,
+  changeYear: true,
+  dateFormat: 'dd/mm/yy',
+  yearRange: '-80:+00',
+  minDate: new Date(),
 });
 
 function sendQuoteDocumentsToCustomer(el) {
