@@ -10,7 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class ProcessRenewalsUploadCreate implements ShouldQueue
+class ProcessRenewalsUploadUpdate implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -33,6 +33,6 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        return $renewalsUploadService->processUploadCreate($this->renewalsUploadLead);
+        return $renewalsUploadService->processUploadUpdate($this->renewalsUploadLead);
     }
 }

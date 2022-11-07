@@ -112,16 +112,33 @@
                                 <th>Max size</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td>1</td><td>Type</td><td>Insurance Type</td><td>Yes</td><td>4</td></tr>
-                                <tr><td>2</td><td>Product Type</td><td>Type of Insurance | Comprehensive or Third Party Only</td><td>No</td><td>50</td></tr>
-                                <tr><td>3</td><td>Advisor</td><td>Advisor Email</td><td>No</td><td>100</td></tr>
-                                <tr><td>4</td><td>Previous Advisor</td><td>Previosuly assigned Advisor Email</td><td>No</td><td>100</td></tr>
-                                <tr><td>5</td><td>Policy</td><td>Policy number assigned</td><td>Yes</td><td>100</td></tr>
-                                <tr><td>6</td><td>Batch</td><td>Batch number assigned</td><td>No</td><td>25</td></tr>
-                                <tr><td>7</td><td>Notes</td><td>Any other Information</td><td>No</td><td>200</td></tr>
-                                <tr><td>8</td><td>Make</td><td>Car Make Information</td><td>No</td><td>50</td></tr>
-                                <tr><td>9</td><td>Model</td><td>Car Model Information</td><td>No</td><td>50</td></tr>
-                                <tr><td>10</td><td>Year</td><td>Vehicle Year of manufacture</td><td>No</td><td>4</td></tr>
+                                <tr><td>1</td><td>Customer Name</td><td>Customer Name</td><td>No</td><td>100</td></tr>
+                                <tr><td>2</td><td>Advisor</td><td>Advisor Email</td><td>No</td><td>100</td></tr>
+                                <tr><td>3</td><td>Policy Number</td><td>Previous Quote Policy Number</td><td>No</td><td>100</td></tr>
+                                <tr><td>4</td><td>Insurer</td><td>Insurance Provider Code</td><td>No</td><td>20</td></tr>
+                                <tr><td>5</td><td>Batch</td><td>Batch number assigned</td><td>No</td><td>25</td></tr>
+                                <tr><td>6</td><td>End Date</td><td>End Date of the insurance - Format should be DD/MM/YYYY</td><td>YES</td><td>10</td></tr>
+                                <tr><td>7</td><td>Make</td><td>Car Make Information</td><td>No</td><td>50</td></tr>
+                                <tr><td>8</td><td>Model</td><td>Car Model Information</td><td>No</td><td>50</td></tr>
+                                <tr><td>9</td><td>Year</td><td>Vehicle Year of manufacture</td><td>No</td><td>4</td></tr>
+                                <tr><td>10</td><td>Customer Email</td><td>Customer Email Id</td><td>Yes</td><td>255</td></tr>
+                                <tr><td>11</td><td>Customer mobile</td><td>Customer Mobile Number - only numeric data</td><td>No</td><td>100</td></tr>
+                                <tr><td>12</td><td>Date Of Birth</td><td>Customer Date of Birth</td><td>No</td><td>10</td></tr>
+                                <tr><td>13</td><td>Driving Experience</td><td>Driving Experience</td><td>No</td><td>50</td></tr>
+                                <tr><td>14</td><td>Provider Name</td><td>Insurance Provider Name</td><td>No</td><td>100</td></tr>
+                                <tr><td>15</td><td>Plan Name</td><td>Insurer Plan Name</td><td>No</td><td>100</td></tr>
+                                <tr><td>16</td><td>Plan Type</td><td>Plan Type</td><td>No</td><td>100</td></tr>
+                                <tr><td>17</td><td>Claim History</td><td>Claim History</td><td>No</td><td>100</td></tr>
+                                <tr><td>18</td><td>Car Value</td><td>Car Value</td><td>No</td><td>50</td></tr>
+                                <tr><td>19</td><td>Nationality</td><td>Nationality</td><td>No</td><td>60</td></tr>
+                                <tr><td>20</td><td>Renewal Premium</td><td>Renewal Premium</td><td>No</td><td>50</td></tr>
+                                <tr><td>21</td><td>Excess</td><td>Excess</td><td>No</td><td>20</td></tr>
+                                <tr><td>22</td><td>Trim</td><td>Trim</td><td>No</td><td>50</td></tr>
+                                <tr><td>23</td><td>Type</td><td>Type</td><td>No</td><td>10</td></tr>
+                                <tr><td>24</td><td>Product Type</td><td>Type of Insurance | Comprehensive or Third Party Only</td><td>No</td><td>50</td></tr>
+                                <tr><td>25</td><td>Registration Location</td><td>Registration Location</td><td>No</td><td>50</td></tr>
+                                <tr><td>26</td><td>Previous Advisor</td><td>Previosuly assigned Advisor Email</td><td>No</td><td>100</td></tr>
+                                <tr><td>27</td><td>Notes</td><td>Any other Information</td><td>No</td><td>200</td></tr>
                             </tbody>
                             </table>
                         </div>
