@@ -83,6 +83,8 @@ RUN \
 EXPOSE 80
 EXPOSE 443
 
+RUN doppler configure set token ${IMCRM_TOKEN}
+
 # Copy code to /var/www
 ARG CACHEBUST=1
 COPY --chown=www:www-data . /var/www
@@ -97,8 +99,6 @@ RUN cp docker/info.php /var/www/public/
 RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
 RUN cp -r docker/*.pem /etc/nginx/conf.d/
 RUN cp docker/log_files.yml /etc/
-
-RUN doppler configure set token ${IMCRM_TOKEN}
 
 # PHP Error Log Files
 RUN mkdir /var/log/php
