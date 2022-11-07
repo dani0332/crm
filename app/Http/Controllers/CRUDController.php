@@ -1013,29 +1013,31 @@ class CRUDController extends Controller
     {
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($request->quote_plans_count);
-        $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid);
+        $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true);
 
-        $freeAddons = [];
-        foreach ($listQuotePlans as $quotePlan) { // only damage_limit feature
-            foreach ($quotePlan->benefits->feature as $feature) {
-                if (strtolower($feature->code) == strtolower(CarPlanFeaturesCode::DAMAGE_LIMIT)) {
-                    $damageLimitFeatureText = $feature->text;
-                    $damageLimitFeatureValue = $feature->value;
+        if(is_array($listQuotePlans)) {
+            $freeAddons = [];
+            foreach ($listQuotePlans as $quotePlan) { // only damage_limit feature
+                foreach ($quotePlan->benefits->feature as $feature) {
+                    if (strtolower($feature->code) == strtolower(CarPlanFeaturesCode::DAMAGE_LIMIT)) {
+                        $damageLimitFeatureText = $feature->text;
+                        $damageLimitFeatureValue = $feature->value;
+                    }
                 }
-            }
-            foreach ($quotePlan->addons as $addon) { // Only free addons
-                foreach ($addon->carAddonOption as $carAddonOption) {
-                    if ($carAddonOption->price == 0) {
-                        $freeAddons[] = $addon;
+                foreach ($quotePlan->addons as $addon) { // Only free addons
+                    foreach ($addon->carAddonOption as $carAddonOption) {
+                        if ($carAddonOption->price == 0) {
+                            $freeAddons[] = $addon;
+                        }
                     }
                 }
             }
-        }
-
-        if (isset($quotePlan->providerCode) && isset($quotePlan->providerCode)) {
-            $singleQuoteUrl = config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id;
-        } else {
-            $singleQuoteUrl = null;
+    
+            if (isset($quotePlan->providerCode) && isset($quotePlan->providerCode)) {
+                $singleQuoteUrl = config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id;
+            } else {
+                $singleQuoteUrl = null;
+            }
         }
 
         $emailData = (object) [
@@ -1061,11 +1063,11 @@ class CRUDController extends Controller
             'repairType' => isset($quotePlan->repairType) ? $quotePlan->repairType : null,
             'providerCode' => isset($quotePlan->providerCode) ? $quotePlan->providerCode : null,
             'providerName' => isset($quotePlan->providerName) ? $quotePlan->providerName : null,
-            'singleQuoteUrl' => $singleQuoteUrl,
+            'singleQuoteUrl' => isset($singleQuoteUrl) ? $singleQuoteUrl : null,
             'discountPremium' => isset($quotePlan->discountPremium) ? $quotePlan->discountPremium : null,
             'damageLimitFeatureText' => isset($damageLimitFeatureText) ? $damageLimitFeatureText : null,
             'damageLimitFeatureValue' => isset($damageLimitFeatureValue) ? $damageLimitFeatureValue : null,
-            'freeAddons' => $freeAddons,
+            'freeAddons' => isset($freeAddons) ? $freeAddons : null,
             'listQuotePlans' => $listQuotePlans,
             'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode=',
         ];

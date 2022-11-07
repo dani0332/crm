@@ -850,7 +850,7 @@ class CarQuoteService extends BaseService
         ];
     }
 
-    public function getQuotePlans($id)
+    public function getQuotePlans($id, $isRenewalSort=false)
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
@@ -867,6 +867,10 @@ class CarQuoteService extends BaseService
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
             'userId' => strval(auth()->id()),
+            'filters' => [[
+                'field' => 'isRenewalSort',
+                'value' => $isRenewalSort,
+            ]],
         ];
 
         $client = new \GuzzleHttp\Client();
@@ -930,7 +934,7 @@ class CarQuoteService extends BaseService
     }
 
     /**
-     * modify plan during upload & update process
+     * modify plan during upload & update process.
      *
      * @param $data
      * @return false
@@ -1057,9 +1061,9 @@ class CarQuoteService extends BaseService
         return CarQuote::where('parent_duplicate_quote_id', $code)->first();
     }
 
-    public function getPlans($id)
+    public function getPlans($id, $isRenewalSort=false)
     {
-        $quotePlans = $this->getQuotePlans($id);
+        $quotePlans = $this->getQuotePlans($id, $isRenewalSort);
 
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;
