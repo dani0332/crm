@@ -2,10 +2,10 @@
 @section('title', 'View ' . $model->modelType)
 @section('content')
 @php
-    use App\Enums\quoteTypeCode;
-    use App\Enums\RolesEnum;
-    use App\Enums\QuoteStatusEnum;
-    use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\PermissionsEnum;
 @endphp
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -15,9 +15,42 @@
         position: relative;
         float: left;
     }
-
+    .additional-filters {
+        margin-bottom: 25px;
+    }
     td {
         word-wrap: break-word;
+    }
+    .select2-results__option--selected {
+        display: none;
+    }
+    .select2-results__option[aria-selected=true] {
+        display: none;
+    }
+    div.dataTables_wrapper div.dataTables_processing {
+        font-size: 30px !important;
+        border: none !important;
+        background-color: transparent !important;
+        color: #4183BD !important;
+        padding: 0px !important;
+        height: 110px !important;
+        width: 250px !important;
+    }
+    .dataTables_paginate .paginate_button.active {
+        background: blue !important;
+    }
+    .pagination {
+        margin-top: 12px !important;
+    }
+    .dataTables_paginate .paginate_button.active a {
+        background: #71A1CC !important;
+        border-radius: 3px;
+        color: white;
+    }
+    .select2-results__option--highlighted {
+        background: #4183BD !important;
+        color: #fff;
+        cursor: pointer !important;
     }
 </style>
 <script>
@@ -31,7 +64,6 @@
             var target = this;
             return target.replace(new RegExp(search, 'g'), replacement);
         };
-
         function formatedDate(date) {
             var newDate = new Date(date);
             var offset = newDate.getTimezoneOffset();
@@ -66,7 +98,6 @@
                     $('#renewal_expiry_date').next().html('Please select renewal start date');
                     return false;
                 }
-
                 if ($('#renewal_expiry_date').val() != '' && $('#renewal_expiry_date_end').val() == '') {
                     $('#renewal_expiry_date_end').next().html('Please select renewal to end date');
                     return false;
@@ -75,7 +106,6 @@
                     $('#previous_policy_expiry_date_end').next().html('Please select previous policy expiry date to end date');
                     return false;
                 }
-
                 if ($('#created_at').val() != '' && $('#created_at_end').val() == '') {
                     $('#created_at_end').next().html('Please select created end date');
                     return false;
@@ -92,7 +122,6 @@
                     $('#next_followup_date').next().html('Please select next followup start date');
                     return false;
                 }
-
                 $("span").each(function(k, v) {
                     if ($(v).hasClass('text-danger')) {
                         $(v).html('');
@@ -115,7 +144,6 @@
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
-
             for (var i = 0; i < modelPropertiesArray.length; i++) {
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
                     // checking if the model type is either leadstatus or teams because it needs to be handled differently
@@ -138,7 +166,6 @@
                                 name: modelPropertiesArray[i].name
                             });
                         }
-
                     } else {
                         // adding properties for all types except leadstatus and teams
                         if (modelPropertiesArray[i].name == 'id') {
@@ -150,12 +177,10 @@
                                     data: "id",
                                     name: "id",
                                     render: function(data, type, row, meta) {
-
                                         return (
                                             '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
                                             data + '">'
                                         );
-
                                     },
                                 });
                             }
@@ -194,7 +219,6 @@
             // Handling Sorting on Grid Column, need switch case because Manager,Deputy and Admin have different set of columns then normal user
             var disableSortColumns = [];
             switch (model.modelType.toLowerCase()) {
-
                 case 'car':
                     if (isRenewalUser) {
                         if (isManagerOrDeputy) {
@@ -335,7 +359,6 @@
                         nextFollowupDateColumn = i;
                     }
                 }
-
                 for (let index = 1; index < rows.length; index++) {
                     var columns = $(rows[index]).children();
                     for (let i = 0; i < columns.length; i++) {
@@ -348,7 +371,6 @@
                             }
                         }
                     }
-
                 }
             });
             $("#searchTable").submit(function(e) {
@@ -435,13 +457,10 @@
                 $(this).addClass("active");
                 $(".toggle-btn").removeClass("active");
             });
-
         });
-
         var ENDPOINT = "{{ url('/') }}";
         var page;
         var temp_status = '';
-
         function loadMore(status) {
             if (localStorage.getItem('page' + status) == null)
                 page = 2;
@@ -449,7 +468,6 @@
                 page = localStorage.getItem('page' + status);
             infinteLoadMore(page, status);
         }
-
         function infinteLoadMore(page, status) {
             $.ajaxSetup({
                 headers: {
@@ -482,7 +500,6 @@
                     console.log('Server error occured');
                 });
         }
-
         function searchTerm(element) {
             var term = $(element).val();
             var status = $(element).attr('name');
@@ -516,7 +533,6 @@
                         console.log('Server error occured');
                     });
             }
-
         }
         window.onload = function() {
             window.localStorage.clear();
@@ -572,7 +588,7 @@
                     <x-leads-visual-card :model="$model" :dropdownSource="$dropdownSource" />
                 </div>
                 @endif
-                <div class="show-container showme">
+                <div class="show-container">
                     @if (session()->has('message'))
                     <div class="alert alert-danger">{!! session()->get('message') !!}</div>
                     @endif
@@ -582,7 +598,6 @@
                     @php
                     $searchProperties = [];
                     $skipProperties = [];
-
                     if($isRenewalUser){
                     $searchProperties = $model->renewalSearchProperties;
                     $skipProperties = $model->renewalSkipProperties;
@@ -599,35 +614,38 @@
                     @if (count($searchProperties) > 0)
                     <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
                         data-parsley-validate="" novalidate="" autocomplete="off">
-
-                        @if (strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
-                        <div class="col-md-6">
-                            <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6">ASSIGNED
-                                START DATE</span>
-                            <input type="date" class="form-control" id="assigned_to_date_start"
-                                name="assigned_to_date_start" />
-                            <span class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6">ASSIGNED END
-                                DATE</span>
-                            <input type="date" class="form-control" id="assigned_to_date_end"
-                                name="assigned_to_date_end" />
-                            <span class="text-danger"></span>
-                        </div>
-                        @endif
-                        @if (Auth::user()->hasRole('ADMIN') && $model->modelType == 'Car')
-                        @php
-                        array_push($searchProperties, 'is_ecommerce');
-                        array_push($searchProperties, 'payment_status_id');
-                        $searchProperties = array_unique($searchProperties);
-                        @endphp
-                        @endif
+                        {{-- <div class="col-md-12">
+                            <div class="col-md-6">
+                                <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
+                                    Search By
+                                </span>
+                                <select class="form-control">
+                                    <option value="">Select SearchBy Field</option>
+                                    @foreach ($searchProperties as $searchProp)
+                                    @php
+                                    $optionLabel = '';
+                                    if(array_key_exists($searchProp, $customTitles)){
+                                    $optionLabel = $customTitles[$searchProp];
+                                    }else{
+                                    $optionLabel = ucwords(str_replace('_', ' ', $searchProp));
+                                    }
+                                    @endphp
+                                    <option value="{{$searchProp}}" >{{ $optionLabel }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
+                                    Search Value
+                                </span>
+                                <input type="date"  class="form-control">
+                            </div>
+                        </div> --}}
                         @foreach ($model->properties as $property => $value)
                         @foreach ($searchProperties as $searchProperty)
                         @if ($searchProperty == $property)
                         @if (str_contains($value, 'range'))
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
                                 {{ strtoupper($customTitles[$property]) . ' START' }}
                             </span>
@@ -636,7 +654,7 @@
                             <span class="text-danger">{{ $errors->first($property) }}</span>
                             @endif
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
                                 {{ strtoupper($customTitles[$property]) . ' END' }}
                             </span>
@@ -646,15 +664,9 @@
                             <span class="text-danger">{{ $errors->first($property . '_end') }}</span>
                             @endif
                         </div>
-                        @endif
-                        @endif
-                        @endforeach
-                        @endforeach
-                        @foreach ($model->properties as $property => $value)
-                        @foreach ($searchProperties as $searchProperty)
-                        @if ($searchProperty == $property && !str_contains($value, 'range'))
-                        <div @if (count($model->properties) < 6) class="col-md-12 show-less" @else
-                                class="col-md-6 additional-filters" @endif>
+                        @else
+                            @if ($searchProperty == $property && !str_contains($value, 'range') &&  !str_contains($value, 'multiple') )
+                            <div class="col-md-4 show-less">
                                 @if (strpos($value, 'input') !== false && !str_contains($value, 'range'))
                                 <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
                                     @if (strpos($value, 'title'))
@@ -697,7 +709,8 @@
                                     <option value="null">UnAssigned</option>
                                     @endif
                                     @foreach ($dropdownSource[$property] as $item)
-                                    <option value="{{ str_contains($model->properties[$property], 'idAsText') ? $item->text : $item->id }}">
+                                    <option
+                                        value="{{ str_contains($model->properties[$property], 'idAsText') ? $item->text : $item->id }}">
                                         {{ $item->text ?? $item->name }}
                                     </option>
                                     @endforeach
@@ -722,9 +735,9 @@
                                 $staticOptionString = end($propertyLastIndex);
                                 $staticOptions = explode(',', $staticOptionString);
                                 @endphp
-                                <select @if (strpos($value, 'multiple' )) name="{{ $property . '[]' }}"
-                                    multiple="multiple" class="form-control select2 select-roles" @else
-                                    class="form-control" name="{{ $property }}" @endif id="{{ $property }}">
+                                <select @if (strpos($value, 'multiple' )) name="{{ $property . '[]' }}" multiple="multiple"
+                                    class="form-control select2 select-roles" @else class="form-control"
+                                    name="{{ $property }}" @endif id="{{ $property }}">
                                     <option value="">
                                         {{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property))
                                         }}
@@ -751,9 +764,59 @@
                                 <span class="text-danger">{{ $errors->first($property) }}</span>
                                 @endif
                                 @endif
-                        </div>
+                            </div>
+                            @endif
+                        @endif
                         @endif
                         @endforeach
+                        @endforeach
+                        @foreach ($model->properties as $property => $value)
+
+                        @foreach ($searchProperties as $searchProperty)
+                            @if($searchProperty == $property)
+                                @if (strpos($value, 'select') !== false &&  str_contains($value, 'multiple') )
+                                    <div class="col-md-6" >
+                                        <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
+                                            @if (strpos($value, 'title'))
+                                            {{ strtoupper($customTitles[$property]) }}
+                                            @else
+                                            {{ str_replace('_', ' ', strtoupper($property)) }}
+                                            @endif
+                                            @if (strpos($value, 'required') == true)
+                                            <span class='required'>*</span>
+                                            @endif
+                                        </span>
+                                        <select @if (strpos($value, 'multiple' )) multiple="multiple"
+                                            class="form-control select2 select-roles" @else class="form-control" @endif
+                                            id="{{ $property }}" name="{{ $property }}">
+                                            @if (strpos($value, 'title'))
+                                            <option value="">
+                                                {{ 'Please select ' . $customTitles[$property] }}
+                                            </option>
+                                            @else
+                                            <option value="">
+                                                {{ 'Please select ' . str_replace('id', ' ', str_replace('_', ' ', $property))
+                                                }}
+                                            </option>
+                                            @endif
+                                            @if ($property == 'advisor_id')
+                                            <option value="null">UnAssigned</option>
+                                            @endif
+                                            @foreach ($dropdownSource[$property] as $item)
+                                            <option
+                                                value="{{ str_contains($model->properties[$property], 'idAsText') ? $item->text : $item->id }}">
+                                                {{ $item->text ?? $item->name }}
+                                            </option>
+                                            @endforeach
+                                        </select>
+                                        @if ($errors->has($property))
+                                            <span class="text-danger">{{ $errors->first($property) }}</span>
+                                        @endif
+                                    </div>
+                                @endif
+                            @endif
+                        @endforeach
+
                         @endforeach
                         <div class="col-md-12" style="margin-top: 25px;">
                             <div class="col">
@@ -768,7 +831,9 @@
                     </form>
                     @endif
 
-                    <form method="post" @if(strtolower($model->modelType) == strtolower(quoteTypeCode::Health)) action="wcuAssign" @else action={{ strtolower($model->modelType). '/manualLeadAssign' }} @endif class="form-horizontal form-label-left" role="form"
+                    <form method="post" @if(strtolower($model->modelType) == strtolower(quoteTypeCode::Health))
+                        action="wcuAssign" @else action={{ strtolower($model->modelType). '/manualLeadAssign' }} @endif
+                        class="form-horizontal form-label-left" role="form"
                         data-parsley-validate="" novalidate="" autocomplete="off">
                         {{ csrf_field() }}
                         <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
@@ -808,21 +873,22 @@
                                                 @php
                                                 $updatedAdvisors = $advisors;
                                                 if(strtolower($model->modelType) != strtolower(quoteTypeCode::Health)){
-                                                    if(!empty($renewalAdvisors)){
-                                                        $updatedAdvisors = $renewalAdvisors;
-                                                    }
+                                                if(!empty($renewalAdvisors)){
+                                                $updatedAdvisors = $renewalAdvisors;
+                                                }
                                                 }
                                                 @endphp
                                                 <select class="form-control" id="assigned_to_id_new"
                                                     name="assigned_to_id_new">
                                                     @foreach ($updatedAdvisors as $handler)
-                                                        @if(Auth::user()->isHealthWCUAdvisor() && strtolower($model->modelType) == strtolower(quoteTypeCode::Health))
-                                                            @if(str_contains($handler->name, RolesEnum::HealthWCUAdvisor))
-                                                                <option value="{{ $handler->id }}">{{ $handler->name }}</option>
-                                                            @endif
-                                                        @else
-                                                            <option value="{{ $handler->id }}">{{ $handler->name }}</option>
-                                                        @endif
+                                                    @if(Auth::user()->isHealthWCUAdvisor() &&
+                                                    strtolower($model->modelType) == strtolower(quoteTypeCode::Health))
+                                                    @if(str_contains($handler->name, RolesEnum::HealthWCUAdvisor))
+                                                    <option value="{{ $handler->id }}">{{ $handler->name }}</option>
+                                                    @endif
+                                                    @else
+                                                    <option value="{{ $handler->id }}">{{ $handler->name }}</option>
+                                                    @endif
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -842,48 +908,48 @@
                         <input type="hidden" id="selectTmLeadId" name="selectTmLeadId" value="">
                         <input type="hidden" id="isManagerOrDeputy" name="isManagerOrDeputy"
                             value="{{ $isManagerORDeputy }}">
-                        </form>
-                        <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;"
-                            width="100%">
-                            <thead>
-                                <tr>
-                                    @if ($isManagerORDeputy == '1' &&
-                                    str_contains('home,health,life,business,travel,car,pet',
-                                    strtolower($model->modelType)))
-                                    <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
-                                            name="checkAllTmLeads" value=""></th>
-                                    @endif
+                    </form>
+                    <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;"
+                        width="100%">
+                        <thead>
+                            <tr>
+                                @if ($isManagerORDeputy == '1' &&
+                                str_contains('home,health,life,business,travel,car,pet',
+                                strtolower($model->modelType)))
+                                <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
+                                        name="checkAllTmLeads" value=""></th>
+                                @endif
 
-                                    @foreach ($model->properties as $property => $value)
-                                    @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
-                                    @if ($property != 'id')
-                                    @if (!in_array($property, explode(',', $skipProperties['list'])))
-                                    <th data-type="{{ explode('|', $value)[1] }}" style="width: 100px !important">
-                                        @if (strpos($value, 'title'))
-                                        {{ strtoupper($customTitles[$property]) }}
-                                        @else
-                                        {{ str_replace('_', ' ', strtoupper($property)) }}
-                                        @endif
-                                    </th>
-                                    @endif
-                                    @endif
+                                @foreach ($model->properties as $property => $value)
+                                @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
+                                @if ($property != 'id')
+                                @if (!in_array($property, explode(',', $skipProperties['list'])))
+                                <th data-type="{{ explode('|', $value)[1] }}" style="width: 180px !important">
+                                    @if (strpos($value, 'title'))
+                                    {{ strtoupper($customTitles[$property]) }}
                                     @else
-                                    @if (!in_array($property, explode(',', $skipProperties['list'])))
-                                    <th data-type="{{ explode('|', $value)[1] }}" style="width: 100px !important">
-                                        @if (strpos($value, 'title'))
-                                        {{ strtoupper($customTitles[$property]) }}
-                                        @else
-                                        {{ str_replace('_', ' ', strtoupper($property)) }}
-                                        @endif
-                                    </th>
+                                    {{ str_replace('_', ' ', strtoupper($property)) }}
                                     @endif
+                                </th>
+                                @endif
+                                @endif
+                                @else
+                                @if (!in_array($property, explode(',', $skipProperties['list'])))
+                                <th data-type="{{ explode('|', $value)[1] }}" style="width: 180px !important">
+                                    @if (strpos($value, 'title'))
+                                    {{ strtoupper($customTitles[$property]) }}
+                                    @else
+                                    {{ str_replace('_', ' ', strtoupper($property)) }}
                                     @endif
-                                    @endforeach
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+                                </th>
+                                @endif
+                                @endif
+                                @endforeach
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
 
                 </div>
             </div>
