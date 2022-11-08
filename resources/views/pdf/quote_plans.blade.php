@@ -234,7 +234,7 @@
 
 @php
 
-    $websitURL = Config::get('constants.AFIA_WEBSITE_DOMAIN');
+    $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
 
     foreach ($quotePlans->quotes->plans as &$quotePlan)
