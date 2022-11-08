@@ -28,7 +28,7 @@
                                     <th>Quote Type</th>
                                     <th>Policy Number</th>
                                     <th>Status</th>
-                                    <th>Plans</th>
+                                    <th>Quote</th>
                                     <th>Created At</th>
                                 </tr>
                             </thead>
