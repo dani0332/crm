@@ -11,18 +11,23 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 
 class AmlDownloadHistoryTable extends DataTableComponent
 {
-    protected $model = SanctionListDownloads::class;
+    // protected $model = SanctionListDownloads::class;
     public $url;
+    protected $listeners = ['refresh-table' => '$refresh'];
 
     public function configure(): void
     {
         $this->setPrimaryKey('id')
             ->setDefaultSort('updated_at', 'desc')
             ->setColumnSelectDisabled()
-            ->setUseHeaderAsFooterEnabled()
             ->setFilterLayoutSlideDown();
 
-        // $this->setDebugEnabled();
+        // disabled pagination count
+        $this->setPaginationDisabled();
+        $this->setPaginationVisibilityDisabled();
+        $this->setConfigurableAreas([
+            'after-pagination' => 'partials.pagination',
+          ]);
     }
 
     public function columns(): array
@@ -68,5 +73,31 @@ class AmlDownloadHistoryTable extends DataTableComponent
                     }
                 }),
         ];
+    }
+
+    public function builder(): Builder
+    {
+        return SanctionListDownloads::query()->limit(10)->offset($this->getOffset());
+    }
+
+    public function getOffset()
+    {
+        return ($this->page - 1) * 10;
+    }
+
+    public function gotoNext()
+    {
+        $this->page++;
+        $this->paginators['page'] = $this->page;
+        $this->emit('refresh-table');
+    }
+
+    public function gotoPrev()
+    {
+        if ($this->page > 1) {
+            $this->page--;
+            $this->paginators['page'] = $this->page;
+            $this->emit('refresh-table');
+        }
     }
 }

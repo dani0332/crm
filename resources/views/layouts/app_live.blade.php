@@ -10,10 +10,17 @@
   <title>@yield('title') | {{config('constants.APP_NAME')}}</title>
 
   <link href="{{ asset('css/livewire.css') }}" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link href="{{ asset('vendors/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
   @livewireStyles
   <style>
     [x-cloak] {
       display: none !important;
+    }
+
+    .navbar.nav_title {
+      display: none;
     }
   </style>
 </head>
