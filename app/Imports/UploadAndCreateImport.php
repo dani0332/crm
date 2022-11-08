@@ -11,6 +11,7 @@ use App\Services\RenewalsUploadService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
@@ -24,7 +25,7 @@ use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class UploadAndCreateImport implements ToModel, WithBatchInserts, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
+class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
 {
     use Importable, SkipsFailures, RegistersEventListeners;
 
@@ -45,17 +46,14 @@ class UploadAndCreateImport implements ToModel, WithBatchInserts, WithStartRow, 
         $this->renewalsUploadLead = $renewalsUploadLead;
     }
 
-    /**
-     * @param  array  $row
-     * @return User
-     */
-    public function model(array $row)
+    public function onRow(Row $row)
     {
         $this->validCount++;
+        $row = $row->toArray();
 
         $quoteData = $this->mapQuoteData($row);
 
-        return new RenewalQuoteProcess([
+        return RenewalQuoteProcess::create([
             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
             'quote_type' => $quoteData['quote_type'],
             'policy_number' => $quoteData['policy_number'],
@@ -66,13 +64,6 @@ class UploadAndCreateImport implements ToModel, WithBatchInserts, WithStartRow, 
         ]);
     }
 
-    /**
-     * @return int
-     */
-    public function batchSize(): int
-    {
-        return 500;
-    }
 
     /**
      * start import from row 2, first row have titles
