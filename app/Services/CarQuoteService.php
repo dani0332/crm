@@ -116,6 +116,7 @@ class CarQuoteService extends BaseService
                 'cqr.parent_duplicate_quote_id',
                 'cqr.renewal_import_code',
                 'cqr.quote_link',
+                'cqrd.advisor_assigned_date',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
