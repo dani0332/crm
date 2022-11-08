@@ -41,7 +41,7 @@
                                         <td>{{ $lead->quote_type }}</td>
                                         <td>{{ $lead->policy_number }}</td>
                                         <td>{{ $lead->status }}</td>
-                                        <td><a href="{{ url('renewals/uploaded-leads') }}" class="btn btn-primary btn-sm">View Plans</a></td>
+                                        <td><a target="_blank" href="{{ request()->url() }}/quote-redirect/{{$lead->id}}" class="btn btn-primary btn-sm fetch-plans">View Quote</a></td>
                                         <td>{{ $lead->created_at }}</td>
                                     </tr>
                                 @endforeach
@@ -59,6 +59,4 @@
         </div>
     </div>
 </div>
-
-
 @endsection

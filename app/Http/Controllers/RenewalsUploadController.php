@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Exports\RenewalFailedValidationExport;
@@ -286,5 +287,27 @@ class RenewalsUploadController extends Controller
         $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])->get();
 
         return view('renewals.validation_passed', compact('renewalLeads'));
+    }
+
+    public function viewQuoteRedirect($renewalProcessId, $leadId)
+    {
+        $renewalLead = RenewalQuoteProcess::where('id', $leadId)->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])->first();
+        if (! $renewalLead) {
+            return abort(404);
+        }
+
+        switch($renewalLead->quote_type) {
+            case QuoteTypeShortCode::CAR:
+                $carQuote = CarQuote::where('policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
+                if (! $carQuote) {
+                    return abort(404);
+                }
+
+                return redirect('/quotes/car/'.$carQuote->uuid);
+                break;
+            default:
+                return abort(404);
+                break;
+        }
     }
 }
