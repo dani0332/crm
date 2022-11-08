@@ -510,6 +510,8 @@ class RenewalsUploadService
             }
 
             $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED]);
+            $renewalUploadLead->good += 1;
+            $renewalUploadLead->save();
 
             return $quote;
         });
@@ -1051,7 +1053,6 @@ class RenewalsUploadService
                 $lead->save();
                 $renewalUploadLead = $lead->renewalUploadLead;
                 if ($lead->status == RenewalProcessStatuses::VALIDATED) {
-                    $renewalUploadLead->good += 1;
                     if ($lead->type == RenewalsUploadType::CREATE_LEADS) {
                         $this->createQuote($lead);
                     } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
