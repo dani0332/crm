@@ -242,7 +242,7 @@ class CRUDService extends BaseService
         }
         $entity->save();
         //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $request->leadStatus == QuoteStatusEnum::Quoted) {
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP) {
             $this->sendSibRequest($entity);
         }
 
