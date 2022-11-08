@@ -1016,8 +1016,9 @@ class CRUDController extends Controller
     public function sendEmailOneClickBuy(Request $request)
     {
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
-        $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($request->quote_plans_count);
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true);
+        $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
+        $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
         if (is_array($listQuotePlans)) {
             $freeAddons = [];

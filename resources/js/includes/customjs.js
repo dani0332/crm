@@ -2971,7 +2971,6 @@ $('#send-one-click-buy-email-btn').on('click', function () {
         quote_id: $(this).attr('data-quote-id'),
         quote_uuid: quote_uuid,
         quote_cdb_id: $(this).attr('data-quote-cdb-id'),
-        quote_plans_count: $(this).attr('data-quote-plans-count'),
         quote_previous_expiry_date: $(this).attr(
           'data-quote-previous-expiry-date',
         ),
