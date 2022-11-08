@@ -298,7 +298,7 @@ class RenewalsUploadController extends Controller
 
         switch($renewalLead->quote_type) {
             case QuoteTypeShortCode::CAR:
-                $carQuote = CarQuote::where('policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
+                $carQuote = CarQuote::where('previous_quote_policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
                 if (! $carQuote) {
                     return abort(404);
                 }
