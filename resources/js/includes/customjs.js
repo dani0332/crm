@@ -2183,7 +2183,21 @@ $(document).ready(function () {
       { data: 'renewal_import_code', name: 'renewal_import_code' },
       { data: 'file_name', name: 'file_name' },
       { data: 'total_records', name: 'total_records' },
-      { data: 'good', name: 'good' },
+      {
+        data: 'good',
+        name: 'good',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.renewal_uploaded_leads +
+            '/' +
+            row.id +
+            "/validation-passed'>" +
+            row.cannot_upload +
+            '</a>'
+          );
+        },
+      },
       {
         data: 'cannot_upload',
         name: 'cannot_upload',

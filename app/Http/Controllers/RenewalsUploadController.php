@@ -280,4 +280,11 @@ class RenewalsUploadController extends Controller
 
         return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
     }
+
+    public function validationPassed($id)
+    {
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])->get();
+
+        return view('renewals.validation_passed', compact('renewalLeads'));
+    }
 }
