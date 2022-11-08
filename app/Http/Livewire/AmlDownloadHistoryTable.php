@@ -11,7 +11,6 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 
 class AmlDownloadHistoryTable extends DataTableComponent
 {
-    // protected $model = SanctionListDownloads::class;
     public $url;
     protected $listeners = ['refresh-table' => '$refresh'];
 
@@ -75,14 +74,20 @@ class AmlDownloadHistoryTable extends DataTableComponent
         ];
     }
 
+    // custom pagination
     public function builder(): Builder
     {
-        return SanctionListDownloads::query()->limit(10)->offset($this->getOffset());
+        return SanctionListDownloads::query()->offset($this->getOffset())->limit(10);
     }
 
     public function getOffset()
     {
         return ($this->page - 1) * 10;
+    }
+
+    public function getCurrentPage()
+    {
+        return $this->page;
     }
 
     public function gotoNext()
