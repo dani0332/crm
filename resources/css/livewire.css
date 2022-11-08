@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.menu_section {
+  @apply flex flex-col gap-1;
+}
+
+.main_menu a i.fa {
+  @apply text-2xl inline-block opacity-95 w-7;
+  font-family: FontAwesome;
+  font-style: normal;
+  font-weight: normal;
+}
+
+.main_menu a span.fa {
+  @apply text-xs inline-block opacity-95;
+  font-family: FontAwesome;
+  font-style: normal;
+  font-weight: normal;
+}
+
+.side-menu li a {
+  @apply flex gap-2 items-center px-3 py-2 cursor-pointer text-sm font-semibold opacity-90 hover:opacity-100 hover:bg-gray-900/50;
+}
+
+.side-menu > li > a > *:nth-child(2) {
+  @apply flex-grow text-right;
+}
+
+.side-menu > li > ul {
+  @apply overflow-hidden transition-all duration-300;
+}
+
+.child_menu li a {
+  @apply pl-12;
+}
