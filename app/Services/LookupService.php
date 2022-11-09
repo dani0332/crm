@@ -90,11 +90,11 @@ class LookupService extends BaseService
 
     public function getCarMake($id)
     {
-        return CarMake::where('id', $id)->first();
+        return CarMake::find($id);
     }
 
     public function getCarModel($id)
     {
-        return CarModel::where('id', $id)->first();
+        return CarModel::find($id);
     }
 }
