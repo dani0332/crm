@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
+use App\Jobs\FetchRenewalsPlansJob;
 use App\Jobs\RenewalBatchEmailJob;
 use App\Models\CarQuote;
 use App\Models\RenewalQuoteProcess;
@@ -52,6 +54,22 @@ class RenewalsUploadController extends Controller
         $result = $this->renewalsUploadFileService->renewalsUploadUpdate(request()->all());
 
         return redirect('renewals/update')->with('success', 'Uploaded renewals records has been updated');
+    }
+
+    /**
+     * @param $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function fetchRenewalPlans($id)
+    {
+        if ($lead = RenewalsUploadLeads::where('id', $id)->where('status', ProcessStatusCode::COMPLETED)->first()) {
+            FetchRenewalsPlansJob::dispatch($lead);
+            $lead->update(['status' => ProcessStatusCode::FETCHING_PLANS]);
+
+            return redirect('renewals/uploaded-leads')->with('message', 'Plans fetching started');
+        }
+
+        return redirect('renewals/uploaded-leads')->with('error', 'Invalid Renewal Lead provided');
     }
 
     /**
@@ -278,5 +296,34 @@ class RenewalsUploadController extends Controller
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
 
         return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+    }
+
+    public function validationPassed($id)
+    {
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])->get();
+
+        return view('renewals.validation_passed', compact('renewalLeads'));
+    }
+
+    public function viewQuoteRedirect($renewalProcessId, $leadId)
+    {
+        $renewalLead = RenewalQuoteProcess::where('id', $leadId)->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])->first();
+        if (! $renewalLead) {
+            return abort(404);
+        }
+
+        switch($renewalLead->quote_type) {
+            case QuoteTypeShortCode::CAR:
+                $carQuote = CarQuote::where('previous_quote_policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
+                if (! $carQuote) {
+                    return abort(404);
+                }
+
+                return redirect('/quotes/car/'.$carQuote->uuid);
+                break;
+            default:
+                return abort(404);
+                break;
+        }
     }
 }

@@ -16,4 +16,6 @@ final class ProcessStatusCode extends Enum
     const PROCEED = 'Proceed';
     const IN_PROGRESS = 'In Progress';
     const UPLOADED = 'Uploaded';
+    const FETCHING_PLANS = 'Fetching Plans';
+    const PLANS_FETCHED = 'Plans Fetched';
 }

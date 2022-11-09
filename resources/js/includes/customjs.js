@@ -2183,7 +2183,21 @@ $(document).ready(function () {
       { data: 'renewal_import_code', name: 'renewal_import_code' },
       { data: 'file_name', name: 'file_name' },
       { data: 'total_records', name: 'total_records' },
-      { data: 'good', name: 'good' },
+      {
+        data: 'good',
+        name: 'good',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.renewal_uploaded_leads +
+            '/' +
+            row.id +
+            "/validation-passed'>" +
+            row.good +
+            '</a>'
+          );
+        },
+      },
       {
         data: 'cannot_upload',
         name: 'cannot_upload',
@@ -2203,6 +2217,22 @@ $(document).ready(function () {
       { data: 'uploaded_by', name: 'uploaded_by' },
       { data: 'created_at', name: 'created_at' },
       { data: 'updated_at', name: 'updated_at' },
+      {
+        data: 'action', name: 'action', orderable: false, searchable: false,
+        render: function (data, type, row) {
+
+          if(row.status == 'Completed') {
+            return (
+              "<a class='btn btn-success btn-sm' href='" +           
+              config.routes.renewal_base_url + "/"  +
+              row.id +
+              "/fetch-plans'>" +
+              
+              'Fetch Plans</a>'
+            );
+          }  
+           
+      },},
     ],
   });
 

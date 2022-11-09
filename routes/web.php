@@ -57,6 +57,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -146,6 +147,8 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);
         Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed']);
         Route::get('uploaded-leads/{id}/validation-failed/download', [RenewalsUploadController::class, 'downloadValidationFailed']);
+        Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);
+        Route::get('uploaded-leads/{id}/validation-passed/quote-redirect/{leadId}', [RenewalsUploadController::class, 'viewQuoteRedirect']);
         Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals']);
         Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('listRenewalBatches');
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batchDetail');
@@ -153,6 +156,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('upload-process', [RenewalsUploadController::class, 'renewalsUploadProcess']);
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate']);
         Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate']);
+        Route::get('{id}/fetch-plans', [RenewalsUploadController::class, 'fetchRenewalPlans']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
 
