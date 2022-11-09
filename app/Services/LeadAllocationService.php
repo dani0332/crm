@@ -517,13 +517,15 @@ class LeadAllocationService extends BaseService
                     $userId = $commonUserIds->first();
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
-                        $carLead->advisor_id = $userId;
-                        $carLead->tier_id = $selectedTier->id;
-                        $carLead->save();
+                        $carQuote = CarQuote::where('id', $carLead->id)->first();
+                        $carQuote->advisor_id = $userId;
+                        $carQuote->tier_id = $selectedTier->id;
+                        $carQuote->save();
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
-                        LeadAllocation::where('user_id', $userId)->increment('allocation_count', 1,
-                            ['last_allocated' => time(), 'updated_at' => Carbon::now()]
-                        );
+                        $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+                        $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
+                        $leadAllocation->updated_at = now();
+                        $leadAllocation->save();
                     }
                 }
             }
