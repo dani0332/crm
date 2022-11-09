@@ -57,6 +57,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 
 /*
 |--------------------------------------------------------------------------
@@ -155,6 +156,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('upload-process', [RenewalsUploadController::class, 'renewalsUploadProcess']);
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate']);
         Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate']);
+        Route::get('{id}/fetch-plans', [RenewalsUploadController::class, 'fetchRenewalPlans']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
 

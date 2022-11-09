@@ -167,8 +167,6 @@ class RenewalsUploadService
         });
 
         $this->uploadedLeadsValidation();
-        $this->fetchLeadPlans();
-
         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
 
         return true;
@@ -177,10 +175,16 @@ class RenewalsUploadService
     /**
      * @return void
      */
-    public function fetchLeadPlans()
+    public function fetchRenewalPlans(RenewalsUploadLeads $renewalsUploadLead)
     {
-        RenewalQuoteProcess::where('status', RenewalProcessStatuses::PROCESSED)->where('quote_type', QuoteTypeShortCode::CAR)->chunk(50, function ($leads) {
+        RenewalQuoteProcess::where([
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'renewals_upload_lead_id' => $renewalsUploadLead->id
+        ])->chunk(50, function ($leads) {
+
             foreach ($leads as $lead) {
+
                 $leadData = (object) $lead->data;
 
                 $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
@@ -190,6 +194,7 @@ class RenewalsUploadService
                     'previous_quote_policy_number' => $lead->policy_number,
                     'previous_policy_expiry_date' => $this->formatDate($leadData->end_date),
                 ])->first())) {
+
                     $plans = $this->carQuoteService->getPlans($quote->uuid);
                     if (isset($plans[0]->id)) {
                         //update status to plans fetched
@@ -198,6 +203,8 @@ class RenewalsUploadService
                 }
             }
         });
+
+        $renewalsUploadLead->update(['status' => ProcessStatusCode::PLANS_FETCHED]);
     }
 
     /**
@@ -510,8 +517,7 @@ class RenewalsUploadService
             }
 
             $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED]);
-            $renewalUploadLead->good += 1;
-            $renewalUploadLead->save();
+            $renewalUploadLead->update(['good' => $renewalUploadLead->good += 1]);
 
             return $quote;
         });
