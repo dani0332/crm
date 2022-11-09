@@ -12,7 +12,6 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 class AmlDownloadHistoryTable extends DataTableComponent
 {
     public $url;
-    protected $listeners = ['refresh-table' => '$refresh'];
 
     public function configure(): void
     {
@@ -94,7 +93,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
     {
         $this->page++;
         $this->paginators['page'] = $this->page;
-        // $this->emit('refresh-table');
+        $this->emit('refreshDatatable');
     }
 
     public function gotoPrev()
@@ -102,7 +101,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
         if ($this->page > 1) {
             $this->page--;
             $this->paginators['page'] = $this->page;
-            // $this->emit('refresh-table');
+            $this->emit('refreshDatatable');
         }
     }
 }
