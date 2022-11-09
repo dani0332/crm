@@ -94,7 +94,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
     {
         $this->page++;
         $this->paginators['page'] = $this->page;
-        $this->emit('refresh-table');
+        // $this->emit('refresh-table');
     }
 
     public function gotoPrev()
@@ -102,7 +102,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
         if ($this->page > 1) {
             $this->page--;
             $this->paginators['page'] = $this->page;
-            $this->emit('refresh-table');
+            // $this->emit('refresh-table');
         }
     }
 }
