@@ -50,6 +50,7 @@ class RenewalsUploadService
     protected $crudService;
     protected $lookupService;
     protected $sendEmailCustomerService;
+    protected $userService;
 
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
@@ -59,7 +60,8 @@ class RenewalsUploadService
         CarQuoteService $carQuoteService,
         CRUDService $crudService,
         LookupService $lookupService,
-        SendEmailCustomerService $sendEmailCustomerService
+        SendEmailCustomerService $sendEmailCustomerService,
+        UserService $userService
     ) {
         $this->renewalsAddonService = $renewalsAddonService;
         $this->checkAMLService = $checkAMLService;
@@ -69,6 +71,7 @@ class RenewalsUploadService
         $this->crudService = $crudService;
         $this->lookupService = $lookupService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->userService = $userService;
     }
 
     /*
@@ -777,7 +780,7 @@ class RenewalsUploadService
             // Fetch single plan data - End
 
             if (isset($carQuote->advisor_id)) {
-                $advisor = User::where('id', $carQuote->advisor_id)->first();
+                $advisor = $this->userService->getUserById($carQuote->advisor_id);
                 $advisorName = $advisor->name;
                 $advisorEmail = $advisor->email;
                 $advisorMobile = $advisor->mobile_no;
