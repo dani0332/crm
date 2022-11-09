@@ -365,7 +365,7 @@ class RenewalsUploadService
             $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
 
             // create additional emails
-            if (count($customerData['additional_emails'])) {
+            if (isset($customerData['additional_emails']) && count($customerData['additional_emails'])) {
                 foreach ($customerData['additional_emails'] as $additionalEmail) {
                     $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);
                 }
