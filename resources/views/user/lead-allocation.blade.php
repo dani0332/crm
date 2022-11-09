@@ -193,7 +193,7 @@
                         '_token': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(data) {
-                        changeAvailabilityInputs(ischecked);
+                        //changeAvailabilityInputs(ischecked);
                     }
                 });
             }
