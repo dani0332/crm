@@ -152,9 +152,7 @@ class RenewalsUploadService
     public function processUploadCreate(RenewalsUploadLeads $renewalsUploadLead)
     {
         try {
-
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
-
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
                 //start file import
@@ -178,13 +176,11 @@ class RenewalsUploadService
             $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
 
             return true;
-
-        }
-        catch (\Exception $exception)
-        {
-            $error = 'RenewalLeadId: ' . $renewalsUploadLead->id . ' FileName: ' . $renewalsUploadLead->file_name .' Error: '. $exception->getMessage();
+        } catch (\Exception $exception) {
+            $error = 'RenewalLeadId: '.$renewalsUploadLead->id.' FileName: '.$renewalsUploadLead->file_name.' Error: '.$exception->getMessage();
             info($error);
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+
             return false;
         }
     }
@@ -219,6 +215,7 @@ class RenewalsUploadService
         });
 
         $renewalsUploadLead->update(['status' => ProcessStatusCode::PLANS_FETCHED]);
+
         return $renewalsUploadLead;
     }
 
@@ -332,7 +329,6 @@ class RenewalsUploadService
             $customerData['last_name'] = $nameParts[1];
         }
 
-
         $emails = explode(',', $this->cleanValue($data['email']));
         $customerData['email'] = $emails[0];
 
@@ -368,9 +364,8 @@ class RenewalsUploadService
         if (! isset($customer->id)) {
             $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
 
-
             // create additional emails
-            if ( count($customerData['additional_emails'])) {
+            if (count($customerData['additional_emails'])) {
                 foreach ($customerData['additional_emails'] as $additionalEmail) {
                     $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);
                 }
