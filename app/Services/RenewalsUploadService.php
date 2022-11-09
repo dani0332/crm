@@ -180,11 +180,9 @@ class RenewalsUploadService
         RenewalQuoteProcess::where([
             'status' => RenewalProcessStatuses::PROCESSED,
             'quote_type' => QuoteTypeShortCode::CAR,
-            'renewals_upload_lead_id' => $renewalsUploadLead->id
+            'renewals_upload_lead_id' => $renewalsUploadLead->id,
         ])->chunk(50, function ($leads) {
-
             foreach ($leads as $lead) {
-
                 $leadData = (object) $lead->data;
 
                 $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
@@ -194,7 +192,6 @@ class RenewalsUploadService
                     'previous_quote_policy_number' => $lead->policy_number,
                     'previous_policy_expiry_date' => $this->formatDate($leadData->end_date),
                 ])->first())) {
-
                     $plans = $this->carQuoteService->getPlans($quote->uuid);
                     if (isset($plans[0]->id)) {
                         //update status to plans fetched

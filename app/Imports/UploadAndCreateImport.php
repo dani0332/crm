@@ -15,8 +15,6 @@ use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStartRow;
@@ -63,7 +61,6 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
             'type' => RenewalsUploadType::CREATE_LEADS,
         ]);
     }
-
 
     /**
      * start import from row 2, first row have titles
