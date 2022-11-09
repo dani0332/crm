@@ -477,7 +477,7 @@ class LeadAllocationService extends BaseService
     public function processCarLeads()
     {
         try {
-            DB::beginTransaction();
+            //DB::beginTransaction();
             $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             $carUnAllocatedLead = $this->getCarUnallocatedLeads($from);
             foreach ($carUnAllocatedLead as $carLead) {
@@ -530,10 +530,11 @@ class LeadAllocationService extends BaseService
                     }
                 }
             }
-            DB::commit();
+            //DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
+            info('error : '. json_encode($e->getMessage()));
+            //DB::rollback();
         }
     }
 
