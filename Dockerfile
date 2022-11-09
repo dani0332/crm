@@ -66,6 +66,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Add user for laravel application
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
+RUN doppler configure set token ${IMCRM_TOKEN}
 
 RUN \
   curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.3.0.315-linux.tar.gz | tar -C /tmp -zx && \
@@ -82,8 +83,6 @@ RUN \
 
 EXPOSE 80
 EXPOSE 443
-
-RUN doppler configure set token ${IMCRM_TOKEN}
 
 # Copy code to /var/www
 ARG CACHEBUST=1
