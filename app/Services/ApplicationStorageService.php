@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\ApplicationStorage;
-use App\Models\LeadAllocation;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;

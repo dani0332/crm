@@ -344,9 +344,9 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            if(!$this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH'))
-            {
+            if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
                 info('Car lead allocation master switch is off');
+
                 return false;
             }
             info('setMaxCapAndAllocationStatus -- started');
@@ -408,7 +408,10 @@ class LeadAllocationService extends BaseService
 
     public function carLeadAllocationSwitchStatus()
     {
-        if(!$this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) return 0;
+        if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
+            return 0;
+        }
+
         return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') == '1';
     }
     public function leadAllocationSwitchStatus()
