@@ -2193,7 +2193,7 @@ $(document).ready(function () {
             '/' +
             row.id +
             "/validation-passed'>" +
-            row.cannot_upload +
+            row.good +
             '</a>'
           );
         },
@@ -2217,6 +2217,22 @@ $(document).ready(function () {
       { data: 'uploaded_by', name: 'uploaded_by' },
       { data: 'created_at', name: 'created_at' },
       { data: 'updated_at', name: 'updated_at' },
+      {
+        data: 'action', name: 'action', orderable: false, searchable: false,
+        render: function (data, type, row) {
+
+          if(row.status == 'Completed') {
+            return (
+              "<a class='btn btn-success btn-sm' href='" +           
+              config.routes.renewal_base_url + "/"  +
+              row.id +
+              "/fetch-plans'>" +
+              
+              'Fetch Plans</a>'
+            );
+          }  
+           
+      },},
     ],
   });
 

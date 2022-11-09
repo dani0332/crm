@@ -11,6 +11,7 @@ use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
+use App\Jobs\FetchRenewalsPlansJob;
 use App\Jobs\RenewalBatchEmailJob;
 use App\Models\CarQuote;
 use App\Models\RenewalQuoteProcess;
@@ -53,6 +54,21 @@ class RenewalsUploadController extends Controller
         $result = $this->renewalsUploadFileService->renewalsUploadUpdate(request()->all());
 
         return redirect('renewals/update')->with('success', 'Uploaded renewals records has been updated');
+    }
+
+    /**
+     * @param $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function fetchRenewalPlans($id)
+    {
+        if($lead = RenewalsUploadLeads::where('id', $id)->where('status' , ProcessStatusCode::COMPLETED)->first()) {
+            FetchRenewalsPlansJob::dispatch($lead);
+            $lead->update(['status' => ProcessStatusCode::FETCHING_PLANS]);
+            return redirect('renewals/uploaded-leads')->with('message', 'Plans fetching started');
+        }
+
+        return redirect('renewals/uploaded-leads')->with('error', 'Invalid Renewal Lead provided');
     }
 
     /**
