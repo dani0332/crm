@@ -154,30 +154,38 @@ class RenewalsUploadService
      */
     public function processUploadCreate(RenewalsUploadLeads $renewalsUploadLead)
     {
-        $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
-            $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
+        try {
+            $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
+                $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
-            //start file import
-            $renewalsUpload = new UploadAndCreateImport($renewalsUploadLead);
-            $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
+                //start file import
+                $renewalsUpload = new UploadAndCreateImport($renewalsUploadLead);
+                $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
 
-            //update counts
-            $validRows = $renewalsUpload->getValidCount();
-            $failedRows = $renewalsUpload->getFailedCount();
+                //update counts
+                $validRows = $renewalsUpload->getValidCount();
+                $failedRows = $renewalsUpload->getFailedCount();
 
-            $renewalsUploadLead->update([
-                'cannot_upload' => $failedRows,
-                'good' => 0,
-                'total_records' => ($validRows + $failedRows),
-            ]);
+                $renewalsUploadLead->update([
+                    'cannot_upload' => $failedRows,
+                    'good' => 0,
+                    'total_records' => ($validRows + $failedRows),
+                ]);
 
-            return $renewalsUploadLead;
-        });
+                return $renewalsUploadLead;
+            });
 
-        $this->uploadedLeadsValidation();
-        $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            $this->uploadedLeadsValidation();
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
 
-        return true;
+            return true;
+        } catch (\Exception $exception) {
+            $error = 'RenewalLeadId: '.$renewalsUploadLead->id.' FileName: '.$renewalsUploadLead->file_name.' Error: '.$exception->getMessage();
+            info($error);
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+
+            return false;
+        }
     }
 
     /**
@@ -210,6 +218,7 @@ class RenewalsUploadService
         });
 
         $renewalsUploadLead->update(['status' => ProcessStatusCode::PLANS_FETCHED]);
+
         return $renewalsUploadLead;
     }
 
@@ -357,7 +366,6 @@ class RenewalsUploadService
         //create new customer if not exists
         if (! isset($customer->id)) {
             $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
-
 
             // create additional emails
             if (isset($customerData['additional_emails']) && count($customerData['additional_emails'])) {

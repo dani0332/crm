@@ -101,7 +101,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     public function getColumns()
     {
         return  [
-            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100|alpha'],
+            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100|regex:/^[\pL\s]+$/u'], //allow only alpha a space
             'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'required|max:255'],
             'quote_type' => ['index' => 2, 'title' => 'Type', 'rules' => 'required|max:4'],
             'insurer' => ['index' => 3, 'title' => 'Insurer', 'rules' => 'required|max:100'],
@@ -156,6 +156,18 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
         $colums = collect($this->getColumns());
 
         return $colums->pluck('title', 'index')->toArray();
+    }
+
+    /**
+     * customer validation messages
+     *
+     * @return string[]
+     */
+    public function customValidationMessages()
+    {
+        return [
+            '0.regex' => ':attribute should only be in letters - no numbers allowed.',
+        ];
     }
 
     /**
