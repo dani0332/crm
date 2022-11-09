@@ -798,7 +798,7 @@ class RenewalsUploadService
                 'currentlyInsuredWith' => $carQuote->currently_insured_with,
                 'carMake' => isset($carMake->text) ? $carMake->text : null,
                 'carModel' => isset($carModel->text) ? $carModel->text : null,
-                'carManufactureYear' => $carQuote->quote_car_year_of_manufacture,
+                'carManufactureYear' => $carQuote->year_of_manufacture,
                 'previousPolicyNumber' => $carQuote->previous_quote_policy_number,
                 'advisorName' => isset($advisorName) ? $advisorName : null,
                 'advisorEmailAddress' => isset($advisorEmail) ? $advisorEmail : null,
