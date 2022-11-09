@@ -533,7 +533,7 @@ class LeadAllocationService extends BaseService
             //DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            info('error : '. json_encode($e->getMessage()));
+            info('error : '.json_encode($e->getMessage()));
             //DB::rollback();
         }
     }
