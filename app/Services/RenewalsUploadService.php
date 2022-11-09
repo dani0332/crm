@@ -185,11 +185,9 @@ class RenewalsUploadService
         RenewalQuoteProcess::where([
             'status' => RenewalProcessStatuses::PROCESSED,
             'quote_type' => QuoteTypeShortCode::CAR,
-            'renewals_upload_lead_id' => $renewalsUploadLead->id
+            'renewals_upload_lead_id' => $renewalsUploadLead->id,
         ])->chunk(50, function ($leads) {
-
             foreach ($leads as $lead) {
-
                 $leadData = (object) $lead->data;
 
                 $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
@@ -199,7 +197,6 @@ class RenewalsUploadService
                     'previous_quote_policy_number' => $lead->policy_number,
                     'previous_policy_expiry_date' => $this->formatDate($leadData->end_date),
                 ])->first())) {
-
                     $plans = $this->carQuoteService->getPlans($quote->uuid);
                     if (isset($plans[0]->id)) {
                         //update status to plans fetched
@@ -788,8 +785,8 @@ class RenewalsUploadService
             }
 
             // Send Email Data
-            $carMakeText = $this->lookupService->getCarMakeTextById($carQuote->car_make_id);
-            $carModelText = $this->lookupService->getCarModelTextById($carQuote->car_model_id);
+            $carMake = $this->lookupService->getCarMake($carQuote->car_make_id);
+            $carModel = $this->lookupService->getCarModel($carQuote->car_model_id);
             $emailData = (object) [
                 'quoteTypeId' => $quoteTypeId,
                 'quoteId' => $carQuote->id,
@@ -799,8 +796,8 @@ class RenewalsUploadService
                 'customerEmail' => $carQuote->email,
                 'previousPolicyExpiryDate' => $carQuote->previous_policy_expiry_date,
                 'currentlyInsuredWith' => $carQuote->currently_insured_with,
-                'carMake' => isset($carMakeText) ? $carMakeText : null,
-                'carModel' => isset($carModelText) ? $carModelText : null,
+                'carMake' => isset($carMake->text) ? $carMake->text : null,
+                'carModel' => isset($carModel->text) ? $carModel->text : null,
                 'carManufactureYear' => $carQuote->quote_car_year_of_manufacture,
                 'previousPolicyNumber' => $carQuote->previous_quote_policy_number,
                 'advisorName' => isset($advisorName) ? $advisorName : null,

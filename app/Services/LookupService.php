@@ -88,13 +88,13 @@ class LookupService extends BaseService
         ->where('is_active', true)->orderBy('text', 'asc')->get();
     }
 
-    public function getCarMakeTextById($id)
+    public function getCarMake($id)
     {
         return CarMake::where('id', $id)->first()->text;
     }
 
-    public function getCarModelTextById($id)
+    public function getCarModel($id)
     {
-        return CarModel::where('id', $id)->first()->text;
+        return CarModel::where('id', $id)->first();
     }
 }
