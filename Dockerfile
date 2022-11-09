@@ -85,7 +85,7 @@ EXPOSE 80
 EXPOSE 443
 
 # Copy code to /var/www
-ARG CACHEBUST=1
+#ARG CACHEBUST=1
 COPY --chown=www:www-data . /var/www
 
 # add root to www group
