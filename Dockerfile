@@ -80,6 +80,9 @@ RUN \
       -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
       -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
       /usr/local/etc/php/conf.d/newrelic.ini
+# PHP Error Log Files
+RUN mkdir /var/log/php
+RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
 
 EXPOSE 80
 EXPOSE 443
@@ -98,10 +101,6 @@ RUN cp docker/info.php /var/www/public/
 RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
 RUN cp -r docker/*.pem /etc/nginx/conf.d/
 RUN cp docker/log_files.yml /etc/
-
-# PHP Error Log Files
-RUN mkdir /var/log/php
-RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
 
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
