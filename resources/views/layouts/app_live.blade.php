@@ -14,15 +14,7 @@
   <!-- Font Awesome -->
   <link href="{{ asset('vendors/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
   @livewireStyles
-  <style>
-    [x-cloak] {
-      display: none !important;
-    }
 
-    .navbar.nav_title {
-      display: none;
-    }
-  </style>
 </head>
 
 <body class="antialiased text-gray-900 bg-white">

@@ -93,6 +93,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
     {
         $this->page++;
         $this->paginators['page'] = $this->page;
+        usleep(500000);
         $this->emit('refreshDatatable');
     }
 
@@ -101,6 +102,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
         if ($this->page > 1) {
             $this->page--;
             $this->paginators['page'] = $this->page;
+            usleep(500000);
             $this->emit('refreshDatatable');
         }
     }
