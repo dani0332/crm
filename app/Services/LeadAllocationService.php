@@ -526,7 +526,7 @@ class LeadAllocationService extends BaseService
                         $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
                         $leadAllocation->updated_at = now();
                         $leadAllocation->save();
-                        info('completed assignment of lead and lead count update is done for quote uuid : '. $carQuote->uuid . ' and lead allocation count for user : '. $userId . ' is now : ' . $leadAllocation->allocation_count);
+                        info('completed assignment of lead and lead count update is done for quote uuid : '.$carQuote->uuid.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
                     }
                 }
             }
