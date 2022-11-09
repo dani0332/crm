@@ -768,7 +768,7 @@ class RenewalsUploadService
                     }
                 }
 
-                if (isset($quotePlan->providerCode) && isset($quotePlan->providerCode)) {
+                if (isset($quotePlan->providerCode) && isset($quotePlan->id)) {
                     $singleQuoteUrl = config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id;
                 } else {
                     $singleQuoteUrl = null;
@@ -819,12 +819,12 @@ class RenewalsUploadService
                 'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
             ];
 
-            $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
+            $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
             if ($responseCode == 201) {
                 Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
             } else {
-                Log::info('renewalBatchEmailProcess EmailNotSent: '.$responseCode);
+                Log::error('renewalBatchEmailProcess EmailNotSent: '.$responseCode.' batchEmailId:'.$batchEmailId.' Customer EmailAddress:'.$carQuote->email);
             }
         }
 
