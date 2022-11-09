@@ -75,6 +75,27 @@
         }
       })
     })
+
+    document.addEventListener('alpine:initialized', () => {
+      const element = document.querySelectorAll('.side-menu li a');
+
+      if (element) {
+
+        element.forEach(function(el, key) {
+
+          el.addEventListener('click', function() {
+
+            el.parentElement.classList.toggle('active');
+
+            element.forEach(function(ell, els) {
+              if (key !== els) {
+                ell.classList.remove('active');
+              }
+            });
+          });
+        });
+      }
+    })
   </script>
 
 </body>

@@ -3,7 +3,7 @@ use App\Enums\RolesEnum;
 use App\Enums\PermissionsEnum;
 @endphp
 
-<aside x-transition:enter="transition transform duration-300" x-transition:enter-start="-translate-x-full opacity-30 ease-in" x-transition:enter-end="translate-x-0 opacity-100 ease-out" x-transition:leave="transition transform duration-300" x-transition:leave-start="translate-x-0 opacity-100 ease-out" x-transition:leave-end="-translate-x-full opacity-0 ease-in" class="fixed inset-y-0 z-10 flex flex-col flex-shrink-0 w-64 max-h-screen overflow-hidden transition-all transform bg-white border-r shadow-lg lg:z-auto lg:static lg:shadow-none" :class="{'-translate-x-full lg:translate-x-0': !$store.sideBar.open, 'lg:w-24': $store.sideBar.minimized}">
+<aside x-transition:enter="transition transform duration-300" x-transition:enter-start="-translate-x-full opacity-30 ease-in" x-transition:enter-end="translate-x-0 opacity-100 ease-out" x-transition:leave="transition transform duration-300" x-transition:leave-start="translate-x-0 opacity-100 ease-out" x-transition:leave-end="-translate-x-full opacity-0 ease-in" class="fixed inset-y-0 z-10 flex flex-col flex-shrink-0 w-64 max-h-screen overflow-hidden transition-all transform bg-white border-r shadow-lg lg:z-auto lg:static lg:shadow-none" :class="{'-translate-x-full lg:translate-x-0': !$store.sideBar.open, 'lg:w-24 minimized': $store.sideBar.minimized}">
 
   <div class="flex items-center justify-between flex-shrink-0" :class="{'lg:justify-center': $store.sideBar.minimized}">
     <img src='{{ asset("image/logo.png") }}' alt="IMCRM" class="p-2" :class="{'lg:hidden': $store.sideBar.minimized}" width="356" height="63" />
