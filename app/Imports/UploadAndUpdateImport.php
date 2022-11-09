@@ -111,7 +111,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
     public function getColumns()
     {
         return  [
-            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'max:100|alpha'],
+            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'max:100|regex:/^[\pL\s]+$/u'],
             'advisor' => ['index' => 1, 'title' => 'Advisor Email', 'rules' => 'max:100'],
             'policy_number' => ['index' => 2, 'title' => 'Policy', 'rules' => 'required|max:100'],
             'insurer' => ['index' => 3, 'title' => 'Insurer', 'rules' => 'required|max:100'],
@@ -138,6 +138,17 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
             'registration_location' => ['index' => 24, 'title' => 'Registration Location', 'rules' => 'max:100'],
             'previous_advisor' => ['index' => 25, 'title' => 'Previous Advisor Email', 'rules' => 'max:100'],
             'notes' => ['index' => 26, 'title' => 'Notes', 'rules' => 'max:200'],
+        ];
+    }
+
+    /**
+     * custom validation message
+     * @return string[]
+     */
+    public function customValidationMessages()
+    {
+        return [
+            '0.regex' => ':attribute should only be in letters - no numbers allowed.',
         ];
     }
 
