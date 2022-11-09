@@ -207,6 +207,7 @@ class RenewalsUploadService
         });
 
         $renewalsUploadLead->update(['status' => ProcessStatusCode::PLANS_FETCHED]);
+        return $renewalsUploadLead;
     }
 
     /**
@@ -354,15 +355,16 @@ class RenewalsUploadService
         if (! isset($customer->id)) {
             $customer = Customer::create(Arr::only($customerData, ['first_name', 'last_name', 'email', 'mobile_no']));
 
+
             // create additional emails
-            if (count($customerData['additional_emails'])) {
+            if (isset($customerData['additional_emails']) && count($customerData['additional_emails'])) {
                 foreach ($customerData['additional_emails'] as $additionalEmail) {
                     $customer->additionalContactInfo()->create(['key' => 'email', 'value' => $additionalEmail]);
                 }
             }
 
             // create additional mobile nos
-            if (count($customerData['additional_mobiles'])) {
+            if (isset($customerData['additional_mobiles']) && count($customerData['additional_mobiles'])) {
                 foreach ($customerData['additional_mobiles'] as $additionalMobile) {
                     $customer->additionalContactInfo()->create(['key' => 'mobile_no', 'value' => $additionalMobile]);
                 }

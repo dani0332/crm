@@ -111,7 +111,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
     public function getColumns()
     {
         return  [
-            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'max:100'],
+            'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'max:100|alpha'],
             'advisor' => ['index' => 1, 'title' => 'Advisor Email', 'rules' => 'max:100'],
             'policy_number' => ['index' => 2, 'title' => 'Policy', 'rules' => 'required|max:100'],
             'insurer' => ['index' => 3, 'title' => 'Insurer', 'rules' => 'required|max:100'],
