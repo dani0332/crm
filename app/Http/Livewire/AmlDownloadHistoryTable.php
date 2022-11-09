@@ -74,14 +74,10 @@ class AmlDownloadHistoryTable extends DataTableComponent
     }
 
     // custom pagination
+
     public function builder(): Builder
     {
         return SanctionListDownloads::query()->offset($this->getOffset())->limit(10);
-    }
-
-    public function getOffset()
-    {
-        return ($this->page - 1) * 10;
     }
 
     public function getCurrentPage()
@@ -89,21 +85,8 @@ class AmlDownloadHistoryTable extends DataTableComponent
         return $this->page;
     }
 
-    public function gotoNext()
+    public function getOffset()
     {
-        $this->page++;
-        $this->paginators['page'] = $this->page;
-        usleep(500000);
-        $this->emit('refreshDatatable');
-    }
-
-    public function gotoPrev()
-    {
-        if ($this->page > 1) {
-            $this->page--;
-            $this->paginators['page'] = $this->page;
-            usleep(500000);
-            $this->emit('refreshDatatable');
-        }
+        return ($this->page - 1) * 10;
     }
 }
