@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CarPlanFeaturesCode;
 use App\Enums\carTypeInsuranceCode;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
@@ -18,11 +19,8 @@ use App\Models\CarModel;
 use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\CarQuoteValuation;
-use App\Models\CarTypeInsurance;
 use App\Models\ClaimHistory;
 use App\Models\Customer;
-use App\Models\EmailActivity;
-use App\Models\EmailStatus;
 use App\Models\Emirate;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
@@ -35,9 +33,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use Config;
 use DateTime;
-use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -51,19 +47,28 @@ class RenewalsUploadService
     protected $capiRequestService;
     protected $insuranceProviderService;
     protected $carQuoteService;
+    protected $crudService;
+    protected $lookupService;
+    protected $sendEmailCustomerService;
 
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
         CheckAmlService $checkAMLService,
         CapiRequestService $capiRequestService,
         InsuranceProviderService $insuranceProviderService,
-        CarQuoteService $carQuoteService
+        CarQuoteService $carQuoteService,
+        CRUDService $crudService,
+        LookupService $lookupService,
+        SendEmailCustomerService $sendEmailCustomerService
     ) {
         $this->renewalsAddonService = $renewalsAddonService;
         $this->checkAMLService = $checkAMLService;
         $this->capiRequestService = $capiRequestService;
         $this->insuranceProviderService = $insuranceProviderService;
         $this->carQuoteService = $carQuoteService;
+        $this->crudService = $crudService;
+        $this->lookupService = $lookupService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
     /*
@@ -369,7 +374,7 @@ class RenewalsUploadService
 
     /**
      * update customer detail if required
-     * todo: test its working
+     * todo: test its working.
      *
      * @param $customerData
      * @return void
@@ -732,189 +737,99 @@ class RenewalsUploadService
         $this->updateAdvisorAssignedDateTime('CarQuoteRequestDetail', $updateCarQuoteRenewal->id, 'car_quote_request_id', $currentUserId, $advisorId);
     }
 
-    public function renewalBatchEmailProcess($batchLeadId, $batchEmailId)
+    public function renewalBatchEmailProcess($batchLeadId, $batchEmailId, $quoteTypeId)
     {
+        Log::info('renewalBatchEmailProcess START');
         $carQuote = CarQuote::find($batchLeadId);
-        $ecomUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid;
+        $ecomUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid;
 
-        if ($carQuote->previous_quote_id != null) {
-            $primaryEmail = $carQuote->email;
-            $otherEmails = $carQuote->other_email_addresses;
+        if ($carQuote->previous_quote_policy_number != null) {
+            // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
+            $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true);
+            $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
+            $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
-            if ($otherEmails) {
-                $allEmails = $primaryEmail.','.$otherEmails;
-            } else {
-                $allEmails = $primaryEmail;
+            // Fetch single plan data - Start
+            if (is_array($listQuotePlans)) {
+                $freeAddons = [];
+                foreach ($listQuotePlans as $quotePlan) { // only damage_limit feature
+                    foreach ($quotePlan->benefits->feature as $feature) {
+                        if (strtolower($feature->code) == strtolower(CarPlanFeaturesCode::DAMAGE_LIMIT)) {
+                            $damageLimitFeatureText = $feature->text;
+                            $damageLimitFeatureValue = $feature->value;
+                        }
+                    }
+                    foreach ($quotePlan->addons as $addon) { // Only free addons
+                        foreach ($addon->carAddonOption as $carAddonOption) {
+                            if ($carAddonOption->price == 0) {
+                                $freeAddons[] = $addon;
+                            }
+                        }
+                    }
+                }
+
+                if (isset($quotePlan->providerCode) && isset($quotePlan->providerCode)) {
+                    $singleQuoteUrl = config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id;
+                } else {
+                    $singleQuoteUrl = null;
+                }
+            }
+            // Fetch single plan data - End
+
+            if (isset($carQuote->advisor_id)) {
+                $advisor = User::where('id', $carQuote->advisor_id)->first();
+                $advisorName = $advisor->name;
+                $advisorEmail = $advisor->email;
+                $advisorMobile = $advisor->mobile_no;
+                $advisorLandline = $advisor->landline_no;
             }
 
-            $finalEmails = explode(',', $allEmails);
+            // Send Email Data
+            $carMake = $this->lookupService->getCarMake($carQuote->car_make_id);
+            $carModel = $this->lookupService->getCarModel($carQuote->car_model_id);
+            $emailData = (object) [
+                'quoteTypeId' => $quoteTypeId,
+                'quoteId' => $carQuote->id,
+                'templateId' => $emailTemplateId,
+                'quoteCdbId' => $carQuote->code,
+                'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
+                'customerEmail' => $carQuote->email,
+                'previousPolicyExpiryDate' => $carQuote->previous_policy_expiry_date,
+                'currentlyInsuredWith' => $carQuote->currently_insured_with,
+                'carMake' => isset($carMake->text) ? $carMake->text : null,
+                'carModel' => isset($carModel->text) ? $carModel->text : null,
+                'carManufactureYear' => $carQuote->year_of_manufacture,
+                'previousPolicyNumber' => $carQuote->previous_quote_policy_number,
+                'advisorName' => isset($advisorName) ? $advisorName : null,
+                'advisorEmailAddress' => isset($advisorEmail) ? $advisorEmail : null,
+                'advisorMobileNo' => isset($advisorMobile) ? $advisorMobile : null,
+                'advisorLandlineNo' => isset($advisorLandline) ? $advisorLandline : null,
+                'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+                'planType' => isset($quotePlan->repairType) && strtolower($quotePlan->repairType) == 'tpl' ? 'Third Party Liability' : 'Comprehensive',
+                'planName' => isset($quotePlan->name) ? $quotePlan->name : null,
+                'repairType' => isset($quotePlan->repairType) ? $quotePlan->repairType : null,
+                'providerCode' => isset($quotePlan->providerCode) ? $quotePlan->providerCode : null,
+                'providerName' => isset($quotePlan->providerName) ? $quotePlan->providerName : null,
+                'singleQuoteUrl' => isset($singleQuoteUrl) ? $singleQuoteUrl : null,
+                'discountPremium' => isset($quotePlan->discountPremium) ? $quotePlan->discountPremium : null,
+                'damageLimitFeatureText' => isset($damageLimitFeatureText) ? $damageLimitFeatureText : null,
+                'damageLimitFeatureValue' => isset($damageLimitFeatureValue) ? $damageLimitFeatureValue : null,
+                'freeAddons' => isset($freeAddons) ? $freeAddons : null,
+                'listQuotePlans' => $listQuotePlans,
+                'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
+            ];
 
-            foreach ($finalEmails as $finalEmail) {
-                $previousCarQuote = CarQuote::find($carQuote->previous_quote_id);
-                Log::info('CDBID: '.$carQuote->code.' RenewalBatch: '.$carQuote->renewal_batch.' PreviousQuoteId: '.$carQuote->previous_quote_id.' Email: '.$carQuote->email.' finalEmail: '.$finalEmail.' ecomUrl: '.$ecomUrl.' renewal_expiry_date: '.$previousCarQuote->renewal_expiry_date);
+            $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
 
-                if (isset($previousCarQuote->renewal_expiry_date)) {
-                    $renewalExpiryDate = date('d/m/Y', strtotime($previousCarQuote->renewal_expiry_date));
-                } else {
-                    $renewalExpiryDate = '';
-                }
-
-                if (isset($carQuote->car_type_insurance_id)) {
-                    $carTypeInsurance = CarTypeInsurance::where('id', '=', $carQuote->car_type_insurance_id)->value('text');
-                } else {
-                    $carTypeInsurance = '';
-                }
-
-                if (isset($carQuote->car_make_id)) {
-                    $carMake = CarMake::where('id', '=', $carQuote->car_make_id)->value('text');
-                } else {
-                    $carMake = '';
-                }
-
-                if (isset($carQuote->car_model_id)) {
-                    $carModel = CarModel::where('id', '=', $carQuote->car_model_id)->value('text');
-                } else {
-                    $carModel = '';
-                }
-
-                if (isset($carQuote->advisor_id)) {
-                    $advisorModel = User::where('id', '=', $carQuote->advisor_id)->first();
-                    $advisorName = $advisorModel->name;
-                    $advisorEmail = $advisorModel->email;
-                    $advisorMobile = $advisorModel->mobile_no;
-                    $advisorLandline = $advisorModel->landline_no;
-                } else {
-                    $advisorName = '';
-                    $advisorEmail = '';
-                    $advisorMobile = '';
-                    $advisorLandline = '';
-                }
-
-                // Send Email
-                $emailData = [
-                    'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
-                    'customerEmail' => $finalEmail,
-                    'cdbId' => $carQuote->code,
-                    'policyNumber' => $carQuote->previous_quote_policy_number,
-                    'expiryDate' => $renewalExpiryDate,
-                    'insurerName' => $carQuote->currently_insured_with,
-                    'planType' => $carTypeInsurance,
-                    'carMake' => $carMake,
-                    'carModel' => $carModel,
-                    'advisorName' => $advisorName,
-                    'advisorEmail' => $advisorEmail,
-                    'advisorMobile' => $advisorMobile,
-                    'advisorLandline' => $advisorLandline,
-                    'ecomUrl' => $ecomUrl,
-                ];
-
-                $getmessageId = $this->sendRenewalEmail($emailData);
-
-                $newEmailStatus = new EmailStatus();
-                $newEmailStatus->quote_type_id = 1;
-                $newEmailStatus->quote_id = $carQuote->id;
-                $newEmailStatus->email_address = $finalEmail;
-                $newEmailStatus->msg_id = $getmessageId;
-                $newEmailStatus->email_status = ProcessStatusCode::IN_PROGRESS;
-                $newEmailStatus->save();
+            if ($responseCode == 201) {
+                Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
+            } else {
+                Log::info('renewalBatchEmailProcess EmailNotSent: '.$responseCode);
             }
         }
 
         $this->updateRenewalBatchRecord($batchEmailId);
-    }
-
-    public function sendRenewalEmail($emailData)
-    {
-        try {
-            $apiKey = Config::get('constants.SENDINBLUE_KEY');
-            $url = Config::get('constants.SIB_URL');
-            $appEnv = Config::get('constants.APP_ENV');
-            $emailTemplateId = (int) Config::get('constants.SIB_CAR_RENEWALS_TEMPLATE_ID');
-            $tag = 'renewal';
-
-            if ($appEnv == 'production') {
-                $tag = $tag;
-            } else {
-                $tag = $appEnv.'-'.$tag;
-            }
-
-            $headers = [
-                'Accept' => 'application/json',
-                'api-key' => $apiKey,
-                'Content-Type' => 'application/json',
-            ];
-
-            $body = json_encode([
-                'to' => [[
-                    'email' => $emailData['customerEmail'],
-                    'name' => $emailData['customerName'],
-                ]],
-                'bcc' => [[
-                    'email' => $emailData['advisorEmail'],
-                    'name' => $emailData['advisorName'],
-                ]],
-                'templateId' => $emailTemplateId,
-                'params' => [
-                    'customerName' => $emailData['customerName'],
-                    'customerEmail' => $emailData['customerEmail'],
-                    'cdbId' => $emailData['cdbId'],
-                    'policyNumber' => $emailData['policyNumber'],
-                    'expiryDate' => $emailData['expiryDate'],
-                    'insurerName' => $emailData['insurerName'],
-                    'planType' => $emailData['planType'],
-                    'carMake' => $emailData['carMake'],
-                    'carModel' => $emailData['carModel'],
-                    'advisorName' => $emailData['advisorName'],
-                    'advisorEmail' => $emailData['advisorEmail'],
-                    'advisorMobile' => $emailData['advisorMobile'],
-                    'advisorLandline' => $emailData['advisorLandline'],
-                    'ecomUrl' => $emailData['ecomUrl'],
-                ],
-                'replyTo' => [
-                    'email' => $emailData['advisorEmail'],
-                ],
-                'tags' => [
-                    $tag,
-                ],
-            ]);
-
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->post(
-                $url,
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => 10000,
-                ]
-            );
-
-            $getMsgDetail = json_decode($clientRequest->getBody()->getContents());
-
-            $getStatusCode = $clientRequest->getStatusCode();
-            $getResponse = json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents());
-
-            if ($getStatusCode == 201) {
-                $isEmailSent = 1;
-            } else {
-                $errorMessage = 'SIB Error:  '.$getStatusCode.' '.$emailData['customerEmail'].' '.get_class();
-                Log::error('errorMessage: '.$errorMessage);
-                $isEmailSent = 0;
-            }
-        } catch (Exception $ex) {
-            $errorMessage = 'SIB Failed Error: '.$ex->getCode().' '.$ex->getMessage().' '.get_class();
-            Log::info('errorMessage: '.$errorMessage);
-            $getStatusCode = $ex->getCode();
-            $getResponse = json_encode($ex->getCode().' '.$ex->getMessage());
-            $isEmailSent = 0;
-        }
-
-        $newEmailActivity = new EmailActivity();
-        $newEmailActivity->api_response = $getResponse;
-        $newEmailActivity->successful = $isEmailSent;
-        $newEmailActivity->email = $emailData['customerEmail'];
-        $newEmailActivity->save();
-
-        return $getMsgDetail->messageId;
+        Log::info('renewalBatchEmailProcess END');
     }
 
     public function updateRenewalBatchRecord($batchEmailId)
