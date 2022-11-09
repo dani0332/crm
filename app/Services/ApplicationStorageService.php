@@ -192,7 +192,7 @@ class ApplicationStorageService extends BaseService
 
     public function updateCarLeadAllocationJobStatus()
     {
-        $applicationStorage = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_JOB_SWITCH')->first();
+        $applicationStorage = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_MASTER_SWITCH')->first();
         $applicationStorage->value = $applicationStorage->value == 1 ? 0 : 1;
         $applicationStorage->save();
 

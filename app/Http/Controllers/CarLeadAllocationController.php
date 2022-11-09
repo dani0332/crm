@@ -37,7 +37,7 @@ class CarLeadAllocationController extends Controller
             $availableUsers = 0;
             $unAvailableUsers = 0;
             $todayTotalLeadCount = $this->carLeadAllocationService->getTodaysCarTotalLeadsCount();
-            $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
+            $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
             $isRenewalLeadAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_RENEWAL_LEAD_ALLOCATION');
             $isFIFO = $this->applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
             $data = $this->carLeadAllocationService->getGridData();
