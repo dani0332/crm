@@ -27,6 +27,5 @@ class AddQuoteIdToRenewalQuoteProcesses extends Migration
      */
     public function down()
     {
-
     }
 }

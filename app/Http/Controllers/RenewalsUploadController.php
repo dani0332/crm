@@ -65,6 +65,7 @@ class RenewalsUploadController extends Controller
         if ($lead = RenewalsUploadLeads::where('id', $id)->where('status', ProcessStatusCode::COMPLETED)->first()) {
             $lead->update(['status' => ProcessStatusCode::FETCHING_PLANS]);
             FetchRenewalsPlansJob::dispatch($lead);
+
             return redirect('renewals/uploaded-leads')->with('message', 'Plans fetching started');
         }
 
