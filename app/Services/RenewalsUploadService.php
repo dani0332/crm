@@ -155,10 +155,12 @@ class RenewalsUploadService
      */
     public function processUploadCreate(RenewalsUploadLeads $renewalsUploadLead)
     {
+        $logPrefix = 'UAC FN: processUploadCreate RenewalLeadId: ' . $renewalsUploadLead->id .' FileName: ' . $renewalsUploadLead->file_name;
+
         try {
-            info('UAC FN: processUploadCreate job started' );
 
             $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
+            info( $logPrefix . ' In Progress Now');
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
 
@@ -179,17 +181,18 @@ class RenewalsUploadService
                 return $renewalsUploadLead;
             });
 
-            info('UAC FN: processUploadCreate excel data stored in DB');
+            info($logPrefix . ' excel data stored in DB');
 
-            $this->uploadedLeadsValidation();
+            $this->uploadedLeadsValidation($renewalsUploadLead);
             $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
 
-            info('UAC FN: processUploadCreate validation and quote creation is completed');
+            info($logPrefix . ' validation and quote creation is completed');
+
             return true;
 
         } catch (\Exception $exception) {
 
-            info('UAC FN: processUploadCreate RenewalLeadId: '.$renewalsUploadLead->id.' FileName: '.$renewalsUploadLead->file_name.' Error: '.$exception->getMessage());
+            info($logPrefix . 'Process Failed. Error: '.$exception->getMessage());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
             return false;
         }
@@ -200,7 +203,8 @@ class RenewalsUploadService
      */
     public function fetchRenewalPlans(RenewalsUploadLeads $renewalsUploadLead)
     {
-        info('FetchPlans FN: fetchRenewalPlans Fetch plans started for ' . $renewalsUploadLead->id . ' fileName: ' . $renewalsUploadLead->file_name);
+        $logPrefix = 'FetchPlans FN: fetchRenewalPlans ' . $renewalsUploadLead->id . ' fileName: ' . $renewalsUploadLead->file_name;
+        info($logPrefix . '  Fetch plans started');
 
         try {
             RenewalQuoteProcess::where([
@@ -235,13 +239,13 @@ class RenewalsUploadService
             });
 
             $renewalsUploadLead->update(['status' => ProcessStatusCode::PLANS_FETCHED]);
-            info('FetchPlans FN: fetchRenewalPlans Fetch plans completed for renewalsUploadLeadID:' . $renewalsUploadLead->id . ' fileName: ' . $renewalsUploadLead->file_name);
+            info($logPrefix . ' Fetch plans completed');
             return $renewalsUploadLead;
         }
         catch (\Exception $exception)
         {
             $renewalsUploadLead->update(['status' => ProcessStatusCode::PLANS_FAILED]);
-            info('FetchPlans FN: fetchRenewalPlans Fetch plans failed for ' . $renewalsUploadLead->id . ' fileName: ' . $renewalsUploadLead->file_name . ' Error: ' . $exception->getMessage());
+            info($logPrefix . 'Fetch plans failed.  Error: ' . $exception->getMessage());
         }
     }
 
@@ -480,7 +484,8 @@ class RenewalsUploadService
         return DB::transaction(function () use ($renewalQuoteProcess) {
             $data = $renewalQuoteProcess->data;
 
-            info('UAC FN: createQuote Quote creation started for Policy NO: '.$data['policy_number'] . ' EndDate: ' . $data['end_date']);
+            $logPrefix = 'UAC FN: createQuote Policy NO: '.$data['policy_number'] . ' EndDate: ' . $data['end_date'];
+            info($logPrefix . ' Quote creation started');
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
@@ -559,7 +564,7 @@ class RenewalsUploadService
             $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED, 'quote_id' => $quote->id]);
             $renewalUploadLead->update(['good' => $renewalUploadLead->good += 1]);
 
-            info('UAC FN: createQuote Quote created for Policy NO: '.$data['policy_number'] . ' EndDate: ' . $data['end_date'] . 'QuoteType: ' . $data['quote_type'] . ' UUID: ' . $quote->uuid);
+            info($logPrefix . ' Quote created. QuoteType: ' . $data['quote_type'] . ' UUID: ' . $quote->uuid);
 
             return $quote;
         });
@@ -920,9 +925,9 @@ class RenewalsUploadService
         return $quoteDetail;
     }
 
-    public function uploadedLeadsValidation()
+    public function uploadedLeadsValidation(RenewalsUploadLeads $renewalsUploadLead)
     {
-        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->chunk(50, function ($leads) {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunk(50, function ($leads) {
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
