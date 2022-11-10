@@ -329,7 +329,7 @@ class RenewalsUploadController extends Controller
                     return abort(404);
                 }
 
-                return redirect('/quotes/car/'.$carQuote->uuid);
+                return redirect(config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid);
                 break;
             default:
                 return abort(404);
