@@ -18,5 +18,6 @@ final class ProcessStatusCode extends Enum
     const UPLOADED = 'Uploaded';
     const FETCHING_PLANS = 'Fetching Plans';
     const PLANS_FETCHED = 'Plans Fetched';
+    const PLANS_FAILED = 'Plans Failed';
     const FAILED = 'Failed';
 }

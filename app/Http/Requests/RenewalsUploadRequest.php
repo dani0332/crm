@@ -37,11 +37,9 @@ class RenewalsUploadRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            //todo: remove comments once code is finalized
-
-            /* if ( request()->hasFile('file_name') && ($existing = RenewalsUploadLeads::where('file_name', request()->file('file_name')->getClientOriginalName())->first() )) {
+             if ( request()->hasFile('file_name') && ($existing = RenewalsUploadLeads::where('file_name', request()->file('file_name')->getClientOriginalName())->first() )) {
                  $validator->errors()->add('type', 'File already been uploaded. Please try again with different file.');
-             }*/
+             }
         });
     }
 }
