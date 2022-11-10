@@ -252,6 +252,7 @@ class RenewalsUploadService
 
         //create lead record
         $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::UPDATE_LEADS);
+        info('UAU FN: renewalsUploadUpdate File uploaded and renewals lead created');
 
         ProcessRenewalsUploadUpdate::dispatch($renewalsUploadLead);
 
@@ -264,31 +265,48 @@ class RenewalsUploadService
      */
     public function processUploadUpdate(RenewalsUploadLeads $renewalsUploadLead)
     {
-        $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
+        $logPrefix = 'UAU FN: processUploadUpdate RenewalLeadId: '.$renewalsUploadLead->id.' FileName: '.$renewalsUploadLead->file_name;
+
+        try {
+            info($logPrefix . ' In Progress Now');
+
             $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
-            //start file import
-            $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
-            $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
+            $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
 
-            //todo: correct these values
-            $validRows = $renewalsUpload->getValidCount();
-            $failedRows = $renewalsUpload->getFailedCount();
+                //start file import
+                $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
+                $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
 
-            $renewalsUploadLead->update([
-                'cannot_upload' => $failedRows,
-                'good' => 0,
-                'total_records' => ($validRows + $failedRows),
-            ]);
+                //todo: correct these values
+                $validRows = $renewalsUpload->getValidCount();
+                $failedRows = $renewalsUpload->getFailedCount();
 
-            return $renewalsUploadLead;
-        });
+                $renewalsUploadLead->update([
+                    'cannot_upload' => $failedRows,
+                    'good' => 0,
+                    'total_records' => ($validRows + $failedRows),
+                ]);
 
-        $this->uploadedLeadsValidation();
+                return $renewalsUploadLead;
+            });
 
-        $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            info($logPrefix.' excel data stored in DB.');
 
-        return true;
+            $this->uploadedLeadsValidation($renewalsUploadLead);
+
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            info($logPrefix.' validation and quote update is completed');
+
+            return true;
+        }
+        catch (Exception $exception)
+        {
+            info($logPrefix.'Process Failed. Error: '.$exception->getMessage());
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+
+            return false;
+        }
     }
 
     /**
