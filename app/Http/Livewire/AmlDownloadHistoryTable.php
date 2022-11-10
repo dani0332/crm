@@ -20,8 +20,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
             ->setColumnSelectDisabled()
             ->setFilterLayoutSlideDown();
 
-        // disabled pagination count
-        $this->setPaginationDisabled();
+        // disabled pagination count & pagination view
         $this->setPaginationVisibilityDisabled();
         $this->setConfigurableAreas([
             'after-pagination' => 'partials.pagination',
@@ -73,20 +72,20 @@ class AmlDownloadHistoryTable extends DataTableComponent
         ];
     }
 
-    // custom pagination
-
     public function builder(): Builder
     {
-        return SanctionListDownloads::query()->offset($this->getOffset())->limit(10);
+        return SanctionListDownloads::query();
     }
+
+    // custom pagination
 
     public function getCurrentPage()
     {
         return $this->page;
     }
 
-    public function getOffset()
+    protected function executeQuery()
     {
-        return ($this->page - 1) * 10;
+        return $this->getBuilder()->simplePaginate($this->getPerPage(), ['*'], $this->getComputedPageName());
     }
 }
