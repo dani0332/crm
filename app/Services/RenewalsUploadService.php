@@ -188,8 +188,9 @@ class RenewalsUploadService
 
             return true;
         } catch (\Exception $exception) {
-            info($logPrefix.'Process Failed. Error: '.$exception->getMessage());
+
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+            Log::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
 
             return false;
         }
@@ -236,8 +237,9 @@ class RenewalsUploadService
 
             return $renewalsUploadLead;
         } catch (\Exception $exception) {
+
             $renewalsUploadLead->update(['status' => ProcessStatusCode::PLANS_FAILED]);
-            info($logPrefix.'Fetch plans failed.  Error: '.$exception->getMessage());
+            Log::error($logPrefix.'Fetch plans failed.  Error: '.$exception->getMessage());
         }
     }
 
