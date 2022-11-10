@@ -1225,6 +1225,7 @@ class CarQuoteService extends BaseService
     public function exportPlansPdf($quoteType, $data)
     {
         $planIds = $data['plan_ids'];
+        $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
 
@@ -1233,9 +1234,11 @@ class CarQuoteService extends BaseService
         }
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
-        $quote->load(['carMake', 'carModel', 'advisor', 'customer']);
+        $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
+        }, 'customer']);
 
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote'));
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
         $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
