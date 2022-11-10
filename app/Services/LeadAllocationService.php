@@ -397,6 +397,7 @@ class LeadAllocationService extends BaseService
                                 'la.allocation_count as allocationCount', 'la.last_allocated as lastAllocation', 'la.max_capacity as maxCapacity', 'la.is_available as isAvailable',
                                 'users.last_login as lastLogin', 'la.id as id'
                             )->get();
+        info('going to update the max cap for users : '. json_encode($users));
         foreach ($users as $user) {
             LeadAllocation::where('user_id', $user->userId)->update([
                 'max_capacity' => str_contains($user->quads, '1') ? 4 : 5,
@@ -477,7 +478,7 @@ class LeadAllocationService extends BaseService
     public function processCarLeads()
     {
         try {
-            //DB::beginTransaction();
+            DB::beginTransaction();
             $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             $carUnAllocatedLead = $this->getCarUnallocatedLeads($from);
             foreach ($carUnAllocatedLead as $carLead) {
@@ -530,11 +531,10 @@ class LeadAllocationService extends BaseService
                     }
                 }
             }
-            //DB::commit();
+            DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            info('error : '.json_encode($e->getMessage()));
-            //DB::rollback();
+            DB::rollback();
         }
     }
 
