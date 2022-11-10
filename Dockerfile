@@ -90,11 +90,11 @@ EXPOSE 443
 # Copy code to /var/www
 #ARG CACHEBUST=1
 # Check yarn packages
-COPY --chown=www:www-data package*.json yarn.lock /var/www
+COPY --chown=www:www-data package*.json yarn.lock /var/www/
 RUN yarn install --pure-lockfile
 
 #Check composer packages
-COPY --chown=www:www-data composer*.json composer.lock /var/www
+COPY --chown=www:www-data composer*.json composer.lock /var/www/
 RUN composer install --optimize-autoloader --no-dev
 
 COPY --chown=www:www-data . /var/www
