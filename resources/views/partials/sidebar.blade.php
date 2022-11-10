@@ -190,16 +190,16 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @hasanyrole(RolesEnum::Renewals.'|'.RolesEnum::RenewalsManager)
+                @hasanyrole(RolesEnum::Renewals.'|'.RolesEnum::RenewalsManager.'|'.RolesEnum::Engineering)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('renewals/upload') }}">Upload & Create</a></li>
                             <li><a href="{{ url('renewals/uploaded-leads') }}">Uploaded Leads</a></li>
                             <li><a href="{{ url('renewals/update') }}">Upload & Update</a></li>
-                            @hasrole(RolesEnum::RenewalsManager)
+                            @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
                             <li><a href="{{ url('renewals/batches') }}">Batches</a></li>
-                            @endhasrole
+                            @endhasanyrole
                         </ul>
                     </li>
                 </ul>

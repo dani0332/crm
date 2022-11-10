@@ -232,7 +232,7 @@ class RenewalsUploadController extends Controller
 
     public function listRenewalBatches(Request $request, CarQuote $carQuote, Datatables $datatables)
     {
-        if (! auth()->user()->hasRole(RolesEnum::RenewalsManager)) {
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
         if ($request->ajax()) {
@@ -251,7 +251,7 @@ class RenewalsUploadController extends Controller
 
     public function batchDetail($batch)
     {
-        if (! auth()->user()->hasRole(RolesEnum::RenewalsManager)) {
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
         $batchEmails = RenewalsBatchEmails::select('id', 'batch', 'total_leads', 'total_sent', 'total_bounced', 'status', 'created_at', 'created_by_id')
@@ -264,7 +264,7 @@ class RenewalsUploadController extends Controller
 
     public function runBatchProcess($batch)
     {
-        if (! auth()->user()->hasRole(RolesEnum::RenewalsManager)) {
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
         $batchLeads = CarQuote::select('car_quote_request.id as id')
