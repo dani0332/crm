@@ -20,7 +20,7 @@ use App\Enums\RolesEnum;
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <table class="table table-striped jambo_table @hasrole(RolesEnum::RenewalsManager)manager-renewals-leads-data-table @else renewals-leads-data-table @endhasrole" style="table-layout: fixed;" width="100%">
+                <table class="table table-striped jambo_table @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin)manager-renewals-leads-data-table @else renewals-leads-data-table @endhasanyrole" style="table-layout: fixed;" width="100%">
                       <thead>
                         <tr>
                           <th style="width: 20px !important">id</th>
@@ -34,7 +34,7 @@ use App\Enums\RolesEnum;
                           <th style="width: 80px !important">Submitted By</th>
                           <th style="width: 80px !important">Submitted At</th>
                           <th style="width: 80px !important">Updated At</th>
-                          @hasrole(RolesEnum::RenewalsManager)<th style="width: 80px;">Action</th>@endhasrole
+                          @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin)<th style="width: 80px;">Action</th>@endhasanyrole
                         </tr>
                       </thead>
                       <tbody>
