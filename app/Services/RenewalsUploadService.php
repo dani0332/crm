@@ -218,10 +218,7 @@ class RenewalsUploadService
                     $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
                     $quoteObject = $this->createQuoteObject($quoteType->code);
 
-                    if ($quoteObject && ($quote = $quoteObject->where([
-                            'previous_quote_policy_number' => $lead->policy_number,
-                            'previous_policy_expiry_date' => $this->formatDate($leadData->end_date),
-                        ])->first())) {
+                    if ($quoteObject && ($quote = $quoteObject->where('id', $lead->quote_id)->first())) {
 
                         info('FetchPlans FN: fetchRenewalPlans' . ' fetching plans for quoteType: ' . $lead->quote_type . ' UUID: ' . $quote->uuid );
                         $plans = $this->carQuoteService->getPlans($quote->uuid);
@@ -235,6 +232,8 @@ class RenewalsUploadService
                             info('FetchPlans FN: fetchRenewalPlans' . ' Failed to fetch plans for quoteType: ' . $lead->quote_type . ' UUID: ' . $quote->uuid . ' Error: ' . $plans );
                         }
                     }
+                    else info('FetchPlans FN: fetchRenewalPlans QuoteId not found for leadId: '. $lead->id . ' PolicyNumber: ' . $lead->policy_number);
+
                 }
             });
 
