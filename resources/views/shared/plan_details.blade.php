@@ -248,6 +248,13 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 				if (shouldReviseQuote == true) {
 					lockField(['#insurer_quote_no', '#actual_premium', '#excess']);
 				}
+
+				// Revert to original values
+				$('#insurer_quote_no').val($('#insurer_quote_no').data('value'));
+				$('#actual_premium').val($('#actual_premium').data('value'));
+				$('#excess').val($('#excess').data('value'));
+				$('#discounted_premium').val($('#discounted_premium').data('value'));
+
 				show_element("#car-value-range-validation-text");
 				lock_addons([addon_price, addon_is_selected]);
 			}
@@ -616,8 +623,8 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td style="width: 120px;">{{\Carbon\Carbon::createFromTimestamp(strtotime($member->dob))->format('d-m-Y')}}</td>
 								<td style="width: 50px;font-weight: bold;">Gender</td>
 								<td style="width: 120px;">@if($member->gender ==GenericRequestEnum::MALE_SINGLE_VALUE ){{GenericRequestEnum::MALE_SINGLE}}@endif
-                                            @if($member->gender ==GenericRequestEnum::FEMALE_SINGLE_VALUE ){{GenericRequestEnum::FEMALE_SINGLE}}@endif
-                                            @if($member->gender ==GenericRequestEnum::FEMALE_MARRIED_VALUE ){{GenericRequestEnum::FEMALE_MARRIED}}@endif</td>
+									@if($member->gender ==GenericRequestEnum::FEMALE_SINGLE_VALUE ){{GenericRequestEnum::FEMALE_SINGLE}}@endif
+									@if($member->gender ==GenericRequestEnum::FEMALE_MARRIED_VALUE ){{GenericRequestEnum::FEMALE_MARRIED}}@endif</td>
 								<td style="width: 50px;font-weight: bold;">Premium</td>
 								<td style="width: 120px;">
 									<input type="hidden" class="member_id" value="{{ $member->memberId }}">
@@ -878,7 +885,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 						<input type="hidden" id="car_value_upper_limit" name="car_value_upper_limit" value="{{ $carValueUpperLimit }}">
 						<input type="hidden" id="repair_type" name="repair_type" value="{{ $repairType }}">
 						<input type="hidden" id="is_create" name="is_create" value="0">
-						<input type = "hidden" id="current_url" name="current_url" value="{{ url()->current() }}">
+						<input type="hidden" id="current_url" name="current_url" value="{{ url()->current() }}">
 						<table cellpadding="10" cellspacing="10">
 							<tr>
 								<td>Hide Plan?</td>
@@ -902,14 +909,14 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 							<tr>
 								<td>Insurer Quote No.:</td>
-								<td><input type="text" id="insurer_quote_no" name="insurer_quote_no" value="{{ $insurerQuoteNo }}" class="form-control"></td>
+								<td><input type="text" id="insurer_quote_no" name="insurer_quote_no" value="{{ $insurerQuoteNo }}" data-value="{{ $insurerQuoteNo }}" class="form-control"></td>
 								<td>Actual Premium:</td>
-								<td><input type="text" id="actual_premium" name="actual_premium" value="{{ $actualPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)"></td>
+								<td><input type="text" id="actual_premium" name="actual_premium" value="{{ $actualPremium }}" data-value="{{ $actualPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)"></td>
 							</tr>
 							<tr>
 								<td>Discounted Premium:</td>
 								<td>
-									<input type="text" id="discounted_premium" name="discounted_premium" value="{{ $discountPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)">
+									<input type="text" id="discounted_premium" name="discounted_premium" value="{{ $discountPremium }}" data-value="{{ $discountPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)">
 									<input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
 								</td>
 								<td>Car value:</td>
@@ -920,7 +927,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 							<tr>
 								<td>Excess:</td>
-								<td><input type="text" id="excess" name="excess" value="{{ $excess }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+								<td><input type="text" id="excess" name="excess" value="{{ $excess }}" data-value="{{ $excess }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 								</td>
 								<td>Ancillary Excess:</td>
 								<td><select class="form-control" id='ancillary_excess' name="ancillary_excess">
