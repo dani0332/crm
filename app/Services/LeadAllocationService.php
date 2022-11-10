@@ -525,6 +525,7 @@ class LeadAllocationService extends BaseService
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
                         $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
                         $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
+                        $leadAllocation->last_allocated = Carbon::now()->timestamp;
                         $leadAllocation->updated_at = now();
                         $leadAllocation->save();
                         info('completed assignment of lead and lead count update is done for quote uuid : '.$carQuote->uuid.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
