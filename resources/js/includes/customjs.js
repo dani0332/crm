@@ -2223,7 +2223,8 @@ $(document).ready(function () {
         orderable: false,
         searchable: false,
         render: function (data, type, row) {
-          if (row.status == 'Completed') {
+
+          if(row.status == 'Completed' && row.renewal_import_type == 'create') {
             return (
               "<a class='btn btn-success btn-sm' href='" +
               config.routes.renewal_base_url +
