@@ -233,7 +233,7 @@ class RenewalsUploadController extends Controller
     public function listRenewalBatches(Request $request, CarQuote $carQuote, Datatables $datatables)
     {
         if (! auth()->user()->hasRole(RolesEnum::RenewalsManager)) {
-            return abort(404);
+            return abort(403);
         }
         if ($request->ajax()) {
             $datalRenewalsBatches = $carQuote::select('renewal_batch')
@@ -252,7 +252,7 @@ class RenewalsUploadController extends Controller
     public function batchDetail($batch)
     {
         if (! auth()->user()->hasRole(RolesEnum::RenewalsManager)) {
-            return abort(404);
+            return abort(403);
         }
         $batchEmails = RenewalsBatchEmails::select('id', 'batch', 'total_leads', 'total_sent', 'total_bounced', 'status', 'created_at', 'created_by_id')
         ->where('batch', $batch)
@@ -265,7 +265,7 @@ class RenewalsUploadController extends Controller
     public function runBatchProcess($batch)
     {
         if (! auth()->user()->hasRole(RolesEnum::RenewalsManager)) {
-            return abort(404);
+            return abort(403);
         }
         $batchLeads = CarQuote::select('car_quote_request.id as id')
         ->leftjoin('quote_status as qs', 'qs.id', 'car_quote_request.quote_status_id')
