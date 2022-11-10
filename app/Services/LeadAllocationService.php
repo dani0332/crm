@@ -397,7 +397,7 @@ class LeadAllocationService extends BaseService
                                 'la.allocation_count as allocationCount', 'la.last_allocated as lastAllocation', 'la.max_capacity as maxCapacity', 'la.is_available as isAvailable',
                                 'users.last_login as lastLogin', 'la.id as id'
                             )->get();
-        info('going to update the max cap for users : '. json_encode($users));
+        info('going to update the max cap for users : '.json_encode($users));
         foreach ($users as $user) {
             LeadAllocation::where('user_id', $user->userId)->update([
                 'max_capacity' => str_contains($user->quads, '1') ? 4 : 5,
