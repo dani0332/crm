@@ -28,7 +28,7 @@
   @apply flex-col text-center text-xs gap-0;
 }
 
-.side-menu > li > a > *:nth-child(2) {
+.side-menu span.fa.fa-chevron-down {
   @apply absolute right-2.5;
 }
 
@@ -40,8 +40,12 @@ li.active > ul.child_menu {
   @apply max-h-full;
 }
 
-li.active span.fa {
+li.active > a > span.fa {
   @apply transform rotate-90;
+}
+
+li.active > a {
+  @apply bg-gray-900/75;
 }
 
 .child_menu li a {
