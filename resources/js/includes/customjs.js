@@ -2168,7 +2168,7 @@ $(document).ready(function () {
     }, 500);
   });
 
-  $('.renewals-leads-data-table').DataTable({
+  $('.manager-renewals-leads-data-table').DataTable({
     ordering: false,
     info: true,
     searching: false,
@@ -2218,21 +2218,76 @@ $(document).ready(function () {
       { data: 'created_at', name: 'created_at' },
       { data: 'updated_at', name: 'updated_at' },
       {
-        data: 'action', name: 'action', orderable: false, searchable: false,
+        data: 'action',
+        name: 'action',
+        orderable: false,
+        searchable: false,
         render: function (data, type, row) {
 
           if(row.status == 'Completed' && row.renewal_import_type == 'create') {
             return (
-              "<a class='btn btn-success btn-sm' href='" +           
-              config.routes.renewal_base_url + "/"  +
+              "<a class='btn btn-success btn-sm' href='" +
+              config.routes.renewal_base_url +
+              '/' +
               row.id +
               "/fetch-plans'>" +
-              
               'Fetch Plans</a>'
             );
-          }  
-           
-      },},
+          }
+        },
+      },
+    ],
+  });
+
+  $('.renewals-leads-data-table').DataTable({
+    ordering: false,
+    info: true,
+    searching: false,
+    bLengthChange: false,
+    processing: true,
+    stateSave: true,
+    paging: true,
+    ajax: config.routes.renewals_leads_datatable_route,
+    columns: [
+      { data: 'id', name: 'id' },
+      { data: 'renewal_import_type', name: 'renewal_import_type' },
+      { data: 'renewal_import_code', name: 'renewal_import_code' },
+      { data: 'file_name', name: 'file_name' },
+      { data: 'total_records', name: 'total_records' },
+      {
+        data: 'good',
+        name: 'good',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.renewal_uploaded_leads +
+            '/' +
+            row.id +
+            "/validation-passed'>" +
+            row.good +
+            '</a>'
+          );
+        },
+      },
+      {
+        data: 'cannot_upload',
+        name: 'cannot_upload',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.renewal_uploaded_leads +
+            '/' +
+            row.id +
+            "/validation-failed'>" +
+            row.cannot_upload +
+            '</a>'
+          );
+        },
+      },
+      { data: 'status', name: 'status' },
+      { data: 'uploaded_by', name: 'uploaded_by' },
+      { data: 'created_at', name: 'created_at' },
+      { data: 'updated_at', name: 'updated_at' },
     ],
   });
 

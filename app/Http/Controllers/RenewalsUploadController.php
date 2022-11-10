@@ -7,6 +7,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Enums\RolesEnum;
 use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Imports\RenewalsImport;
@@ -231,6 +232,9 @@ class RenewalsUploadController extends Controller
 
     public function listRenewalBatches(Request $request, CarQuote $carQuote, Datatables $datatables)
     {
+        if (! auth()->user()->hasRole(RolesEnum::RenewalsManager)) {
+            return abort(403);
+        }
         if ($request->ajax()) {
             $datalRenewalsBatches = $carQuote::select('renewal_batch')
             ->whereNotNull(['renewal_batch', 'renewal_import_code'])
@@ -247,6 +251,9 @@ class RenewalsUploadController extends Controller
 
     public function batchDetail($batch)
     {
+        if (! auth()->user()->hasRole(RolesEnum::RenewalsManager)) {
+            return abort(403);
+        }
         $batchEmails = RenewalsBatchEmails::select('id', 'batch', 'total_leads', 'total_sent', 'total_bounced', 'status', 'created_at', 'created_by_id')
         ->where('batch', $batch)
         ->orderBy('created_at', 'desc')
@@ -257,6 +264,9 @@ class RenewalsUploadController extends Controller
 
     public function runBatchProcess($batch)
     {
+        if (! auth()->user()->hasRole(RolesEnum::RenewalsManager)) {
+            return abort(403);
+        }
         $batchLeads = CarQuote::select('car_quote_request.id as id')
         ->leftjoin('quote_status as qs', 'qs.id', 'car_quote_request.quote_status_id')
         ->whereNotNull('car_quote_request.previous_quote_policy_number')

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             AddRoleForMarketingSeeder::class,
             addPermissionForManualLeadTesting::class,
             QuoteTypeTableSeeder::class,
+            AddRoleForRenewalsManager::class,
         ]);
     }
 }
