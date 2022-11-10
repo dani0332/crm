@@ -304,9 +304,8 @@ class RenewalsUploadService
         }
         catch (Exception $exception)
         {
-            info($logPrefix.'Process Failed. Error: '.$exception->getMessage());
+            Log::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-
             return false;
         }
     }
