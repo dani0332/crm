@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
 use App\Models\ApplicationStorage;
+use App\Models\CarMake;
+use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\InsuranceProvider;
 use App\Models\LostReasons;
@@ -84,5 +86,15 @@ class LookupService extends BaseService
     {
         return InsuranceProvider::select('id', 'text')
         ->where('is_active', true)->orderBy('text', 'asc')->get();
+    }
+
+    public function getCarMake($id)
+    {
+        return CarMake::find($id);
+    }
+
+    public function getCarModel($id)
+    {
+        return CarModel::find($id);
     }
 }

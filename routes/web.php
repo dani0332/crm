@@ -155,6 +155,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('upload-process', [RenewalsUploadController::class, 'renewalsUploadProcess']);
         Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate']);
         Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate']);
+        Route::get('{id}/fetch-plans', [RenewalsUploadController::class, 'fetchRenewalPlans']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
 

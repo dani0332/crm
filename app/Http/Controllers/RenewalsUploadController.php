@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProcessStatusCode;
-use App\Enums\quoteStatusCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -11,6 +11,7 @@ use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
+use App\Jobs\FetchRenewalsPlansJob;
 use App\Jobs\RenewalBatchEmailJob;
 use App\Models\CarQuote;
 use App\Models\RenewalQuoteProcess;
@@ -53,6 +54,22 @@ class RenewalsUploadController extends Controller
         $result = $this->renewalsUploadFileService->renewalsUploadUpdate(request()->all());
 
         return redirect('renewals/update')->with('success', 'Uploaded renewals records has been updated');
+    }
+
+    /**
+     * @param $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function fetchRenewalPlans($id)
+    {
+        if ($lead = RenewalsUploadLeads::where('id', $id)->where('status', ProcessStatusCode::COMPLETED)->first()) {
+            FetchRenewalsPlansJob::dispatch($lead);
+            $lead->update(['status' => ProcessStatusCode::FETCHING_PLANS]);
+
+            return redirect('renewals/uploaded-leads')->with('message', 'Plans fetching started');
+        }
+
+        return redirect('renewals/uploaded-leads')->with('error', 'Invalid Renewal Lead provided');
     }
 
     /**
@@ -242,9 +259,8 @@ class RenewalsUploadController extends Controller
     {
         $batchLeads = CarQuote::select('car_quote_request.id as id')
         ->leftjoin('quote_status as qs', 'qs.id', 'car_quote_request.quote_status_id')
-        ->whereNotNull('car_quote_request.previous_quote_id')
-        ->where(['car_quote_request.renewal_batch' => $batch, 'qs.code' => quoteStatusCode::QUOTED])
-        ->get();
+        ->whereNotNull('car_quote_request.previous_quote_policy_number')
+        ->where(['car_quote_request.renewal_batch' => $batch])->get();
 
         $batchLeadsCount = $batchLeads->count();
 
@@ -262,7 +278,7 @@ class RenewalsUploadController extends Controller
         $renewalsBatchStatus->save();
 
         foreach ($batchLeads as $batchLead) {
-            dispatch(new RenewalBatchEmailJob($batchLead->id, $this->renewalsUploadFileService, $renewalsBatchStatus->id));
+            dispatch(new RenewalBatchEmailJob($batchLead->id, $renewalsBatchStatus->id, QuoteTypeId::Car));
         }
 
         return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
