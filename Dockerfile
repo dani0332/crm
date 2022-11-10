@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y \
     nginx \
     wget \
     gnupg
-   
+
 # Install node 16
 RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
 RUN bash /tmp/nodesource_setup.sh
@@ -43,7 +43,7 @@ RUN apt install nodejs -y
 # Install yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN apt update 
+RUN apt update
 RUN apt install yarn -y
 
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
@@ -80,11 +80,15 @@ RUN \
       -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
       -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
       /usr/local/etc/php/conf.d/newrelic.ini
+# PHP Error Log Files
+RUN mkdir /var/log/php
+RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
 
 EXPOSE 80
 EXPOSE 443
 
 # Copy code to /var/www
+#ARG CACHEBUST=1
 COPY --chown=www:www-data . /var/www
 
 # add root to www group
@@ -98,13 +102,9 @@ RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
 RUN cp -r docker/*.pem /etc/nginx/conf.d/
 RUN cp docker/log_files.yml /etc/
 
-# PHP Error Log Files
-RUN mkdir /var/log/php
-RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
-
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
-RUN yarn 
+RUN yarn
 RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 
