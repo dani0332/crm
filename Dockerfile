@@ -89,6 +89,15 @@ EXPOSE 443
 
 # Copy code to /var/www
 #ARG CACHEBUST=1
+
+# Check yarn packages
+COPY --chown=www:www-data package*.json yarn.lock /var/www/
+RUN yarn install --pure-lockfile
+
+#Check composer packages
+#COPY --chown=www:www-data composer*.json composer.lock /var/www/
+#RUN composer install --optimize-autoloader --no-dev
+
 COPY --chown=www:www-data . /var/www
 
 # add root to www group
@@ -104,7 +113,7 @@ RUN cp docker/log_files.yml /etc/
 
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
-RUN yarn 
+#RUN yarn 
 RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 
