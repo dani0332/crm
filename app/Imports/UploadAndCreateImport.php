@@ -63,6 +63,14 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
     }
 
     /**
+     * @return int
+     */
+    public function chunkSize(): int
+    {
+        return 2000;
+    }
+
+    /**
      * start import from row 2, first row have titles
      *
      * @return int
@@ -72,13 +80,6 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
         return 2;
     }
 
-    /**
-     * @return int
-     */
-    public function chunkSize(): int
-    {
-        return 2000;
-    }
 
     /**
      * @return int
