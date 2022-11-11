@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Enums\RolesEnum;
 use App\Models\RenewalsUploadLeads;
+use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 
@@ -18,7 +19,11 @@ class UploadedRenewalLeadsTable extends DataTableComponent
             ->setFilterLayoutSlideDown()
             ->setSearchDisabled()
             ->setPerPageVisibilityDisabled()
-            ->setColumnSelectDisabled();
+            ->setColumnSelectDisabled()
+            ->setPaginationVisibilityDisabled()
+            ->setConfigurableAreas([
+                'after-pagination' => 'partials.pagination',
+            ]);
     }
 
     public function columns(): array
@@ -28,8 +33,7 @@ class UploadedRenewalLeadsTable extends DataTableComponent
             Column::make('Upload Type', 'renewal_import_type'),
             Column::make('Upload Code', 'renewal_import_code'),
             Column::make('File name', 'file_name'),
-            Column::make('Total records', 'total_records')
-                ->sortable(),
+            Column::make('Total records', 'total_records'),
             Column::make('Good', 'good')
                 ->format(
                     function ($value, $row, Column $column) {
@@ -60,5 +64,22 @@ class UploadedRenewalLeadsTable extends DataTableComponent
                 ->html()
                 ->hideIf(! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin])),
         ];
+    }
+
+    // simple pagination functions
+
+    public function builder(): Builder
+    {
+        return RenewalsUploadLeads::query();
+    }
+
+    public function getCurrentPage()
+    {
+        return $this->page;
+    }
+
+    protected function executeQuery()
+    {
+        return $this->getBuilder()->simplePaginate($this->getPerPage(), ['*'], $this->getComputedPageName());
     }
 }
