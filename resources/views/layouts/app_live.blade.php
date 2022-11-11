@@ -21,9 +21,9 @@
     }
   </style>
   @livewireStyles
-   <!-- Font Awesome -->
+  <!-- Font Awesome -->
   <link href="{{ asset('vendors/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
-  
+
 </head>
 
 <body class="antialiased text-gray-900 bg-white">
@@ -41,9 +41,9 @@
 
       @include('partials.header')
 
-      @include('partials.messages')
-
       <main class="flex-1 max-h-full p-5 overflow-hidden overflow-y-scroll">
+        @include('partials.messages')
+        
         @yield('content')
 
         <footer class="mt-12">

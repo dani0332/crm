@@ -18,11 +18,13 @@ mix.options({
 mix
   .js('resources/js/alpine/alpine.js', 'public/js')
   .postCss('resources/css/livewire.css', 'public/css', []);
-// mix
-//   .js('resources/js/app.js', 'public/js')
-//   .react()
-//   .version()
-//   .postCss('resources/css/app.css', 'build/css', [require('tailwindcss')]);
+
+// this should be removed, react's resources are not used
+mix
+  .js('resources/js/app.js', 'public/js')
+  .react()
+  .version()
+  .postCss('resources/css/app.css', 'build/css', [require('tailwindcss')]);
 
 mix
   .scripts(
@@ -38,25 +40,3 @@ mix
     'public/build/css/style.min.css',
   )
   .version();
-// mix.js('resources/js/app.js', 'public/js')
-//     .react()
-//     .less('resources/less/app.less', 'public/build', {
-//         lessOptions: {
-//             strictMath: true
-//         }
-//     }
-//     .postCss("resources/css/app.css", "public/build", [
-//         require("tailwindcss"),
-//        ])
-//     );
-
-// mix.js("resources/js/app.js", "public/js")
-// .react()
-// .postCss("resources/css/app.css", "public/css", [
-//     require("tailwindcss"),
-// ])
-// .less('resources/less/app.less', 'public/build', {
-//         lessOptions: {
-//             strictMath: true
-//         }
-// });

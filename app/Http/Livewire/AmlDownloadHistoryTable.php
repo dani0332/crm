@@ -18,6 +18,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
         $this->setPrimaryKey('id')
             ->setDefaultSort('updated_at', 'desc')
             ->setColumnSelectDisabled()
+            ->setPerPageVisibilityDisabled()
             ->setFilterLayoutSlideDown();
 
         // disabled pagination count & pagination view

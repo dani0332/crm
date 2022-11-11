@@ -55,3 +55,19 @@ li.active > a {
 .minimized .child_menu li a {
   @apply pl-2 text-left items-start;
 }
+
+.btn {
+  @apply inline-block bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus-visible:ring ring-sky-400 text-white text-sm font-semibold text-center rounded-lg outline-none transition px-3 py-1.5;
+}
+
+.alert {
+  @apply py-2 px-4 rounded bg-sky-200 w-full text-sm font-semibold mt-0 mb-4;
+}
+
+.alert.alert-success {
+  @apply bg-green-400 text-green-900;
+}
+
+.alert.alert-error {
+  @apply bg-red-400 text-red-900;
+}
