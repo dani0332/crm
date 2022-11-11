@@ -137,7 +137,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
         $quoteData = [];
         foreach ($fields as $key => $field) {
             if (! empty($field['type']) && $field['type'] == 'date') {
-                $quoteData[$key] = Carbon::parse( $row[$field['index']])->format('d/m/Y');
+                $quoteData[$key] = Carbon::parse($row[$field['index']])->format('d/m/Y');
             } else {
                 $quoteData[$key] = $row[$field['index']];
             }
