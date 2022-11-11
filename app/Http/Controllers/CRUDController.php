@@ -1020,31 +1020,6 @@ class CRUDController extends Controller
         $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
-        if (is_array($listQuotePlans)) {
-            $freeAddons = [];
-            foreach ($listQuotePlans as $quotePlan) { // only damage_limit feature
-                foreach ($quotePlan->benefits->feature as $feature) {
-                    if (strtolower($feature->code) == strtolower(CarPlanFeaturesCode::DAMAGE_LIMIT)) {
-                        $damageLimitFeatureText = $feature->text;
-                        $damageLimitFeatureValue = $feature->value;
-                    }
-                }
-                foreach ($quotePlan->addons as $addon) { // Only free addons
-                    foreach ($addon->carAddonOption as $carAddonOption) {
-                        if ($carAddonOption->price == 0) {
-                            $freeAddons[] = $addon;
-                        }
-                    }
-                }
-            }
-
-            if (isset($quotePlan->providerCode) && isset($quotePlan->providerCode)) {
-                $singleQuoteUrl = config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode='.$quotePlan->providerCode.'&planId='.$quotePlan->id;
-            } else {
-                $singleQuoteUrl = null;
-            }
-        }
-
         $emailData = (object) [
             'quoteTypeId' => $request->quote_type_id,
             'quoteId' => $request->quote_id,
@@ -1063,18 +1038,9 @@ class CRUDController extends Controller
             'advisorMobileNo' => $request->advisor_mobile_no,
             'advisorLandlineNo' => $request->advisor_landline_no,
             'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$request->quote_uuid,
-            'planType' => isset($quotePlan->repairType) && strtolower($quotePlan->repairType) == 'tpl' ? 'Third Party Liability' : 'Comprehensive',
-            'planName' => isset($quotePlan->name) ? $quotePlan->name : null,
-            'repairType' => isset($quotePlan->repairType) ? $quotePlan->repairType : null,
-            'providerCode' => isset($quotePlan->providerCode) ? $quotePlan->providerCode : null,
-            'providerName' => isset($quotePlan->providerName) ? $quotePlan->providerName : null,
-            'singleQuoteUrl' => isset($singleQuoteUrl) ? $singleQuoteUrl : null,
-            'discountPremium' => isset($quotePlan->discountPremium) ? $quotePlan->discountPremium : null,
-            'damageLimitFeatureText' => isset($damageLimitFeatureText) ? $damageLimitFeatureText : null,
-            'damageLimitFeatureValue' => isset($damageLimitFeatureValue) ? $damageLimitFeatureValue : null,
-            'freeAddons' => isset($freeAddons) ? $freeAddons : null,
             'listQuotePlans' => $listQuotePlans,
             'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode=',
+            'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
         ];
 
         $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
