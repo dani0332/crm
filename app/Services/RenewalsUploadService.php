@@ -187,7 +187,6 @@ class RenewalsUploadService
 
             return true;
         } catch (\Exception $exception) {
-
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
             Log::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
 
@@ -236,7 +235,6 @@ class RenewalsUploadService
 
             return $renewalsUploadLead;
         } catch (\Exception $exception) {
-
             $renewalsUploadLead->update(['status' => ProcessStatusCode::PLANS_FAILED]);
             Log::error($logPrefix.'Fetch plans failed.  Error: '.$exception->getMessage());
         }
@@ -269,12 +267,11 @@ class RenewalsUploadService
         $logPrefix = 'UAU FN: processUploadUpdate RenewalLeadId: '.$renewalsUploadLead->id.' FileName: '.$renewalsUploadLead->file_name;
 
         try {
-            info($logPrefix . ' In Progress Now');
+            info($logPrefix.' In Progress Now');
 
             $renewalsUploadLead->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
             $renewalsUploadLead = DB::transaction(function () use ($renewalsUploadLead) {
-
                 //start file import
                 $renewalsUpload = new UploadAndUpdateImport($this, $renewalsUploadLead);
                 $renewalsUpload->import($renewalsUploadLead->file_path, 'azureIM');
@@ -300,11 +297,10 @@ class RenewalsUploadService
             info($logPrefix.' validation and quote update is completed');
 
             return true;
-        }
-        catch (Exception $exception)
-        {
+        } catch (Exception $exception) {
             Log::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+
             return false;
         }
     }
@@ -940,7 +936,7 @@ class RenewalsUploadService
                             $leadValidationErrors->push('Invalid Product Type');
                         }
                         if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number) {
-                            if (CarQuote::where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $leadData->end_date)->first()) {
+                            if (CarQuote::where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
                                 $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
                             }
                         }
