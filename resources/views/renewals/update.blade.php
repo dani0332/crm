@@ -92,7 +92,7 @@
                     </div>
                     <div class="item form-group">
                         <div class="col-md-3">
-                            Download Sample XLSX <a href="{{ $azureStorageUrl.$azureStorageContainer }}/renewals/renewals_update_a1.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
+                            Download Sample XLSX <a href="{{ $azureStorageUrl.$azureStorageContainer }}/renewals/renewals_update_a2.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
                         </div>
                     </div>
                     <div class="item form-group">
