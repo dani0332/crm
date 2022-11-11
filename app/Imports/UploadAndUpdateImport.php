@@ -116,13 +116,13 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
             'policy_number' => ['index' => 2, 'title' => 'Policy', 'rules' => 'required|max:100'],
             'insurer' => ['index' => 3, 'title' => 'Insurer', 'rules' => 'required|max:100'],
             'batch' => ['index' => 4, 'title' => 'Batch', 'rules' => 'max:25'],
-            'end_date' => ['index' => 5, 'title' => 'End Date', 'rules' => 'required|max:10'], //'type' => 'date'
+            'end_date' => ['index' => 5, 'title' => 'End Date', 'rules' => 'required|max:10', 'type' => 'date'],
             'make' => ['index' => 6, 'title' => 'Make', 'rules' => 'max:50'],
             'model' => ['index' => 7, 'title' => 'Model', 'rules' => 'max:50'],
             'year' => ['index' => 8, 'title' => 'Year', 'rules' => 'max:4'],
             'email' => ['index' => 9, 'title' => 'Customer Email', 'rules' => 'max:255'],
             'mobile_no' => ['index' => 10, 'title' => 'Customer Mobile', 'rules' => 'max:100'],
-            'dob' => ['index' => 11, 'title' => 'Date of Birth', 'rules' => 'max:10'],
+            'dob' => ['index' => 11, 'title' => 'Date of Birth', 'rules' => 'max:10', 'type' => 'date'],
             'driving_experience' => ['index' => 12, 'title' => 'Driving Experience', 'rules' => 'max:10'],
             'provider_name' => ['index' => 13, 'title' => 'Provider Name', 'rules' => 'max:100'],
             'plan_name' => ['index' => 14, 'title' => 'Plan Name', 'rules' => 'max:100'],
@@ -166,7 +166,14 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
         $quoteData = [];
         foreach ($columns as $key => $column) {
             if (! empty($column['type']) && $column['type'] == 'date') {
-                $quoteData[$key] = Carbon::createFromFormat('d/m/Y', $row[$column['index']])->format('d/m/Y');
+
+                if(strpos($row[$column['index']], '/')) {
+                    $quoteData[$key] = Carbon::createFromFormat('d/m/Y', $row[$column['index']])->format('d/m/Y');
+                }
+                else {
+                    $quoteData[$key] = Carbon::instance(Date::excelToDateTimeObject( (float) $row[$column['index']]))->format('d/m/Y');
+                }
+
             } else {
                 $quoteData[$key] = $row[$column['index']] ?? null;
             }
