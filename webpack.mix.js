@@ -16,6 +16,10 @@ mix.options({
  */
 
 mix
+  .js('resources/js/alpine/alpine.js', 'public/js')
+  .postCss('resources/css/livewire.css', 'public/css', []);
+
+mix
   .js('resources/js/app.js', 'public/js')
   .react()
   .version()
@@ -23,7 +27,11 @@ mix
 
 mix
   .scripts(
-    ['resources/js/includes/customjs.js', 'resources/js/includes/tm_js.js', 'public/build/js/customer_additional_contact.js'],
+    [
+      'resources/js/includes/customjs.js',
+      'resources/js/includes/tm_js.js',
+      'public/build/js/customer_additional_contact.js',
+    ],
     'public/build/js/customjs.min.js',
   )
   .styles(
