@@ -190,7 +190,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @hasanyrole(RolesEnum::Renewals.'|'.RolesEnum::RenewalsManager.'|'.RolesEnum::Engineering)
+                @hasanyrole(RolesEnum::Renewals.'|'.RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
