@@ -12,7 +12,7 @@ use BenSampo\Enum\Enum;
 final class ProcessStatusCode extends Enum
 {
     public const PENDING = 'Pending';
-    public const COMPLETED = 'Validation Completed';
+    public const COMPLETED = 'Completed';
     public const PROCEED = 'Proceed';
     public const IN_PROGRESS = 'In Progress';
     public const UPLOADED = 'Uploaded';
