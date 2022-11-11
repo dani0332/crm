@@ -591,7 +591,7 @@ class TravelQuoteService extends BaseService
                 $title = 'How many days would you like cover for?';
                 break;
             case 'advisor_id':
-                $title = 'Assigned To';
+                $title = 'Advisor';
                 break;
             case 'quote_status_id':
                 $title = 'Lead Status';

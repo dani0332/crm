@@ -185,7 +185,7 @@
                           <th style="width: 85px !important">Enquiry Date</th>
                           <th style="width: 85px !important">Allocation Date</th>
                           <th style="width: 100px !important">Next Follow-up Date</th>
-                          <th style="width: 100px !important">Assigned To</th>
+                          <th style="width: 100px !important">Advisor</th>
                           <th style="width: 100px !important">Created At</th>
                           <th style="width: 100px !important">Updated At</th>
                          
