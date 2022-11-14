@@ -25,7 +25,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
         $this->setPaginationVisibilityDisabled();
         $this->setConfigurableAreas([
             'after-pagination' => 'partials.pagination',
-          ]);
+        ]);
     }
 
     public function columns(): array
