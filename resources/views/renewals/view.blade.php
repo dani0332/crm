@@ -34,7 +34,6 @@ use App\Enums\RolesEnum;
                           <th style="width: 80px !important">Submitted By</th>
                           <th style="width: 80px !important">Submitted At</th>
                           <th style="width: 80px !important">Updated At</th>
-                          @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin)<th style="width: 80px;">Action</th>@endhasanyrole
                         </tr>
                       </thead>
                       <tbody>

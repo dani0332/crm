@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
@@ -14,16 +15,18 @@ class FetchRenewalsPlansJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $renewalsUploadLead;
+    protected $batch;
+    protected $renewalStatusProcess;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(RenewalsUploadLeads $renewalsUploadLead)
+    public function __construct(RenewalStatusProcess $renewalStatusProcess, $batch)
     {
-        $this->renewalsUploadLead = $renewalsUploadLead;
+        $this->batch = $batch;
+        $this->renewalStatusProcess = $renewalStatusProcess;
     }
 
     /**
@@ -33,6 +36,6 @@ class FetchRenewalsPlansJob implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        $renewalsUploadService->fetchRenewalPlans($this->renewalsUploadLead);
+        $renewalsUploadService->fetchRenewalPlans($this->renewalStatusProcess, $this->batch);
     }
 }

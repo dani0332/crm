@@ -17,6 +17,7 @@ use App\Jobs\RenewalBatchEmailJob;
 use App\Models\CarQuote;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
+use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Http\Request;
@@ -50,27 +51,45 @@ class RenewalsUploadController extends Controller
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
-    public function renewalsUploadUpdate()
+    public function renewalsUploadUpdate(RenewalsUploadRequest $request)
     {
-        $result = $this->renewalsUploadFileService->renewalsUploadUpdate(request()->all());
+        $result = $this->renewalsUploadFileService->renewalsUploadUpdate($request->validated());
 
         return redirect('renewals/update')->with('success', 'Uploaded renewals records has been updated');
     }
 
     /**
+     * fetch plans batch wise
      * @param $id
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
-    public function fetchRenewalPlans($id)
+    public function fetchPlans($batch)
     {
-        if ($lead = RenewalsUploadLeads::where('id', $id)->where('status', ProcessStatusCode::COMPLETED)->first()) {
-            $lead->update(['status' => ProcessStatusCode::FETCHING_PLANS]);
-            FetchRenewalsPlansJob::dispatch($lead);
-
-            return redirect('renewals/uploaded-leads')->with('message', 'Plans fetching started');
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
         }
 
-        return redirect('renewals/uploaded-leads')->with('error', 'Invalid Renewal Lead provided');
+       $totalPending =  RenewalQuoteProcess::where([
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'batch' => $batch,
+            'status' => RenewalProcessStatuses::PROCESSED
+        ])->count();
+
+       if($totalPending > 0) {
+
+          $renewalStatusProcess =  RenewalStatusProcess::create([
+               'batch' => $batch,
+               'total_leads' => $totalPending,
+               'status' => ProcessStatusCode::IN_PROGRESS,
+               'created_by_id' => auth()->id()
+           ]);
+
+           FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);
+           return redirect('renewals/batches/'.$batch.'/plans-processes')->with('success', 'Fetch plans is started for batch ' . $batch);
+       }
+
+        return redirect('renewals/batches/'.$batch.'/plans-processes')->with('error', 'No pending leads available to fetch plans');
+
     }
 
     /**
@@ -247,6 +266,21 @@ class RenewalsUploadController extends Controller
         }
 
         return view('renewals.batches');
+    }
+
+    /**
+     * fetch plans for all pending quotes
+     * @param $batch
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|never
+     */
+    public function plansProcesses($batch)
+    {
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
+        }
+
+        $planProcesses = RenewalStatusProcess::where('batch', $batch)->orderBy('created_at', 'desc')->get();
+        return view('renewals.plan_processes', compact('batch', 'planProcesses'));
     }
 
     public function batchDetail($batch)
