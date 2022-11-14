@@ -950,15 +950,18 @@ class RenewalsUploadService
                         if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
                             $leadValidationErrors->push('Invalid Product Type');
                         }
-                        dd($lead->toArray());
+
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
-                            $insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->first();
-                            if ($insuranceProvider) {
-                                if (! CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $insuranceProvider->id)->first()) {
-                                    $leadValidationErrors->push('Invalid Insurer Plan Name or Plan Type');
+                            if ($leadData->car_value || $leadData->premium || $leadData->excess || $leadData->trim) {
+                                if (! $leadData->provider_name || ! $leadData->plan_type || ! $leadData->plan_name) {
+                                    $leadValidationErrors->push('Provider Name, Insurer Plan Name & Plan Type are required when any value provided for Car Value, Renewal Premium, Excess, or Trim.');
+                                } elseif ($insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->first()) {
+                                    if (! CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $insuranceProvider->id)->first()) {
+                                        $leadValidationErrors->push('Invalid Insurer Plan Name or Plan Type');
+                                    }
+                                } else {
+                                    $leadValidationErrors->push('Invalid Provider Name');
                                 }
-                            } else {
-                                $leadValidationErrors->push('Invalid Provider Name');
                             }
                         }
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->claim_history) {
