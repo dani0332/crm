@@ -907,12 +907,18 @@ class RenewalsUploadService
                 if (! QuoteType::where('short_code', $lead->quote_type)->first()) {
                     $leadValidationErrors->push('Invalid Insurance Type Provided');
                 }
+                $quoteTypeObject = $this->createQuoteObject(ucfirst($lead->quote_type));
+                $leadData = (object) $lead->data;
+
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
                     $leadValidationErrors->push('Policy Number is mandatory for update process');
+                } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS && $lead->policy_number && $quoteTypeObject) {
+                    if (! $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
+                        $leadValidationErrors->push('Quote does not exist for this policy number, use upload and create');
+                    }
                 }
 
-                $leadData = (object) $lead->data;
-                if (! InsuranceProvider::where('code', $leadData->insurer)->first()) {
+                if ($lead->type == RenewalsUploadType::CREATE_LEADS && ! InsuranceProvider::where('code', $leadData->insurer)->first()) {
                     $leadValidationErrors->push('Invalid Insurance Code Provided');
                 }
                 if ($leadData->advisor && ! User::where('email', $leadData->advisor)->first()) {
@@ -927,9 +933,8 @@ class RenewalsUploadService
                 if (isset($leadData->dob) && $leadData->dob && ! $this->validateDate($leadData->dob)) {
                     $leadValidationErrors->push('Invalid Date of Birth');
                 }
-                if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number) {
-                    $quoteObject = $this->createQuoteObject(ucfirst($leadData->insurer));
-                    if ($quoteObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
+                if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number && $quoteTypeObject) {
+                    if ($quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
                         $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
                     }
                 }
