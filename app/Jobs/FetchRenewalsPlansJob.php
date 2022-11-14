@@ -3,7 +3,6 @@
 namespace App\Jobs;
 
 use App\Models\RenewalStatusProcess;
-use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

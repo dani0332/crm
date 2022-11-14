@@ -80,7 +80,6 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
         return 2;
     }
 
-
     /**
      * @return int
      */

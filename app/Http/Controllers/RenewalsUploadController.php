@@ -60,6 +60,7 @@ class RenewalsUploadController extends Controller
 
     /**
      * fetch plans batch wise
+     *
      * @param $id
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
@@ -69,27 +70,26 @@ class RenewalsUploadController extends Controller
             return abort(403);
         }
 
-       $totalPending =  RenewalQuoteProcess::where([
+        $totalPending = RenewalQuoteProcess::where([
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
-            'status' => RenewalProcessStatuses::PROCESSED
+            'status' => RenewalProcessStatuses::PROCESSED,
         ])->count();
 
-       if($totalPending > 0) {
+        if ($totalPending > 0) {
+            $renewalStatusProcess = RenewalStatusProcess::create([
+                'batch' => $batch,
+                'total_leads' => $totalPending,
+                'status' => ProcessStatusCode::IN_PROGRESS,
+                'created_by_id' => auth()->id(),
+            ]);
 
-          $renewalStatusProcess =  RenewalStatusProcess::create([
-               'batch' => $batch,
-               'total_leads' => $totalPending,
-               'status' => ProcessStatusCode::IN_PROGRESS,
-               'created_by_id' => auth()->id()
-           ]);
+            FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);
 
-           FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);
-           return redirect('renewals/batches/'.$batch.'/plans-processes')->with('success', 'Fetch plans is started for batch ' . $batch);
-       }
+            return redirect('renewals/batches/'.$batch.'/plans-processes')->with('success', 'Fetch plans is started for batch '.$batch);
+        }
 
         return redirect('renewals/batches/'.$batch.'/plans-processes')->with('error', 'No pending leads available to fetch plans');
-
     }
 
     /**
@@ -270,6 +270,7 @@ class RenewalsUploadController extends Controller
 
     /**
      * fetch plans for all pending quotes
+     *
      * @param $batch
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|never
      */
@@ -280,6 +281,7 @@ class RenewalsUploadController extends Controller
         }
 
         $planProcesses = RenewalStatusProcess::where('batch', $batch)->orderBy('created_at', 'desc')->get();
+
         return view('renewals.plan_processes', compact('batch', 'planProcesses'));
     }
 
