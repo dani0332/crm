@@ -2624,7 +2624,7 @@ $(document).ready(function () {
             '/' +
             row.renewal_batch +
             "/plans-processes'>" +
-            'Manage Plans' +
+            'Fetch Plans' +
             '</a>'
           );
         },

@@ -52,7 +52,7 @@
                                         <td>{{ $planProcess->total_completed }}</td>
                                         <td>{{ $planProcess->total_failed }}</td>
                                         <td>{{ $planProcess->status }}</td>
-                                        <td>{{ $planProcess->createdby ? $planProcess->createdby->email : '' }}</td>
+                                        <td>{{ $planProcess->createdBy ? $planProcess->createdBy->email : '' }}</td>
                                         <td>{{ $planProcess->created_at }}</td>
                                         <td>{{ $planProcess->updated_at }}</td>
                                     </tr>

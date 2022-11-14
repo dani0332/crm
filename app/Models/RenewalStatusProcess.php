@@ -9,7 +9,7 @@ class RenewalStatusProcess extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['batch', 'total_leads', 'total_completed', 'total_failed', 'status', 'created_by_id'];
+    protected $fillable = ['batch', 'total_leads', 'total_completed', 'total_failed', 'status', 'user_id'];
 
     public function createdBy()
     {
