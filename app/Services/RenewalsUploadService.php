@@ -950,11 +950,7 @@ class RenewalsUploadService
                         if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
                             $leadValidationErrors->push('Invalid Product Type');
                         }
-
-                        if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
-                            $leadValidationErrors->push('No Quote exists against this Policy Number, either create quote or check policy number');
-                        }
-
+                        dd($lead->toArray());
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
                             $insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->first();
                             if ($insuranceProvider) {
