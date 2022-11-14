@@ -693,8 +693,10 @@ class RenewalsUploadService
                 }
 
                 //todo: check if this fails
-                $response = $this->modifyPlan($data, $quote);
-                info($logPrefix.' plan info updated for UUID: '.$quote->uuid);
+                if(!empty($data['provider_name']) && !empty($data['plan_name']) && !empty($data['plan_type'])) {
+                    $response = $this->modifyPlan($data, $quote);
+                    info($logPrefix . ' plan info updated for UUID: ' . $quote->uuid);
+                }
 
                 $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED, 'quote_id' => $quote->id]);
                 $renewalUploadLead->update(['good' => $renewalUploadLead->good += 1]);
