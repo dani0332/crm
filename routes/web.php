@@ -36,6 +36,7 @@ use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RewardCategoryController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RewardSliderController;
@@ -158,7 +159,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('upload-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
-
+    Route::get('/reports/advisor-conversion', [ReportsController::class, 'index']);
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::group(['prefix' => 'rewards'], function () {
         Route::resource('partner', PartnerController::class);

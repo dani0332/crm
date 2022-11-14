@@ -516,6 +516,42 @@ $(document).ready(function () {
         ],
     });
 
+        // TM Leads: Expost data into csv
+        function newexportaction(e, dt, button, config) {
+            var self = this;
+            var oldStart = dt.settings()[0]._iDisplayStart;
+            dt.one('preXhr', function (e, s, data) {
+                data.start = 0;
+                data.length = 2147483647;
+                dt.one('preDraw', function (e, settings) {
+                    if (button[0].className.indexOf('buttons-csv') >= 0) {
+                        $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config)
+                            ? $.fn.dataTable.ext.buttons.csvHtml5.action.call(
+                                self,
+                                e,
+                                dt,
+                                button,
+                                config,
+                            )
+                            : $.fn.dataTable.ext.buttons.csvFlash.action.call(
+                                self,
+                                e,
+                                dt,
+                                button,
+                                config,
+                            );
+                    }
+                    dt.one('preXhr', function (e, s, data) {
+                        settings._iDisplayStart = oldStart;
+                        data.start = oldStart;
+                    });
+                    setTimeout(dt.ajax.reload, 0);
+                    return false;
+                });
+            });
+            dt.ajax.reload();
+        }
+
     var transactionsDatatable = $('.transaction-data-table').DataTable({
         dom: 'Bfrtip',
         buttons: [
@@ -1136,8 +1172,7 @@ $(document).ready(function () {
         } else {
             $('#car_fields').hide();
         }
-      },
-    });
+      }
   });
   $('.payment-link-copy').on('click', function () {
     var planId = $(this).attr('data-planId');
@@ -1690,41 +1725,6 @@ $(document).ready(function () {
     });
     tmLeadsDatatable.column(4).visible(false);
 
-    // TM Leads: Expost data into csv
-    function newexportaction(e, dt, button, config) {
-        var self = this;
-        var oldStart = dt.settings()[0]._iDisplayStart;
-        dt.one('preXhr', function (e, s, data) {
-            data.start = 0;
-            data.length = 2147483647;
-            dt.one('preDraw', function (e, settings) {
-                if (button[0].className.indexOf('buttons-csv') >= 0) {
-                    $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config)
-                        ? $.fn.dataTable.ext.buttons.csvHtml5.action.call(
-                            self,
-                            e,
-                            dt,
-                            button,
-                            config,
-                        )
-                        : $.fn.dataTable.ext.buttons.csvFlash.action.call(
-                            self,
-                            e,
-                            dt,
-                            button,
-                            config,
-                        );
-                }
-                dt.one('preXhr', function (e, s, data) {
-                    settings._iDisplayStart = oldStart;
-                    data.start = oldStart;
-                });
-                setTimeout(dt.ajax.reload, 0);
-                return false;
-            });
-        });
-        dt.ajax.reload();
-    }
 
     $('#tm-leads-export').click(function () {
         $('#tm-leads-export').hide();
