@@ -927,6 +927,12 @@ class RenewalsUploadService
                 if (isset($leadData->dob) && $leadData->dob && ! $this->validateDate($leadData->dob)) {
                     $leadValidationErrors->push('Invalid Date of Birth');
                 }
+                if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number) {
+                    $quoteObject = $this->createQuoteObject(ucfirst($leadData->insurer));
+                    if ($quoteObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
+                        $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
+                    }
+                }
 
                 switch($lead->quote_type) {
                     case QuoteTypeShortCode::CAR:
@@ -939,11 +945,7 @@ class RenewalsUploadService
                         if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
                             $leadValidationErrors->push('Invalid Product Type');
                         }
-                        if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number) {
-                            if (CarQuote::where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
-                                $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
-                            }
-                        }
+
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! CarQuote::where('policy_number', $lead->policy_number)->first()) {
                             $leadValidationErrors->push('No Quote exists against this Policy Number, either create quote or check policy number');
                         }
