@@ -927,8 +927,7 @@ class RenewalsUploadService
                 if (isset($leadData->dob) && $leadData->dob && ! $this->validateDate($leadData->dob)) {
                     $leadValidationErrors->push('Invalid Date of Birth');
                 }
-                $quoteObject = $this->createQuoteObject(ucfirst($quoteType->code));
-                $quote = $quoteObject->where('previous_quote_policy_number', $data['policy_number'])->first();
+
                 switch($lead->quote_type) {
                     case QuoteTypeShortCode::CAR:
                         if ($leadData->make && ! CarMake::where('text', $leadData->make)->first()) {
