@@ -530,12 +530,16 @@ class RenewalsUploadService
             ];
 
             if ($quoteType->code == quoteTypeCode::Car) {
+
                 $make = CarMake::where('text', $data['make'])->first();
                 $model = CarModel::where('text', $data['model'])->first();
-                $vehicleType = $this->renewalsAddonService->getVehicleType($model->vehicle_type_id);
 
-                $quoteData['car_make_id'] = $make->id;
-                $quoteData['car_model_id'] = $model->id;
+                if($model) {
+                    $vehicleType = $this->renewalsAddonService->getVehicleType($model->vehicle_type_id);
+                }
+
+                $quoteData['car_make_id'] = $make->id ?? null;
+                $quoteData['car_model_id'] = $model->id ?? null;
                 $quoteData['year_of_manufacture'] = $data['year'];
                 $quoteData['cylinder'] = $model->cylinder ?? null;
                 $quoteData['vehicle_category'] = $vehicleType->category ?? null;
