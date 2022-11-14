@@ -2,15 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Rule;
-use App\Models\RuleLeadSource;
-use App\Models\Team;
-use App\Models\Tier;
-use App\Models\User;
 use Carbon\Carbon;
-use DB;
-use Illuminate\Http\Request;
-use stdClass;
 
 class ReportService extends BaseService
 {
@@ -18,7 +10,6 @@ class ReportService extends BaseService
     protected $searchPrefix = 'r.';
     public function __construct()
     {
-
     }
 
     public function getAdvisorConversionReportData()
@@ -40,20 +31,20 @@ class ReportService extends BaseService
             GROUP BY q.advisor_id)  a order by a.email";
     }
 
-
     public function generateBatchesFilterText()
     {
         $batchArray = [];
         $startDate = Carbon::parse('2018-08-05')->startOfYear();
         $count = 1;
         while ($startDate < now()) {
-           $currentDate = $startDate->toDateString();
-           $nextWeek = $startDate->addDays(7)->toDateString();
-            $key = $currentDate . ','. $nextWeek;
-            $value = 'Batch - '. $count .' - ( '.  $currentDate . ' to '. $nextWeek . ' )' ;
-            array_push($batchArray, $key . '|' .$value);
+            $currentDate = $startDate->toDateString();
+            $nextWeek = $startDate->addDays(7)->toDateString();
+            $key = $currentDate.','.$nextWeek;
+            $value = 'Batch - '.$count.' - ( '.$currentDate.' to '.$nextWeek.' )';
+            array_push($batchArray, $key.'|'.$value);
             $count++;
         }
+
         return $batchArray;
     }
 }

@@ -39,6 +39,7 @@ class ReportsController extends Controller
                 ->addIndexColumn()
                 ->make(true);
         }
+
         return view('reports.advisor-conversion-report', compact('batches', 'teams', 'users', 'tiers', 'leadSources'));
     }
 }

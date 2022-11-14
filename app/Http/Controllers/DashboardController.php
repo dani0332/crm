@@ -13,7 +13,7 @@ class DashboardController extends Controller
         $this->dashboardService = $dashboardService;
     }
 
-    /**          
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
