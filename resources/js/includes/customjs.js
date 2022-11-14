@@ -2216,26 +2216,7 @@ $(document).ready(function () {
       { data: 'status', name: 'status' },
       { data: 'uploaded_by', name: 'uploaded_by' },
       { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-      {
-        data: 'action',
-        name: 'action',
-        orderable: false,
-        searchable: false,
-        render: function (data, type, row) {
-
-          if(row.status == 'Completed' && row.renewal_import_type == 'create') {
-            return (
-              "<a class='btn btn-success btn-sm' href='" +
-              config.routes.renewal_base_url +
-              '/' +
-              row.id +
-              "/fetch-plans'>" +
-              'Fetch Plans</a>'
-            );
-          }
-        },
-      },
+      { data: 'updated_at', name: 'updated_at' }
     ],
   });
 
@@ -2629,6 +2610,21 @@ $(document).ready(function () {
             row.renewal_batch +
             "'>" +
             row.renewal_batch +
+            '</a>'
+          );
+        },
+      },
+      {
+        data: 'renewal_batch',
+        name: 'manage_plans',
+        render: function (data, type, row) {
+          return (
+            "<a class='btn btn-info btn-sm' href='" +
+            config.routes.renewals_batches_datatable_route +
+            '/' +
+            row.renewal_batch +
+            "/plans-processes'>" +
+            'Manage Plans' +
             '</a>'
           );
         },

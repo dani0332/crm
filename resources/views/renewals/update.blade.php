@@ -134,7 +134,7 @@
                                 <tr><td>20</td><td>Renewal Premium</td><td>Renewal Premium</td><td>No</td><td>50</td></tr>
                                 <tr><td>21</td><td>Excess</td><td>Excess</td><td>No</td><td>20</td></tr>
                                 <tr><td>22</td><td>Trim</td><td>Trim</td><td>No</td><td>50</td></tr>
-                                <tr><td>23</td><td>Type</td><td>Type</td><td>No</td><td>10</td></tr>
+                                <tr><td>23</td><td>Type</td><td>Insurance Type</td><td>Yes</td><td>10</td></tr>
                                 <tr><td>24</td><td>Product Type</td><td>Type of Insurance | Comprehensive or Third Party Only</td><td>No</td><td>50</td></tr>
                                 <tr><td>25</td><td>Registration Location</td><td>Registration Location</td><td>No</td><td>50</td></tr>
                                 <tr><td>26</td><td>Previous Advisor</td><td>Previosuly assigned Advisor Email</td><td>No</td><td>100</td></tr>

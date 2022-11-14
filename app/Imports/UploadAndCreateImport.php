@@ -114,10 +114,10 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
             'previous_advisor' => ['index' => 9, 'title' => 'Previous Advisor Email', 'rules' => 'max:100'],
             'policy_number' => ['index' => 10, 'title' => 'Policy', 'rules' => 'required|max:100'],
             'batch' => ['index' => 11, 'title' => 'Batch', 'rules' => 'required|max:25'],
-            'start_date' => ['index' => 12, 'title' => 'Start Date', 'rules' => 'max:25', 'type' => 'date'], //date_format:d/m/Y
-            'end_date' => ['index' => 13, 'title' => 'End Date', 'rules' => 'required|max:25', 'type' => 'date'], //date_format:d/m/Y
+            'start_date' => ['index' => 12, 'title' => 'Start Date', 'rules' => 'max:25', 'type' => 'date'],
+            'end_date' => ['index' => 13, 'title' => 'End Date', 'rules' => 'required|max:25', 'type' => 'date'],
             'object' => ['index' => 14, 'title' => 'Object', 'rules' => 'max:200'],
-            'premium' => ['index' => 15, 'title' => 'Gross Premium', 'rules' => 'max:25'],
+            'premium' => ['index' => 15, 'title' => 'Gross Premium', 'rules' => 'nullable|numeric'],
             'notes' => ['index' => 16, 'title' => 'Notes', 'rules' => 'max:200'],
             'make' => ['index' => 17, 'title' => 'Make', 'rules' => 'max:50'],
             'model' => ['index' => 18, 'title' => 'Model', 'rules' => 'max:50'],
