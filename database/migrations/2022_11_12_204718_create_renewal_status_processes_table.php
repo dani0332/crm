@@ -15,13 +15,13 @@ class CreateRenewalStatusProcessesTable extends Migration
     {
         Schema::create('renewal_status_processes', function (Blueprint $table) {
             $table->id();
-            $table->string('batch');
+            $table->string('batch', 50);
             $table->integer('total_leads');
             $table->integer('total_completed')->default(0);
             $table->integer('total_failed')->default(0);
-            $table->string('status');
-            $table->unsignedBigInteger('created_by_id');
-            $table->foreign('created_by_id')->references('id')->on('users')->onDelete('no action');
+            $table->string('status', 100);
+            $table->unsignedBigInteger('user_id');
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('no action');
             $table->timestamps();
         });
     }

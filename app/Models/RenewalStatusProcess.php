@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class RenewalStatusProcess extends Model
 {
     use HasFactory;
+
     protected $fillable = ['batch', 'total_leads', 'total_completed', 'total_failed', 'status', 'created_by_id'];
 
-    public function createdby()
+    public function createdBy()
     {
-        return $this->belongsTo(User::class, 'created_by_id', 'id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }
