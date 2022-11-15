@@ -74,6 +74,7 @@ class RenewalsUploadController extends Controller
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
             'status' => RenewalProcessStatuses::PROCESSED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
         ])->count();
 
         if ($totalPending > 0) {
