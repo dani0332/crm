@@ -1,7 +1,6 @@
-@extends('layouts.app_live')
+@extends('layouts.app')
 @section('title','Uploaded Renewal Leads Files')
 @section('content')
-
 @php
 use App\Enums\RolesEnum;
 @endphp
@@ -39,6 +38,10 @@ use App\Enums\RolesEnum;
                       </thead>
                       <tbody>
 
-
+                      </tbody>
+                    </table>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
