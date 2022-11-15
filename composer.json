@@ -26,6 +26,7 @@
         "owen-it/laravel-auditing": "^12.0",
         "parsecsv/php-parsecsv": "^1.3",
         "predis/predis": "^1.1",
+        "rappasoft/laravel-livewire-tables": "^2.8",
         "sentry/sentry-laravel": "^2.7",
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-permission": "^4.0",
