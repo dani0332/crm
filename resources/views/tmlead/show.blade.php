@@ -1,9 +1,9 @@
 @extends('layouts.app')
 @section('title','TM Lead')
 @section('content')
-<?php
+@php
 use App\Enums\tmInsuranceTypeCode;
-?>
+@endphp
 <div class="row">
     <div class="col-md-12 col-sm-12 admin-detail">
         <div class="x_panel">
@@ -95,7 +95,7 @@ use App\Enums\tmInsuranceTypeCode;
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Assigned To"><b>Assigned To</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Advisor"><b>Advisor</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $tmlead->assignedto ? $tmlead->assignedto->name : '' }}</p>
                             </div>
