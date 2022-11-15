@@ -210,7 +210,9 @@ class RenewalsUploadService
                 'status' => RenewalProcessStatuses::PROCESSED,
                 'quote_type' => QuoteTypeShortCode::CAR,
                 'batch' => $batch,
-            ])->chunk(50, function ($leads) use ($renewalStatusProcess) {
+                'type' => RenewalsUploadType::UPDATE_LEADS
+            ])->distinct('quote_id')->orderBy('id', 'desc')->chunk(50, function ($leads) use ($renewalStatusProcess) {
+
                 foreach ($leads as $lead) {
                     $leadData = (object) $lead->data;
 
@@ -675,6 +677,7 @@ class RenewalsUploadService
                     'vehicle_category' => $vehicleType->category ?? null,
                     'year_of_manufacture' => $data['year'] ?? null,
                     'previous_advisor_id' => $previousAdvisorId,
+                    'quote_updated_at' => Carbon::now()
                 ]);
 
                 if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
@@ -734,10 +737,15 @@ class RenewalsUploadService
 
         //trim is optional
         if (! empty($data['trim'])) {
-            $valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first();
-            $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
-            if (! empty($trims[$data['trim']]['admeId'])) {
-                $planData['trim_id'] = $trims[$data['trim']]['admeId'];
+            if( ($valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first()) )
+            {
+                if(!empty($valuation->insurer_available_trims))
+                {
+                    $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
+                    if (! empty($trims[$data['trim']]['admeId'])) {
+                        $planData['trim_id'] = $trims[$data['trim']]['admeId'];
+                    }
+                }
             }
         }
 
