@@ -637,7 +637,7 @@ class LifeQuoteService extends BaseService
                 $title = 'Lead Status';
                 break;
             case 'advisor_id':
-                $title = 'Assigned To';
+                $title = 'Advisor';
                 break;
             case 'marital_status_id':
                 $title = 'Marital Status';

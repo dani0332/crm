@@ -604,7 +604,7 @@ class PetQuoteService extends BaseService
                 $title = 'Lead Status';
                 break;
             case 'advisor_id':
-                $title = 'Assigned To';
+                $title = 'Advisor';
                 break;
             case 'next_followup_date':
                 $title = 'Next Followup Date';
