@@ -563,7 +563,7 @@ class HomeQuoteService extends BaseService
                 $title = 'Lead Status';
                 break;
             case 'advisor_id':
-                $title = 'Assigned To';
+                $title = 'Advisor';
                 break;
             case 'ilivein_accommodation_type_id':
                 $title = 'I Live In';

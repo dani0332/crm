@@ -378,7 +378,7 @@ class CarQuoteService extends BaseService
                 $title = 'CDB ID';
                 break;
             case 'advisor_id':
-                $title = 'Assigned To';
+                $title = 'Advisor';
                 break;
             case 'payment_status_id':
                 $title = 'Payment Status';
