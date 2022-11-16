@@ -2599,21 +2599,7 @@ $(document).ready(function () {
     processing: true,
     ajax: config.routes.renewals_batches_datatable_route,
     columns: [
-      {
-        data: 'renewal_batch',
-        name: 'renewal_batch',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.renewals_batches_datatable_route +
-            '/' +
-            row.renewal_batch +
-            "'>" +
-            row.renewal_batch +
-            '</a>'
-          );
-        },
-      },
+      { data: 'renewal_batch', name: 'renewal_batch' },
       {
         data: 'renewal_batch',
         name: 'manage_plans',
@@ -2625,7 +2611,13 @@ $(document).ready(function () {
             row.renewal_batch +
             "/plans-processes'>" +
             'Fetch Plans' +
-            '</a>'
+            '</a>' + 
+            "<a class='btn btn-warning btn-sm' href='" +
+            config.routes.renewals_batches_datatable_route +
+            '/' +
+            row.renewal_batch +
+            "'>" +
+            'Send Emails</a>'
           );
         },
       },

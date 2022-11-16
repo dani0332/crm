@@ -12,7 +12,7 @@
                       <thead>
                         <tr>
                           <th>Batch</th>
-                            <th>Plans</th>
+                            <th>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
