@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\carTypeInsuranceCode;
+use App\Enums\FetchPlansStatuses;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
@@ -211,7 +212,9 @@ class RenewalsUploadService
                 'quote_type' => QuoteTypeShortCode::CAR,
                 'batch' => $batch,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
-            ])->distinct('quote_id')->orderBy('id', 'desc')->chunk(50, function ($leads) use ($renewalStatusProcess) {
+                'fetch_plans_status' => FetchPlansStatuses::PENDING
+            ])->chunk(50, function ($leads) use ($renewalStatusProcess) {
+
                 foreach ($leads as $lead) {
                     $leadData = (object) $lead->data;
 
@@ -224,10 +227,10 @@ class RenewalsUploadService
                         if (isset($plans[0]->id)) {
                             info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
                             //update status to plans fetched
-                            $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED]);
+                            $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'plans_status' => FetchPlansStatuses::FETCHED]);
                             $renewalStatusProcess->update(['total_completed' => $renewalStatusProcess->total_completed + 1]);
                         } else {
-                            info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid.' Error: '.$plans);
+                            info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid.' Error: '. (is_string($plans)) ? $plans : json_encode($plans) );
                             $renewalStatusProcess->update(['total_failed' => $renewalStatusProcess->total_failed + 1]);
                         }
                     } else {
@@ -705,7 +708,16 @@ class RenewalsUploadService
                     info($logPrefix.' plan info updated for UUID: '.$quote->uuid);
                 }
 
-                $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED, 'quote_id' => $quote->id]);
+                //mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
+                RenewalQuoteProcess::where('quote_id', $quote->id)->where('status', RenewalProcessStatuses::PROCESSED)->where('type', 'update')
+                    ->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+
+                $renewalQuoteProcess->update([
+                    'status' => RenewalProcessStatuses::PROCESSED,
+                    'quote_id' => $quote->id,
+                    'fetch_plans_status' => FetchPlansStatuses::PENDING
+                ]);
+
                 $renewalUploadLead->update(['good' => $renewalUploadLead->good += 1]);
 
                 info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
