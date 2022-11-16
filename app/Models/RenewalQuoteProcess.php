@@ -9,7 +9,7 @@ class RenewalQuoteProcess extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['renewals_upload_lead_id', 'quote_id', 'quote_type', 'policy_number', 'data', 'batch', 'validation_errors', 'status', 'email_sent', 'type'];
+    protected $fillable = ['renewals_upload_lead_id', 'quote_id', 'quote_type', 'policy_number', 'data', 'batch', 'validation_errors', 'status', 'email_sent', 'type', 'fetch_plans_status'];
     protected $casts = [
         'data' => 'array',
         'validation_errors' => 'array',

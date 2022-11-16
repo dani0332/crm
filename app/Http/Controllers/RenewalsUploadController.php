@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\FetchPlansStatuses;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
@@ -75,6 +76,7 @@ class RenewalsUploadController extends Controller
             'batch' => $batch,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
         ])->count();
 
         if ($totalPending > 0) {
