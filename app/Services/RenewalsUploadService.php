@@ -680,7 +680,7 @@ class RenewalsUploadService
                     'quote_updated_at' => Carbon::now(),
                 ]);
 
-                if(!empty($data['year']) && $quoteType->code == quoteTypeCode::Car ) {
+                if (! empty($data['year']) && $quoteType->code == quoteTypeCode::Car) {
                     $quoteData['year_of_first_registration'] = $data['year'];
                 }
 
