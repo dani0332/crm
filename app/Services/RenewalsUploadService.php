@@ -708,9 +708,14 @@ class RenewalsUploadService
                 }
 
                 //mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
-                RenewalQuoteProcess::where('quote_id', $quote->id)->where('status', RenewalProcessStatuses::PROCESSED)->where('type', 'update')
-                    ->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+                RenewalQuoteProcess::where([
+                    'quote_id' => $quote->id,
+                    'status' => RenewalProcessStatuses::PROCESSED,
+                    'type' => RenewalsUploadType::UPDATE_LEADS,
+                    'fetch_plans_status' => FetchPlansStatuses::OUTDATED,
+                ]);
 
+                //mark renewal quote process as processed and assign quote id
                 $renewalQuoteProcess->update([
                     'status' => RenewalProcessStatuses::PROCESSED,
                     'quote_id' => $quote->id,
