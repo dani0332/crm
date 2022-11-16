@@ -16,7 +16,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 
-class AdvisorConversionReportTable extends DataTableComponent
+class AdvisorPerformanceReportTable extends DataTableComponent
 {
     public $url;
 
@@ -43,47 +43,39 @@ class AdvisorConversionReportTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make('Batch Number', 'batch.name'),
-            Column::make('Start Date', 'batch.start_date'),
-            Column::make('Stop Date', 'batch.end_date'),
             Column::make('Advisor Name', 'advisor.name')->searchable(),
+            Column::make('Created Manually')->label(fn ($row) => $row->manual_created)->footer(function ($rows) {
+                return $rows->sum('manual_created');
+            }),
+            // Column::make('Auto Assigned')->label(fn ($row) => $row->new_leads)->footer(function ($rows) {
+            //     return $rows->sum('new_leads');
+            // }),
+            // Column::make('Manually Assigned')->label(fn ($row) => $row->not_interested)->footer(function ($rows) {
+            //     return $rows->sum('not_interested');
+            // }),
+            // Column::make('Pulled Leads')->label(fn ($row) => $row->in_progress)->footer(function ($rows) {
+            //     return $rows->sum('in_progress');
+            // }),
             Column::make('Total Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
                 return $rows->sum('total_leads');
             }),
-            Column::make('New Leads')->label(fn ($row) => $row->new_leads)->footer(function ($rows) {
-                return $rows->sum('new_leads');
-            }),
-            Column::make('Not Interested')->label(fn ($row) => $row->not_interested)->footer(function ($rows) {
+            // Column::make('Dials')->label(fn ($row) => $row->bad_leads)->footer(function ($rows) {
+            //     return $rows->sum('bad_leads');
+            // }),
+            Column::make('NI')->label(fn ($row) => $row->not_interested)->footer(function ($rows) {
                 return $rows->sum('not_interested');
             }),
             Column::make('In Progress')->label(fn ($row) => $row->in_progress)->footer(function ($rows) {
                 return $rows->sum('in_progress');
             }),
-            Column::make('Manually Created')->label(fn ($row) => $row->manual_created)->footer(function ($rows) {
-                return $rows->sum('manual_created');
-            }),
-            Column::make('Bad Leads')->label(fn ($row) => $row->bad_leads)->footer(function ($rows) {
+            Column::make('Bad Lead')->label(fn ($row) => $row->bad_leads)->footer(function ($rows) {
                 return $rows->sum('bad_leads');
             }),
-            Column::make('Sale Leads')->label(fn ($row) => $row->sale_leads)->footer(function ($rows) {
+            Column::make('Sale')->label(fn ($row) => $row->sale_leads)->footer(function ($rows) {
                 return $rows->sum('sale_leads');
             }),
-            Column::make('Gross Conversion')->label(fn ($row) => (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->manual_created) : 1)).' %')
-            ->footer(function ($rows) {
-                $total = 0;
-                foreach ($rows as $row) {
-                    $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->manual_created) : 1));
-                }
-
-                return $total.' %';
-            }),
-            Column::make('Net Conversion')->label(fn ($row) => (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->bad_leads - $row->manual_created) : 1)).' %')->footer(function ($rows) {
-                $total = 0;
-                foreach ($rows as $row) {
-                    $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->bad_leads - $row->manual_created) : 1));
-                }
-
-                return $total.' %';
+            Column::make('Completed')->label(fn ($row) => $row->completed_leads)->footer(function ($rows) {
+                return $rows->sum('completed_leads');
             }),
         ];
     }
@@ -99,7 +91,7 @@ class AdvisorConversionReportTable extends DataTableComponent
               DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as manual_created'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
-              DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" and car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as created_sale_leads'),
+              DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as completed_leads'),
           )
           ->join('users', 'users.id', 'car_quote_request.advisor_id')
           ->leftJoin('teams', function ($join) {
@@ -108,7 +100,7 @@ class AdvisorConversionReportTable extends DataTableComponent
           })
           ->whereNull('car_quote_request.renewal_import_code')
           ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
-          ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
+          ->orderBy('users.email');
     }
 
     // custom pagination
@@ -134,27 +126,7 @@ class AdvisorConversionReportTable extends DataTableComponent
               ->filter(function (Builder $builder, string $value) {
                   $builder->whereDate('car_quote_request.created_at', '<=', $value);
               }),
-            SelectFilter::make('Ecommerce')
-            ->setFilterPillTitle('ABC')
-            ->options([
-                '' => 'All',
-                'yes' => 'Yes',
-                'no' => 'No',
-            ])->filter(function (Builder $builder, string $value) {
-                $builder->where('car_quote_request.is_ecommerce', $value == 'no' ? false : true);
-            }),
-            MultiSelectFilter::make('Batch Number')
-            ->options(
-                QuoteBatches::query()
-                    ->orderBy('id')
-                    ->get()
-                    ->keyBy('id')
-                    ->map(fn ($batch) => $batch->name . '-('. $batch->start_date . ' to '. $batch->end_date . ')')
-                    ->toArray(),
-            )->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.quote_batch_id', $value);
-            }),
-            MultiSelectFilter::make('Teams')
+            SelectFilter::make('Teams')
             ->options(
                 Team::query()
                     ->orderBy('name')
@@ -166,21 +138,9 @@ class AdvisorConversionReportTable extends DataTableComponent
 
                     ->toArray(),
             )->filter(function (Builder $builder, $value) {
-                $builder->whereIn('teams.id', $value);
+                $builder->where('teams.id', $value);
             }),
-            MultiSelectFilter::make('Advisor Name')
-            ->options(
-                User::query()
-                    ->orderBy('name')
-                    ->where('is_active', 1)
-                    ->get()
-                    ->keyBy('id')
-                    ->map(fn ($users) => $users->name)
-                    ->toArray(),
-            )->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.advisor_id', $value);
-            }),
-            MultiSelectFilter::make('Tiers')
+            SelectFilter::make('Tiers')
             ->options(
                 Tier::query()
                     ->orderBy('name')
@@ -190,9 +150,9 @@ class AdvisorConversionReportTable extends DataTableComponent
                     ->map(fn ($users) => $users->name)
                     ->toArray(),
             )->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.tier_id', $value);
+                $builder->where('car_quote_request.tier_id', $value);
             }),
-            MultiSelectFilter::make('Lead Source')
+            SelectFilter::make('Lead Source')
             ->options(
                 LeadSource::query()
                     ->orderBy('name')
@@ -202,7 +162,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                     ->map(fn ($users) => $users->name)
                     ->toArray(),
             )->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.source', $value);
+                $builder->where('car_quote_request.source', $value);
             }),
 
         ];

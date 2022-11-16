@@ -29,6 +29,18 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
+                <ul class="nav side-menu">
+                    <li><a><i class="fa fa-line-chart"
+                        aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
+                            <li><a href="{{ url('reports/advisor-performance') }}">Advisor Performance</a></li>
+                            <li><a href="{{ url('reports/advisor-distribution') }}">Advisor Distribution</a></li>
+                            <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
+                            <li><a href="{{ url('reports/lead-list') }}">Lead List</a></li>
+                        </ul>
+                    </li>
+                </ul>
                 @can(PermissionsEnum::LeadAllocationView)
                 @canany([PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD, PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD])
                 <ul class="nav side-menu">

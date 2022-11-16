@@ -159,7 +159,11 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('upload-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
-    Route::get('/reports/advisor-conversion', [ReportsController::class, 'index']);
+    Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport']);
+    Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport']);
+    Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport']);
+    Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport']);
+    Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::group(['prefix' => 'rewards'], function () {
         Route::resource('partner', PartnerController::class);

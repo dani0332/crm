@@ -3,6 +3,7 @@ $theme = $component->getTheme();
 @endphp
 
 @if ($theme === 'tailwind')
+
 <div x-data="{show: false}" x-on:click.away="show = false" class="relative">
     <button x-on:click="show = !show;" x-on:keydown.escape.stop="show = false" type="button" class="relative w-full bg-white border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" aria-haspopup="listbox" aria-expanded="true" aria-labelledby="listbox-label">
         <span class="flex items-center truncate py-0.5">
@@ -15,11 +16,10 @@ $theme = $component->getTheme();
         </span>
     </button>
     <ul x-show="show" style="display: none" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-56 rounded-md p-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm" tabindex="-1" role="listbox" aria-labelledby="listbox-label" aria-activedescendant="listbox-option-3">
-
         @foreach($filter->getOptions() as $key => $value)
         <li wire:key="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-multiselect-{{ $key }}">
             <input type="checkbox" id="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" value="{{ $key }}" wire:key="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" wire:model.stop="{{ $component->getTableName() }}.filters.{{ $filter->getKey() }}" {{ count($component->getAppliedFilterWithValue($filter->getKey()) ?? []) === count($filter->getOptions()) ? 'disabled' : ''}} :class="{'disabled:bg-gray-400 disabled:hover:bg-gray-400' : {{ count($component->getAppliedFilterWithValue($filter->getKey()) ?? []) === count($filter->getOptions()) ? 'true' : 'false' }}}" class="text-indigo-600 rounded border-gray-300 shadow-sm transition duration-150 ease-in-out focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-900 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600 dark:focus:bg-gray-600 disabled:opacity-50 disabled:cursor-wait">
-            <label for="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" class="dark:text-white text-xs">{{ $value }}</label>
+            <label for="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" class="dark:text-white" style="font-size:10px !important;">{{ $value }}</label>
         </li>
         @endforeach
     </ul>

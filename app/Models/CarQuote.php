@@ -17,6 +17,11 @@ class CarQuote extends BaseModel
     ];
     protected $guarded = [];
 
+    public function fullName()
+    {
+        return $this->first_name . ' '. $this->last_name;
+    }
+
     public function uaeLicenseHeldFor()
     {
         return $this->hasOne(UAELicenseHeldFor::class, 'id', 'uae_license_held_for_id');
@@ -198,9 +203,19 @@ class CarQuote extends BaseModel
         return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
     }
 
+    public function batch()
+    {
+        return $this->hasOne(QuoteBatches::class, 'id', 'quote_batch_id')->select(['id', 'name', 'start_date', 'end_date']);
+    }
+
     public function oe_id()
     {
         return $this->hasOne(User::class, 'id', 'oe_id')->select(['id', 'email', 'name']);
+    }
+
+    public function tier()
+    {
+        return $this->hasOne(Tier::class, 'id', 'tier_id')->select(['id', 'name', 'min_price', 'max_price', 'cost_per_lead']);
     }
 
     public function scopeRelationWhere($query, $isGetList, $filters)
