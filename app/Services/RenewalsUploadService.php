@@ -697,8 +697,8 @@ class RenewalsUploadService
 
                 //todo: check if this fails
                 if (! empty($data['provider_name']) && ! empty($data['plan_name']) && ! empty($data['plan_type'])) {
-                    $response = $this->modifyPlan($data, $quote);
-                    info($logPrefix.' plan info updated for UUID: '.$quote->uuid);
+                    //$response = $this->modifyPlan($data, $quote);
+                    //info($logPrefix.' plan info updated for UUID: '.$quote->uuid);
                 }
 
                 //mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
