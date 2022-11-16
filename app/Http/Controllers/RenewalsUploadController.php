@@ -76,12 +76,10 @@ class RenewalsUploadController extends Controller
             'batch' => $batch,
             'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
-            'fetch_plans_status' => FetchPlansStatuses::PENDING
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
         ])->count();
 
-
         if ($totalPending > 0) {
-
             $renewalStatusProcess = RenewalStatusProcess::create([
                 'batch' => $batch,
                 'total_leads' => $totalPending,
