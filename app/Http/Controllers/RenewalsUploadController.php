@@ -298,7 +298,11 @@ class RenewalsUploadController extends Controller
         ->orderBy('created_at', 'desc')
         ->get();
 
-        return view('renewals.batch_detail', compact('batch', 'batchEmails'));
+        $plansProcessedTotal = $this->renewalsUploadFileService->getProcessCount(FetchPlansStatuses::PENDING, $batch);
+        $plansFetchedTotal = $this->renewalsUploadFileService->getProcessCount(FetchPlansStatuses::FETCHED, $batch);
+        $hideSendEmailButton = $plansFetchedTotal != $plansProcessedTotal ? 1 : 0;
+
+        return view('renewals.batch_detail', compact('batch', 'batchEmails','hideSendEmailButton'));
     }
 
     public function runBatchProcess($batch)

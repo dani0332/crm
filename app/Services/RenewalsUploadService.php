@@ -1061,13 +1061,14 @@ class RenewalsUploadService
         return $d && $d->format($format) === $date;
     }
 
-    public function getProcessCount($status, $batch)
+    public function getProcessCount($fetchPlansStatus, $batch)
     {
         return RenewalQuoteProcess::where([
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
-            'type' => RenewalsUploadType::CREATE_LEADS,
-            'status' => $status
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'fetch_plans_status' => $fetchPlansStatus,
         ])->count();
     }
 }

@@ -21,7 +21,9 @@
                 @endif
                 <form id="demo-form2" method='post' action="" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                     <ul class="nav navbar-right panel_toolbox">
+                        @if($hideSendEmailButton == 1)
                         <li><a class="btn btn-success btn-sm" onclick="return confirm('Do you want to send emails?');" href="{{ $batch }}/batch-process">Send Emails</a></li>
+                        @endif
                     </ul>
                     <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                             <thead>
