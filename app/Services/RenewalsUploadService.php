@@ -985,7 +985,7 @@ class RenewalsUploadService
                             $leadValidationErrors->push('Invalid Car Model');
                         }
                         if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
-                            $leadValidationErrors->push('Invalid Product Type');
+                            $leadValidationErrors->push('Invalid Product Type, needs to be Third Party Only or Comprehensive');
                         }
 
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
