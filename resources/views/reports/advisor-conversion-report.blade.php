@@ -1,8 +1,10 @@
-@extends('layouts.app')
+@extends('layouts.app_live')
 @section('title','Advisor Conversion Report')
 @section('content')
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+<h1 style="font-size: 33px;text-align: center;color: #308BCA;margin-bottom: 60px;">Advisor Conversion Report</h1>
+@livewire('advisor-conversion-report-table')
+{{-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/js/bootstrap-select.min.js"></script>
 <style type="text/css">
@@ -161,5 +163,5 @@
             </div>
         </div>
     </div>
-</div>
+</div> --}}
 @endsection

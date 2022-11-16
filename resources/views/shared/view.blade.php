@@ -809,7 +809,7 @@
                         data-parsley-validate="" novalidate="" autocomplete="off">
                         {{ csrf_field() }}
                         <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
-                        <div class="row" id="tm-leads-assign-div">
+                        <div class="row" id="tm-leads-assign-div" style="display: none;">
                             <div class="col-md-12 col-sm-12">
                                 <div class="x_panel">
                                     <div class="x_title">

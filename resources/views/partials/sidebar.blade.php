@@ -259,11 +259,11 @@ use App\Enums\PermissionsEnum;
                     <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
                 </ul>
                 @endif
-                @if (auth()->check() && auth()->user()->isAdmin())
+                {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
                     <li><a href="{{ url('assignOE') }}"><i></i> Assign OE </a>
                 </ul>
-                @endif
+                @endif --}}
                 @can(PermissionsEnum::TeleMarketingList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Telemarketing <span class="fa fa-chevron-down"></span></a>

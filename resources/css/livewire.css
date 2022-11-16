@@ -71,3 +71,9 @@ li.active > a {
 .alert.alert-error {
   @apply bg-red-400 text-red-900;
 }
+
+table.min-w-full > tfoot {
+    background-color: aqua !important;
+    color: black !important;
+    font-weight: 900 !important;
+}

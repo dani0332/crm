@@ -87,7 +87,6 @@
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
-            debugger;
             var dataTableColumns = [];
             var skipPropertiesArray = model.skipProperties['list'].split(',');
             for (var i = 0; i < modelPropertiesArray.length; i++) {

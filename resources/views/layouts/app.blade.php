@@ -205,12 +205,47 @@
                 renewals_batches_datatable_route: "{{ url('renewals/batches') }}",
                 lead_allocation_index_route: "{{ route('lead-allocation.index') }}",
                 car_lead_allocation_index_route: "{{ route('car-lead-allocation.index') }}",
-                advisor-conversion-report-route : "{{ url('reports/advisor-conversion')  }}",
+                advisor_conversion_report_route : "{{ url('reports/advisor-conversion')  }}",
             },
             _token: "{{ csrf_token() }}",
             image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}",
             image_path_rewards_slider: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/rewards-slider/' }}"
         };
+          // TM Leads: Expost data into csv
+        function newexportaction(e, dt, button, config) {
+            var self = this;
+            var oldStart = dt.settings()[0]._iDisplayStart;
+            dt.one('preXhr', function (e, s, data) {
+            data.start = 0;
+            data.length = 2147483647;
+            dt.one('preDraw', function (e, settings) {
+                if (button[0].className.indexOf('buttons-csv') >= 0) {
+                $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config)
+                    ? $.fn.dataTable.ext.buttons.csvHtml5.action.call(
+                        self,
+                        e,
+                        dt,
+                        button,
+                        config,
+                    )
+                    : $.fn.dataTable.ext.buttons.csvFlash.action.call(
+                        self,
+                        e,
+                        dt,
+                        button,
+                        config,
+                    );
+                }
+                dt.one('preXhr', function (e, s, data) {
+                settings._iDisplayStart = oldStart;
+                data.start = oldStart;
+                });
+                setTimeout(dt.ajax.reload, 0);
+                return false;
+            });
+            });
+            dt.ajax.reload();
+        }
     </script>
     <!-- <script src="{{ asset('build/js/customjs.js') }}"></script> -->
     <script src="{{ mix('build/js/customjs.min.js') }}"></script>
