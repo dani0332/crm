@@ -422,7 +422,7 @@
             {{-- buy now row --}}
             <tr>
                 <td class="bg-light-blue" >
-                    <p class="quote-info">Car insurance comparison for: <b>{{ $quote->customer->first_name  }} {{$quote->customer->last_name}}</b></p>
+                    <p class="quote-info">Car insurance comparison for: <b>{{ $quote->first_name  }} {{$quote->last_name}}</b></p>
                 </td>
                 @foreach($planIds as $planId)
                     <td>

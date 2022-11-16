@@ -572,7 +572,7 @@ class BusinessQuoteService extends BaseService
                 $title = 'CDB ID';
                 break;
             case 'advisor_id':
-                $title = 'Assigned To';
+                $title = 'Advisor';
                 break;
             case 'quote_status_id':
                 $title = 'Lead Status';

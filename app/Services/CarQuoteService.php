@@ -370,7 +370,7 @@ class CarQuoteService extends BaseService
                 $title = 'CDB ID';
                 break;
             case 'advisor_id':
-                $title = 'Assigned To';
+                $title = 'Advisor';
                 break;
             case 'payment_status_id':
                 $title = 'Payment Status';
@@ -1140,7 +1140,7 @@ class CarQuoteService extends BaseService
     }
 
     /**
-     * generate PDF for car quote plan and return
+     * generate PDF for car quote plan and return.
      *
      * @param $quoteType
      * @param $data
