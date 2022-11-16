@@ -149,7 +149,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                     ->orderBy('id')
                     ->get()
                     ->keyBy('id')
-                    ->map(fn ($batch) => $batch->name . '-('. $batch->start_date . ' to '. $batch->end_date . ')')
+                    ->map(fn ($batch) => $batch->name.'-('.$batch->start_date.' to '.$batch->end_date.')')
                     ->toArray(),
             )->filter(function (Builder $builder, $value) {
                 $builder->whereIn('car_quote_request.quote_batch_id', $value);

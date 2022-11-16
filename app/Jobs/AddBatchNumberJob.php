@@ -31,24 +31,22 @@ class AddBatchNumberJob implements ShouldQueue
     public function handle()
     {
         try {
-            info('today date for batch job is : '. json_encode(now()->toDateString()));
+            info('today date for batch job is : '.json_encode(now()->toDateString()));
             $lastBatch = QuoteBatches::orderBy('id', 'desc')->first();
-            info('last batch : '. json_encode($lastBatch));
+            info('last batch : '.json_encode($lastBatch));
             if ($lastBatch == null) {
                 info('inside creating batches from scratch');
                 $batches = $this->generateBatchNumbers(Carbon::parse('2018-08-05'));
-                if(count($batches)){
+                if (count($batches)) {
                     foreach ($batches as $batch) {
                         $this->insertQuoteBatch($batch);
                     }
                     info('batches created');
                 }
-            }
-            else if (! (now() >= Carbon::parse($lastBatch->start_date) &&  now() <= Carbon::parse($lastBatch->end_date)))
-            {
+            } elseif (! (now() >= Carbon::parse($lastBatch->start_date) && now() <= Carbon::parse($lastBatch->end_date))) {
                 info('inside creating batch of current week');
                 $batches = $this->generateBatchNumbers(Carbon::parse($lastBatch->end_date));
-                if(count($batches)){
+                if (count($batches)) {
                     foreach ($batches as $batch) {
                         $this->insertQuoteBatch($batch);
                     }
@@ -56,6 +54,7 @@ class AddBatchNumberJob implements ShouldQueue
                 }
             } else {
                 info('batches are update to date');
+
                 return true;
             }
         } catch (\Exception $e) {
@@ -71,7 +70,7 @@ class AddBatchNumberJob implements ShouldQueue
     private function insertQuoteBatch($batch)
     {
         QuoteBatches::insert([
-            'name' => explode('|',$batch)[1],
+            'name' => explode('|', $batch)[1],
             'start_date' => explode(',', $batch)[0],
             'end_date' => explode('|', explode(',', $batch)[1])[0],
             'created_at' => now(),
@@ -81,14 +80,13 @@ class AddBatchNumberJob implements ShouldQueue
 
     private function generateBatchNumbers($startDate)
     {
-
         $batchArray = [];
         $count = QuoteBatches::all()->count() + 1;
         while ($startDate < now()) {
             $currentDate = $startDate->toDateString();
             $nextWeek = $startDate->addDays(7)->toDateString();
             $key = $currentDate.','.$nextWeek;
-            $value = 'Batch '. $count ;
+            $value = 'Batch '.$count;
             array_push($batchArray, $key.'|'.$value);
             $count++;
         }

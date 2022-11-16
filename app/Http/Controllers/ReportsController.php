@@ -2,10 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LeadSource;
-use App\Models\Team;
-use App\Models\Tier;
-use App\Models\User;
 use App\Services\ReportService;
 use Illuminate\Http\Request;
 
@@ -20,7 +16,6 @@ class ReportsController extends Controller
 
     public function index(Request $request)
     {
-
     }
 
     public function renderAdvisorConversionReport()

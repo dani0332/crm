@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 
 class AdvisorDistributionReportTable extends DataTableComponent
@@ -81,7 +80,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
     {
         return CarQuote::query()
           ->select(
-              DB::raw("count(car_quote_request.id) as total_leads"),
+              DB::raw('count(car_quote_request.id) as total_leads'),
               DB::raw("SUM(CASE WHEN tiers.name = 'T0' THEN 1 ELSE 0 END) as tier_0_lead_count"),
               DB::raw("SUM(CASE WHEN tiers.name = 'T1' THEN 1 ELSE 0 END) as tier_1_lead_count"),
               DB::raw("SUM(CASE WHEN tiers.name = 'T2' THEN 1 ELSE 0 END) as tier_2_lead_count"),
@@ -119,7 +118,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
         ->keyBy('id')
         ->map(fn ($team) => $team->name)
         ->toArray();
-        array_unshift($teams, [''=> 'All']);
+        array_unshift($teams, ['' => 'All']);
+
         return [
             DateFilter::make('Start Date')
               ->filter(function (Builder $builder, string $value) {

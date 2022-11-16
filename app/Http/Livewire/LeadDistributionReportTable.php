@@ -3,18 +3,13 @@
 namespace App\Http\Livewire;
 
 use App\Models\CarQuote;
-use App\Models\LeadSource;
-use App\Models\QuoteBatches;
-use App\Models\Team;
 use App\Models\Tier;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 
 class LeadDistributionReportTable extends DataTableComponent
 {
