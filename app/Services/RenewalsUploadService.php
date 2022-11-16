@@ -547,6 +547,7 @@ class RenewalsUploadService
                 $quoteData['car_make_id'] = $make->id ?? null;
                 $quoteData['car_model_id'] = $model->id ?? null;
                 $quoteData['year_of_manufacture'] = $data['year'];
+                $quoteData['year_of_first_registration'] = $data['year'];
                 $quoteData['cylinder'] = $model->cylinder ?? null;
                 $quoteData['vehicle_category'] = $vehicleType->category ?? null;
 
@@ -663,7 +664,7 @@ class RenewalsUploadService
                     'claim_history_id' => $claimHistory->id ?? null,
                     'nationality_id' => $nationality->id ?? null,
                     'emirate_of_registration_id' => $emirate->id ?? null,
-                    'uae_license_held_for_id' => $uaeLicenseHeldFor->id,
+                    'uae_license_held_for_id' => $uaeLicenseHeldFor->id ?? null,
                     'car_value' => $data['car_value'],
                     'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
                     'previous_quote_policy_premium' => $data['premium'],
@@ -679,8 +680,12 @@ class RenewalsUploadService
                     'quote_updated_at' => Carbon::now(),
                 ]);
 
-                if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
-                    $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
+                if(!empty($data['year']) && $quoteType->code == quoteTypeCode::Car ) {
+                    $quoteData['year_of_first_registration'] = $data['year'];
+                }
+
+                if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike]) && ($insurer = $this->insuranceProviderService->getProviderByCode($data['insurer']))) {
+                    $quoteData['currently_insured_with'] = $insurer->text;
                 }
 
                 info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
