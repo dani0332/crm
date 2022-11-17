@@ -1050,6 +1050,7 @@ class RenewalsUploadService
                     $renewalUploadLead->cannot_upload += 1;
                 }
                 $renewalUploadLead->save();
+                sleep(1);
             }
         });
     }
