@@ -75,7 +75,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                     $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->manual_created) : 1));
                 }
 
-                return $total.' %';
+                return number_format((float)$total, 2, '.', '').' %';
             }),
             Column::make('Net Conversion')->label(fn ($row) => (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->bad_leads - $row->manual_created) : 1)).' %')->footer(function ($rows) {
                 $total = 0;
@@ -83,7 +83,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                     $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->bad_leads - $row->manual_created) : 1));
                 }
 
-                return $total.' %';
+                return number_format((float)$total, 2, '.', '').' %';
             }),
         ];
     }
