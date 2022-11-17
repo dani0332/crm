@@ -47,6 +47,11 @@ class AdvisorConversionReportTable extends DataTableComponent
             Column::make('Start Date', 'batch.start_date'),
             Column::make('Stop Date', 'batch.end_date'),
             Column::make('Advisor Name', 'advisor.name')->searchable(),
+            Column::make('Total Leads')
+            ->label(
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show($row->total_leads)`)" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
+            )
+          ->html(),
             Column::make('Total Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
                 return $rows->sum('total_leads');
             }),

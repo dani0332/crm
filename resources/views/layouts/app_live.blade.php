@@ -42,8 +42,9 @@
       @include('partials.header')
 
       <main class="flex-1 max-h-full p-5 overflow-hidden overflow-y-scroll">
+        <livewire:table-modal />
         @include('partials.messages')
-        
+
         @yield('content')
 
         <footer class="mt-12">

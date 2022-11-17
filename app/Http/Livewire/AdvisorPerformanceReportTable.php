@@ -44,15 +44,12 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             Column::make('Created Manually')->label(fn ($row) => $row->manual_created)->footer(function ($rows) {
                 return $rows->sum('manual_created');
             }),
-            // Column::make('Auto Assigned')->label(fn ($row) => $row->new_leads)->footer(function ($rows) {
-            //     return $rows->sum('new_leads');
-            // }),
-            // Column::make('Manually Assigned')->label(fn ($row) => $row->not_interested)->footer(function ($rows) {
-            //     return $rows->sum('not_interested');
-            // }),
-            // Column::make('Pulled Leads')->label(fn ($row) => $row->in_progress)->footer(function ($rows) {
-            //     return $rows->sum('in_progress');
-            // }),
+            Column::make('Auto Assigned')->label(fn ($row) => $row->auto_assigned)->footer(function ($rows) {
+                return $rows->sum('auto_assigned');
+            }),
+            Column::make('Manually Assigned')->label(fn ($row) => $row->manually_assigned)->footer(function ($rows) {
+                return $rows->sum('manually_assigned');
+            }),
             Column::make('Total Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
                 return $rows->sum('total_leads');
             }),
@@ -83,6 +80,8 @@ class AdvisorPerformanceReportTable extends DataTableComponent
           ->select(
               DB::raw('count(car_quote_request.id) as total_leads'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 40 THEN 1 ELSE 0 END) as new_leads'),
+              DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as auto_assigned'),
+              DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is not null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as manually_assigned'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 8 THEN 1 ELSE 0 END) as not_interested'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (2,24,25) THEN 1 ELSE 0 END) as in_progress'),
               DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as manual_created'),
@@ -91,6 +90,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as completed_leads'),
           )
           ->join('users', 'users.id', 'car_quote_request.advisor_id')
+          ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
           ->leftJoin('teams', function ($join) {
               $join->on('users.team_id', '=', 'teams.id');
               $join->on('users.sub_team_id', '=', 'teams.id');
