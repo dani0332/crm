@@ -6,7 +6,7 @@ use App\Jobs\AddBatchNumberJob;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
-class LeadAllocation extends Command
+class AddBatchNumber extends Command
 {
     /**
      * The name and signature of the console command.
