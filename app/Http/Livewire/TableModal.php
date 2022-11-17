@@ -9,7 +9,7 @@ class TableModal extends Component
     public bool $show = false;
     protected $listeners = [
         'show' => 'show',
-      ];
+    ];
 
     public function show($totalLeadCount)
     {
