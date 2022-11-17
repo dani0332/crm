@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Charts\MainDashboardChart;
 use App\Services\DashboardService;
 
 class DashboardController extends Controller
@@ -18,9 +19,9 @@ class DashboardController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(MainDashboardChart $mainDashboardChart)
     {
-        return view('dashboard');
+        return view('dashboard.main_dashboard', ['chart' => $mainDashboardChart->build()]);
     }
 
     public function conversionStats($quoteType)

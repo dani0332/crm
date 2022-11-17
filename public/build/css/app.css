@@ -844,6 +844,9 @@ select {
 .m-auto {
   margin: auto;
 }
+.m-20 {
+  margin: 5rem;
+}
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -1359,6 +1362,9 @@ select {
 }
 .p-1 {
   padding: 0.25rem;
+}
+.p-6 {
+  padding: 1.5rem;
 }
 .px-4 {
   padding-left: 1rem;
