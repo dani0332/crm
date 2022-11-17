@@ -8,12 +8,16 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
 class ProcessRenewalsUploadUpdate implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $tries = 3;
+    public $timeout = 30;
+    public $backoff = 35;
     protected $renewalsUploadLead;
 
     /**
@@ -34,5 +38,10 @@ class ProcessRenewalsUploadUpdate implements ShouldQueue
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
         return $renewalsUploadService->processUploadUpdate($this->renewalsUploadLead);
+    }
+
+    public function middleware()
+    {
+        return [new WithoutOverlapping($this->renewalsUploadLead->id)];
     }
 }
