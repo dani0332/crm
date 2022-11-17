@@ -571,8 +571,8 @@ class RenewalsUploadService
             $quoteObject = $this->createQuoteObject($quoteType->code);
             $quote = $quoteObject->create($quoteData);
 
-            //send AML request
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            //send AML request (Commenting Out AML Check)
+            // $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
 
             //update advisor assign date/time
             if (! empty($advisorId)) {
