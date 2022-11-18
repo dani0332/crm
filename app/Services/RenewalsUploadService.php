@@ -703,7 +703,7 @@ class RenewalsUploadService
                     'claim_history_id' => $claimHistory->id ?? null,
                     'nationality_id' => $nationality->id ?? null,
                     'emirate_of_registration_id' => $emirate->id ?? null,
-                    'uae_license_held_for_id' => $uaeLicenseHeldFor->id,
+                    'uae_license_held_for_id' => $uaeLicenseHeldFor->id ?? null,
                     'car_value' => $data['car_value'],
                     'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
                     'previous_quote_policy_premium' => $data['premium'],
@@ -715,13 +715,16 @@ class RenewalsUploadService
                     'cylinder' => $carModel->cylinder ?? null,
                     'vehicle_category' => $vehicleType->category ?? null,
                     'year_of_manufacture' => $data['year'] ?? null,
-                    'year_of_first_registration' => $data['year'] ?? null,
                     'previous_advisor_id' => $previousAdvisorId,
                     'quote_updated_at' => Carbon::now(),
                 ]);
 
-                if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
-                    $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
+                if (! empty($data['year']) && $quoteType->code == quoteTypeCode::Car) {
+                    $quoteData['year_of_first_registration'] = $data['year'];
+                }
+
+                if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike]) && ($insurer = $this->insuranceProviderService->getProviderByCode($data['insurer']))) {
+                    $quoteData['currently_insured_with'] = $insurer->text;
                 }
 
                 info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
@@ -788,11 +791,12 @@ class RenewalsUploadService
 
         //trim is optional
         if (! empty($data['trim'])) {
-            $valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first();
-            if (! empty($valuation->insurer_available_trims)) {
-                $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
-                if (! empty($trims[$data['trim']]['admeId'])) {
-                    $planData['trim_id'] = $trims[$data['trim']]['admeId'];
+            if (($valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first())) {
+                if (! empty($valuation->insurer_available_trims)) {
+                    $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
+                    if (! empty($trims[$data['trim']]['admeId'])) {
+                        $planData['trim_id'] = $trims[$data['trim']]['admeId'];
+                    }
                 }
             }
         }
@@ -1040,7 +1044,7 @@ class RenewalsUploadService
                             $leadValidationErrors->push('Invalid Car Model');
                         }
                         if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
-                            $leadValidationErrors->push('Invalid Product Type');
+                            $leadValidationErrors->push('Invalid Product Type, needs to be Third Party Only or Comprehensive');
                         }
 
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
