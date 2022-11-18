@@ -586,6 +586,7 @@ class RenewalsUploadService
                 $quoteData['car_make_id'] = $make->id ?? null;
                 $quoteData['car_model_id'] = $model->id ?? null;
                 $quoteData['year_of_manufacture'] = $data['year'];
+                $quoteData['year_of_first_registration'] = $data['year'];
                 $quoteData['cylinder'] = $model->cylinder ?? null;
                 $quoteData['vehicle_category'] = $vehicleType->category ?? null;
 
@@ -714,7 +715,9 @@ class RenewalsUploadService
                     'cylinder' => $carModel->cylinder ?? null,
                     'vehicle_category' => $vehicleType->category ?? null,
                     'year_of_manufacture' => $data['year'] ?? null,
+                    'year_of_first_registration' => $data['year'] ?? null,
                     'previous_advisor_id' => $previousAdvisorId,
+                    'quote_updated_at' => Carbon::now(),
                 ]);
 
                 if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike])) {
