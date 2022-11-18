@@ -13,6 +13,7 @@ use App\Models\GenericModel;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Models\QuoteViewCount;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
@@ -274,6 +275,29 @@ class CRUDController extends Controller
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
+        }
+        if($quoteType == strtolower(quoteTypeCode::Car))
+        {
+            if($record->advisor_id != null)
+            {
+                if($record->advisor_id == Auth::user()->id){
+                    $quoteCount = QuoteViewCount::where('quote_id', $record->id)->first();
+                    if($quoteCount != null){
+                        $quoteCount->visit_count = $quoteCount->visit_countc + 1;
+                        $quoteCount->save();
+
+                    }else{
+                        QuoteViewCount::insert([
+                            'visit_count' => 1,
+                            'quote_id' => $record->id,
+                            'quote_type_id' => 1,
+                            'user_id' => Auth::user()->id,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            }
         }
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;

@@ -37,7 +37,7 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('reports/advisor-performance') }}">Advisor Performance</a></li>
                             <li><a href="{{ url('reports/advisor-distribution') }}">Advisor Distribution</a></li>
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
-                            <li><a href="{{ url('reports/lead-list') }}">Lead List</a></li>
+                            {{-- <li><a href="{{ url('reports/lead-list') }}">Lead List</a></li> --}}
                         </ul>
                     </li>
                 </ul>

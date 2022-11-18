@@ -53,9 +53,9 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             Column::make('Total Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
                 return $rows->sum('total_leads');
             }),
-            // Column::make('Dials')->label(fn ($row) => $row->bad_leads)->footer(function ($rows) {
-            //     return $rows->sum('bad_leads');
-            // }),
+            Column::make('View Count')->label(fn ($row) => $row->view_count)->footer(function ($rows) {
+                return $rows->sum('view_count');
+            }),
             Column::make('NI')->label(fn ($row) => $row->not_interested)->footer(function ($rows) {
                 return $rows->sum('not_interested');
             }),
@@ -67,9 +67,6 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             }),
             Column::make('Sale')->label(fn ($row) => $row->sale_leads)->footer(function ($rows) {
                 return $rows->sum('sale_leads');
-            }),
-            Column::make('Completed')->label(fn ($row) => $row->completed_leads)->footer(function ($rows) {
-                return $rows->sum('completed_leads');
             }),
         ];
     }
@@ -87,10 +84,11 @@ class AdvisorPerformanceReportTable extends DataTableComponent
               DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as manual_created'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
-              DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as completed_leads'),
+              DB::raw('count(quote_view_count.visit_count) as view_count'),
           )
           ->join('users', 'users.id', 'car_quote_request.advisor_id')
           ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+          ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
           ->leftJoin('teams', function ($join) {
               $join->on('users.team_id', '=', 'teams.id');
               $join->on('users.sub_team_id', '=', 'teams.id');

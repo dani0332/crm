@@ -69,16 +69,24 @@ class AdvisorConversionReportTable extends DataTableComponent
             )->html()->footer(function ($rows) {
                 return $rows->sum('not_interested');
             }),
-            Column::make('In Progress')->label(fn ($row) => $row->in_progress)->footer(function ($rows) {
+            Column::make('In Progress')->label(
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `in_progress`])" class="text-sky-700 cursor-pointer">'.$row->in_progress.'</a>'
+            )->html()->footer(function ($rows) {
                 return $rows->sum('in_progress');
             }),
-            Column::make('Manually Created')->label(fn ($row) => $row->manual_created)->footer(function ($rows) {
+            Column::make('Manually Created')->label(
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `manual_created`])" class="text-sky-700 cursor-pointer">'.$row->manual_created.'</a>'
+            )->html()->footer(function ($rows) {
                 return $rows->sum('manual_created');
             }),
-            Column::make('Bad Leads')->label(fn ($row) => $row->bad_leads)->footer(function ($rows) {
+            Column::make('Bad Leads')->label(
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `bad_leads`])" class="text-sky-700 cursor-pointer">'.$row->bad_leads.'</a>'
+            )->html()->footer(function ($rows) {
                 return $rows->sum('bad_leads');
             }),
-            Column::make('Sale Leads')->label(fn ($row) => $row->sale_leads)->footer(function ($rows) {
+            Column::make('Sale Leads')->label(
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `sale_leads`])" class="text-sky-700 cursor-pointer">'.$row->sale_leads.'</a>'
+            )->html()->footer(function ($rows) {
                 return $rows->sum('sale_leads');
             }),
             Column::make('Gross Conversion')->label(fn ($row) => (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->manual_created) : 1)).' %')
@@ -107,7 +115,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->select(
                 'users.id as advisorId',
                 DB::raw('count(car_quote_request.id) as total_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 40 THEN 1 ELSE 0 END) as new_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is not null and car_quote_request.quote_status_id = 8 THEN 1 ELSE 0 END) as new_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 8 THEN 1 ELSE 0 END) as not_interested'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (2,24,25) THEN 1 ELSE 0 END) as in_progress'),
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as manual_created'),
@@ -120,6 +128,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                 $join->on('users.team_id', '=', 'teams.id');
                 $join->on('users.sub_team_id', '=', 'teams.id');
             })
+            ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->whereNull('car_quote_request.renewal_import_code')
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
