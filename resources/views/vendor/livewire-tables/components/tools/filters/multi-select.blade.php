@@ -7,7 +7,7 @@ $theme = $component->getTheme();
 <div x-data="{show: false}" x-on:click.away="show = false" class="relative">
     <button x-on:click="show = !show;" x-on:keydown.escape.stop="show = false" type="button" class="pl-3 pr-10 py-2 border border-gray-300 block w-full rounded-md shadow-sm transition duration-150 ease-in-out focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-800 dark:text-white dark:border-gray-600" aria-haspopup="listbox" aria-expanded="true" aria-labelledby="listbox-label">
         <span class="flex items-center truncate py-0">
-            {{count($component->getAppliedFilterWithValue($filter->getKey()) ?? [])}} Selected
+            {{count($component->getAppliedFilterWithValue($filter->getKey()) ?? [])}} Selected @if($filter->hasConfig('max')) (max {{ $filter->getConfig('max') }}) @endif
         </span>
         <span class="ml-3 absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -18,7 +18,12 @@ $theme = $component->getTheme();
     <ul x-show="show" style="display: none" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-56 rounded-md p-1.5 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm divide-y" tabindex="-1" role="listbox" aria-labelledby="listbox-label" aria-activedescendant="listbox-option-3">
         @foreach($filter->getOptions() as $key => $value)
         <li wire:key="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-multiselect-{{ $key }}" class="flex gap-1.5 py-1.5">
-            <input type="checkbox" id="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" value="{{ $key }}" wire:key="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" wire:model.stop="{{ $component->getTableName() }}.filters.{{ $filter->getKey() }}" {{ count($component->getAppliedFilterWithValue($filter->getKey()) ?? []) === count($filter->getOptions()) ? 'disabled' : ''}} :class="{'disabled:bg-gray-400 disabled:hover:bg-gray-400' : {{ count($component->getAppliedFilterWithValue($filter->getKey()) ?? []) === count($filter->getOptions()) ? 'true' : 'false' }}}" class="text-indigo-600 rounded border-gray-300 shadow-sm transition duration-150 ease-in-out focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-900 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600 dark:focus:bg-gray-600 disabled:opacity-50 disabled:cursor-wait">
+            <input type="checkbox" id="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" value="{{ $key }}" wire:key="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" wire:model.stop="{{ $component->getTableName() }}.filters.{{ $filter->getKey() }}" 
+            @if($filter->hasConfig('max'))
+            {{ in_array($key, $component->getAppliedFilterWithValue($filter->getKey()) ?? []) ? 'checked' : (count($component->getAppliedFilterWithValue($filter->getKey()) ?? []) !== $filter->getConfig('max') ? '' : 'disabled') }}
+            @endif
+            :class="{'disabled:bg-gray-400 disabled:hover:bg-gray-400' : {{ count($component->getAppliedFilterWithValue($filter->getKey()) ?? []) === count($filter->getOptions()) ? 'true' : 'false' }}}"
+            class="text-indigo-600 rounded border-gray-300 shadow-sm transition duration-150 ease-in-out focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 dark:bg-gray-900 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600 dark:focus:bg-gray-600 disabled:opacity-50 disabled:cursor-wait">
             <label for="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" class="dark:text-white text-xs hover:text-sky-700 cursor-pointer">{{ $value }}</label>
         </li>
         @endforeach
