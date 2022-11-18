@@ -706,7 +706,6 @@ class RenewalsUploadService
                     'uae_license_held_for_id' => $uaeLicenseHeldFor->id ?? null,
                     'car_value' => $data['car_value'],
                     'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
-                    'previous_quote_policy_premium' => $data['premium'],
                     'advisor_id' => $advisorId,
                     'renewal_batch' => $data['batch'],
                     'additional_notes' => $data['notes'],
