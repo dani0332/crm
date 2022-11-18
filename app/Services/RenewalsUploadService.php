@@ -998,10 +998,10 @@ class RenewalsUploadService
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
                             if ($leadData->car_value || $leadData->premium || $leadData->excess || $leadData->trim) {
                                 if (! $leadData->provider_name || ! $leadData->plan_type || ! $leadData->plan_name) {
-                                    $leadValidationErrors->push('Provider Name, Insurer Plan Name & Plan Type are required when any value provided for Car Value, Renewal Premium, Excess, or Trim.');
+                                    $leadValidationErrors->push('Provider Name, Insurer Plan Name & Repair Type are required when any value provided for Car Value, Renewal Premium, Excess, or Trim.');
                                 } elseif ($insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->first()) {
                                     if (! CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $insuranceProvider->id)->first()) {
-                                        $leadValidationErrors->push('Invalid Insurer Plan Name or Plan Type');
+                                        $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
                                     }
                                 } else {
                                     $leadValidationErrors->push('Invalid Provider Name');
@@ -1039,7 +1039,7 @@ class RenewalsUploadService
                     $lead->status = RenewalProcessStatuses::BAD_DATA;
                 }
                 $lead->save();
-                $renewalUploadLead = $lead->renewalUploadLead;
+
                 if ($lead->status == RenewalProcessStatuses::VALIDATED) {
                     if ($lead->type == RenewalsUploadType::CREATE_LEADS) {
                         $this->createQuote($lead);
@@ -1047,9 +1047,10 @@ class RenewalsUploadService
                         $this->updateQuote($lead);
                     }
                 } else {
+                    $renewalUploadLead = $lead->renewalUploadLead;
                     $renewalUploadLead->cannot_upload += 1;
+                    $renewalUploadLead->save();
                 }
-                $renewalUploadLead->save();
                 sleep(1);
             }
         });
