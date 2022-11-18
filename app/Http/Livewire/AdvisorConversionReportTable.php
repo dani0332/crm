@@ -36,10 +36,20 @@ class AdvisorConversionReportTable extends DataTableComponent
             });
     }
 
+    public function mount()
+    {
+        $latestBatch = QuoteBatches::orderBy('id', 'asc')->first();
+        if (! $this->getAppliedFilterWithValue('batch_number')) {
+            $this->setFilter('batch_number', [$latestBatch->id]);
+        }
+    }
+
     public function columns(): array
     {
         return [
-            Column::make('Batch Number', 'batch.name'),
+            Column::make('Batch Number', 'batch.name')->footer(function () {
+                return  'Total';
+            }),
             Column::make('Start Date', 'batch.start_date'),
             Column::make('Stop Date', 'batch.end_date'),
             Column::make('Advisor Name', 'advisor.name')->searchable(),
