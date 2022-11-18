@@ -12,11 +12,13 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
 {
     public $advisorId;
     public $leadType;
+
     public function configure(): void
     {
         $this->setPrimaryKey('id')
           ->setColumnSelectDisabled()
-          ->setFilterLayoutSlideDown();
+          ->setSearchDisabled()
+          ->setPerPageVisibilityDisabled();
     }
 
     public function columns(): array

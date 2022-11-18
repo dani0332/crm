@@ -3,7 +3,7 @@
     <div x-cloak x-show="showModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
 
     <div x-cloak x-show="showModal" x-transition class="fixed inset-0 z-50 flex items-center justify-center px-4">
-        <div x-on:click.away="showModal = false" class="relative w-full max-w-3xl overflow-y-auto max-h-[80vh] rounded-lg bg-white p-4 shadow-lg">
+        <div x-on:click.away="showModal = false" class="relative w-full max-w-6xl overflow-y-auto max-h-[88vh] rounded-lg bg-white p-4 shadow-lg">
             <div class="sticky top-0">
                 <button x-on:click="showModal = false" class="absolute -right-2 -top-2">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 hover:text-orange-600">
@@ -11,10 +11,14 @@
                     </svg>
                 </button>
             </div>
-            <h2 class="text-lg font-semibold mb-4 text-center pb-2 border-b">Advisor Leads</h2>
-            <div>
-                @livewire('advisor-assigned-car-quotes-table', ['advisorId' => $this->advisorId, 'leadType' => $this->leadType])
-            </div>
+
+            @if ($show)
+                <h2 class="text-lg font-semibold mb-4 text-center pb-2 border-b">Advisor Leads</h2>
+                <div>
+                    @livewire('advisor-assigned-car-quotes-table', ['advisorId' => $this->advisorId, 'leadType' => $this->leadType])
+                </div>
+            @endif
+
         </div>
     </div>
 </div>
