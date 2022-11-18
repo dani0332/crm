@@ -2,7 +2,6 @@
 
 namespace App\Http\Livewire;
 
-use App\Models\CarQuote;
 use Livewire\Component;
 
 class TableModal extends Component
@@ -12,7 +11,7 @@ class TableModal extends Component
     public $leadType;
     protected $listeners = [
         'show' => 'show',
-      ];
+    ];
 
     public function show($data)
     {

@@ -45,17 +45,17 @@ class AdvisorConversionReportTable extends DataTableComponent
             Column::make('Advisor Name', 'advisor.name')->searchable(),
             Column::make('Total Leads')
             ->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['. $row .', `total_leads`])" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `total_leads`])" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('total_leads');
             }),
             Column::make('New Leads')->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['. $row .', `new_leads`])" class="text-sky-700 cursor-pointer">'.$row->new_leads.'</a>'
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `new_leads`])" class="text-sky-700 cursor-pointer">'.$row->new_leads.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('new_leads');
             }),
             Column::make('Not Interested')->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['. $row .', `not_interested`])" class="text-sky-700 cursor-pointer">'.$row->not_interested.'</a>'
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `not_interested`])" class="text-sky-700 cursor-pointer">'.$row->not_interested.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('not_interested');
             }),
