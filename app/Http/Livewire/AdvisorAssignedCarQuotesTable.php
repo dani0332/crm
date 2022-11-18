@@ -16,6 +16,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
     public $leadType;
     public $startDate;
     public $endDate;
+    protected string $emptyMessage = "No data available";
 
     public function configure(): void
     {
