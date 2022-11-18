@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
 class FetchRenewalsPlansJob implements ShouldQueue
@@ -15,8 +16,8 @@ class FetchRenewalsPlansJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $timeout = 30;
-    public $backoff = 35;
+    public $timeout = 360;
+    public $backoff = 365;
     protected $batch;
     protected $renewalStatusProcess;
 
@@ -39,5 +40,10 @@ class FetchRenewalsPlansJob implements ShouldQueue
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
         $renewalsUploadService->fetchRenewalPlans($this->renewalStatusProcess, $this->batch);
+    }
+
+    public function middleware()
+    {
+        return [new WithoutOverlapping($this->renewalStatusProcess->id)];
     }
 }
