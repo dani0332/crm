@@ -199,6 +199,32 @@ class RenewalsUploadService
     }
 
     /**
+     * call get plans
+     * todo: refine later
+     *
+     * @param $id
+     * @return mixed|string|null
+     */
+    public function getPlans($id)
+    {
+        $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true);
+
+        if (isset($quotePlans->message) && $quotePlans->message != '') {
+            $listQuotePlans = $quotePlans->message;
+        } else {
+            if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
+                $listQuotePlans = $quotePlans->quotes->plans;
+            } elseif (! isset($quotePlans->quotes->plans)) {
+                $listQuotePlans = 'Plans not available!';
+            } else {
+                $listQuotePlans = $quotePlans;
+            }
+        }
+
+        return $listQuotePlans;
+    }
+
+    /**
      * @return void
      */
     public function fetchRenewalPlans(RenewalStatusProcess $renewalStatusProcess, $batch)
@@ -232,7 +258,7 @@ class RenewalsUploadService
                         }
 
                         info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
-                        $plans = $this->carQuoteService->getPlans($quote->uuid, false, true);
+                        $plans = $this->getPlans($quote->uuid);
                         if (isset($plans[0]->id)) {
                             info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
                             //update status to plans fetched
