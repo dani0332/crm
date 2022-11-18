@@ -74,7 +74,7 @@ class CheckAmlService
         $requestDataForIndividual['quoteTypeId'] = $quoteTypeId;
         $requestDataForIndividual['yob'] = $yob;
         //executing request
-        $amlRequest = Http::contentType('application/json')->send('POST', $amlEndPoint.'/search', ['body' => json_encode($requestDataForIndividual)]);
+        $amlRequest = Http::timeout(60)->contentType('application/json')->send('POST', $amlEndPoint.'/search', ['body' => json_encode($requestDataForIndividual)]);
         //capturing response
         $requestStatus = $amlRequest->status();
         $response = $amlRequest->json();
@@ -111,7 +111,7 @@ class CheckAmlService
         $requestDataForEntity['quoteRequestId'] = $quoteRequestId;
         $requestDataForEntity['quoteTypeId'] = $quoteTypeId;
         //executing request
-        $amlRequest = Http::contentType('application/json')->send('POST', $amlEndPoint.'/search-entity', ['body' => json_encode($requestDataForEntity)]);
+        $amlRequest = Http::timeout(60)->contentType('application/json')->send('POST', $amlEndPoint.'/search-entity', ['body' => json_encode($requestDataForEntity)]);
         //capturing response
         $requestStatus = $amlRequest->status();
         $response = $amlRequest->json();
