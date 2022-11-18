@@ -792,9 +792,9 @@ class RenewalsUploadService
         //trim is optional
         if (! empty($data['trim'])) {
             if (($valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first())) {
-                if (!empty($valuation->insurer_available_trims)) {
+                if (! empty($valuation->insurer_available_trims)) {
                     $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
-                    if (!empty($trims[$data['trim']]['admeId'])) {
+                    if (! empty($trims[$data['trim']]['admeId'])) {
                         $planData['trim_id'] = $trims[$data['trim']]['admeId'];
                     }
                 }
