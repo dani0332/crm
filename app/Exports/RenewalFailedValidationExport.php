@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Enums\RenewalProcessStatuses;
+use App\Enums\RenewalsUploadType;
 use App\Models\RenewalQuoteProcess;
 use Maatwebsite\Excel\Concerns\FromCollection;
 
@@ -22,7 +23,7 @@ class RenewalFailedValidationExport implements FromCollection
     {
         $failedLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $this->renewaUploadLead->id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
         $exportLeads = collect();
-        if ($this->renewaUploadLead->renewal_import_type == 'create') {
+        if ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::CREATE_LEADS) {
             $firstRow = (object) [];
             $firstRow->customer_name = 'Customer Name';
             $firstRow->email = 'Customer e-mail';
@@ -46,7 +47,7 @@ class RenewalFailedValidationExport implements FromCollection
             $firstRow->notes = 'Notes';
             $firstRow->errors = 'Errors';
             $exportLeads->push($firstRow);
-        } elseif ($this->renewaUploadLead->renewal_import_type == 'update') {
+        } elseif ($this->renewaUploadLead->renewal_import_type == RenewalsUploadType::UPDATE_LEADS) {
             $firstRow = (object) [];
             $firstRow->customer_name = 'Customer Name';
             $firstRow->email = 'Customer e-mail';
