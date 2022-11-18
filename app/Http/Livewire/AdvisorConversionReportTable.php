@@ -146,7 +146,6 @@ class AdvisorConversionReportTable extends DataTableComponent
                     $builder->whereDate('car_quote_request.created_at', '<=', $value);
                 }),
             SelectFilter::make('Ecommerce')
-                ->setFilterPillTitle('ABC')
                 ->options([
                     '' => 'All',
                     'yes' => 'Yes',
