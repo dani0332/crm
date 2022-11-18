@@ -2,23 +2,23 @@
 
 namespace App\Http\Livewire;
 
+use App\Models\CarQuote;
 use Livewire\Component;
 
 class TableModal extends Component
 {
     public bool $show = false;
+    public $advisorId;
+    public $leadType;
     protected $listeners = [
         'show' => 'show',
-    ];
+      ];
 
-    public function show($totalLeadCount)
+    public function show($data)
     {
+        $this->advisorId = $data[0]['advisorId'];
+        $this->leadType = $data[1];
         $this->show = true;
-    }
-
-    public function loadTable($id)
-    {
-        $this->emit('loadTable', $id);
     }
 
     public function render()

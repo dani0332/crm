@@ -841,11 +841,11 @@ select {
 .m-0 {
   margin: 0px;
 }
-.m-auto {
-  margin: auto;
-}
 .m-20 {
   margin: 5rem;
+}
+.m-auto {
+  margin: auto;
 }
 .mx-auto {
   margin-left: auto;
@@ -1354,6 +1354,9 @@ select {
 .p-0 {
   padding: 0px;
 }
+.p-6 {
+  padding: 1.5rem;
+}
 .p-5 {
   padding: 1.25rem;
 }
@@ -1362,9 +1365,6 @@ select {
 }
 .p-1 {
   padding: 0.25rem;
-}
-.p-6 {
-  padding: 1.5rem;
 }
 .px-4 {
   padding-left: 1rem;

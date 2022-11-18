@@ -24,12 +24,8 @@ class AdvisorConversionReportTable extends DataTableComponent
     {
         $this->setPrimaryKey('id')
           ->setColumnSelectDisabled()
-          ->setPerPageVisibilityDisabled()
           ->setFilterLayoutSlideDown()
-          ->setPaginationVisibilityDisabled()
-          ->setConfigurableAreas([
-              'after-pagination' => 'partials.pagination',
-          ])
+          ->setPaginationDisabled()
           ->setFooterEnabled()
           ->setFooterTdAttributes(function ($rows) {
               return [
@@ -49,16 +45,18 @@ class AdvisorConversionReportTable extends DataTableComponent
             Column::make('Advisor Name', 'advisor.name')->searchable(),
             Column::make('Total Leads')
             ->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show($row->total_leads)`)" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
-            )
-          ->html(),
-            Column::make('Total Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['. $row .', `total_leads`])" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
+            )->html()->footer(function ($rows) {
                 return $rows->sum('total_leads');
             }),
-            Column::make('New Leads')->label(fn ($row) => $row->new_leads)->footer(function ($rows) {
+            Column::make('New Leads')->label(
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['. $row .', `new_leads`])" class="text-sky-700 cursor-pointer">'.$row->new_leads.'</a>'
+            )->html()->footer(function ($rows) {
                 return $rows->sum('new_leads');
             }),
-            Column::make('Not Interested')->label(fn ($row) => $row->not_interested)->footer(function ($rows) {
+            Column::make('Not Interested')->label(
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['. $row .', `not_interested`])" class="text-sky-700 cursor-pointer">'.$row->not_interested.'</a>'
+            )->html()->footer(function ($rows) {
                 return $rows->sum('not_interested');
             }),
             Column::make('In Progress')->label(fn ($row) => $row->in_progress)->footer(function ($rows) {
@@ -97,6 +95,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     {
         return CarQuote::query()
           ->select(
+              'users.id as advisorId',
               DB::raw('count(car_quote_request.id) as total_leads'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 40 THEN 1 ELSE 0 END) as new_leads'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 8 THEN 1 ELSE 0 END) as not_interested'),
@@ -114,18 +113,6 @@ class AdvisorConversionReportTable extends DataTableComponent
           ->whereNull('car_quote_request.renewal_import_code')
           ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
           ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
-    }
-
-    // custom pagination
-
-    public function getCurrentPage()
-    {
-        return $this->page;
-    }
-
-    protected function executeQuery()
-    {
-        return $this->getBuilder()->simplePaginate($this->getPerPage(), ['*'], $this->getComputedPageName());
     }
 
     public function filters(): array
