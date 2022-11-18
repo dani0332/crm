@@ -276,17 +276,14 @@ class CRUDController extends Controller
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
         }
-        if($quoteType == strtolower(quoteTypeCode::Car))
-        {
-            if($record->advisor_id != null)
-            {
-                if($record->advisor_id == Auth::user()->id){
+        if ($quoteType == strtolower(quoteTypeCode::Car)) {
+            if ($record->advisor_id != null) {
+                if ($record->advisor_id == Auth::user()->id) {
                     $quoteCount = QuoteViewCount::where('quote_id', $record->id)->first();
-                    if($quoteCount != null){
+                    if ($quoteCount != null) {
                         $quoteCount->visit_count = $quoteCount->visit_countc + 1;
                         $quoteCount->save();
-
-                    }else{
+                    } else {
                         QuoteViewCount::insert([
                             'visit_count' => 1,
                             'quote_id' => $record->id,

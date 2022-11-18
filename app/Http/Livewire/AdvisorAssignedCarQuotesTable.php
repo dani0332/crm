@@ -5,7 +5,6 @@ namespace App\Http\Livewire;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
-use App\Models\QuoteStatus;
 use DB;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
