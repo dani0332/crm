@@ -872,7 +872,7 @@ class CarQuoteService extends BaseService
         ];
     }
 
-    public function getQuotePlans($id, $isRenewalSort = false)
+    public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false)
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
@@ -884,6 +884,7 @@ class CarQuoteService extends BaseService
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
+            'getLatestRating' => $getLatestRating,
             'lang' => 'en',
             'url' => strval(url()->current()),
             'ipAddress' => request()->ip(),
@@ -961,18 +962,23 @@ class CarQuoteService extends BaseService
      * @param $data
      * @return false
      */
-    public function renewalModifyPlan($data)
+    public function renewalCreatePlan($data)
     {
         $carPlanData = [
             'quoteUID' => $data['quote_uuid'],
-            'update' => true,
+            'update' => false,
             'url' => strval(request()->current_url),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
-            'userId' => $data['created_by'],
+            'userId' => $data['created_by_id'],
+            //'userId' => 'faisal.abbas@insurancemarket.ae',
         ];
 
-        $plan['planId'] = $data['plan_id'];
+        $plan = [
+            'planId' => $data['plan_id'],
+            'isDisabled' => false,
+            'isManualUpdate' => false,
+        ];
 
         if (! empty($data['premium'])) {
             $plan['actualPremium'] = (float) $data['premium'];
@@ -1002,12 +1008,7 @@ class CarQuoteService extends BaseService
         ];
 
         $response = $this->httpService->processRequest($carPlanData, $apiCreds);
-
-        if ($response == 200) {
-            return $this->lockCarQuote($data['quote_uuid']);
-        }
-
-        return false;
+        return ($response == 200) ? true : $response;
     }
 
     public function carPlanModify($request)

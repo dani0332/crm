@@ -214,6 +214,7 @@ class RenewalsUploadService
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ])->chunk(50, function ($leads) use ($renewalStatusProcess) {
+
                 foreach ($leads as $lead) {
                     $leadData = (object) $lead->data;
 
@@ -221,12 +222,23 @@ class RenewalsUploadService
                     $quoteObject = $this->createQuoteObject($quoteType->code);
 
                     if ($quoteObject && ($quote = $quoteObject->where('id', $lead->quote_id)->first())) {
+
+                        info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
+                        //$this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+                        info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
+
+                        if(!empty($leadData->provider_name) && !empty($leadData->plan_name) && !empty($leadData->plan_type)) {
+                            info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('. $leadData->provider_name .') for UUID: '.$quote->uuid);
+                            $planResponse = $this->createPlan($lead->data, $quote, $renewalStatusProcess->created_by_id);
+                            info('FetchPlans FN: fetchRenewalPlans'.' plan creation result ('. $planResponse .') for UUID: '.$quote->uuid);
+                        }
+
                         info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
-                        $plans = $this->carQuoteService->getPlans($quote->uuid);
+                        $plans = $this->carQuoteService->getPlans($quote->uuid, false, true);
                         if (isset($plans[0]->id)) {
                             info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
                             //update status to plans fetched
-                            $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'plans_status' => FetchPlansStatuses::FETCHED]);
+                            $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                             $renewalStatusProcess->update(['total_completed' => $renewalStatusProcess->total_completed + 1]);
                         } else {
                             info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plans)) ? $plans : json_encode($plans));
@@ -546,6 +558,7 @@ class RenewalsUploadService
                     $vehicleType = $this->renewalsAddonService->getVehicleType($model->vehicle_type_id);
                 }
 
+                $quoteData['is_quote_locked'] = true;
                 $quoteData['car_make_id'] = $make->id ?? null;
                 $quoteData['car_model_id'] = $model->id ?? null;
                 $quoteData['year_of_manufacture'] = $data['year'];
@@ -734,7 +747,7 @@ class RenewalsUploadService
      * @param $quote
      * @return void
      */
-    public function modifyPlan($data, $quote)
+    public function createPlan($data, $quote, $createdById)
     {
         $provider = InsuranceProvider::where('text', $data['provider_name'])->first();
 
@@ -745,21 +758,28 @@ class RenewalsUploadService
         ])->first();
 
         $planData = Arr::only($data, ['premium', 'car_value', 'excess']);
-        $planData['plan_id'] = $carPlan->id;
-        $planData['quote_uuid'] = $quote->uuid;
-        $planData['created_by'] = $quote->created_by;
 
         //trim is optional
         if (! empty($data['trim'])) {
             $valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first();
-            $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
-            if (! empty($trims[$data['trim']]['admeId'])) {
-                $planData['trim_id'] = $trims[$data['trim']]['admeId'];
+            if(!empty($valuation->insurer_available_trims))
+            {
+                $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
+                if (! empty($trims[$data['trim']]['admeId'])) {
+                    $planData['trim_id'] = $trims[$data['trim']]['admeId'];
+                }
             }
         }
 
+
+        if(sizeof($planData) <= 0) return true;
+
+        $planData['plan_id'] = $carPlan->id;
+        $planData['quote_uuid'] = $quote->uuid;
+        $planData['created_by_id'] = $createdById;
+
         //todo: what to do when it fails
-        return $this->carQuoteService->renewalModifyPlan($planData);
+        return $this->carQuoteService->renewalCreatePlan($planData);
     }
 
     public function getquoteStatusIdbyCode($quoteStatus)
