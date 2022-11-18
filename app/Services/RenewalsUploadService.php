@@ -214,7 +214,6 @@ class RenewalsUploadService
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ])->chunk(50, function ($leads) use ($renewalStatusProcess) {
-
                 foreach ($leads as $lead) {
                     $leadData = (object) $lead->data;
 
@@ -222,15 +221,14 @@ class RenewalsUploadService
                     $quoteObject = $this->createQuoteObject($quoteType->code);
 
                     if ($quoteObject && ($quote = $quoteObject->where('id', $lead->quote_id)->first())) {
-
                         info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
                         //$this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
                         info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
 
-                        if(!empty($leadData->provider_name) && !empty($leadData->plan_name) && !empty($leadData->plan_type)) {
-                            info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('. $leadData->provider_name .') for UUID: '.$quote->uuid);
+                        if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
+                            info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('.$leadData->provider_name.') for UUID: '.$quote->uuid);
                             $planResponse = $this->createPlan($lead->data, $quote, $renewalStatusProcess->created_by_id);
-                            info('FetchPlans FN: fetchRenewalPlans'.' plan creation result ('. $planResponse .') for UUID: '.$quote->uuid);
+                            info('FetchPlans FN: fetchRenewalPlans'.' plan creation result ('.$planResponse.') for UUID: '.$quote->uuid);
                         }
 
                         info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
@@ -762,8 +760,7 @@ class RenewalsUploadService
         //trim is optional
         if (! empty($data['trim'])) {
             $valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first();
-            if(!empty($valuation->insurer_available_trims))
-            {
+            if (! empty($valuation->insurer_available_trims)) {
                 $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
                 if (! empty($trims[$data['trim']]['admeId'])) {
                     $planData['trim_id'] = $trims[$data['trim']]['admeId'];
@@ -771,8 +768,10 @@ class RenewalsUploadService
             }
         }
 
-
-        if(sizeof($planData) <= 0) return true;
+        if (count($planData) <= 0) {
+            //todo: check later
+            return true;
+        }
 
         $planData['plan_id'] = $carPlan->id;
         $planData['quote_uuid'] = $quote->uuid;

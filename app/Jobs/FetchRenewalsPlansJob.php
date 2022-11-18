@@ -42,7 +42,6 @@ class FetchRenewalsPlansJob implements ShouldQueue
         $renewalsUploadService->fetchRenewalPlans($this->renewalStatusProcess, $this->batch);
     }
 
-
     public function middleware()
     {
         return [new WithoutOverlapping($this->renewalStatusProcess->id)];
