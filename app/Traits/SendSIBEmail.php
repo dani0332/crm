@@ -39,15 +39,13 @@ trait SendSIBEmail
                 }
             }
 
-            if(str_contains($emailTo, ','))
-            {
+            if (str_contains($emailTo, ',')) {
                 $emails = [];
-                foreach (explode(',',$emailTo) as $email) {
+                foreach (explode(',', $emailTo) as $email) {
                     array_push($emails, ['email' => $email]);
                 }
                 $to = $emails;
-            }else
-            {
+            } else {
                 $to = $emailTo;
             }
             info('Lead send email json : '.json_encode($to));
