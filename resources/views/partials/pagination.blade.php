@@ -1,21 +1,36 @@
-<div class="flex flex-wrap gap-4 justify-between items-center py-4">
+<div class="flex flex-wrap gap-4 justify-between items-center py-4 select-none">
   <div class="text-sm">
     Page # <span class="lining-nums font-bold">{{ $this->getCurrentPage() }}</span>
   </div>
 
-  <div class="flex items-center gap-4">
-    <button wire:click="previousPage()" wire:loading.attr="disabled" dusk="previousPage" rel="prev" class="relative inline-flex gap-2 items-center px-5 py-2 text-sm font-semibold text-white bg-sky-700 border border-sky-800 rounded-md hover:bg-sky-900 focus:ring focus:ring-sky-700 focus:ring-offset-2 active:bg-gray-800 transition ease-in-out duration-150 disabled:bg-gray-500" {{ $this->getCurrentPage() == 1 ? 'disabled' : '' }}>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-        <path fill-rule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clip-rule="evenodd" />
-      </svg>
-      Prev
-    </button>
+  <div>
+    @if ($rows->hasPages())
+    <nav role="navigation" aria-label="Pagination Navigation" class="flex items-center gap-4 justify-between">
+      <span>
+        @if ($rows->onFirstPage())
+        <span class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default leading-5 rounded-md">
+          {!! __('pagination.previous') !!}
+        </span>
+        @else
+        <button wire:click="previousPage" wire:loading.attr="disabled" rel="prev" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:shadow-outline-blue focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150">
+          {!! __('pagination.previous') !!}
+        </button>
+        @endif
+      </span>
 
-    <button wire:click="nextPage()" wire:loading.attr="disabled" dusk="nextPage" rel="next" class="relative inline-flex gap-2 items-center px-5 py-2 text-sm font-semibold text-white bg-sky-700 border border-sky-800 rounded-md hover:bg-sky-900 focus:ring focus:ring-sky-700 focus:ring-offset-2 active:bg-gray-800 transition ease-in-out duration-150 disabled:bg-gray-500" {{ $rows->count() < 10 ? 'disabled' : '' }}>
-      Next
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-        <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clip-rule="evenodd" />
-      </svg>
-    </button>
+      <span>
+        @if ($rows->hasMorePages())
+        <button wire:click="nextPage" wire:loading.attr="disabled" rel="next" class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 leading-5 rounded-md hover:text-gray-500 focus:outline-none focus:shadow-outline-blue focus:border-blue-300 active:bg-gray-100 active:text-gray-700 transition ease-in-out duration-150">
+          {!! __('pagination.next') !!}
+        </button>
+        @else
+        <span class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 cursor-default leading-5 rounded-md">
+          {!! __('pagination.next') !!}
+        </span>
+        @endif
+      </span>
+    </nav>
+    @endif
   </div>
+
 </div>
