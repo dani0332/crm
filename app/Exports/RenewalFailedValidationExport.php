@@ -54,7 +54,6 @@ class RenewalFailedValidationExport implements FromCollection
             $firstRow->mobile_no = 'Customer Mobile';
             $firstRow->quote_type = 'Insurance Type';
             $firstRow->insurer = 'Insurance Provider';
-            $firstRow->product = 'Product';
             $firstRow->product_type = 'Product Type';
             $firstRow->advisor = 'Advisor Email';
             $firstRow->policy_number = 'Policy Number';
