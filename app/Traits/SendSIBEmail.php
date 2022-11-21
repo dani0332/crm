@@ -40,9 +40,9 @@ trait SendSIBEmail
             }
 
             if (str_contains($emailTo, ',')) {
-                $emails = array();
+                $emails = [];
                 foreach (explode(',', $emailTo) as $email) {
-                    array_push($emails, array('email' => $email));
+                    array_push($emails, ['email' => $email]);
                 }
                 $to = $emails;
             } else {
