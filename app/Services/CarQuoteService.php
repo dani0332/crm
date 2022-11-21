@@ -970,8 +970,7 @@ class CarQuoteService extends BaseService
             'url' => strval(request()->current_url),
             'ipAddress' => request()->ip(),
             'userAgent' => request()->header('User-Agent'),
-            'userId' => $data['created_by_id'],
-            //'userId' => 'faisal.abbas@insurancemarket.ae',
+            'userId' => strval($data['created_by_id']),
         ];
 
         $plan = [
@@ -1007,9 +1006,7 @@ class CarQuoteService extends BaseService
             'apiPassword' => config('constants.KEN_API_PWD'),
         ];
 
-        $response = $this->httpService->processRequest($carPlanData, $apiCreds);
-
-        return ($response == 200) ? true : $response;
+        return $this->httpService->processRequest($carPlanData, $apiCreds);
     }
 
     public function carPlanModify($request)
