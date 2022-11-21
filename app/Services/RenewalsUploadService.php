@@ -958,6 +958,7 @@ class RenewalsUploadService
 
     public function updateRenewalBatchRecord($batchEmailId)
     {
+        Log::info('updateRenewalBatchRecord START');
         $renewalsBatchStatus = RenewalsBatchEmails::where('id', $batchEmailId)->first();
         if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
             $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
@@ -967,6 +968,7 @@ class RenewalsUploadService
             $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
             $renewalsBatchStatus->save();
         }
+        Log::info('updateRenewalBatchRecord END');
     }
 
     /**

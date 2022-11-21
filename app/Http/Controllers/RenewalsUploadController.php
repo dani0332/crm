@@ -60,7 +60,7 @@ class RenewalsUploadController extends Controller
     }
 
     /**
-     * fetch plans batch wise
+     * fetch plans batch wise.
      *
      * @param $id
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
@@ -272,7 +272,7 @@ class RenewalsUploadController extends Controller
     }
 
     /**
-     * fetch plans for all pending quotes
+     * fetch plans for all pending quotes.
      *
      * @param $batch
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|never
@@ -293,7 +293,7 @@ class RenewalsUploadController extends Controller
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
-        $batchEmails = RenewalsBatchEmails::select('id', 'batch', 'total_leads', 'total_sent', 'total_bounced', 'status', 'created_at', 'created_by_id')
+        $batchEmails = RenewalsBatchEmails::select('id', 'batch', 'total_leads', 'total_sent', 'total_bounced', 'status', 'created_at', 'created_by_id', 'updated_at')
         ->where('batch', $batch)
         ->orderBy('created_at', 'desc')
         ->get();
