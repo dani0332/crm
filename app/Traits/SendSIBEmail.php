@@ -37,7 +37,7 @@ trait SendSIBEmail
                     ];
                 }
             }
-
+            info('Lead send email json : '. json_encode($emailTo));
             $body = json_encode([
                 'to' => [[
                     'email' => $emailTo,
