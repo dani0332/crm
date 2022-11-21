@@ -22,6 +22,7 @@ use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\Datatables\Datatables;
 
@@ -330,8 +331,9 @@ class RenewalsUploadController extends Controller
         $renewalsBatchStatus->created_by_id = auth()->id();
         $renewalsBatchStatus->save();
 
-        foreach ($batchLeads as $batchLead) {
-            dispatch(new RenewalBatchEmailJob($batchLead->id, $renewalsBatchStatus->id, QuoteTypeId::Car));
+        foreach ($batchLeads as $key => $batchLead) {
+            $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
+            dispatch(new RenewalBatchEmailJob($batchLead->id, $renewalsBatchStatus->id, QuoteTypeId::Car, $isCompleted));
         }
 
         return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');

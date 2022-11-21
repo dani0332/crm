@@ -200,7 +200,7 @@ class RenewalsUploadService
 
     /**
      * call get plans
-     * todo: refine later
+     * todo: refine later.
      *
      * @param $id
      * @return mixed|string|null
@@ -887,7 +887,7 @@ class RenewalsUploadService
         $this->updateAdvisorAssignedDateTime('CarQuoteRequestDetail', $updateCarQuoteRenewal->id, 'car_quote_request_id', $currentUserId, $advisorId);
     }
 
-    public function renewalBatchEmailProcess($batchLeadId, $batchEmailId, $quoteTypeId)
+    public function renewalBatchEmailProcess($batchLeadId, $batchEmailId, $quoteTypeId, $isCompleted)
     {
         Log::info('renewalBatchEmailProcess START');
         $carQuote = CarQuote::find($batchLeadId);
@@ -942,19 +942,19 @@ class RenewalsUploadService
             }
         }
 
-        $this->updateRenewalBatchRecord($batchEmailId);
+        $this->updateRenewalBatchRecord($batchEmailId, $isCompleted);
         Log::info('renewalBatchEmailProcess END');
     }
 
-    public function updateRenewalBatchRecord($batchEmailId)
+    public function updateRenewalBatchRecord($batchEmailId, $isCompleted)
     {
         Log::info('updateRenewalBatchRecord START');
-        $renewalsBatchStatus = RenewalsBatchEmails::where('id', $batchEmailId)->first();
+        $renewalsBatchStatus = RenewalsBatchEmails::find($batchEmailId);
         if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
             $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
             $renewalsBatchStatus->save();
         }
-        if (($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads) { // if all records are uploaded, update the status to completed
+        if (($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads || $isCompleted == 1) { // if all records are uploaded, update the status to completed
             $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
             $renewalsBatchStatus->save();
         }
