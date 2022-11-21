@@ -200,7 +200,7 @@ class RenewalsUploadService
 
     /**
      * call get plans
-     * todo: refine later
+     * todo: refine later.
      *
      * @param $id
      * @return mixed|string|null
@@ -948,8 +948,14 @@ class RenewalsUploadService
 
     public function updateRenewalBatchRecord($batchEmailId)
     {
+        Log::info('updateRenewalBatchRecord START');
+
         $renewalsBatchStatus = RenewalsBatchEmails::where('id', $batchEmailId)->first();
+
         if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
+            Log::info('batchEmailId: '.$batchEmailId);
+            Log::info('renewalsBatchStatus->total_sent: '.$renewalsBatchStatus->total_sent);
+            Log::info('renewalsBatchStatus->total_sent + 1: '.$renewalsBatchStatus->total_sent + 1);
             $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
             $renewalsBatchStatus->save();
         }
@@ -957,6 +963,7 @@ class RenewalsUploadService
             $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
             $renewalsBatchStatus->save();
         }
+        Log::info('updateRenewalBatchRecord END');
     }
 
     /**
