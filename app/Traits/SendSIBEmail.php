@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 trait SendSIBEmail
 {
+    public $to;
     public function sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailTo)
     {
         info('sendEmailUsingSIB -- start');
@@ -37,11 +38,21 @@ trait SendSIBEmail
                     ];
                 }
             }
-            info('Lead send email json : '.json_encode($emailTo));
+
+            if(str_contains($emailTo, ','))
+            {
+                $emails = [];
+                foreach (explode(',',$emailTo) as $email) {
+                    array_push($emails, ['email' => $email]);
+                }
+                $to = $emails;
+            }else
+            {
+                $to = $emailTo;
+            }
+            info('Lead send email json : '.json_encode($to));
             $body = json_encode([
-                'to' => [[
-                    'email' => $emailTo,
-                ]],
+                'to' => [$to],
                 'templateId' => $emailTemplateId,
                 'params' => $emailData,
                 'tags' => [
