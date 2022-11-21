@@ -92,7 +92,7 @@
                         </div>
                         <div class="item form-group">
                             <div class="col-md-3">
-                                Download Sample XLSX <a href="{{ $azureStorageUrl.$azureStorageContainer }}/renewals/renewals_upload_and_update_m2.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
+                                Download Sample XLSX <a href="{{ $azureStorageUrl.$azureStorageContainer }}/renewals/renewals_upload_update_m3.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
                             </div>
                         </div>
                         <div class="item form-group">
@@ -113,14 +113,14 @@
                                     </thead>
                                     <tbody>
                                     <tr><td>1</td><td>Customer Name</td><td>Customer Name</td><td>No</td><td>100</td></tr>
-                                    <tr><td>2</td><td>Customer Email</td><td>Customer Email</td><td>Yes</td><td>255</td></tr>
+                                    <tr><td>2</td><td>Customer Email</td><td>Customer Email</td><td>No</td><td>255</td></tr>
                                     <tr><td>3</td><td>Customer mobile</td><td>Customer Mobile Number - only numeric data</td><td>No</td><td>100</td></tr>
                                     <tr><td>4</td><td>Insurance Type</td><td>Insurance Type</td><td>Yes</td><td>10</td></tr>
                                     <tr><td>5</td><td>Insurance Provider</td><td>Insurance Provider Code</td><td>No</td><td>20</td></tr>
                                     <tr><td>6</td><td>Product Type</td><td>Type of Insurance | Comprehensive or Third Party Only</td><td>No</td><td>50</td></tr>
                                     <tr><td>7</td><td>Advisor Email</td><td>Advisor Email</td><td>No</td><td>100</td></tr>
-                                    <tr><td>8</td><td>Policy Number</td><td>Previous Quote Policy Number</td><td>No</td><td>100</td></tr>
-                                    <tr><td>9</td><td>Policy End Date</td><td>End Date of the insurance Policy - Format should be DD/MM/YYYY</td><td>YES</td><td>10</td></tr>
+                                    <tr><td>8</td><td>Policy Number</td><td>Previous Quote Policy Number</td><td>Yes</td><td>100</td></tr>
+                                    <tr><td>9</td><td>Policy End Date</td><td>End Date of the insurance Policy - Format should be DD/MM/YYYY</td><td>Yes</td><td>10</td></tr>
                                     <tr><td>10</td><td>Batch</td><td>Batch number assigned</td><td>No</td><td>25</td></tr>
                                     <tr><td>11</td><td>Car Make</td><td>Car Make Information</td><td>No</td><td>50</td></tr>
                                     <tr><td>12</td><td>Car Model</td><td>Car Model Information</td><td>No</td><td>50</td></tr>
