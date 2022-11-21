@@ -253,8 +253,20 @@ class RenewalsUploadService
 
                         if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
                             info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('.$leadData->provider_name.') for UUID: '.$quote->uuid);
-                            $planResponse = $this->createPlan($lead->data, $quote, $renewalStatusProcess->created_by_id);
-                            info('FetchPlans FN: fetchRenewalPlans'.' plan creation result ('.$planResponse.') for UUID: '.$quote->uuid);
+                            $planResponse = $this->createPlan($lead->data, $quote, $renewalStatusProcess->user_id);
+
+                            if(is_int($planResponse) && $planResponse == 200) {
+                                info('FetchPlans FN: fetchRenewalPlans'.' plan created successfully for UUID: '.$quote->uuid);
+                            }
+                            else {
+                                $error = (is_string($planResponse)) ? ('Error: ' . $planResponse) : "";
+
+                                if(isset($planResponse->message)) {
+                                    $error = 'Error: ' . $planResponse->message;
+                                }
+
+                                info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('. $error .') UUID: '.$quote->uuid);
+                            }
                         }
 
                         info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
@@ -747,9 +759,8 @@ class RenewalsUploadService
                 RenewalQuoteProcess::where([
                     'quote_id' => $quote->id,
                     'status' => RenewalProcessStatuses::PROCESSED,
-                    'type' => RenewalsUploadType::UPDATE_LEADS,
-                    'fetch_plans_status' => FetchPlansStatuses::OUTDATED,
-                ]);
+                    'type' => RenewalsUploadType::UPDATE_LEADS
+                ])->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
 
                 //mark renewal quote process as processed and assign quote id
                 $renewalQuoteProcess->update([
