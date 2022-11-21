@@ -22,7 +22,6 @@ use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\Datatables\Datatables;
 
@@ -301,7 +300,8 @@ class RenewalsUploadController extends Controller
 
         $plansProcessedTotal = $this->renewalsUploadFileService->getProcessCount(FetchPlansStatuses::PENDING, $batch);
         $plansFetchedTotal = $this->renewalsUploadFileService->getProcessCount(FetchPlansStatuses::FETCHED, $batch);
-        $hideSendEmailButton = $plansFetchedTotal != $plansProcessedTotal ? 1 : 0;
+        //$hideSendEmailButton = $plansFetchedTotal != $plansProcessedTotal ? 1 : 0;
+        $hideSendEmailButton = 1;
 
         return view('renewals.batch_detail', compact('batch', 'batchEmails', 'hideSendEmailButton'));
     }
