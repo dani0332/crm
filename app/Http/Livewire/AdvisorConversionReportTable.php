@@ -15,6 +15,8 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+
 
 class AdvisorConversionReportTable extends DataTableComponent
 {
@@ -137,14 +139,12 @@ class AdvisorConversionReportTable extends DataTableComponent
     public function filters(): array
     {
         return [
-            DateFilter::make('Start Date')
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereDate('car_quote_request.created_at', '>=', $value);
-                }),
-            DateFilter::make('Stop Date')
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->whereDate('car_quote_request.created_at', '<=', $value);
-                }),
+            TextFilter::make('Range Date')
+            ->config([
+                'placeholder' => 'Select Start & End Date',
+                'range' => true,
+                'max_days' => 31,
+            ]),
             SelectFilter::make('Ecommerce')
                 ->options([
                     '' => 'All',

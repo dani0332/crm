@@ -19,12 +19,8 @@ class LeadDistributionReportTable extends DataTableComponent
     {
         $this->setPrimaryKey('id')
           ->setColumnSelectDisabled()
-          ->setPerPageVisibilityDisabled()
+          ->setPaginationDisabled()
           ->setFilterLayoutSlideDown()
-          ->setPaginationVisibilityDisabled()
-          ->setConfigurableAreas([
-              'after-pagination' => 'partials.pagination',
-          ])
           ->setFooterEnabled()
           ->setFooterTdAttributes(function ($rows) {
               return [
@@ -65,18 +61,6 @@ class LeadDistributionReportTable extends DataTableComponent
           )
           ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
           ->groupBy('tiers.name');
-    }
-
-    // custom pagination
-
-    public function getCurrentPage()
-    {
-        return $this->page;
-    }
-
-    protected function executeQuery()
-    {
-        return $this->getBuilder()->simplePaginate($this->getPerPage(), ['*'], $this->getComputedPageName());
     }
 
     public function filters(): array

@@ -20,12 +20,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
     {
         $this->setPrimaryKey('id')
           ->setColumnSelectDisabled()
-          ->setPerPageVisibilityDisabled()
           ->setFilterLayoutSlideDown()
-          ->setPaginationVisibilityDisabled()
-          ->setConfigurableAreas([
-              'after-pagination' => 'partials.pagination',
-          ])
+          ->setPaginationDisabled()
           ->setFooterEnabled()
           ->setFooterTdAttributes(function ($rows) {
               return [
@@ -96,18 +92,6 @@ class AdvisorDistributionReportTable extends DataTableComponent
           ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
           ->groupBy('users.email')
           ->orderBy('users.name');
-    }
-
-    // custom pagination
-
-    public function getCurrentPage()
-    {
-        return $this->page;
-    }
-
-    protected function executeQuery()
-    {
-        return $this->getBuilder()->simplePaginate($this->getPerPage(), ['*'], $this->getComputedPageName());
     }
 
     public function filters(): array

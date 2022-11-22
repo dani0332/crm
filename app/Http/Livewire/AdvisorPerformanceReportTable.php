@@ -21,12 +21,8 @@ class AdvisorPerformanceReportTable extends DataTableComponent
     {
         $this->setPrimaryKey('id')
           ->setColumnSelectDisabled()
-          ->setPerPageVisibilityDisabled()
           ->setFilterLayoutSlideDown()
-          ->setPaginationVisibilityDisabled()
-          ->setConfigurableAreas([
-              'after-pagination' => 'partials.pagination',
-          ])
+          ->setPaginationDisabled()
           ->setFooterEnabled()
           ->setFooterTdAttributes(function ($rows) {
               return [
@@ -96,18 +92,6 @@ class AdvisorPerformanceReportTable extends DataTableComponent
           ->whereNull('car_quote_request.renewal_import_code')
           ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
           ->orderBy('users.email');
-    }
-
-    // custom pagination
-
-    public function getCurrentPage()
-    {
-        return $this->page;
-    }
-
-    protected function executeQuery()
-    {
-        return $this->getBuilder()->simplePaginate($this->getPerPage(), ['*'], $this->getComputedPageName());
     }
 
     public function filters(): array
