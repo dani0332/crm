@@ -20,6 +20,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 class AdvisorConversionReportTable extends DataTableComponent
 {
     use GetUserTree;
+
     public $url;
 
     public function configure(): void
@@ -114,6 +115,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     public function builder(): Builder
     {
         $userIds = $this->walkTree(auth()->user()->id);
+
         return CarQuote::query()
             ->select(
                 'users.id as advisorId',
