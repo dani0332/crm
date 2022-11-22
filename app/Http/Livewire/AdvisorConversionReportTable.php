@@ -37,6 +37,8 @@ class AdvisorConversionReportTable extends DataTableComponent
                     'style' => 'color:black;font-weight:900 !important;',
                 ];
             });
+            $this->setDebugStatus(true);
+
     }
 
     public function mount()
@@ -115,7 +117,6 @@ class AdvisorConversionReportTable extends DataTableComponent
     public function builder(): Builder
     {
         $userIds = $this->walkTree(auth()->user()->id);
-
         return CarQuote::query()
             ->select(
                 'users.id as advisorId',
@@ -144,7 +145,6 @@ class AdvisorConversionReportTable extends DataTableComponent
     {
         return [
             TextFilter::make('Range Date')
-                ->notResetByClearButton()
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
