@@ -201,7 +201,7 @@ class RenewalsUploadService
 
     /**
      * call get plans
-     * todo: refine later
+     * todo: refine later.
      *
      * @param $id
      * @return mixed|string|null
@@ -902,7 +902,7 @@ class RenewalsUploadService
         $this->updateAdvisorAssignedDateTime('CarQuoteRequestDetail', $updateCarQuoteRenewal->id, 'car_quote_request_id', $currentUserId, $advisorId);
     }
 
-    public function renewalBatchEmailProcess($batchLeadId, $batchEmailId, $quoteTypeId)
+    public function renewalBatchEmailProcess($batchLeadId, $batchEmailId, $quoteTypeId, $isCompleted)
     {
         Log::info('renewalBatchEmailProcess START');
         $carQuote = CarQuote::find($batchLeadId);
@@ -948,7 +948,7 @@ class RenewalsUploadService
                 'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
             ];
 
-            $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
+            $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
             if ($responseCode == 201) {
                 Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
@@ -957,19 +957,19 @@ class RenewalsUploadService
             }
         }
 
-        $this->updateRenewalBatchRecord($batchEmailId);
+        $this->updateRenewalBatchRecord($batchEmailId, $isCompleted);
         Log::info('renewalBatchEmailProcess END');
     }
 
-    public function updateRenewalBatchRecord($batchEmailId)
+    public function updateRenewalBatchRecord($batchEmailId, $isCompleted)
     {
         Log::info('updateRenewalBatchRecord START');
-        $renewalsBatchStatus = RenewalsBatchEmails::where('id', $batchEmailId)->first();
+        $renewalsBatchStatus = RenewalsBatchEmails::find($batchEmailId);
         if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
             $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
             $renewalsBatchStatus->save();
         }
-        if (($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads) { // if all records are uploaded, update the status to completed
+        if (($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads || $isCompleted == 1) { // if all records are uploaded, update the status to completed
             $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
             $renewalsBatchStatus->save();
         }
@@ -1131,14 +1131,31 @@ class RenewalsUploadService
         return $d && $d->format($format) === $date;
     }
 
-    public function getProcessCount($fetchPlansStatus, $batch)
+    public function getProcessTotalLeads($batch)
     {
         return RenewalQuoteProcess::where([
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
-            'status' => RenewalProcessStatuses::PROCESSED,
+            'type' => RenewalsUploadType::UPDATE_LEADS])->distinct('quote_id')->count();
+    }
+
+    public function getProcessTotalLeadsWithPlans($batch)
+    {
+        return RenewalQuoteProcess::where([
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'batch' => $batch,
             'type' => RenewalsUploadType::UPDATE_LEADS,
-            'fetch_plans_status' => $fetchPlansStatus,
-        ])->count();
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED])->distinct('quote_id')->count();
+    }
+
+    public function getProcessLeads($batch)
+    {
+        return RenewalQuoteProcess::select('quote_id as id')->where([
+        'quote_type' => QuoteTypeShortCode::CAR,
+        'batch' => $batch,
+        'type' => RenewalsUploadType::UPDATE_LEADS,
+        'status' => RenewalProcessStatuses::PLANS_FETCHED,
+        'fetch_plans_status' => FetchPlansStatuses::FETCHED])->distinct('quote_id')->get();
     }
 }

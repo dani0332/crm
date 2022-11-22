@@ -1014,6 +1014,7 @@ class CRUDController extends Controller
 
     public function sendEmailOneClickBuy(Request $request)
     {
+        Log::info('sendEmailOneClickBuy START');
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true);
         $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
@@ -1042,12 +1043,14 @@ class CRUDController extends Controller
             'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
         ];
 
-        $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
+        $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
 
         if ($responseCode == 201) {
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
+            Log::info('sendEmailOneClickBuy ('.$request->quote_cdb_id.') OCB email sending failed Error Code: '.$responseCode);
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
+        Log::info('sendEmailOneClickBuy END');
     }
 }
