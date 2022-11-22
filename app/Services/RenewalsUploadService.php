@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CarPlanType;
 use App\Enums\carTypeInsuranceCode;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\ProcessStatusCode;
@@ -731,6 +732,10 @@ class RenewalsUploadService
 
                 if (! empty($data['year']) && $quoteType->code == quoteTypeCode::Car) {
                     $quoteData['year_of_first_registration'] = $data['year'];
+                }
+
+                if(!empty($data['plan_type']) && in_array($data['plan_type'], [CarPlanType::TPL, CarPlanType::COMP] )) {
+                    $quoteData['current_insurance_status'] = 'ACTIVE_' . $data['plan_type'];
                 }
 
                 if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike]) && ($insurer = $this->insuranceProviderService->getProviderByCode($data['insurer']))) {
