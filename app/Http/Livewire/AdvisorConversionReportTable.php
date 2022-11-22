@@ -116,7 +116,8 @@ class AdvisorConversionReportTable extends DataTableComponent
     public function builder(): Builder
     {
         $userIds = $this->walkTree(auth()->user()->id);
-        info('user ids for advisor conversion report are : '. json_encode($userIds));
+        info('user ids for advisor conversion report are : '.json_encode($userIds));
+
         return CarQuote::query()
             ->select(
                 'users.id as advisorId',
