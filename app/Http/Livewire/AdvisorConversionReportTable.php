@@ -144,11 +144,16 @@ class AdvisorConversionReportTable extends DataTableComponent
     {
         return [
             TextFilter::make('Range Date')
-            ->config([
-                'placeholder' => 'Select Start & End Date',
-                'range' => true,
-                'max_days' => 31,
-            ]),
+                ->notResetByClearButton()
+                ->config([
+                    'placeholder' => 'Select Start & End Date',
+                    'range' => true,
+                    'max_days' => 31,
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $value = explode('-', $value);
+                    $this->builder->whereBetween('quote_batches.created_at', [$value[0], $value[1]]);
+                }),
             SelectFilter::make('Ecommerce')
                 ->options([
                     '' => 'All',
