@@ -1126,14 +1126,23 @@ class RenewalsUploadService
         return $d && $d->format($format) === $date;
     }
 
-    public function getProcessCount($fetchPlansStatus, $batch)
+    public function getProcessTotalLeads($batch)
     {
         return RenewalQuoteProcess::where([
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
-            'status' => RenewalProcessStatuses::PROCESSED,
             'type' => RenewalsUploadType::UPDATE_LEADS,
-            'fetch_plans_status' => $fetchPlansStatus,
+        ])->distinct('quote_id')->count();
+    }
+
+    public function getProcessTotalLeadsWithPlans($batch)
+    {
+        return RenewalQuoteProcess::where([
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'batch' => $batch,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
         ])->count();
     }
 }

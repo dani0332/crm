@@ -298,10 +298,9 @@ class RenewalsUploadController extends Controller
         ->orderBy('created_at', 'desc')
         ->get();
 
-        $plansProcessedTotal = $this->renewalsUploadFileService->getProcessCount(FetchPlansStatuses::PENDING, $batch);
-        $plansFetchedTotal = $this->renewalsUploadFileService->getProcessCount(FetchPlansStatuses::FETCHED, $batch);
-        //$hideSendEmailButton = $plansFetchedTotal != $plansProcessedTotal ? 1 : 0;
-        $hideSendEmailButton = 1;
+        $totalLeads = $this->renewalsUploadFileService->getProcessTotalLeads($batch);
+        $totalLeadsCompleted = $this->renewalsUploadFileService->getProcessTotalLeadsWithPlans($batch);
+        $hideSendEmailButton = $totalLeads != $totalLeadsCompleted ? 1 : 0;
 
         return view('renewals.batch_detail', compact('batch', 'batchEmails', 'hideSendEmailButton'));
     }
