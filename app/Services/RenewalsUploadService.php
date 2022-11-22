@@ -943,7 +943,7 @@ class RenewalsUploadService
                 'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
             ];
 
-            $responseCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
+            $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
             if ($responseCode == 201) {
                 Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
