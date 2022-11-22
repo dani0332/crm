@@ -16,8 +16,8 @@ class FetchRenewalsPlansJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $timeout = 360;
-    public $backoff = 365;
+    public $timeout = 1080;
+    public $backoff = 1085;
     protected $batch;
     protected $renewalStatusProcess;
 
