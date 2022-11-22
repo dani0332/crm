@@ -34,7 +34,9 @@ use App\Enums\PermissionsEnum;
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager]))
                             <li><a href="{{ url('reports/advisor-performance') }}">Advisor Performance</a></li>
+                            @endif
                             <li><a href="{{ url('reports/advisor-distribution') }}">Advisor Distribution</a></li>
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
                             {{-- <li><a href="{{ url('reports/lead-list') }}">Lead List</a></li> --}}
