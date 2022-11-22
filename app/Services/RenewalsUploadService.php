@@ -1131,8 +1131,7 @@ class RenewalsUploadService
         return RenewalQuoteProcess::where([
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
-            'type' => RenewalsUploadType::UPDATE_LEADS,
-        ])->distinct('quote_id')->count();
+            'type' => RenewalsUploadType::UPDATE_LEADS])->distinct('quote_id')->count();
     }
 
     public function getProcessTotalLeadsWithPlans($batch)
@@ -1142,7 +1141,16 @@ class RenewalsUploadService
             'batch' => $batch,
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-        ])->count();
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED])->distinct('quote_id')->count();
+    }
+
+    public function getProcessLeads($batch)
+    {
+        return RenewalQuoteProcess::select('quote_id as id')->where([
+        'quote_type' => QuoteTypeShortCode::CAR,
+        'batch' => $batch,
+        'type' => RenewalsUploadType::UPDATE_LEADS,
+        'status' => RenewalProcessStatuses::PLANS_FETCHED,
+        'fetch_plans_status' => FetchPlansStatuses::FETCHED])->distinct('quote_id')->get();
     }
 }

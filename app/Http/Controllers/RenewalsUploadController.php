@@ -24,6 +24,7 @@ use App\Services\RenewalsUploadService;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\Datatables\Datatables;
+use Illuminate\Support\Facades\Log;
 
 class RenewalsUploadController extends Controller
 {
@@ -295,12 +296,11 @@ class RenewalsUploadController extends Controller
         }
         $batchEmails = RenewalsBatchEmails::select('id', 'batch', 'total_leads', 'total_sent', 'total_bounced', 'status', 'created_at', 'created_by_id', 'updated_at')
         ->where('batch', $batch)
-        ->orderBy('created_at', 'desc')
-        ->get();
+        ->orderBy('created_at', 'desc')->get();
 
         $totalLeads = $this->renewalsUploadFileService->getProcessTotalLeads($batch);
         $totalLeadsCompleted = $this->renewalsUploadFileService->getProcessTotalLeadsWithPlans($batch);
-        $hideSendEmailButton = $totalLeads != $totalLeadsCompleted ? 1 : 0;
+        $hideSendEmailButton = $totalLeadsCompleted != $totalLeads ? 1 : 0;
 
         return view('renewals.batch_detail', compact('batch', 'batchEmails', 'hideSendEmailButton'));
     }
@@ -310,12 +310,11 @@ class RenewalsUploadController extends Controller
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
-        $batchLeads = CarQuote::select('car_quote_request.id as id')
-        ->leftjoin('quote_status as qs', 'qs.id', 'car_quote_request.quote_status_id')
-        ->whereNotNull('car_quote_request.previous_quote_policy_number')
-        ->where(['car_quote_request.renewal_batch' => $batch])->get();
 
+        Log::info('runBatchProcess START');
+        $batchLeads = $this->renewalsUploadFileService->getProcessLeads($batch);
         $batchLeadsCount = $batchLeads->count();
+        Log::info('batch: '.$batch.' batchLeadsCount: '.$batchLeadsCount);
 
         if ($batchLeadsCount == 0) {
             return redirect('renewals/batches/'.$batch)->with('message', 'No leads found for this batch');
@@ -335,6 +334,7 @@ class RenewalsUploadController extends Controller
             dispatch(new RenewalBatchEmailJob($batchLead->id, $renewalsBatchStatus->id, QuoteTypeId::Car, $isCompleted));
         }
 
+        Log::info('runBatchProcess END');
         return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
     }
 
