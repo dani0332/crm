@@ -13,12 +13,17 @@ class MainDashboardChart
         $this->chart = $chart;
     }
 
-    public function build(): \ArielMejiaDev\LarapexCharts\PolarAreaChart
+    public function build(): \ArielMejiaDev\LarapexCharts\BarChart
     {
-        return $this->chart->polarAreaChart()
-    ->setTitle('Top 3 scorers of the team.')
-    ->setSubtitle('Season 2021.')
-    ->addData([20, 24, 30])
-    ->setLabels(['Player 7', 'Player 10', 'Player 9']);
+        return $this->chart->barChart()
+        ->setTitle('Comprehensive Conversion Report')
+        ->addData('Batch 11', [13])
+        ->addData('Batch 2', [5])
+        ->addData('Batch 3', [7])
+        ->addData('Batch 4', [7])
+        ->addData('Batch 5', [7])
+        ->addData('Batch 6', [7])
+        ->addData('Batch 7', [7])
+        ->setXAxis(['Batch 1', 'Batch 2', 'Batch 3', 'Batch 4', 'Batch 5', 'Batch 6']);
     }
 }
