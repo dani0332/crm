@@ -80,7 +80,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
               DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as manual_created'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
               DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
-              DB::raw('count(quote_view_count.visit_count) as view_count'),
+              DB::raw('SUM(quote_view_count.visit_count) as view_count'),
           )
           ->join('users', 'users.id', 'car_quote_request.advisor_id')
           ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')

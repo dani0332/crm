@@ -8,6 +8,7 @@ use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\User;
+use App\Traits\GetUserTree;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -18,6 +19,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorConversionReportTable extends DataTableComponent
 {
+    use GetUserTree;
     public $url;
 
     public function configure(): void
@@ -74,7 +76,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             )->html()->footer(function ($rows) {
                 return $rows->sum('in_progress');
             }),
-            Column::make('Manually Created')->label(
+            Column::make('Manual Created')->label(
                 fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `manual_created`])" class="text-sky-700 cursor-pointer">'.$row->manual_created.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('manual_created');
@@ -111,6 +113,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
+        $userIds = $this->walkTree(auth()->user()->id);
         return CarQuote::query()
             ->select(
                 'users.id as advisorId',
@@ -130,6 +133,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             })
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->whereNull('car_quote_request.renewal_import_code')
+            ->whereIn('car_quote_request.advisor_id', $userIds)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
     }

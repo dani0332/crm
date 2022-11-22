@@ -29,20 +29,28 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
+                @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::CarAdvisor]))
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
-                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager]))
+                            @endif
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/advisor-performance') }}">Advisor Performance</a></li>
                             @endif
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/advisor-distribution') }}">Advisor Distribution</a></li>
+                            @endif
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
+                            @endif
                             {{-- <li><a href="{{ url('reports/lead-list') }}">Lead List</a></li> --}}
                         </ul>
                     </li>
                 </ul>
+                @endif
                 @can(PermissionsEnum::LeadAllocationView)
                 @canany([PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD, PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD])
                 <ul class="nav side-menu">
