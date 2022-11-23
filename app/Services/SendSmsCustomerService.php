@@ -25,6 +25,8 @@ class SendSmsCustomerService extends BaseService
                 'type' => 'text',
             ]]);
 
+            Log::info('Response: '.$clientRequest.' | mobile: '.$customerMobile.' | email: '.$customerEmail.' | record_id '.$recordId.' | class: '.get_class());
+
             $responseCode = $clientRequest->getStatusCode();
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
