@@ -37,7 +37,6 @@ class AdvisorConversionReportTable extends DataTableComponent
                     'style' => 'color:black;font-weight:900 !important;',
                 ];
             });
-        $this->setDebugStatus(true);
     }
 
     public function mount()
