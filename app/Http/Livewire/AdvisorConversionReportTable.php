@@ -162,14 +162,16 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ])->filter(function (Builder $builder, string $value) {
                     $builder->where('car_quote_request.is_ecommerce', $value == 'no' ? false : true);
                 }),
-                SelectFilter::make('Exclude Created Leads')
-                ->options([
-                    '' => 'All',
-                    'yes' => 'Yes',
-                    'no' => 'No',
-                ])->filter(function (Builder $builder, string $value) {
-                    if($value == 'yes') $builder->where('car_quote_request.source', 'IMCRM');
-                }),
+            SelectFilter::make('Exclude Created Leads')
+            ->options([
+                '' => 'All',
+                'yes' => 'Yes',
+                'no' => 'No',
+            ])->filter(function (Builder $builder, string $value) {
+                if ($value == 'yes') {
+                    $builder->where('car_quote_request.source', 'IMCRM');
+                }
+            }),
             MultiSelectFilter::make('Batch Number')
                 ->options(
                     QuoteBatches::query()
