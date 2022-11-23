@@ -1,6 +1,8 @@
-@extends('layouts.app_live')
+@extends('layouts.app_livewire')
 @section('title','Advisor Performance Report')
 @section('content')
-<h1 style="font-size: 33px;text-align: center;color: #308BCA;margin-bottom: 60px;">Advisor Performance Report</h1>
-@livewire('advisor-performance-report-table')
+  <h1 class="text-3xl text-center mb-14 text-[#308BCA]">
+    Advisor Performance Report
+  </h1>
+  @livewire('advisor-performance-report-table')
 @endsection

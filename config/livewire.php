@@ -39,7 +39,7 @@ return [
     |
     */
 
-    'layout' => 'layouts.app_live',
+    'layout' => 'layouts.app_livewire',
 
     /*
     |--------------------------------------------------------------------------

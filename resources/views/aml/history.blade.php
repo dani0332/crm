@@ -1,4 +1,4 @@
-@extends('layouts.app_live')
+@extends('layouts.app_livewire')
 @section('title','AML Download History')
 @section('content')
 <div>

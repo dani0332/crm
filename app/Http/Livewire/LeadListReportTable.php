@@ -26,7 +26,7 @@ class LeadListReportTable extends DataTableComponent
           ->setFilterLayoutSlideDown()
           ->setPaginationVisibilityDisabled()
           ->setConfigurableAreas([
-              'after-pagination' => 'partials.pagination',
+              'after-pagination' => 'livewire.pagination',
           ])
           ->setFooterEnabled()
           ->setFooterTdAttributes(function ($rows) {

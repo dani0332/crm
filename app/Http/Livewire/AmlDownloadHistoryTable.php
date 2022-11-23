@@ -24,7 +24,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
         // disabled pagination count & pagination view
         $this->setPaginationVisibilityDisabled();
         $this->setConfigurableAreas([
-            'after-pagination' => 'partials.pagination',
+            'after-pagination' => 'livewire.pagination',
         ]);
     }
 
