@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\quoteTypeCode;
 use App\Models\Team;
 use DB;
 use Illuminate\Http\Request;
@@ -20,6 +21,11 @@ class TeamService extends BaseService
     public function getEntity($id)
     {
         return $this->query->where('t.id', $id)->first();
+    }
+
+    public function getEntityPlainByName($name)
+    {
+        return Team::where('name', $name)->first();
     }
 
     public function getEntityPlain($id)

@@ -66,16 +66,6 @@ class CarLeadAllocationDashboardService extends BaseService
         return $batchList;
     }
 
-    public function generateAdvisorConversionReportData()
-    {
-        $batchList = $this->generateReportBatches();
-        $carTeamId = Teams::where('name', quoteTypeCode::Car)->first()->id;
-        $teams = Teams::where('parent_team_id', $carTeamId)->get();
-        $leadSources = LeadSource::where('is_active', 1)->get();
-        $users = User::where('team_id', $carTeamId)->where('is_active', 1)->get();
-        $tiers = Tier::where('is_active', 1)->get();
-    }
-
     public function getTodaysCarTotalLeadsCount()
     {
         $from = Carbon::now()->startOfDay();

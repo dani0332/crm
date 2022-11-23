@@ -16,7 +16,7 @@ class AddQuoteViewCountTable extends Migration
         if (! Schema::hasTable('quote_view_count')) {
             Schema::create('quote_view_count', function (Blueprint $table) {
                 $table->id();
-                $table->integer('visit_count');
+                $table->unsignedInteger('visit_count');
                 $table->integer('quote_type_id');
                 $table->integer('quote_id');
                 $table->unsignedBigInteger('user_id')->nullable();

@@ -277,39 +277,45 @@ class GenericCrudController extends Controller
     private function setModelType(Request $request)
     {
         $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
-        if (strpos($url, GenericModelTypeEnum::INSURANCE_PROVIDER)) {
-            $this->genericModel->modelType = 'InsuranceProvider';
+        $modelType = '';
+        switch ($url) {
+            case GenericModelTypeEnum::INSURANCE_PROVIDER:
+                $modelType = 'InsuranceProvider';
+                break;
+            case GenericModelTypeEnum::CAR_PLAN:
+                $modelType = 'CarPlan';
+                break;
+            case GenericModelTypeEnum::CAR_PLAN_COVERAGE:
+                $modelType = 'CarPlanCoverage';
+                break;
+            case GenericModelTypeEnum::CAR_PLAN_ADDON:
+                $modelType = 'CarPlanAddOn';
+                break;
+            case GenericModelTypeEnum::CAR_PLAN_ADDON_OPTION:
+                $modelType = 'CarPlanAddOnOption';
+                break;
+            case GenericModelTypeEnum::APPLICATION_STORAGE:
+                $modelType = 'ApplicationStorage';
+                break;
+            case GenericModelTypeEnum::LEAD_STATUS:
+                $modelType = 'LeadStatus';
+                break;
+            case GenericModelTypeEnum::TEAMS:
+                $modelType = 'Teams';
+                break;
+            case GenericModelTypeEnum::TIER:
+                $modelType = 'Tier';
+                break;
+            case GenericModelTypeEnum::QUADRANT:
+                $modelType = 'Quadrant';
+                break;
+            case GenericModelTypeEnum::RULE:
+                $modelType = 'Rule';
+                break;
+            default:
+                break;
         }
-        if (strpos($url, GenericModelTypeEnum::CAR_PLAN)) {
-            $this->genericModel->modelType = 'CarPlan';
-        }
-        if (strpos($url, GenericModelTypeEnum::CAR_PLAN_COVERAGE)) {
-            $this->genericModel->modelType = 'CarPlanCoverage';
-        }
-        if (strpos($url, GenericModelTypeEnum::CAR_PLAN_ADDON)) {
-            $this->genericModel->modelType = 'CarPlanAddOn';
-        }
-        if (strpos($url, GenericModelTypeEnum::CAR_PLAN_ADDON_OPTION)) {
-            $this->genericModel->modelType = 'CarPlanAddOnOption';
-        }
-        if (strpos($url, GenericModelTypeEnum::APPLICATION_STORAGE)) {
-            $this->genericModel->modelType = 'ApplicationStorage';
-        }
-        if (strpos($url, GenericModelTypeEnum::TEAMS)) {
-            $this->genericModel->modelType = 'Teams';
-        }
-        if (strpos($url, GenericModelTypeEnum::LEAD_STATUS)) {
-            $this->genericModel->modelType = 'LeadStatus';
-        }
-        if (strpos($url, GenericModelTypeEnum::TIER)) {
-            $this->genericModel->modelType = 'Tier';
-        }
-        if (strpos($url, GenericModelTypeEnum::QUADRANT)) {
-            $this->genericModel->modelType = 'Quadrant';
-        }
-        if (strpos($url, GenericModelTypeEnum::RULE)) {
-            $this->genericModel->modelType = 'Rule';
-        }
+        $this->genericModel->modelType = $modelType;
     }
 
     private function fillModelByModelType($type, Request $request)

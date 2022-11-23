@@ -2,10 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\quoteTypeCode;
-use App\Models\Team;
-use App\Models\Tier;
-use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\CacheService;
 use App\Services\CarLeadAllocationDashboardService;
@@ -18,6 +14,9 @@ class CarLeadAllocationController extends Controller
     protected $carLeadAllocationService;
     protected $applicationStorageService;
     protected $cacheService;
+    protected $teamService;
+    protected $userService;
+    protected $tierService;
     public function __construct(CarLeadAllocationDashboardService $carLeadAllocationService, ApplicationStorageService $applicationStorageService,
      CacheService $cacheService)
     {
@@ -59,12 +58,6 @@ class CarLeadAllocationController extends Controller
 
     public function renderAdvisorConversionReport()
     {
-        $carTeamId = Team::where('name', quoteTypeCode::Car)->first()->id;
-        $teams = Team::where('parent_team_id', $carTeamId)->get();
-        $leadSources = $this->cacheService->getLeadSources();
-        $users = User::where('team_id', $carTeamId)->where('is_active', 1)->get();
-        $tiers = Tier::where('is_active', 1)->get();
-
-        return view('dashboard.advisor-conversion-report', compact([]));
+        return view('dashboard.advisor-conversion-report');
     }
 }
