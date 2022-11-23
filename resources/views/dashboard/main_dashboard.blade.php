@@ -1,4 +1,4 @@
-@extends('layouts.app_live')
+@extends('layouts.app_dashboard')
 @section('title','Dashboard')
 @section('content')
 <div class="">

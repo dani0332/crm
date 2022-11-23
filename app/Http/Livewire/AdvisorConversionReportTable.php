@@ -153,7 +153,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $value = explode('-', $value);
-                    $this->builder->whereBetween('quote_batches.created_at', [$value[0], $value[1]]);
+                    $builder->whereBetween('quote_batches.created_at', [$value[0], $value[1]]);
                 }),
             SelectFilter::make('Ecommerce')
                 ->options([
