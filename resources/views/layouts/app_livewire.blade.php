@@ -58,38 +58,6 @@
 
   <script src="{{ asset('js/alpine.js') }}" defer></script>
   @livewireScripts
-  <script defer>
-    document.addEventListener('alpine:init', () => {
-      Alpine.store('sideBar', {
-        init() {
-          this.open = window.outerWidth < 1024 ? false : true;
-          this.minimized = false;
-        },
-
-        open: false,
-        minimized: false,
-
-        toggle() {
-          this.open = !this.open;
-        },
-        resize() {
-          this.minimized = !this.minimized;
-        }
-      })
-    })
-
-    document.addEventListener('alpine:initialized', () => {
-      const element = document.querySelectorAll('.side-menu li a');
-
-      if (element) {
-        element.forEach(function(el, key) {
-          el.addEventListener('click', function() {
-            el.parentElement.classList.toggle('active');
-          });
-        });
-      }
-    })
-  </script>
   @stack('scripts')
 
 </body>
