@@ -4,13 +4,9 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
-use App\Models\LeadSource;
-use App\Models\Teams;
-use App\Models\Tier;
 use App\Models\User;
 use Carbon\Carbon;
 use DB;
