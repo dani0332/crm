@@ -13,7 +13,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 
 class ProcessSIBCustomerMail implements ShouldQueue
@@ -36,7 +35,7 @@ class ProcessSIBCustomerMail implements ShouldQueue
     {
         try {
             $this->customerWEGenerateUrlService = $customerWEGenerateUrlService;
-            $emailTemplateId = (int) Config::get('constants.SIB_CORPORATE_TEMPLATE');
+            $emailTemplateId = (int) config('constants.SIB_CORPORATE_TEMPLATE');
             $myAlfredSignupUrl = $this->customerWEGenerateUrlService->getCustomerWeUrl($this->email);
 
             $emailData = (object) [
