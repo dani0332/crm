@@ -18,7 +18,7 @@ class addCarAllocationMasterSwitch extends Seeder
         if ($masterSwitch == null) {
             ApplicationStorage::insert([
                 'key_name' => 'CAR_LEAD_ALLOCATION_MASTER_SWITCH',
-                'value' => '1',
+                'value' => '0',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
