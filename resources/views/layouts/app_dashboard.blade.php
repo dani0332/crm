@@ -35,11 +35,11 @@
 
     <div @click="$store.sideBar.toggle()" x-show.in.out.opacity="$store.sideBar.open" class="fixed inset-0 z-10 bg-black bg-opacity-20 backdrop-blur-md lg:hidden"></div>
 
-    @include('partials.sidebar_live')
+    @include('livewire.sidebar')
 
     <div class="flex flex-col flex-1 h-full overflow-hidden">
 
-      @include('partials.header')
+      @include('livewire.header')
 
       <main class="flex-1 max-h-full p-5 overflow-hidden overflow-y-scroll">
         <livewire:table-modal />
