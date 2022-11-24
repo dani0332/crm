@@ -1134,48 +1134,48 @@ $(document).ready(function () {
       $('#car_fields').hide();
     }
   }
-$('.payment-link-copy').on('click', function () {
-  var planId = $(this).attr('data-planId');
-  var quoteUUID = $(this).attr('data-quoteUUId');
-  var providerCode = $(this).attr('data-providerCode');
-  var websiteURL = $(this).attr('data-websiteURL');
-  var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-  navigator.clipboard.writeText(paymentLink);
-  var self = this;
-  $(this).text('Copied !');
-  setTimeout(function () {
-    $(self).text('Copy');
-  }, 2000);
-});
+  $('.payment-link-copy').on('click', function () {
+    var planId = $(this).attr('data-planId');
+    var quoteUUID = $(this).attr('data-quoteUUId');
+    var providerCode = $(this).attr('data-providerCode');
+    var websiteURL = $(this).attr('data-websiteURL');
+    var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
+    navigator.clipboard.writeText(paymentLink);
+    var self = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(self).text('Copy');
+    }, 2000);
+  });
 
-$('.health-plan-link-copy').on('click', function () {
-  var planId = $(this).attr('data-planId');
-  var quoteUUID = $(this).attr('data-quoteUUId');
-  var providerCode = $(this).attr('data-providerCode');
-  var websiteURL = $(this).attr('data-websiteURL');
-  var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-  navigator.clipboard.writeText(paymentLink);
-  var self = this;
-  $(this).text('Copied !');
-  setTimeout(function () {
-    $(self).text('Copy');
-  }, 2000);
-});
+  $('.health-plan-link-copy').on('click', function () {
+    var planId = $(this).attr('data-planId');
+    var quoteUUID = $(this).attr('data-quoteUUId');
+    var providerCode = $(this).attr('data-providerCode');
+    var websiteURL = $(this).attr('data-websiteURL');
+    var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
+    navigator.clipboard.writeText(paymentLink);
+    var self = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(self).text('Copy');
+    }, 2000);
+  });
 
-$('#btn_copy_doc_upload_link').on('click', function () {
-  var doc_upload_url = $(this).data('doc-upload-url');
-  navigator.clipboard.writeText(doc_upload_url);
-  var obj = this;
-  $(this).text('Copied !');
-  setTimeout(function () {
-    $(obj).text($(obj).data('label'));
-  }, 2000);
-});
+  $('#btn_copy_doc_upload_link').on('click', function () {
+    var doc_upload_url = $(this).data('doc-upload-url');
+    navigator.clipboard.writeText(doc_upload_url);
+    var obj = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(obj).text($(obj).data('label'));
+    }, 2000);
+  });
 
-$('#btn_download_plan_pdf').on('click', function () {
-  if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-        alert('Please select at least three (3) plans.');
-        return false;
+  $('#btn_download_plan_pdf').on('click', function () {
+    if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
+      alert('Please select at least three (3) plans.');
+      return false;
     }
   });
 
@@ -2230,37 +2230,15 @@ $('#btn_download_plan_pdf').on('click', function () {
       {
         data: 'good',
         name: 'good',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.renewal_uploaded_leads +
-            '/' +
-            row.id +
-            "/validation-passed'>" +
-            row.good +
-            '</a>'
-          );
-        },
       },
       {
         data: 'cannot_upload',
         name: 'cannot_upload',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.renewal_uploaded_leads +
-            '/' +
-            row.id +
-            "/validation-failed'>" +
-            row.cannot_upload +
-            '</a>'
-          );
-        },
       },
       { data: 'status', name: 'status' },
       { data: 'uploaded_by', name: 'uploaded_by' },
       { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' }
+      { data: 'updated_at', name: 'updated_at' },
     ],
   });
 
@@ -2282,32 +2260,10 @@ $('#btn_download_plan_pdf').on('click', function () {
       {
         data: 'good',
         name: 'good',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.renewal_uploaded_leads +
-            '/' +
-            row.id +
-            "/validation-passed'>" +
-            row.good +
-            '</a>'
-          );
-        },
       },
       {
         data: 'cannot_upload',
         name: 'cannot_upload',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.renewal_uploaded_leads +
-            '/' +
-            row.id +
-            "/validation-failed'>" +
-            row.cannot_upload +
-            '</a>'
-          );
-        },
       },
       { data: 'status', name: 'status' },
       { data: 'uploaded_by', name: 'uploaded_by' },
@@ -2631,8 +2587,6 @@ $('#btn_download_plan_pdf').on('click', function () {
       },
     });
   });
-var a = config.routes.renewals_batches_datatable_route;
-debugger;
   $('.renewals-batches-data-table').DataTable({
     ordering: false,
     info: false,
@@ -2643,30 +2597,7 @@ debugger;
     paging: true,
     processing: true,
     ajax: config.routes.renewals_batches_datatable_route,
-    columns: [
-      { data: 'renewal_batch', name: 'renewal_batch' },
-      {
-        data: 'renewal_batch',
-        name: 'manage_plans',
-        render: function (data, type, row) {
-          return (
-            "<a class='btn btn-info btn-sm' href='" +
-            config.routes.renewals_batches_datatable_route +
-            '/' +
-            row.renewal_batch +
-            "/plans-processes'>" +
-            'Fetch Plans' +
-            '</a>' +
-            "<a class='btn btn-warning btn-sm' href='" +
-            config.routes.renewals_batches_datatable_route +
-            '/' +
-            row.renewal_batch +
-            "'>" +
-            'Send Emails</a>'
-          );
-        },
-      },
-    ],
+    columns: [{ data: 'renewal_batch', name: 'renewal_batch' }],
   });
 
   $('.generateCCLink').click(function () {
