@@ -61,6 +61,7 @@ class DashboardController extends Controller
             array_push($data, $percentage.' %');
             array_push($labels, $record->name);
         }
+
         return view('dashboard.tpl_dashboard', compact('labels', 'data'));
     }
 
