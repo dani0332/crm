@@ -289,6 +289,8 @@
         $plans[$quotePlan->id] = $quotePlan;
     }
 
+    $planIds = collect($plans)->SortByDesc('isRenewal')->pluck('id')->toArray();
+
     $features = [
         ["code" => "heading", "title" => "BENEFITS"],
         ["code" => "damage", "title" => "Loss or Damage to the Insured Vehicle", "type" => ["feature", "inclusion", "exclusion"]],
