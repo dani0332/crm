@@ -25,9 +25,15 @@ use App\Enums\PermissionsEnum;
                         <ul class="nav child_menu">
                             <li><a href="{{ url('dashboard/car-conversion') }}">Car Conversion</a></li>
                             <li><a href="{{ url('dashboard/travel-conversion') }}">Travel Conversion</a></li>
+                            @can(PermissionsEnum::TPL_DASHBOARD_VIEW)
                             <li><a href="{{ url('/tpl-conversion-dashboard') }}">TPL Conversion</a></li>
+                            @endcan
+                            @can(PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW)
                             <li><a href="{{ url('/comprehensive-conversion-dashboard') }}">Comprehensive Conversion</a></li>
+                            @endcan
+                            @can(PermissionsEnum::MAIN_DASHBOARD_VIEW)
                             <li><a href="{{ url('/accumulative-dashboard') }}">Accumulative Dashboard</a></li>
+                            @endcan
                         </ul>
                     </li>
                 </ul>

@@ -179,4 +179,7 @@ final class PermissionsEnum extends Enum
     const RULE_CONFIG_LIST = 'rule-config-list';
     const QUAD_CONFIG_LIST = 'quad-config-list';
     const TIER_CONFIG_LIST = 'tier-config-list';
+    const TPL_DASHBOARD_VIEW = 'tpl-dashboard-view';
+    const COMPREHENSIVE_DASHBOARD_VIEW = 'comprehensive-dashboard-view';
+    const MAIN_DASHBOARD_VIEW = 'main-dashboard-view';
 }
