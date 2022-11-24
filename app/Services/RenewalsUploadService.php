@@ -801,7 +801,15 @@ class RenewalsUploadService
             'provider_id' => $provider->id,
         ])->first();
 
-        $planData = Arr::only($data, ['premium', 'car_value', 'excess']);
+        $planData = [
+            'premium' => $data['premium'],
+            'car_value' => $data['car_value'],
+        ];
+
+        //excess will be used for comp or agency repair type
+        if ($data['plan_type'] == carTypeInsuranceCode::COMP || $data['plan_type'] == carTypeInsuranceCode::AGENCY) {
+            $planData['excess'] = $data['excess'];
+        }
 
         //trim is optional
         if (! empty($data['trim'])) {
@@ -1156,10 +1164,10 @@ class RenewalsUploadService
     public function getProcessLeads($batch)
     {
         return RenewalQuoteProcess::select('quote_id as id')->where([
-        'quote_type' => QuoteTypeShortCode::CAR,
-        'batch' => $batch,
-        'type' => RenewalsUploadType::UPDATE_LEADS,
-        'status' => RenewalProcessStatuses::PLANS_FETCHED,
-        'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])->distinct('quote_id')->get();
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'batch' => $batch,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])->distinct('quote_id')->get();
     }
 }
