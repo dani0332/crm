@@ -1,5 +1,3 @@
-/* eslint-disable no-undef */
-/* eslint-disable unused-imports/no-unused-vars */
 var selectedPkgIds = new Set();
 
 $(document).ready(function () {
@@ -44,7 +42,7 @@ $(document).ready(function () {
     dateFormat: 'yy-mm-dd',
     yearRange: '-80:+00',
   });
-  $('.hasDatePicker').datepicker({
+  $('input[type^=date]').datepicker({
     // TM Leads
     changeMonth: true,
     changeYear: true,
@@ -209,6 +207,7 @@ $(document).ready(function () {
     bLengthChange: false,
     scrollX: true,
   });
+
   $('.data-table').DataTable({
     ordering: false,
     info: false,
@@ -1135,50 +1134,50 @@ $(document).ready(function () {
       $('#car_fields').hide();
     }
   }
-});
-$('.payment-link-copy').on('click', function () {
-  var planId = $(this).attr('data-planId');
-  var quoteUUID = $(this).attr('data-quoteUUId');
-  var providerCode = $(this).attr('data-providerCode');
-  var websiteURL = $(this).attr('data-websiteURL');
-  var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-  navigator.clipboard.writeText(paymentLink);
-  var self = this;
-  $(this).text('Copied !');
-  setTimeout(function () {
-    $(self).text('Copy');
-  }, 2000);
-});
+  $('.payment-link-copy').on('click', function () {
+    var planId = $(this).attr('data-planId');
+    var quoteUUID = $(this).attr('data-quoteUUId');
+    var providerCode = $(this).attr('data-providerCode');
+    var websiteURL = $(this).attr('data-websiteURL');
+    var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
+    navigator.clipboard.writeText(paymentLink);
+    var self = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(self).text('Copy');
+    }, 2000);
+  });
 
-$('.health-plan-link-copy').on('click', function () {
-  var planId = $(this).attr('data-planId');
-  var quoteUUID = $(this).attr('data-quoteUUId');
-  var providerCode = $(this).attr('data-providerCode');
-  var websiteURL = $(this).attr('data-websiteURL');
-  var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-  navigator.clipboard.writeText(paymentLink);
-  var self = this;
-  $(this).text('Copied !');
-  setTimeout(function () {
-    $(self).text('Copy');
-  }, 2000);
-});
+  $('.health-plan-link-copy').on('click', function () {
+    var planId = $(this).attr('data-planId');
+    var quoteUUID = $(this).attr('data-quoteUUId');
+    var providerCode = $(this).attr('data-providerCode');
+    var websiteURL = $(this).attr('data-websiteURL');
+    var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
+    navigator.clipboard.writeText(paymentLink);
+    var self = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(self).text('Copy');
+    }, 2000);
+  });
 
-$('#btn_copy_doc_upload_link').on('click', function () {
-  var doc_upload_url = $(this).data('doc-upload-url');
-  navigator.clipboard.writeText(doc_upload_url);
-  var obj = this;
-  $(this).text('Copied !');
-  setTimeout(function () {
-    $(obj).text($(obj).data('label'));
-  }, 2000);
-});
+  $('#btn_copy_doc_upload_link').on('click', function () {
+    var doc_upload_url = $(this).data('doc-upload-url');
+    navigator.clipboard.writeText(doc_upload_url);
+    var obj = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(obj).text($(obj).data('label'));
+    }, 2000);
+  });
 
-$('#btn_download_plan_pdf').on('click', function () {
-  if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-    alert('Please select at least three (3) plans.');
-    return false;
-  }
+  $('#btn_download_plan_pdf').on('click', function () {
+    if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
+      alert('Please select at least three (3) plans.');
+      return false;
+    }
+  });
 
   var customerDataTable = $('.customer-data-table').DataTable({
     ordering: false,
@@ -1685,6 +1684,42 @@ $('#btn_download_plan_pdf').on('click', function () {
     },
   });
   tmLeadsDatatable.column(4).visible(false);
+
+  // TM Leads: Expost data into csv
+  function newexportaction(e, dt, button, config) {
+    var self = this;
+    var oldStart = dt.settings()[0]._iDisplayStart;
+    dt.one('preXhr', function (e, s, data) {
+      data.start = 0;
+      data.length = 2147483647;
+      dt.one('preDraw', function (e, settings) {
+        if (button[0].className.indexOf('buttons-csv') >= 0) {
+          $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config)
+            ? $.fn.dataTable.ext.buttons.csvHtml5.action.call(
+                self,
+                e,
+                dt,
+                button,
+                config,
+              )
+            : $.fn.dataTable.ext.buttons.csvFlash.action.call(
+                self,
+                e,
+                dt,
+                button,
+                config,
+              );
+        }
+        dt.one('preXhr', function (e, s, data) {
+          settings._iDisplayStart = oldStart;
+          data.start = oldStart;
+        });
+        setTimeout(dt.ajax.reload, 0);
+        return false;
+      });
+    });
+    dt.ajax.reload();
+  }
 
   $('#tm-leads-export').click(function () {
     $('#tm-leads-export').hide();
@@ -2596,7 +2631,6 @@ $('#btn_download_plan_pdf').on('click', function () {
       },
     });
   });
-
   $('.renewals-batches-data-table').DataTable({
     ordering: false,
     info: false,
@@ -2681,16 +2715,6 @@ $('#btn_download_plan_pdf').on('click', function () {
     $(this).text('Copied !');
     setTimeout(function () {
       $(self).text('Copy');
-    }, 2000);
-  });
-
-  $('#btn_copy_doc_upload_link').on('click', function () {
-    var doc_upload_url = $(this).data('doc-upload-url');
-    navigator.clipboard.writeText(doc_upload_url);
-    var obj = this;
-    $(this).text('Copied !');
-    setTimeout(function () {
-      $(obj).text($(obj).data('label'));
     }, 2000);
   });
 
