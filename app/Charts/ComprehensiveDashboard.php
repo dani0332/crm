@@ -5,7 +5,6 @@ namespace App\Charts;
 use App\Models\CarQuote;
 use ArielMejiaDev\LarapexCharts\LarapexChart;
 use DB;
-use Illuminate\Http\Client\Request;
 
 class ComprehensiveDashboard
 {
@@ -37,7 +36,7 @@ class ComprehensiveDashboard
         ->setTitle('Comprehensive Conversion Report');
         foreach ($records as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
-            $chart->addData($record->name . ' ( ' . $record->start_date . ' to '. $record->end_date . ' ) ' , [$percentage.' %']);
+            $chart->addData($record->name.' ( '.$record->start_date.' to '.$record->end_date.' ) ', [$percentage.' %']);
         }
         $chart->setXAxis(['Comprehensive Conversion']);
 

@@ -35,6 +35,7 @@ class DashboardController extends Controller
     public function renderTplDashboard(TPLDashboard $tPLDashboard)
     {
         $type = CarTypeInsurance::where('is_active', 1)->get();
+
         return view('dashboard.tpl_dashboard', ['chart' => $tPLDashboard->build(), 'type' => $type]);
     }
 
