@@ -19,6 +19,11 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class CarQuoteTable extends DataTableComponent
 {
+    public function index()
+    {
+        return view('livewire.quote.car');
+    }
+
     public function configure(): void
     {
         $this->setPrimaryKey('id')
