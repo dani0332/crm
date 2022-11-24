@@ -194,7 +194,6 @@ class AdvisorConversionReportTable extends DataTableComponent
                         ->get()
                         ->keyBy('id')
                         ->map(fn ($Teams) => $Teams->name)
-
                         ->toArray(),
                 )->filter(function (Builder $builder, $value) {
                     $builder->whereIn('teams.id', $value);

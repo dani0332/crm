@@ -2,11 +2,9 @@
 
 namespace App\Charts;
 
-use App\Models\CarQuote;
 use ArielMejiaDev\LarapexCharts\LarapexChart;
-use DB;
 
-class MainDashboardChart
+class ComprehensiveDashboard
 {
     protected $chart;
 
