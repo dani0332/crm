@@ -1,4 +1,4 @@
-@extends('layouts.app_live')
+@extends('layouts.app_livewire')
 @section('title','TPL Dashboard')
 @section('content')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" ></script>
@@ -7,8 +7,8 @@
 <script type="text/javascript">
 
       var labels =  JSON.parse('<?php echo json_encode($labels); ?>');
-      var users =  JSON.parse('<?php echo json_encode(get_object_vars($data)); ?>');
-
+      var users =  JSON.parse('<?php echo json_encode($data); ?>');
+    debugger;
       const data = {
         labels: labels,
         datasets: [{
@@ -32,7 +32,7 @@
 
 </script>
 <canvas id="myChart" height="100px"></canvas>
-<div class="">
+{{-- <div class="">
     <div class="row">
         <div class="col-md-12" style="float: right; margin-right: 100px;">
             <form action="/tpl-conversion-dashboard">
@@ -48,5 +48,5 @@
             {{-- {!! $chart->container() !!} --}}
         </div>
     </div>
-</div>
+</div> --}}
 @endsection
