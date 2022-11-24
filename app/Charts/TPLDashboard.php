@@ -31,9 +31,10 @@ class TPLDashboard
         ->setTitle('Comprehensive Conversion Report');
         foreach ($records as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
-            $chart->addData($record['name'], [$percentage . ' %']);
+            $chart->addData($record['name'], [$percentage.' %']);
         }
         $chart->setXAxis(['Comprehensive Conversion']);
+
         return $chart;
     }
 }
