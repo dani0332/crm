@@ -702,7 +702,15 @@ class CRUDController extends Controller
     {
         $selectedTeam = $request->get('assign_team');
 
-        $lead = $this->healthQuoteService->getEntityPlain($request->get('entityId'));
+        $entityId = $request->get('entityId');
+
+        info('Inside Health Team Assign with team : ' . $selectedTeam . '  and entity Id : '. $entityId);
+
+        $lead = $this->healthQuoteService->getEntityPlain($entityId);
+
+        if (!$lead || $lead == null) {
+            return redirect()->to('/quotes/health')->with('message', ' Lead not found. Please try again.');
+        }
 
         $isAssigned = $this->healthQuoteService->assignHealthTeam($request, $lead);
 
