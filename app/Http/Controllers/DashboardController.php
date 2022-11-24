@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Charts\ComprehensiveDashboard;
 use App\Charts\MainDashboardChart;
+use App\Charts\TPLDashboard;
+use App\Models\CarTypeInsurance;
 use App\Services\DashboardService;
 
 class DashboardController extends Controller
@@ -19,9 +22,25 @@ class DashboardController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(MainDashboardChart $mainDashboardChart)
+    public function index()
+    {
+        return view('dashboard');
+    }
+
+    public function renderMainDashboard(MainDashboardChart $mainDashboardChart)
     {
         return view('dashboard.main_dashboard', ['chart' => $mainDashboardChart->build()]);
+    }
+
+    public function renderTplDashboard(TPLDashboard $tPLDashboard)
+    {
+        $type = CarTypeInsurance::where('is_active', 1)->get();
+        return view('dashboard.tpl_dashboard', ['chart' => $tPLDashboard->build(), 'type' => $type]);
+    }
+
+    public function renderComprehensiveDashboard(ComprehensiveDashboard $comprehensiveDashboard)
+    {
+        return view('dashboard.comprehensive_dashboard', ['chart' => $comprehensiveDashboard->build()]);
     }
 
     public function conversionStats($quoteType)

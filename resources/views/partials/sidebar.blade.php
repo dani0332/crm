@@ -18,13 +18,16 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-                @can(PermissionsEnum::DashboardView)
+            @can(PermissionsEnum::DashboardView)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-tachometer"
                         aria-hidden="true"></i>Dashboard <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('dashboard/car-conversion') }}">Car Conversion</a></li>
                             <li><a href="{{ url('dashboard/travel-conversion') }}">Travel Conversion</a></li>
+                            <li><a href="{{ url('/tpl-conversion-dashboard') }}">TPL Conversion</a></li>
+                            <li><a href="{{ url('/comprehensive-conversion-dashboard') }}">Comprehensive Conversion</a></li>
+                            <li><a href="{{ url('/accumulative-dashboard') }}">Accumulative Dashboard</a></li>
                         </ul>
                     </li>
                 </ul>
