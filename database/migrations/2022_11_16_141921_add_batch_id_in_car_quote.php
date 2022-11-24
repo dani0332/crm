@@ -15,7 +15,7 @@ class AddBatchIdInCarQuote extends Migration
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
             if (! Schema::hasColumn('car_quote_request', 'quote_batch_id')) {
-                $table->bigInteger('quote_batch_id')->nullable();
+                $table->unsignedBigInteger('quote_batch_id')->nullable();
                 $table->foreign('quote_batch_id')->references('id')->on('quote_batches')->onDelete('no action');
             }
         });
