@@ -26,6 +26,8 @@ class SendSmsCustomerService extends BaseService
             ]]);
 
             $responseCode = $clientRequest->getStatusCode();
+
+            Log::info('Response: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customerEmail.' | record_id '.$recordId.' | class: '.get_class());
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             info($responseCode);
