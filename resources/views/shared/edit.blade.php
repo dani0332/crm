@@ -6,6 +6,12 @@
     .form-control:disabled, .form-control[readonly]{
         background-color: white !important;
     }
+    .select2-results__option--selected {
+            display: none;
+        }
+        .select2-results__option[aria-selected=true] {
+            display: none;
+        }
 </style>
 <?php
     use App\Enums\quoteTypeCode;
@@ -124,7 +130,7 @@
 
         $('#car_model_id').on('change',function(){
             var car_model_id = $('#car_model_id').val();
-            ajaxCallScript(car_model_id) 
+            ajaxCallScript(car_model_id)
         });
 
         function ajaxCallScript(car_model_id){
@@ -134,7 +140,7 @@
                 data: {
                     car_model_id: car_model_id
                 },
-                success: function(data){     
+                success: function(data){
                     if(data.length > 0){
                         var trim = $('#trim').empty();
                         $.each(data, function (create, carmodelObj) {
@@ -143,7 +149,7 @@
                                 populateCarValues(carmodelObj)
                                 trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
                                 }else{
-                                    
+
                                     if(carModelDetailId != 0 && carmodelObj.id == carModelDetailId) {
                                         trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
                                     } else if(create == 0) {
@@ -155,7 +161,7 @@
                                 populateCarValues(carmodelObj)
                                 trim.append('<option value="">I dont know</option>');
                             }
-                            
+
                         });
 
                     } else{
@@ -163,7 +169,7 @@
                     }
                 },
                 error: function(data){
-                   
+
                 }
             });
         }

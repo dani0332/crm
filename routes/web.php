@@ -8,6 +8,7 @@ use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
+use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CarQuoteController;
 use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
@@ -35,6 +36,7 @@ use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RewardCategoryController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RewardSliderController;
@@ -72,6 +74,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('login');
 });
+
+Route::post('logout', [UserController::class, 'logout'])->name('logout');
 
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
@@ -132,8 +136,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/customer-additional-contact/add', [CustomerController::class, 'addAdditionalContact']);
 
     Route::resource('lead-allocation', LeadAllocationController::class);
+    Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
-    Route::post('/lead-allocation/setLeadAllocationJobStatus', [LeadAllocationController::class, 'setLeadAllocationJobStatus']);
+    Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
+    Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
+    Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
+    Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
@@ -151,7 +159,14 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('upload-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
-
+    Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard']);
+    Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard']);
+    Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard']);
+    Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport']);
+    Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport']);
+    Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport']);
+    Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport']);
+    Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::group(['prefix' => 'rewards'], function () {
         Route::resource('partner', PartnerController::class);
@@ -218,6 +233,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('applicationstorage', GenericCrudController::class);
         Route::resource('teams', GenericCrudController::class);
         Route::resource('leadstatus', GenericCrudController::class);
+        Route::resource('tier', GenericCrudController::class);
+        Route::resource('quadrant', GenericCrudController::class);
+        Route::resource('rule', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });

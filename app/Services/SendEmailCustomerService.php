@@ -91,7 +91,7 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->quoteCdbId.' Class: '.get_class();
-            Log::error($responseDetail);
+            info($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
         }

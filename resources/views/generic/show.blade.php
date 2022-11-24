@@ -5,9 +5,16 @@
 #quote-plans table.dataTable thead .sorting_asc:after {
     content: none !important;
 }
+.select2-results__option--selected {
+            display: none;
+        }
+        .select2-results__option[aria-selected=true] {
+            display: none;
+        }
 </style>
 <?php
     use App\Enums\InsuranceProvderConstants;
+    use App\Enums\GenericRequestEnum;
 ?>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -27,7 +34,7 @@
                         <li><a href="{{ url('generic/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)). ' List' }}</a></li>
                     </ul>
                     <div class="clearfix"></div>
-                </div>      
+                </div>
                 <div class="x_content">
 
                     @php
@@ -47,7 +54,7 @@
                                     @if(str_contains($value, 'select'))
                                         @if(str_contains($value, 'customTable'))
                                         <div class="col-md-6 col-sm-6" style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
-                                            <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
+                                            <p class="label-align-center">{{ !empty($customTableList[$property][0]) && $customTableList[$property][0]->names }}</p>
                                         </div>
                                         @else
                                             <div class="col-md-6 col-sm-6">
@@ -55,15 +62,18 @@
                                             </div>
                                         @endif
                                     @else
-                                        @if(str_contains($value, 'customTable'))
-                                        <div class="col-md-6 col-sm-6" style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
-                                            <p class="label-align-center">{{ $customTableList[$property][0]->names }}</p>
-                                        </div>
-                                        @else
+                                        @php
+                                            $propertyValue = '';
+                                            if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), strtowlower(GenericRequestEnum::Yes))))
+                                                $propertyValue = $record->$property ? GenericRequestEnum::Yes : GenericRequestEnum::No ;
+                                            else if(str_contains($value, 'static') && !str_contains(strtolower($value), strtowlower(GenericRequestEnum::Yes)))
+                                                $propertyValue = $record->$property;
+                                            else
+                                                $propertyValue = $record->$property;
+                                        @endphp
                                             <div class="col-md-6 col-sm-6" style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
-                                                <p class="label-align-center">{{ $record->$property }}</p>
+                                                <p class="label-align-center">{{ $propertyValue }}</p>
                                             </div>
-                                        @endif
                                     @endif
                             </div>
                             @if(count($model->properties) == $count && $count % 2 != 0)
@@ -89,33 +99,33 @@
         </div>
     </div>
     @if($model->modelType == InsuranceProvderConstants::NAME)
-        <x-provider-car-plans 
-        :plansList="$plansList" 
+        <x-provider-car-plans
+        :plansList="$plansList"
         :uuidModal="$record->id"
         :RequestId="$record->id"
-        :model="$model" 
+        :model="$model"
         :record="$record"/>
     @endif
     @if($model->modelType == InsuranceProvderConstants::PLANNAME)
-        <x-provider-car-plans-coverage 
-        :coverageList="$coverageList" 
+        <x-provider-car-plans-coverage
+        :coverageList="$coverageList"
         :uuidModal="$record->id"
         :RequestId="$record->id"
         :model="$model"
         :record="$record" />
 
         <x-car-plan-addon
-        :plansList="$plansList" 
+        :plansList="$plansList"
         :uuidModal="$record->id"
         :RequestId="$record->id"
         :model="$model"
         :record="$record" />
-        
+
     @endif
-    
+
     @if($model->modelType == InsuranceProvderConstants::PLANADDON)
         <x-car-plan-add-on-option
-        :plansList="$plansList" 
+        :plansList="$plansList"
         :uuidModal="$record->id"
         :RequestId="$record->id"
         :model="$model"

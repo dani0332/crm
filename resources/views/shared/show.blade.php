@@ -336,7 +336,7 @@
                                 @endforeach
                             </select>
                             <select class="form-control" style="display:none;margin-top:10px" id="lob_team_sub_selection" name="lob_team_sub_selection">
-                            <option value="" disabled selected>Select your option</option>    
+                            <option value="" disabled selected>Select your option</option>
                             <option value="new_enquiry">New enquiry</option>
                             <option value="record_only">Record purposes only</option>
                             </select>

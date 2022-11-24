@@ -5,7 +5,7 @@ use App\Enums\PermissionsEnum;
 <div class="col-md-3 left_col">
     <div class="left_col scroll-view" style="border: 0;backgroundlinear-gradient(0deg,#69d0fe,#4183bd);">
         <div class="navbar nav_title" style="border: 0;background:#eef1f4;">
-            <a href="index.html" class="site_title">
+            <a href="/" class="site_title">
                 <img src='{{ asset("image/logo.png") }}' style="width:200px;" alt="IMCRM logo" />
             </a>
         </div>
@@ -18,23 +18,63 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-                @can(PermissionsEnum::DashboardView)
+            @can(PermissionsEnum::DashboardView)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-tachometer"
                         aria-hidden="true"></i>Dashboard <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('dashboard/car-conversion') }}">Car Conversion</a></li>
                             <li><a href="{{ url('dashboard/travel-conversion') }}">Travel Conversion</a></li>
+                            @can(PermissionsEnum::TPL_DASHBOARD_VIEW)
+                            <li><a href="{{ url('/tpl-conversion-dashboard') }}">TPL Conversion</a></li>
+                            @endcan
+                            @can(PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW)
+                            <li><a href="{{ url('/comprehensive-conversion-dashboard') }}">Comprehensive Conversion</a></li>
+                            @endcan
+                            @can(PermissionsEnum::MAIN_DASHBOARD_VIEW)
+                            <li><a href="{{ url('/accumulative-dashboard') }}">Accumulative Dashboard</a></li>
+                            @endcan
                         </ul>
                     </li>
                 </ul>
                 @endcan
-                @can(PermissionsEnum::LeadAllocationView)
+                @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::CarAdvisor]))
                 <ul class="nav side-menu">
-                    <li>
-                        <a href="{{ url('/lead-allocation') }}"><i class="fa fa-paper-plane"></i>Lead Allocation</a>
+                    <li><a><i class="fa fa-line-chart"
+                        aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
+                            <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
+                            @endif
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
+                            <li><a href="{{ url('reports/advisor-performance') }}">Advisor Performance</a></li>
+                            @endif
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
+                            <li><a href="{{ url('reports/advisor-distribution') }}">Advisor Distribution</a></li>
+                            @endif
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
+                            <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
+                            @endif
+                            {{-- <li><a href="{{ url('reports/lead-list') }}">Lead List</a></li> --}}
+                        </ul>
                     </li>
                 </ul>
+                @endif
+                @can(PermissionsEnum::LeadAllocationView)
+                @canany([PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD, PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD])
+                <ul class="nav side-menu">
+                    <li><a><i class="fa fa-paper-plane"></i>Lead Allocation<span class="fa fa-chevron-down" style="color: white;"></span></a>
+                        <ul class="nav child_menu">
+                            @can(PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD)
+                            <li><a href="{{ url('lead-allocation') }}">Health</a></li>
+                            @endcan
+                            @can(PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD)
+                            <li><a href="{{ url('car-lead-allocation') }}">Car</a></li>
+                            @endcan
+                        </ul>
+                    </li>
+                </ul>
+                @endcanany
                 @endcan
                 @if (auth()->check() && auth()->user()->hasMyLeadAccess())
                 <ul class="nav side-menu">
@@ -250,11 +290,11 @@ use App\Enums\PermissionsEnum;
                     <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
                 </ul>
                 @endif
-                @if (auth()->check() && auth()->user()->isAdmin())
+                {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
                     <li><a href="{{ url('assignOE') }}"><i></i> Assign OE </a>
                 </ul>
-                @endif
+                @endif --}}
                 @can(PermissionsEnum::TeleMarketingList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Telemarketing <span class="fa fa-chevron-down"></span></a>
@@ -281,7 +321,7 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @endcan
                 @canany([PermissionsEnum::UsersList, PermissionsEnum::RoleList, PermissionsEnum::TeamsList,
-                PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList])
+                PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList,PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
@@ -294,9 +334,21 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/teams') }}">Teams</a></li>
                             @endcan
-                            {{-- @can(PermissionsEnum::TeamsList)
-                            <li><a href="{{ url('generic/leadstatus') }}">Lead Status</a></li>
-                            @endcan --}}
+                            @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST])
+                            <li><a>Allocation Config<span class="fa fa-chevron-down" style="color: white;"></span></a>
+                                <ul class="nav child_menu">
+                                    @can(PermissionsEnum::TIER_CONFIG_LIST)
+                                        <li><a href="{{ url('generic/tier') }}">Tiers</a></li>
+                                    @endcan
+                                    @can(PermissionsEnum::QUAD_CONFIG_LIST)
+                                        <li><a href="{{ url('generic/quadrant') }}">Quadrants</a></li>
+                                    @endcan
+                                    @can(PermissionsEnum::RULE_CONFIG_LIST)
+                                        <li><a href="{{ url('generic/rule') }}">Rules</a></li>
+                                    @endcan
+                                </ul>
+                            </li>
+                            @endcanany
                             @can(PermissionsEnum::InsuranceProviderList)
                             <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
                             @endcan
