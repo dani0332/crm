@@ -91,7 +91,9 @@ class CarQuoteTable extends DataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $value = explode(' - ', $value);
-                    $builder->whereBetween('car_quote_request.updated_at', [$value[0], $value[1]]);
+                    $builder
+                        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+                        ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$value[0], $value[1]]);
                 }),
 
             TextFilter::make('CDB ID', 'code')
