@@ -78,4 +78,6 @@ final class RolesEnum extends Enum
     public const MarketingOperations = 'MARKETING_OPERATIONS';
     public const Renewals = 'RENEWALS';
     public const RenewalsManager = 'RENEWALS_MANAGER';
+    public const CarDeputyManager = 'CAR_DEPUTY_MANAGER';
+    public const CarManager = 'CAR_MANAGER';
 }

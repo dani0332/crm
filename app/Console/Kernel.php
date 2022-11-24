@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\LeadAllocation::class,
+        Commands\AddBatchNumber::class,
     ];
 
     /**
@@ -26,6 +27,13 @@ class Kernel extends ConsoleKernel
     {
         $schedule
             ->command('LeadAllocation:cron')
+            ->timezone('Asia/Dubai')
+            ->everyMinute()
+            ->onOneServer()
+            ->withoutOverlapping(1);
+
+        $schedule
+            ->command('AddBatchNumber:cron')
             ->timezone('Asia/Dubai')
             ->everyMinute()
             ->onOneServer()
