@@ -54,7 +54,7 @@ class CarQuoteTable extends DataTableComponent
             Column::make('Last Name'),
             Column::make('Currently Insured With'),
             Column::make('Lead Status', 'quoteStatus.text'),
-            Column::make('Vehicle Type', 'vehicle_type_id'),
+            Column::make('Vehicle Type', 'vehicleType.text'),
             Column::make('Updated at'),
             Column::make('Created at'),
             Column::make('Home Country Driving License Held For', 'uaeLicenseHeldFor.text'),
