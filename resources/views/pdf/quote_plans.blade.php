@@ -289,7 +289,7 @@
         $plans[$quotePlan->id] = $quotePlan;
     }
 
-    $planIds = collect($plans)->SortByDesc('isRenewal')->pluck('id')->toArray();
+    $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
 
     $features = [
         ["code" => "heading", "title" => "BENEFITS"],
