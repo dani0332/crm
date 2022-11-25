@@ -9,6 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationJob implements ShouldQueue
@@ -96,5 +97,10 @@ class LeadAllocationJob implements ShouldQueue
             info('Lead Allocation Job Failed');
             info('message: '.$e->getMessage());
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping(1))->dontRelease()];
     }
 }
