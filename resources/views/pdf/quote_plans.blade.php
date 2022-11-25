@@ -341,7 +341,7 @@
 
 @endphp
 
-<img src="{{public_path('images/quote_plans_pages/p1.jpg')}}" class="full-page-image" />
+<img src="{{public_path('images/quote_plans_pages/P1-1.png')}}" class="full-page-image" />
 
 <footer>
     <table class="tbl-footer">
