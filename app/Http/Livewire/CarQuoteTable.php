@@ -79,8 +79,9 @@ class CarQuoteTable extends DataTableComponent
                     'max_days' => 365,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $value = explode(' - ', $value);
-                    $builder->whereBetween('car_quote_request.created_at', [$value[0], $value[1]]);
+                    if (preg_match('/^(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
+                        $builder->whereBetween('car_quote_request.created_at', [$matches[1], $matches[2]]);
+                    }
                 }),
 
             TextFilter::make('Assigned Date', 'assigned_date')
@@ -90,10 +91,11 @@ class CarQuoteTable extends DataTableComponent
                     'max_days' => 365,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $value = explode(' - ', $value);
-                    $builder
-                        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
-                        ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$value[0], $value[1]]);
+                    if (preg_match('/^(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
+                        $builder
+                            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+                            ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$matches[1], $matches[2]]);
+                    }
                 }),
 
             TextFilter::make('CDB ID', 'code')
