@@ -962,42 +962,8 @@ class CarQuoteService extends BaseService
      * @param $data
      * @return false
      */
-    public function renewalCreatePlan($data)
+    public function renewalCreatePlan($planData)
     {
-        $carPlanData = [
-            'quoteUID' => $data['quote_uuid'],
-            'update' => false,
-            'url' => strval(request()->current_url),
-            'ipAddress' => request()->ip(),
-            'userAgent' => request()->header('User-Agent'),
-            'userId' => strval($data['created_by_id']),
-        ];
-
-        $plan = [
-            'planId' => $data['plan_id'],
-            'isDisabled' => false,
-            'isManualUpdate' => false,
-        ];
-
-        if (! empty($data['premium'])) {
-            $plan['actualPremium'] = (float) $data['premium'];
-            $plan['discountPremium'] = (float) $data['premium'];
-        }
-
-        if (! empty($data['car_value'])) {
-            $plan['carValue'] = $data['car_value'];
-        }
-
-        if (! empty($data['excess'])) {
-            $plan['excess'] = (float) $data['excess'];
-        }
-
-        if (! empty($data['trim_id'])) {
-            $plan['insurerTrimId'] = strval($data['trim_id']);
-        }
-
-        $carPlanData['plans'][] = $plan;
-
         $apiCreds = [
             'apiEndPoint' => config('constants.KEN_API_ENDPOINT').'/save-manual-car-quote-plan',
             'apiToken' => config('constants.KEN_API_TOKEN'),
@@ -1006,7 +972,7 @@ class CarQuoteService extends BaseService
             'apiPassword' => config('constants.KEN_API_PWD'),
         ];
 
-        return $this->httpService->processRequest($carPlanData, $apiCreds);
+        return $this->httpService->processRequest($planData, $apiCreds);
     }
 
     public function carPlanModify($request)
