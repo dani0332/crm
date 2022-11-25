@@ -1071,6 +1071,9 @@ class RenewalsUploadService
                             $leadValidationErrors->push('Invalid Product Type, needs to be Third Party Only or Comprehensive');
                         }
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
+                            if (! $leadData->car_value) {
+                                $leadValidationErrors->push('Car Value (From Insurer) is required');
+                            }
                             if ($leadData->plan_type == carTypeInsuranceCode::COMP || $leadData->plan_type == carTypeInsuranceCode::AGENCY) {
                                 if (! $leadData->excess) {
                                     $leadValidationErrors->push('Excess is required when Repair Type is COMP or AGENCY');
@@ -1093,7 +1096,6 @@ class RenewalsUploadService
                                 $leadValidationErrors->push('Invalid Claim History');
                             }
                         }
-
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->nationality) {
                             if (! Nationality::where('text', $leadData->nationality)->first()) {
                                 $leadValidationErrors->push('Invalid Nationality Text');
