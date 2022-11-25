@@ -227,6 +227,21 @@
             width: 100%;
         }
         .text-center {text-align: center;}
+        .badge-success {
+            color: #fff;
+            background-color: #1d83bc;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.4em;
+            font-size: 50%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+        }
     </style>
 </head>
 
@@ -418,7 +433,7 @@
                             {{ $plans[$planId]->name }}
                         </p>
                         @if(isset($plans[$planId]->isRenewal) && $plans[$planId]->isRenewal)
-                            <img style="margin-top:3px" src="{{public_path('images/quote_plans_pages/imcrm_plan_renewal_tag_blue.png')}}" />
+                            <span class="badge badge-success">Renewal Quote</span>
                         @else
                             <img style="margin-top:3px" src="{{public_path('images/quote_plans_pages/imcrm_plan_renewal_empty_tag.png')}}" />
                         @endif
