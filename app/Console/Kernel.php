@@ -32,12 +32,13 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        $schedule
-            ->command('AddBatchNumber:cron')
-            ->timezone('Asia/Dubai')
-            ->everyMinute()
-            ->onOneServer()
-            ->withoutOverlapping(1);
+        //Disabled for UAT
+        // $schedule
+        //     ->command('AddBatchNumber:cron')
+        //     ->timezone('Asia/Dubai')
+        //     ->everyMinute()
+        //     ->onOneServer()
+        //     ->withoutOverlapping(1);
     }
 
     /**
