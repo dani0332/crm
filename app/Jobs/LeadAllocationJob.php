@@ -95,10 +95,6 @@ class LeadAllocationJob implements ShouldQueue
         } catch (\Exception $e) {
             info('Lead Allocation Job Failed');
             info('message: '.$e->getMessage());
-            if ($this->attempts() < 4) {
-                $delayInSeconds = 2 * 60;
-                $this->release($delayInSeconds);
-            }
         }
     }
 }
