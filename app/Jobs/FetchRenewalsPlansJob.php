@@ -44,6 +44,6 @@ class FetchRenewalsPlansJob implements ShouldQueue
 
     public function middleware()
     {
-        return [new WithoutOverlapping($this->renewalStatusProcess->id)];
+        return [(new WithoutOverlapping($this->renewalStatusProcess->id))->dontRelease()];
     }
 }
