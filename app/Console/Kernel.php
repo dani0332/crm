@@ -25,14 +25,13 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule
-            ->command('LeadAllocation:cron')
-            ->timezone('Asia/Dubai')
-            ->everyMinute()
-            ->onOneServer()
-            ->withoutOverlapping(1);
+        // $schedule
+        //     ->command('LeadAllocation:cron')
+        //     ->timezone('Asia/Dubai')
+        //     ->everyMinute()
+        //     ->onOneServer()
+        //     ->withoutOverlapping(1);
 
-        //Disabled for UAT
         // $schedule
         //     ->command('AddBatchNumber:cron')
         //     ->timezone('Asia/Dubai')
