@@ -47,6 +47,7 @@ class LeadAllocationService extends BaseService
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $userAgainstManagerWithDetail = $userAgainstManagerWithDetail->where('u.manager_id', auth()->user()->id);
             }
+
             return $userAgainstManagerWithDetail->get();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -78,6 +79,7 @@ class LeadAllocationService extends BaseService
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
             if (! $leadAllocation) {
                 DB::commit();
+
                 return false;
             }
             if (isset($allocationCount)) {
@@ -110,6 +112,7 @@ class LeadAllocationService extends BaseService
                 ->whereNotNull('health_quote_request.health_team_type')
                 ->whereNull('health_quote_request.advisor_id')
                 ->whereBetween('health_quote_request.created_at', [$from, $to])->skip(0)->take(20)->get();
+
             return $unAllocatedLeads;
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -226,18 +229,22 @@ class LeadAllocationService extends BaseService
             if ($leadAllocation != null) {
                 if ($leadAllocation->is_available == 0) {
                     info('Advisor '.$advisorId.' cannot take lead while he/she is not available');
+
                     return false;
                 }
                 if ($leadAllocation->max_capacity == -1 || $leadAllocation->allocation_count < $leadAllocation->max_capacity) {
                     info('Advisor '.$advisorId.' can take lead');
+
                     return true;
                 }
                 if ($leadAllocation->max_capacity == $leadAllocation->allocation_count && $leadAllocation->max_capacity != -1) {
                     info('Advisor '.$advisorId.' cannot take lead. Max capacity reached');
+
                     return false;
                 }
             } else {
                 info('Advisor '.$advisorId.' has no allocation record');
+
                 return false;
             }
         } catch (\Exception $e) {
@@ -273,9 +280,14 @@ class LeadAllocationService extends BaseService
                     info('User '.$user->name.' has sub-team '.$user->sub_team_id);
                     $userSubTeam = Team::where('id', $user->sub_team_id)->first();
                     info('User '.$user->name.' belongs to sub team '.$userSubTeam->name);
+
                     return strtolower($userSubTeam->name);
-                } else return null;
-            } else return null;
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -315,6 +327,7 @@ class LeadAllocationService extends BaseService
             if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
                 info('Car lead allocation master switch is off');
                 DB::commit();
+
                 return false;
             }
             info('setMaxCapAndAllocationStatus -- started');
@@ -392,6 +405,7 @@ class LeadAllocationService extends BaseService
     {
         try {
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+
             return $leadAllocation;
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -410,6 +424,7 @@ class LeadAllocationService extends BaseService
                                             })
                                             ->where(strtolower('t.name'), strtolower($lead->health_team_type))
                                             ->orderBy('lead_allocation.last_allocated', 'asc');
+
             return $availableUserId->first();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
