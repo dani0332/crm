@@ -283,9 +283,6 @@
                                                         readonly="readonly" style="background-color: rgb(246, 246, 246) !important;pointer-events: none;"
                                                     @endif
                                                 @else 
-                                                    @if($property == DatabaseColumnsString::RENEWAL_BATCH && $record->$property)
-                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;"
-                                                    @endif
                                                     @if($property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER && $record->$property)
                                                         readonly="readonly" style="background-color: rgb(246, 246, 246) !important;"
                                                     @endif

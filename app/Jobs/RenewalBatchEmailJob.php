@@ -49,7 +49,6 @@ class RenewalBatchEmailJob implements ShouldQueue
             Log::info('RenewalBatchEmailJob message: '.$e->getMessage());
             if ($this->attempts() == 3) {
                 // Update status = failed
-                
             }
         }
     }
