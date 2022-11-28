@@ -32,21 +32,5 @@
 
 </script>
 <canvas id="myChart" height="100px"></canvas>
-{{-- <div class="">
-    <div class="row">
-        <div class="col-md-12" style="float: right; margin-right: 100px;">
-            <form action="/tpl-conversion-dashboard">
-                <select name="test" class="form-control">
-                    @foreach ($type as $t)
-                        <option value="{{$t['id']}}" >{{ $t['code'] }}</option>
-                    @endforeach
-                </select>
-                <button type="submit" class="btn btn-warning btn-sm"> Button</button>
-            </form>
-        </div>
-        <div class="p-6 m-20 bg-white rounded shadow">
-            {{-- {!! $chart->container() !!} --}}
-        </div>
-    </div>
-</div> --}}
+
 @endsection
