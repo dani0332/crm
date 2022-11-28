@@ -16,7 +16,6 @@ use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
 use App\Jobs\ProcessRenewalsUploadCreate;
 use App\Jobs\ProcessRenewalsUploadUpdate;
-use App\Models\CarAddOnOption;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarPlan;
@@ -1172,45 +1171,47 @@ class RenewalsUploadService
                                     $leadValidationErrors->push('Repair Type is required');
                                 }
                                 if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name && $insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->where('code', $leadData->insurer)->first()) {
-                                    if (! CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $insuranceProvider->id)->first()) {
+                                    if (! $carPlan = CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $insuranceProvider->id)->first()) {
                                         $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
                                     }
                                 } else {
                                     $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
                                 }
-                                if (! $leadData->ancillary_excess) {
-                                    $leadValidationErrors->push('Ancillary Excess is required with Renewal Premium & Excess');
-                                }
-                                if (! $leadData->driver_cover) {
-                                    $leadValidationErrors->push('PAB Driver is required with Renewal Premium & Excess');
-                                } elseif (! CarAddOnOption::where('value', $leadData->driver_cover)->first()) {
-                                    $leadValidationErrors->push('Invalid PAB Driver value');
-                                }
-                                if (! $leadData->passenger_cover) {
-                                    $leadValidationErrors->push('PAB Passenger is required with Renewal Premium & Excess');
-                                } elseif (! CarAddOnOption::where('value', $leadData->passenger_cover)->first()) {
-                                    $leadValidationErrors->push('Invalid PAB Passenger value');
-                                }
-                                if (! $leadData->car_hire) {
-                                    $leadValidationErrors->push('Rent a car is required with Renewal Premium & Excess');
-                                } elseif (! CarAddOnOption::where('value', $leadData->car_hire)->first()) {
-                                    $leadValidationErrors->push('Invalid Rent a car value');
-                                }
-                                if (! $leadData->car_hire_amount) {
-                                    $leadValidationErrors->push('Amount- Rent a Car is required with Renewal Premium & Excess');
-                                }
-                                if (! $leadData->oman_cover) {
-                                    $leadValidationErrors->push('Oman cover is required with Renewal Premium & Excess');
-                                } elseif (! CarAddOnOption::where('value', $leadData->oman_cover)->first()) {
-                                    $leadValidationErrors->push('Invalid Oman cover value');
-                                }
-                                if (! $leadData->road_side_assistance) {
-                                    $leadValidationErrors->push('Road Side Assistance is required with Renewal Premium & Excess');
-                                } elseif (! CarAddOnOption::where('value', $leadData->road_side_assistance)->first()) {
-                                    $leadValidationErrors->push('Invalid Road Side Assistance value');
-                                }
-                                if (! $leadData->year_of_first_registration) {
-                                    $leadValidationErrors->push('First Year of Registration is required with Renewal Premium & Excess');
+                                if ($carPlan) {
+                                    if (! $leadData->ancillary_excess) {
+                                        $leadValidationErrors->push('Ancillary Excess is required with Renewal Premium & Excess');
+                                    }
+                                    if (! $leadData->driver_cover) {
+                                        $leadValidationErrors->push('PAB Driver is required with Renewal Premium & Excess');
+                                    } elseif (! $carPlan->carAddons) {
+                                        $leadValidationErrors->push('Invalid PAB Driver value');
+                                    }
+                                    if (! $leadData->passenger_cover) {
+                                        $leadValidationErrors->push('PAB Passenger is required with Renewal Premium & Excess');
+                                    } elseif (! $carPlan->carAddons) {
+                                        $leadValidationErrors->push('Invalid PAB Passenger value');
+                                    }
+                                    if (! $leadData->car_hire) {
+                                        $leadValidationErrors->push('Rent a car is required with Renewal Premium & Excess');
+                                    } elseif (! $carPlan->carAddons) {
+                                        $leadValidationErrors->push('Invalid Rent a car value');
+                                    }
+                                    if (! $leadData->car_hire_amount) {
+                                        $leadValidationErrors->push('Amount- Rent a Car is required with Renewal Premium & Excess');
+                                    }
+                                    if (! $leadData->oman_cover) {
+                                        $leadValidationErrors->push('Oman cover is required with Renewal Premium & Excess');
+                                    } elseif (! $carPlan->carAddons) {
+                                        $leadValidationErrors->push('Invalid Oman cover value');
+                                    }
+                                    if (! $leadData->road_side_assistance) {
+                                        $leadValidationErrors->push('Road Side Assistance is required with Renewal Premium & Excess');
+                                    } elseif (! $carPlan->carAddons) {
+                                        $leadValidationErrors->push('Invalid Road Side Assistance value');
+                                    }
+                                    if (! $leadData->year_of_first_registration) {
+                                        $leadValidationErrors->push('First Year of Registration is required with Renewal Premium & Excess');
+                                    }
                                 }
                             }
                             if (! $leadData->registration_location) {
