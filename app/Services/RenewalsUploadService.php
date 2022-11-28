@@ -1182,34 +1182,60 @@ class RenewalsUploadService
                                     }
                                     if (! $leadData->driver_cover) {
                                         $leadValidationErrors->push('PAB Driver is required with Renewal Premium & Excess');
-                                    } elseif (! $carPlan->carAddons) {
-                                        $leadValidationErrors->push('Invalid PAB Driver value');
                                     }
                                     if (! $leadData->passenger_cover) {
                                         $leadValidationErrors->push('PAB Passenger is required with Renewal Premium & Excess');
-                                    } elseif (! $carPlan->carAddons) {
-                                        $leadValidationErrors->push('Invalid PAB Passenger value');
                                     }
                                     if (! $leadData->car_hire) {
                                         $leadValidationErrors->push('Rent a car is required with Renewal Premium & Excess');
-                                    } elseif (! $carPlan->carAddons) {
-                                        $leadValidationErrors->push('Invalid Rent a car value');
                                     }
                                     if (! $leadData->car_hire_amount) {
                                         $leadValidationErrors->push('Amount- Rent a Car is required with Renewal Premium & Excess');
                                     }
                                     if (! $leadData->oman_cover) {
                                         $leadValidationErrors->push('Oman cover is required with Renewal Premium & Excess');
-                                    } elseif (! $carPlan->carAddons) {
-                                        $leadValidationErrors->push('Invalid Oman cover value');
                                     }
                                     if (! $leadData->road_side_assistance) {
                                         $leadValidationErrors->push('Road Side Assistance is required with Renewal Premium & Excess');
-                                    } elseif (! $carPlan->carAddons) {
-                                        $leadValidationErrors->push('Invalid Road Side Assistance value');
                                     }
                                     if (! $leadData->year_of_first_registration) {
                                         $leadValidationErrors->push('First Year of Registration is required with Renewal Premium & Excess');
+                                    }
+
+                                    $carPlan->load([
+                                        'carAddons' => function ($q) {
+                                            $q->whereIn('code', [CarPlanAddonsCode::DRIVER_COVER, CarPlanAddonsCode::PASSENGER_COVER,
+                                                CarPlanAddonsCode::CAR_HIRE, CarPlanAddonsCode::OMAN_COVER, CarPlanAddonsCode::BREAKDOWN_COVER,
+                                            ])->with('carAddonOptions');
+                                        },
+                                    ]);
+
+                                    $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
+
+                                    $addons = [
+                                        'driver_cover' => CarPlanAddonsCode::DRIVER_COVER,
+                                        'passenger_cover' => CarPlanAddonsCode::PASSENGER_COVER,
+                                        'car_hire' => CarPlanAddonsCode::CAR_HIRE,
+                                        'oman_cover' => CarPlanAddonsCode::OMAN_COVER,
+                                        'road_side_assistance' => CarPlanAddonsCode::BREAKDOWN_COVER,
+                                    ];
+
+                                    foreach ($addons as $key => $addonCode) {
+                                        if (isset($planAddons[$addonCode])) {
+                                            $addon = $planAddons[$addonCode];
+
+                                            $found = false;
+                                            foreach ($addon['car_addon_options'] as $option) {
+                                                if (trim($option['value']) == trim($leadData->{$key})) {
+                                                    $found = true;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (! $found) {
+                                                $leadValidationErrors->push('Invalid car addon option provided - '.$leadData->{$key});
+                                            }
+                                        }
                                     }
                                 }
                             }
