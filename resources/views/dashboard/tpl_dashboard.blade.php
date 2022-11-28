@@ -8,7 +8,6 @@
 
       var labels =  JSON.parse('<?php echo json_encode($labels); ?>');
       var users =  JSON.parse('<?php echo json_encode($data); ?>');
-    debugger;
       const data = {
         labels: labels,
         datasets: [{
