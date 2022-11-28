@@ -13,15 +13,22 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        $this->call([PaymentMethodsSeeder::class,
+        $this->call([
+            PaymentMethodsSeeder::class,
             DocumentTypeSeeder::class,
             AddRoleForBetaUserSeeder::class,
             CustomerAdditionalContactSeeder::class,
+            addRenewalAppSettings::class,
             SendPolicyApplicationStorageSeeder::class,
             AddRoleForMarketingSeeder::class,
             addPermissionForManualLeadTesting::class,
             QuoteTypeTableSeeder::class,
             AddRoleForRenewalsManager::class,
+            addPermissionForCarAllocation::class,
+            addLeadSourcesForAllocation::class,
+            addCarLeadAllocationFetchStartDate::class,
+            addAdvisorConvertionReportBatchStartDate::class,
+            addCarAllocationMasterSwitch::class,
         ]);
     }
 }

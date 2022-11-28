@@ -1134,6 +1134,50 @@ $(document).ready(function () {
       $('#car_fields').hide();
     }
   }
+  $('.payment-link-copy').on('click', function () {
+    var planId = $(this).attr('data-planId');
+    var quoteUUID = $(this).attr('data-quoteUUId');
+    var providerCode = $(this).attr('data-providerCode');
+    var websiteURL = $(this).attr('data-websiteURL');
+    var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
+    navigator.clipboard.writeText(paymentLink);
+    var self = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(self).text('Copy');
+    }, 2000);
+  });
+
+  $('.health-plan-link-copy').on('click', function () {
+    var planId = $(this).attr('data-planId');
+    var quoteUUID = $(this).attr('data-quoteUUId');
+    var providerCode = $(this).attr('data-providerCode');
+    var websiteURL = $(this).attr('data-websiteURL');
+    var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
+    navigator.clipboard.writeText(paymentLink);
+    var self = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(self).text('Copy');
+    }, 2000);
+  });
+
+  $('#btn_copy_doc_upload_link').on('click', function () {
+    var doc_upload_url = $(this).data('doc-upload-url');
+    navigator.clipboard.writeText(doc_upload_url);
+    var obj = this;
+    $(this).text('Copied !');
+    setTimeout(function () {
+      $(obj).text($(obj).data('label'));
+    }, 2000);
+  });
+
+  $('#btn_download_plan_pdf').on('click', function () {
+    if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
+      alert('Please select at least three (3) plans.');
+      return false;
+    }
+  });
 
   var customerDataTable = $('.customer-data-table').DataTable({
     ordering: false,
@@ -2216,7 +2260,7 @@ $(document).ready(function () {
       { data: 'status', name: 'status' },
       { data: 'uploaded_by', name: 'uploaded_by' },
       { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' }
+      { data: 'updated_at', name: 'updated_at' },
     ],
   });
 
@@ -2587,7 +2631,6 @@ $(document).ready(function () {
       },
     });
   });
-
   $('.renewals-batches-data-table').DataTable({
     ordering: false,
     info: false,
@@ -2611,7 +2654,7 @@ $(document).ready(function () {
             row.renewal_batch +
             "/plans-processes'>" +
             'Fetch Plans' +
-            '</a>' + 
+            '</a>' +
             "<a class='btn btn-warning btn-sm' href='" +
             config.routes.renewals_batches_datatable_route +
             '/' +
@@ -2672,16 +2715,6 @@ $(document).ready(function () {
     $(this).text('Copied !');
     setTimeout(function () {
       $(self).text('Copy');
-    }, 2000);
-  });
-
-  $('#btn_copy_doc_upload_link').on('click', function () {
-    var doc_upload_url = $(this).data('doc-upload-url');
-    navigator.clipboard.writeText(doc_upload_url);
-    var obj = this;
-    $(this).text('Copied !');
-    setTimeout(function () {
-      $(obj).text($(obj).data('label'));
     }, 2000);
   });
 

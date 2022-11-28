@@ -42,6 +42,6 @@ class ProcessRenewalsUploadUpdate implements ShouldQueue
 
     public function middleware()
     {
-        return [new WithoutOverlapping($this->renewalsUploadLead->id)];
+        return [(new WithoutOverlapping($this->renewalsUploadLead->id))->dontRelease()];
     }
 }

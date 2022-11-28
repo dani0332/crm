@@ -32,14 +32,15 @@ use App\Enums\PermissionsEnum;
         border: none !important;
         background-color: transparent !important;
         color: #4183BD !important;
-        padding: 0px !important;
+        padding: 0px  !important;
         height: 110px !important;
         width: 250px !important;
     }
+
     .dataTables_paginate .paginate_button.active {
         background: blue !important;
     }
-    .pagination {
+    .pagination{
         margin-top: 12px !important;
     }
     .dataTables_paginate .paginate_button.active a {
@@ -333,6 +334,11 @@ use App\Enums\PermissionsEnum;
                         }
                     }
                 },
+                language: {
+                    "processing": "<span class='fa-stack fa-lg'>\n\
+                                        <i class='fa fa-spinner fa-spin fa-stack-2x fa-fw'></i>\n\
+                                </span>&emsp;Processing ...",
+                },
                 columnDefs: [{
                     orderable: false,
                     targets: disableSortColumns
@@ -365,9 +371,9 @@ use App\Enums\PermissionsEnum;
                         if (checkboxIndexes.includes(i)) {
                             const element = columns[i];
                             if ($(element).text() == '1') {
-                                $(element).text('True');
+                                $(element).text('Yes');
                             } else if ($(element).text() == '0') {
-                                $(element).text('False');
+                                $(element).text('No');
                             }
                         }
                     }
@@ -810,7 +816,7 @@ use App\Enums\PermissionsEnum;
                         data-parsley-validate="" novalidate="" autocomplete="off">
                         {{ csrf_field() }}
                         <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType">
-                        <div class="row" id="tm-leads-assign-div">
+                        <div class="row" id="tm-leads-assign-div" style="display: none;">
                             <div class="col-md-12 col-sm-12">
                                 <div class="x_panel">
                                     <div class="x_title">

@@ -12,4 +12,5 @@ class GenericModel extends BaseModel
     public $renewalSearchProperties = [];
     public $newBusinessSkipProperties = [];
     public $newBusinessSearchProperties = [];
+    public $sortProperties = [];
 }

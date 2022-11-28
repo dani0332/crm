@@ -1138,6 +1138,9 @@ class RenewalsUploadService
                             $leadValidationErrors->push('Invalid Product Type, needs to be Third Party Only or Comprehensive');
                         }
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
+                            if (! $leadData->car_value) {
+                                $leadValidationErrors->push('Car Value (From Insurer) is required');
+                            }
                             if ($leadData->plan_type == carTypeInsuranceCode::COMP || $leadData->plan_type == carTypeInsuranceCode::AGENCY) {
                                 if (! $leadData->excess) {
                                     $leadValidationErrors->push('Excess is required when Repair Type is COMP or AGENCY');
@@ -1146,12 +1149,12 @@ class RenewalsUploadService
                             if ($leadData->car_value || $leadData->premium || $leadData->excess || $leadData->trim) {
                                 if (! $leadData->provider_name || ! $leadData->plan_type || ! $leadData->plan_name) {
                                     $leadValidationErrors->push('Provider Name, Insurer Plan Name & Repair Type are required when any value provided for Car Value, Renewal Premium, Excess, or Trim.');
-                                } elseif ($insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->first()) {
+                                } elseif ($insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->where('code', $leadData->insurer)->first()) {
                                     if (! CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $insuranceProvider->id)->first()) {
                                         $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
                                     }
                                 } else {
-                                    $leadValidationErrors->push('Invalid Provider Name');
+                                    $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
                                 }
                             }
                         }
@@ -1160,7 +1163,6 @@ class RenewalsUploadService
                                 $leadValidationErrors->push('Invalid Claim History');
                             }
                         }
-
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->nationality) {
                             if (! Nationality::where('text', $leadData->nationality)->first()) {
                                 $leadValidationErrors->push('Invalid Nationality Text');
@@ -1231,10 +1233,10 @@ class RenewalsUploadService
     public function getProcessLeads($batch)
     {
         return RenewalQuoteProcess::select('quote_id as id')->where([
-        'quote_type' => QuoteTypeShortCode::CAR,
-        'batch' => $batch,
-        'type' => RenewalsUploadType::UPDATE_LEADS,
-        'status' => RenewalProcessStatuses::PLANS_FETCHED,
-        'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])->distinct('quote_id')->get();
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'batch' => $batch,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])->distinct('quote_id')->get();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\GenericModelTypeEnum;
 use App\Enums\InsuranceProvderConstants;
 use App\Models\GenericModel;
 use App\Services\ApplicationStorageService;
@@ -13,7 +14,10 @@ use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\InsuranceProviderService;
 use App\Services\LeadStatusService;
+use App\Services\QuadrantService;
+use App\Services\RuleService;
 use App\Services\TeamService;
+use App\Services\TierService;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
@@ -30,6 +34,9 @@ class GenericCrudController extends Controller
     protected $applicationStorageService;
     protected $teamsService;
     protected $leadStatusService;
+    protected $tierService;
+    protected $quadrantService;
+    protected $ruleService;
 
     public function __construct(
         InsuranceProviderService $insuranceProviderService,
@@ -42,7 +49,10 @@ class GenericCrudController extends Controller
         CarPlanAddOnOptionService $carPlanAddOnOptionService,
         ApplicationStorageService $applicationStorageService,
         TeamService $teamsService,
-        LeadStatusService $leadStatusService
+        LeadStatusService $leadStatusService,
+        TierService $tierService,
+        QuadrantService $quadrantService,
+        RuleService $ruleService
     ) {
         $this->genericModel = new GenericModel();
         $this->crudService = $crudService;
@@ -55,6 +65,9 @@ class GenericCrudController extends Controller
         $this->applicationStorageService = $applicationStorageService;
         $this->teamsService = $teamsService;
         $this->leadStatusService = $leadStatusService;
+        $this->tierService = $tierService;
+        $this->quadrantService = $quadrantService;
+        $this->ruleService = $ruleService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -78,7 +91,6 @@ class GenericCrudController extends Controller
             }
         }
         $model = $this->genericModel;
-
         if ($request->ajax()) {
             return DataTables::of($gridData)
                 ->addIndexColumn()
@@ -222,7 +234,7 @@ class GenericCrudController extends Controller
                 $dropdownSource[$property] = $data;
             }
             if (str_contains($value, 'customTable')) {
-                $data = $this->dropdownSourceService->getCustomDropdownList($property, $record[0]->id);
+                $data = $this->dropdownSourceService->getCustomDropdownList($property, $record->id);
                 $customLists[$property] = $data;
             }
         }
@@ -265,30 +277,45 @@ class GenericCrudController extends Controller
     private function setModelType(Request $request)
     {
         $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
-        if (strpos($url, 'insuranceprovider')) {
-            $this->genericModel->modelType = 'InsuranceProvider';
+        $modelType = '';
+        switch ($url) {
+            case GenericModelTypeEnum::INSURANCE_PROVIDER:
+                $modelType = 'InsuranceProvider';
+                break;
+            case GenericModelTypeEnum::CAR_PLAN:
+                $modelType = 'CarPlan';
+                break;
+            case GenericModelTypeEnum::CAR_PLAN_COVERAGE:
+                $modelType = 'CarPlanCoverage';
+                break;
+            case GenericModelTypeEnum::CAR_PLAN_ADDON:
+                $modelType = 'CarPlanAddOn';
+                break;
+            case GenericModelTypeEnum::CAR_PLAN_ADDON_OPTION:
+                $modelType = 'CarPlanAddOnOption';
+                break;
+            case GenericModelTypeEnum::APPLICATION_STORAGE:
+                $modelType = 'ApplicationStorage';
+                break;
+            case GenericModelTypeEnum::LEAD_STATUS:
+                $modelType = 'LeadStatus';
+                break;
+            case GenericModelTypeEnum::TEAMS:
+                $modelType = 'Teams';
+                break;
+            case GenericModelTypeEnum::TIER:
+                $modelType = 'Tier';
+                break;
+            case GenericModelTypeEnum::QUADRANT:
+                $modelType = 'Quadrant';
+                break;
+            case GenericModelTypeEnum::RULE:
+                $modelType = 'Rule';
+                break;
+            default:
+                break;
         }
-        if (strpos($url, 'carplan')) {
-            $this->genericModel->modelType = 'CarPlan';
-        }
-        if (strpos($url, 'carplancoverage')) {
-            $this->genericModel->modelType = 'CarPlanCoverage';
-        }
-        if (strpos($url, 'carplanaddon')) {
-            $this->genericModel->modelType = 'CarPlanAddOn';
-        }
-        if (strpos($url, 'carplanaddonoption')) {
-            $this->genericModel->modelType = 'CarPlanAddOnOption';
-        }
-        if (strpos($url, 'applicationstorage')) {
-            $this->genericModel->modelType = 'ApplicationStorage';
-        }
-        if (strpos($url, 'teams')) {
-            $this->genericModel->modelType = 'Teams';
-        }
-        if (strpos($url, 'leadstatus')) {
-            $this->genericModel->modelType = 'LeadStatus';
-        }
+        $this->genericModel->modelType = $modelType;
     }
 
     private function fillModelByModelType($type, Request $request)
@@ -301,5 +328,8 @@ class GenericCrudController extends Controller
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
         $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
         $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
+        if (method_exists($this->{$serviceType}, 'fillSortingProperties')) {
+            $this->genericModel->sortProperties = $this->{$serviceType}->fillSortingProperties();
+        }
     }
 }

@@ -6,11 +6,19 @@
     .form-control:disabled, .form-control[readonly]{
         background-color: white !important;
     }
+    .select2-results__option--selected {
+            display: none;
+        }
+        .select2-results__option[aria-selected=true] {
+            display: none;
+        }
 </style>
-<?php
+@php
     use App\Enums\quoteTypeCode;
     use App\Enums\GenericRequestEnum;
-    ?>
+    use App\Enums\RolesEnum;
+    use App\Enums\DatabaseColumnsString;
+@endphp
 <script>
     function getCarMakes(id)
     {
@@ -124,7 +132,7 @@
 
         $('#car_model_id').on('change',function(){
             var car_model_id = $('#car_model_id').val();
-            ajaxCallScript(car_model_id) 
+            ajaxCallScript(car_model_id)
         });
 
         function ajaxCallScript(car_model_id){
@@ -134,7 +142,7 @@
                 data: {
                     car_model_id: car_model_id
                 },
-                success: function(data){     
+                success: function(data){
                     if(data.length > 0){
                         var trim = $('#trim').empty();
                         $.each(data, function (create, carmodelObj) {
@@ -143,7 +151,7 @@
                                 populateCarValues(carmodelObj)
                                 trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
                                 }else{
-                                    
+
                                     if(carModelDetailId != 0 && carmodelObj.id == carModelDetailId) {
                                         trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
                                     } else if(create == 0) {
@@ -155,7 +163,7 @@
                                 populateCarValues(carmodelObj)
                                 trim.append('<option value="">I dont know</option>');
                             }
-                            
+
                         });
 
                     } else{
@@ -163,7 +171,7 @@
                     }
                 },
                 error: function(data){
-                   
+
                 }
             });
         }
@@ -193,6 +201,13 @@
                 }
             });
         }
+
+        $('#previous_policy_expiry_date').datepicker({
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: 'yy-mm-dd',
+            yearRange: '-80:+00',
+        });
 });
 </script>
     <div class="row">
@@ -259,12 +274,25 @@
                                             </span>
                                             <input
                                                 @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
-                                                @if(explode("|", $value)[1] != 'date')
-                                                    type={{ explode("|", $value)[1]  }}
-                                                    @endif id={{$property}}
-                                                name={{$property}}
+                                                @if(explode("|", $value)[1] != 'date') type={{ explode("|", $value)[1] }} @endif 
+                                                id={{$property}} name={{$property}}
                                                 @if($property == 'email' || $property == 'mobile_no') disabled="disabled" @endif
-                                                value="{{ old($property, $record->$property) }}" class="form-control">
+                                                value="{{ old($property, $record->$property) }}" class="form-control" 
+                                                @if(!Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::Admin]))
+                                                    @if($property == DatabaseColumnsString::RENEWAL_BATCH || $property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER || $property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE) 
+                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;pointer-events: none;"
+                                                    @endif
+                                                @else 
+                                                    @if($property == DatabaseColumnsString::RENEWAL_BATCH && $record->$property)
+                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;"
+                                                    @endif
+                                                    @if($property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER && $record->$property)
+                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;"
+                                                    @endif
+                                                    @if($property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE && $record->$property)
+                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;pointer-events: none;"
+                                                    @endif
+                                                @endif >
                                             @if ($errors->has($property))
                                                 <span class="text-danger">{{ $errors->first($property) }}</span>
                                             @endif
