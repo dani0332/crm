@@ -1189,19 +1189,19 @@ class RenewalsUploadService
                                     if (! $leadData->car_hire) {
                                         $leadValidationErrors->push('Rent a car is required with Renewal Premium & Excess');
                                     }
-                                    if (! $leadData->car_hire_amount) {
+                                    if ($leadData->car_hire_amount == '') {
                                         $leadValidationErrors->push('Amount- Rent a Car is required with Renewal Premium & Excess');
                                     }
-                                    if (! $leadData->driver_cover_amount) {
+                                    if ($leadData->driver_cover_amount == '') {
                                         $leadValidationErrors->push('Amount- PAB Driver is required with Renewal Premium & Excess');
                                     }
-                                    if (! $leadData->passenger_cover_amount) {
+                                    if ($leadData->passenger_cover_amount == '') {
                                         $leadValidationErrors->push('Amount- PAB Passenger is required with Renewal Premium & Excess');
                                     }
-                                    if (! $leadData->oman_cover_amount) {
+                                    if ($leadData->oman_cover_amount == '') {
                                         $leadValidationErrors->push('Amount- Oman Cover is required with Renewal Premium & Excess');
                                     }
-                                    if (! $leadData->road_side_assistance_amount) {
+                                    if ($leadData->road_side_assistance_amount == '') {
                                         $leadValidationErrors->push('Amount- Road Side Assistance is required with Renewal Premium & Excess');
                                     }
                                     if (! $leadData->oman_cover) {
