@@ -33,6 +33,7 @@ class CarLeadAllocationDashboardService extends BaseService
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $users = $users->where('users.manager_id', auth()->user()->id);
             }
+
             return $users->get();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
