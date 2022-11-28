@@ -14,8 +14,8 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 
 class AdvisorAssignedCarQuotesTable extends DataTableComponent
 {
-
     use GetUserTree;
+
     public $advisorId;
     public $leadType;
     public $startDate;
@@ -59,8 +59,8 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         ->whereNull('car_quote_request.renewal_import_code')
         ->where('car_quote_request.advisor_id', $this->advisorId)
         ->orderBy('car_quote_request.created_at', 'desc');
-        if($batch != null){
-            info('batch : '. json_encode($batch->id));
+        if ($batch != null) {
+            info('batch : '.json_encode($batch->id));
             $query->where('quote_batch_id', $batch->id);
         }
         if ($this->leadType == 'new_leads') {
