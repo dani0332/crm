@@ -15,7 +15,7 @@ class AddBatchNumberJob implements ShouldQueue
 
     public $tries = 3;
     public $timeout = 30;
-    public $backoff = 3;
+    public $backoff = 35;
 
     /**
      * Create a new job instance.
@@ -60,10 +60,6 @@ class AddBatchNumberJob implements ShouldQueue
         } catch (\Exception $e) {
             info('Add Batch Number Job Failed');
             info('message: '.$e->getMessage());
-            if ($this->attempts() < 4) {
-                $delayInSeconds = 2 * 60;
-                $this->release($delayInSeconds);
-            }
         }
     }
 
