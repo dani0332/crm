@@ -9,15 +9,16 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, GetUserTree;
 
-    public $tries = 3;
-    public $timeout = 30;
-    public $backoff = 35;
+    public $tries = 1;
+    public $timeout = 40;
+    public $backoff = 45;
 
     /**
      * Create a new job instance.
@@ -96,5 +97,10 @@ class LeadAllocationJob implements ShouldQueue
             info('Lead Allocation Job Failed');
             info('message: '.$e->getMessage());
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping(1))->dontRelease()];
     }
 }
