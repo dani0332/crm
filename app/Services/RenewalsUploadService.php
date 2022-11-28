@@ -1024,24 +1024,11 @@ class RenewalsUploadService
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->quote_type) {
-                    $leadValidationErrors->push('Insurance Type is Required');
-                }
                 if (! QuoteType::where('short_code', $lead->quote_type)->first()) {
                     $leadValidationErrors->push('Invalid Insurance Type Provided');
                 }
                 $quoteTypeObject = $this->createQuoteObject(ucfirst($lead->quote_type));
                 $leadData = (object) $lead->data;
-
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->customer_name) {
-                    $leadValidationErrors->push('Customer name is Required');
-                }
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->email) {
-                    $leadValidationErrors->push('Customer e-mail is Required');
-                }
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->mobile_no) {
-                    $leadValidationErrors->push('Customer Mobile is Required');
-                }
 
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
                     $leadValidationErrors->push('Policy Number is mandatory for update process');
@@ -1058,27 +1045,17 @@ class RenewalsUploadService
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->product_type) {
                     $leadValidationErrors->push('Product Type is Required');
                 }
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->advisor) {
-                    $leadValidationErrors->push('Advisor Email is Required');
-                }
                 if ($leadData->advisor && ! User::where('email', $leadData->advisor)->first()) {
                     $leadValidationErrors->push('Invalid Advisor Email Address');
                 }
                 if (isset($leadData->start_date) && $leadData->start_date && ! $this->validateDate($leadData->start_date)) {
                     $leadValidationErrors->push('Invalid Start Date');
                 }
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->end_date) {
-                    $leadValidationErrors->push('Policy End date is required');
-                }
+
                 if (isset($leadData->end_date) && $leadData->end_date && ! $this->validateDate($leadData->end_date)) {
                     $leadValidationErrors->push('Invalid Policy End date');
                 }
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->batch) {
-                    $leadValidationErrors->push('Batch is required');
-                }
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->dob) {
-                    $leadValidationErrors->push('Date of Birth is required');
-                }
+
                 if (isset($leadData->dob) && $leadData->dob && ! $this->validateDate($leadData->dob)) {
                     $leadValidationErrors->push('Invalid Date of Birth');
                 }
@@ -1086,9 +1063,6 @@ class RenewalsUploadService
                     if ($quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
                         $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
                     }
-                }
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_numbert) {
-                    $leadValidationErrors->push('Policy Number is required');
                 }
 
                 switch($lead->quote_type) {
