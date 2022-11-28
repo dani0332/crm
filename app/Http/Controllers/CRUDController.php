@@ -1078,6 +1078,7 @@ class CRUDController extends Controller
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
             Log::info('sendEmailOneClickBuy ('.$request->quote_cdb_id.') OCB email sending failed Error Code: '.$responseCode);
+
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
         Log::info('sendEmailOneClickBuy END');
