@@ -92,7 +92,7 @@
                         </div>
                         <div class="item form-group">
                             <div class="col-md-3">
-                                Download Sample XLSX <a href="{{ $azureStorageUrl.$azureStorageContainer }}/renewals/renewals_upload_update_m3.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
+                                Download Sample XLSX <a href="{{ $azureStorageUrl.$azureStorageContainer }}/renewals/renewals_upload_update_m4.xlsx"><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0" /></a>
                             </div>
                         </div>
                         <div class="item form-group">
@@ -112,43 +112,47 @@
                                         <th>Max size</th></tr>
                                     </thead>
                                     <tbody>
-                                    <tr><td>1</td><td>Customer Name</td><td>Customer Name</td><td>No</td><td>100</td></tr>
-                                    <tr><td>2</td><td>Customer Email</td><td>Customer Email</td><td>No</td><td>255</td></tr>
-                                    <tr><td>3</td><td>Customer mobile</td><td>Customer Mobile Number - only numeric data</td><td>No</td><td>100</td></tr>
-                                    <tr><td>4</td><td>Insurance Type</td><td>Insurance Type</td><td>Yes</td><td>10</td></tr>
-                                    <tr><td>5</td><td>Insurance Provider</td><td>Insurance Provider Code</td><td>No</td><td>20</td></tr>
-                                    <tr><td>6</td><td>Product Type</td><td>Type of Insurance | Comprehensive or Third Party Only</td><td>No</td><td>50</td></tr>
-                                    <tr><td>7</td><td>Advisor Email</td><td>Advisor Email</td><td>No</td><td>100</td></tr>
-                                    <tr><td>8</td><td>Policy Number</td><td>Previous Quote Policy Number</td><td>Yes</td><td>100</td></tr>
-                                    <tr><td>9</td><td>Policy End Date</td><td>End Date of the insurance Policy - Format should be DD/MM/YYYY</td><td>Yes</td><td>10</td></tr>
-                                    <tr><td>10</td><td>Batch</td><td>Batch number assigned</td><td>No</td><td>25</td></tr>
-                                    <tr><td>11</td><td>Car Make</td><td>Car Make Information</td><td>No</td><td>50</td></tr>
-                                    <tr><td>12</td><td>Car Model</td><td>Car Model Information</td><td>No</td><td>50</td></tr>
-                                    <tr><td>13</td><td>Model Year</td><td>Vehicle Year of manufacture</td><td>No</td><td>4</td></tr>
-                                    <tr><td>14</td><td>Date Of Birth</td><td>Customer Date of Birth</td><td>No</td><td>10</td></tr>
-                                    <tr><td>15</td><td>Driving Experience</td><td>Driving Experience</td><td>No</td><td>50</td></tr>
-                                    <tr><td>16</td><td>Nationality</td><td>Nationality</td><td>No</td><td>60</td></tr>
-                                    <tr><td>17</td><td>Provider Name</td><td>Insurance Provider Name</td><td>No</td><td>100</td></tr>
-                                    <tr><td>18</td><td>Plan Name</td><td>Insurer Plan Name</td><td>No</td><td>100</td></tr>
-                                    <tr><td>19</td><td>Repair Type</td><td>Repair Type</td><td>No</td><td>100</td></tr>
-                                    <tr><td>20</td><td>Claim History</td><td>Claim History</td><td>No</td><td>100</td></tr>
-                                    <tr><td>21</td><td>NC Letter</td><td>NC Letter - Yes/No</td><td>No</td><td>100</td></tr>
-                                    <tr><td>22</td><td>Insurer Quote No.</td><td>Insurer Quote No.</td><td>No</td><td>100</td></tr>
-                                    <tr><td>23</td><td>Car Value</td><td>Car Value (From Insurer)</td><td>No</td><td>50</td></tr>
-                                    <tr><td>24</td><td>Renewal Premium</td><td>Renewal Premium</td><td>No</td><td>50</td></tr>
-                                    <tr><td>25</td><td>Excess</td><td>Excess</td><td>No</td><td>20</td></tr>
-                                    <tr><td>26</td><td>Ancillary Excess</td><td>Ancillary Excess</td><td>No</td><td>20</td></tr>
-                                    <tr><td>27</td><td>PAB Driver</td><td>PAB Driver</td><td>No</td><td>20</td></tr>
-                                    <tr><td>28</td><td>PAB Passenger</td><td>PAB Passenger</td><td>No</td><td>20</td></tr>
-                                    <tr><td>29</td><td>Rent a car</td><td>Rent a car</td><td>No</td><td>20</td></tr>
-                                    <tr><td>30</td><td>Amount- Rent a Car</td><td>Amount- Rent a Car</td><td>No</td><td>20</td></tr>
-                                    <tr><td>31</td><td>Oman cover</td><td>Oman cover</td><td>No</td><td>20</td></tr>
-                                    <tr><td>32</td><td>Road Side Assistance</td><td>Road Side Assistance</td><td>No</td><td>20</td></tr>
-                                    <tr><td>33</td><td>First Year of Registration</td><td>First Year of Registration</td><td>No</td><td>20</td></tr>
-                                    <tr><td>34</td><td>Trim</td><td>Trim</td><td>No</td><td>50</td></tr>
-                                    <tr><td>35</td><td>Registration Location</td><td>Registration Location</td><td>No</td><td>50</td></tr>
-                                    <tr><td>36</td><td>Previous Advisor Email</td><td>Previously assigned Advisor Email</td><td>No</td><td>100</td></tr>
-                                    <tr><td>37</td><td>Notes</td><td>Any other Information</td><td>No</td><td>200</td></tr>
+                                        <tr><td>1</td><td>Customer Name</td><td>Customer Name</td><td>No</td><td>100</td></tr>
+                                        <tr><td>2</td><td>Customer Email</td><td>Customer Email</td><td>No</td><td>255</td></tr>
+                                        <tr><td>3</td><td>Customer mobile</td><td>Customer Mobile Number - only numeric data</td><td>No</td><td>100</td></tr>
+                                        <tr><td>4</td><td>Insurance Type</td><td>Insurance Type</td><td>Yes</td><td>10</td></tr>
+                                        <tr><td>5</td><td>Insurance Provider</td><td>Insurance Provider Code</td><td>No</td><td>20</td></tr>
+                                        <tr><td>6</td><td>Product Type</td><td>Type of Insurance | Comprehensive or Third Party Only</td><td>No</td><td>50</td></tr>
+                                        <tr><td>7</td><td>Advisor Email</td><td>Advisor Email</td><td>No</td><td>100</td></tr>
+                                        <tr><td>8</td><td>Policy Number</td><td>Previous Quote Policy Number</td><td>Yes</td><td>100</td></tr>
+                                        <tr><td>9</td><td>Policy End Date</td><td>End Date of the insurance Policy - Format should be DD/MM/YYYY</td><td>Yes</td><td>10</td></tr>
+                                        <tr><td>10</td><td>Batch</td><td>Batch number assigned</td><td>No</td><td>25</td></tr>
+                                        <tr><td>11</td><td>Car Make</td><td>Car Make Information</td><td>No</td><td>50</td></tr>
+                                        <tr><td>12</td><td>Car Model</td><td>Car Model Information</td><td>No</td><td>50</td></tr>
+                                        <tr><td>13</td><td>Model Year</td><td>Vehicle Year of manufacture</td><td>No</td><td>4</td></tr>
+                                        <tr><td>14</td><td>Date Of Birth</td><td>Customer Date of Birth</td><td>No</td><td>10</td></tr>
+                                        <tr><td>15</td><td>Driving Experience</td><td>Driving Experience</td><td>No</td><td>50</td></tr>
+                                        <tr><td>16</td><td>Nationality</td><td>Nationality</td><td>No</td><td>60</td></tr>
+                                        <tr><td>17</td><td>Provider Name</td><td>Insurance Provider Name</td><td>No</td><td>100</td></tr>
+                                        <tr><td>18</td><td>Plan Name</td><td>Insurer Plan Name</td><td>No</td><td>100</td></tr>
+                                        <tr><td>19</td><td>Repair Type</td><td>Repair Type</td><td>No</td><td>100</td></tr>
+                                        <tr><td>20</td><td>Claim History</td><td>Claim History</td><td>No</td><td>100</td></tr>
+                                        <tr><td>21</td><td>NC Letter</td><td>NC Letter - Yes/No</td><td>No</td><td>100</td></tr>
+                                        <tr><td>22</td><td>Insurer Quote No.</td><td>Insurer Quote No.</td><td>No</td><td>100</td></tr>
+                                        <tr><td>23</td><td>Car Value</td><td>Car Value (From Insurer)</td><td>No</td><td>50</td></tr>
+                                        <tr><td>24</td><td>Renewal Premium</td><td>Renewal Premium</td><td>No</td><td>50</td></tr>
+                                        <tr><td>25</td><td>Excess</td><td>Excess</td><td>No</td><td>20</td></tr>
+                                        <tr><td>26</td><td>Ancillary Excess</td><td>Ancillary Excess</td><td>No</td><td>20</td></tr>
+                                        <tr><td>27</td><td>PAB Driver</td><td>PAB Driver</td><td>No</td><td>20</td></tr>
+                                        <tr><td>28</td><td>Amount - PAB Driver</td><td>Amount - PAB Driver</td><td>No</td><td>20</td></tr>
+                                        <tr><td>29</td><td>PAB Passenger</td><td>PAB Passenger</td><td>No</td><td>20</td></tr>
+                                        <tr><td>30</td><td>Amount - PAB Passenger</td><td>Amount - PAB Passenger</td><td>No</td><td>20</td></tr>
+                                        <tr><td>31</td><td>Rent a car</td><td>Rent a car</td><td>No</td><td>20</td></tr>
+                                        <tr><td>32</td><td>Amount- Rent a Car</td><td>Amount- Rent a Car</td><td>No</td><td>20</td></tr>
+                                        <tr><td>33</td><td>Oman cover</td><td>Amount - Oman cover</td><td>No</td><td>20</td></tr>
+                                        <tr><td>34</td><td>Amount - Oman cover</td><td>Amount - Oman cover</td><td>No</td><td>20</td></tr>
+                                        <tr><td>35</td><td>Road Side Assistance</td><td>Road Side Assistance</td><td>No</td><td>20</td></tr>
+                                        <tr><td>36</td><td>Amount - Road Side Assistance</td><td>Amount - Road Side Assistance</td><td>No</td><td>20</td></tr>
+                                        <tr><td>37</td><td>First Year of Registration</td><td>First Year of Registration</td><td>No</td><td>20</td></tr>
+                                        <tr><td>38</td><td>Trim</td><td>Trim</td><td>No</td><td>50</td></tr>
+                                        <tr><td>39</td><td>Registration Location</td><td>Registration Location</td><td>No</td><td>50</td></tr>
+                                        <tr><td>40</td><td>Previous Advisor Email</td><td>Previously assigned Advisor Email</td><td>No</td><td>100</td></tr>
+                                        <tr><td>41</td><td>Notes</td><td>Any other Information</td><td>No</td><td>200</td></tr>
                                     </tbody>
                                 </table>
                             </div>
