@@ -22,9 +22,9 @@ use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\Datatables\Datatables;
-use Illuminate\Support\Facades\Log;
 
 class RenewalsUploadController extends Controller
 {
@@ -335,6 +335,7 @@ class RenewalsUploadController extends Controller
         }
 
         Log::info('runBatchProcess END');
+
         return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
     }
 
