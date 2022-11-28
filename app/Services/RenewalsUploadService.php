@@ -831,9 +831,13 @@ class RenewalsUploadService
             'discountPremium' => $data['premium'] ?? 0,
             'ancillaryExcess' => $data['ancillary_excess'] ?? 0,
             'carValue' => $data['car_value'] ?? 0,
-            'excess' => $data['excess'] ?? 0,
             'insurerQuoteNo' => $data['insurer_quote_no'] ?? "",
         ];
+
+        //excess will be used for comp or agency repair type
+        if ($data['plan_type'] == carTypeInsuranceCode::COMP || $data['plan_type'] == carTypeInsuranceCode::AGENCY) {
+            $planData['excess'] = $data['excess'];
+        }
 
         info($logPrefix . ' car plan detail with addons fetched');
 
