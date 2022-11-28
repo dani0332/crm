@@ -733,9 +733,9 @@ class RenewalsUploadService
                     'has_ncd_supporting_documents' => $data['nc_letter'],
                 ]);
 
-                if ($quoteType->code == quoteTypeCode::Car && !empty($data['year_of_first_registration'])) {
+                if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
                     $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];
-                } else if ($quoteType->code == quoteTypeCode::Car && !empty($data['year'])) {
+                } elseif ($quoteType->code == quoteTypeCode::Car && ! empty($data['year'])) {
                     $quoteData['year_of_first_registration'] = $data['year'];
                 }
 
@@ -798,8 +798,8 @@ class RenewalsUploadService
      */
     public function createPlan($data, $quote, $createdById)
     {
-        $logPrefix = 'CreatePlan FN: createPlan UUID: ' . $quote->uuid;
-        info($logPrefix . ' Create Plan Started');
+        $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
+        info($logPrefix.' Create Plan Started');
 
         $provider = InsuranceProvider::where('text', $data['provider_name'])->first();
 
@@ -809,10 +809,9 @@ class RenewalsUploadService
             'provider_id' => $provider->id,
         ])->with(['carAddons' => function ($q) {
             $q->whereIn('code', [CarPlanAddonsCode::DRIVER_COVER, CarPlanAddonsCode::PASSENGER_COVER,
-                CarPlanAddonsCode::CAR_HIRE, CarPlanAddonsCode::OMAN_COVER, CarPlanAddonsCode::BREAKDOWN_COVER
+                CarPlanAddonsCode::CAR_HIRE, CarPlanAddonsCode::OMAN_COVER, CarPlanAddonsCode::BREAKDOWN_COVER,
             ])->with('carAddonOptions');
         }])->first();
-
 
         $planData = [
             'quoteUID' => $quote->uuid,
@@ -832,10 +831,10 @@ class RenewalsUploadService
             'ancillaryExcess' => $data['ancillary_excess'] ?? 0,
             'carValue' => $data['car_value'] ?? 0,
             'excess' => $data['excess'] ?? 0,
-            'insurerQuoteNo' => $data['insurer_quote_no'] ?? "",
+            'insurerQuoteNo' => $data['insurer_quote_no'] ?? '',
         ];
 
-        info($logPrefix . ' car plan detail with addons fetched');
+        info($logPrefix.' car plan detail with addons fetched');
 
         $planAddons = collect($carPlan->carAddons)->keyBy('code')->toArray();
 
@@ -847,26 +846,24 @@ class RenewalsUploadService
             'road_side_assistance' => CarPlanAddonsCode::BREAKDOWN_COVER,
         ];
 
-        foreach ($addons as $key => $addonCode)
-        {
-            if($data[$key] == "NO") continue;
+        foreach ($addons as $key => $addonCode) {
+            if ($data[$key] == 'NO') {
+                continue;
+            }
 
-            if(isset($planAddons[$addonCode]))
-            {
+            if (isset($planAddons[$addonCode])) {
                 $addon = $planAddons[$addonCode];
 
                 foreach ($addon['car_addon_options'] as $option) {
-
-                    if(trim($option['value']) == trim($data[$key])) {
-
+                    if (trim($option['value']) == trim($data[$key])) {
                         $planDataAddon = [
                             'addonId' => $option['addon_id'],
                             'addonOptionId' => $option['id'],
                             'isSelected' => true,
-                            'price' =>  0
+                            'price' => 0,
                         ];
 
-                        if($addonCode == CarPlanAddonsCode::CAR_HIRE) {
+                        if ($addonCode == CarPlanAddonsCode::CAR_HIRE) {
                             $planDataAddon['price'] = $data['car_hire_amount'];
                             $planDataAddon['isSelected'] = ($data['car_hire_amount'] == 0);
                         }
@@ -875,8 +872,9 @@ class RenewalsUploadService
                         break;
                     }
                 }
-
-            } else info($logPrefix . '(' . $addonCode.  ') not found');
+            } else {
+                info($logPrefix.'('.$addonCode.') not found');
+            }
         }
 
         //trim is optional
@@ -893,11 +891,11 @@ class RenewalsUploadService
 
         $planData['plans'][] = $plan;
 
-        info($logPrefix . ' setup create plan data is completed.');
+        info($logPrefix.' setup create plan data is completed.');
 
         //todo: temporary logging, remove later
-        info($logPrefix . ' PlanData: ' . json_encode($planData));
-        info($logPrefix . ' ExcelAddonsData: ' . json_encode(Arr::only($data, ['driver_cover', 'passenger_cover', 'car_hire', 'car_hire_amount', 'oman_cover', 'road_side_assistance'])));
+        info($logPrefix.' PlanData: '.json_encode($planData));
+        info($logPrefix.' ExcelAddonsData: '.json_encode(Arr::only($data, ['driver_cover', 'passenger_cover', 'car_hire', 'car_hire_amount', 'oman_cover', 'road_side_assistance'])));
 
         //todo: what to do when it fails
         return $this->carQuoteService->renewalCreatePlan($planData);
