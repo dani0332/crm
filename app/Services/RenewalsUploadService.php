@@ -1089,6 +1089,12 @@ class RenewalsUploadService
                             } elseif (! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                 $leadValidationErrors->push('Invalid Driving Experience');
                             }
+                            if ($leadData->premium && ! $leadData->excess) {
+                                $leadValidationErrors->push('Excess is required with Renewal Premium');
+                            }
+                            if (! $leadData->premium && $leadData->excess) {
+                                $leadValidationErrors->push('Renewal Premium is required with Excess');
+                            }
                             if ($leadData->premium && $leadData->excess) {
                                 if (! $leadData->provider_name) {
                                     $leadValidationErrors->push('Provider Name is required');
