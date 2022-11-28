@@ -16,4 +16,6 @@ final class CarPlanAddonsCode extends Enum
     const PASSENGER_COVER = 'passengerCover';
     const PASSENGER_COVER_TEXT = 'passengers cover';
     const BREAKDOWN_COVER = 'breakdownCover';
+    const CAR_HIRE = 'carHire';
+    const OMAN_COVER = 'omanCover';
 }
