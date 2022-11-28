@@ -17,7 +17,6 @@ class CarLeadAllocationDashboardService extends BaseService
     public function getGridData()
     {
         try {
-            DB::beginTransaction();
             $users = User::join('tier_users as tu', 'tu.user_id', 'users.id')
                             ->join('tiers as t', 't.id', 'tu.tier_id')
                             ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
@@ -34,12 +33,10 @@ class CarLeadAllocationDashboardService extends BaseService
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $users = $users->where('users.manager_id', auth()->user()->id);
             }
-            DB::commit();
 
             return $users->get();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
         }
     }
 
