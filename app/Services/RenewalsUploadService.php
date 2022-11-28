@@ -1068,83 +1068,57 @@ class RenewalsUploadService
                 switch($lead->quote_type) {
                     case QuoteTypeShortCode::CAR:
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
-                            if (! $leadData->make) {
-                                $leadValidationErrors->push('Car Make is required');
-                            } elseif ($leadData->make && ! CarMake::where('text', $leadData->make)->first()) {
+                            if ($leadData->make && ! CarMake::where('text', $leadData->make)->first()) {
                                 $leadValidationErrors->push('Invalid Car Make');
                             }
-                            if (! $leadData->model) {
-                                $leadValidationErrors->push('Car Model is required');
-                            } elseif ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
+                            if ($leadData->model && ! CarModel::where('text', $leadData->model)->first()) {
                                 $leadValidationErrors->push('Invalid Car Model');
                             }
-                            if (! $leadData->make) {
-                                $leadValidationErrors->push('Car Model is required');
-                            }
-                            if (! $leadData->model_year) {
-                                $leadValidationErrors->push('Model Year is required');
-                            }
+
                             if ($leadData->product_type != carTypeInsuranceCode::Comprehensive && $leadData->product_type != carTypeInsuranceCode::ThirdPartyOnly) {
                                 $leadValidationErrors->push('Invalid Product Type, needs to be Third Party Only or Comprehensive');
                             }
-                            //removing cause of new upload sheet requirements
-                            // if ($leadData->plan_type == carTypeInsuranceCode::COMP || $leadData->plan_type == carTypeInsuranceCode::AGENCY) {
-                            //     if (! $leadData->excess) {
-                            //         $leadValidationErrors->push('Excess is required when Repair Type is COMP or AGENCY');
-                            //     }
-                            // }
-                            if (! $leadData->nationality) {
-                                $leadValidationErrors->push('Nationality is required');
-                            } elseif (! Nationality::where('text', $leadData->nationality)->first()) {
+                            if ($leadData->nationality && ! Nationality::where('text', $leadData->nationality)->first()) {
                                 $leadValidationErrors->push('Invalid Nationality Text');
                             }
-                            if (! $leadData->provider_name) {
-                                $leadValidationErrors->push('Provider Name is required');
-                            }
-                            if (! $leadData->plan_name) {
-                                $leadValidationErrors->push('Plan Name is required');
-                            }
-                            if (! $leadData->plan_type) {
-                                $leadValidationErrors->push('Repair Type is required');
-                            }
-                            if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name && $insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->where('code', $leadData->insurer)->first()) {
-                                if (! CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $insuranceProvider->id)->first()) {
-                                    $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
-                                }
-                            } else {
-                                $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
-                            }
-
-                            if (! $leadData->claim_history) {
-                                $leadValidationErrors->push('Claim History is required');
-                            } elseif (! ClaimHistory::where('text', $leadData->claim_history)->first()) {
+                            if ($leadData->claim_history && ! ClaimHistory::where('text', $leadData->claim_history)->first()) {
                                 $leadValidationErrors->push('Invalid Claim History');
-                            }
-                            if (! $leadData->nc_letter) {
-                                $leadValidationErrors->push('NC Letter is required');
                             }
                             if (! $leadData->driving_experience) {
                                 $leadValidationErrors->push('Driving Experience is required');
                             } elseif (! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                 $leadValidationErrors->push('Invalid Driving Experience');
                             }
-                            if (! $leadData->car_value) {
-                                $leadValidationErrors->push('Car Value (From Insurer) is required');
-                            }
                             if ($leadData->premium && $leadData->excess) {
+                                if (! $leadData->provider_name) {
+                                    $leadValidationErrors->push('Provider Name is required');
+                                }
+                                if (! $leadData->plan_name) {
+                                    $leadValidationErrors->push('Plan Name is required');
+                                }
+                                if (! $leadData->plan_type) {
+                                    $leadValidationErrors->push('Repair Type is required');
+                                }
+                                if ($leadData->provider_name && $leadData->plan_type && $leadData->plan_name && $insuranceProvider = InsuranceProvider::where('text', $leadData->provider_name)->where('code', $leadData->insurer)->first()) {
+                                    if (! CarPlan::where('repair_type', $leadData->plan_type)->where('text', $leadData->plan_name)->where('provider_id', $insuranceProvider->id)->first()) {
+                                        $leadValidationErrors->push('Invalid Insurer Plan Name or Repair Type');
+                                    }
+                                } else {
+                                    $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
+                                }
                                 if ($leadData->ancillary_excess) {
                                     $leadValidationErrors->push('Ancillary Excess is required with Renewal Premium & Excess');
                                 }
-                                if ($leadData->pab_driver) {
+                                if ($leadData->driver_cover) {
                                     $leadValidationErrors->push('PAB Driver is required with Renewal Premium & Excess');
                                 }
-                                if ($leadData->pab_passenger) {
+                                if ($leadData->passenger_cover) {
                                     $leadValidationErrors->push('PAB Passenger is required with Renewal Premium & Excess');
                                 }
-                                if ($leadData->rent_car) {
+                                if ($leadData->car_hire) {
                                     $leadValidationErrors->push('Rent a car is required with Renewal Premium & Excess');
                                 }
-                                if ($leadData->amount_rent_car) {
+                                if ($leadData->car_hire_amount) {
                                     $leadValidationErrors->push('Amount- Rent a Car is required with Renewal Premium & Excess');
                                 }
                                 if ($leadData->oman_cover) {
@@ -1153,7 +1127,7 @@ class RenewalsUploadService
                                 if ($leadData->road_side_assistance) {
                                     $leadValidationErrors->push('Road Side Assistance is required with Renewal Premium & Excess');
                                 }
-                                if ($leadData->first_year_of_registration) {
+                                if ($leadData->year_of_first_registration) {
                                     $leadValidationErrors->push('First Year of Registration is required with Renewal Premium & Excess');
                                 }
                             }
