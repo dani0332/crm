@@ -28,6 +28,7 @@ class RenewalValidationPassedTable extends DataTableComponent
     public function columns(): array
     {
         return [
+            Column::make('ID', 'id')->hideIf(true),
             Column::make('Batch', 'batch'),
             Column::make('File name', 'renewalUploadLead.file_name'),
             Column::make('Quote type', 'quote_type'),
