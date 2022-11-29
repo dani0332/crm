@@ -43,16 +43,16 @@ class DashboardController extends Controller
             'quote_batches.start_date',
             'quote_batches.end_date',
             DB::raw('count(car_quote_request.id) as total_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'. LeadSourceEnum::IMCRM .'" THEN 1 ELSE 0 END) as manual_created'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'. LeadSourceEnum::IMCRM .'" and car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as created_sale_leads'),
         )
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->groupBy('quote_batches.name', 'quote_batches.id')
         ->orderBy('quote_batches.id', 'desc')->take(10);
-        if($request->tier_filter){
+        if ($request->tier_filter) {
             $request->tier_filter == 'tr' ? $records->where('tiers.name', TiersEnum::TierR) : $records->where('tiers.name', TiersEnum::Tier6);
         }
         $labels = [];
