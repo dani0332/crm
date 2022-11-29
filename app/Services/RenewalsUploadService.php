@@ -1177,7 +1177,7 @@ class RenewalsUploadService
                                     $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
                                 }
                                 if ($carPlan) {
-                                    if (! $leadData->ancillary_excess) {
+                                    if ($leadData->ancillary_excess == '') {
                                         $leadValidationErrors->push('Ancillary Excess is required with Renewal Premium & Excess');
                                     }
                                     if (! $leadData->driver_cover) {
