@@ -7,6 +7,7 @@ use App\Charts\MainDashboardChart;
 use App\Enums\LeadSourceEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
+use App\Models\QuoteBatches;
 use App\Services\DashboardService;
 use DB;
 use Illuminate\Http\Request;
@@ -37,7 +38,17 @@ class DashboardController extends Controller
 
     public function renderTplDashboard(Request $request)
     {
-        $records = CarQuote::query()
+
+        $stats = $this->getTPLDashboardStats($request);
+        return view('dashboard.tpl_dashboard')
+                ->with('labels', json_encode($stats[0], JSON_OBJECT_AS_ARRAY))
+                ->with('data', json_encode($stats[1], JSON_OBJECT_AS_ARRAY));
+    }
+
+    public function getTPLDashboardStats(Request $request)
+    {
+        $lastTenBatchIds = QuoteBatches::whereNotNull('start_date')->whereNotNull('start_date')->orderBy('id', 'desc')->take(10)->pluck('id');
+        $records = QuoteBatches::query()
         ->select(
             'quote_batches.name',
             'quote_batches.start_date',
@@ -48,13 +59,20 @@ class DashboardController extends Controller
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as created_sale_leads'),
         )
-        ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->groupBy('quote_batches.name', 'quote_batches.id')
-        ->orderBy('quote_batches.id', 'desc')->take(10);
-        if ($request->tier_filter) {
-            $request->tier_filter == 'tr' ? $records->where('tiers.name', TiersEnum::TierR) : $records->where('tiers.name', TiersEnum::Tier6);
+        ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+        ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
+        if (isset($request->tier_filter)) {
+            $request->tier_filter == 'tr' ? $records->where('tiers.name', TiersEnum::TierTR) : $records->where('tiers.name', TiersEnum::Tier6);
         }
+        if (isset($request->source)) {
+            if($request->source == 'yes'){
+                $records->where('car_quote_request.source', LeadSourceEnum::IMCRM);
+            }
+            if($request->source == 'no'){
+                $records->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
+            }
+        }
+
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
@@ -63,9 +81,7 @@ class DashboardController extends Controller
             array_push($labels, $record->name);
         }
 
-        return view('dashboard.tpl_dashboard')
-                ->with('labels', json_encode($labels, JSON_OBJECT_AS_ARRAY))
-                ->with('data', json_encode($data, JSON_OBJECT_AS_ARRAY));
+        return $request->tier_filter ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
     }
 
     public function renderComprehensiveDashboard(ComprehensiveDashboard $comprehensiveDashboard)
