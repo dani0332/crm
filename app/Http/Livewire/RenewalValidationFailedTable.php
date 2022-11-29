@@ -21,31 +21,31 @@ class RenewalValidationFailedTable extends DataTableComponent
           ->setPaginationVisibilityDisabled()
           ->setEmptyMessage('No data found')
           ->setConfigurableAreas([
-            'after-pagination' => 'livewire.pagination',
+              'after-pagination' => 'livewire.pagination',
           ]);
     }
 
     public function columns(): array
     {
         return [
-          Column::make('Batch', 'batch'),
-          Column::make('File name', 'renewalUploadLead.file_name'),
-          Column::make('Quote type', 'quote_type'),
-          Column::make('Policy number', 'policy_number'),
-          Column::make('Status', 'status'),
-          Column::make('Validation Errors', 'validation_errors')
-            ->format(
-                function ($value, $row, Column $column) {
-                    $html = '';
-                    foreach ($row->validation_errors as $key => $error) {
-                        $html .= '<li>'.$error.'</li>';
-                    }
+            Column::make('Batch', 'batch'),
+            Column::make('File name', 'renewalUploadLead.file_name'),
+            Column::make('Quote type', 'quote_type'),
+            Column::make('Policy number', 'policy_number'),
+            Column::make('Status', 'status'),
+            Column::make('Validation Errors', 'validation_errors')
+              ->format(
+                  function ($value, $row, Column $column) {
+                      $html = '';
+                      foreach ($row->validation_errors as $key => $error) {
+                          $html .= '<li>'.$error.'</li>';
+                      }
 
-                    return '<ul class="list-disc marker:text-red-600">'.$html.'</ul>';
-                }
-            )
-            ->html(),
-          Column::make('Created at', 'created_at'),
+                      return '<ul class="list-disc marker:text-red-600">'.$html.'</ul>';
+                  }
+              )
+              ->html(),
+            Column::make('Created at', 'created_at'),
         ];
     }
 

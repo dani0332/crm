@@ -21,24 +21,24 @@ class RenewalValidationPassedTable extends DataTableComponent
           ->setPaginationVisibilityDisabled()
           ->setEmptyMessage('No data found')
           ->setConfigurableAreas([
-            'after-pagination' => 'livewire.pagination',
+              'after-pagination' => 'livewire.pagination',
           ]);
     }
 
     public function columns(): array
     {
         return [
-          Column::make('Batch', 'batch'),
-          Column::make('File name', 'renewalUploadLead.file_name'),
-          Column::make('Quote type', 'quote_type'),
-          Column::make('Policy number', 'policy_number'),
-          Column::make('Status', 'status'),
-          Column::make('Quote')
-            ->label(
-                fn ($row, Column $column) => '<a target="_blank" href="'.request()->url().'/quote-redirect/'.$row->id.'" class="btn btn-primary btn-sm fetch-plans">View Quote</a>'
-            )
-            ->html(),
-          Column::make('Created at', 'created_at'),
+            Column::make('Batch', 'batch'),
+            Column::make('File name', 'renewalUploadLead.file_name'),
+            Column::make('Quote type', 'quote_type'),
+            Column::make('Policy number', 'policy_number'),
+            Column::make('Status', 'status'),
+            Column::make('Quote')
+              ->label(
+                  fn ($row, Column $column) => '<a target="_blank" href="'.request()->url().'/quote-redirect/'.$row->id.'" class="btn btn-primary btn-sm fetch-plans">View Quote</a>'
+              )
+              ->html(),
+            Column::make('Created at', 'created_at'),
         ];
     }
 
