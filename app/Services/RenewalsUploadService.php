@@ -1095,7 +1095,7 @@ class RenewalsUploadService
 
     public function uploadedLeadsValidation(RenewalsUploadLeads $renewalsUploadLead)
     {
-        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunk(50, function ($leads) {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunkById(50, function ($leads) {
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
@@ -1188,7 +1188,7 @@ class RenewalsUploadService
                                     $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
                                 }
                                 if ($carPlan) {
-                                    if (! $leadData->ancillary_excess) {
+                                    if ($leadData->ancillary_excess == '') {
                                         $leadValidationErrors->push('Ancillary Excess is required with Renewal Premium & Excess');
                                     }
                                     if (! $leadData->driver_cover) {
@@ -1294,7 +1294,7 @@ class RenewalsUploadService
                     $renewalUploadLead->save();
                 }
             }
-        });
+        }, $column = 'id');
     }
 
     private function validateDate($date, $format = 'd/m/Y')
