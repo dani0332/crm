@@ -14,6 +14,7 @@ use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
+use App\Jobs\CreateRenewalQuotesJob;
 use App\Jobs\ProcessRenewalsUploadCreate;
 use App\Jobs\ProcessRenewalsUploadUpdate;
 use App\Models\CarMake;
@@ -37,7 +38,9 @@ use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DateTime;
+use Illuminate\Bus\Batch;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -186,8 +189,11 @@ class RenewalsUploadService
 
             info($logPrefix.' excel data stored in DB');
 
-            $this->uploadedLeadsValidation($renewalsUploadLead);
-            $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead);
+            if($validationResult) {
+                $this->createQuotes($renewalsUploadLead);
+            }
+
 
             info($logPrefix.' validation and quote creation is completed');
 
@@ -197,6 +203,55 @@ class RenewalsUploadService
             Log::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
 
             return false;
+        }
+    }
+
+    public function createQuotes(RenewalsUploadLeads $renewalsUploadLead)
+    {
+        try {
+            $jobs = null;
+
+            dd(RenewalQuoteProcess::where([
+                'renewals_upload_lead_id' => $renewalsUploadLead->id,
+                'status' => RenewalProcessStatuses::VALIDATED
+            ])->count());
+            RenewalQuoteProcess::where([
+                'renewals_upload_lead_id' => $renewalsUploadLead->id,
+                'status' => RenewalProcessStatuses::VALIDATED
+            ])->chunk(50, function ($leads) use($renewalsUploadLead, &$jobs) {
+
+                $chunks = $leads->chunk(5);
+
+                foreach ($chunks as $chunk) {
+                    $jobs[] = new CreateRenewalQuotesJob($chunk);
+                }
+            });
+
+            if($jobs != null && sizeof($jobs))
+            {
+                $batch = Bus::batch($jobs)->then(function (Batch $batch) use($renewalsUploadLead) {
+                    // All jobs completed successfully...
+                    info('BATCH: all jobs completed successfully');
+                    $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                })->catch(function (Batch $batch, \Throwable $e) use($renewalsUploadLead) {
+                    // First batch job failure detected...
+                    info('BATCH: one of batch is failed');
+                    $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+                })->finally(function (Batch $batch) {
+                    // The batch has finished executing...
+                    info('BATCH: everything done');
+                })->dispatch();
+            }
+            else
+            {
+                info('BATCH: no jobs to create quotes');
+                $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            }
+        }
+        catch (\Exception $exception)
+        {
+            info('BATCH: one of batch is failed. Exception : ' . $exception->getMessage());
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
         }
     }
 
@@ -1263,6 +1318,7 @@ class RenewalsUploadService
                         break;
                 }
 
+                dump($leadValidationErrors->count(), $leadValidationErrors->toArray());
                 if ($leadValidationErrors->count() == 0) {
                     $lead->status = RenewalProcessStatuses::VALIDATED;
                 } else {
@@ -1273,9 +1329,9 @@ class RenewalsUploadService
 
                 if ($lead->status == RenewalProcessStatuses::VALIDATED) {
                     if ($lead->type == RenewalsUploadType::CREATE_LEADS) {
-                        $this->createQuote($lead);
+                       // $this->createQuote($lead);
                     } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
-                        $this->updateQuote($lead);
+                       // $this->updateQuote($lead);
                     }
                 } else {
                     $renewalUploadLead = $lead->renewalUploadLead;
@@ -1284,6 +1340,8 @@ class RenewalsUploadService
                 }
             }
         });
+
+        return true;
     }
 
     private function validateDate($date, $format = 'd/m/Y')
