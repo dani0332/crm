@@ -5,13 +5,14 @@ namespace App\Jobs\Renewals;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 
-class CreateRenewalQuotesJob implements ShouldQueue
+class UpdateRenewalQuotesJob implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -40,7 +41,7 @@ class CreateRenewalQuotesJob implements ShouldQueue
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
         foreach ($this->renewalQuoteProcess as $lead) {
-            $renewalsUploadService->createQuote($lead);
+            $renewalsUploadService->updateQuote($lead);
         }
     }
 

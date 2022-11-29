@@ -17,6 +17,7 @@ use App\Imports\UploadAndUpdateImport;
 use App\Jobs\ProcessRenewalsUploadCreate;
 use App\Jobs\ProcessRenewalsUploadUpdate;
 use App\Jobs\Renewals\CreateRenewalQuotesJob;
+use App\Jobs\Renewals\UpdateRenewalQuotesJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarPlan;
@@ -205,6 +206,11 @@ class RenewalsUploadService
         }
     }
 
+    /**
+     * @param RenewalsUploadLeads $renewalsUploadLead
+     * @return void
+     * @throws \Throwable
+     */
     public function createQuotes(RenewalsUploadLeads $renewalsUploadLead)
     {
         $logPrefix = 'UAC fn: createQuotes ';
@@ -236,6 +242,49 @@ class RenewalsUploadService
                 })->dispatch();
             } else {
                 info('BATCH: no jobs to create quotes');
+                $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            }
+        } catch (\Exception $exception) {
+            info('BATCH: one of batch is failed. Exception : '.$exception->getMessage());
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+        }
+    }
+
+    public function updateQuotes(RenewalsUploadLeads $renewalsUploadLead)
+    {
+        $logPrefix = 'UAU fn: updateQuotes ';
+        info($logPrefix.' Quote update started');
+
+        try {
+            $jobs = null;
+
+            RenewalQuoteProcess::where([
+                'renewals_upload_lead_id' => $renewalsUploadLead->id,
+                'status' => RenewalProcessStatuses::VALIDATED,
+            ])->chunkById(50, function ($leads) use (&$jobs) {
+                $chunks = $leads->chunk(5);
+
+                foreach ($chunks as $chunk) {
+                    $jobs[] = new UpdateRenewalQuotesJob($chunk);
+                }
+            });
+
+            if ($jobs != null && count($jobs)) {
+
+                $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalsUploadLead, $logPrefix) {
+                    info($logPrefix.' all jobs completed successfully');
+                    $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                })->catch(function (Batch $batch, \Throwable $e) use ($renewalsUploadLead, $logPrefix) {
+                    info($logPrefix.' one of batch is failed. batch: '.json_encode($batch->toArray()));
+                    $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+                })->finally(function (Batch $batch, $logPrefix) {
+                    info($logPrefix.' everything done');
+                })->dispatch();
+
+                info($logPrefix . ' jobs dispatched');
+
+            } else {
+                info($logPrefix . ' no jobs to create quotes');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
             }
         } catch (\Exception $exception) {
@@ -393,9 +442,12 @@ class RenewalsUploadService
 
             info($logPrefix.' excel data stored in DB.');
 
-            $this->uploadedLeadsValidation($renewalsUploadLead);
+            $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead);
 
-            $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            if ($validationResult) {
+                $this->updateQuotes($renewalsUploadLead);
+            }
+
             info($logPrefix.' validation and quote update is completed');
 
             return true;
@@ -715,6 +767,7 @@ class RenewalsUploadService
     public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
         return DB::transaction(function () use ($renewalQuoteProcess) {
+
             $logPrefix = 'UAU FN: updateQuote';
             $data = $renewalQuoteProcess->data;
 
