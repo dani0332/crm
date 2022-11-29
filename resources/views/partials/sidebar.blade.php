@@ -38,7 +38,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @if(Auth::user()->hasRole(RolesEnum::BetaUser) && Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::CarAdvisor]))
+                @if(Auth::user()->hasRole(RolesEnum::BetaUser) && Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::CarAdvisor]))
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
