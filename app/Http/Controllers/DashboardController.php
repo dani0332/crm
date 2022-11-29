@@ -6,7 +6,6 @@ use App\Charts\ComprehensiveDashboard;
 use App\Charts\MainDashboardChart;
 use App\Enums\LeadSourceEnum;
 use App\Enums\TiersEnum;
-use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Services\DashboardService;
 use DB;
@@ -38,8 +37,8 @@ class DashboardController extends Controller
 
     public function renderTplDashboard(Request $request)
     {
-
         $stats = $this->getTPLDashboardStats($request);
+
         return view('dashboard.tpl_dashboard')
                 ->with('labels', json_encode($stats[0], JSON_OBJECT_AS_ARRAY))
                 ->with('data', json_encode($stats[1], JSON_OBJECT_AS_ARRAY));
@@ -65,10 +64,10 @@ class DashboardController extends Controller
             $request->tier_filter == 'tr' ? $records->where('tiers.name', TiersEnum::TierTR) : $records->where('tiers.name', TiersEnum::Tier6);
         }
         if (isset($request->source)) {
-            if($request->source == 'yes'){
+            if ($request->source == 'yes') {
                 $records->where('car_quote_request.source', LeadSourceEnum::IMCRM);
             }
-            if($request->source == 'no'){
+            if ($request->source == 'no') {
                 $records->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
             }
         }
