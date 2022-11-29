@@ -1105,15 +1105,14 @@ class RenewalsUploadService
         $this->updateAdvisorAssignedDateTime('CarQuoteRequestDetail', $updateCarQuoteRenewal->id, 'car_quote_request_id', $currentUserId, $advisorId);
     }
 
-    public function renewalBatchEmailProcess($batchLeadId, $batchEmailId, $quoteTypeId, $isCompleted)
+    public function renewalBatchEmailProcess($batchLeadId, $batchEmailId, $quoteTypeId, $isCompleted, $batch)
     {
         Log::info('renewalBatchEmailProcess START');
         $carQuote = CarQuote::find($batchLeadId);
-        $ecomUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid;
 
         if ($carQuote->previous_quote_policy_number != null) {
             // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
-            $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true);
+            $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true);
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
             $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
@@ -1155,18 +1154,20 @@ class RenewalsUploadService
 
             if ($responseCode == 201) {
                 Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
+                $this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
+                
             } else {
                 Log::error('renewalBatchEmailProcess EmailNotSent: '.$responseCode.' batchEmailId:'.$batchEmailId.' Customer EmailAddress:'.$carQuote->email);
             }
         }
 
-        $this->updateRenewalBatchRecord($batchEmailId, $isCompleted);
+        $this->updateRenewalEmailBatchStatus($batchEmailId, $isCompleted);
         Log::info('renewalBatchEmailProcess END');
     }
 
-    public function updateRenewalBatchRecord($batchEmailId, $isCompleted)
+    public function updateRenewalEmailBatchStatus($batchEmailId, $isCompleted)
     {
-        Log::info('updateRenewalBatchRecord START');
+        Log::info('updateRenewalEmailBatchStatus START');
         $renewalsBatchStatus = RenewalsBatchEmails::find($batchEmailId);
         if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
             $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
@@ -1176,7 +1177,7 @@ class RenewalsUploadService
             $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
             $renewalsBatchStatus->save();
         }
-        Log::info('updateRenewalBatchRecord END');
+        Log::info('updateRenewalEmailBatchStatus END');
     }
 
     /**
@@ -1308,7 +1309,7 @@ class RenewalsUploadService
                                     $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
                                 }
                                 if ($carPlan) {
-                                    if (! $leadData->ancillary_excess) {
+                                    if ($leadData->ancillary_excess == '') {
                                         $leadValidationErrors->push('Ancillary Excess is required with Renewal Premium & Excess');
                                     }
                                     if (! $leadData->driver_cover) {
@@ -1447,5 +1448,35 @@ class RenewalsUploadService
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])->distinct('quote_id')->get();
+    }
+
+    public function getProcessLeadsToSendEmails($batch)
+    {
+        return RenewalQuoteProcess::select('id','quote_id')->where([
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'batch' => $batch,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'email_sent' => 0,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])->distinct('quote_id')->get();
+    }
+
+    public function updateRenewalQuoteEmailSent($batch, $quoteId)
+    {
+        Log::info('updateRenewalQuoteEmailSent START');
+        Log::info('updateRenewalQuoteEmailSent batch: '.$batch);
+        Log::info('updateRenewalQuoteEmailSent quoteId: '.$quoteId);
+        $emailSent = RenewalQuoteProcess::where([
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'batch' => $batch,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'email_sent' => 0,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED, 
+            'quote_id' => $quoteId])->first();
+        $emailSent->email_sent = 1;
+        $emailSent->save();
+        Log::info('updateRenewalQuoteEmailSent emailSent->id: '.$emailSent->id);
+        Log::info('updateRenewalQuoteEmailSent END');
     }
 }

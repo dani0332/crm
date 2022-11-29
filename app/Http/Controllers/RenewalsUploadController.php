@@ -253,18 +253,20 @@ class RenewalsUploadController extends Controller
         return view('renewals.update', compact('azureStorageUrl', 'azureStorageContainer', 'renewalsUploads'));
     }
 
-    public function listRenewalBatches(Request $request, CarQuote $carQuote, Datatables $datatables)
+    public function listRenewalBatches(Request $request, Datatables $datatables)
     {
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
         if ($request->ajax()) {
-            $datalRenewalsBatches = $carQuote::select('renewal_batch')
-            ->whereNotNull(['renewal_batch', 'renewal_import_code'])
-            ->groupBy('renewal_batch')
+            $dataRenewalsBatches = RenewalQuoteProcess::select('batch as renewal_batch')
+            ->where([
+                'quote_type' => QuoteTypeShortCode::CAR,
+                'type' => RenewalsUploadType::UPDATE_LEADS, ])
+            ->groupBy('batch')
             ->orderBy('created_at', 'desc');
 
-            return $datatables::of($datalRenewalsBatches)
+            return $datatables::of($dataRenewalsBatches)
                 ->addIndexColumn()
                 ->make(true);
         }
@@ -312,26 +314,26 @@ class RenewalsUploadController extends Controller
         }
 
         Log::info('runBatchProcess START');
-        $batchLeads = $this->renewalsUploadFileService->getProcessLeads($batch);
+        $batchLeads = $this->renewalsUploadFileService->getProcessLeadsToSendEmails($batch);
         $batchLeadsCount = $batchLeads->count();
         Log::info('batch: '.$batch.' batchLeadsCount: '.$batchLeadsCount);
 
         if ($batchLeadsCount == 0) {
-            return redirect('renewals/batches/'.$batch)->with('message', 'No leads found for this batch');
+            return redirect('renewals/batches/'.$batch)->with('success', 'No leads found for this batch');
         }
 
-        $renewalsBatchStatus = new RenewalsBatchEmails();
-        $renewalsBatchStatus->batch = $batch;
-        $renewalsBatchStatus->status = ProcessStatusCode::IN_PROGRESS;
-        $renewalsBatchStatus->total_leads = $batchLeadsCount;
-        $renewalsBatchStatus->total_sent = 0;
-        $renewalsBatchStatus->total_bounced = 0;
-        $renewalsBatchStatus->created_by_id = auth()->id();
-        $renewalsBatchStatus->save();
+        $batchEmail = new RenewalsBatchEmails();
+        $batchEmail->batch = $batch;
+        $batchEmail->status = ProcessStatusCode::IN_PROGRESS;
+        $batchEmail->total_leads = $batchLeadsCount;
+        $batchEmail->total_sent = 0;
+        $batchEmail->total_bounced = 0;
+        $batchEmail->created_by_id = auth()->id();
+        $batchEmail->save();
 
         foreach ($batchLeads as $key => $batchLead) {
             $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
-            dispatch(new RenewalBatchEmailJob($batchLead->id, $renewalsBatchStatus->id, QuoteTypeId::Car, $isCompleted));
+            dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
         }
 
         Log::info('runBatchProcess END');
