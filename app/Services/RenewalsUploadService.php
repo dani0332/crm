@@ -483,7 +483,7 @@ class RenewalsUploadService
      * @param $customerData
      * @return void
      */
-    public function udpateCustomer($customerData, $customerId)
+    public function updateCustomer($customerData, $customerId)
     {
         $update = false;
         $customer = CustomerService::getCustomerById($customerId);
@@ -705,7 +705,7 @@ class RenewalsUploadService
                 info($logPrefix.' quote found to update with UUID: '.$quote->uuid);
 
                 $customerData = $this->buildCustomerData($data);
-                $this->udpateCustomer($customerData, $quote->customer_id);
+                $this->updateCustomer($customerData, $quote->customer_id);
 
                 $quoteData = $this->getNonEmptyValues([
                     'first_name' => $customerData['first_name'],
