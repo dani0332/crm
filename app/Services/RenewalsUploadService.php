@@ -762,7 +762,12 @@ class RenewalsUploadService
 
             $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED, 'quote_id' => $quote->id]);
 
-            $renewalUploadLead->update(['good' => $renewalUploadLead->good += 1]);
+            $totalProcessed = RenewalQuoteProcess::where('renewals_upload_lead_id', $renewalUploadLead->id)
+                ->where('status', RenewalProcessStatuses::PROCESSED)->count();
+
+            $totalProcessed = (($totalProcessed + 1) > $renewalUploadLead->total_records) ? $totalProcessed : ($totalProcessed + 1);
+
+            $renewalUploadLead->update(['good' => $totalProcessed]);
 
             info($logPrefix.' Quote created. QuoteType: '.$data['quote_type'].' UUID: '.$quote->uuid);
 
@@ -909,7 +914,13 @@ class RenewalsUploadService
                     'fetch_plans_status' => FetchPlansStatuses::PENDING,
                 ]);
 
-                $renewalUploadLead->update(['good' => $renewalUploadLead->good += 1]);
+
+                $totalProcessed = RenewalQuoteProcess::where('renewals_upload_lead_id', $renewalUploadLead->id)
+                    ->where('status', RenewalProcessStatuses::PROCESSED)->count();
+
+                $totalProcessed = (($totalProcessed + 1) > $renewalUploadLead->total_records) ? $totalProcessed : ($totalProcessed + 1);
+
+                $renewalUploadLead->update(['good' => $totalProcessed]);
 
                 info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
 
@@ -1155,7 +1166,7 @@ class RenewalsUploadService
             if ($responseCode == 201) {
                 Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
                 $this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
-                
+
             } else {
                 Log::error('renewalBatchEmailProcess EmailNotSent: '.$responseCode.' batchEmailId:'.$batchEmailId.' Customer EmailAddress:'.$carQuote->email);
             }
@@ -1472,7 +1483,7 @@ class RenewalsUploadService
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'email_sent' => 0,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED, 
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
             'quote_id' => $quoteId])->first();
         $emailSent->email_sent = 1;
         $emailSent->save();
