@@ -5,7 +5,14 @@
     <div class="row">
         <div class="col-md-10 col-md-offset-1">
             <div class="panel panel-default">
-                <div class="panel-heading" style="font-size: 30px; font-wieght: 800;">TPL Conversion </div>
+                <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:left;">TPL Conversion </div>
+                <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:right;">
+                    <select class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100" id="tier-filter">
+                        <option value="" onchange="">Select Tier</option>
+                        <option value="tr">Tier R</option>
+                        <option value="t6">Tier 6</option>
+                    </select>
+                </div>
                 <div class="panel-body">
                     <canvas id="myChart"></canvas>
                 </div>
@@ -13,13 +20,22 @@
         </div>
     </div>
 </div>
-
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+    $(function(){
+        $('#tier-filter').on('change', function (e) {
+            var tierFilterValue = $('#tier-filter option:selected').val();
+            debugger;
+            $.get('/tpl-conversion-dashboard?tier_filter=' + tierFilterValue, function (data) {
+                debugger;
+            });
+        });
+    });
     function randomRGB() {
-    var roundValue = Math.round, rndmValue = Math.random, maxNum = 255;
-    return 'rgba(' + roundValue(rndmValue()*maxNum) + ',' + roundValue(rndmValue()*maxNum) + ',' + roundValue(rndmValue()*maxNum) + ')';
+        var roundValue = Math.round, rndmValue = Math.random, maxNum = 255;
+        return 'rgba(' + roundValue(rndmValue()*maxNum) + ',' + roundValue(rndmValue()*maxNum) + ',' + roundValue(rndmValue()*maxNum) + ')';
     }
     var backgroundColors = [];
     for (let index = 0; index < 50; index++) {
