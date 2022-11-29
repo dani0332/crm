@@ -1034,16 +1034,6 @@ class RenewalsUploadService
         Log::info('renewalBatchEmailProcess END');
     }
 
-    public function updateRenewalQuoteEmailSent($batch, $quoteId)
-    {
-        $emailSent = RenewalQuoteProcess::where([
-            'quote_type' => QuoteTypeShortCode::CAR,
-            'batch' => $batch,
-            'quote_id' => $quoteId, ]);
-        $emailSent->email_sent = 1;
-        $emailSent->save();
-    }
-
     public function updateRenewalEmailBatchStatus($batchEmailId, $isCompleted)
     {
         Log::info('updateRenewalEmailBatchStatus START');
@@ -1341,5 +1331,24 @@ class RenewalsUploadService
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'email_sent' => 0,
             'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])->distinct('quote_id')->get();
+    }
+
+    public function updateRenewalQuoteEmailSent($batch, $quoteId)
+    {
+        Log::info('updateRenewalQuoteEmailSent START');
+        Log::info('updateRenewalQuoteEmailSent batch: '.$batch);
+        Log::info('updateRenewalQuoteEmailSent quoteId: '.$quoteId);
+        $emailSent = RenewalQuoteProcess::where([
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'batch' => $batch,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+            'email_sent' => 0,
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED, 
+            'quote_id' => $quoteId])->first();
+        $emailSent->email_sent = 1;
+        $emailSent->save();
+        Log::info('updateRenewalQuoteEmailSent emailSent->id: '.$emailSent->id);
+        Log::info('updateRenewalQuoteEmailSent END');
     }
 }

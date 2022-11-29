@@ -51,7 +51,7 @@ class RenewalBatchEmailJob implements ShouldQueue
         try {
             $this->renewalsUploadFileService->renewalBatchEmailProcess($this->batchLeadId, $this->batchEmailId, $this->quoteTypeId, $this->isCompleted, $this->batch);
         } catch (\Exception $e) {
-            Log::info('RenewalBatchEmailJob message: '.$e->getMessage());
+            Log::info('RenewalBatchEmailJob Error: '.$e->getMessage());
             if ($this->attempts() == 3 && $this->isCompleted) {
                 // Update email batch status = failed
                 $batchEmail = RenewalsBatchEmails::find($this->batchEmailId);

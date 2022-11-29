@@ -319,21 +319,21 @@ class RenewalsUploadController extends Controller
         Log::info('batch: '.$batch.' batchLeadsCount: '.$batchLeadsCount);
 
         if ($batchLeadsCount == 0) {
-            return redirect('renewals/batches/'.$batch)->with('message', 'No leads found for this batch');
+            return redirect('renewals/batches/'.$batch)->with('success', 'No leads found for this batch');
         }
 
-        $renewalsBatchStatus = new RenewalsBatchEmails();
-        $renewalsBatchStatus->batch = $batch;
-        $renewalsBatchStatus->status = ProcessStatusCode::IN_PROGRESS;
-        $renewalsBatchStatus->total_leads = $batchLeadsCount;
-        $renewalsBatchStatus->total_sent = 0;
-        $renewalsBatchStatus->total_bounced = 0;
-        $renewalsBatchStatus->created_by_id = auth()->id();
-        $renewalsBatchStatus->save();
+        $batchEmail = new RenewalsBatchEmails();
+        $batchEmail->batch = $batch;
+        $batchEmail->status = ProcessStatusCode::IN_PROGRESS;
+        $batchEmail->total_leads = $batchLeadsCount;
+        $batchEmail->total_sent = 0;
+        $batchEmail->total_bounced = 0;
+        $batchEmail->created_by_id = auth()->id();
+        $batchEmail->save();
 
         foreach ($batchLeads as $key => $batchLead) {
             $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
-            dispatch(new RenewalBatchEmailJob($batchLead->id, $renewalsBatchStatus->id, QuoteTypeId::Car, $isCompleted, $batch));
+            dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
         }
 
         Log::info('runBatchProcess END');
