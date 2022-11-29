@@ -538,7 +538,7 @@ class RenewalsUploadService
      * @param $customerData
      * @return void
      */
-    public function udpateCustomer($customerData, $customerId)
+    public function updateCustomer($customerData, $customerId)
     {
         $update = false;
         $customer = CustomerService::getCustomerById($customerId);
@@ -760,7 +760,7 @@ class RenewalsUploadService
                 info($logPrefix.' quote found to update with UUID: '.$quote->uuid);
 
                 $customerData = $this->buildCustomerData($data);
-                $this->udpateCustomer($customerData, $quote->customer_id);
+                $this->updateCustomer($customerData, $quote->customer_id);
 
                 $quoteData = $this->getNonEmptyValues([
                     'first_name' => $customerData['first_name'],
@@ -1139,7 +1139,7 @@ class RenewalsUploadService
 
     public function uploadedLeadsValidation(RenewalsUploadLeads $renewalsUploadLead)
     {
-        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunk(50, function ($leads) {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunkById(50, function ($leads) {
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
@@ -1339,9 +1339,7 @@ class RenewalsUploadService
                     $renewalUploadLead->save();
                 }
             }
-        });
-
-        return true;
+        }, $column = 'id');
     }
 
     private function validateDate($date, $format = 'd/m/Y')

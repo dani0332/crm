@@ -42,7 +42,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     public function mount()
     {
         $latestBatch = QuoteBatches::orderBy('id', 'desc')->first();
-        if (! $this->getAppliedFilterWithValue('batch_number')) {
+        if (! $this->getAppliedFilterWithValue('batch_number') && $latestBatch != null) {
             $this->setFilter('batch_number', [$latestBatch->id]);
         }
     }

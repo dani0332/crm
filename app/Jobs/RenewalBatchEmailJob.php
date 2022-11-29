@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
@@ -19,8 +20,8 @@ class RenewalBatchEmailJob implements ShouldQueue
     protected $quoteTypeId;
     protected $isCompleted;
     public $tries = 3;
-    public $timeout = 360;
-    public $backoff = 365;
+    public $timeout = 30;
+    public $backoff = 35;
 
     /**
      * Create a new job instance.
@@ -51,5 +52,10 @@ class RenewalBatchEmailJob implements ShouldQueue
                 // Update status = failed
             }
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->batchLeadId))->dontRelease()];
     }
 }

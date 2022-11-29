@@ -343,7 +343,9 @@ class RenewalsUploadController extends Controller
     {
         $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
 
-        return view('renewals.validation_failed', compact('renewalLeads'));
+        $batch_id = $id;
+
+        return view('renewals.validation_failed', compact('renewalLeads'), compact('batch_id'));
     }
 
     public function downloadValidationFailed($id)
@@ -357,7 +359,9 @@ class RenewalsUploadController extends Controller
     {
         $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])->get();
 
-        return view('renewals.validation_passed', compact('renewalLeads'));
+        $batch_id = $id;
+
+        return view('renewals.validation_passed', compact('renewalLeads'), compact('batch_id'));
     }
 
     public function viewQuoteRedirect($renewalProcessId, $leadId)
