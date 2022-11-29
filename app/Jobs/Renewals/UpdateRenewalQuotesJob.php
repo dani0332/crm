@@ -30,7 +30,7 @@ class UpdateRenewalQuotesJob implements ShouldQueue
     public function __construct($renewalQuoteProcess)
     {
         $this->renewalQuoteProcess = $renewalQuoteProcess;
-        $this->uniqueId = rand(0, 100000);
+        $this->uniqueId = rand(0, 200000);
     }
 
     /**

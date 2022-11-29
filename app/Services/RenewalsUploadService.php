@@ -761,13 +761,8 @@ class RenewalsUploadService
             }
 
             $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED, 'quote_id' => $quote->id]);
-
-            $totalProcessed = RenewalQuoteProcess::where('renewals_upload_lead_id', $renewalUploadLead->id)
-                ->where('status', RenewalProcessStatuses::PROCESSED)->count();
-
-            $totalProcessed = (($totalProcessed + 1) > $renewalUploadLead->total_records) ? $totalProcessed : ($totalProcessed + 1);
-
-            $renewalUploadLead->update(['good' => $totalProcessed]);
+            
+            RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
 
             info($logPrefix.' Quote created. QuoteType: '.$data['quote_type'].' UUID: '.$quote->uuid);
 
@@ -810,9 +805,9 @@ class RenewalsUploadService
             $logPrefix = 'UAU FN: updateQuote';
             $data = $renewalQuoteProcess->data;
 
-            info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number']);
-
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
+
+            info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number'] . ' ID: ' . $renewalQuoteProcess->id . ' UploadLeadId: ' . $renewalUploadLead->id);
 
             $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
             $carMake = $this->renewalsAddonService->getCarMake($data['make']);
@@ -914,13 +909,7 @@ class RenewalsUploadService
                     'fetch_plans_status' => FetchPlansStatuses::PENDING,
                 ]);
 
-
-                $totalProcessed = RenewalQuoteProcess::where('renewals_upload_lead_id', $renewalUploadLead->id)
-                    ->where('status', RenewalProcessStatuses::PROCESSED)->count();
-
-                $totalProcessed = (($totalProcessed + 1) > $renewalUploadLead->total_records) ? $totalProcessed : ($totalProcessed + 1);
-
-                $renewalUploadLead->update(['good' => $totalProcessed]);
+                RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
 
                 info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
 
