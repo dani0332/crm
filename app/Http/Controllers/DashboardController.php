@@ -58,11 +58,10 @@ class DashboardController extends Controller
         foreach ($records as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
             // $chart->addData($record->name.' ( '.$record->start_date.' to '.$record->end_date.' ) ', [$percentage.' %']);
-            array_push($data, $percentage.' %');
+            array_push($data, $percentage);
             array_push($labels, $record->name);
         }
-
-        return view('dashboard.tpl_dashboard', compact('labels', 'data'));
+        return view('dashboard.tpl_dashboard')->with('labels',json_encode($labels, JSON_OBJECT_AS_ARRAY))->with('data',json_encode($data, JSON_OBJECT_AS_ARRAY));
     }
 
     public function renderComprehensiveDashboard(ComprehensiveDashboard $comprehensiveDashboard)
