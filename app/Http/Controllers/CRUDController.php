@@ -1045,7 +1045,7 @@ class CRUDController extends Controller
     {
         Log::info('sendEmailOneClickBuy START');
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
-        $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true);
+        $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true, true);
         $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
