@@ -253,18 +253,20 @@ class RenewalsUploadController extends Controller
         return view('renewals.update', compact('azureStorageUrl', 'azureStorageContainer', 'renewalsUploads'));
     }
 
-    public function listRenewalBatches(Request $request, CarQuote $carQuote, Datatables $datatables)
+    public function listRenewalBatches(Request $request, Datatables $datatables)
     {
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
         if ($request->ajax()) {
-            $datalRenewalsBatches = $carQuote::select('renewal_batch')
-            ->whereNotNull(['renewal_batch', 'renewal_import_code'])
-            ->groupBy('renewal_batch')
+            $dataRenewalsBatches = RenewalQuoteProcess::select('batch as renewal_batch')
+            ->where([
+                'quote_type' => QuoteTypeShortCode::CAR,
+                'type' => RenewalsUploadType::UPDATE_LEADS, ])
+            ->groupBy('batch')
             ->orderBy('created_at', 'desc');
 
-            return $datatables::of($datalRenewalsBatches)
+            return $datatables::of($dataRenewalsBatches)
                 ->addIndexColumn()
                 ->make(true);
         }
@@ -312,7 +314,7 @@ class RenewalsUploadController extends Controller
         }
 
         Log::info('runBatchProcess START');
-        $batchLeads = $this->renewalsUploadFileService->getProcessLeads($batch);
+        $batchLeads = $this->renewalsUploadFileService->getProcessLeadsToSendEmails($batch);
         $batchLeadsCount = $batchLeads->count();
         Log::info('batch: '.$batch.' batchLeadsCount: '.$batchLeadsCount);
 
@@ -331,7 +333,7 @@ class RenewalsUploadController extends Controller
 
         foreach ($batchLeads as $key => $batchLead) {
             $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
-            dispatch(new RenewalBatchEmailJob($batchLead->id, $renewalsBatchStatus->id, QuoteTypeId::Car, $isCompleted));
+            dispatch(new RenewalBatchEmailJob($batchLead->id, $renewalsBatchStatus->id, QuoteTypeId::Car, $isCompleted, $batch));
         }
 
         Log::info('runBatchProcess END');
