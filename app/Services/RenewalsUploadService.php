@@ -17,6 +17,7 @@ use App\Imports\UploadAndUpdateImport;
 use App\Jobs\ProcessRenewalsUploadCreate;
 use App\Jobs\ProcessRenewalsUploadUpdate;
 use App\Jobs\Renewals\CreateRenewalQuotesJob;
+use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -328,66 +329,99 @@ class RenewalsUploadService
         info($logPrefix.'  Fetch plans started');
 
         try {
+            $jobs = null;
+
             RenewalQuoteProcess::where([
                 'status' => RenewalProcessStatuses::PROCESSED,
                 'quote_type' => QuoteTypeShortCode::CAR,
                 'batch' => $batch,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ])->chunk(50, function ($leads) use ($renewalStatusProcess) {
+            ])->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs) {
+
                 foreach ($leads as $lead) {
-                    $leadData = (object) $lead->data;
-
-                    $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
-                    $quoteObject = $this->createQuoteObject($quoteType->code);
-
-                    if ($quoteObject && ($quote = $quoteObject->where('id', $lead->quote_id)->first())) {
-                        info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
-                        //$this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
-                        info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
-
-                        if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
-                            info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('.$leadData->provider_name.') for UUID: '.$quote->uuid);
-                            $planResponse = $this->createPlan($lead->data, $quote, $renewalStatusProcess->user_id);
-
-                            if (is_int($planResponse) && $planResponse == 200) {
-                                info('FetchPlans FN: fetchRenewalPlans'.' plan created successfully for UUID: '.$quote->uuid);
-                            } else {
-                                $error = (is_string($planResponse)) ? ('Error: '.$planResponse) : '';
-
-                                if (isset($planResponse->message)) {
-                                    $error = 'Error: '.$planResponse->message;
-                                }
-
-                                info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('.$error.') UUID: '.$quote->uuid);
-                            }
-                        }
-
-                        info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
-                        $plans = $this->getPlans($quote->uuid);
-                        if (isset($plans[0]->id)) {
-                            info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
-                            //update status to plans fetched
-                            $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
-                            $renewalStatusProcess->update(['total_completed' => $renewalStatusProcess->total_completed + 1]);
-                        } else {
-                            info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plans)) ? $plans : json_encode($plans));
-                            $renewalStatusProcess->update(['total_failed' => $renewalStatusProcess->total_failed + 1]);
-                        }
-                    } else {
-                        info('FetchPlans FN: fetchRenewalPlans QuoteId not found for leadId: '.$lead->id.' PolicyNumber: '.$lead->policy_number);
-                        $renewalStatusProcess->update(['total_failed' => $renewalStatusProcess->total_failed + 1]);
-                    }
+                   $jobs[] = FetchPlansForRenewalsQuoteJob::dispatch($lead, $renewalStatusProcess);
                 }
+
             });
 
-            info($logPrefix.' Fetch plans completed');
-            $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
 
+            if ($jobs != null && count($jobs)) {
+
+                $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalStatusProcess, $logPrefix) {
+                    info($logPrefix.' all jobs completed successfully');
+                    $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+                })->catch(function (Batch $batch, \Throwable $e) use ($renewalStatusProcess, $logPrefix) {
+                    info($logPrefix.' one of batch is failed. batch: '.json_encode($batch->toArray()));
+                    $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
+                })->finally(function (Batch $batch, $logPrefix) {
+                    info($logPrefix.' everything done');
+                })->dispatch();
+
+            } else {
+                info( $logPrefix.' no jobs to create quotes');
+                $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+            }
+
+            info($logPrefix.' all jobs are dispatched');
             return true;
+
         } catch (\Exception $exception) {
             Log::error($logPrefix.'Fetch plans failed.  Error: '.$exception->getMessage());
             $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
+        }
+    }
+
+    /**
+     * fetch plans for individual quote
+     * @param RenewalQuoteProcess $renewalQuoteProcess
+     * @param RenewalStatusProcess $renewalStatusProcess
+     * @return false|void
+     */
+    public function fetchQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
+    {
+        $leadData = (object) $renewalQuoteProcess->data;
+
+        $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
+        $quoteObject = $this->createQuoteObject($quoteType->code);
+
+        if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
+            info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
+            //$this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
+
+            if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
+                info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('.$leadData->provider_name.') for UUID: '.$quote->uuid);
+                $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id);
+
+                if (is_int($planResponse) && $planResponse == 200) {
+                    info('FetchPlans FN: fetchRenewalPlans'.' plan created successfully for UUID: '.$quote->uuid);
+                } else {
+                    $error = (is_string($planResponse)) ? ('Error: '.$planResponse) : '';
+
+                    if (isset($planResponse->message)) {
+                        $error = 'Error: '.$planResponse->message;
+                    }
+
+                    info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('.$error.') UUID: '.$quote->uuid);
+                    return false;
+                }
+            }
+
+            info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
+            $plans = $this->getPlans($quote->uuid);
+            if (isset($plans[0]->id)) {
+                info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
+                //update status to plans fetched
+                $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
+                $renewalStatusProcess->update(['total_completed' => $renewalStatusProcess->total_completed + 1]);
+            } else {
+                info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plans)) ? $plans : json_encode($plans));
+                $renewalStatusProcess->update(['total_failed' => $renewalStatusProcess->total_failed + 1]);
+            }
+        } else {
+            info('FetchPlans FN: fetchRenewalPlans QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
+            $renewalStatusProcess->update(['total_failed' => $renewalStatusProcess->total_failed + 1]);
         }
     }
 
