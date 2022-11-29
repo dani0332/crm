@@ -61,7 +61,8 @@ class DashboardController extends Controller
             array_push($data, $percentage);
             array_push($labels, $record->name);
         }
-        return view('dashboard.tpl_dashboard')->with('labels',json_encode($labels, JSON_OBJECT_AS_ARRAY))->with('data',json_encode($data, JSON_OBJECT_AS_ARRAY));
+
+        return view('dashboard.tpl_dashboard')->with('labels', json_encode($labels, JSON_OBJECT_AS_ARRAY))->with('data', json_encode($data, JSON_OBJECT_AS_ARRAY));
     }
 
     public function renderComprehensiveDashboard(ComprehensiveDashboard $comprehensiveDashboard)
