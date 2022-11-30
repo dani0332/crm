@@ -338,7 +338,7 @@ class RenewalsUploadService
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ])->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs) {
                 foreach ($leads as $lead) {
-                    $jobs[] = FetchPlansForRenewalsQuoteJob::dispatch($lead, $renewalStatusProcess);
+                    $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
                 }
             });
 
