@@ -208,8 +208,9 @@ class RenewalsUploadService
     }
 
     /**
-     * @param RenewalsUploadLeads $renewalsUploadLead
+     * @param  RenewalsUploadLeads  $renewalsUploadLead
      * @return void
+     *
      * @throws \Throwable
      */
     public function createQuotes(RenewalsUploadLeads $renewalsUploadLead)
@@ -271,7 +272,6 @@ class RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
-
                 $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalsUploadLead, $logPrefix) {
                     info($logPrefix.' all jobs completed successfully');
                     $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -282,10 +282,9 @@ class RenewalsUploadService
                     info($logPrefix.' everything done');
                 })->dispatch();
 
-                info($logPrefix . ' jobs dispatched');
-
+                info($logPrefix.' jobs dispatched');
             } else {
-                info($logPrefix . ' no jobs to create quotes');
+                info($logPrefix.' no jobs to create quotes');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
             }
         } catch (\Exception $exception) {
@@ -338,15 +337,12 @@ class RenewalsUploadService
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ])->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs) {
-
                 foreach ($leads as $lead) {
-                   $jobs[] = FetchPlansForRenewalsQuoteJob::dispatch($lead, $renewalStatusProcess);
+                    $jobs[] = FetchPlansForRenewalsQuoteJob::dispatch($lead, $renewalStatusProcess);
                 }
-
             });
-            
-            if ($jobs != null && count($jobs)) {
 
+            if ($jobs != null && count($jobs)) {
                 $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalStatusProcess, $logPrefix) {
                     info($logPrefix.' all jobs completed successfully');
                     $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -356,15 +352,14 @@ class RenewalsUploadService
                 })->finally(function (Batch $batch, $logPrefix) {
                     info($logPrefix.' everything done');
                 })->dispatch();
-
             } else {
-                info( $logPrefix.' no jobs to create quotes');
+                info($logPrefix.' no jobs to create quotes');
                 $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
             }
 
             info($logPrefix.' all jobs are dispatched');
-            return true;
 
+            return true;
         } catch (\Exception $exception) {
             Log::error($logPrefix.'Fetch plans failed.  Error: '.$exception->getMessage());
             $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
@@ -373,8 +368,9 @@ class RenewalsUploadService
 
     /**
      * fetch plans for individual quote
-     * @param RenewalQuoteProcess $renewalQuoteProcess
-     * @param RenewalStatusProcess $renewalStatusProcess
+     *
+     * @param  RenewalQuoteProcess  $renewalQuoteProcess
+     * @param  RenewalStatusProcess  $renewalStatusProcess
      * @return false|void
      */
     public function fetchQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
@@ -403,6 +399,7 @@ class RenewalsUploadService
                     }
 
                     info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('.$error.') UUID: '.$quote->uuid);
+
                     return false;
                 }
             }
@@ -414,7 +411,6 @@ class RenewalsUploadService
                 //update status to plans fetched
                 $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
-
             } else {
                 info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plans)) ? $plans : json_encode($plans));
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
@@ -801,13 +797,12 @@ class RenewalsUploadService
     public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
         return DB::transaction(function () use ($renewalQuoteProcess) {
-
             $logPrefix = 'UAU FN: updateQuote';
             $data = $renewalQuoteProcess->data;
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
-            info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number'] . ' ID: ' . $renewalQuoteProcess->id . ' UploadLeadId: ' . $renewalUploadLead->id);
+            info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number'].' ID: '.$renewalQuoteProcess->id.' UploadLeadId: '.$renewalUploadLead->id);
 
             $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
             $carMake = $this->renewalsAddonService->getCarMake($data['make']);
@@ -1155,7 +1150,6 @@ class RenewalsUploadService
             if ($responseCode == 201) {
                 Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
                 $this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
-
             } else {
                 Log::error('renewalBatchEmailProcess EmailNotSent: '.$responseCode.' batchEmailId:'.$batchEmailId.' Customer EmailAddress:'.$carQuote->email);
             }
@@ -1452,7 +1446,7 @@ class RenewalsUploadService
 
     public function getProcessLeadsToSendEmails($batch)
     {
-        return RenewalQuoteProcess::select('id','quote_id')->where([
+        return RenewalQuoteProcess::select('id', 'quote_id')->where([
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
             'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -1473,7 +1467,7 @@ class RenewalsUploadService
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'email_sent' => 0,
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-            'quote_id' => $quoteId])->first();
+            'quote_id' => $quoteId, ])->first();
         $emailSent->email_sent = 1;
         $emailSent->save();
         Log::info('updateRenewalQuoteEmailSent emailSent->id: '.$emailSent->id);

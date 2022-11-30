@@ -7,7 +7,6 @@ use App\Models\RenewalStatusProcess;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -20,7 +19,6 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue
 
     protected $renewalQuoteProcess;
     protected $renewalStatusProcess;
-
     public $timeout = 60;
     public $backoff = 65;
     public $tries = 3;
@@ -46,7 +44,6 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue
         $renewalsUploadService->fetchQuotePlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
     }
 
-    
     public function middleware()
     {
         return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
