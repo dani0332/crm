@@ -65,7 +65,7 @@ class DashboardController extends Controller
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
 
-        if(isset($request->tier_filter)) {
+        if (isset($request->tier_filter)) {
             $records = $this->applyFilter($records, 'tiers.name', $request->tier_filter == 'tr' ? TiersEnum::TierTR : TiersEnum::Tier6, IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
         if (isset($request->source)) {
@@ -90,13 +90,12 @@ class DashboardController extends Controller
 
     private function applyFilter($query, $column, $value, $searchType)
     {
-        switch($searchType)
-        {
+        switch($searchType) {
             case IMCRMSearchTypesEnum::EQUAL_SEARCH :
                 $query = $query->where($column, $value);
                 break;
             case IMCRMSearchTypesEnum::LIKE_SEARCH :
-                $query = $query->where($column, 'like', '%'. $value. '%');
+                $query = $query->where($column, 'like', '%'.$value.'%');
                 break;
             case IMCRMSearchTypesEnum::MULTI_SEARCH :
                 $query = $query->whereIn($column, $value);
@@ -113,6 +112,7 @@ class DashboardController extends Controller
             default:
                 break;
         }
+
         return $query;
     }
 
@@ -152,6 +152,7 @@ class DashboardController extends Controller
             $data[] = $percentage;
             $labels[] = $record->name;
         }
+
         return $request->tier_filter ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
     }
 
