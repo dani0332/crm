@@ -161,6 +161,8 @@ Route::group(['middleware' => ['auth']], function () {
     });
     Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard']);
     Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard']);
+
+    Route::get('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
     Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard']);
     Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport']);
     Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport']);
