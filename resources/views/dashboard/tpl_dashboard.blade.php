@@ -47,6 +47,10 @@
                             ];
     function initializeChart(labels, data)
     {
+        const percentages = [];
+        for (let i = 0; i < data.length; i++) {
+            percentages.push(data[i] + ' %');
+        }
         const ctx = document.getElementById('myChart');
         tpl_conversion_chart = new Chart(ctx, {
             type: 'bar',
@@ -62,11 +66,41 @@
             },
             options: {
                 scales: {
-                y: {
-                    beginAtZero: true
+                    y: {
+                        ticks: {
+                            // Include a dollar sign in the ticks
+                            callback: function(value, index, ticks) {
+                                return Chart.Ticks.formatters.numeric.apply(this, [value, index, ticks]) + ' % ' ;
+                            }
+                        },
+                        beginAtZero: true,
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += context.parsed.y + ' %';
+                                }
+                                return label;
+                            },
+                            labelPointStyle: function(context) {
+                                return {
+                                    pointStyle: 'triangle',
+                                    rotation: 0
+                                };
+                            }
+                        },
+                        usePointStyle: true,
+                    }
                 }
-                }
-            }
+            },
         });
     }
     $(function(){

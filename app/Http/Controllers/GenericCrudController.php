@@ -279,37 +279,37 @@ class GenericCrudController extends Controller
         $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
         $modelType = '';
         switch ($url) {
-            case GenericModelTypeEnum::INSURANCE_PROVIDER:
+            case str_contains($url, GenericModelTypeEnum::INSURANCE_PROVIDER):
                 $modelType = 'InsuranceProvider';
                 break;
-            case GenericModelTypeEnum::CAR_PLAN:
+            case str_contains($url, GenericModelTypeEnum::CAR_PLAN):
                 $modelType = 'CarPlan';
                 break;
-            case GenericModelTypeEnum::CAR_PLAN_COVERAGE:
+            case str_contains($url, GenericModelTypeEnum::CAR_PLAN_COVERAGE):
                 $modelType = 'CarPlanCoverage';
                 break;
-            case GenericModelTypeEnum::CAR_PLAN_ADDON:
+            case str_contains($url, GenericModelTypeEnum::CAR_PLAN_ADDON):
                 $modelType = 'CarPlanAddOn';
                 break;
-            case GenericModelTypeEnum::CAR_PLAN_ADDON_OPTION:
+            case str_contains($url, GenericModelTypeEnum::CAR_PLAN_ADDON_OPTION):
                 $modelType = 'CarPlanAddOnOption';
                 break;
-            case GenericModelTypeEnum::APPLICATION_STORAGE:
+            case str_contains($url, GenericModelTypeEnum::APPLICATION_STORAGE):
                 $modelType = 'ApplicationStorage';
                 break;
-            case GenericModelTypeEnum::LEAD_STATUS:
+            case str_contains($url, GenericModelTypeEnum::LEAD_STATUS):
                 $modelType = 'LeadStatus';
                 break;
-            case GenericModelTypeEnum::TEAMS:
+            case str_contains($url, GenericModelTypeEnum::TEAMS):
                 $modelType = 'Teams';
                 break;
-            case GenericModelTypeEnum::TIER:
+            case str_contains($url, GenericModelTypeEnum::TIER):
                 $modelType = 'Tier';
                 break;
-            case GenericModelTypeEnum::QUADRANT:
+            case str_contains($url, GenericModelTypeEnum::QUADRANT):
                 $modelType = 'Quadrant';
                 break;
-            case GenericModelTypeEnum::RULE:
+            case str_contains($url, GenericModelTypeEnum::RULE):
                 $modelType = 'Rule';
                 break;
             default:

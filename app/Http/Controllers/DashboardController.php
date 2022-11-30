@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Charts\MainDashboardChart;
+use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
@@ -47,7 +48,7 @@ class DashboardController extends Controller
                 ->with('data', json_encode($stats[1], JSON_OBJECT_AS_ARRAY));
     }
 
-    public function getTPLDashboardStats(Request $request)
+    public function getTPLDashboardStats(Request $request): array
     {
         $records = QuoteBatches::query()
         ->select(
@@ -63,8 +64,9 @@ class DashboardController extends Controller
         ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
-        if (isset($request->tier_filter)) {
-            $request->tier_filter == 'tr' ? $records->where('tiers.name', TiersEnum::TierTR) : $records->where('tiers.name', TiersEnum::Tier6);
+
+        if(isset($request->tier_filter)) {
+            $records = $this->applyFilter($records, 'tiers.name', $request->tier_filter == 'tr' ? TiersEnum::TierTR : TiersEnum::Tier6, IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
         if (isset($request->source)) {
             if ($request->source == 'no') {
@@ -79,14 +81,42 @@ class DashboardController extends Controller
         $data = [];
         foreach ($records->get() as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
-            array_push($data, $percentage);
-            array_push($labels, $record->name);
+            $data[] = $percentage;
+            $labels[] = $record->name;
         }
 
         return $request->tier_filter ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
     }
 
-    public function getComprehensiveDashboardStats(Request $request, $tiers)
+    private function applyFilter($query, $column, $value, $searchType)
+    {
+        switch($searchType)
+        {
+            case IMCRMSearchTypesEnum::EQUAL_SEARCH :
+                $query = $query->where($column, $value);
+                break;
+            case IMCRMSearchTypesEnum::LIKE_SEARCH :
+                $query = $query->where($column, 'like', '%'. $value. '%');
+                break;
+            case IMCRMSearchTypesEnum::MULTI_SEARCH :
+                $query = $query->whereIn($column, $value);
+                break;
+            case IMCRMSearchTypesEnum::NOT_EQUAL:
+                $query = $query->whereNotIn($column, '!=', $value);
+                break;
+            case IMCRMSearchTypesEnum::NOT_NULL:
+                $query = $query->whereNotNull($column);
+                break;
+            case IMCRMSearchTypesEnum::NULL:
+                $query = $query->whereNull($column);
+                break;
+            default:
+                break;
+        }
+        return $query;
+    }
+
+    public function getComprehensiveDashboardStats(Request $request, $tiers): array
     {
         $compTiers = $tiers->pluck('id');
         $records = QuoteBatches::query()
@@ -115,15 +145,13 @@ class DashboardController extends Controller
                 $records->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
             }
         }
-
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
-            array_push($data, $percentage);
-            array_push($labels, $record->name);
+            $data[] = $percentage;
+            $labels[] = $record->name;
         }
-
         return $request->tier_filter ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
     }
 
@@ -147,7 +175,7 @@ class DashboardController extends Controller
         return view('dashboard.'.$quoteType.'-conversion', compact('statsArray', 'headingArray'));
     }
 
-    public function getWeeklyStats($type)
+    public function getWeeklyStats($type): array
     {
         return [
             '1Week' => $this->dashboardService->getDashboardStatsByDate(
@@ -173,7 +201,7 @@ class DashboardController extends Controller
         ];
     }
 
-    public function getWeeklyHeading()
+    public function getWeeklyHeading(): array
     {
         return [
             '1WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(0),
