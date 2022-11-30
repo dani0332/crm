@@ -911,7 +911,7 @@ class CarQuoteService extends BaseService
             ]],
         ];
 
-        if($isDisabledEnabled) {
+        if ($isDisabledEnabled) {
             $plansDataArr['filters'][0]['field'] = 'isDisabled';
             $plansDataArr['filters'][0]['value'] = false;
         }
