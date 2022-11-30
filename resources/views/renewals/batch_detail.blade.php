@@ -31,7 +31,6 @@
                                     <th>Id</th>
                                     <th>Batch</th>
                                     <th>Total Leads</th>
-                                    <th>Total Sent</th>
                                     <th>Status</th>
                                     <th>User</th>
                                     <th>Created At</th>
@@ -45,7 +44,6 @@
                                         <td>{{ $batchEmail->id }}</td>
                                         <td>{{ $batchEmail->batch }}</td>
                                         <td>{{ $batchEmail->total_leads }}</td>
-                                        <td>{{ $batchEmail->total_sent }}</td>
                                         <td>{{ $batchEmail->status }}</td>
                                         <td>{{ $batchEmail->createdby ? $batchEmail->createdby->email : '' }}</td>
                                         <td>{{ $batchEmail->created_at }}</td>
