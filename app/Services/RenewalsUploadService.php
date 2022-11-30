@@ -16,6 +16,9 @@ use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
 use App\Jobs\ProcessRenewalsUploadCreate;
 use App\Jobs\ProcessRenewalsUploadUpdate;
+use App\Jobs\Renewals\CreateRenewalQuotesJob;
+use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
+use App\Jobs\Renewals\UpdateRenewalQuotesJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarPlan;
@@ -37,7 +40,9 @@ use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DateTime;
+use Illuminate\Bus\Batch;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -186,8 +191,10 @@ class RenewalsUploadService
 
             info($logPrefix.' excel data stored in DB');
 
-            $this->uploadedLeadsValidation($renewalsUploadLead);
-            $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead);
+            if ($validationResult) {
+                $this->createQuotes($renewalsUploadLead);
+            }
 
             info($logPrefix.' validation and quote creation is completed');
 
@@ -197,6 +204,92 @@ class RenewalsUploadService
             Log::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
 
             return false;
+        }
+    }
+
+    /**
+     * @param  RenewalsUploadLeads  $renewalsUploadLead
+     * @return void
+     *
+     * @throws \Throwable
+     */
+    public function createQuotes(RenewalsUploadLeads $renewalsUploadLead)
+    {
+        $logPrefix = 'UAC fn: createQuotes ';
+        info($logPrefix.' QuoteCreation started');
+
+        try {
+            $jobs = null;
+
+            RenewalQuoteProcess::where([
+                'renewals_upload_lead_id' => $renewalsUploadLead->id,
+                'status' => RenewalProcessStatuses::VALIDATED,
+            ])->chunkById(50, function ($leads) use (&$jobs) {
+                $chunks = $leads->chunk(5);
+
+                foreach ($chunks as $chunk) {
+                    $jobs[] = new CreateRenewalQuotesJob($chunk);
+                }
+            });
+
+            if ($jobs != null && count($jobs)) {
+                $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalsUploadLead, $logPrefix) {
+                    info($logPrefix.' all jobs completed successfully');
+                    $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                })->catch(function (Batch $batch, \Throwable $e) use ($renewalsUploadLead, $logPrefix) {
+                    info($logPrefix.' one of batch is failed. batch: '.json_encode($batch->toArray()));
+                    $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+                })->finally(function (Batch $batch, $logPrefix) {
+                    info($logPrefix.' everything done');
+                })->dispatch();
+            } else {
+                info('BATCH: no jobs to create quotes');
+                $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            }
+        } catch (\Exception $exception) {
+            info('BATCH: one of batch is failed. Exception : '.$exception->getMessage());
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+        }
+    }
+
+    public function updateQuotes(RenewalsUploadLeads $renewalsUploadLead)
+    {
+        $logPrefix = 'UAU fn: updateQuotes ';
+        info($logPrefix.' Quote update started');
+
+        try {
+            $jobs = null;
+
+            RenewalQuoteProcess::where([
+                'renewals_upload_lead_id' => $renewalsUploadLead->id,
+                'status' => RenewalProcessStatuses::VALIDATED,
+            ])->chunkById(50, function ($leads) use (&$jobs) {
+                $chunks = $leads->chunk(5);
+
+                foreach ($chunks as $chunk) {
+                    $jobs[] = new UpdateRenewalQuotesJob($chunk);
+                }
+            });
+
+            if ($jobs != null && count($jobs)) {
+                $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalsUploadLead, $logPrefix) {
+                    info($logPrefix.' all jobs completed successfully');
+                    $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                })->catch(function (Batch $batch, \Throwable $e) use ($renewalsUploadLead, $logPrefix) {
+                    info($logPrefix.' one of batch is failed. batch: '.json_encode($batch->toArray()));
+                    $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+                })->finally(function (Batch $batch, $logPrefix) {
+                    info($logPrefix.' everything done');
+                })->dispatch();
+
+                info($logPrefix.' jobs dispatched');
+            } else {
+                info($logPrefix.' no jobs to create quotes');
+                $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            }
+        } catch (\Exception $exception) {
+            info('BATCH: one of batch is failed. Exception : '.$exception->getMessage());
+            $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
         }
     }
 
@@ -235,66 +328,96 @@ class RenewalsUploadService
         info($logPrefix.'  Fetch plans started');
 
         try {
+            $jobs = null;
+
             RenewalQuoteProcess::where([
                 'status' => RenewalProcessStatuses::PROCESSED,
                 'quote_type' => QuoteTypeShortCode::CAR,
                 'batch' => $batch,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ])->chunk(50, function ($leads) use ($renewalStatusProcess) {
+            ])->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs) {
                 foreach ($leads as $lead) {
-                    $leadData = (object) $lead->data;
-
-                    $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
-                    $quoteObject = $this->createQuoteObject($quoteType->code);
-
-                    if ($quoteObject && ($quote = $quoteObject->where('id', $lead->quote_id)->first())) {
-                        info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
-                        //$this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
-                        info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
-
-                        if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
-                            info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('.$leadData->provider_name.') for UUID: '.$quote->uuid);
-                            $planResponse = $this->createPlan($lead->data, $quote, $renewalStatusProcess->user_id);
-
-                            if (is_int($planResponse) && $planResponse == 200) {
-                                info('FetchPlans FN: fetchRenewalPlans'.' plan created successfully for UUID: '.$quote->uuid);
-                            } else {
-                                $error = (is_string($planResponse)) ? ('Error: '.$planResponse) : '';
-
-                                if (isset($planResponse->message)) {
-                                    $error = 'Error: '.$planResponse->message;
-                                }
-
-                                info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('.$error.') UUID: '.$quote->uuid);
-                            }
-                        }
-
-                        info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
-                        $plans = $this->getPlans($quote->uuid);
-                        if (isset($plans[0]->id)) {
-                            info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid);
-                            //update status to plans fetched
-                            $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
-                            $renewalStatusProcess->update(['total_completed' => $renewalStatusProcess->total_completed + 1]);
-                        } else {
-                            info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$lead->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plans)) ? $plans : json_encode($plans));
-                            $renewalStatusProcess->update(['total_failed' => $renewalStatusProcess->total_failed + 1]);
-                        }
-                    } else {
-                        info('FetchPlans FN: fetchRenewalPlans QuoteId not found for leadId: '.$lead->id.' PolicyNumber: '.$lead->policy_number);
-                        $renewalStatusProcess->update(['total_failed' => $renewalStatusProcess->total_failed + 1]);
-                    }
+                    $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
                 }
             });
 
-            info($logPrefix.' Fetch plans completed');
-            $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+            if ($jobs != null && count($jobs)) {
+                $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalStatusProcess, $logPrefix) {
+                    info($logPrefix.' all jobs completed successfully');
+                    $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+                })->catch(function (Batch $batch, \Throwable $e) use ($renewalStatusProcess, $logPrefix) {
+                    info($logPrefix.' one of batch is failed. batch: '.json_encode($batch->toArray()));
+                    $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
+                })->finally(function (Batch $batch, $logPrefix) {
+                    info($logPrefix.' everything done');
+                })->dispatch();
+            } else {
+                info($logPrefix.' no jobs to create quotes');
+                $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+            }
+
+            info($logPrefix.' all jobs are dispatched');
 
             return true;
         } catch (\Exception $exception) {
             Log::error($logPrefix.'Fetch plans failed.  Error: '.$exception->getMessage());
             $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
+        }
+    }
+
+    /**
+     * fetch plans for individual quote
+     *
+     * @param  RenewalQuoteProcess  $renewalQuoteProcess
+     * @param  RenewalStatusProcess  $renewalStatusProcess
+     * @return false|void
+     */
+    public function fetchQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
+    {
+        $leadData = (object) $renewalQuoteProcess->data;
+
+        $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
+        $quoteObject = $this->createQuoteObject($quoteType->code);
+
+        if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
+            info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
+            //$this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
+
+            if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
+                info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('.$leadData->provider_name.') for UUID: '.$quote->uuid);
+                $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id);
+
+                if (is_int($planResponse) && $planResponse == 200) {
+                    info('FetchPlans FN: fetchRenewalPlans'.' plan created successfully for UUID: '.$quote->uuid);
+                } else {
+                    $error = (is_string($planResponse)) ? ('Error: '.$planResponse) : '';
+
+                    if (isset($planResponse->message)) {
+                        $error = 'Error: '.$planResponse->message;
+                    }
+
+                    info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('.$error.') UUID: '.$quote->uuid);
+
+                    return false;
+                }
+            }
+
+            info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
+            $plans = $this->getPlans($quote->uuid);
+            if (isset($plans[0]->id)) {
+                info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
+                //update status to plans fetched
+                $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
+                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
+            } else {
+                info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plans)) ? $plans : json_encode($plans));
+                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+            }
+        } else {
+            info('FetchPlans FN: fetchRenewalPlans QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
+            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
 
@@ -349,9 +472,12 @@ class RenewalsUploadService
 
             info($logPrefix.' excel data stored in DB.');
 
-            $this->uploadedLeadsValidation($renewalsUploadLead);
+            $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead);
 
-            $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+            if ($validationResult) {
+                $this->updateQuotes($renewalsUploadLead);
+            }
+
             info($logPrefix.' validation and quote update is completed');
 
             return true;
@@ -632,7 +758,7 @@ class RenewalsUploadService
 
             $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED, 'quote_id' => $quote->id]);
 
-            $renewalUploadLead->update(['good' => $renewalUploadLead->good += 1]);
+            RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
 
             info($logPrefix.' Quote created. QuoteType: '.$data['quote_type'].' UUID: '.$quote->uuid);
 
@@ -674,9 +800,9 @@ class RenewalsUploadService
             $logPrefix = 'UAU FN: updateQuote';
             $data = $renewalQuoteProcess->data;
 
-            info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number']);
-
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
+
+            info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number'].' ID: '.$renewalQuoteProcess->id.' UploadLeadId: '.$renewalUploadLead->id);
 
             $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
             $carMake = $this->renewalsAddonService->getCarMake($data['make']);
@@ -778,7 +904,7 @@ class RenewalsUploadService
                     'fetch_plans_status' => FetchPlansStatuses::PENDING,
                 ]);
 
-                $renewalUploadLead->update(['good' => $renewalUploadLead->good += 1]);
+                RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
 
                 info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
 
@@ -1024,7 +1150,6 @@ class RenewalsUploadService
             if ($responseCode == 201) {
                 Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
                 $this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
-                
             } else {
                 Log::error('renewalBatchEmailProcess EmailNotSent: '.$responseCode.' batchEmailId:'.$batchEmailId.' Customer EmailAddress:'.$carQuote->email);
             }
@@ -1270,21 +1395,18 @@ class RenewalsUploadService
                     $lead->validation_errors = $leadValidationErrors;
                     $lead->status = RenewalProcessStatuses::BAD_DATA;
                 }
+
                 $lead->save();
 
-                if ($lead->status == RenewalProcessStatuses::VALIDATED) {
-                    if ($lead->type == RenewalsUploadType::CREATE_LEADS) {
-                        $this->createQuote($lead);
-                    } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
-                        $this->updateQuote($lead);
-                    }
-                } else {
+                if ($lead->status == RenewalProcessStatuses::BAD_DATA) {
                     $renewalUploadLead = $lead->renewalUploadLead;
                     $renewalUploadLead->cannot_upload += 1;
                     $renewalUploadLead->save();
                 }
             }
         }, $column = 'id');
+
+        return true;
     }
 
     private function validateDate($date, $format = 'd/m/Y')
@@ -1324,7 +1446,7 @@ class RenewalsUploadService
 
     public function getProcessLeadsToSendEmails($batch)
     {
-        return RenewalQuoteProcess::select('id','quote_id')->where([
+        return RenewalQuoteProcess::select('id', 'quote_id')->where([
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
             'type' => RenewalsUploadType::UPDATE_LEADS,
@@ -1344,8 +1466,8 @@ class RenewalsUploadService
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'email_sent' => 0,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED, 
-            'quote_id' => $quoteId])->first();
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+            'quote_id' => $quoteId, ])->first();
         $emailSent->email_sent = 1;
         $emailSent->save();
         Log::info('updateRenewalQuoteEmailSent emailSent->id: '.$emailSent->id);
