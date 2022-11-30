@@ -334,6 +334,7 @@ class RenewalsUploadController extends Controller
         foreach ($batchLeads as $key => $batchLead) {
             $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
             dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
+            sleep(0.5);
         }
 
         Log::info('runBatchProcess END');
