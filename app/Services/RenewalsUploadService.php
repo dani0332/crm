@@ -997,7 +997,7 @@ class RenewalsUploadService
                 $addon = $planAddons[$addonCode];
 
                 foreach ($addon['car_addon_options'] as $option) {
-                    if (trim($option['value']) == trim($data[$key])) {
+                    if (strtolower(trim($option['value'])) == strtolower(trim($data[$key]))) {
                         $price = $data[$key.'_amount'];
 
                         $planDataAddon = [
@@ -1366,7 +1366,7 @@ class RenewalsUploadService
 
                                             $found = false;
                                             foreach ($addon['car_addon_options'] as $option) {
-                                                if (trim($option['value']) == trim($leadData->{$key})) {
+                                                if (strtolower(trim($option['value'])) == strtolower(trim($leadData->{$key}))) {
                                                     $found = true;
                                                     break;
                                                 }
