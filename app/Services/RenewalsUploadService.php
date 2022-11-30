@@ -1318,10 +1318,10 @@ class RenewalsUploadService
                                         $leadValidationErrors->push('Rent a car is required with TPL & TM');
                                     }
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
-                                        $leadValidationErrors->push('Amount- Rent a Car is required with TPL & TM');
+                                        $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
                                     }
                                     if ($leadData->driver_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount- PAB Driver is required with Renewal Premium & Excess');
+                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
                                     }
                                     if ($leadData->passenger_cover_amount == '') {
                                         $leadValidationErrors->push('Amount- PAB Passenger is required with Renewal Premium & Excess');
