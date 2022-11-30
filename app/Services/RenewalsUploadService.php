@@ -399,7 +399,8 @@ class RenewalsUploadService
                         $error = 'Error: '.$planResponse->message;
                     }
 
-                    info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('.$error.') UUID: '.$quote->uuid);
+                    info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('.$error.') UUID: '.$quote->uuid.' . fetch plans skipped');
+                    RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
 
                     return false;
                 }
@@ -993,11 +994,11 @@ class RenewalsUploadService
         ];
 
         foreach ($addons as $key => $addonCode) {
-            if (isset($planAddons[$addonCode])) {
+            if (isset($planAddons[$addonCode]) && ! empty($data[$key])) {
                 $addon = $planAddons[$addonCode];
 
                 foreach ($addon['car_addon_options'] as $option) {
-                    if (trim($option['value']) == trim($data[$key])) {
+                    if (strtolower(trim($option['value'])) == strtolower(trim($data[$key]))) {
                         $price = $data[$key.'_amount'];
 
                         $planDataAddon = [
@@ -1318,10 +1319,10 @@ class RenewalsUploadService
                                         $leadValidationErrors->push('Rent a car is required with TPL & TM');
                                     }
                                     if ($leadData->plan_type != CarPlanType::TPL && $leadData->insurer != 'TM' && $leadData->car_hire_amount == '') {
-                                        $leadValidationErrors->push('Amount- Rent a Car is required with TPL & TM');
+                                        $leadValidationErrors->push('Amount - Rent a Car is required with TPL & TM');
                                     }
                                     if ($leadData->driver_cover_amount == '') {
-                                        $leadValidationErrors->push('Amount- PAB Driver is required with Renewal Premium & Excess');
+                                        $leadValidationErrors->push('Amount - PAB Driver is required with Renewal Premium & Excess');
                                     }
                                     if ($leadData->passenger_cover_amount == '') {
                                         $leadValidationErrors->push('Amount- PAB Passenger is required with Renewal Premium & Excess');
@@ -1366,7 +1367,7 @@ class RenewalsUploadService
 
                                             $found = false;
                                             foreach ($addon['car_addon_options'] as $option) {
-                                                if (trim($option['value']) == trim($leadData->{$key})) {
+                                                if (strtolower(trim($option['value'])) == strtolower(trim($leadData->{$key}))) {
                                                     $found = true;
                                                     break;
                                                 }
