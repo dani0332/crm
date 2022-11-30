@@ -344,8 +344,7 @@ class RenewalsUploadService
                 }
 
             });
-
-
+            
             if ($jobs != null && count($jobs)) {
 
                 $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalStatusProcess, $logPrefix) {
@@ -414,14 +413,15 @@ class RenewalsUploadService
                 info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
                 //update status to plans fetched
                 $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
-                $renewalStatusProcess->update(['total_completed' => $renewalStatusProcess->total_completed + 1]);
+                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
+
             } else {
                 info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plans)) ? $plans : json_encode($plans));
-                $renewalStatusProcess->update(['total_failed' => $renewalStatusProcess->total_failed + 1]);
+                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
             }
         } else {
             info('FetchPlans FN: fetchRenewalPlans QuoteId not found for leadId: '.$renewalQuoteProcess->id.' PolicyNumber: '.$renewalQuoteProcess->policy_number);
-            $renewalStatusProcess->update(['total_failed' => $renewalStatusProcess->total_failed + 1]);
+            RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
         }
     }
 
@@ -761,7 +761,7 @@ class RenewalsUploadService
             }
 
             $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PROCESSED, 'quote_id' => $quote->id]);
-            
+
             RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
 
             info($logPrefix.' Quote created. QuoteType: '.$data['quote_type'].' UUID: '.$quote->uuid);
