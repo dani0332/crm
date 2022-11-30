@@ -10,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
 
 class UpdateRenewalQuotesJob implements ShouldQueue
 {
@@ -29,7 +30,7 @@ class UpdateRenewalQuotesJob implements ShouldQueue
     public function __construct($renewalQuoteProcess)
     {
         $this->renewalQuoteProcess = $renewalQuoteProcess;
-        $this->uniqueId = rand(0, 200000);
+        $this->uniqueId = Str::random(4).rand(0, 200000);
     }
 
     /**
