@@ -9,8 +9,9 @@ use BenSampo\Enum\Enum;
  * @method static static OptionTwo()
  * @method static static OptionThree()
  */
-final class InsuranceProviders extends Enum
+final class InsuranceProvidersEnum extends Enum
 {
-    const AXA = 'AXA';
-    const RSA = 'RSA';
+    public const AXA = 'AXA';
+    public const RSA = 'RSA';
+    public const TM = 'TM';
 }
