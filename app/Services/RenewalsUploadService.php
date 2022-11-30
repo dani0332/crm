@@ -399,7 +399,8 @@ class RenewalsUploadService
                         $error = 'Error: '.$planResponse->message;
                     }
 
-                    info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('.$error.') UUID: '.$quote->uuid);
+                    info('FetchPlans FN: fetchRenewalPlans'.' plan creation failed. API Response ('.$error.') UUID: '.$quote->uuid.' . fetch plans skipped');
+                    RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
 
                     return false;
                 }
@@ -993,7 +994,7 @@ class RenewalsUploadService
         ];
 
         foreach ($addons as $key => $addonCode) {
-            if (isset($planAddons[$addonCode])) {
+            if (isset($planAddons[$addonCode]) && ! empty($data[$key])) {
                 $addon = $planAddons[$addonCode];
 
                 foreach ($addon['car_addon_options'] as $option) {
