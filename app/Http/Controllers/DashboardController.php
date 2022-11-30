@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Charts\ComprehensiveDashboard;
 use App\Charts\MainDashboardChart;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
@@ -132,7 +131,7 @@ class DashboardController extends Controller
     {
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $carUsers = User::where('team_id', $carTeam->id)->get();
-        $tiers = Tier::whereNotIn('name',  [TiersEnum::TierTR, TiersEnum::Tier6])->get();
+        $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->get();
         $stats = $this->getComprehensiveDashboardStats($request, $tiers);
 
         return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers'))
