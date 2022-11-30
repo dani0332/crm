@@ -49,7 +49,7 @@ use App\Enums\PermissionsEnum;
                             @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/advisor-performance') }}">Advisor Performance</a></li>
                             @endif
-                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/advisor-distribution') }}">Advisor Distribution</a></li>
                             @endif
                             @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
