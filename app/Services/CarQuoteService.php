@@ -912,8 +912,10 @@ class CarQuoteService extends BaseService
         ];
 
         if ($isDisabledEnabled) {
-            $plansDataArr['filters'][0]['field'] = 'isDisabled';
-            $plansDataArr['filters'][0]['value'] = false;
+            $plansDataArr['filters'][] = [
+                'field' => 'isDisabled',
+                'value' => false,
+            ];
         }
 
         $client = new \GuzzleHttp\Client();
