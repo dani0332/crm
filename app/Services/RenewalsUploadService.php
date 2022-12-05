@@ -966,7 +966,7 @@ class RenewalsUploadService
 
         //excess will be used for comp or agency repair type
         if ($data['plan_type'] == CarPlanType::COMP || $data['plan_type'] == CarPlanType::AGENCY) {
-            $planData['excess'] = $data['excess'];
+            $plan['excess'] = $data['excess'];
         }
 
         //trim is optional
@@ -1308,7 +1308,7 @@ class RenewalsUploadService
                                 } else {
                                     $leadValidationErrors->push('Invalid Insurance Provider & Provider Name Combination Provided');
                                 }
-                                if ($carPlan) {
+                                if (isset($carPlan)) {
                                     if (! $leadData->driver_cover) {
                                         $leadValidationErrors->push('PAB Driver is required with Renewal Premium & Excess');
                                     }
