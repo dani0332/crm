@@ -352,7 +352,7 @@ class RenewalsUploadService
                     $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
                 })->finally(function (Batch $batch, $logPrefix) {
                     info($logPrefix.' everything done');
-                })->dispatch();
+                })->onQueue('renewals')->dispatch();
             } else {
                 info($logPrefix.' no jobs to create quotes');
                 $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
