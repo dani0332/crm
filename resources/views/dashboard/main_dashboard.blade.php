@@ -1,5 +1,5 @@
 @extends('layouts.app_livewire')
-@section('title','Comprehensive Dashboard')
+@section('title','Accumulative Dashboard')
 @section('content')
 <style>
     * {

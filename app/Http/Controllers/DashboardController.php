@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Charts\MainDashboardChart;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
