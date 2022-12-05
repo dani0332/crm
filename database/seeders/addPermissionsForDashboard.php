@@ -4,8 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\Permission;
 use App\Models\Role;
-use Illuminate\Database\Seeder;
 use DB;
+use Illuminate\Database\Seeder;
 
 class addPermissionsForDashboard extends Seeder
 {
@@ -42,20 +42,20 @@ class addPermissionsForDashboard extends Seeder
             $compPermissionViewId = Permission::where('name', 'comprehensive-dashboard-view')->first()->id;
             $mainPermissionViewId = Permission::where('name', 'main-dashboard-view')->first()->id;
             DB::table('role_has_permissions')->insert(
-            [
-                'role_id' => $adminRoleId,
-                'permission_id' => $tplPermissionViewId,
-            ]);
+                [
+                    'role_id' => $adminRoleId,
+                    'permission_id' => $tplPermissionViewId,
+                ]);
             DB::table('role_has_permissions')->insert(
-            [
-                'role_id' => $adminRoleId,
-                'permission_id' => $compPermissionViewId,
-            ]);
+                [
+                    'role_id' => $adminRoleId,
+                    'permission_id' => $compPermissionViewId,
+                ]);
             DB::table('role_has_permissions')->insert(
-            [
-                'role_id' => $adminRoleId,
-                'permission_id' => $mainPermissionViewId,
-            ]);
+                [
+                    'role_id' => $adminRoleId,
+                    'permission_id' => $mainPermissionViewId,
+                ]);
         }
     }
 }

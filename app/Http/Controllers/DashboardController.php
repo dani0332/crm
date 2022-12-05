@@ -68,10 +68,10 @@ class DashboardController extends Controller
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
 
         if (isset($request->tier_filter)) {
-            $records = $this->applyFilter($records, 'tiers.id', $request->tier_filter , IMCRMSearchTypesEnum::EQUAL_SEARCH);
+            $records = $this->applyFilter($records, 'tiers.id', $request->tier_filter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
-        if($request->tier_filter == ''){
-            $records = $this->applyFilter($records, 'tiers.id', $tplTiers , IMCRMSearchTypesEnum::MULTI_SEARCH);
+        if ($request->tier_filter == '') {
+            $records = $this->applyFilter($records, 'tiers.id', $tplTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->source)) {
             if ($request->source == 'no') {
@@ -140,13 +140,13 @@ class DashboardController extends Controller
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
         if (isset($request->tier_filter)) {
-            $records = $this->applyFilter($records, 'tiers.id', $request->tier_filter , IMCRMSearchTypesEnum::EQUAL_SEARCH);
+            $records = $this->applyFilter($records, 'tiers.id', $request->tier_filter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
-        if($request->tier_filter == ''){
-            $records = $this->applyFilter($records, 'tiers.id', $compTiers , IMCRMSearchTypesEnum::MULTI_SEARCH);
+        if ($request->tier_filter == '') {
+            $records = $this->applyFilter($records, 'tiers.id', $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->userFilter)) {
-            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter , IMCRMSearchTypesEnum::EQUAL_SEARCH);
+            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
         $labels = [];
         $data = [];
@@ -165,6 +165,7 @@ class DashboardController extends Controller
         $carUsers = User::where('team_id', $carTeam->id)->orderBy('name', 'asc')->get();
         $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->orderBy('name', 'asc')->get();
         $stats = $this->getComprehensiveDashboardStats($request);
+
         return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers'))
                 ->with('labels', json_encode($stats[0], JSON_OBJECT_AS_ARRAY))
                 ->with('data', json_encode($stats[1], JSON_OBJECT_AS_ARRAY));
