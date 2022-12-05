@@ -50,6 +50,8 @@ class DashboardController extends Controller
 
     public function getTPLDashboardStats(Request $request): array
     {
+        $tiers = Tier::whereIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->get();
+        $tplTiers = $tiers->pluck('id');
         $records = QuoteBatches::query()
         ->select(
             'quote_batches.name',
@@ -66,14 +68,17 @@ class DashboardController extends Controller
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
 
         if (isset($request->tier_filter)) {
-            $records = $this->applyFilter($records, 'tiers.name', $request->tier_filter == 'tr' ? TiersEnum::TierTR : TiersEnum::Tier6, IMCRMSearchTypesEnum::EQUAL_SEARCH);
+            $records = $this->applyFilter($records, 'tiers.id', $request->tier_filter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
+        }
+        if ($request->tier_filter == '') {
+            $records = $this->applyFilter($records, 'tiers.id', $tplTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->source)) {
             if ($request->source == 'no') {
-                $records->where('car_quote_request.source', LeadSourceEnum::IMCRM);
+                $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::EQUAL_SEARCH);
             }
             if ($request->source == 'yes') {
-                $records->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
+                $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::NOT_EQUAL);
             }
         }
 
@@ -116,8 +121,9 @@ class DashboardController extends Controller
         return $query;
     }
 
-    public function getComprehensiveDashboardStats(Request $request, $tiers): array
+    public function getComprehensiveDashboardStats(Request $request): array
     {
+        $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->get();
         $compTiers = $tiers->pluck('id');
         $records = QuoteBatches::query()
         ->select(
@@ -132,18 +138,15 @@ class DashboardController extends Controller
         )
         ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->whereIn('tiers.id', $compTiers)
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
         if (isset($request->tier_filter)) {
-            $request->tier_filter == 'tr' ? $records->where('tiers.name', TiersEnum::TierTR) : $records->where('tiers.name', TiersEnum::Tier6);
+            $records = $this->applyFilter($records, 'tiers.id', $request->tier_filter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
-        if (isset($request->source)) {
-            if ($request->source == 'no') {
-                $records->where('car_quote_request.source', LeadSourceEnum::IMCRM);
-            }
-            if ($request->source == 'yes') {
-                $records->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
-            }
+        if ($request->tier_filter == '') {
+            $records = $this->applyFilter($records, 'tiers.id', $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
+        }
+        if (isset($request->userFilter)) {
+            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
         $labels = [];
         $data = [];
@@ -159,9 +162,9 @@ class DashboardController extends Controller
     public function renderComprehensiveDashboard(Request $request)
     {
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
-        $carUsers = User::where('team_id', $carTeam->id)->get();
-        $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->get();
-        $stats = $this->getComprehensiveDashboardStats($request, $tiers);
+        $carUsers = User::where('team_id', $carTeam->id)->orderBy('name', 'asc')->get();
+        $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->orderBy('name', 'asc')->get();
+        $stats = $this->getComprehensiveDashboardStats($request);
 
         return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers'))
                 ->with('labels', json_encode($stats[0], JSON_OBJECT_AS_ARRAY))

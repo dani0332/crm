@@ -18,7 +18,7 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-            @can(PermissionsEnum::DashboardView)
+            @canany([PermissionsEnum::DashboardView, PermissionsEnum::TPL_DASHBOARD_VIEW, PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW, PermissionsEnum::MAIN_DASHBOARD_VIEW])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-tachometer"
                         aria-hidden="true"></i>Dashboard <span class="fa fa-chevron-down"></span></a>
@@ -32,18 +32,18 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('/comprehensive-conversion-dashboard') }}">Comprehensive Conversion</a></li>
                             @endcan
                             @can(PermissionsEnum::MAIN_DASHBOARD_VIEW)
-                            <li><a href="{{ url('/accumulative-dashboard') }}">Accumulative Dashboard</a></li>
+                            <li><a href="{{ url('/accumulative- dashboard') }}">Accumulative Dashboard</a></li>
                             @endcan
                         </ul>
                     </li>
                 </ul>
-                @endcan
-                @if(Auth::user()->hasRole(RolesEnum::BetaUser) && Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::CarAdvisor]))
+                @endcanany
+                @if(Auth::user()->hasRole(RolesEnum::BetaUser) && Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::CarManager]))
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
                             @endif
                             @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))

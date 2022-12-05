@@ -65,6 +65,11 @@ class User extends Authenticatable implements AuditableContract
         'profile_photo_url',
     ];
 
+    public function getPermissionAttribute()
+    {
+        return $this->getAllPermissions();
+    }
+
     public function usersroles()
     {
         return $this->belongsToMany(Role::class, 'model_has_roles', 'model_id');

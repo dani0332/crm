@@ -9,7 +9,7 @@
                 <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:right;">
                     <select
                         class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                        id="source-filter" style="margin-left: 10px;">
+                        id="userFilter" style="margin-left: 10px;">
                         <option value="">All Users</option>
                         @foreach ($carUsers as $carUser)
                             <option value="{{$carUser->id}}" > {{ $carUser->name }} </option>
@@ -72,10 +72,10 @@
         });
     }
     $(function(){
-        $('#tier-filter,#source-filter').on('change', function (e) {
+        $('#tier-filter,#userFilter').on('change', function (e) {
             var tierFilterValue = $('#tier-filter option:selected').val();
-            var sourceFilterValue = $('#source-filter option:selected').val();
-            $.get('/get-tpl-filter-stats?tier_filter=' + tierFilterValue + '&source='+ sourceFilterValue, function (data) {
+            var sourceFilterValue = $('#userFilter option:selected').val();
+            $.get('/get-comp-filter-stats?tier_filter=' + tierFilterValue + '&userFilter='+ sourceFilterValue, function (data) {
                if(data){
                 var labels = (typeof data[0]) == 'string' ? JSON.parse(data[0]) : data[0];
                 var data = (typeof data[1]) == 'string' ? JSON.parse(data[1]) : data[1];
