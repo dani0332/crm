@@ -25,7 +25,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule
+        /*$schedule
             ->command('LeadAllocation:cron')
             ->timezone('Asia/Dubai')
             ->everyMinute()
@@ -37,7 +37,7 @@ class Kernel extends ConsoleKernel
             ->timezone('Asia/Dubai')
             ->everyMinute()
             ->onOneServer()
-            ->withoutOverlapping(1);
+            ->withoutOverlapping(1);*/
     }
 
     /**
