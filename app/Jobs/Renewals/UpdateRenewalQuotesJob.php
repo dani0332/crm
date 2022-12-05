@@ -31,6 +31,7 @@ class UpdateRenewalQuotesJob implements ShouldQueue
     {
         $this->renewalQuoteProcess = $renewalQuoteProcess;
         $this->uniqueId = Str::random(4).rand(0, 200000);
+        $this->onQueue('renewals');
     }
 
     /**
