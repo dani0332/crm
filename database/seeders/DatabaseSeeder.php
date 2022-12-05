@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             addCarLeadAllocationFetchStartDate::class,
             addAdvisorConvertionReportBatchStartDate::class,
             addCarAllocationMasterSwitch::class,
+            addPermissionsForDashboard::class,
         ]);
     }
 }
