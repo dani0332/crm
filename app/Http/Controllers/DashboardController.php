@@ -7,6 +7,7 @@ use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
+use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\Tier;
@@ -34,9 +35,19 @@ class DashboardController extends Controller
         return view('dashboard');
     }
 
-    public function renderMainDashboard(MainDashboardChart $mainDashboardChart)
+    public function renderMainDashboard(Request $request)
     {
-        return view('dashboard.main_dashboard', ['chart' => $mainDashboardChart->build()]);
+        $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->addDays(-40)->startOfDay(), now()->endOfDay()])->get();
+        $totalLeadsReceived = count($allCarQuotesToday);
+        $totalLeadsReceivedEcommerce = count($allCarQuotesToday->where('is_ecommerce', 1));
+        $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
+        $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
+        //dd($totalLeadsReceived, $totalLeadsReceivedEcommerce, $totalUnAssignedLeadsReceived, $totalUnAssignedLeadsReceivedEcommerce);
+        $stats = $this->getTPLDashboardStats($request);
+
+        return view('dashboard.main_dashboard')
+                ->with('labels', json_encode($stats[0], JSON_OBJECT_AS_ARRAY))
+                ->with('data', json_encode($stats[1], JSON_OBJECT_AS_ARRAY));
     }
 
     public function renderTplDashboard(Request $request)
