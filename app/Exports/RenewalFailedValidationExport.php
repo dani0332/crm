@@ -6,8 +6,9 @@ use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Models\RenewalQuoteProcess;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class RenewalFailedValidationExport implements FromCollection
+class RenewalFailedValidationExport implements FromCollection, WithStrictNullComparison
 {
     private $renewaUploadLead;
 
