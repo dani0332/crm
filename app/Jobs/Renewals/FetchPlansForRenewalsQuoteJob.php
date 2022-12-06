@@ -32,6 +32,7 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue
     {
         $this->renewalQuoteProcess = $renewalQuoteProcess;
         $this->renewalStatusProcess = $renewalStatusProcess;
+        $this->onQueue('renewals');
     }
 
     /**
@@ -42,6 +43,7 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
         $renewalsUploadService->fetchQuotePlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
+        sleep(10);
     }
 
     public function middleware()

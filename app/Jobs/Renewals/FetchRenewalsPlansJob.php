@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Renewals;
 
 use App\Models\RenewalStatusProcess;
 use App\Services\RenewalsUploadService;
