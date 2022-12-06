@@ -97,7 +97,7 @@
                             TOTAL LEADS RECEIVED
                         </div>
                         <div>
-                            <b>546</b>
+                            <b>{{$totalLeadsReceived}}</b>
                         </div>
                     </div>
                     <div id="slide-2">
@@ -105,7 +105,7 @@
                             TOTAL LEADS RECEIVED ECOMMERCE
                         </div>
                         <div>
-                            <b>546</b>
+                            <b>{{$totalLeadsReceivedEcommerce}}</b>
                         </div>
                     </div>
                     <div id="slide-3">
@@ -113,7 +113,7 @@
                             TOTAL UNASSIGNED LEADS
                         </div>
                         <div>
-                            <b>546</b>
+                            <b>{{$totalUnAssignedLeadsReceived}}</b>
                         </div>
                     </div>
                     <div id="slide-4">
@@ -121,7 +121,7 @@
                             TOTAL UNASSIGNED LEADS ECOMMERCE
                         </div>
                         <div>
-                            <b>546</b>
+                            <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
                         </div>
                     </div>
                 </div>
@@ -142,7 +142,7 @@
                             TOTAL LEADS RECEIVED
                         </div>
                         <div>
-                            <b>546</b>
+                            <b>{{$totalLeadsReceived}}</b>
                         </div>
                     </div>
                     <div id="slide-6">
@@ -150,7 +150,7 @@
                             TOTAL LEADS RECEIVED ECOMMERCE
                         </div>
                         <div>
-                            <b>546</b>
+                            <b>{{$totalLeadsReceivedEcommerce}}</b>
                         </div>
                     </div>
                     <div id="slide-7">
@@ -158,7 +158,7 @@
                             TOTAL UNASSIGNED LEADS
                         </div>
                         <div>
-                            <b>546</b>
+                            <b>{{$totalUnAssignedLeadsReceived}}</b>
                         </div>
                     </div>
                     <div id="slide-8">
@@ -166,7 +166,7 @@
                             TOTAL UNASSIGNED LEADS ECOMMERCE
                         </div>
                         <div>
-                            <b>546</b>
+                            <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
                         </div>
                     </div>
                 </div>
@@ -179,14 +179,14 @@
     </div>
     <div style="clear: both;">
     <div class="row mt-12">
-        <div class="col-md-6 col-md-offset-1" style="width: 500px; float:left;">
+        <div class="col-md-6 col-md-offset-1" style="width: 420px; float:left;">
             <div class="panel panel-default">
                 <div class="panel-body">
                     <canvas id="myChart"></canvas>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 col-md-offset-1" style="width: 500px; float:right;">
+        <div class="col-md-6 col-md-offset-1" style="width: 420px; float:right;">
             <div class="panel panel-default">
                 <div class="panel-body">
                     <canvas id="1myChart"></canvas>
@@ -196,7 +196,7 @@
     </div>
     <div style="clear: both;">
     </div>
-    <div class="row">
+    <div class="row mt-12">
         <h1 class="text-2xl text-left mb-14 mt-12 text-[#308BCA]">
             Advisor Conversion Report
           </h1>
