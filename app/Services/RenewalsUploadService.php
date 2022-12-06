@@ -46,6 +46,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class RenewalsUploadService
 {
@@ -234,15 +235,23 @@ class RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
-                $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalsUploadLead, $logPrefix) {
-                    info($logPrefix.' all jobs completed successfully');
-                    $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
-                })->catch(function (Batch $batch, \Throwable $e) use ($renewalsUploadLead, $logPrefix) {
-                    info($logPrefix.' one of batch is failed. batch: '.json_encode($batch->toArray()));
-                    $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-                })->finally(function (Batch $batch, $logPrefix) {
-                    info($logPrefix.' everything done');
-                })->dispatch();
+
+                $haystack = Haystack::build()
+                    ->addJobs($jobs)
+                    ->then(function () use($logPrefix, $renewalsUploadLead) {
+                        info($logPrefix.' all jobs completed successfully');
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                    })
+                    ->catch(function () use($logPrefix, $renewalsUploadLead) {
+                        info($logPrefix.' one of batch is failed. batch: '.json_encode($batch->toArray()));
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+                    })
+                    ->finally(function () use($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->withDelay(5)
+                    ->dispatch();
+
             } else {
                 info('BATCH: no jobs to create quotes');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -273,17 +282,26 @@ class RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
-                $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalsUploadLead, $logPrefix) {
-                    info($logPrefix.' all jobs completed successfully');
-                    $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
-                })->catch(function (Batch $batch, \Throwable $e) use ($renewalsUploadLead, $logPrefix) {
-                    info($logPrefix.' one of batch is failed. batch: '.json_encode($batch->toArray()));
-                    $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-                })->finally(function (Batch $batch, $logPrefix) {
-                    info($logPrefix.' everything done');
-                })->dispatch();
+
+                $haystack = Haystack::build()
+                    ->addJobs($jobs)
+                    ->then(function () use($logPrefix, $renewalsUploadLead) {
+                        info($logPrefix.' all jobs completed successfully');
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                    })
+                    ->catch(function () use($logPrefix, $renewalsUploadLead) {
+                        // Haystack failed
+                        info($logPrefix.' one of batch is failed. ');
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+                    })
+                    ->finally(function () use($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->withDelay(5)
+                    ->dispatch();
 
                 info($logPrefix.' jobs dispatched');
+
             } else {
                 info($logPrefix.' no jobs to create quotes');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -344,15 +362,24 @@ class RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
-                $batch = Bus::batch($jobs)->then(function (Batch $batch) use ($renewalStatusProcess, $logPrefix) {
-                    info($logPrefix.' all jobs completed successfully');
-                    $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
-                })->catch(function (Batch $batch, \Throwable $e) use ($renewalStatusProcess, $logPrefix) {
-                    info($logPrefix.' one of batch is failed. batch: '.json_encode($batch->toArray()));
-                    $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
-                })->finally(function (Batch $batch, $logPrefix) {
-                    info($logPrefix.' everything done');
-                })->dispatch();
+
+                $haystack = Haystack::build()
+                    ->addJobs($jobs)
+                    ->then(function () use($logPrefix, $renewalStatusProcess) {
+                        info($logPrefix.' all jobs completed successfully');
+                        $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+                    })
+                    ->catch(function () use($logPrefix, $renewalStatusProcess) {
+                        // Haystack failed
+                        info($logPrefix.' one of batch is failed. ');
+                        $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
+                    })
+                    ->finally(function () use($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->withDelay(20)
+                    ->dispatch();
+
             } else {
                 info($logPrefix.' no jobs to create quotes');
                 $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
