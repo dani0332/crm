@@ -9,15 +9,16 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, GetUserTree;
 
-    public $tries = 3;
-    public $timeout = 30;
-    public $backoff = 3;
+    public $tries = 1;
+    public $timeout = 40;
+    public $backoff = 45;
 
     /**
      * Create a new job instance.
@@ -34,12 +35,18 @@ class LeadAllocationJob implements ShouldQueue
     {
         try {
             Log::info('Lead Allocation Job Started');
+            $leadAllocationService->setAdvisorsToUnavailable();
+            $leadAllocationService->setMaxCapAndAllocationStatus();
+            if (! $leadAllocationService->carLeadAllocationSwitchStatus()) {
+                info('CAR Lead Allocation Job Switch is OFF');
+            } else {
+                $leadAllocationService->processCarLeads();
+            }
             if (! $leadAllocationService->leadAllocationSwitchStatus()) {
-                info('Lead Allocation Job Switch is OFF');
+                info('Health Lead Allocation Job Switch is OFF');
 
                 return;
             } else {
-                $leadAllocationService->setAdvisorsToUnavailable();
                 $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();
                 if (count($unAllocatedLeads) > 0) {
                     $availableUsers = $leadAllocationService->getAvailableAdvisors();
@@ -50,7 +57,7 @@ class LeadAllocationJob implements ShouldQueue
                     });
                     info('availableUsers: '.$availableUsersString);
                     foreach ($healthTeams as $healthTeam) {
-                        info('Lead Allocation Started for health team: '.$healthTeam);
+                        info('Health Lead Allocation Started for health team: '.$healthTeam);
                         $filteredLeadsByHealthTeam = $unAllocatedLeads->filter(function ($lead) use ($healthTeam) {
                             return strtolower($lead->health_team_type) == strtolower($healthTeam) ? $lead : false;
                         });
@@ -64,7 +71,7 @@ class LeadAllocationJob implements ShouldQueue
                                 $filteredUsersByHealthTeam = $filteredUsersByHealthTeam->sortBy('last_allocated', SORT_NATURAL)->flatten();
                                 $advisor = $filteredUsersByHealthTeam->first();
                                 $leadAllocationService->assignLead($lead, $advisor->id, false);
-                                info('------->Lead Allocation Done for lead: '.$lead->uuid.' and advisor: '.$advisor->name);
+                                info('------->Health Lead Allocation Done for lead: '.$lead->uuid.' and advisor: '.$advisor->name);
                                 $filteredUsersByHealthTeam->each(function ($user) use ($advisor) {
                                     if ($user->id == $advisor->id) {
                                         $user->last_allocated = microtime(true);
@@ -89,10 +96,11 @@ class LeadAllocationJob implements ShouldQueue
         } catch (\Exception $e) {
             info('Lead Allocation Job Failed');
             info('message: '.$e->getMessage());
-            if ($this->attempts() < 4) {
-                $delayInSeconds = 2 * 60;
-                $this->release($delayInSeconds);
-            }
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping(1))->dontRelease()];
     }
 }

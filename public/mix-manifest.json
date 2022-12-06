@@ -1,6 +1,8 @@
 {
-    "/js/app.js": "/js/app.js?id=a1f69b37b5b3ea51088ee8a9723b6260",
-    "/build/css/app.css": "/build/css/app.css?id=7bcea77356f916f2d03ea657f1642a15",
-    "/build/js/customjs.min.js": "/build/js/customjs.min.js?id=d588ea5cf967639a109cc532eb5c76b0",
+    "/js/alpine.js": "/js/alpine.js?id=7926fb8d9f75db9ad260691c9267db15",
+    "/js/app.js": "/js/app.js?id=8961747d5953055c454573f795931deb",
+    "/build/css/app.css": "/build/css/app.css?id=ab303e5a364be09bc5cb03a0d61394f1",
+    "/css/livewire.css": "/css/livewire.css?id=e967f49047c796a3845aba09d30acb45",
+    "/build/js/customjs.min.js": "/build/js/customjs.min.js?id=ff96327d5aab6a623c2fbaa74260478e",
     "/build/css/style.min.css": "/build/css/style.min.css?id=43dbc3b7dd8e7f56018a65739180828a"
 }

@@ -6,6 +6,18 @@
     .form-control:disabled, .form-control[readonly]{
         background-color: white !important;
     }
+    .select2-results__option--selected {
+        display: none;
+    }
+    .select2-results__option[aria-selected=true] {
+        display: none;
+    }
+    .select2-results__option--highlighted {
+        background: #4183BD !important;
+        color: #fff;
+        cursor: pointer !important;
+    }
+</style>
 </style>
     <div class="row">
         <div class="col-md-12 col-sm-12">
@@ -57,9 +69,7 @@
                                             </span>
                                             <input
                                                 @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
-                                                @if(explode("|", $value)[1] != 'date')
-                                                    type={{ explode("|", $value)[1]  }}
-                                                    @endif id={{$property}}
+                                                    type={{ explode("|", $value)[1]  }} id={{$property}}
                                                     @if(strpos($value, 'min') !== false)
                                                         min="{{explode(":", $value)[1]}}"
                                                     @endif
@@ -82,7 +92,7 @@
                                                 <span class='required'>*</span>
                                                 @endif
                                             </span>
-                                            <select @if(strpos($value, 'multiple')) multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}" >
+                                            <select @if(strpos($value, 'multiple')) data-mdb-filter="true" multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}" >
                                                 @if(strpos($value, 'title'))
                                                     <option value="">{{"Please select ".$customTitles[$property] }}</option>
                                                 @else
@@ -91,24 +101,39 @@
                                                 @if (strpos($value, 'customTable') !== false)
                                                     @foreach($customLists[$property] as $selectedItem)
                                                         @foreach($dropdownSource[$property] as $item)
-                                                            @if ($selectedItem->id == $item->id)
+                                                        @php
+                                                            $itemName = $item->text ?? $item->name;
+                                                            $selectedItemName = $selectedItem->text ?? $selectedItem->name;
+                                                        @endphp
+                                                            @if(str_contains($selectedItemName, ','))
+                                                                <option value="{{$item->id}}" @if (preg_match("/\b". $itemName ."\b/i", $selectedItemName)) selected="selected" @endif> {{ $itemName }} </option>
+                                                            @elseif ($selectedItem->id == $item->id)
                                                                 <option value="{{$item->id}}" selected="selected">
-                                                                {{ $item->text ?? $item->name }}
+                                                                {{ $itemName }}
                                                                 </option>
                                                             @else
                                                                 <option value="{{$item->id}}">
-                                                                {{ $item->text ?? $item->name }}
+                                                                {{ $itemName }}
                                                                 </option>
                                                             @endif
                                                         @endforeach
                                                     @endforeach
                                                 @else
                                                 @foreach($dropdownSource[$property] as $item)
-                                                @if(gettype($record->$property) != 'string')
-                                                    <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
-                                                @else
-                                                <option value="{{$item->id}}" {{ $item->text == old($item->text, $record->$property) ? 'selected' : ''}}>{{ $item->text ?? $item->name }}</option>
-                                                @endif
+                                                    @php
+                                                        $itemName = $item->name ?? $item->text;
+                                                    @endphp
+                                                    @if(gettype($record->$property) != 'string')
+                                                        <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $itemName }}</option>
+                                                    @elseif (str_contains($record->$property, ','))
+                                                        @if(str_contains($record->$property, $itemName))
+                                                        <option value="{{$item->id}}" selected="selected">{{ $itemName }}</option>
+                                                        @else
+                                                        <option value="{{$item->id}}">{{ $itemName }}</option>
+                                                        @endif
+                                                    @else
+                                                        <option value="{{$item->id}}" {{ $itemName == old($itemName, $record->$property) ? 'selected' : ''}}>{{ $itemName }}</option>
+                                                    @endif
                                                 @endforeach
 
                                                 @endif

@@ -23,7 +23,6 @@ use Carbon\Carbon;
 use DB;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class HealthQuoteService extends BaseService
 {
@@ -927,13 +926,13 @@ class HealthQuoteService extends BaseService
     public function assignWCU($request): array
     {
         $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        info('Leads ids to assign: '.json_encode($leadsIds));
         $userId = $request->assigned_to_id_new;
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             if ($this->isLeadTransactionApproved($lead)) {
-                Log::info('Cannot assign WCU as lead is in Transaction Approved state , lead id: '.$leadId);
+                info('Cannot assign WCU as lead is in Transaction Approved state , lead id: '.$leadId);
                 array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
 
                 continue;
@@ -943,7 +942,7 @@ class HealthQuoteService extends BaseService
                 $lead->wcu_id = $userId;
                 $lead->health_team_type = $request->assign_team;
                 $lead->save();
-                Log::info('WCU advisor : '.$userId.' assigned to lead: '.$leadId);
+                info('WCU advisor : '.$userId.' assigned to lead: '.$leadId);
             }
         }
 
@@ -953,21 +952,21 @@ class HealthQuoteService extends BaseService
     public function assignHealthTeam($request, $lead): bool
     {
         if ($this->isLeadTransactionApproved($lead)) {
-            Log::info('Cannot assign Health Team as lead is in Transaction Approved state');
+            info('Cannot assign Health Team as lead is in Transaction Approved state');
 
             return false;
         }
         if ($lead->health_team_type != null && $lead->advisor_id != null) {
-            Log::info('Removing previous advisor as lead already assigned to a health team');
+            info('Removing previous advisor as lead already assigned to a health team');
             $this->removePreviousAdvisorAndUpdateStatus($lead, QuoteStatusEnum::Qualified);
         }
         $selectedTeam = $request->get('assign_team');
         if ($selectedTeam == quoteTypeCode::GM) {
-            Log::info('Assigning lead to GM');
+            info('Assigning lead to GM');
             $this->convertLeadToGM($lead);
             $lead->health_team_type = quoteTypeCode::GM;
         } else {
-            Log::info('Assigning lead to '.$selectedTeam.' team');
+            info('Assigning lead to '.$selectedTeam.' team');
             $lead->health_team_type = $selectedTeam;
             if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
                 $lead->wcu_id = null;
@@ -1000,7 +999,7 @@ class HealthQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        info('Leads ids to assign: '.json_encode($leadsIds));
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -1013,18 +1012,18 @@ class HealthQuoteService extends BaseService
             }
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
                 if ($lead->health_team_type == null || $lead->health_team_type == '') {
-                    Log::info('Lead with id: '.$leadId.' is not assigned to any health team');
+                    info('Lead with id: '.$leadId.' is not assigned to any health team');
                     $msg = 'Health team is missing please select health team first';
                     array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
 
                     continue;
                 }
                 if ($this->leadAllocationService->checkIfAdvisorCanTakeLead($userId)) {
-                    Log::info('Advisor : '.$userId.' can take lead: '.$leadId);
+                    info('Advisor : '.$userId.' can take lead: '.$leadId);
                     $user = User::where('id', $userId)->first();
                     $subTeam = Team::where('id', $user->sub_team_id)->first();
                     if (strtolower($subTeam->name) != strtolower($lead->health_team_type)) {
-                        Log::info('Advisor : '.$userId.' can take lead: '.$leadId.' but he is not assigned to the correct health team');
+                        info('Advisor : '.$userId.' can take lead: '.$leadId.' but he is not assigned to the correct health team');
                         $msg = 'User sub team mismatch with lead health team';
                         array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
 
@@ -1032,9 +1031,9 @@ class HealthQuoteService extends BaseService
                     }
                     $this->leadAllocationService->assignLead($lead, $userId, true);
                     $this->updateChildRecord($lead->id);
-                    Log::info('Lead: '.$leadId.' assigned to advisor: '.$userId);
+                    info('Lead: '.$leadId.' assigned to advisor: '.$userId);
                 } else {
-                    Log::info('Advisor : '.$userId.' cannot take lead: '.$leadId);
+                    info('Advisor : '.$userId.' cannot take lead: '.$leadId);
                     $msg = 'Advisor is not allowed to take lead with CDBID : '.$lead->code;
                     array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
 
