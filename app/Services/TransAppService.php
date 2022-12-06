@@ -167,8 +167,9 @@ class TransAppService extends BaseService
 
     public function sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $recordId)
     {
-        if (preg_match('/^(?:971|\+971|0)?(?:50|51|52|54|55|56|58)\d{7}$/', $customerMobile)) {
-            $mobileNumber = preg_replace('/^(?:971|\+971|0)/', '971', $customerMobile);
+        $customerMobile = str_replace([' ', '-'], '', $customerMobile);
+        if (preg_match('/^(?:971|00971|\+971|0)?(?:50|51|52|54|55|56|58)\d{7}$/', $customerMobile)) {
+            $mobileNumber = '971'.substr($customerMobile, -9);
         } else {
             $mobileNumber = null;
         }
