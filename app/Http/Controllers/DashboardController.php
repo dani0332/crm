@@ -43,7 +43,7 @@ class DashboardController extends Controller
         $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
         $stats = $this->getTPLDashboardStats($request);
 
-        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce' ]))
+        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce']))
                 ->with('labels', json_encode($stats[0], JSON_OBJECT_AS_ARRAY))
                 ->with('data', json_encode($stats[1], JSON_OBJECT_AS_ARRAY));
     }
