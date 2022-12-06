@@ -57,6 +57,7 @@ class SendEmailCustomerService extends BaseService
                     'customerName' => $emailData->customerName,
                     'customerEmail' => $emailData->customerEmail,
                     'signUpButtonUrl' => isset($emailData->signUpButtonUrl) ? $emailData->signUpButtonUrl : null,
+                    'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                     'buttonUrl' => isset($emailData->buttonUrl) ? $emailData->buttonUrl : null,
                     'cdbId' => isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null,
                     'notesForCustomer' => isset($emailData->notesForCustomer) ? nl2br(htmlentities(str_replace('<br />', '', $emailData->notesForCustomer))) : null,
