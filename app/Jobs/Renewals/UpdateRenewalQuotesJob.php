@@ -43,6 +43,7 @@ class UpdateRenewalQuotesJob implements ShouldQueue
     {
         foreach ($this->renewalQuoteProcess as $lead) {
             $renewalsUploadService->updateQuote($lead);
+            sleep(1);
         }
     }
 
