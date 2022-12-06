@@ -249,6 +249,7 @@ class RenewalsUploadService
                     ->finally(function () use($logPrefix) {
                         info($logPrefix.' everything done');
                     })
+                    ->allowFailures()
                     ->withDelay(5)
                     ->dispatch();
 
@@ -297,6 +298,7 @@ class RenewalsUploadService
                     ->finally(function () use($logPrefix) {
                         info($logPrefix.' everything done');
                     })
+                    ->allowFailures()
                     ->withDelay(5)
                     ->dispatch();
 
@@ -377,6 +379,7 @@ class RenewalsUploadService
                     ->finally(function () use($logPrefix) {
                         info($logPrefix.' everything done');
                     })
+                    ->allowFailures()
                     ->withDelay(20)
                     ->dispatch();
 
