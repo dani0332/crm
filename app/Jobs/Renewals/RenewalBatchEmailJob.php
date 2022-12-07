@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Renewals;
 
 use App\Enums\ProcessStatusCode;
 use App\Models\RenewalsBatchEmails;
@@ -38,6 +38,7 @@ class RenewalBatchEmailJob implements ShouldQueue
         $this->quoteTypeId = $quoteTypeId;
         $this->isCompleted = $isCompleted;
         $this->batch = $batch;
+        $this->onQueue('renewals');
     }
 
     /**
