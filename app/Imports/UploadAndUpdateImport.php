@@ -186,7 +186,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
                     $quoteData[$key] = Carbon::instance(Date::excelToDateTimeObject((float) $row[$column['index']]))->format('d/m/Y');
                 }
             } else {
-                $quoteData[$key] = $row[$column['index']] ?? null;
+                $quoteData[$key] = isset($row[$column['index']]) ? $row[$column['index']] : null;
             }
         }
 

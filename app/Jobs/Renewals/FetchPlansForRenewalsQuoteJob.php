@@ -42,8 +42,8 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
+        sleep(20);
         $renewalsUploadService->fetchQuotePlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
-        sleep(10);
     }
 
     public function middleware()
