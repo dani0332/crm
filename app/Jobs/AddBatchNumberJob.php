@@ -14,7 +14,7 @@ class AddBatchNumberJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable;
 
-    public $tries = 3;
+    public $tries = 1;
     public $timeout = 30;
     public $backoff = 35;
     private $leadAllocationBatchId = 'lead_allocation_batch_number';
