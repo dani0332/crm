@@ -204,6 +204,8 @@
                 activitiesDataTable: "{{ route('activities.index') }}",
                 renewals_batches_datatable_route: "{{ url('renewals/batches') }}",
                 lead_allocation_index_route: "{{ route('lead-allocation.index') }}",
+                renewal_uploaded_leads: "{{ url('renewals/uploaded-leads') }}",
+                renewal_base_url: "{{ url('renewals') }}",
                 car_lead_allocation_index_route: "{{ route('car-lead-allocation.index') }}",
                 advisor_conversion_report_route : "{{ url('reports/advisor-conversion')  }}",
             },
