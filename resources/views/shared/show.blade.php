@@ -296,6 +296,9 @@
     @endif
 
     @if (strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
+        @if ($model->modelType == quoteTypeCode::Car)
+            <x-quote-renewal-card :record="$record" />
+        @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled" />
     @endif
