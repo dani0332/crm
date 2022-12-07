@@ -36,15 +36,7 @@
 
 <script>
     var tpl_conversion_chart = {};
-    var backgroundColors =  [
-                                'rgba(255, 99, 132, 0.2)',
-                                'rgba(255, 159, 64, 0.2)',
-                                'rgba(255, 205, 86, 0.2)',
-                                'rgba(75, 192, 192, 0.2)',
-                                'rgba(54, 162, 235, 0.2)',
-                                'rgba(153, 102, 255, 0.2)',
-                                'rgba(201, 203, 207, 0.2)'
-                            ];
+    var backgroundColors =   ['#FFBF00', '#DE3163', '#40E0D0', '#7B68EE', '#FF7F50', '#50C878', '#6495ED', '#F06292', '#4DD0E1'];
     function initializeChart(labels, data)
     {
         const percentages = [];
