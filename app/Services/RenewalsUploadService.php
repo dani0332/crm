@@ -236,14 +236,14 @@ class RenewalsUploadService
 
             if ($jobs != null && count($jobs)) {
 
-                $haystack = Haystack::build()
+                 Haystack::build()
                     ->addJobs($jobs)
                     ->then(function () use($logPrefix, $renewalsUploadLead) {
                         info($logPrefix.' all jobs completed successfully');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
                     })
                     ->catch(function () use($logPrefix, $renewalsUploadLead) {
-                        info($logPrefix.' one of batch is failed. batch: '.json_encode($batch->toArray()));
+                        info($logPrefix.' one of batch is failed. ');
                         $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
                     })
                     ->finally(function () use($logPrefix) {
@@ -284,7 +284,7 @@ class RenewalsUploadService
 
             if ($jobs != null && count($jobs)) {
 
-                $haystack = Haystack::build()
+                 Haystack::build()
                     ->addJobs($jobs)
                     ->then(function () use($logPrefix, $renewalsUploadLead) {
                         info($logPrefix.' all jobs completed successfully');
@@ -365,7 +365,7 @@ class RenewalsUploadService
 
             if ($jobs != null && count($jobs)) {
 
-                $haystack = Haystack::build()
+                 Haystack::build()
                     ->addJobs($jobs)
                     ->then(function () use($logPrefix, $renewalStatusProcess) {
                         info($logPrefix.' all jobs completed successfully');
