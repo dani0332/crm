@@ -3,7 +3,6 @@
 namespace App\Jobs\Renewals;
 
 use App\Services\RenewalsUploadService;
-use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -11,10 +10,12 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Str;
+use Sammyjo20\LaravelHaystack\Concerns\Stackable;
+use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
-class CreateRenewalQuotesJob implements ShouldQueue
+class CreateRenewalQuotesJob implements ShouldQueue, StackableJob
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Stackable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 60;
     public $backoff = 65;
@@ -31,7 +32,6 @@ class CreateRenewalQuotesJob implements ShouldQueue
     {
         $this->renewalQuoteProcess = $renewalQuoteProcess;
         $this->uniqueId = Str::random(4).rand(0, 200000);
-        $this->onQueue('renewals');
     }
 
     /**
@@ -43,7 +43,6 @@ class CreateRenewalQuotesJob implements ShouldQueue
     {
         foreach ($this->renewalQuoteProcess as $lead) {
             $renewalsUploadService->createQuote($lead);
-            sleep(1);
         }
     }
 

@@ -5,17 +5,18 @@ namespace App\Jobs\Renewals;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
 use App\Services\RenewalsUploadService;
-use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Sammyjo20\LaravelHaystack\Concerns\Stackable;
+use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
-class FetchPlansForRenewalsQuoteJob implements ShouldQueue
+class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
 {
-    use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
 
     protected $renewalQuoteProcess;
     protected $renewalStatusProcess;
@@ -32,7 +33,6 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue
     {
         $this->renewalQuoteProcess = $renewalQuoteProcess;
         $this->renewalStatusProcess = $renewalStatusProcess;
-        $this->onQueue('renewals');
     }
 
     /**
@@ -42,7 +42,6 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        sleep(20);
         $renewalsUploadService->fetchQuotePlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
     }
 

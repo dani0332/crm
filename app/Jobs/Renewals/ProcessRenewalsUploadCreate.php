@@ -16,8 +16,8 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $timeout = 360;
-    public $backoff = 365;
+    public $timeout = 90;
+    public $backoff = 95;
     protected $renewalsUploadLead;
 
     /**
@@ -28,6 +28,7 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
     public function __construct(RenewalsUploadLeads $renewalsUploadLead)
     {
         $this->renewalsUploadLead = $renewalsUploadLead;
+        $this->onQueue('renewals');
     }
 
     /**
