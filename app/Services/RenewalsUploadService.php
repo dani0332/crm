@@ -237,6 +237,7 @@ class RenewalsUploadService
             if ($jobs != null && count($jobs)) {
 
                  Haystack::build()
+                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use($logPrefix, $renewalsUploadLead) {
                         info($logPrefix.' all jobs completed successfully');
@@ -285,6 +286,7 @@ class RenewalsUploadService
             if ($jobs != null && count($jobs)) {
 
                  Haystack::build()
+                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use($logPrefix, $renewalsUploadLead) {
                         info($logPrefix.' all jobs completed successfully');
@@ -366,6 +368,7 @@ class RenewalsUploadService
             if ($jobs != null && count($jobs)) {
 
                  Haystack::build()
+                     ->onQueue('renewals')
                     ->addJobs($jobs)
                     ->then(function () use($logPrefix, $renewalStatusProcess) {
                         info($logPrefix.' all jobs completed successfully');
