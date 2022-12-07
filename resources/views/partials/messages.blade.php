@@ -11,3 +11,11 @@
         </div>
     </div>
 @endif
+
+@if(session()->has('message'))
+    <div class="alert alert-success mt-5">{{ session()->get('message') }}</div>
+@endif
+
+@if(session()->has('error'))
+    <div class="alert alert-danger mt-5">{{ session()->get('error') }}</div>
+@endif

@@ -66,4 +66,9 @@ class CarPlan extends BaseModel implements AuditableContract
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    public function carAddons()
+    {
+        return $this->belongsToMany(CarAddOn::class, 'car_plan_addon', 'plan_id', 'addon_id');
+    }
 }

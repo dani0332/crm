@@ -13,10 +13,12 @@
             display: none;
         }
 </style>
-<?php
+@php
     use App\Enums\quoteTypeCode;
     use App\Enums\GenericRequestEnum;
-    ?>
+    use App\Enums\RolesEnum;
+    use App\Enums\DatabaseColumnsString;
+@endphp
 <script>
     function getCarMakes(id)
     {
@@ -199,6 +201,13 @@
                 }
             });
         }
+
+        $('#previous_policy_expiry_date').datepicker({
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: 'yy-mm-dd',
+            yearRange: '-80:+00',
+        });
 });
 </script>
     <div class="row">
@@ -265,12 +274,22 @@
                                             </span>
                                             <input
                                                 @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
-                                                @if(explode("|", $value)[1] != 'date')
-                                                    type={{ explode("|", $value)[1]  }}
-                                                    @endif id={{$property}}
-                                                name={{$property}}
+                                                @if(explode("|", $value)[1] != 'date') type={{ explode("|", $value)[1] }} @endif 
+                                                id={{$property}} name={{$property}}
                                                 @if($property == 'email' || $property == 'mobile_no') disabled="disabled" @endif
-                                                value="{{ old($property, $record->$property) }}" class="form-control">
+                                                value="{{ old($property, $record->$property) }}" class="form-control" 
+                                                @if(!Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::Admin]))
+                                                    @if($property == DatabaseColumnsString::RENEWAL_BATCH || $property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER || $property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE) 
+                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;pointer-events: none;"
+                                                    @endif
+                                                @else 
+                                                    @if($property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER && $record->$property)
+                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;"
+                                                    @endif
+                                                    @if($property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE && $record->$property)
+                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;pointer-events: none;"
+                                                    @endif
+                                                @endif >
                                             @if ($errors->has($property))
                                                 <span class="text-danger">{{ $errors->first($property) }}</span>
                                             @endif
