@@ -18,20 +18,20 @@ trait RolePermissionConditions
         $ids = $this->walkTree(Auth::user()->id);
 
         if ($isRenewalAdvisor) {
-            $query->whereNotNull($prefix.'.'.'previous_quote_id');
+            $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
         }
         if ($isRenewalManager) {
-            $query->whereNotNull($prefix.'.'.'previous_quote_id');
+            $query->whereNotNull($prefix.'.'.'previous_quote_policy_number');
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
         }
         if ($isNewAdvisor) {
             $query->where($prefix.'.'.'advisor_id', Auth::user()->id);
-            $query->whereNull($prefix.'.'.'previous_quote_id');
+            $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
         if ($isNewManager) {
             $query->whereIn($prefix.'.'.'advisor_id', $ids);
-            $query->whereNull($prefix.'.'.'previous_quote_id');
+            $query->whereNull($prefix.'.'.'previous_quote_policy_number');
         }
     }
 }

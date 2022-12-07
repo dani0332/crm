@@ -7,6 +7,7 @@ use BenSampo\Enum\Enum;
 final class RolesEnum extends Enum
 {
     public const Admin = 'ADMIN';
+    public const Engineering = 'ENGINEERING';
     public const CarAdvisor = 'CAR_ADVISOR';
     public const BusinessAdvisor = 'BUSINESS_ADVISOR';
     public const HealthAdvisor = 'HEALTH_ADVISOR';
@@ -74,6 +75,9 @@ final class RolesEnum extends Enum
     public const CorplineNewBusinessManager = 'CORPLINE_NEW_BUSINESS_MANAGER';
     public const SuperManagerLeadAllocation = 'SUPER_MANAGER_LEAD_ALLOCATION';
     public const BetaUser = 'BETA_USER';
+    public const MarketingOperations = 'MARKETING_OPERATIONS';
+    public const Renewals = 'RENEWALS';
+    public const RenewalsManager = 'RENEWALS_MANAGER';
     public const CarDeputyManager = 'CAR_DEPUTY_MANAGER';
     public const CarManager = 'CAR_MANAGER';
 }

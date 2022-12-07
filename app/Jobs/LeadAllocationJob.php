@@ -19,6 +19,7 @@ class LeadAllocationJob implements ShouldQueue
     public $tries = 1;
     public $timeout = 40;
     public $backoff = 45;
+    private $leadAllocationJobId = 'lead_allocation';
 
     /**
      * Create a new job instance.
