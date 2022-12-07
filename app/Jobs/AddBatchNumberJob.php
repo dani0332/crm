@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 
 class AddBatchNumberJob implements ShouldQueue
 {
@@ -16,6 +17,7 @@ class AddBatchNumberJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 30;
     public $backoff = 35;
+    private $leadAllocationBatchId = 'lead_allocation_batch_number';
 
     /**
      * Create a new job instance.
@@ -88,5 +90,10 @@ class AddBatchNumberJob implements ShouldQueue
         }
 
         return $batchArray;
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->leadAllocationBatchId))->dontRelease()];
     }
 }
