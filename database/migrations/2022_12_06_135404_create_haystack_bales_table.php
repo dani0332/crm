@@ -1,9 +1,9 @@
 <?php
 
-use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 return new class extends Migration
 {
