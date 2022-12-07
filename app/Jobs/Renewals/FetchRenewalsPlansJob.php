@@ -30,6 +30,7 @@ class FetchRenewalsPlansJob implements ShouldQueue
     {
         $this->batch = $batch;
         $this->renewalStatusProcess = $renewalStatusProcess;
+        $this->onQueue('renewals');
     }
 
     /**
