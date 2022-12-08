@@ -51,7 +51,7 @@ class TransAppService extends BaseService
                 if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
                     $responseExtend = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
-                    $listId = Config::get('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
+                    $listId = config('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
                     $responseContact = CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateInviteCodeResponse);
 
                     if ($responseContact != 201 && $responseContact != 204) {
@@ -116,7 +116,7 @@ class TransAppService extends BaseService
 
             $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
 
-            if ($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && $isCustomerExisting->isEmpty()) {
+            if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && $isCustomerExisting->isEmpty()) {
                 $this->sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, 'transapp-myalfred-we');
 
                 // Send SMS to customer
@@ -141,8 +141,8 @@ class TransAppService extends BaseService
     public function sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $emailTemplateId = (int) Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
-        $redirect_url = Config::get('constants.SIB_MYALFRED_CUSTOMER_REDIRECT_URL');
+        $emailTemplateId = config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
+        $redirect_url = config('constants.SIB_MYALFRED_CUSTOMER_REDIRECT_URL');
 
         $emailData = (object) [
             'customerName' => $customer->first_name.' '.$customer->last_name,
@@ -169,7 +169,7 @@ class TransAppService extends BaseService
 
     public function sendWelcomeSms($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $recordId)
     {
-        // $redirect_url = Config::get('constants.SIB_MYALFRED_CUSTOMER_REDIRECT_URL');
+        // $redirect_url = config('constants.SIB_MYALFRED_CUSTOMER_REDIRECT_URL');
 
         $customerMobile = str_replace([' ', '-'], '', $customerMobile);
         if (preg_match('/^(?:971|00971|\+971|0)?(?:50|51|52|54|55|56|58)\d{7}$/', $customerMobile)) {

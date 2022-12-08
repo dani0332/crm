@@ -2,15 +2,13 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Config;
-
 class CustomerWEGenerateInviteCodeService extends BaseService
 {
     public static function getCustomerInviteCode()
     {
-        $inviteCodeGenerateEndPoint = Config::get('constants.BERLIN_API_ENDPOINT').'/auth/generate-code';
-        $inviteCodeGenerateUserName = Config::get('constants.BERLIN_BASIC_AUTH_USER_NAME');
-        $inviteCodeGeneratePassword = Config::get('constants.BERLIN_BASIC_AUTH_PASSWORD');
+        $inviteCodeGenerateEndPoint = config('constants.BERLIN_API_ENDPOINT').'/auth/generate-code';
+        $inviteCodeGenerateUserName = config('constants.BERLIN_BASIC_AUTH_USER_NAME');
+        $inviteCodeGeneratePassword = config('constants.BERLIN_BASIC_AUTH_PASSWORD');
 
         $inviteCodeGeneratauthBasic = base64_encode($inviteCodeGenerateUserName.':'.$inviteCodeGeneratePassword);
         $clientBerlin = new \GuzzleHttp\Client();
