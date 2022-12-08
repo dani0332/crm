@@ -50,9 +50,9 @@ class DashboardController extends Controller
         foreach ($teams as $team) {
             $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
             $teamWiseLeadsAssignedAverage[] = [
-                'totalUsersUnderTeam' => count($teamUserIds) ,
+                'totalUsersUnderTeam' => count($teamUserIds),
                 'teamName' => $team->name,
-                'totalLeadsCount' => CarQuote::whereIn('advisor_id', $teamUserIds)->count()
+                'totalLeadsCount' => CarQuote::whereIn('advisor_id', $teamUserIds)->count(),
             ];
         }
 
