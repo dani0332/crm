@@ -37,14 +37,35 @@ class DashboardController extends Controller
     public function renderMainDashboard(Request $request)
     {
         $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->addDays(-40)->startOfDay(), now()->endOfDay()])->get();
+        $carTeam = Team::where('name', quoteTypeCode::Car)->first();
+        $teams = Team::where('parent_team_id', $carTeam->id)->get();
+        $carAdvisors = User::where('team_id', $carTeam->id)->where('sub_team_id', $teams->pluck('id')->toArray())->get();
+        $teamWiseLeadsAssignedAverage = [];
+        $advisorConversionLabels = [];
+        $advisorConversionData = [];
+        foreach ($carAdvisors as $key => $carAdvisor) {
+            $advisorConversionLabels[] = $carAdvisor->name;
+            $advisorConversionData[] = $allCarQuotesToday->where('advisor_id', $carAdvisor->id)->count();
+        }
+        foreach ($teams as $team) {
+            $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
+            $teamWiseLeadsAssignedAverage[] = [
+                'totalUsersUnderTeam' => count($teamUserIds) ,
+                'teamName' => $team->name,
+                'totalLeadsCount' => CarQuote::whereIn('advisor_id', $teamUserIds)->count()
+            ];
+        }
+
         $totalLeadsReceived = count($allCarQuotesToday);
         $totalLeadsReceivedEcommerce = count($allCarQuotesToday->where('is_ecommerce', 1));
         $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
         $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
         $stats = $this->getTPLDashboardStats($request);
 
-        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce']))
+        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce', 'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage']))
                 ->with('labels', json_encode($stats[0], JSON_OBJECT_AS_ARRAY))
+                ->with('advisorConversionLabels', json_encode($advisorConversionLabels, JSON_OBJECT_AS_ARRAY))
+                ->with('advisorConversionData', json_encode($advisorConversionData, JSON_OBJECT_AS_ARRAY))
                 ->with('data', json_encode($stats[1], JSON_OBJECT_AS_ARRAY));
     }
 
