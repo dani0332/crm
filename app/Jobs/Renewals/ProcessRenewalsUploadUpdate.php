@@ -15,9 +15,9 @@ class ProcessRenewalsUploadUpdate implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
-    public $timeout = 90;
-    public $backoff = 95;
+    public $tries = 2;
+    public $timeout = 1200;
+    public $backoff = 10;
     protected $renewalsUploadLead;
 
     /**
