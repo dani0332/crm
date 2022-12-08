@@ -169,7 +169,7 @@ class TransAppService extends BaseService
 
     public function sendWelcomeSms($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $recordId)
     {
-        $redirect_url = Config::get('constants.SIB_MYALFRED_CUSTOMER_REDIRECT_URL');
+        // $redirect_url = Config::get('constants.SIB_MYALFRED_CUSTOMER_REDIRECT_URL');
 
         $customerMobile = str_replace([' ', '-'], '', $customerMobile);
         if (preg_match('/^(?:971|00971|\+971|0)?(?:50|51|52|54|55|56|58)\d{7}$/', $customerMobile)) {
@@ -179,8 +179,9 @@ class TransAppService extends BaseService
         }
 
         if ($mobileNumber != null) {
-            $shortUrl = $this->sendSmsCustomerService->getShortUrl($redirect_url);
-            $smsMessage = 'As a valued customer of InsuranceMarket.ae, you can avail offers from over 100 brands on myAlfred. Click '.$shortUrl.' & enter '.$WEGenerateInviteCodeResponse.'! optoutMA 4741';
+            // $shortUrl = $this->sendSmsCustomerService->getShortUrl($redirect_url);
+
+            $smsMessage = 'Welcome to the InsuranceMarket.ae family! Avail offers from over 100 brands on the myAlfred app. Download the app and use code '.$WEGenerateInviteCodeResponse.' to sign up! optoutMA4741';
             $this->sendSmsCustomerService->sendSms($mobileNumber, $smsMessage, $customerEmail, $recordId);
         } else {
             Log::info('Invalid mobile number: '.$customerMobile.' | email: '.$customerEmail.' | record_id: '.$recordId.' | class: '.get_class());
