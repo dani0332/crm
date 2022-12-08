@@ -1306,19 +1306,20 @@ class RenewalsUploadService
                             } elseif (! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                 $leadValidationErrors->push('Invalid Driving Experience');
                             }
-                            if (! $leadData->plan_type) {
-                                $leadValidationErrors->push('Repair Type is required');
-                            } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0) {
-                                $leadValidationErrors->push('Excess should be 0 with TPL');
-                            } elseif ($leadData->plan_type == CarPlanType::COMP || $leadData->plan_type == CarPlanType::AGENCY) {
-                                if (! $leadData->excess) {
-                                    $leadValidationErrors->push('Excess should be > 0 with Repair Type - COMP or AGENCY');
-                                }
-                            }
-                            if (! $leadData->premium && $leadData->excess) {
-                                $leadValidationErrors->push('Renewal Premium is required with Excess');
-                            }
+
                             if ($leadData->premium) {
+                                if (! $leadData->plan_type) {
+                                    $leadValidationErrors->push('Repair Type is required');
+                                } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0) {
+                                    $leadValidationErrors->push('Excess should be 0 with TPL');
+                                } elseif ($leadData->plan_type == CarPlanType::COMP || $leadData->plan_type == CarPlanType::AGENCY) {
+                                    if (! $leadData->excess) {
+                                        $leadValidationErrors->push('Excess should be > 0 with Repair Type - COMP or AGENCY');
+                                    }
+                                }
+                                if (! $leadData->premium && $leadData->excess) {
+                                    $leadValidationErrors->push('Renewal Premium is required with Excess');
+                                }
                                 if (! $leadData->provider_name) {
                                     $leadValidationErrors->push('Provider Name is required');
                                 }
