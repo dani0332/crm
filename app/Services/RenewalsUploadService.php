@@ -1235,7 +1235,7 @@ class RenewalsUploadService
 
     public function uploadedLeadsValidation(RenewalsUploadLeads $renewalsUploadLead)
     {
-        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunkById(50, function ($leads) {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunkById(5, function ($leads) {
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
