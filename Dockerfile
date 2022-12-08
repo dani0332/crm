@@ -114,7 +114,7 @@ RUN cp docker/log_files.yml /etc/
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
 #RUN yarn
-RUN yarn run prod
+# RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 
 ENTRYPOINT ["/var/www/docker/run.sh"]
