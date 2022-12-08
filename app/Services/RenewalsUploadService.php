@@ -225,10 +225,9 @@ class RenewalsUploadService
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
-                $chunks = $leads->chunk(5);
 
-                foreach ($chunks as $chunk) {
-                    $jobs[] = new CreateRenewalQuotesJob($chunk);
+                foreach ($leads as $lead) {
+                    $jobs[] = new CreateRenewalQuotesJob($lead);
                 }
             });
 
@@ -248,7 +247,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(5)
+                   ->withDelay(3)
                    ->dispatch();
             } else {
                 info('BATCH: no jobs to create quotes');
@@ -272,10 +271,9 @@ class RenewalsUploadService
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
-                $chunks = $leads->chunk(5);
 
-                foreach ($chunks as $chunk) {
-                    $jobs[] = new UpdateRenewalQuotesJob($chunk);
+                foreach ($leads as $lead) {
+                    $jobs[] = new UpdateRenewalQuotesJob($lead);
                 }
             });
 
@@ -296,7 +294,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(5)
+                   ->withDelay(3)
                    ->dispatch();
 
                 info($logPrefix.' jobs dispatched');
