@@ -18,7 +18,7 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-            @can(PermissionsEnum::DashboardView)
+            @canany([PermissionsEnum::DashboardView, PermissionsEnum::TPL_DASHBOARD_VIEW, PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW, PermissionsEnum::MAIN_DASHBOARD_VIEW])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-tachometer"
                         aria-hidden="true"></i>Dashboard <span class="fa fa-chevron-down"></span></a>
@@ -32,24 +32,24 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('/comprehensive-conversion-dashboard') }}">Comprehensive Conversion</a></li>
                             @endcan
                             @can(PermissionsEnum::MAIN_DASHBOARD_VIEW)
-                            <li><a href="{{ url('/accumulative-dashboard') }}">Accumulative Dashboard</a></li>
+                            <li><a href="{{ url('/accumulative- dashboard') }}">Accumulative Dashboard</a></li>
                             @endcan
                         </ul>
                     </li>
                 </ul>
-                @endcan
-                @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::CarAdvisor]))
+                @endcanany
+                @if(Auth::user()->hasRole(RolesEnum::BetaUser) && Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
                             @endif
                             @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/advisor-performance') }}">Advisor Performance</a></li>
                             @endif
-                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/advisor-distribution') }}">Advisor Distribution</a></li>
                             @endif
                             @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
@@ -230,18 +230,20 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @can(PermissionsEnum::RenewalsUpload)
+                @hasanyrole(RolesEnum::Renewals.'|'.RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             <li><a href="{{ url('renewals/upload') }}">Upload & Create</a></li>
                             <li><a href="{{ url('renewals/uploaded-leads') }}">Uploaded Leads</a></li>
                             <li><a href="{{ url('renewals/update') }}">Upload & Update</a></li>
+                            @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
                             <li><a href="{{ url('renewals/batches') }}">Batches</a></li>
+                            @endhasanyrole
                         </ul>
                     </li>
                 </ul>
-                @endcan
+                @endhasanyrole
                 @can(PermissionsEnum::ClaimList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>

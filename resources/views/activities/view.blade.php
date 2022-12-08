@@ -526,7 +526,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
 
             <div class="modal-content">
-                <form method="post" action="/activities/createActivity" autocomplete="off">
+                <form method="post" action="/activities/create-activity" autocomplete="off">
                     {{ csrf_field() }}
                     @method('POST')
                     <input type="hidden" name="isActivityView" value="1" id="quote_uuid">

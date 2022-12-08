@@ -22,11 +22,14 @@ class DatabaseSeeder extends Seeder
             SendPolicyApplicationStorageSeeder::class,
             AddRoleForMarketingSeeder::class,
             addPermissionForManualLeadTesting::class,
+            QuoteTypeTableSeeder::class,
+            AddRoleForRenewalsManager::class,
             addPermissionForCarAllocation::class,
             addLeadSourcesForAllocation::class,
             addCarLeadAllocationFetchStartDate::class,
             addAdvisorConvertionReportBatchStartDate::class,
             addCarAllocationMasterSwitch::class,
+            addPermissionsForDashboard::class,
         ]);
     }
 }
