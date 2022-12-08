@@ -225,7 +225,6 @@ class RenewalsUploadService
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
-
                 foreach ($leads as $lead) {
                     $jobs[] = new CreateRenewalQuotesJob($lead);
                 }
@@ -247,7 +246,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(3)
+                   ->withDelay(1)
                    ->dispatch();
             } else {
                 info('BATCH: no jobs to create quotes');
@@ -271,7 +270,6 @@ class RenewalsUploadService
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
-
                 foreach ($leads as $lead) {
                     $jobs[] = new UpdateRenewalQuotesJob($lead);
                 }
@@ -294,7 +292,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(3)
+                   ->withDelay(1)
                    ->dispatch();
 
                 info($logPrefix.' jobs dispatched');
@@ -1235,7 +1233,7 @@ class RenewalsUploadService
 
     public function uploadedLeadsValidation(RenewalsUploadLeads $renewalsUploadLead)
     {
-        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunkById(5, function ($leads) {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunkById(50, function ($leads) {
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
