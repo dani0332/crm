@@ -24,7 +24,7 @@ class RenewalBatchEmailJob implements ShouldQueue
     protected $batch;
     public $tries = 3;
     public $timeout = 30;
-    public $backoff = 35;
+    public $backoff = 10;
 
     /**
      * Create a new job instance.

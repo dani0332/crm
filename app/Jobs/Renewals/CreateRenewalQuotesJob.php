@@ -17,10 +17,9 @@ class CreateRenewalQuotesJob implements ShouldQueue, StackableJob
     use Stackable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $timeout = 60;
-    public $backoff = 65;
+    public $backoff = 10;
     public $tries = 3;
     protected $renewalQuoteProcess;
-    protected $uniqueId = null;
 
     /**
      * Create a new job instance.
@@ -42,6 +41,9 @@ class CreateRenewalQuotesJob implements ShouldQueue, StackableJob
         $renewalsUploadService->createQuote($this->renewalQuoteProcess);
     }
 
+    /**
+     * @return array
+     */
     public function middleware()
     {
         return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
