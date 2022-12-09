@@ -119,8 +119,8 @@ Route::group(['middleware' => ['auth']], function () {
         'index' => 'activities.index',
         'destroy' => 'activities.destroy',
     ]);
-    Route::post('/activities/createActivity', [ActivitesController::class, 'store'])->name('activities.store');
-    Route::post('activities/{id}/update', [ActivitesController::class, 'update'])->name('activities.update');
+    Route::post('/activities/create-activity', [ActivitesController::class, 'store']);
+    Route::post('activities/{id}/update', [ActivitesController::class, 'update']);
     Route::post('activities/{id}/delete', [ActivitesController::class, 'destroy'])->name('activities.destroy');
     Route::post('activities/updateStatus', [ActivitesController::class, 'updateStatus'])->name('activities.updateStatus');
     Route::post('activities/getEditView', [ActivitesController::class, 'getEditView'])->name('activities.getEditView');
