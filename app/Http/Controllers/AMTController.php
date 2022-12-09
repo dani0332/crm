@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\GroupMedicalType;
@@ -13,6 +14,7 @@ use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\LookupService;
+use App\Services\DropdownSourceService;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -27,6 +29,7 @@ class AMTController extends Controller
     protected $crudService;
     protected $lookupService;
     protected $customerService;
+    protected $dropdownSourceService;
 
     use RolePermissionConditions;
 
@@ -34,12 +37,14 @@ class AMTController extends Controller
         BusinessQuoteService $businessQuoteService,
         CRUDService $crudService,
         LookupService $lookupService,
-        CustomerService $customerService
+        CustomerService $customerService,
+        DropdownSourceService $dropdownSourceService
     ) {
         $this->businessQuoteService = $businessQuoteService;
         $this->crudService = $crudService;
         $this->lookupService = $lookupService;
         $this->customerService = $customerService;
+        $this->dropdownSourceService = $dropdownSourceService;
     }
 
     /**
@@ -89,7 +94,7 @@ class AMTController extends Controller
         }
         $this->whereBasedOnRole($data, 'bqr');
 
-        $leadStatuses = $this->lookupService->getLeadStatuses();
+        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
@@ -222,13 +227,7 @@ class AMTController extends Controller
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
         $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
-        $leadStatuses = DB::table('quote_status')
-            ->select('id', 'text')
-            ->whereNotIn('text', [
-                'AML Screening Cleared', 'Draft', 'Cancelled', 'AML Screening Failed', 'Transaction Declined', 'Policy Issued', 'Policy Invoiced',
-                'Completed', 'Pending', 'Rejected', 'Issued', 'Approved', 'Approval required', 'Resubmit for approval',
-            ])
-            ->orderBy('sort_order', 'asc')->get();
+        $leadStatuses = $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
         $lostReasons = DB::table('lost_reasons')
             ->select('id', 'text')
             ->get();
