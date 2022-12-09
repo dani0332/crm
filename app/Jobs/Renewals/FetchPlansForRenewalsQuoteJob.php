@@ -2,8 +2,10 @@
 
 namespace App\Jobs\Renewals;
 
+use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
+use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -11,8 +13,10 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
+use Throwable;
 
 class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
 {
@@ -21,7 +25,7 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
     protected $renewalQuoteProcess;
     protected $renewalStatusProcess;
     public $timeout = 60;
-    public $backoff = 65;
+    public $backoff = 10;
     public $tries = 3;
 
     /**
@@ -45,8 +49,22 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
         $renewalsUploadService->fetchQuotePlans($this->renewalQuoteProcess, $this->renewalStatusProcess);
     }
 
+    /**
+     * @return array
+     */
     public function middleware()
     {
         return [(new WithoutOverlapping($this->renewalQuoteProcess->id))->dontRelease()];
     }
+
+    /**
+     * @param  Throwable  $exception
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        info('CL: '.get_class().' FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' Error: '.$exception->getMessage());
+        RenewalStatusProcess::where('id', $this->renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+    }
+
 }
