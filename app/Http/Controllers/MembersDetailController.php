@@ -59,12 +59,13 @@ class MembersDetailController extends Controller
     {
         $dob = isset($request->dob) ? Carbon::createFromFormat('d-m-Y', $request->dob)->format(get_dob_date_format()) : null;
         $data = [
-            'health_quote_request_id' => $request->health_quote_request_id,
-            'gender' => $request->gender,
-            'dob' => $dob,
-            'member_category_id' => $request->member_category,
-            'salary_band_id' => $request->salary_band,
+            'health_quote_request_id' => isset($request->health_quote_request_id) ? $request->health_quote_request_id : null,
+            'gender' => isset($request->gender) ? $request->gender : null,
+            'dob' => isset($dob) ? $dob : null,
+            'member_category_id' => isset($request->member_category) ? $request->member_category : null,
+            'salary_band_id' => isset($request->salary_band) ? $request->salary_band : null,
         ];
+
         $memberDetail = HealthMemberDetail::find($id);
         if ($memberDetail) {
             $memberDetail->update($data);

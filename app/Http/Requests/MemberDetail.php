@@ -26,8 +26,6 @@ class MemberDetail extends FormRequest
         return [
             'gender' => 'required',
             'dob' => 'required',
-            'member_category' => 'required',
-            'salary_band' => 'required',
             'health_quote_request_id' => 'required',
             'modelType' => '',
         ];
