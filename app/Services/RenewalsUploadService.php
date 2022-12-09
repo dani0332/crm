@@ -372,7 +372,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(20)
+                   ->withDelay(10)
                    ->dispatch();
             } else {
                 info($logPrefix.' no jobs to create quotes');
