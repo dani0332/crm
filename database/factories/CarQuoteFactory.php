@@ -19,7 +19,7 @@ class CarQuoteFactory extends Factory
         $carMakeIds = DB::table('car_make')->pluck('id');
         $carModelIds = DB::table('car_model')->pluck('id');
         $nationalityIds = DB::table('nationality')->pluck('id');
-        $quoteStatusIds = DB::table('quote_status')->where('text', ['Fake','Duplicate','Followed Up','Quoted','Lost','Policy Issued'])->where('is_active',1)->pluck('id');
+        $quoteStatusIds = DB::table('quote_status')->where('text', ['Fake', 'Duplicate', 'Followed Up', 'Quoted', 'Lost', 'Policy Issued'])->where('is_active', 1)->pluck('id');
         $quoteBatchIds = DB::table('quote_batches')->pluck('id');
         $tierIds = DB::table('tiers')->pluck('id');
         $sources = DB::table('car_quote_request')->distinct('source')->pluck('source');
