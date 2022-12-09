@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+
 class CustomerWEGenerateInviteCodeService extends BaseService
 {
     public static function getCustomerInviteCode()
@@ -31,6 +33,7 @@ class CustomerWEGenerateInviteCodeService extends BaseService
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $responseErrorCode = $e->getResponse()->getStatusCode();
+            Log::info('CustomerWEGenerateInviteCodeService Error: '.$responseErrorCode);
         }
 
         if (isset($getResponseInviteCode)) {

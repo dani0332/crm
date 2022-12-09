@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\GenericRequestEnum;
 use App\Models\CarQuote;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\CarQuotePolicy;
@@ -15,7 +16,6 @@ use App\Models\TypeOfInsurance;
 use App\Models\User;
 use Auth;
 use Carbon\Carbon;
-use Config;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -41,7 +41,7 @@ class TransAppService extends BaseService
     {
         $WEGenerateInviteCodeResponse = CustomerWEGenerateInviteCodeService::getCustomerInviteCode();
 
-        if (gettype($WEGenerateInviteCodeResponse) == 'string') {
+        if (gettype($WEGenerateInviteCodeResponse) == GenericRequestEnum::TypeString) {
             $existingCustomer = CustomerService::getCustomerByEmail($request->email)->first();
             $sendWelcomeEmail = ($existingCustomer && ! $existingCustomer->is_we_sent) || ! $existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
@@ -141,7 +141,7 @@ class TransAppService extends BaseService
     public function sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $emailTemplateId = config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
+        $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //405
         $redirect_url = config('constants.SIB_MYALFRED_CUSTOMER_REDIRECT_URL');
 
         $emailData = (object) [
@@ -159,7 +159,7 @@ class TransAppService extends BaseService
 
             // $code = substr($WEGenerateInviteCodeResponse, strpos($WEGenerateInviteCodeResponse, 'signup/') + 7);
             $newMyAlFredUser = new MyAlFredUser;
-            // $newMyAlFredUser->signup_url = $WEGenerateInviteCodeResponse;
+            $newMyAlFredUser->signup_url = null;
             $newMyAlFredUser->customer_id = $customerId;
             $newMyAlFredUser->code = $WEGenerateInviteCodeResponse;
             $newMyAlFredUser->source = 'TRANSAPP';
