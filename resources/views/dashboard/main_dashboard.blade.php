@@ -209,7 +209,7 @@
     </div>
     <div style="clear: both;">
         <div class="row mt-12">
-            <div class="col-md-6 ml-10  col-md-offset-1" style="width: 600px; float:left;">
+            <div class="col-md-6 ml-10  col-md-offset-1" style="width: 700px; float:left;">
                 <div class="panel panel-default">
                     <div class="panel-body">
                         <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
@@ -219,7 +219,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 ml-10 col-md-offset-1" style="width: 600px; float:right;">
+            <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:right;">
                 <div class="panel panel-default">
                     <div class="panel-body">
                         <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
@@ -233,7 +233,7 @@
         <div style="clear: both;">
         </div>
         <div class="row mt-12">
-            <div class="col-md-6 ml-10 col-md-offset-1" style="width: 600px; float:left;margin-left: 50px;">
+            <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:left;margin-left: 50px;">
                 <div class="panel panel-default">
                     <div class="panel-body">
                         <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
@@ -335,13 +335,14 @@
                 }]
             },
             options: {
-            zoomOutPercentage: 55, // makes chart 40% smaller (50% by default, if the preoprty is undefined)
             plugins: {
-                legend: false,
+                legend: true,
                 outlabels: {
-                    text: '%v : %p',
-                    color: 'black',
-                    stretch: 45,
+                    text: '%v %',
+                    color: 'white',
+                    stretch: 20,
+                    valuePrecision: 0,
+			        percentPrecision: 2,
                     font: {
                         resizable: true,
                         minSize: 12,
@@ -350,6 +351,7 @@
                 }
             }
         }
+
         });
     }
     function initializeBChart(labels, data, id)

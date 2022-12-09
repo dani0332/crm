@@ -36,7 +36,7 @@ class DashboardController extends Controller
 
     public function renderMainDashboard(Request $request)
     {
-        $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->addDays(-40)->startOfDay(), now()->endOfDay()])->get();
+        $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
         $carAdvisors = User::where('team_id', $carTeam->id)->where('sub_team_id', $teams->pluck('id')->toArray())->get();
@@ -116,7 +116,7 @@ class DashboardController extends Controller
         $data = [];
         foreach ($records->get() as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
-            $data[] = $percentage;
+            $data[] = number_format((float)$percentage, 2, '.', '');
             $labels[] = $record->name;
         }
 
@@ -182,7 +182,7 @@ class DashboardController extends Controller
         $data = [];
         foreach ($records->get() as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
-            $data[] = $percentage;
+            $data[] = number_format((float)$percentage, 2, '.', '');
             $labels[] = $record->name;
         }
 

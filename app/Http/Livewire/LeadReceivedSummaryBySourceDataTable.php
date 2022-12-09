@@ -49,7 +49,6 @@ class LeadReceivedSummaryBySourceDataTable extends DataTableComponent
                 DB::raw('count(*) as leadSourceCount'),
                 DB::raw("count(*) / (SELECT count(*)	FROM car_Quote_Request WHERE created_at = '2021-01-26 05:41:32' ) AS percent"),
             )
-            ->where('created_at', '2021-01-26 05:41:32')
             ->groupBy('source');
     }
 }
