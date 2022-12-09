@@ -52,12 +52,12 @@ class ProcessRenewalsUploadCreate implements ShouldQueue
     }
 
     /**
-     * @param Throwable $exception
+     * @param  Throwable  $exception
      * @return void
      */
     public function failed(Throwable $exception)
     {
-        info('CL: ' . get_class() . ' FN: failed. Job Failed. Error: '.$exception->getMessage());
+        info('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage());
         $this->renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
     }
 }

@@ -1429,6 +1429,8 @@ class RenewalsUploadService
                     $renewalUploadLead->save();
                 }
             }
+
+            sleep(1);
         }, $column = 'id');
 
         return true;
