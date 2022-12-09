@@ -24,7 +24,7 @@
                                     <div class="input-group">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align">Gender</label>
                                         <select name="gender" id="ebp_gender" class="form-control">
-                                            <option>Please Select Gender</option>
+                                            <option value="">Please Select Gender</option>
                                             <option value="{{GenericRequestEnum::MALE_SINGLE_VALUE}}">{{GenericRequestEnum::MALE_SINGLE}}</option>
                                             <option value="{{GenericRequestEnum::FEMALE_SINGLE_VALUE}}">{{GenericRequestEnum::FEMALE_SINGLE}}</option>
                                             <option value="{{GenericRequestEnum::FEMALE_MARRIED_VALUE}}">{{GenericRequestEnum::FEMALE_MARRIED}}</option>
@@ -43,9 +43,9 @@
                                     <div class="input-group">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align">Category</label>
                                         <select name="member_category" id="ebp_category" class="form-control">
-                                            <option>Please Select Member Category</option>
+                                            <option value="">Please Select Member Category</option>
                                             @foreach($categories as $member)
-                                            <option value="{{$member->id}}">{{$member->text}}</option>
+                                                <option value="{{$member->id}}">{{$member->text}}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -54,10 +54,10 @@
                                     <div class="input-group">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align">Salary Band</label>
                                     <select name="salary_band" id="ebp_salary" class="form-control">
-                                            <option>Please Select Salary Band</option>
-                                            @foreach($salaries as $salary)
+                                        <option value="">Please Select Salary Band</option>
+                                        @foreach($salaries as $salary)
                                             <option value="{{$salary->id}}">{{$salary->text}}</option>
-                                            @endforeach
+                                        @endforeach
                                     </select>
                                     </div>
                                 </div>
