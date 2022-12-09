@@ -2,10 +2,8 @@
 
 namespace App\Jobs\Renewals;
 
-use App\Enums\RenewalProcessStatuses;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalStatusProcess;
-use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -66,5 +64,4 @@ class FetchPlansForRenewalsQuoteJob implements ShouldQueue, StackableJob
         info('CL: '.get_class().' FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' Error: '.$exception->getMessage());
         RenewalStatusProcess::where('id', $this->renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
-
 }
