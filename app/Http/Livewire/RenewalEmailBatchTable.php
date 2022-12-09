@@ -31,6 +31,7 @@ class RenewalEmailBatchTable extends DataTableComponent
             Column::make('Id'),
             Column::make('Batch'),
             Column::make('Total Leads'),
+            Column::make('Total Sent', 'total_sent'),
             Column::make('Status'),
             Column::make('User', 'createdBy.email'),
             Column::make('Created At'),
