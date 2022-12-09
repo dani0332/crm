@@ -33,7 +33,7 @@ class CustomerWEGenerateInviteCodeService extends BaseService
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $responseErrorCode = $e->getResponse()->getStatusCode();
-            Log::info('CustomerWEGenerateInviteCodeService Error: '.$responseErrorCode);
+            Log::error('CustomerWEGenerateInviteCodeService Error: '.$responseErrorCode);
         }
 
         if (isset($getResponseInviteCode)) {
