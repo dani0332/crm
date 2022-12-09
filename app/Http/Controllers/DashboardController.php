@@ -116,7 +116,7 @@ class DashboardController extends Controller
         $data = [];
         foreach ($records->get() as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
-            $data[] = number_format((float)$percentage, 2, '.', '');
+            $data[] = number_format((float) $percentage, 2, '.', '');
             $labels[] = $record->name;
         }
 
@@ -182,7 +182,7 @@ class DashboardController extends Controller
         $data = [];
         foreach ($records->get() as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
-            $data[] = number_format((float)$percentage, 2, '.', '');
+            $data[] = number_format((float) $percentage, 2, '.', '');
             $labels[] = $record->name;
         }
 

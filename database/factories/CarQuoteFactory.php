@@ -3,14 +3,11 @@
 namespace Database\Factories;
 
 use App\Models\CarQuote;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use DB;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 class CarQuoteFactory extends Factory
 {
-
-
-
     protected $model = CarQuote::class;
     /**
      * Define the model's default state.
@@ -28,6 +25,7 @@ class CarQuoteFactory extends Factory
         $sources = DB::table('car_quote_request')->distinct('source')->pluck('source');
         $uuid = $this->faker->regexify('[A-Za-z0-9]{8}');
         $users = DB::table('users')->where('team_id', 2)->pluck('id');
+
         return [
             'uuid' => $uuid,
             'is_ecommerce' => $this->faker->unique()->email,
@@ -47,7 +45,7 @@ class CarQuoteFactory extends Factory
             'renewal_expiry_date' => $this->faker->dateTime('now'),
             'tier_id' => $this->faker->randomElement(($tierIds)),
             'quote_batch_id' => $this->faker->randomElement(($quoteBatchIds)),
-            'advisor_id' => $this->faker->randomElement($users)
+            'advisor_id' => $this->faker->randomElement($users),
         ];
     }
 }
