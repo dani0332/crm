@@ -17,7 +17,7 @@ class UpdateRenewalQuotesJob implements ShouldQueue, StackableJob
     use  Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
 
     public $timeout = 60;
-    public $backoff = 65;
+    public $backoff = 10;
     public $tries = 3;
     protected $renewalQuoteProcess;
 

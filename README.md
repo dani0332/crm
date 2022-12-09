@@ -24,7 +24,6 @@ Please make sure to go through the last two lines to familiarize yourself with t
 - Ask for a dump of stage DB which you will need to import.
 - Run ```composer install``` to install the laravel required files.
 
-
 **Doppler Configuration**
 
 Once you have doppler CLI installed on your local machine, run the following command to initiate the login setup.
