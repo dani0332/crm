@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarAddOn;
 use App\Models\CarMake;
@@ -110,10 +113,16 @@ class DropdownSourceService extends BaseService
                 $data = Nationality::select('id', 'text')->where('is_active', true)->orderBy('text')->get();
                 break;
             case 'quote_status_id':
-                $data = QuoteStatus::select('quote_status.id as id', 'quote_status.text as text')
+                $query = QuoteStatus::select('quote_status.id as id', 'quote_status.text as text')
                     ->where(['quote_status.is_active' => true, 'quote_status_map.quote_type_id' => $quoteTypeId])
                     ->leftjoin('quote_status_map', 'quote_status.id', 'quote_status_map.quote_status_id')
-                    ->orderBy('quote_status_map.sort_order', 'asc')->get();
+                    ->orderBy('quote_status_map.sort_order', 'asc');
+                if ($quoteTypeId == QuoteTypeId::Car) {
+                    if (! auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) {
+                        $query->whereNotIn('quote_status.id', [QuoteStatusEnum::Duplicate, QuoteStatusEnum::Fake]);
+                    }
+                }
+                $data = $query->get();
                 break;
             case 'cover_for_id':
                 $data = HealthCoverFor::select('id', 'text')->where('is_active', true)->get();
