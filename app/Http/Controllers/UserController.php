@@ -306,6 +306,7 @@ class UserController extends Controller
             User::where('id', Auth::user()->id)->update(['logout_at' => now()]);
         }
         Auth::logout();
+
         return redirect('/login');
     }
 }
