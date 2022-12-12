@@ -14,6 +14,6 @@ class CarQuoteRequestSeeder extends Seeder
      */
     public function run()
     {
-        CarQuote::factory()->count(1000)->create();
+        CarQuote::factory()->count(5000)->create();
     }
 }
