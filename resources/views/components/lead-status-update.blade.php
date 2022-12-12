@@ -70,6 +70,16 @@
                 format: 'YYYY-MM-DD HH:mm:ss',
             },
         });
+
+        // Car Quote: lock lead status options (Fake, Duplicate) conditionaly
+        var quoteTypeId = JSON.parse('<?php echo json_encode($quoteTypeId) ?>');
+        var quoteTypeCar = JSON.parse('<?php echo json_encode(QuoteTypeId::Car) ?>');
+        var hasRoles = JSON.parse('<?php echo json_encode(auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) ?>');
+
+        if(quoteTypeId == quoteTypeCar && !hasRoles) {
+            $("#leadStatus option[value='9']").hide();
+            $("#leadStatus option[value='35']").hide();
+        }
     });
 </script>
 <div class="row">
