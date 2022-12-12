@@ -464,7 +464,7 @@
                 <td><p>EXACT VEHICLE (INSURER SPECIFIC)</p></td>
                 @foreach($planIds as $planId)
                     <td>
-                        <p class="text-center">{!! $quote->carMake->text . ' ' . $quote->carModel->text . ' ' . $quote->year_of_manufacture  !!}</p>
+                        <p class="text-center">{!! @$quote->carMake->text . ' ' . @$quote->carModel->text . ' ' . @$quote->year_of_manufacture  !!}</p>
                     </td>
                 @endforeach
             </tr>
