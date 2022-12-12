@@ -13,4 +13,5 @@ final class RenewalProcessStatuses extends Enum
     public const PROCESSED = 'PROCESSED';
     public const PLANS_FETCHED = 'PLANS_FETCHED';
     public const EMAIL_SENT = 'EMAIL_SENT';
+    public const FAILED = 'FAILED';
 }

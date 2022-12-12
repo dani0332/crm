@@ -372,7 +372,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(20)
+                   ->withDelay(10)
                    ->dispatch();
             } else {
                 info($logPrefix.' no jobs to create quotes');
@@ -918,6 +918,7 @@ class RenewalsUploadService
                     'quote_id' => $quote->id,
                     'status' => RenewalProcessStatuses::PROCESSED,
                     'type' => RenewalsUploadType::UPDATE_LEADS,
+                    'fetch_plans_status' => FetchPlansStatuses::PENDING,
                 ])->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
 
                 //mark renewal quote process as processed and assign quote id
