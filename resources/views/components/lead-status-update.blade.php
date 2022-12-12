@@ -4,6 +4,7 @@
     use App\Enums\GenericRequestEnum;
     use App\Enums\quoteTypeCode;
     use App\Enums\RolesEnum;
+    use App\Enums\QuoteTypeId;
 @endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
@@ -61,6 +62,14 @@
             }
         });
 
+        $('#next_followup_date').daterangepicker({
+            timePicker: true,
+            singleDatePicker: true,
+            timePicker24Hour: true,
+            locale: {
+                format: 'YYYY-MM-DD HH:mm:ss',
+            },
+        });
     });
 </script>
 <div class="row">
@@ -78,12 +87,14 @@
                     <input type="hidden" value="{{$modeltype}}" name="modelType">
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead
-                                    Status</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead Status</b></label>
                             <div class="col-md-6 col-sm-6">
-                                <select @if($lead->quote_status_id ==
-                                    QuoteStatusEnum::TransactionApproved) disabled @endif class="form-control"
-                                    id="leadStatus" name="leadStatus">
+                                <select @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved || 
+                                        ($quoteTypeId == QuoteTypeId::Car && ($lead->quote_status_id == QuoteStatusEnum::Duplicate || $lead->quote_status_id == QuoteStatusEnum::Fake) 
+                                        && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin]))) 
+                                            disabled 
+                                        @endif 
+                                        class="form-control" id="leadStatus" name="leadStatus">
                                     <option value="">Select Lead Status</option>
                                     @foreach ($statuses as $item)
                                         @if($item->id == QuoteStatusEnum::PolicyIssued && isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
@@ -98,6 +109,12 @@
                             </div>
                         </div>
                         <div class="col">
+                            <div id="quote_next_followup_date" style="display: none;">
+                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Followup Date</b> <span class='required'>*</span></label>
+                                <div class="col-md-6 col-sm-6">
+                                    <input type="text" id="next_followup_date" name="next_followup_date" value="{{ $lead->next_followup_date }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select follow-up date & time">
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="item form-group">
