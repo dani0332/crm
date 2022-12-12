@@ -45,6 +45,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
+use function PHPUnit\Framework\throwException;
 
 class RenewalsUploadService
 {
@@ -819,6 +820,8 @@ class RenewalsUploadService
         return DB::transaction(function () use ($renewalQuoteProcess) {
             $logPrefix = 'UAU FN: updateQuote';
             $data = $renewalQuoteProcess->data;
+
+            throw_if($data['quote_type'] != QuoteTypeShortCode::CAR, 'Only Insurance Type Car is allowed to update lead');
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
