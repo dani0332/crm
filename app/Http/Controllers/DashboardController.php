@@ -61,21 +61,16 @@ class DashboardController extends Controller
         $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
         $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
         $stats = $this->getTPLDashboardStats($request);
-
-        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce', 'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage']))
-                ->with('labels', json_encode($stats[0], JSON_OBJECT_AS_ARRAY))
-                ->with('advisorConversionLabels', json_encode($advisorConversionLabels, JSON_OBJECT_AS_ARRAY))
-                ->with('advisorConversionData', json_encode($advisorConversionData, JSON_OBJECT_AS_ARRAY))
-                ->with('data', json_encode($stats[1], JSON_OBJECT_AS_ARRAY));
+        $labels = $stats[0];
+        $data = $stats[1];
+        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce', 'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'labels', 'data']));
     }
 
     public function renderTplDashboard(Request $request)
     {
         $stats = $this->getTPLDashboardStats($request);
 
-        return view('dashboard.tpl_dashboard')
-                ->with('labels', json_encode($stats[0], JSON_OBJECT_AS_ARRAY))
-                ->with('data', json_encode($stats[1], JSON_OBJECT_AS_ARRAY));
+        return view('dashboard.tpl_dashboard', compact('labels', 'data'));
     }
 
     public function getTPLDashboardStats(Request $request): array
@@ -120,7 +115,7 @@ class DashboardController extends Controller
             $labels[] = $record->name;
         }
 
-        return $request->tier_filter ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
+        return [$labels, $data];
     }
 
     private function applyFilter($query, $column, $value, $searchType)

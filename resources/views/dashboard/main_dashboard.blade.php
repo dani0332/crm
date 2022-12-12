@@ -2,7 +2,6 @@
 @section('title','Accumulative Dashboard')
 @section('content')
 <style>
-
     * {
         box-sizing: border-box;
     }
@@ -86,8 +85,9 @@
             display: none;
         }
     }
+
     .corder {
-        border : 1px solid black;
+        border: 1px solid black;
         padding: 5px;
         margin: 10px;
         width: 40%;
@@ -99,11 +99,60 @@
         font-size: 20px;
         text-align: center;
     }
+
     .evenDiv {
         float: right;
         text-align: center;
         font-size: 20px;
     }
+
+
+    .highcharts-figure,
+.highcharts-data-table table {
+    min-width: 320px;
+    max-width: 800px;
+    margin: 1em auto;
+}
+
+.highcharts-data-table table {
+    font-family: Verdana, sans-serif;
+    border-collapse: collapse;
+    border: 1px solid #ebebeb;
+    margin: 10px auto;
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+}
+
+.highcharts-data-table caption {
+    padding: 1em 0;
+    font-size: 1.2em;
+    color: #555;
+}
+
+.highcharts-data-table th {
+    font-weight: 600;
+    padding: 0.5em;
+}
+
+.highcharts-data-table td,
+.highcharts-data-table th,
+.highcharts-data-table caption {
+    padding: 0.5em;
+}
+
+.highcharts-data-table thead tr,
+.highcharts-data-table tr:nth-child(even) {
+    background: #f8f8f8;
+}
+
+.highcharts-data-table tr:hover {
+    background: #f1f7ff;
+}
+
+input[type="number"] {
+    min-width: 50px;
+}
 
 </style>
 
@@ -112,32 +161,37 @@
     <div class="row">
         <div class="col-md-6" style="float: left;width:50%;padding: 10px;">
             <div class="col-md-12">
-                <div class="col-md-2 corder oddDiv" style="background-color: #EF5445; color: white;border-radius: 25px;">
-                    T. LEADS RCVD
+                <div class="col-md-2 corder oddDiv"
+                    style="background-color: #EF5445; color: white;border-radius: 25px;">
+                    LEADS RCVD
                     <div style="text-align: center;">
                         <b>{{$totalLeadsReceived}}</b>
                     </div>
                 </div>
-                <div class="col-md-2 corder evenDiv" style="background-color: #2F78E2; color: white;border-radius: 25px;">
-                    T. LEADS RCVD ECOM
+                <div class="col-md-2 corder evenDiv"
+                    style="background-color: #2F78E2; color: white;border-radius: 25px;">
+                    LEADS RCVD ECOM
                     <div style="text-align: center;">
                         <b>{{$totalLeadsReceivedEcommerce}}</b>
                     </div>
                 </div>
-                <div class="col-md-2 corder oddDiv" style="background-color: #DF2EE6; color: white;border-radius: 25px;">
-                    T. UNASSIGNED LEADS
+                <div class="col-md-2 corder oddDiv"
+                    style="background-color: #DF2EE6; color: white;border-radius: 25px;">
+                    UNASSIGNED LEADS
                     <div style="text-align: center;">
                         <b>{{$totalUnAssignedLeadsReceived}}</b>
                     </div>
                 </div>
-                <div class="col-md-2 corder evenDiv" style="background-color: #49D1B8; color: white;border-radius: 25px;">
-                    T. UNASSIGNED LEADS ECOM
+                <div class="col-md-2 corder evenDiv"
+                    style="background-color: #49D1B8; color: white;border-radius: 25px;">
+                    UNASSIGNED LEADS ECOM
                     <div style="text-align: center;">
                         <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
                     </div>
                 </div>
-                <div class="col-md-4 corder oddDiv" style="background-color: #EF5445; color: white;border-radius: 25px;">
-                    T. UNASSIGNED REVIVAL LEADS
+                <div class="col-md-4 corder oddDiv"
+                    style="background-color: #EF5445; color: white;border-radius: 25px;">
+                    UNASSIGNED REVIVAL LEADS
                     <div style="text-align: center;">
                         <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
                     </div>
@@ -147,437 +201,253 @@
         <div class="col-md-6" style="float: left;width:50%;padding: 10px;">
             <div class="col-md-12">
                 @foreach ($teamWiseLeadsAssignedAverage as $item)
-                    @php
-                        $backGroundColor = ['#FF7F50', '#22c55e','#ef4444', '#0c4a6e', '#0ea5e9', '#fbbf24','#0369a1'];
-                    @endphp
-                    <div class="col-md-1" style="margin-top:10px; margin-left:10px; float: left;border-radius: 10px;border: 1px solid black;padding: 10px;text-align: center;color:black;box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;">
-                        {{$item['teamName']}}
-                        <div style="text-align: center;">
-                            <b>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' . number_format((float)$item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')  }}</b>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-        {{-- <div class="col-md-4" style="float: left;width:33%;padding: 10px;">
-            <div class="col-md-12">
-                <div class="col-md-3 corder">
-                    First
-                </div>
-                <div class="col-md-3 corder">
-                    Second
-                </div>
-                <div class="col-md-3 corder">
-                    Third
-                </div>
-                <div class="col-md-3 corder">
-                    Four
-                </div>
-            </div>
-
-        </div> --}}
-    </div>
-    {{-- <div class="row">
-        <div class="col-md-4" style="float: left;">
-            <div class="slider">
-                <div class="slides">
-                    <div id="slide-1">
-                        <div style="font-size: 30px;">
-                            TOTAL LEADS RECEIVED
-                        </div>
-                        <div>
-                            <b>{{$totalLeadsReceived}}</b>
-                        </div>
-                    </div>
-                    <div id="slide-2">
-                        <div style="font-size: 30px;">
-                            TOTAL LEADS RECEIVED ECOMMERCE
-                        </div>
-                        <div>
-                            <b>{{$totalLeadsReceivedEcommerce}}</b>
-                        </div>
-                    </div>
-                    <div id="slide-3">
-                        <div style="font-size: 30px;">
-                            TOTAL UNASSIGNED LEADS
-                        </div>
-                        <div>
-                            <b>{{$totalUnAssignedLeadsReceived}}</b>
-                        </div>
-                    </div>
-                    <div id="slide-4">
-                        <div style="font-size: 30px;">
-                            TOTAL UNASSIGNED LEADS ECOMMERCE
-                        </div>
-                        <div>
-                            <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
-                        </div>
-                    </div>
-                </div>
-                <a href="#slide-1">1</a>
-                <a href="#slide-2">2</a>
-                <a href="#slide-3">3</a>
-                <a href="#slide-4">4</a>
-            </div>
-        </div>
-        <div class="col-md-4" style="margin-left: 50px;float: left;">
-            <div class="slider">
-                <div class="slides">
-                    @php
-                        $teamAverageCount = 0;
-                    @endphp
-                @foreach ($teamWiseLeadsAssignedAverage as $item)
-
-                       @php
-                            $teamAverageCount++;
-                        @endphp
-                    <div id="{{'slide-'.$teamAverageCount + 100}}">
-                        <div style="font-size: 30px;">
-                            {{$item['teamName']}}
-                        </div>
-                        <div>
-                            <b>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' . number_format((float)$item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')  }}</b>
-                        </div>
-                    </div>
-                @endforeach
-                </div>
                 @php
-                    $teamSilderAnchorCount = 0;
+                $backGroundColor = ['#FF7F50', '#22c55e','#ef4444', '#0c4a6e', '#0ea5e9', '#fbbf24','#0369a1'];
                 @endphp
-                @foreach ($teamWiseLeadsAssignedAverage as $item)
-                    @php
-                         $teamSilderAnchorCount++;
-                    @endphp
-                    <a href="{{'#slide-'. $teamSilderAnchorCount + 100}}">{{$teamSilderAnchorCount}}</a>
-
+                <div class="col-md-1"
+                    style="margin-top:10px; margin-left:10px; float: left;border-radius: 10px;border: 1px solid black;padding: 10px;text-align: center;color:black;box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;">
+                    {{$item['teamName']}}
+                    <div style="text-align: center;">
+                        <b>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
+                            number_format((float)$item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
+                            }}</b>
+                    </div>
+                </div>
                 @endforeach
             </div>
         </div>
-        <div class="col-md-4" style="float: left;margin-left: 50px;">
-            <div class="slider">
-                <div class="slides">
-                    <div id="slide-5">
-                        <div style="font-size: 30px;">
-                            TOTAL LEADS RECEIVED
-                        </div>
-                        <div>
-                            <b>{{$totalLeadsReceived}}</b>
-                        </div>
-                    </div>
-                    <div id="slide-6">
-                        <div style="font-size: 30px;">
-                            TOTAL LEADS RECEIVED ECOMMERCE
-                        </div>
-                        <div>
-                            <b>{{$totalLeadsReceivedEcommerce}}</b>
-                        </div>
-                    </div>
-                    <div id="slide-7">
-                        <div style="font-size: 30px;">
-                            TOTAL UNASSIGNED LEADS
-                        </div>
-                        <div>
-                            <b>{{$totalUnAssignedLeadsReceived}}</b>
-                        </div>
-                    </div>
-                    <div id="slide-8">
-                        <div style="font-size: 30px;">
-                            TOTAL UNASSIGNED LEADS ECOMMERCE
-                        </div>
-                        <div>
-                            <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
-                        </div>
-                    </div>
-                </div>
-                <a href="#slide-5">1</a>
-                <a href="#slide-6">2</a>
-                <a href="#slide-7">3</a>
-                <a href="#slide-8">4</a>
-            </div>
-        </div>
-    </div> --}}
-    <div style="clear: both;">
-        <div class="row mt-12">
-            <div class="col-md-6 ml-10  col-md-offset-1" style="width: 700px; float:left;">
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
-                            Total Leads Received Summary (by tier)
-                        </h1>
-                        <canvas id="myChart"></canvas>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:right;">
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
-                            Unassigned Leads Received Summary (by tier)
-                        </h1>
-                        <canvas id="1myChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div style="clear: both;">
-        </div>
-        <div class="row mt-12">
-            <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:left;margin-left: 50px;">
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
-                            Unassigned Leads Received Summary (by LeadSource)
-                        </h1>
-                        <canvas id="2myChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-        <div style="clear: both;">
-        </div>
-        <div class="row mt-12">
-            <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
-                Total Leads Received Summary (by LeadSource)
-                @livewire('lead-received-summary-by-source-data-table')
-            </h1>
-
-        </div>
-        <div style="clear: both;">
-        </div>
-        <div class="row mt-12">
-            <div class="col-md-12 col-md-offset-1" style="width: 600px; float:left;">
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        <canvas id="2myChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
-                Advisor Conversion Report
-            </h1>
-            <div class="col-md-3" style="float: right;flex-direction: column;">
-                <select
-                    class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                    id="source-filter" style="margin-left: 10px;">
-                    <option value="">Select Advisor</option>
-                    @foreach ($carAdvisors as $team)
-                    <option value="{{$team->id}}">{{$team->name}}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-9">
+    </div>
+    <div style="clear: both;"></div>
+    <div class="row mt-12">
+        <div class="col-md-6 ml-10  col-md-offset-1" style="width: 700px; float:left;">
+            <div class="panel panel-default">
                 <div class="panel-body">
-                    <canvas id="3myChart"></canvas>
+                    <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
+
+                    </h1>
+                    <div id="myChart"></div>
                 </div>
             </div>
         </div>
-        <div style="clear: both;">
-        </div>
-        <div class="row">
-            <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
-                Lead Assign Count Summary Per Advisor
-            </h1>
-            <div class="col-md-3" style="float: right;flex-direction: column;">
-                <select
-                    class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                    id="source-filter" style="margin-left: 10px;">
-                    <option value="">Select Team</option>
-                    @foreach ($teams as $team)
-                    <option value="{{$team->id}}">{{$team->name}}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-9">
+        <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:right;">
+            <div class="panel panel-default">
                 <div class="panel-body">
-                    <canvas id="4myChart"></canvas>
+                    <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
+                        Unassigned Leads Received Summary (by tier)
+                    </h1>
+                    <canvas id="1myChart"></canvas>
                 </div>
             </div>
-        </div>
-        <div style="clear: both;">
         </div>
     </div>
-    <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-piechart-outlabels@0.1.4/dist/chartjs-plugin-piechart-outlabels.min.js"></script>
+    <div style="clear: both;">
+    </div>
+    <div class="row mt-12">
+        <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:left;margin-left: 50px;">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
+                        Unassigned Leads Received Summary (by LeadSource)
+                    </h1>
+                    <canvas id="2myChart"></canvas>
+                </div>
+            </div>
+        </div>
 
-    <script>
-    var tpl_conversion_chart = {};
-    var backgroundColors =  ['#FFBF00', '#DE3163', '#40E0D0', '#7B68EE', '#FF7F50', '#50C878', '#6495ED', '#F06292', '#4DD0E1'];
-    function initializeAChart(labels, data, id)
-    {
-        var co = id ;
-        var ctr = document.getElementById(co);
-        tpl_conversion_chart = new Chart(ctr, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                label: 'Net Conversion',
-                data: data,
-                borderWidth: 1,
-                borderColor: '#2989CB',
-                backgroundColor: backgroundColors,
-                color: 'black',
-                }]
+    </div>
+    <div style="clear: both;">
+    </div>
+    <div class="row mt-12">
+        <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
+            Total Leads Received Summary (by LeadSource)
+            @livewire('lead-received-summary-by-source-data-table')
+        </h1>
+
+    </div>
+    <div style="clear: both;">
+    </div>
+    <div class="row mt-12">
+        <div class="col-md-12 col-md-offset-1" style="width: 600px; float:left;">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <canvas id="2myChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
+            Advisor Conversion Report
+        </h1>
+        <div class="col-md-3" style="float: right;flex-direction: column;">
+            <select
+                class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+                id="source-filter" style="margin-left: 10px;">
+                <option value="">Select Advisor</option>
+                @foreach ($carAdvisors as $team)
+                <option value="{{$team->id}}">{{$team->name}}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-9">
+            <div class="panel-body">
+                <canvas id="3myChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div style="clear: both;">
+    </div>
+    <div class="row">
+        <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
+            Lead Assign Count Summary Per Advisor
+        </h1>
+        <div class="col-md-3" style="float: right;flex-direction: column;">
+            <select
+                class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+                id="source-filter" style="margin-left: 10px;">
+                <option value="">Select Team</option>
+                @foreach ($teams as $team)
+                <option value="{{$team->id}}">{{$team->name}}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-9">
+            <div class="panel-body">
+                <canvas id="4myChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div style="clear: both;">
+    </div>
+    <div class="row mt-12">
+        <div class="col-md-12 col-md-offset-1" style="width: 600px; float:left;">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div id="containersss" style="width: 500px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script type="text/javascript">
+    var data = <?php echo json_encode($data)?>;
+    var labels = <?php echo json_encode($labels)?>;
+
+   $(function(){
+    createLeadRcdSummaryByTierPieChart(data, labels);
+   });
+
+
+   function createLeadRcdSummaryByTierPieChart(data, labels)
+   {
+    var cData = [];
+        for (let index = 0; index < data.length; index++) {
+            cData.push({name: labels[index], y: parseFloat(data[index])});
+        }
+        console.log(cData);
+            // Data retrieved from https://netmarketshare.com
+        Highcharts.chart('myChart', {
+            chart: {
+                plotBackgroundColor: null,
+                plotBorderWidth: null,
+                plotShadow: false,
+                type: 'pie'
             },
-            options: {
-            plugins: {
-                legend: true,
-                outlabels: {
-                    text: '%v %',
-                    color: 'white',
-                    stretch: 20,
-                    valuePrecision: 0,
-			        percentPrecision: 2,
-                    font: {
-                        resizable: true,
-                        minSize: 12,
-                        maxSize: 18
+            title: {
+                text: 'Total Leads Received Summary (by tier)',
+                align: 'center'
+            },
+            tooltip: {
+                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+            },
+            accessibility: {
+                point: {
+                    valueSuffix: '%'
+                }
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{y} Leads'
                     }
                 }
-            }
-        }
+            },
+            series: [{
+                name: 'Brands',
+                colorByPoint: true,
+                data: cData
+            }]
+        });
 
-        });
-    }
-    function initializeBChart(labels, data, id)
+   }
+
+    function createLeadRcdSummaryByTierChart(data, labels)
     {
-        var co = id ;
-        var ctx = document.getElementById(co);
-        tpl_conversion_chart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                label: 'Net Conversion',
-                data: data,
-                borderWidth: 1,
-                borderColor: '#2989CB',
-                backgroundColor: backgroundColors,
-                }]
+        var cData = [];
+        for (let index = 0; index < data.length; index++) {
+            cData.push([labels[index], parseFloat(data[index])]);
+        }
+        Highcharts.chart('myChart', {
+            chart: {
+                type: 'column'
             },
-            options: {
-                scales: {
-                y: {
-                    beginAtZero: true
+            title: {
+                text: 'Total Leads Received Summary (by tier)'
+            },
+            subtitle: {
+            //  text: 'Source: <a href="https://worldpopulationreview.com/world-cities" target="_blank">World Population Review</a>'
+            },
+            xAxis: {
+                type: 'category',
+                labels: {
+                    rotation: -45,
+                    style: {
+                        fontSize: '13px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
                 }
+            },
+            yAxis: {
+                min: 0,
+                title: {
+                    text: 'Total Gross Conversion'
                 }
-            }
+            },
+            legend: {
+                enabled: false
+            },
+            tooltip: {
+                pointFormat: '<b>{point.y:.1f}</b>'
+            },
+            plotOptions: {
+                series: {
+                    pointWidth: 40
+                }
+            },
+            series: [{
+                name: 'Population',
+                data: cData,
+                dataLabels: {
+                    enabled: true,
+                    rotation: -90,
+                    color: '#FFFFFF',
+                    align: 'right',
+                    format: '{point.y:.1f}', // one decimal
+                    y: 10, // 10 pixels down from the top
+                    style: {
+                        fontSize: '13px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
+                }
+            }]
         });
     }
-    function initializeCChart(labels, data, id)
-    {
-        var co = id ;
-        var ctx = document.getElementById(co);
-        tpl_conversion_chart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                label: 'Net Conversion',
-                data: data,
-                borderWidth: 1,
-                borderColor: '#2989CB',
-                backgroundColor: backgroundColors,
-                }]
-            },
-            options: {
-                scales: {
-                y: {
-                    beginAtZero: true
-                }
-                }
-            }
-        });
-    }
-    function initializeDChart(labels, data, id)
-    {
-        var co = id ;
-        var ctx = document.getElementById(co);
-        tpl_conversion_chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                label: 'Net Conversion',
-                data: data,
-                borderWidth: 1,
-                borderColor: '#2989CB',
-                backgroundColor: ['#FF7F50', '#22c55e','#ef4444', '#0c4a6e', '#0ea5e9', '#fbbf24','#0369a1'],
-                }]
-            },
-            options: {
-                scales: {
-                y: {
-                    beginAtZero: true
-                }
-                }
-            }
-        });
-    }
-    function initializeEChart(labels, data, id)
-    {
-        var co = id ;
-        var ctx = document.getElementById(co);
-        tpl_conversion_chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                label: 'Net Conversion',
-                data: data,
-                borderWidth: 1,
-                borderColor: '#2989CB',
-                backgroundColor: '#95CEFF',
-                }]
-            },
-            options: {
-                scales: {
-                y: {
-                    beginAtZero: true
-                }
-                }
-            }
-        });
-    }
-    $(function(){
-        $('#tier-filter,#userFilter').on('change', function (e) {
-            var tierFilterValue = $('#tier-filter option:selected').val();
-            var sourceFilterValue = $('#userFilter option:selected').val();
-            $.get('/get-comp-filter-stats?tier_filter=' + tierFilterValue + '&userFilter='+ sourceFilterValue, function (data) {
-               if(data){
-                var labels = (typeof data[0]) == 'string' ? JSON.parse(data[0]) : data[0];
-                var data = (typeof data[1]) == 'string' ? JSON.parse(data[1]) : data[1];
-                if(labels.length > 0 ){
-                    tpl_conversion_chart.destroy();
-                    initializeAChart(labels, data, 'myChart');
-                    initializeBChart(labels, data, '1myChart');
-                    initializeBChart(labels, data, '2myChart');
-                    initializeDChart(labels, data, '3myChart');
-                    initializeEChart(labels, data, '4myChart');
-                }else{
-                    tpl_conversion_chart.destroy();
-                    initializeAChart([''], [0], 'myChart');
-                    initializeBChart(labels, data, '1myChart');
-                    initializeBChart(labels, data, '2myChart');
-                    initializeDChart(labels, data, '3myChart');
-                    initializeEChart(labels, data, '4myChart');
-                }
-               }
-            });
-        });
-    });
-    var labels = <?php echo $labels; ?>;
-    var data = <?php echo $data; ?>;
-    var advisorConversionLabels = <?php echo $advisorConversionLabels; ?>;
-    var advisorConversionData = <?php echo $advisorConversionData; ?>;
-    initializeAChart(labels, data, 'myChart');
-    initializeBChart(labels, data, '1myChart');
-    initializeBChart(labels, data, '2myChart');
-    initializeDChart(labels, data, '3myChart');
-    initializeEChart(advisorConversionLabels, advisorConversionData, '4myChart');
-    </script>
-    @endsection
+
+</script>
+@endsection
