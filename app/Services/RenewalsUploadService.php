@@ -771,9 +771,6 @@ class RenewalsUploadService
             $quoteObject = $this->createQuoteObject($quoteType->code);
             $quote = $quoteObject->create($quoteData);
 
-            //send AML request (Commenting Out AML Check)
-            // $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
-
             //update advisor assign date/time
             if (! empty($advisorId)) {
                 $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
@@ -905,12 +902,6 @@ class RenewalsUploadService
                 if (! empty($advisorId)) {
                     $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
                     info($logPrefix.' quote advisor assigned datetime updated UUID: '.$quote->uuid);
-                }
-
-                //todo: check if this fails
-                if (! empty($data['provider_name']) && ! empty($data['plan_name']) && ! empty($data['plan_type'])) {
-                    //$response = $this->modifyPlan($data, $quote);
-                    //info($logPrefix.' plan info updated for UUID: '.$quote->uuid);
                 }
 
                 //mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
@@ -1067,63 +1058,6 @@ class RenewalsUploadService
         return $randomString;
     }
 
-    public function updateExistingCarQuote($quoteData, $renewalImportCode, $currentUserId)
-    {
-        $carTypeOfInsurance = null;
-        $carMake = $this->renewalsAddonService->getCarMake($quoteData->make);
-        $carModel = $this->renewalsAddonService->getCarModel($quoteData->model);
-        $vehicleType = null;
-        $previousAdvisorId = $this->renewalsAddonService->getUserInfo($quoteData->pAdvisor);
-        $advisorId = $this->renewalsAddonService->getUserInfo($quoteData->advisor);
-
-        if ($carModel) {
-            $vehicleType = $this->renewalsAddonService->getVehicleType($carModel->vehicle_type_id);
-        }
-
-        if ($quoteData->product_type != null) {
-            $carTypeOfInsuranceInstance = $this->renewalsAddonService->getCarTypeOfInsurance($quoteData->product_type);
-            if ($carTypeOfInsuranceInstance) {
-                $carTypeOfInsurance = $carTypeOfInsuranceInstance->id;
-            }
-        }
-
-        // Previous Car Lead
-        $updateCarQuote = CarQuote::where('renewal_import_code', $renewalImportCode)
-            ->where('policy_number', $quoteData->policy)->first();
-
-        $previousAdvisorEmail = 'Previous Advisor Email Id : '.$quoteData->pAdvisor;
-        $carMakeModel = 'Car Make/Model/Year : '.$quoteData->make.' '.$quoteData->year;
-        $notes = $previousAdvisorId == '' ? $updateCarQuote->additional_notes.' - '.$carMakeModel.' - '.$previousAdvisorEmail.' - '.$quoteData->notes : $updateCarQuote->additional_notes.' - '.$carMakeModel.' - '.$quoteData->notes;
-
-        $updateCarQuote->car_type_insurance_id = $carTypeOfInsurance;
-        $updateCarQuote->advisor_id = $previousAdvisorId;
-        $updateCarQuote->renewal_batch = $quoteData->batch;
-        $updateCarQuote->additional_notes = $notes;
-        $updateCarQuote->car_make_id = $carMake->id ?? null;
-        $updateCarQuote->car_model_id = $carModel->id ?? null;
-        $updateCarQuote->cylinder = $carModel->cylinder ?? null;
-        $updateCarQuote->vehicle_category = $vehicleType->category ?? null;
-        $updateCarQuote->year_of_manufacture = $quoteData->year ?? null;
-        $updateCarQuote->save();
-        $this->updateAdvisorAssignedDateTime('CarQuoteRequestDetail', $updateCarQuote->id, 'car_quote_request_id', $currentUserId, $previousAdvisorId);
-
-        // Renewal Car Lead
-        $updateCarQuoteRenewal = CarQuote::where('renewal_import_code', $renewalImportCode)
-            ->where('previous_quote_policy_number', $quoteData->policy)->first();
-
-        $updateCarQuoteRenewal->car_type_insurance_id = $carTypeOfInsurance;
-        $updateCarQuoteRenewal->advisor_id = $advisorId;
-        $updateCarQuoteRenewal->renewal_batch = $quoteData->batch;
-        $updateCarQuoteRenewal->additional_notes = $notes;
-        $updateCarQuoteRenewal->car_make_id = $carMake->id ?? null;
-        $updateCarQuoteRenewal->car_model_id = $carModel->id ?? null;
-        $updateCarQuoteRenewal->cylinder = $carModel->cylinder ?? null;
-        $updateCarQuoteRenewal->vehicle_category = $vehicleType->category ?? null;
-        $updateCarQuoteRenewal->year_of_manufacture = $quoteData->year ?? null;
-        $updateCarQuoteRenewal->save();
-        $this->updateAdvisorAssignedDateTime('CarQuoteRequestDetail', $updateCarQuoteRenewal->id, 'car_quote_request_id', $currentUserId, $advisorId);
-    }
-
     public function renewalBatchEmailProcess($batchLeadId, $batchEmailId, $quoteTypeId, $isCompleted, $batch)
     {
         Log::info('renewalBatchEmailProcess START');
@@ -1240,6 +1174,7 @@ class RenewalsUploadService
 
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $lead->quote_type != QuoteTypeShortCode::CAR) {
                     $leadValidationErrors->push('Only Car Insurance Type is allowed to update lead');
+
                     continue;
                 }
 
