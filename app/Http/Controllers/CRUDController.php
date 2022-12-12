@@ -280,20 +280,15 @@ class CRUDController extends Controller
         if ($quoteType == strtolower(quoteTypeCode::Car)) {
             if ($record->advisor_id != null) {
                 if ($record->advisor_id == Auth::user()->id) {
-                    $quoteCount = QuoteViewCount::where('quote_id', $record->id)->where('user_id', Auth::user()->id)->first();
-                    if ($quoteCount != null) {
-                        $quoteCount->visit_count = $quoteCount->visit_count + 1;
-                        $quoteCount->save();
-                    } else {
-                        QuoteViewCount::insert([
-                            'visit_count' => 1,
-                            'quote_id' => $record->id,
-                            'quote_type_id' => 1,
-                            'user_id' => Auth::user()->id,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
+                    QuoteViewCount::firstOrCreate([
+                        'quote_id' => $record->id, 'user_id' => Auth::user()->id,
+                    ], [
+                        'quote_id' => $record->id,
+                        'quote_type_id' => 1,
+                        'user_id' => Auth::user()->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ])->increment('visit_count');
                 }
             }
         }

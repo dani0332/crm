@@ -259,20 +259,6 @@ class RenewalsUploadController extends Controller
             return abort(403);
         }
 
-        // Not required anymore, moved query to app/Http/Livewire/RenewalBatchesTable.php
-        // if ($request->ajax()) {
-        //     $dataRenewalsBatches = RenewalQuoteProcess::select('batch as renewal_batch')
-        //     ->where([
-        //         'quote_type' => QuoteTypeShortCode::CAR,
-        //         'type' => RenewalsUploadType::UPDATE_LEADS, ])
-        //     ->groupBy('batch')
-        //     ->orderBy('created_at', 'desc');
-
-        //     return $datatables::of($dataRenewalsBatches)
-        //         ->addIndexColumn()
-        //         ->make(true);
-        // }
-
         return view('renewals.batches');
     }
 
@@ -288,9 +274,6 @@ class RenewalsUploadController extends Controller
             return abort(403);
         }
 
-        // Not required anymore
-        // $planProcesses = RenewalStatusProcess::where('batch', $batch)->orderBy('created_at', 'desc')->get();
-
         return view('renewals.plan_processes', compact('batch'));
     }
 
@@ -299,11 +282,6 @@ class RenewalsUploadController extends Controller
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
-
-        // Not required anymore
-        // $batchEmails = RenewalsBatchEmails::select('id', 'batch', 'total_leads', 'total_sent', 'total_bounced', 'status', 'created_at', 'created_by_id', 'updated_at')
-        // ->where('batch', $batch)
-        // ->orderBy('created_at', 'desc')->get();
 
         $totalLeads = $this->renewalsUploadFileService->getProcessTotalLeads($batch);
         $totalLeadsCompleted = $this->renewalsUploadFileService->getProcessTotalLeadsWithPlans($batch);
