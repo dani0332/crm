@@ -10,7 +10,7 @@ class QuoteViewCount extends Model
     use HasFactory;
 
     protected $table = 'quote_view_count';
-    protected $fillable = ['quote_id', 'visit_count', 'quote_type_id', 'user_id' ];
+    protected $fillable = ['quote_id', 'visit_count', 'quote_type_id', 'user_id'];
 
     public function getCreatedAtAttribute($table)
     {

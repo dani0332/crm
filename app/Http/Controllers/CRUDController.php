@@ -280,7 +280,7 @@ class CRUDController extends Controller
             if ($record->advisor_id != null) {
                 if ($record->advisor_id == Auth::user()->id) {
                     QuoteViewCount::firstOrCreate([
-                        'quote_id' => $record->id, 'user_id' => Auth::user()->id
+                        'quote_id' => $record->id, 'user_id' => Auth::user()->id,
                     ], [
                         'quote_id' => $record->id,
                         'quote_type_id' => 1,
