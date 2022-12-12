@@ -63,6 +63,7 @@ class DashboardController extends Controller
         $stats = $this->getTPLDashboardStats($request);
         $labels = $stats[0];
         $data = $stats[1];
+
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce', 'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'labels', 'data']));
     }
 
