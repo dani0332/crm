@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Renewals;
 
+use App\Enums\ProcessStatusCode;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
@@ -10,14 +11,15 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class ProcessRenewalsUploadUpdate implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
-    public $timeout = 90;
-    public $backoff = 95;
+    public $tries = 2;
+    public $timeout = 1200;
+    public $backoff = 10;
     protected $renewalsUploadLead;
 
     /**
@@ -41,8 +43,21 @@ class ProcessRenewalsUploadUpdate implements ShouldQueue
         return $renewalsUploadService->processUploadUpdate($this->renewalsUploadLead);
     }
 
+    /**
+     * @return array
+     */
     public function middleware()
     {
         return [(new WithoutOverlapping($this->renewalsUploadLead->id))->dontRelease()];
+    }
+
+    /**
+     * @param  Throwable  $exception
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        $this->renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+        info('CL: '.get_class().' FN: failed. Job Failed. Error: '.$exception->getMessage());
     }
 }

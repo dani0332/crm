@@ -225,10 +225,8 @@ class RenewalsUploadService
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
-                $chunks = $leads->chunk(5);
-
-                foreach ($chunks as $chunk) {
-                    $jobs[] = new CreateRenewalQuotesJob($chunk);
+                foreach ($leads as $lead) {
+                    $jobs[] = new CreateRenewalQuotesJob($lead);
                 }
             });
 
@@ -248,7 +246,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(5)
+                   ->withDelay(1)
                    ->dispatch();
             } else {
                 info('BATCH: no jobs to create quotes');
@@ -272,10 +270,8 @@ class RenewalsUploadService
                 'renewals_upload_lead_id' => $renewalsUploadLead->id,
                 'status' => RenewalProcessStatuses::VALIDATED,
             ])->chunkById(50, function ($leads) use (&$jobs) {
-                $chunks = $leads->chunk(5);
-
-                foreach ($chunks as $chunk) {
-                    $jobs[] = new UpdateRenewalQuotesJob($chunk);
+                foreach ($leads as $lead) {
+                    $jobs[] = new UpdateRenewalQuotesJob($lead);
                 }
             });
 
@@ -296,7 +292,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(5)
+                   ->withDelay(1)
                    ->dispatch();
 
                 info($logPrefix.' jobs dispatched');
@@ -376,7 +372,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(20)
+                   ->withDelay(10)
                    ->dispatch();
             } else {
                 info($logPrefix.' no jobs to create quotes');
@@ -922,6 +918,7 @@ class RenewalsUploadService
                     'quote_id' => $quote->id,
                     'status' => RenewalProcessStatuses::PROCESSED,
                     'type' => RenewalsUploadType::UPDATE_LEADS,
+                    'fetch_plans_status' => FetchPlansStatuses::PENDING,
                 ])->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
 
                 //mark renewal quote process as processed and assign quote id
@@ -1306,19 +1303,20 @@ class RenewalsUploadService
                             } elseif (! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                 $leadValidationErrors->push('Invalid Driving Experience');
                             }
-                            if (! $leadData->plan_type) {
-                                $leadValidationErrors->push('Repair Type is required');
-                            } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0) {
-                                $leadValidationErrors->push('Excess should be 0 with TPL');
-                            } elseif ($leadData->plan_type == CarPlanType::COMP || $leadData->plan_type == CarPlanType::AGENCY) {
-                                if (! $leadData->excess) {
-                                    $leadValidationErrors->push('Excess should be > 0 with Repair Type - COMP or AGENCY');
-                                }
-                            }
-                            if (! $leadData->premium && $leadData->excess) {
-                                $leadValidationErrors->push('Renewal Premium is required with Excess');
-                            }
+
                             if ($leadData->premium) {
+                                if (! $leadData->plan_type) {
+                                    $leadValidationErrors->push('Repair Type is required');
+                                } elseif ($leadData->plan_type == CarPlanType::TPL && $leadData->excess != 0) {
+                                    $leadValidationErrors->push('Excess should be 0 with TPL');
+                                } elseif ($leadData->plan_type == CarPlanType::COMP || $leadData->plan_type == CarPlanType::AGENCY) {
+                                    if (! $leadData->excess) {
+                                        $leadValidationErrors->push('Excess should be > 0 with Repair Type - COMP or AGENCY');
+                                    }
+                                }
+                                if (! $leadData->premium && $leadData->excess) {
+                                    $leadValidationErrors->push('Renewal Premium is required with Excess');
+                                }
                                 if (! $leadData->provider_name) {
                                     $leadValidationErrors->push('Provider Name is required');
                                 }
@@ -1432,6 +1430,8 @@ class RenewalsUploadService
                     $renewalUploadLead->save();
                 }
             }
+
+            sleep(1);
         }, $column = 'id');
 
         return true;
