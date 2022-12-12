@@ -42,6 +42,7 @@
             }
         });
         $('#leadStatus').on('change', function(){
+            var lead_status_code = $(this).val();
             if(showFollowupStatuses.find((str) => str == $('#leadStatus option:selected').text())){
                 $('#followup-div').show();
             }
@@ -59,6 +60,14 @@
             else{
                 $('#lost-reason-div').hide();
                 $('#trans-div').hide();
+            }
+
+            if(lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::FollowupCall) ?>') || 
+            lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::Interested) ?>') || 
+            lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::NoAnswer) ?>')) {
+                $('#quote-next-followup-date').show();
+            } else {
+                $('#quote-next-followup-date').hide();
             }
         });
 
@@ -109,17 +118,17 @@
                                     @foreach ($statuses as $item)
                                         @if($item->id == QuoteStatusEnum::PolicyIssued && isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
                                         <option @if($status==$item->id) selected="selected" @endif
-                                            value="{{$item->id}}" >{{$item->text}}</option>
+                                            value="{{$item->id}}">{{$item->text}}</option>
                                         @elseif($item->id != QuoteStatusEnum::PolicyIssued)
                                             <option @if($status==$item->id) selected="selected" @endif
-                                                value="{{$item->id}}" >{{$item->text}}</option>
+                                                value="{{$item->id}}">{{$item->text}}</option>
                                         @endif
                                     @endforeach
                                 </select>
                             </div>
                         </div>
                         <div class="col">
-                            <div id="quote_next_followup_date" style="display: none;">
+                            <div id="quote-next-followup-date" style="display: none;">
                                 <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Followup Date</b> <span class='required'>*</span></label>
                                 <div class="col-md-6 col-sm-6">
                                     <input type="text" id="next_followup_date" name="next_followup_date" value="{{ $lead->next_followup_date }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select follow-up date & time">
