@@ -55,5 +55,15 @@ class AddRoleForMarketingSeeder extends Seeder
                 'is_deleted' => 0,
             ]);
         }
+
+        $lostReasonsCancelled = LostReasons::where('text', 'Cancelled')->first();
+        if (! $lostReasonsCancelled) {
+            DB::table('lost_reasons')->insert([
+                'text' => 'Cancelled',
+                'text_ar' => 'Cancelled',
+                'is_active' => 1,
+                'is_deleted' => 0,
+            ]);
+        }
     }
 }

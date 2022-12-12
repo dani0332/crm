@@ -227,6 +227,21 @@
             width: 100%;
         }
         .text-center {text-align: center;}
+        .badge-success {
+            color: #fff;
+            background-color: #1d83bc;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.4em;
+            font-size: 50%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+        }
     </style>
 </head>
 
@@ -289,6 +304,8 @@
         $plans[$quotePlan->id] = $quotePlan;
     }
 
+    $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
+
     $features = [
         ["code" => "heading", "title" => "BENEFITS"],
         ["code" => "damage", "title" => "Loss or Damage to the Insured Vehicle", "type" => ["feature", "inclusion", "exclusion"]],
@@ -324,7 +341,7 @@
 
 @endphp
 
-<img src="{{public_path('images/quote_plans_pages/p1.jpg')}}" class="full-page-image" />
+<img src="{{public_path('images/quote_plans_pages/P1-1.png')}}" class="full-page-image" />
 
 <footer>
     <table class="tbl-footer">
@@ -415,6 +432,11 @@
                         <p class="text-center">
                             {{ $plans[$planId]->name }}
                         </p>
+                        @if(isset($plans[$planId]->isRenewal) && $plans[$planId]->isRenewal)
+                            <span class="badge badge-success">Renewal Quote</span>
+                        @else
+                            <img style="margin-top:3px" src="{{public_path('images/quote_plans_pages/imcrm_plan_renewal_empty_tag.png')}}" />
+                        @endif
                     </td>
                 @endforeach
             </tr>
@@ -442,7 +464,7 @@
                 <td><p>EXACT VEHICLE (INSURER SPECIFIC)</p></td>
                 @foreach($planIds as $planId)
                     <td>
-                        <p class="text-center">{!! $quote->carMake->text . ' ' . $quote->carModel->text . ' ' . $quote->year_of_manufacture  !!}</p>
+                        <p class="text-center">{!! @$quote->carMake->text . ' ' . @$quote->carModel->text . ' ' . @$quote->year_of_manufacture  !!}</p>
                     </td>
                 @endforeach
             </tr>

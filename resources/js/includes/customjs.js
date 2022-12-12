@@ -2230,10 +2230,32 @@ $(document).ready(function () {
       {
         data: 'good',
         name: 'good',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.renewal_uploaded_leads +
+            '/' +
+            row.id +
+            "/validation-passed'>" +
+            row.good +
+            '</a>'
+          );
+        },
       },
       {
         data: 'cannot_upload',
         name: 'cannot_upload',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.renewal_uploaded_leads +
+            '/' +
+            row.id +
+            "/validation-failed'>" +
+            row.cannot_upload +
+            '</a>'
+          );
+        },
       },
       { data: 'status', name: 'status' },
       { data: 'uploaded_by', name: 'uploaded_by' },
@@ -2260,10 +2282,32 @@ $(document).ready(function () {
       {
         data: 'good',
         name: 'good',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.renewal_uploaded_leads +
+            '/' +
+            row.id +
+            "/validation-passed'>" +
+            row.good +
+            '</a>'
+          );
+        },
       },
       {
         data: 'cannot_upload',
         name: 'cannot_upload',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.renewal_uploaded_leads +
+            '/' +
+            row.id +
+            "/validation-failed'>" +
+            row.cannot_upload +
+            '</a>'
+          );
+        },
       },
       { data: 'status', name: 'status' },
       { data: 'uploaded_by', name: 'uploaded_by' },
@@ -2597,7 +2641,30 @@ $(document).ready(function () {
     paging: true,
     processing: true,
     ajax: config.routes.renewals_batches_datatable_route,
-    columns: [{ data: 'renewal_batch', name: 'renewal_batch' }],
+    columns: [
+      { data: 'renewal_batch', name: 'renewal_batch' },
+      {
+        data: 'renewal_batch',
+        name: 'manage_plans',
+        render: function (data, type, row) {
+          return (
+            "<a class='btn btn-info btn-sm' href='" +
+            config.routes.renewals_batches_datatable_route +
+            '/' +
+            row.renewal_batch +
+            "/plans-processes'>" +
+            'Fetch Plans' +
+            '</a>' +
+            "<a class='btn btn-warning btn-sm' href='" +
+            config.routes.renewals_batches_datatable_route +
+            '/' +
+            row.renewal_batch +
+            "'>" +
+            'Send Emails</a>'
+          );
+        },
+      },
+    ],
   });
 
   $('.generateCCLink').click(function () {

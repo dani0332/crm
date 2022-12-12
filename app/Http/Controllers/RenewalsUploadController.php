@@ -2,20 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\FetchPlansStatuses;
 use App\Enums\ProcessStatusCode;
-use App\Enums\quoteStatusCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypeShortCode;
+use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Enums\RolesEnum;
+use App\Exports\RenewalFailedValidationExport;
+use App\Http\Requests\RenewalsUploadRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
-use App\Jobs\RenewalBatchEmailJob;
+use App\Jobs\Renewals\FetchRenewalsPlansJob;
+use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Models\CarQuote;
+use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
+use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
-use Auth;
-use Config;
-use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use Yajra\Datatables\Datatables;
 
 class RenewalsUploadController extends Controller
 {
@@ -27,11 +36,72 @@ class RenewalsUploadController extends Controller
     }
 
     /**
-     * renew the quote against the customer
+     * process upload and create import.
+     *
+     * @param  RenewalsUploadRequest  $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function renewalsUploadCreate(RenewalsUploadRequest $request)
+    {
+        $result = $this->renewalsUploadFileService->renewalsUploadCreate($request->validated());
+
+        return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
+    }
+
+    /**
+     * process upload and update import.
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function renewalsUploadUpdate(RenewalsUploadRequest $request)
+    {
+        $result = $this->renewalsUploadFileService->renewalsUploadUpdate($request->validated());
+
+        return redirect('renewals/update')->with('success', 'Uploaded renewals records has been updated');
+    }
+
+    /**
+     * fetch plans batch wise.
+     *
+     * @param $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function fetchPlans($batch)
+    {
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
+        }
+
+        $totalPending = RenewalQuoteProcess::where([
+            'quote_type' => QuoteTypeShortCode::CAR,
+            'batch' => $batch,
+            'status' => RenewalProcessStatuses::PROCESSED,
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
+        ])->count();
+
+        if ($totalPending > 0) {
+            $renewalStatusProcess = RenewalStatusProcess::create([
+                'batch' => $batch,
+                'total_leads' => $totalPending,
+                'status' => ProcessStatusCode::IN_PROGRESS,
+                'user_id' => auth()->id(),
+            ]);
+
+            FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);
+
+            return redirect('renewals/batches/'.$batch.'/plans-processes')->with('success', 'Fetch plans is started for batch '.$batch);
+        }
+
+        return redirect('renewals/batches/'.$batch.'/plans-processes')->with('error', 'No pending leads available to fetch plans');
+    }
+
+    /**
+     * renew the quote against the customer.
      *
      * @param  \Illuminate\Http\Request  $request
      */
-    public function processRenewalsCSV(Request $request)
+    public function renewalsUploadProcess(Request $request)
     {
         // validate the file extension
         $this->validate($request, [
@@ -119,22 +189,22 @@ class RenewalsUploadController extends Controller
 
     private function createRenewalUploadLeadRecord($fileName, $filePathAzure)
     {
-        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
-        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
         $renewalsUploadLead = new RenewalsUploadLeads();
         $renewalsUploadLead->file_name = $fileName;
         $renewalsUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
         $renewalsUploadLead->status = ProcessStatusCode::IN_PROGRESS;
         $renewalsUploadLead->good = 0;
-        $renewalsUploadLead->created_by_id = Auth::user()->id;
+        $renewalsUploadLead->created_by_id = auth()->id();
         $renewalsUploadLead->save();
     }
 
     public function uploadRenewals()
     {
-        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
-        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
         return view('renewals.upload', compact('azureStorageUrl', 'azureStorageContainer'));
     }
@@ -173,8 +243,8 @@ class RenewalsUploadController extends Controller
 
     public function updateRenewals()
     {
-        $azureStorageUrl = Config::get('constants.AZURE_IM_STORAGE_URL');
-        $azureStorageContainer = Config::get('constants.AZURE_IM_STORAGE_CONTAINER');
+        $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
+        $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
         $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', RenewalsUploadType::CREATE_LEADS)
         ->where('renewal_import_code', '!=', '')
@@ -183,59 +253,122 @@ class RenewalsUploadController extends Controller
         return view('renewals.update', compact('azureStorageUrl', 'azureStorageContainer', 'renewalsUploads'));
     }
 
-    public function listRenewalBatches(Request $request, CarQuote $carQuote, Datatables $datatables)
+    public function listRenewalBatches(Request $request, Datatables $datatables)
     {
-        if ($request->ajax()) {
-            $datalRenewalsBatches = $carQuote::select('renewal_batch')
-            ->whereNotNull(['renewal_batch', 'renewal_import_code'])
-            ->groupBy('renewal_batch')
-            ->orderBy('created_at', 'desc');
-
-            return $datatables::of($datalRenewalsBatches)
-                ->addIndexColumn()
-                ->make(true);
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
         }
 
         return view('renewals.batches');
     }
 
+    /**
+     * fetch plans for all pending quotes.
+     *
+     * @param $batch
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|never
+     */
+    public function plansProcesses($batch)
+    {
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
+        }
+
+        return view('renewals.plan_processes', compact('batch'));
+    }
+
     public function batchDetail($batch)
     {
-        $batchEmails = RenewalsBatchEmails::select('id', 'batch', 'total_leads', 'total_sent', 'total_bounced', 'status', 'created_at', 'created_by_id')
-        ->where('batch', $batch)
-        ->orderBy('created_at', 'desc')
-        ->get();
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
+        }
 
-        return view('renewals.batch_detail', compact('batch', 'batchEmails'));
+        $totalLeads = $this->renewalsUploadFileService->getProcessTotalLeads($batch);
+        $totalLeadsCompleted = $this->renewalsUploadFileService->getProcessTotalLeadsWithPlans($batch);
+        $hideSendEmailButton = $totalLeadsCompleted != $totalLeads ? 1 : 0;
+
+        return view('renewals.batch_detail', compact('batch', 'hideSendEmailButton'));
     }
 
     public function runBatchProcess($batch)
     {
-        $batchLeads = CarQuote::select('car_quote_request.id as id')
-        ->leftjoin('quote_status as qs', 'qs.id', 'car_quote_request.quote_status_id')
-        ->whereNotNull('car_quote_request.previous_quote_id')
-        ->where(['car_quote_request.renewal_batch' => $batch, 'qs.code' => quoteStatusCode::QUOTED])
-        ->get();
+        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            return abort(403);
+        }
 
+        Log::info('runBatchProcess START');
+        $batchLeads = $this->renewalsUploadFileService->getProcessLeadsToSendEmails($batch);
         $batchLeadsCount = $batchLeads->count();
+        Log::info('batch: '.$batch.' batchLeadsCount: '.$batchLeadsCount);
 
         if ($batchLeadsCount == 0) {
-            return redirect('renewals/batches/'.$batch)->with('message', 'No leads found for this batch');
+            return redirect('renewals/batches/'.$batch)->with('success', 'No leads found for this batch');
         }
 
-        $renewalsBatchStatus = new RenewalsBatchEmails();
-        $renewalsBatchStatus->batch = $batch;
-        $renewalsBatchStatus->status = ProcessStatusCode::IN_PROGRESS;
-        $renewalsBatchStatus->total_leads = $batchLeadsCount;
-        $renewalsBatchStatus->total_sent = 0;
-        $renewalsBatchStatus->total_bounced = 0;
-        $renewalsBatchStatus->created_by_id = Auth::user()->id;
-        $renewalsBatchStatus->save();
+        $batchEmail = new RenewalsBatchEmails();
+        $batchEmail->batch = $batch;
+        $batchEmail->status = ProcessStatusCode::IN_PROGRESS;
+        $batchEmail->total_leads = $batchLeadsCount;
+        $batchEmail->total_sent = 0;
+        $batchEmail->total_bounced = 0;
+        $batchEmail->created_by_id = auth()->id();
+        $batchEmail->save();
 
-        foreach ($batchLeads as $batchLead) {
-            dispatch(new RenewalBatchEmailJob($batchLead->id, $this->renewalsUploadFileService, $renewalsBatchStatus->id));
+        foreach ($batchLeads as $key => $batchLead) {
+            $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
+            dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
+            sleep(0.5);
         }
+
+        Log::info('runBatchProcess END');
 
         return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
+    }
+
+    public function validationFailed($id)
+    {
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
+
+        $batch_id = $id;
+
+        return view('renewals.validation_failed', compact('renewalLeads'), compact('batch_id'));
+    }
+
+    public function downloadValidationFailed($id)
+    {
+        $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
+
+        return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+    }
+
+    public function validationPassed($id)
+    {
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])->get();
+
+        $batch_id = $id;
+
+        return view('renewals.validation_passed', compact('renewalLeads'), compact('batch_id'));
+    }
+
+    public function viewQuoteRedirect($renewalProcessId, $leadId)
+    {
+        $renewalLead = RenewalQuoteProcess::where('id', $leadId)->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])->first();
+        if (! $renewalLead) {
+            return abort(404);
+        }
+
+        switch($renewalLead->quote_type) {
+            case QuoteTypeShortCode::CAR:
+                $carQuote = CarQuote::where('previous_quote_policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
+                if (! $carQuote) {
+                    return abort(404);
+                }
+
+                return redirect(config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid);
+                break;
+            default:
+                return abort(404);
+                break;
+        }
     }
 }

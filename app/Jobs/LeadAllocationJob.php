@@ -18,7 +18,8 @@ class LeadAllocationJob implements ShouldQueue
 
     public $tries = 1;
     public $timeout = 40;
-    public $backoff = 45;
+    public $backoff = 10;
+    private $leadAllocationJobId = 'lead_allocation';
 
     /**
      * Create a new job instance.
@@ -101,6 +102,6 @@ class LeadAllocationJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping(1))->dontRelease()];
+        return [(new WithoutOverlapping($this->leadAllocationJobId))->dontRelease()];
     }
 }

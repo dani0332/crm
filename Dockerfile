@@ -1,4 +1,4 @@
-FROM php:8.0-fpm
+FROM php:8.1-fpm
 ARG IMCRM_TOKEN
 #ARG NGINX_FILE
 #ARG NEW_RELIC_LICENSE_KEY
@@ -114,7 +114,7 @@ RUN cp docker/log_files.yml /etc/
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
 #RUN yarn
-RUN yarn run prod
+# RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 
 ENTRYPOINT ["/var/www/docker/run.sh"]
