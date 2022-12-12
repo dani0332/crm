@@ -45,7 +45,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
-use function PHPUnit\Framework\throwException;
 
 class RenewalsUploadService
 {
