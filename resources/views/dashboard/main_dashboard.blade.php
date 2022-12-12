@@ -86,9 +86,98 @@
             display: none;
         }
     }
+    .corder {
+        border : 1px solid black;
+        padding: 5px;
+        margin: 10px;
+        width: 40%;
+        box-shadow: rgba(0, 0, 0, 0.17) 0px -23px 25px 0px inset, rgba(0, 0, 0, 0.15) 0px -36px 30px 0px inset, rgba(0, 0, 0, 0.1) 0px -79px 40px 0px inset, rgba(0, 0, 0, 0.06) 0px 2px 1px, rgba(0, 0, 0, 0.09) 0px 4px 2px, rgba(0, 0, 0, 0.09) 0px 8px 4px, rgba(0, 0, 0, 0.09) 0px 16px 8px, rgba(0, 0, 0, 0.09) 0px 32px 16px;
+    }
+
+    .oddDiv {
+        float: left;
+        font-size: 20px;
+        text-align: center;
+    }
+    .evenDiv {
+        float: right;
+        text-align: center;
+        font-size: 20px;
+    }
+
 </style>
+
+
 <div class="container">
     <div class="row">
+        <div class="col-md-6" style="float: left;width:50%;padding: 10px;">
+            <div class="col-md-12">
+                <div class="col-md-2 corder oddDiv" style="background-color: #EF5445; color: white;border-radius: 25px;">
+                    T. LEADS RCVD
+                    <div style="text-align: center;">
+                        <b>{{$totalLeadsReceived}}</b>
+                    </div>
+                </div>
+                <div class="col-md-2 corder evenDiv" style="background-color: #2F78E2; color: white;border-radius: 25px;">
+                    T. LEADS RCVD ECOM
+                    <div style="text-align: center;">
+                        <b>{{$totalLeadsReceivedEcommerce}}</b>
+                    </div>
+                </div>
+                <div class="col-md-2 corder oddDiv" style="background-color: #DF2EE6; color: white;border-radius: 25px;">
+                    T. UNASSIGNED LEADS
+                    <div style="text-align: center;">
+                        <b>{{$totalUnAssignedLeadsReceived}}</b>
+                    </div>
+                </div>
+                <div class="col-md-2 corder evenDiv" style="background-color: #49D1B8; color: white;border-radius: 25px;">
+                    T. UNASSIGNED LEADS ECOM
+                    <div style="text-align: center;">
+                        <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
+                    </div>
+                </div>
+                <div class="col-md-4 corder oddDiv" style="background-color: #EF5445; color: white;border-radius: 25px;">
+                    T. UNASSIGNED REVIVAL LEADS
+                    <div style="text-align: center;">
+                        <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6" style="float: left;width:50%;padding: 10px;">
+            <div class="col-md-12">
+                @foreach ($teamWiseLeadsAssignedAverage as $item)
+                    @php
+                        $backGroundColor = ['#FF7F50', '#22c55e','#ef4444', '#0c4a6e', '#0ea5e9', '#fbbf24','#0369a1'];
+                    @endphp
+                    <div class="col-md-1" style="margin-top:10px; margin-left:10px; float: left;border-radius: 10px;border: 1px solid black;padding: 10px;text-align: center;color:black;box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;">
+                        {{$item['teamName']}}
+                        <div style="text-align: center;">
+                            <b>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' . number_format((float)$item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')  }}</b>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        {{-- <div class="col-md-4" style="float: left;width:33%;padding: 10px;">
+            <div class="col-md-12">
+                <div class="col-md-3 corder">
+                    First
+                </div>
+                <div class="col-md-3 corder">
+                    Second
+                </div>
+                <div class="col-md-3 corder">
+                    Third
+                </div>
+                <div class="col-md-3 corder">
+                    Four
+                </div>
+            </div>
+
+        </div> --}}
+    </div>
+    {{-- <div class="row">
         <div class="col-md-4" style="float: left;">
             <div class="slider">
                 <div class="slides">
@@ -206,7 +295,7 @@
                 <a href="#slide-8">4</a>
             </div>
         </div>
-    </div>
+    </div> --}}
     <div style="clear: both;">
         <div class="row mt-12">
             <div class="col-md-6 ml-10  col-md-offset-1" style="width: 700px; float:left;">
@@ -417,7 +506,7 @@
                 data: data,
                 borderWidth: 1,
                 borderColor: '#2989CB',
-                backgroundColor: [  '#FF7F50', '#22c55e','#ef4444', '#0c4a6e', '#0ea5e9', '#fbbf24','#0369a1'],
+                backgroundColor: ['#FF7F50', '#22c55e','#ef4444', '#0c4a6e', '#0ea5e9', '#fbbf24','#0369a1'],
                 }]
             },
             options: {
@@ -485,7 +574,6 @@
     var data = <?php echo $data; ?>;
     var advisorConversionLabels = <?php echo $advisorConversionLabels; ?>;
     var advisorConversionData = <?php echo $advisorConversionData; ?>;
-    debugger;
     initializeAChart(labels, data, 'myChart');
     initializeBChart(labels, data, '1myChart');
     initializeBChart(labels, data, '2myChart');
