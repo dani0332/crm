@@ -1172,12 +1172,6 @@ class RenewalsUploadService
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
-                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $lead->quote_type != QuoteTypeShortCode::CAR) {
-                    $leadValidationErrors->push('Only Car Insurance Type is allowed to update lead');
-
-                    continue;
-                }
-
                 if ($lead->type == RenewalsUploadType::CREATE_LEADS) {
                     if (! QuoteType::where('short_code', $lead->quote_type)->first()) {
                         $leadValidationErrors->push('Invalid Insurance Type Provided');
@@ -1373,8 +1367,6 @@ class RenewalsUploadService
                     $renewalUploadLead->save();
                 }
             }
-
-            sleep(1);
         }, $column = 'id');
 
         return true;
