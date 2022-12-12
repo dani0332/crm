@@ -71,7 +71,7 @@
             },
         });
 
-        // Car Quote: lock lead status options (Fake, Duplicate) conditionaly
+        // Car Quote: lock lead status options (Fake, Duplicate) conditionally
         var quoteTypeId = JSON.parse('<?php echo json_encode($quoteTypeId) ?>');
         var quoteTypeCar = JSON.parse('<?php echo json_encode(QuoteTypeId::Car) ?>');
         var hasRoles = JSON.parse('<?php echo json_encode(auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) ?>');
