@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Enums\FetchPlansStatuses;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Models\Customer;
@@ -60,6 +61,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
             'data' => $quoteData,
             'batch' => $quoteData['batch'],
             'status' => RenewalProcessStatuses::NEW,
+            'fetch_plans_status' => FetchPlansStatuses::PENDING,
             'type' => RenewalsUploadType::UPDATE_LEADS,
         ]);
     }
