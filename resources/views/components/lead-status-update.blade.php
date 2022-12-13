@@ -109,7 +109,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/updateLeadStatus" id="lead-status-form">
+                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/update-lead-status" id="lead-status-form">
                     {{csrf_field()}}
                     <input type="hidden" value="{{$lead->id}}" name="leadId">
                     <input type="hidden" value="{{$modeltype}}" name="modelType">
