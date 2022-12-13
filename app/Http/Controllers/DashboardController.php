@@ -36,7 +36,7 @@ class DashboardController extends Controller
 
     public function renderMainDashboard(Request $request)
     {
-        $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->get();
+        $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->addDays(-60)->startOfDay(), now()->endOfDay()])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
         $carAdvisors = User::where('team_id', $carTeam->id)->where('sub_team_id', $teams->pluck('id')->toArray())->get();
@@ -60,11 +60,12 @@ class DashboardController extends Controller
         $totalLeadsReceivedEcommerce = count($allCarQuotesToday->where('is_ecommerce', 1));
         $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
         $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
+        $totalUnAssignedRevivalLeads = count($allCarQuotesToday->whereNull('advisor_id')->where('source', LeadSourceEnum::REFERRAL));
         $stats = $this->getTPLDashboardStats($request);
         $labels = $stats[0];
         $data = $stats[1];
 
-        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce', 'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'labels', 'data']));
+        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce', 'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'labels', 'data']));
     }
 
     public function renderTplDashboard(Request $request)

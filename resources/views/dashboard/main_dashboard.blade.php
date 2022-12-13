@@ -193,7 +193,7 @@ input[type="number"] {
                     style="background-color: #EF5445; color: white;border-radius: 25px;">
                     UNASSIGNED REVIVAL LEADS
                     <div style="text-align: center;">
-                        <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
+                        <b>{{$totalUnAssignedRevivalLeads}}</b>
                     </div>
                 </div>
             </div>
@@ -225,17 +225,14 @@ input[type="number"] {
                     <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
 
                     </h1>
-                    <div id="myChart"></div>
+                    <div id="LeadRcdSummaryByTier"></div>
                 </div>
             </div>
         </div>
         <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:right;">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
-                        Unassigned Leads Received Summary (by tier)
-                    </h1>
-                    <canvas id="1myChart"></canvas>
+                    <div id="UnAssignedLeadRcdSummaryByTier" style="margin-top: 60px;"></div>
                 </div>
             </div>
         </div>
@@ -246,10 +243,7 @@ input[type="number"] {
         <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:left;margin-left: 50px;">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
-                        Unassigned Leads Received Summary (by LeadSource)
-                    </h1>
-                    <canvas id="2myChart"></canvas>
+                    <div id="UnAssignedLeadRcdSummaryByLeadSource" style="margin-top: 60px;"></div>
                 </div>
             </div>
         </div>
@@ -266,20 +260,8 @@ input[type="number"] {
     </div>
     <div style="clear: both;">
     </div>
-    <div class="row mt-12">
-        <div class="col-md-12 col-md-offset-1" style="width: 600px; float:left;">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <canvas id="2myChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
     <div class="row">
-        <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
-            Advisor Conversion Report
-        </h1>
-        <div class="col-md-3" style="float: right;flex-direction: column;">
+        <div class="col-md-3" style="float: right;">
             <select
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
                 id="source-filter" style="margin-left: 10px;">
@@ -289,19 +271,18 @@ input[type="number"] {
                 @endforeach
             </select>
         </div>
-        <div class="col-md-9">
+    </div>
+    <div class="row">
+        <div class="col-md-12" style="margin-top: 80px;">
             <div class="panel-body">
-                <canvas id="3myChart"></canvas>
+                <div id="advisorConversion"></div>
             </div>
         </div>
     </div>
-    <div style="clear: both;">
+    <div style="clear: both;"  style="margin-bottom: 40px;">
     </div>
-    <div class="row">
-        <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
-            Lead Assign Count Summary Per Advisor
-        </h1>
-        <div class="col-md-3" style="float: right;flex-direction: column;">
+    <div class="row" style="margin-top: 40px;">
+        <div class="col-md-3" style="float: right;">
             <select
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
                 id="source-filter" style="margin-left: 10px;">
@@ -311,22 +292,15 @@ input[type="number"] {
                 @endforeach
             </select>
         </div>
-        <div class="col-md-9">
+    </div>
+    <div class="row">
+        <div class="col-md-12" style="margin-top: 80px;">
             <div class="panel-body">
-                <canvas id="4myChart"></canvas>
+                <div id="leadAssignCountSummaryByAdvisor"></div>
             </div>
         </div>
     </div>
     <div style="clear: both;">
-    </div>
-    <div class="row mt-12">
-        <div class="col-md-12 col-md-offset-1" style="width: 600px; float:left;">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <div id="containersss" style="width: 500px;"></div>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -337,19 +311,22 @@ input[type="number"] {
     var labels = <?php echo json_encode($labels)?>;
 
    $(function(){
-    createLeadRcdSummaryByTierPieChart(data, labels);
+        createLeadRcdSummaryByTierPieChart(data, labels);
+        createUnAssignedLeadRcdSummaryByTierChart(data, labels);
+        createUnAssignedLeadRcdSummaryByLeadSourceChart(data,labels);
+        createAdvisorConversionChart(data, labels);
+        createLeadAssignCountSummaryByAdvisorChart(data,labels);
    });
 
 
    function createLeadRcdSummaryByTierPieChart(data, labels)
    {
-    var cData = [];
+        var cData = [];
         for (let index = 0; index < data.length; index++) {
             cData.push({name: labels[index], y: parseFloat(data[index])});
         }
-        console.log(cData);
             // Data retrieved from https://netmarketshare.com
-        Highcharts.chart('myChart', {
+        Highcharts.chart('LeadRcdSummaryByTier', {
             chart: {
                 plotBackgroundColor: null,
                 plotBorderWidth: null,
@@ -379,7 +356,7 @@ input[type="number"] {
                 }
             },
             series: [{
-                name: 'Brands',
+                name: 'Leads',
                 colorByPoint: true,
                 data: cData
             }]
@@ -387,18 +364,104 @@ input[type="number"] {
 
    }
 
-    function createLeadRcdSummaryByTierChart(data, labels)
+   function createUnAssignedLeadRcdSummaryByTierChart(data, labels)
+   {
+        var cData = [];
+        for (let index = 0; index < data.length; index++) {
+            cData.push({name: labels[index], y: parseFloat(data[index])});
+        }
+        Highcharts.chart('UnAssignedLeadRcdSummaryByTier', {
+            chart: {
+                plotBackgroundColor: null,
+                plotBorderWidth: null,
+                plotShadow: false,
+                type: 'pie'
+            },
+            title: {
+                text: 'Total Leads Received Summary (by tier)',
+                align: 'center'
+            },
+            tooltip: {
+                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+            },
+            accessibility: {
+                point: {
+                    valueSuffix: '%'
+                }
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{y} Leads'
+                    }
+                }
+            },
+            series: [{
+                name: 'Leads',
+                colorByPoint: true,
+                data: cData
+            }]
+        });
+    }
+
+    function createUnAssignedLeadRcdSummaryByLeadSourceChart(data, labels)
+   {
+        var cData = [];
+        for (let index = 0; index < data.length; index++) {
+            cData.push({name: labels[index], y: parseFloat(data[index])});
+        }
+        Highcharts.chart('UnAssignedLeadRcdSummaryByLeadSource', {
+            chart: {
+                plotBackgroundColor: null,
+                plotBorderWidth: null,
+                plotShadow: false,
+                type: 'pie'
+            },
+            title: {
+                text: 'Unassigned Leads Received Summary (by LeadSource)',
+                align: 'center'
+            },
+            tooltip: {
+                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+            },
+            accessibility: {
+                point: {
+                    valueSuffix: '%'
+                }
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{y} Leads'
+                    }
+                }
+            },
+            series: [{
+                name: 'Leads',
+                colorByPoint: true,
+                data: cData
+            }]
+        });
+    }
+
+    function createAdvisorConversionChart(data, labels)
     {
         var cData = [];
         for (let index = 0; index < data.length; index++) {
             cData.push([labels[index], parseFloat(data[index])]);
         }
-        Highcharts.chart('myChart', {
+        Highcharts.chart('advisorConversion', {
             chart: {
                 type: 'column'
             },
             title: {
-                text: 'Total Leads Received Summary (by tier)'
+                text: 'Advisor Conversion Report'
             },
             subtitle: {
             //  text: 'Source: <a href="https://worldpopulationreview.com/world-cities" target="_blank">World Population Review</a>'
@@ -448,6 +511,70 @@ input[type="number"] {
             }]
         });
     }
+
+    function createLeadAssignCountSummaryByAdvisorChart(data, labels)
+    {
+        var cData = [];
+        for (let index = 0; index < data.length; index++) {
+            cData.push([labels[index], parseFloat(data[index])]);
+        }
+        Highcharts.chart('leadAssignCountSummaryByAdvisor', {
+            chart: {
+                type: 'column'
+            },
+            title: {
+                text: 'Lead Assign Count Summary Per Advisor'
+            },
+            subtitle: {
+            //  text: 'Source: <a href="https://worldpopulationreview.com/world-cities" target="_blank">World Population Review</a>'
+            },
+            xAxis: {
+                type: 'category',
+                labels: {
+                    rotation: -45,
+                    style: {
+                        fontSize: '13px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
+                }
+            },
+            yAxis: {
+                min: 0,
+                title: {
+                    text: 'Total Gross Conversion'
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            tooltip: {
+                pointFormat: '<b>{point.y:.1f}</b>'
+            },
+            plotOptions: {
+                series: {
+                    pointWidth: 40
+                }
+            },
+            series: [{
+                name: 'Population',
+                data: cData,
+                dataLabels: {
+                    enabled: true,
+                    rotation: -90,
+                    color: '#FFFFFF',
+                    align: 'right',
+                    format: '{point.y:.1f}', // one decimal
+                    y: 10, // 10 pixels down from the top
+                    style: {
+                        fontSize: '13px',
+                        fontFamily: 'Verdana, sans-serif'
+                    }
+                }
+            }]
+        });
+    }
+
+    //leadAssignCountSummaryByAdvisor
 
 </script>
 @endsection
