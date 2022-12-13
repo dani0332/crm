@@ -315,8 +315,8 @@ use App\Enums\PermissionsEnum;
                         carProps.forEach(element => {
                             d[element] = $('#' + element).val();
                         });
-                        d.assigned_to_date_start = $('#assigned_to_date_start').val();
-                        d.assigned_to_date_end = $('#assigned_to_date_end').val();
+                        d.advisor_assigned_date = $('#advisor_assigned_date').val();
+                        d.advisor_assigned_date_end = $('#advisor_assigned_date_end').val();
                         d.renewal_expiry_date = $('#renewal_expiry_date').val();
                         d.renewal_expiry_date_end = $('#renewal_expiry_date_end').val();
                         d.policy_number = $('#policy_number').val();
