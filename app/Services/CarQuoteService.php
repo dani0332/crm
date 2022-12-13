@@ -686,17 +686,17 @@ class CarQuoteService extends BaseService
             }
             if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
                 $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
-                $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
+                $dateTo = $this->parseDate($request['renewal_expiry_date_end'], true);
                 $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
                 $dateFrom = $this->parseDate($request['next_followup_date'], true);
-                $dateTo = $this->parseDate($request['next_followup_date_end'], false);
+                $dateTo = $this->parseDate($request['next_followup_date_end'], true);
                 $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
                 $dateFrom = $this->parseDate($request['created_at'], true);
-                $dateTo = $this->parseDate($request['created_at_end'], false);
+                $dateTo = $this->parseDate($request['created_at_end'], true);
                 $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
             }
             if (Auth::user()->hasRole('ADMIN')) {
