@@ -27,7 +27,6 @@ use App\Traits\SendSIBEmail;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Redis;
 
 class LeadAllocationService extends BaseService
 {

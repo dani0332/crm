@@ -17,14 +17,15 @@ class CheckLastLoginMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if(auth()->user()) {
+        if (auth()->user()) {
             $lastLoginDate = Carbon::parse(auth()->user()->last_login);
-            if(now()->diffInDays($lastLoginDate) > 0 )
-            {
+            if (now()->diffInDays($lastLoginDate) > 0) {
                 auth()->logout();
+
                 return redirect('/login');
             }
         }
+
         return $next($request);
     }
 }
