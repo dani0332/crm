@@ -75,8 +75,6 @@ Route::get('/', function () {
     return redirect('login');
 });
 
-Route::post('logout', [UserController::class, 'logout'])->name('logout');
-
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
