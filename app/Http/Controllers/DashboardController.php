@@ -78,7 +78,7 @@ class DashboardController extends Controller
             DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
             DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
         )
-        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->whereBetween('car_quote_request.created_at', [now()->addDays(-60)->startOfDay(), now()->endOfDay()])
         ->get();
     }
 
@@ -90,7 +90,7 @@ class DashboardController extends Controller
             DB::raw('count(*) as leadCount')
         )
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->whereBetween('car_quote_request.created_at', [now()->addDays(-60)->startOfDay(), now()->endOfDay()])
         ->groupBy('tiers.name')
         ->get();
     }
@@ -104,7 +104,7 @@ class DashboardController extends Controller
         )
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->whereNull('car_quote_request.advisor_id')
-        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->whereBetween('car_quote_request.created_at', [now()->addDays(-60)->startOfDay(), now()->endOfDay()])
         ->groupBy('tiers.name')
         ->get();
     }
@@ -117,7 +117,7 @@ class DashboardController extends Controller
             DB::raw('COUNT(car_quote_request.id) AS total_leads'),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->whereBetween('car_quote_request.created_at', [now()->addDays(-60)->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name')
         ->get();
     }
