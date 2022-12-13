@@ -64,9 +64,11 @@ class DashboardController extends Controller
         $leadsCountByTier = $this->getLeadsCountByTier($request);
         $unAssignedLeadsByTier = $this->getUnAssignedLeadsCountByTier($request);
         $revivalLeadsCount = $this->getLeadsCountRevival($request);
-
+        $advisorConversionData = $this->getAdvisorConversionData($request);
+        $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData($request);
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
-            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount', ]));
+            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount', 'advisorConversionData'
+            ,'advisorLeadsAssignedData']));
     }
 
     public function getLeadsCountRevival($request)
@@ -104,6 +106,40 @@ class DashboardController extends Controller
         ->whereNull('car_quote_request.advisor_id')
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('tiers.name')
+        ->get();
+    }
+
+    public function getAdvisorLeadAssignedData($request)
+    {
+        return
+        CarQuote::select(
+            'users.name',
+            DB::raw('COUNT(car_quote_request.id) AS total_leads'),
+        )
+        ->join('users', 'users.id', 'car_quote_request.advisor_id')
+        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->groupBy('users.name')
+        ->get();
+    }
+
+    public function getAdvisorConversionData($request)
+    {
+        return
+        CarQuote::select(
+            'quote_batches.name',
+            'quote_batches.start_date',
+            'quote_batches.end_date',
+            DB::raw('COUNT(car_quote_request.id) AS total_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) AS manual_created'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id IN (9, 35) THEN 1 ELSE 0 END) AS bad_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) AS sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM"
+            AND car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) AS created_sale_leads'),
+        )
+        ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+        ->groupBy('quote_batches.name')
+        ->orderBy('quote_batches.id', 'desc')
+        ->take(10)
         ->get();
     }
 

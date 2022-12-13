@@ -158,55 +158,51 @@ input[type="number"] {
 
 
 <div class="container">
-    <div class="row">
-        <div class="col-md-6" style="float: left;width:50%;padding: 10px;">
+    <div class="row" style="background-color: #f9fafb;min-height: 300px;padding:35px;box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);float: left;">
+        <div class="col-md-6" style="float: left;width:55%;padding: 10px;">
             <div class="col-md-12">
-                <div class="col-md-2 corder oddDiv"
-                    style="background-color: #EF5445; color: white;border-radius: 25px;">
-                    LEADS RCVD
+                <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%));padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
+                    <b style="color: cornflowerblue;">TOTAL LEADS RCVD</b>
                     <div style="text-align: center;">
                         <b>{{$totalLeadsReceived}}</b>
                     </div>
                 </div>
-                <div class="col-md-2 corder evenDiv"
-                    style="background-color: #2F78E2; color: white;border-radius: 25px;">
-                    LEADS RCVD ECOM
+                <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
+                    <b style="color: cornflowerblue;">TOTAL LEADS RCVD ECOM</b>
                     <div style="text-align: center;">
                         <b>{{$totalLeadsReceivedEcommerce}}</b>
                     </div>
                 </div>
-                <div class="col-md-2 corder oddDiv"
-                    style="background-color: #DF2EE6; color: white;border-radius: 25px;">
-                    UNASSIGNED LEADS
+                <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
+                    <b style="color: cornflowerblue;">TOTAL UNASSIGNED LEADS</b>
                     <div style="text-align: center;">
                         <b>{{$totalUnAssignedLeadsReceived}}</b>
                     </div>
                 </div>
-                <div class="col-md-2 corder evenDiv"
-                    style="background-color: #49D1B8; color: white;border-radius: 25px;">
-                    UNASSIGNED LEADS ECOM
+                <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
+                    <b style="color: cornflowerblue;">TOTAL UNASSIGNED LEADS ECOM</b>
                     <div style="text-align: center;">
                         <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
                     </div>
                 </div>
-                <div class="col-md-4 corder oddDiv"
-                    style="background-color: #EF5445; color: white;border-radius: 25px;">
-                    UNASSIGNED REVIVAL LEADS
+                <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
+                    <b style="color: cornflowerblue;">TOTAL UNASSIGNED REVIVAL LEADS</b>
                     <div style="text-align: center;">
                         <b>{{$totalUnAssignedRevivalLeads}}</b>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6" style="float: left;width:50%;padding: 10px;">
+        <div class="col-md-6" style="float: right;width:45%;padding: 10px;">
             <div class="col-md-12">
+                <h2 style="text-align: center;color: cornflowerblue;font-size: 25px;font-weight: 600;margin-top: -40px;">LEADS ASSIGNED AVERAGE</h2>
                 @foreach ($teamWiseLeadsAssignedAverage as $item)
                 @php
                 $backGroundColor = ['#FF7F50', '#22c55e','#ef4444', '#0c4a6e', '#0ea5e9', '#fbbf24','#0369a1'];
                 @endphp
                 <div class="col-md-1"
-                    style="margin-top:10px; margin-left:10px; float: left;border-radius: 8px;border: 1px solid black;padding: 10px;text-align: center;color:black;min-width:180px;">
-                    {{$item['teamName']}}
+                    style="background-color:white;margin-top:10px; margin-left:10px; float: right;border-radius: 8px;border: 1px solid black;padding: 10px;text-align: center;color:black;min-width:218px;">
+                    <b  style="color: cornflowerblue;">{{strtoupper($item['teamName'])}}</b>
                     <div style="text-align: center;">
                         <b>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
                             number_format((float)$item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
@@ -218,7 +214,13 @@ input[type="number"] {
         </div>
     </div>
     <div style="clear: both;"></div>
-    <div class="row mt-12">
+    <div class="row">
+        <div style="float:right;margin-top:70px;">
+            <input type="date" id="" name="" class="form-control" style="width: 345px;text-align: center;border-radius: 5px;"  /> <button style="height: 45px;" class="btn btn-primary">Go</button>
+        </div>
+    </div>
+    <div style="clear: both;"></div>
+    <div class="row mt-12" style="margin-top:20px;">
         <div class="col-md-6 ml-10  col-md-offset-1" style="width: 700px; float:left;">
             <div class="panel panel-default">
                 <div class="panel-body">
@@ -229,10 +231,10 @@ input[type="number"] {
                 </div>
             </div>
         </div>
-        <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:right;">
+        <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:right;margin-top: 45px;">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <div id="UnAssignedLeadRcdSummaryByTier" style="margin-top: 60px;"></div>
+                    <div id="UnAssignedLeadRcdSummaryByTier"></div>
                 </div>
             </div>
         </div>
@@ -310,16 +312,14 @@ input[type="number"] {
     var leadsCountByTier = <?php echo json_encode($leadsCountByTier)?>;
     var unAssignedLeadsByTier = <?php echo json_encode($unAssignedLeadsByTier)?>;
     var revivalLeadsCount = <?php echo json_encode($revivalLeadsCount)?>;
-    console.log(leadsCountByTier);
-    console.log(unAssignedLeadsByTier);
-    console.log(revivalLeadsCount);
-debugger;
+    var advisorConversionData  = <?php echo json_encode($advisorConversionData)?>;
+    var advisorLeadsAssignedData = <?php echo json_encode($advisorLeadsAssignedData)?>;
    $(function(){
         createLeadRcdSummaryByTierPieChart(leadsCountByTier);
         createUnAssignedLeadRcdSummaryByTierChart(unAssignedLeadsByTier);
         createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCount);
-        createAdvisorConversionChart(data, labels);
-        createLeadAssignCountSummaryByAdvisorChart(data,labels);
+        createAdvisorConversionChart(advisorConversionData);
+        createLeadAssignCountSummaryByAdvisorChart(advisorLeadsAssignedData);
    });
 
 
@@ -413,8 +413,8 @@ debugger;
 
     function createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCount)
    {
-        var cData = [{name : 'Revival Leads', y: parseInt(revivalLeadsCount['revival_leads']) },
-        {name : 'Non Revival Leads', y: parseInt(revivalLeadsCount['non_revival_leads']) }];
+        var cData = [{name : 'Revival Leads', y: parseInt(revivalLeadsCount[0]['revival_leads']) },
+        {name : 'Non Revival Leads', y: parseInt(revivalLeadsCount[0]['non_revival_leads']) }];
         Highcharts.chart('UnAssignedLeadRcdSummaryByLeadSource', {
             chart: {
                 plotBackgroundColor: null,
@@ -452,131 +452,111 @@ debugger;
         });
     }
 
-    function createAdvisorConversionChart(data, labels)
+    function createAdvisorConversionChart(advisorConversionData)
     {
         var cData = [];
-        for (let index = 0; index < data.length; index++) {
-            cData.push([labels[index], parseFloat(data[index])]);
+        for (let index = 0; index < advisorConversionData.length; index++) {
+            var node = advisorConversionData[index];
+            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( (node.total_leads - node.bad_leads - node.manual_created ) / ( node.sale_leads - node.created_sale_leads ) )});
         }
         Highcharts.chart('advisorConversion', {
             chart: {
                 type: 'column'
             },
             title: {
-                text: 'Advisor Conversion Report'
-            },
-            subtitle: {
-            //  text: 'Source: <a href="https://worldpopulationreview.com/world-cities" target="_blank">World Population Review</a>'
+                align: 'center',
+                text: 'ADVISOR CONVERSION REPORT'
             },
             xAxis: {
-                type: 'category',
-                labels: {
-                    rotation: -45,
-                    style: {
-                        fontSize: '13px',
-                        fontFamily: 'Verdana, sans-serif'
-                    }
-                }
+                type: 'category'
             },
             yAxis: {
-                min: 0,
                 title: {
                     text: 'Total Gross Conversion'
                 }
+
             },
             legend: {
                 enabled: false
             },
-            tooltip: {
-                pointFormat: '<b>{point.y:.1f}</b>'
-            },
             plotOptions: {
                 series: {
-                    pointWidth: 40
-                }
-            },
-            series: [{
-                name: 'Population',
-                data: cData,
-                dataLabels: {
-                    enabled: true,
-                    rotation: -90,
-                    color: '#FFFFFF',
-                    align: 'right',
-                    format: '{point.y:.1f}', // one decimal
-                    y: 10, // 10 pixels down from the top
-                    style: {
-                        fontSize: '13px',
-                        fontFamily: 'Verdana, sans-serif'
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.y:.1f}%'
                     }
                 }
-            }]
+            },
+
+            tooltip: {
+                headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+                pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b>'
+            },
+
+            series: [
+                {
+                    name: 'Gross Conversion',
+                    colorByPoint: true,
+                    data: cData
+                }
+            ]
         });
+
     }
 
-    function createLeadAssignCountSummaryByAdvisorChart(data, labels)
+    function createLeadAssignCountSummaryByAdvisorChart(data)
     {
+        debugger;
         var cData = [];
         for (let index = 0; index < data.length; index++) {
-            cData.push([labels[index], parseFloat(data[index])]);
+            var node = data[index];
+            cData.push({name: node.name, y: parseFloat( node.total_leads )});
         }
         Highcharts.chart('leadAssignCountSummaryByAdvisor', {
             chart: {
                 type: 'column'
             },
             title: {
+                align: 'center',
                 text: 'Lead Assign Count Summary Per Advisor'
             },
-            subtitle: {
-            //  text: 'Source: <a href="https://worldpopulationreview.com/world-cities" target="_blank">World Population Review</a>'
-            },
             xAxis: {
-                type: 'category',
-                labels: {
-                    rotation: -45,
-                    style: {
-                        fontSize: '13px',
-                        fontFamily: 'Verdana, sans-serif'
-                    }
-                }
+                type: 'category'
             },
             yAxis: {
-                min: 0,
                 title: {
-                    text: 'Total Gross Conversion'
+                    text: 'Number of Leads Assigned'
                 }
+
             },
             legend: {
                 enabled: false
             },
-            tooltip: {
-                pointFormat: '<b>{point.y:.1f}</b>'
-            },
             plotOptions: {
                 series: {
-                    pointWidth: 80
-                }
-            },
-            series: [{
-                name: 'Population',
-                data: cData,
-                dataLabels: {
-                    enabled: true,
-                    rotation: -90,
-                    color: '#FFFFFF',
-                    align: 'right',
-                    format: '{point.y:.1f}', // one decimal
-                    y: 10, // 10 pixels down from the top
-                    style: {
-                        fontSize: '13px',
-                        fontFamily: 'Verdana, sans-serif'
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.y:.1f}%'
                     }
                 }
-            }]
+            },
+
+            tooltip: {
+                headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+                pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}</b>'
+            },
+
+            series: [
+                {
+                    name: 'Leads Assigned',
+                    colorByPoint: true,
+                    data: cData
+                }
+            ]
         });
     }
-
-    //leadAssignCountSummaryByAdvisor
 
 </script>
 @endsection
