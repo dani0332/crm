@@ -82,7 +82,7 @@ Route::middleware(['auth'])->get('/home', function () {
     return view('home');
 });
 
-Route::group(['middleware' => ['auth']], function () {
+Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
         Artisan::call('view:cache');
