@@ -750,7 +750,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function UpdateLeadStatus(Request $request)
+    public function updateLeadStatus(Request $request)
     {
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
@@ -767,6 +767,17 @@ class CRUDController extends Controller
             $this->validate($request, [
                 'trans_code' => 'required',
             ]);
+        }
+        // Car Quote: validate next_followup_date
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
+            if($request->leadStatus == QuoteStatusEnum::FollowupCall || 
+            $request->leadStatus == QuoteStatusEnum::Interested || 
+            $request->leadStatus == QuoteStatusEnum::NoAnswer) {
+                $this->validate($request, [
+                    'next_followup_date' => 'required',
+                    'next_followup_date' => 'date_format:Y-m-d H:i:s|after_or_equal:'.date('Y-m-d H:i:s'),
+                ]);
+            }
         }
         $entity = $this->crudService->updateQuoteStatus($request);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {

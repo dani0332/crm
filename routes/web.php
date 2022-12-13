@@ -217,7 +217,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('{quoteType}/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
         Route::post('wcuAssign', [CRUDController::class, 'wcuAssign'])->name('wcuAssign');
-        Route::post('/{modelType}/{QuoteUId}/UpdateLeadStatus', [CRUDController::class, 'UpdateLeadStatus'])->name('UpdateLeadStatus');
+        Route::post('/{modelType}/{QuoteUId}/updateLeadStatus', [CRUDController::class, 'updateLeadStatus'])->name('updateLeadStatus');
         Route::post('health/healthTeamAssign', [CRUDController::class, 'healthTeamAssign'])->name('healthTeamAssign');
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/create-quote', [CRUDController::class, 'addCarQuotePlan']);
