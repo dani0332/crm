@@ -66,9 +66,9 @@ class DashboardController extends Controller
         $revivalLeadsCount = $this->getLeadsCountRevival($request);
         $advisorConversionData = $this->getAdvisorConversionData($request);
         $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData($request);
+
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
-            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount', 'advisorConversionData'
-            ,'advisorLeadsAssignedData']));
+            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', ]));
     }
 
     public function getLeadsCountRevival($request)
