@@ -711,7 +711,7 @@ class CarQuoteService extends BaseService
             }
 
             foreach ($searchProperties as $item) {
-                if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date') {
+                if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
                     } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
