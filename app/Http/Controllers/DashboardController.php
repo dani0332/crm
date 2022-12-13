@@ -64,16 +64,17 @@ class DashboardController extends Controller
         $leadsCountByTier = $this->getLeadsCountByTier($request);
         $unAssignedLeadsByTier = $this->getUnAssignedLeadsCountByTier($request);
         $revivalLeadsCount = $this->getLeadsCountRevival($request);
+
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
-             'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount']));
+            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount', ]));
     }
 
     public function getLeadsCountRevival($request)
     {
         return
         CarQuote::select(
-            DB::raw('sum(CASE WHEN car_quote_request.source = "'. LeadSourceEnum::REVIVAL .'" THEN 1 ELSE 0 END) as revival_leads'),
-            DB::raw('sum(CASE WHEN car_quote_request.source != "'. LeadSourceEnum::REVIVAL .'" THEN 1 ELSE 0 END) as non_revival_leads'),
+            DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
+            DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
         )
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->get();
