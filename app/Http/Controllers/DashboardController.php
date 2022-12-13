@@ -61,11 +61,49 @@ class DashboardController extends Controller
         $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
         $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
         $totalUnAssignedRevivalLeads = count($allCarQuotesToday->whereNull('advisor_id')->where('source', LeadSourceEnum::REFERRAL));
-        $stats = $this->getTPLDashboardStats($request);
-        $labels = $stats[0];
-        $data = $stats[1];
+        $leadsCountByTier = $this->getLeadsCountByTier($request);
+        $unAssignedLeadsByTier = $this->getUnAssignedLeadsCountByTier($request);
+        $revivalLeadsCount = $this->getLeadsCountRevival($request);
+        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
+             'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount']));
+    }
 
-        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce', 'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'labels', 'data']));
+    public function getLeadsCountRevival($request)
+    {
+        return
+        CarQuote::select(
+            DB::raw('sum(CASE WHEN car_quote_request.source = "'. LeadSourceEnum::REVIVAL .'" THEN 1 ELSE 0 END) as revival_leads'),
+            DB::raw('sum(CASE WHEN car_quote_request.source != "'. LeadSourceEnum::REVIVAL .'" THEN 1 ELSE 0 END) as non_revival_leads'),
+        )
+        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->get();
+    }
+
+    public function getLeadsCountByTier($request)
+    {
+        return
+        CarQuote::select(
+            'tiers.name as tierNames',
+            DB::raw('count(*) as leadCount')
+        )
+        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->groupBy('tiers.name')
+        ->get();
+    }
+
+    public function getUnAssignedLeadsCountByTier($request)
+    {
+        return
+        CarQuote::select(
+            'tiers.name as tierNames',
+            DB::raw('count(*) as leadCount')
+        )
+        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        ->whereNull('car_quote_request.advisor_id')
+        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->groupBy('tiers.name')
+        ->get();
     }
 
     public function renderTplDashboard(Request $request)

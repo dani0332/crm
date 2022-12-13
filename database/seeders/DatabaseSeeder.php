@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
             addAdvisorConvertionReportBatchStartDate::class,
             addCarAllocationMasterSwitch::class,
             addPermissionsForDashboard::class,
-            CarQuoteRequestSeeder::class,
+            //CarQuoteRequestSeeder::class,
         ]);
     }
 }

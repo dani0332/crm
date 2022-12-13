@@ -205,7 +205,7 @@ input[type="number"] {
                 $backGroundColor = ['#FF7F50', '#22c55e','#ef4444', '#0c4a6e', '#0ea5e9', '#fbbf24','#0369a1'];
                 @endphp
                 <div class="col-md-1"
-                    style="margin-top:10px; margin-left:10px; float: left;border-radius: 10px;border: 1px solid black;padding: 10px;text-align: center;color:black;box-shadow: rgba(50, 50, 93, 0.25) 0px 30px 60px -12px inset, rgba(0, 0, 0, 0.3) 0px 18px 36px -18px inset;">
+                    style="margin-top:10px; margin-left:10px; float: left;border-radius: 8px;border: 1px solid black;padding: 10px;text-align: center;color:black;min-width:180px;">
                     {{$item['teamName']}}
                     <div style="text-align: center;">
                         <b>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
@@ -307,23 +307,27 @@ input[type="number"] {
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script type="text/javascript">
-    var data = <?php echo json_encode($data)?>;
-    var labels = <?php echo json_encode($labels)?>;
-
+    var leadsCountByTier = <?php echo json_encode($leadsCountByTier)?>;
+    var unAssignedLeadsByTier = <?php echo json_encode($unAssignedLeadsByTier)?>;
+    var revivalLeadsCount = <?php echo json_encode($revivalLeadsCount)?>;
+    console.log(leadsCountByTier);
+    console.log(unAssignedLeadsByTier);
+    console.log(revivalLeadsCount);
+debugger;
    $(function(){
-        createLeadRcdSummaryByTierPieChart(data, labels);
-        createUnAssignedLeadRcdSummaryByTierChart(data, labels);
-        createUnAssignedLeadRcdSummaryByLeadSourceChart(data,labels);
+        createLeadRcdSummaryByTierPieChart(leadsCountByTier);
+        createUnAssignedLeadRcdSummaryByTierChart(unAssignedLeadsByTier);
+        createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCount);
         createAdvisorConversionChart(data, labels);
         createLeadAssignCountSummaryByAdvisorChart(data,labels);
    });
 
 
-   function createLeadRcdSummaryByTierPieChart(data, labels)
+   function createLeadRcdSummaryByTierPieChart(leadsCountByTier)
    {
         var cData = [];
-        for (let index = 0; index < data.length; index++) {
-            cData.push({name: labels[index], y: parseFloat(data[index])});
+        for (let index = 0; index < leadsCountByTier.length; index++) {
+            cData.push({name: leadsCountByTier[index]['tierNames'], y: parseFloat(leadsCountByTier[index]['leadCount'])});
         }
             // Data retrieved from https://netmarketshare.com
         Highcharts.chart('LeadRcdSummaryByTier', {
@@ -364,11 +368,11 @@ input[type="number"] {
 
    }
 
-   function createUnAssignedLeadRcdSummaryByTierChart(data, labels)
+   function createUnAssignedLeadRcdSummaryByTierChart(unAssignedLeadsByTier)
    {
         var cData = [];
-        for (let index = 0; index < data.length; index++) {
-            cData.push({name: labels[index], y: parseFloat(data[index])});
+        for (let index = 0; index < unAssignedLeadsByTier.length; index++) {
+            cData.push({name: unAssignedLeadsByTier[index]['tierNames'], y: parseFloat(unAssignedLeadsByTier[index]['leadCount'])});
         }
         Highcharts.chart('UnAssignedLeadRcdSummaryByTier', {
             chart: {
@@ -407,12 +411,10 @@ input[type="number"] {
         });
     }
 
-    function createUnAssignedLeadRcdSummaryByLeadSourceChart(data, labels)
+    function createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCount)
    {
-        var cData = [];
-        for (let index = 0; index < data.length; index++) {
-            cData.push({name: labels[index], y: parseFloat(data[index])});
-        }
+        var cData = [{name : 'Revival Leads', y: parseInt(revivalLeadsCount['revival_leads']) },
+        {name : 'Non Revival Leads', y: parseInt(revivalLeadsCount['non_revival_leads']) }];
         Highcharts.chart('UnAssignedLeadRcdSummaryByLeadSource', {
             chart: {
                 plotBackgroundColor: null,
@@ -552,7 +554,7 @@ input[type="number"] {
             },
             plotOptions: {
                 series: {
-                    pointWidth: 40
+                    pointWidth: 80
                 }
             },
             series: [{
