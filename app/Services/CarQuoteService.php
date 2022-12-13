@@ -679,9 +679,9 @@ class CarQuoteService extends BaseService
             if (! isset($request->email) && $request->email == '') {
                 $this->query->where('qs.id', '!=', 9);
             }
-            if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-                $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
-                $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
+            if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+                $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
+                $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
                 $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
             }
             if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
