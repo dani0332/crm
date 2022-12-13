@@ -62,34 +62,44 @@
                 $('#trans-div').hide();
             }
 
-            if(lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::FollowupCall) ?>') || 
-            lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::Interested) ?>') || 
-            lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::NoAnswer) ?>')) {
-                $('#quote-next-followup-date').show();
-            } else {
-                $('#quote-next-followup-date').hide();
-            }
+            // Car Quote: on lead_status change hideshow next_followup_date conditionally
+            next_followup_date_visibility(lead_status_code);
         });
 
-        $('#next_followup_date').daterangepicker({
-            timePicker: true,
-            singleDatePicker: true,
-            timePicker24Hour: true,
-            locale: {
-                format: 'YYYY-MM-DD HH:mm:ss',
-            },
-        });
-
-        // Car Quote: lock lead status options (Fake, Duplicate) conditionally
         var quoteTypeId = JSON.parse('<?php echo json_encode($quoteTypeId) ?>');
         var quoteTypeCar = JSON.parse('<?php echo json_encode(QuoteTypeId::Car) ?>');
         var hasRoles = JSON.parse('<?php echo json_encode(auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) ?>');
-
-        if(quoteTypeId == quoteTypeCar && !hasRoles) {
-            $("#leadStatus option[value='9']").hide();
-            $("#leadStatus option[value='35']").hide();
+        if(quoteTypeId == quoteTypeCar) {
+            // Car Quote: display calendar on next_followup_date
+            $('#next_followup_date').daterangepicker({
+                timePicker: true,
+                singleDatePicker: true,
+                timePicker24Hour: true,
+                locale: {
+                    format: 'YYYY-MM-DD HH:mm:ss',
+                },
+            });
+            // Car Quote: lock lead status options (Fake, Duplicate) conditionally
+            if(!hasRoles) {
+                $("#leadStatus option[value='9']").hide();
+                $("#leadStatus option[value='35']").hide();
+            }
+            // Car Quote: on page load hideshow next_followup_date conditionally
+            var lead_status_code = $('#leadStatus option:selected').val();
+            next_followup_date_visibility(lead_status_code);
         }
     });
+
+    function next_followup_date_visibility(lead_status_code) {
+        if(lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::FollowupCall) ?>') || 
+        lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::Interested) ?>') || 
+        lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::NoAnswer) ?>')) {
+            $('#quote-next-followup-date').show();
+        } else {
+            $('#quote-next-followup-date').hide();
+        }
+        return false;
+    }
 </script>
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -99,8 +109,7 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/UpdateLeadStatus"
-                    id="lead-status-form">
+                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/update-lead-status" id="lead-status-form">
                     {{csrf_field()}}
                     <input type="hidden" value="{{$lead->id}}" name="leadId">
                     <input type="hidden" value="{{$modeltype}}" name="modelType">
