@@ -57,6 +57,7 @@ use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use App\Http\Livewire\CarQuoteTable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -196,6 +197,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
+
+        Route::get('car', [CarQuoteTable::class, 'index']);
+
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
@@ -211,7 +215,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('{quoteType}/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
         Route::post('wcuAssign', [CRUDController::class, 'wcuAssign'])->name('wcuAssign');
-        Route::post('/{modelType}/{QuoteUId}/UpdateLeadStatus', [CRUDController::class, 'UpdateLeadStatus'])->name('UpdateLeadStatus');
+        Route::post('/{modelType}/{QuoteUId}/update-lead-status', [CRUDController::class, 'updateLeadStatus'])->name('updateLeadStatus');
         Route::post('health/healthTeamAssign', [CRUDController::class, 'healthTeamAssign'])->name('healthTeamAssign');
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/create-quote', [CRUDController::class, 'addCarQuotePlan']);

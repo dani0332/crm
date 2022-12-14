@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             addCarAllocationMasterSwitch::class,
             addPermissionsForDashboard::class,
             //CarQuoteRequestSeeder::class,
+            QuoteStatusTableSeeder::class,
         ]);
     }
 }

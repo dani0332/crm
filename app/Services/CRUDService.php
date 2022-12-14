@@ -226,6 +226,9 @@ class CRUDService extends BaseService
         if (isset($request->lost_approval_reason) && $request->lost_approval_reason != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
             $quoteDetailEntity->lost_approval_reason = $request->lost_approval_reason;
         }
+        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
+            $quoteDetailEntity->next_followup_date = $request->next_followup_date;
+        }
 
         $quoteDetailEntity->save();
 
