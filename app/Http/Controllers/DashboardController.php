@@ -56,9 +56,9 @@ class DashboardController extends Controller
         $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
         $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
         $totalUnAssignedRevivalLeads = count($allCarQuotesToday->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
-        $leadsCountByTier = $this->getLeadsCountByTier($request);
+        $leadsCountByTier = $this->getLeadsCountByTier(null, null);
         $unAssignedLeadsByTier = $this->getUnAssignedLeadsCountByTier($request);
-        $revivalLeadsCount = $this->getLeadsCountRevival($request);
+        $revivalLeadsCount = $this->getLeadsCountRevival(null, null);
         $advisorConversionData = $this->getAdvisorConversionData($request);
         $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData($request);
 
@@ -66,28 +66,70 @@ class DashboardController extends Controller
             'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', ]));
     }
 
-    public function getLeadsCountRevival($request)
+    public function getRecentDailyStats(Request $request)
     {
-        return
-        CarQuote::select(
-            DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
-            DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
-        )
-        ->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])
-        ->get();
+        $startDate = explode(',', $request->range)[0];
+        $endDate = explode(',', $request->range)[0];
+        $allCarQuotesToday = CarQuote::whereBetween('created_at', [$startDate, $endDate])->get();
+        dd($startDate, $endDate);
+        $carTeam = Team::where('name', quoteTypeCode::Car)->first();
+        $teams = Team::where('parent_team_id', $carTeam->id)->get();
+        $carAdvisors = User::where(function ($query) use ($carTeam, $teams) {
+            $query->where('team_id', $carTeam->id)
+            ->orWhere('sub_team_id', $teams->pluck('id')->toArray());
+        })->get();
+        foreach ($teams as $team) {
+            $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
+            $teamWiseLeadsAssignedAverage[] = [
+                'totalUsersUnderTeam' => count($teamUserIds),
+                'teamName' => $team->name,
+                'totalLeadsCount' => CarQuote::whereIn('advisor_id', $teamUserIds)->whereBetween('created_at', [$startDate, $endDate])->count(),
+            ];
+        }
+        $totalLeadsReceived = count($allCarQuotesToday);
+        $totalLeadsReceivedEcommerce = count($allCarQuotesToday->where('is_ecommerce', 1));
+        $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
+        $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
+        $totalUnAssignedRevivalLeads = count($allCarQuotesToday->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
+        $leadsCountByTier = $this->getLeadsCountByTier($startDate, $endDate);
+        $revivalLeadsCount = $this->getLeadsCountRevival($startDate, $endDate);
+        return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+        'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
+        'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount];
     }
 
-    public function getLeadsCountByTier($request)
+    public function getLeadsCountRevival($startDate, $endDate)
     {
-        return
-        CarQuote::select(
+        $query = CarQuote::select(
+            DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
+            DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
+        );
+        if($startDate == null && $endDate == null)
+        {
+            $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
+        }else
+        {
+            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
+        }
+        return $query->get();
+    }
+
+    public function getLeadsCountByTier($startDate, $endDate)
+    {
+        $query = CarQuote::select(
             'tiers.name as tierNames',
             DB::raw('count(*) as leadCount')
         )
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])
-        ->groupBy('tiers.name')
-        ->get();
+        ->groupBy('tiers.name');
+        if($startDate == null && $endDate == null)
+        {
+            $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
+        }else
+        {
+            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
+        }
+        return $query->get();
     }
 
     public function getUnAssignedLeadsCountByTier($request)

@@ -164,31 +164,31 @@ input[type="number"] {
                 <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%));padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
                     <b style="color: cornflowerblue;">TOTAL LEADS RCVD</b>
                     <div style="text-align: center;">
-                        <b>{{$totalLeadsReceived}}</b>
+                        <b id="totalLeadsReceived">{{$totalLeadsReceived}}</b>
                     </div>
                 </div>
                 <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
                     <b style="color: cornflowerblue;">TOTAL LEADS RCVD ECOM</b>
                     <div style="text-align: center;">
-                        <b>{{$totalLeadsReceivedEcommerce}}</b>
+                        <b id="totalLeadsReceivedEcommerce">{{$totalLeadsReceivedEcommerce}}</b>
                     </div>
                 </div>
                 <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
                     <b style="color: cornflowerblue;">TOTAL UNASSIGNED LEADS</b>
                     <div style="text-align: center;">
-                        <b>{{$totalUnAssignedLeadsReceived}}</b>
+                        <b id="totalUnAssignedLeadsReceived">{{$totalUnAssignedLeadsReceived}}</b>
                     </div>
                 </div>
                 <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
                     <b style="color: cornflowerblue;">TOTAL UNASSIGNED LEADS ECOM</b>
                     <div style="text-align: center;">
-                        <b>{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
+                        <b id="totalUnAssignedLeadsReceivedEcommerce">{{$totalUnAssignedLeadsReceivedEcommerce}}</b>
                     </div>
                 </div>
                 <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
                     <b style="color: cornflowerblue;">TOTAL UNASSIGNED REVIVAL LEADS</b>
                     <div style="text-align: center;">
-                        <b>{{$totalUnAssignedRevivalLeads}}</b>
+                        <b id="totalUnAssignedRevivalLeads">{{$totalUnAssignedRevivalLeads}}</b>
                     </div>
                 </div>
             </div>
@@ -204,7 +204,7 @@ input[type="number"] {
                     style="background-color:white;margin-top:10px; margin-left:10px; float: right;border-radius: 8px;border: 1px solid black;padding: 10px;text-align: center;color:black;min-width:218px;">
                     <b  style="color: cornflowerblue;">{{strtoupper($item['teamName'])}}</b>
                     <div style="text-align: center;">
-                        <b>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
+                        <b id={{str_replace(' ', '', $item['teamName'])}}>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
                             number_format((float)$item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
                             }}</b>
                     </div>
@@ -313,11 +313,13 @@ input[type="number"] {
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.umd.min.js"></script>
 <script type="text/javascript" defer>
-    var leadsCountByTier = <?php echo json_encode($leadsCountByTier)?>;
-    var unAssignedLeadsByTier = <?php echo json_encode($unAssignedLeadsByTier)?>;
-    var revivalLeadsCount = <?php echo json_encode($revivalLeadsCount)?>;
-    var advisorConversionData  = <?php echo json_encode($advisorConversionData)?>;
-    var advisorLeadsAssignedData = <?php echo json_encode($advisorLeadsAssignedData)?>;
+   var leadsCountByTier = <?php echo json_encode($leadsCountByTier)?>;
+   var unAssignedLeadsByTier = <?php echo json_encode($unAssignedLeadsByTier)?>;
+   var revivalLeadsCount = <?php echo json_encode($revivalLeadsCount)?>;
+   var advisorConversionData  = <?php echo json_encode($advisorConversionData)?>;
+   var advisorLeadsAssignedData = <?php echo json_encode($advisorLeadsAssignedData)?>;
+   var leadRcdSummaryByTierPieChart = {};
+   var revivalLeadsCountChart = {};
    $(function(){
         const picker = new easepick.create({
             element: document.getElementById('reloadDailyStatsDate'),
@@ -331,6 +333,9 @@ input[type="number"] {
             PresetPlugin: {
                 position: "right"
             },
+            RangePlugin: {
+                delimiter: ","
+            },
             plugins: [
                 "RangePlugin",
                 "LockPlugin",
@@ -340,39 +345,59 @@ input[type="number"] {
         picker.setStartDate(new Date());
         picker.setEndDate(new Date());
         $('#reloadDailyStats').on('click', function(){
-            var selectedDate = $('#reloadDailyStatsDate option:selected').val();
-            var sourceFilterValue = $('#source-filter option:selected').val();
-            $.get('/get-tpl-filter-stats?tier_filter=' + tierFilterValue + '&source='+ sourceFilterValue, function (data) {
-               if(data){
-                var labels = (typeof data[0]) == 'string' ? JSON.parse(data[0]) : data[0];
-                var data = (typeof data[1]) == 'string' ? JSON.parse(data[1]) : data[1];
-                if(labels.length > 0 ){
-                    tpl_conversion_chart.destroy();
-                    initializeChart(labels, data);
-                }else{
-                    tpl_conversion_chart.destroy();
-                    initializeChart([''], [0]);
-                }
+            var selectedDate = $('#reloadDailyStatsDate').val();
+            $.get('/get-recent-daily-stats?range=' + selectedDate , function (data) {
+               if (data) {
+                 $('#totalLeadsReceived').text(data['totalLeadsReceived']);
+                 $('#totalLeadsReceivedEcommerce').text(data['totalLeadsReceivedEcommerce']);
+                 $('#totalUnAssignedLeadsReceived').text(data['totalUnAssignedLeadsReceived']);
+                 $('#totalUnAssignedLeadsReceivedEcommerce').text(data['totalUnAssignedLeadsReceivedEcommerce']);
+                 $('#totalUnAssignedRevivalLeads').text(data['totalUnAssignedRevivalLeads']);
+                 for (let index = 0; index < data['teamWiseLeadsAssignedAverage'].length; index++) {
+                    const teamName = data['teamWiseLeadsAssignedAverage'][index]['teamName'];
+                    const totalLeadsCount = data['teamWiseLeadsAssignedAverage'][index]['totalLeadsCount'];
+                    const totalUsersUnderTeam = data['teamWiseLeadsAssignedAverage'][index]['totalUsersUnderTeam'];
+                    $('#'+ teamName.replace(/ /g,'')).text(totalLeadsCount + ' / ' + totalUsersUnderTeam + ' = ' + totalLeadsCount/totalUsersUnderTeam);
+                 }
+                 leadRcdSummaryByTierPieChart.destroy();
+                 var leadRcdSummaryByTierPieChartData = [];
+                 for (let index = 0; index < data['leadsCountByTier'].length; index++) {
+                    const name = data['leadsCountByTier'][index]['tierNames'];
+                    const count = data['leadsCountByTier'][index]['leadCount'];
+                    leadRcdSummaryByTierPieChartData.push({ name: name, y: count });
+                 }
+                 createLeadRcdSummaryByTierPieChart(leadRcdSummaryByTierPieChartData);
+
+                 revivalLeadsCountChart.destroy();
+                 var revivalLeadsCountChartData = [{name : 'Revival Leads', y: parseInt(data['revivalLeadsCount'][0]['revival_leads']) },
+                    {name : 'Non Revival Leads', y: parseInt(data['revivalLeadsCount'][0]['non_revival_leads']) }];
+                 createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCountChartData);
                }
             });
         });
-
-        createLeadRcdSummaryByTierPieChart(leadsCountByTier);
-        createUnAssignedLeadRcdSummaryByTierChart(unAssignedLeadsByTier);
-        createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCount);
-        createAdvisorConversionChart(advisorConversionData);
-        createLeadAssignCountSummaryByAdvisorChart(advisorLeadsAssignedData);
-   });
-
-
-   function createLeadRcdSummaryByTierPieChart(leadsCountByTier)
-   {
         var cData = [];
         for (let index = 0; index < leadsCountByTier.length; index++) {
             cData.push({name: leadsCountByTier[index]['tierNames'], y: parseFloat(leadsCountByTier[index]['leadCount'])});
         }
-            // Data retrieved from https://netmarketshare.com
-        Highcharts.chart('LeadRcdSummaryByTier', {
+        createLeadRcdSummaryByTierPieChart(cData);
+
+        var cData = [];
+        for (let index = 0; index < unAssignedLeadsByTier.length; index++) {
+            cData.push({name: unAssignedLeadsByTier[index]['tierNames'], y: parseFloat(unAssignedLeadsByTier[index]['leadCount'])});
+        }
+        createUnAssignedLeadRcdSummaryByTierChart(cData);
+
+        var cData = [{name : 'Revival Leads', y: parseInt(revivalLeadsCount[0]['revival_leads']) },
+        {name : 'Non Revival Leads', y: parseInt(revivalLeadsCount[0]['non_revival_leads']) }];
+        createUnAssignedLeadRcdSummaryByLeadSourceChart(cData);
+        createAdvisorConversionChart(advisorConversionData);
+        createLeadAssignCountSummaryByAdvisorChart(advisorLeadsAssignedData);
+
+   });
+   function createLeadRcdSummaryByTierPieChart(data)
+   {
+
+        leadRcdSummaryByTierPieChart = Highcharts.chart('LeadRcdSummaryByTier', {
             chart: {
                 plotBackgroundColor: null,
                 plotBorderWidth: null,
@@ -404,19 +429,15 @@ input[type="number"] {
             series: [{
                 name: 'Leads',
                 colorByPoint: true,
-                data: cData
+                data: data
             }]
         });
 
    }
 
-   function createUnAssignedLeadRcdSummaryByTierChart(unAssignedLeadsByTier)
+   function createUnAssignedLeadRcdSummaryByTierChart(data)
    {
-        var cData = [];
-        for (let index = 0; index < unAssignedLeadsByTier.length; index++) {
-            cData.push({name: unAssignedLeadsByTier[index]['tierNames'], y: parseFloat(unAssignedLeadsByTier[index]['leadCount'])});
-        }
-        Highcharts.chart('UnAssignedLeadRcdSummaryByTier', {
+        unAssignedLeadsByTierChart = Highcharts.chart('UnAssignedLeadRcdSummaryByTier', {
             chart: {
                 plotBackgroundColor: null,
                 plotBorderWidth: null,
@@ -448,16 +469,14 @@ input[type="number"] {
             series: [{
                 name: 'Leads',
                 colorByPoint: true,
-                data: cData
+                data: data
             }]
         });
     }
 
-    function createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCount)
+    function createUnAssignedLeadRcdSummaryByLeadSourceChart(data)
    {
-        var cData = [{name : 'Revival Leads', y: parseInt(revivalLeadsCount[0]['revival_leads']) },
-        {name : 'Non Revival Leads', y: parseInt(revivalLeadsCount[0]['non_revival_leads']) }];
-        Highcharts.chart('UnAssignedLeadRcdSummaryByLeadSource', {
+        revivalLeadsCountChart = Highcharts.chart('UnAssignedLeadRcdSummaryByLeadSource', {
             chart: {
                 plotBackgroundColor: null,
                 plotBorderWidth: null,
@@ -489,7 +508,7 @@ input[type="number"] {
             series: [{
                 name: 'Leads',
                 colorByPoint: true,
-                data: cData
+                data: data
             }]
         });
     }
@@ -549,7 +568,6 @@ input[type="number"] {
 
     function createLeadAssignCountSummaryByAdvisorChart(data)
     {
-        debugger;
         var cData = [];
         for (let index = 0; index < data.length; index++) {
             var node = data[index];
