@@ -41,21 +41,14 @@ class DashboardController extends Controller
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
         $carAdvisors = User::where('team_id', $carTeam->id)->where('sub_team_id', $teams->pluck('id')->toArray())->get();
         $teamWiseLeadsAssignedAverage = [];
-        $advisorConversionLabels = [];
-        $advisorConversionData = [];
-        foreach ($carAdvisors as $key => $carAdvisor) {
-            $advisorConversionLabels[] = $carAdvisor->name;
-            $advisorConversionData[] = $allCarQuotesToday->where('advisor_id', $carAdvisor->id)->count();
-        }
         foreach ($teams as $team) {
             $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => count($teamUserIds),
                 'teamName' => $team->name,
-                'totalLeadsCount' => CarQuote::whereIn('advisor_id', $teamUserIds)->count(),
+                'totalLeadsCount' => CarQuote::whereIn('advisor_id', $teamUserIds)->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->count(),
             ];
         }
-
         $totalLeadsReceived = count($allCarQuotesToday);
         $totalLeadsReceivedEcommerce = count($allCarQuotesToday->where('is_ecommerce', 1));
         $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));

@@ -21,20 +21,6 @@ class LeadReceivedSummaryBySourceDataTable extends DataTableComponent
 
     public function columns(): array
     {
-        /*
-
-        SELECT count(*) AS leadSourceCount,
-            source,
-            count(*) / (
-                SELECT count(*)
-                FROM car_Quote_Request
-                WHERE created_at = '2021-01-26 05:41:32'
-                ) AS PERCENT
-        FROM car_quote_request
-        WHERE created_at = '2021-01-26 05:41:32'
-        GROUP BY source
-
-        */
         return [
             Column::make('Lead Source', 'source'),
             Column::make('Count By LeadSource')->label(fn ($row) => $row->leadSourceCount),
@@ -47,8 +33,9 @@ class LeadReceivedSummaryBySourceDataTable extends DataTableComponent
         return CarQuote::query()
             ->select(
                 DB::raw('count(*) as leadSourceCount'),
-                DB::raw("count(*) / (SELECT count(*)	FROM car_Quote_Request WHERE created_at = '2021-01-26 05:41:32' ) AS percent"),
+                DB::raw("count(*) / (SELECT count(*) FROM car_Quote_Request WHERE created_at between '". now()->startOfDay() ."' and '". now()->endOfDay() ."' ) AS percent"),
             )
+            ->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
             ->groupBy('source');
     }
 }

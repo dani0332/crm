@@ -221,20 +221,22 @@ input[type="number"] {
     </div>
     <div style="clear: both;"></div>
     <div class="row mt-12" style="margin-top:20px;">
-        <div class="col-md-6 ml-10  col-md-offset-1" style="width: 700px; float:left;">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
+        <div class="col-md-12">
+            <div class="col-md-6 ml-10  col-md-offset-1" style="width:  50%; float:left;">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <h1 class="text-xl text-left mb-14 mt-12 text-[#308BCA]">
 
-                    </h1>
-                    <div id="LeadRcdSummaryByTier"></div>
+                        </h1>
+                        <div id="LeadRcdSummaryByTier"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:right;margin-top: 45px;">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <div id="UnAssignedLeadRcdSummaryByTier"></div>
+            <div class="col-md-6 ml-10 col-md-offset-1" style="width: 50%; float:right;margin-top: 45px;">
+                <div class="panel panel-default">
+                    <div class="panel-body">
+                        <div id="UnAssignedLeadRcdSummaryByTier"></div>
+                    </div>
                 </div>
             </div>
         </div>
