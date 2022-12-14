@@ -27,7 +27,6 @@ use App\Traits\SendSIBEmail;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Redis;
 
 class LeadAllocationService extends BaseService
 {
@@ -309,8 +308,6 @@ class LeadAllocationService extends BaseService
                     'is_available' => 0,
                     'allocation_count' => 0,
                 ]);
-                Redis::command('flushdb');
-                User::where('is_active', 1)->update(['logout_at' => null]);
                 info('Advisors are now unavailable and allocation count is set to 0');
             }
             DB::commit();
@@ -645,7 +642,6 @@ class LeadAllocationService extends BaseService
                             ->orWhere('lead_allocation.max_capacity', '=', -1);
                     })
                     ->where('u.last_login', '>', Carbon::now()->addDays(-1)->endOfDay())
-                    ->whereNull('u.logout_at')
                     ->whereIn('u.id', $tierUsers)
                     ->select('u.id', 'u.name', 'u.email', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity',
                         'lead_allocation.last_allocated')
