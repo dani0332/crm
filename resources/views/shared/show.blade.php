@@ -249,13 +249,6 @@
                                                     @elseif($record->$property == GenericRequestEnum::FEMALE_MARRIED_VALUE) {{GenericRequestEnum::FEMALE_MARRIED}}
                                                     @else {{ $record->$property }}
                                                     @endif
-                                                @elseif($property == 'previous_quote_id')
-                                                    @php
-                                                        $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
-                                                    @endphp
-                                                    @if($previousQuote)
-                                                        <a href="/quotes/{{strtolower($model->modelType)}}/{{ $previousQuote->uuid }}" target="_blank" style="text-decoration: underline;">{{ $record->$property }}</a>
-                                                    @endif
                                                 @else
                                                     {{ $property==DatabaseColumnsString::CAR_VALUE ? number_format($record->$property, 2) : $record->$property }}
                                                 @endif
@@ -380,7 +373,7 @@
         @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
         <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" />
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />

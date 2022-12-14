@@ -76,8 +76,6 @@ Route::get('/', function () {
     return redirect('login');
 });
 
-Route::post('logout', [UserController::class, 'logout'])->name('logout');
-
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
@@ -85,7 +83,7 @@ Route::middleware(['auth'])->get('/home', function () {
     return view('home');
 });
 
-Route::group(['middleware' => ['auth']], function () {
+Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
         Artisan::call('view:cache');
@@ -120,8 +118,8 @@ Route::group(['middleware' => ['auth']], function () {
         'index' => 'activities.index',
         'destroy' => 'activities.destroy',
     ]);
-    Route::post('/activities/createActivity', [ActivitesController::class, 'store'])->name('activities.store');
-    Route::post('activities/{id}/update', [ActivitesController::class, 'update'])->name('activities.update');
+    Route::post('/activities/create-activity', [ActivitesController::class, 'store']);
+    Route::post('activities/{id}/update', [ActivitesController::class, 'update']);
     Route::post('activities/{id}/delete', [ActivitesController::class, 'destroy'])->name('activities.destroy');
     Route::post('activities/updateStatus', [ActivitesController::class, 'updateStatus'])->name('activities.updateStatus');
     Route::post('activities/getEditView', [ActivitesController::class, 'getEditView'])->name('activities.getEditView');
@@ -153,11 +151,19 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);
+        Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed']);
+        Route::get('uploaded-leads/{id}/validation-failed/download', [RenewalsUploadController::class, 'downloadValidationFailed']);
+        Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);
+        Route::get('uploaded-leads/{id}/validation-passed/quote-redirect/{leadId}', [RenewalsUploadController::class, 'viewQuoteRedirect']);
         Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals']);
         Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('listRenewalBatches');
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batchDetail');
         Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('runBatchProcess');
-        Route::post('upload-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
+        Route::post('upload-process', [RenewalsUploadController::class, 'renewalsUploadProcess']);
+        Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate']);
+        Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate']);
+        Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses']);
+        Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
     Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard']);
@@ -228,6 +234,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
         Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
         Route::post('{quoteType}/export-plans-pdf', [CRUDController::class, 'exportPlansPdf'])->name('exportPlansPdf');
+        Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
     });
 
     Route::group(['prefix' => 'generic'], function () {

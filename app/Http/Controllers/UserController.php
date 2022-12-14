@@ -299,12 +299,4 @@ class UserController extends Controller
 
         return $teamManagers;
     }
-
-    public function logout(Request $request)
-    {
-        User::where('id', auth()->user()->id)->update(['logout_at' => now()]);
-        Auth::logout();
-
-        return redirect('/login');
-    }
 }

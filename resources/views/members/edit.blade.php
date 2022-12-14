@@ -21,7 +21,7 @@
                 <div class="input-group">
                 <label class="col-form-label col-md-3 col-sm-3 label-align">Gender</label>
                     <select name="gender" id="" class="form-control">
-                        <option>Please Select Gender</option>
+                        <option value="">Please Select Gender</option>
                         <option value="{{GenericRequestEnum::MALE_SINGLE_VALUE}}" @if($data->gender == GenericRequestEnum::MALE_SINGLE_VALUE) selected @endif>{{GenericRequestEnum::MALE_SINGLE}}</option>
                         <option value="{{GenericRequestEnum::FEMALE_SINGLE_VALUE}}" @if($data->gender == GenericRequestEnum::FEMALE_SINGLE_VALUE) selected @endif>{{GenericRequestEnum::FEMALE_SINGLE}}</option>
                         <option value="{{GenericRequestEnum::FEMALE_MARRIED_VALUE}}" @if($data->gender == GenericRequestEnum::FEMALE_MARRIED_VALUE) selected @endif>{{GenericRequestEnum::FEMALE_MARRIED}}</option>
@@ -40,7 +40,7 @@
                 <div class="input-group">
                 <label class="col-form-label col-md-3 col-sm-3 label-align">Category</label>
                     <select name="member_category" id="" class="form-control">
-                        <option>Please Select Member Category</option>
+                        <option value="">Please Select Member Category</option>
                         @foreach($categories as $member)
                         <option value="{{$member->id}}"  @if($data->member_category_id == $member->id) selected @endif>{{$member->text}}</option>
                         @endforeach
@@ -51,7 +51,7 @@
                 <div class="input-group">
                 <label class="col-form-label col-md-3 col-sm-3 label-align">Salary Band</label>
                 <select name="salary_band" id="" class="form-control">
-                        <option>Please Select Salary Band</option>
+                        <option value="">Please Select Salary Band</option>
                         @foreach($salaries as $salary)
                         <option value="{{$salary->id}}" @if($data->salary_band_id == $salary->id) selected @endif>{{$salary->text}}</option>
                         @endforeach

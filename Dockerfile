@@ -1,4 +1,4 @@
-FROM php:8.0-fpm
+FROM php:8.1-fpm
 ARG IMCRM_TOKEN
 #ARG NGINX_FILE
 #ARG NEW_RELIC_LICENSE_KEY
@@ -69,7 +69,7 @@ RUN useradd -u 1000 -ms /bin/bash -g www www
 RUN doppler configure set token ${IMCRM_TOKEN}
 
 RUN \
-  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.3.0.315-linux.tar.gz | tar -C /tmp -zx && \
+  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.4.0.316-linux.tar.gz | tar -C /tmp -zx && \
   export NR_INSTALL_USE_CP_NOT_LN=1 && \
   export NR_INSTALL_SILENT=1 && \
   /tmp/newrelic-php5-*/newrelic-install install && \
@@ -114,7 +114,7 @@ RUN cp docker/log_files.yml /etc/
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
 #RUN yarn
-RUN yarn run prod
+# RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 
 ENTRYPOINT ["/var/www/docker/run.sh"]
