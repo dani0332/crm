@@ -48,8 +48,11 @@ use App\Enums\PermissionsEnum;
 
     if (elements) {
       const element = Array.from(elements).find(el => el.href === route.href);
-      element.parentElement.parentElement.parentElement.classList.add('active');
-      element.parentElement.classList.add('active');
+
+      if (element) {
+        element.parentElement.parentElement.parentElement.classList.add('active');
+        element.parentElement.classList.add('active');
+      }
       
       elements.forEach(function(el, key) {
         el.addEventListener('click', function() {
