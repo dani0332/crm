@@ -198,7 +198,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
 
-        Route::get('car', [CarQuoteTable::class, 'index']);
+        //Route::get('car', [CarQuoteTable::class, 'index']);
 
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
@@ -206,7 +206,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('travel', CRUDController::class);
         Route::resource('pet', CRUDController::class);
         Route::resource('teams', CRUDController::class);
-        // Route::resource('leadstatus', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
