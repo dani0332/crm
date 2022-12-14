@@ -8,6 +8,7 @@ use App\Models\InsuranceProvider;
 use App\Models\PaymentStatus;
 use App\Models\QuoteStatus;
 use App\Models\User;
+use App\Models\VehicleType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -72,6 +73,52 @@ class CarQuoteTable extends DataTableComponent
     public function filters(): array
     {
         return [
+            TextFilter::make('CDB ID', 'code')
+                ->config([
+                    'placeholder' => 'Search by CDB ID',
+                    'maxlength' => '25',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where('car_quote_request.code', $value);
+                }),
+
+            TextFilter::make('Renewal Batch #', 'renewal_batch_number')
+                ->config([
+                    'placeholder' => 'Search by Renewal Batch #',
+                    'maxlength' => '25',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where('car_quote_request.renewal_batch', $value);
+                }),
+
+            TextFilter::make('Renewal Expiry Date', 'renewal_expiry_date')
+                ->config([
+                    'placeholder' => 'Select Start & End Date',
+                    'range' => true,
+                    'max_days' => 365,
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if (preg_match('/^(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
+                        $builder->whereBetween('car_quote_request.previous_policy_expiry_date', [$matches[1], $matches[2]]);
+                    }
+                }),
+
+            MultiSelectFilter::make('Advisor')
+                ->options(
+                    User::query()
+                        ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
+                        ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                        ->whereIn('roles.name', [RolesEnum::CarAdvisor, RolesEnum::CarNewBusinessAdvisor, RolesEnum::CarRenewalAdvisor])
+                        ->select('users.id', DB::raw("CONCAT(users.name,' - ',roles.name) as name"))
+                        ->orderBy('roles.name')
+                        ->get()
+                        ->keyBy('id')
+                        ->map(fn ($users) => $users->name)
+                        ->toArray(),
+                )->filter(function (Builder $builder, $value) {
+                    $builder->whereIn('car_quote_request.advisor_id', $value);
+                }),
+
             TextFilter::make('Created Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
@@ -98,41 +145,31 @@ class CarQuoteTable extends DataTableComponent
                     }
                 }),
 
-            TextFilter::make('CDB ID', 'code')
-                ->config([
-                    'placeholder' => 'Search by CDB ID',
-                    'maxlength' => '25',
-                ])
-                ->filter(function (Builder $builder, string $value) {
-                    $builder->where('car_quote_request.code', $value);
-                }),
-
-            MultiSelectFilter::make('Advisor')
-                ->options(
-                    User::query()
-                        ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
-                        ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                        ->whereIn('roles.name', [RolesEnum::CarAdvisor, RolesEnum::CarNewBusinessAdvisor, RolesEnum::CarRenewalAdvisor])
-                        ->select('users.id', DB::raw("CONCAT(users.name,' - ',roles.name) as name"))
-                        ->orderBy('roles.name')
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($users) => $users->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
-                    $builder->whereIn('car_quote_request.advisor_id', $value);
-                }),
-
             SelectFilter::make('Currently Insured With')
                 ->options(
                     ['' => 'Select Insurance Provider'] +
                         InsuranceProvider::query()
+                        ->select('id', 'text')
                         ->orderBy('text')
                         ->get()
                         ->pluck('text', 'text')
                         ->toArray(),
                 )->filter(function (Builder $builder, string $value) {
                     $builder->where('car_quote_request.currently_insured_with', $value);
+                }),
+
+            SelectFilter::make('Vehicle Type')
+                ->options(
+                    ['' => 'Select Vehicle Type'] +
+                        VehicleType::query()
+                        ->where('is_active', true)
+                        ->select('id', 'text')
+                        ->orderBy('text')
+                        ->get()
+                        ->pluck('text', 'id')
+                        ->toArray(),
+                )->filter(function (Builder $builder, string $value) {
+                    $builder->where('car_quote_request.vehicle_type_id', $value);
                 }),
 
             MultiSelectFilter::make('Lead Status')
@@ -174,6 +211,14 @@ class CarQuoteTable extends DataTableComponent
                     } elseif ($value === '0') {
                         $builder->where('is_ecommerce', false);
                     }
+                }),
+
+            TextFilter::make('Previous Policy Number')
+                ->config([
+                    'placeholder' => 'Search by Previous Policy Number',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where('car_quote_request.previous_quote_policy_number', 'like', '%'.$value.'%');
                 }),
 
             TextFilter::make('First Name')
