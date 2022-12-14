@@ -215,8 +215,9 @@ input[type="number"] {
     </div>
     <div style="clear: both;"></div>
     <div class="row">
-        <div style="float:right;margin-top:70px;">
-            <input type="date" id="" name="" class="form-control" style="width: 345px;text-align: center;border-radius: 5px;"  /> <button style="height: 45px;" class="btn btn-primary">Go</button>
+        <div style="float:right;margin-top:70px;position:relative;z-index:1;">
+            <input type="text" id="reloadDailyStatsDate" name="reloadDailyStatsDate" class="form-control" style="width: 345px;text-align: center;border-radius: 5px;"  />
+             <button id="reloadDailyStats" style="height: 45px;" class="btn btn-primary">Go</button>
         </div>
     </div>
     <div style="clear: both;"></div>
@@ -310,13 +311,52 @@ input[type="number"] {
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-<script type="text/javascript">
+<script src="https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.umd.min.js"></script>
+<script type="text/javascript" defer>
     var leadsCountByTier = <?php echo json_encode($leadsCountByTier)?>;
     var unAssignedLeadsByTier = <?php echo json_encode($unAssignedLeadsByTier)?>;
     var revivalLeadsCount = <?php echo json_encode($revivalLeadsCount)?>;
     var advisorConversionData  = <?php echo json_encode($advisorConversionData)?>;
     var advisorLeadsAssignedData = <?php echo json_encode($advisorLeadsAssignedData)?>;
    $(function(){
+        const picker = new easepick.create({
+            element: document.getElementById('reloadDailyStatsDate'),
+            css: [
+            'https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.css',
+            ],
+            zIndex: 10,
+            LockPlugin: {
+                maxDays: 31
+            },
+            PresetPlugin: {
+                position: "right"
+            },
+            plugins: [
+                "RangePlugin",
+                "LockPlugin",
+                "PresetPlugin"
+            ],
+        });
+        picker.setStartDate(new Date());
+        picker.setEndDate(new Date());
+        $('#reloadDailyStats').on('click', function(){
+            var selectedDate = $('#reloadDailyStatsDate option:selected').val();
+            var sourceFilterValue = $('#source-filter option:selected').val();
+            $.get('/get-tpl-filter-stats?tier_filter=' + tierFilterValue + '&source='+ sourceFilterValue, function (data) {
+               if(data){
+                var labels = (typeof data[0]) == 'string' ? JSON.parse(data[0]) : data[0];
+                var data = (typeof data[1]) == 'string' ? JSON.parse(data[1]) : data[1];
+                if(labels.length > 0 ){
+                    tpl_conversion_chart.destroy();
+                    initializeChart(labels, data);
+                }else{
+                    tpl_conversion_chart.destroy();
+                    initializeChart([''], [0]);
+                }
+               }
+            });
+        });
+
         createLeadRcdSummaryByTierPieChart(leadsCountByTier);
         createUnAssignedLeadRcdSummaryByTierChart(unAssignedLeadsByTier);
         createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCount);
