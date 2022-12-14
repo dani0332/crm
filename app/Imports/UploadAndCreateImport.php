@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
+use App\Traits\RenewalsImportTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
@@ -25,7 +26,7 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
 {
-    use Importable, SkipsFailures, RegistersEventListeners;
+    use Importable, SkipsFailures, RegistersEventListeners, RenewalsImportTrait;
 
     private $validCount = 0;
     private $failedCount = 0;
@@ -110,8 +111,12 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
             'product_type' => ['index' => 6, 'title' => 'Product Type', 'rules' => 'max:100'],
             'advisor' => ['index' => 7, 'title' => 'Advisor Email', 'rules' => 'max:100'],
             'policy_number' => ['index' => 8, 'title' => 'Policy Number', 'rules' => 'required|max:100'],
-            'start_date' => ['index' => 9, 'title' => 'Policy Start Date', 'rules' => 'max:25', 'type' => 'date'],
-            'end_date' => ['index' => 10, 'title' => 'Policy End date', 'rules' => 'required|max:25', 'type' => 'date'],
+            'start_date' => ['index' => 9, 'title' => 'Policy Start Date', 'rules' => ['max:10', function($attribute, $value, $onFailure){
+                if(!$this->validateDate($value)) {$onFailure('Invalid value provided for ' . $attribute);}
+            }], 'type' => 'date'],
+            'end_date' => ['index' => 10, 'title' => 'Policy End date', 'rules' => ['required', 'max:10', function($attribute, $value, $onFailure){
+                if(!$this->validateDate($value)) {$onFailure('Invalid value provided for ' . $attribute);}
+            }], 'type' => 'date'],
             'batch' => ['index' => 11, 'title' => 'Batch', 'rules' => 'required|max:25'],
             'make' => ['index' => 12, 'title' => 'Car Make', 'rules' => 'max:50'],
             'model' => ['index' => 13, 'title' => 'Car Model', 'rules' => 'max:50'],
@@ -124,55 +129,6 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
         ];
     }
 
-    /**
-     * map row with keys.
-     *
-     * @param $row
-     * @return array
-     */
-    public function mapQuoteData($row)
-    {
-        $fields = $this->getColumns();
-
-        $quoteData = [];
-        foreach ($fields as $key => $field) {
-            if (! empty($field['type']) && $field['type'] == 'date') {
-                if (strpos($row[$field['index']], '/')) {
-                    $quoteData[$key] = Carbon::createFromFormat('d/m/Y', $row[$field['index']])->format('d/m/Y');
-                } else {
-                    $quoteData[$key] = Carbon::instance(Date::excelToDateTimeObject((float) $row[$field['index']]))->format('d/m/Y');
-                }
-            } else {
-                $quoteData[$key] = $row[$field['index']];
-            }
-        }
-
-        return $quoteData;
-    }
-
-    /**
-     * Attributes Mapping, pluck titles from columns and these will be used in validation as field name.
-     *
-     * @return string[] e.g 0 => Customer Name, 1 => Customer Email
-     */
-    public function customValidationAttributes()
-    {
-        $colums = collect($this->getColumns());
-
-        return $colums->pluck('title', 'index')->toArray();
-    }
-
-    /**
-     * customer validation messages
-     *
-     * @return string[]
-     */
-    public function customValidationMessages()
-    {
-        return [
-            '0.regex' => ':attribute should only be in letters - no numbers allowed.',
-        ];
-    }
 
     /**
      * validation rules for every column in a row.
@@ -181,14 +137,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
      */
     public function rules(): array
     {
-        $rules = [];
-        $columns = collect($this->getColumns())->pluck('rules', 'index');
-
-        $columns->each(function ($item, $index) use (&$rules) {
-            $rules['*.'.$index] = $item;
-        });
-
-        return $rules;
+        return $this->getRules();
     }
 
     /**
@@ -205,7 +154,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
                 foreach ($this->failures() as $failure) {
                     if (! isset($failed[$failure->row()])) {
-                        $quoteData = $this->mapQuoteData($failure->values());
+                        $quoteData = $this->mapData($failure->values());
                         $failed[$failure->row()] = [
                             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
                             'quote_type' => $quoteData['quote_type'],
