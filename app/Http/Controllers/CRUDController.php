@@ -770,8 +770,8 @@ class CRUDController extends Controller
         }
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
-            if($request->leadStatus == QuoteStatusEnum::FollowupCall || 
-            $request->leadStatus == QuoteStatusEnum::Interested || 
+            if ($request->leadStatus == QuoteStatusEnum::FollowupCall ||
+            $request->leadStatus == QuoteStatusEnum::Interested ||
             $request->leadStatus == QuoteStatusEnum::NoAnswer) {
                 $this->validate($request, [
                     'next_followup_date' => 'required',

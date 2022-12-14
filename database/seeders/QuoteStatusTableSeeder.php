@@ -31,7 +31,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Price too high
-        $carPriceTooHigh = DB::table('quote_status')->where('code','PriceTooHigh')->first();
+        $carPriceTooHigh = DB::table('quote_status')->where('code', 'PriceTooHigh')->first();
         if (! $carPriceTooHigh) {
             $carPriceTooHighId = DB::table('quote_status')->insertGetId([
                 'id' => 40,
@@ -61,7 +61,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Policy purchased before first call
-        $carPolicyPurchasedBeforeFirstCall = DB::table('quote_status')->where('code','PolicyPurchasedBeforeFirstCall')->first();
+        $carPolicyPurchasedBeforeFirstCall = DB::table('quote_status')->where('code', 'PolicyPurchasedBeforeFirstCall')->first();
         if (! $carPolicyPurchasedBeforeFirstCall) {
             $carPolicyPurchasedBeforeFirstCallId = DB::table('quote_status')->insertGetId([
                 'id' => 41,
@@ -91,7 +91,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Not contactable-P&E
-        $carNotContactablePe = DB::table('quote_status')->where('code','NotContactablePe')->first();
+        $carNotContactablePe = DB::table('quote_status')->where('code', 'NotContactablePe')->first();
         if (! $carNotContactablePe) {
             $carNotContactablePeId = DB::table('quote_status')->insertGetId([
                 'id' => 42,
@@ -121,7 +121,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Follow-up Call
-        $carFollowupCall = DB::table('quote_status')->where('code','FollowupCall')->first();
+        $carFollowupCall = DB::table('quote_status')->where('code', 'FollowupCall')->first();
         if (! $carFollowupCall) {
             $carFollowupCallId = DB::table('quote_status')->insertGetId([
                 'id' => 43,
@@ -151,7 +151,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Interested
-        $carInterested = DB::table('quote_status')->where('code','Interested')->first();
+        $carInterested = DB::table('quote_status')->where('code', 'Interested')->first();
         if (! $carInterested) {
             $carInterestedId = DB::table('quote_status')->insertGetId([
                 'id' => 44,
@@ -181,7 +181,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // No Answer
-        $carNoAnswer = DB::table('quote_status')->where('code','NoAnswer')->first();
+        $carNoAnswer = DB::table('quote_status')->where('code', 'NoAnswer')->first();
         if (! $carNoAnswer) {
             $carNoAnswerId = DB::table('quote_status')->insertGetId([
                 'id' => 45,
@@ -211,7 +211,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Not Interested
-        $carNotInterested = DB::table('quote_status')->where('code','NotInterested')->first();
+        $carNotInterested = DB::table('quote_status')->where('code', 'NotInterested')->first();
         if (! $carNotInterested) {
             $carNotInterestedId = DB::table('quote_status')->insertGetId([
                 'id' => 46,
@@ -241,7 +241,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Not Eligible for Insurance
-        $carNotEligibleForInsurance = DB::table('quote_status')->where('code','NotEligibleForInsurance')->first();
+        $carNotEligibleForInsurance = DB::table('quote_status')->where('code', 'NotEligibleForInsurance')->first();
         if (! $carNotEligibleForInsurance) {
             $carNotEligibleForInsuranceId = DB::table('quote_status')->insertGetId([
                 'id' => 47,
@@ -271,7 +271,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // AFIA Renewal
-        $carAfiaRenewal = DB::table('quote_status')->where('code','AfiaRenewal')->first();
+        $carAfiaRenewal = DB::table('quote_status')->where('code', 'AfiaRenewal')->first();
         if (! $carAfiaRenewal) {
             $carAfiaRenewalId = DB::table('quote_status')->insertGetId([
                 'id' => 48,
@@ -301,7 +301,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Not looking for motor insurance
-        $carNotLookingForMotorInsurance = DB::table('quote_status')->where('code','NotLookingForMotorInsurance')->first();
+        $carNotLookingForMotorInsurance = DB::table('quote_status')->where('code', 'NotLookingForMotorInsurance')->first();
         if (! $carNotLookingForMotorInsurance) {
             $carNotLookingForMotorInsuranceId = DB::table('quote_status')->insertGetId([
                 'id' => 49,
@@ -331,7 +331,7 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Non-GCC Spec
-        $carNonGccSpec = DB::table('quote_status')->where('code','NonGccSpec')->first();
+        $carNonGccSpec = DB::table('quote_status')->where('code', 'NonGccSpec')->first();
         if (! $carNonGccSpec) {
             $carNonGccSpecId = DB::table('quote_status')->insertGetId([
                 'id' => 50,
@@ -574,159 +574,159 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
         }
 
-         // FTC Sent
-         $healthFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 10])->first();
-         if (! $healthFtcSentMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 10,
-                 'sort_order' => 12,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Sent
+        $healthFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 10])->first();
+        if (! $healthFtcSentMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 10,
+                'sort_order' => 12,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Accepted
-         $healthFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 11])->first();
-         if (! $healthFtcAcceptedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 11,
-                 'sort_order' => 13,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Accepted
+        $healthFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 11])->first();
+        if (! $healthFtcAcceptedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 11,
+                'sort_order' => 13,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Resubmitted
-         $healthFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 12])->first();
-         if (! $healthFtcResubmittedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 12,
-                 'sort_order' => 14,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Resubmitted
+        $healthFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 12])->first();
+        if (! $healthFtcResubmittedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 12,
+                'sort_order' => 14,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // KYC Cleared
-         $healthKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 19])->first();
-         if (! $healthKycClearedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 19,
-                 'sort_order' => 15,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // KYC Cleared
+        $healthKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 19])->first();
+        if (! $healthKycClearedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 19,
+                'sort_order' => 15,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Payment Pending
-         $healthPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 28])->first();
-         if (! $healthPaymentPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 28,
-                 'sort_order' => 16,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Payment Pending
+        $healthPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 28])->first();
+        if (! $healthPaymentPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 28,
+                'sort_order' => 16,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Transaction Approved
-         $healthTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 15])->first();
-         if (! $healthTransactionApprovedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 15,
-                 'sort_order' => 17,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Transaction Approved
+        $healthTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 15])->first();
+        if (! $healthTransactionApprovedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 15,
+                'sort_order' => 17,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Documents Pending
-         $healthPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 29])->first();
-         if (! $healthPolicyDocumentsPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 29,
-                 'sort_order' => 18,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Documents Pending
+        $healthPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 29])->first();
+        if (! $healthPolicyDocumentsPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 29,
+                'sort_order' => 18,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Issued
-         $healthPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 33])->first();
-         if (! $healthPolicyIssuedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 33,
-                 'sort_order' => 19,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Issued
+        $healthPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 33])->first();
+        if (! $healthPolicyIssuedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 33,
+                'sort_order' => 19,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Lost
-         $healthLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 17])->first();
-         if (! $healthLostdMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 17,
-                 'sort_order' => 20,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Lost
+        $healthLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 17])->first();
+        if (! $healthLostdMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 17,
+                'sort_order' => 20,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Fake
-         $healthFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 9])->first();
-         if (! $healthFakedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 9,
-                 'sort_order' => 21,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Fake
+        $healthFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 9])->first();
+        if (! $healthFakedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 9,
+                'sort_order' => 21,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Duplicate
-         $healthDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 35])->first();
-         if (! $healthDuplicatedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 3,
-                 'quote_status_id' => 35,
-                 'sort_order' => 22,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Duplicate
+        $healthDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 35])->first();
+        if (! $healthDuplicatedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 35,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // HEALTH - END
 
@@ -886,159 +886,159 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
         }
 
-         // FTC Sent
-         $travelFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 10])->first();
-         if (! $travelFtcSentMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 10,
-                 'sort_order' => 12,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Sent
+        $travelFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 10])->first();
+        if (! $travelFtcSentMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 10,
+                'sort_order' => 12,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Accepted
-         $travelFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 11])->first();
-         if (! $travelFtcAcceptedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 11,
-                 'sort_order' => 13,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Accepted
+        $travelFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 11])->first();
+        if (! $travelFtcAcceptedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 11,
+                'sort_order' => 13,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Resubmitted
-         $travelFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 12])->first();
-         if (! $travelFtcResubmittedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 12,
-                 'sort_order' => 14,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Resubmitted
+        $travelFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 12])->first();
+        if (! $travelFtcResubmittedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 12,
+                'sort_order' => 14,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // KYC Cleared
-         $travelKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 19])->first();
-         if (! $travelKycClearedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 19,
-                 'sort_order' => 15,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // KYC Cleared
+        $travelKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 19])->first();
+        if (! $travelKycClearedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 19,
+                'sort_order' => 15,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Payment Pending
-         $travelPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 28])->first();
-         if (! $travelPaymentPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 28,
-                 'sort_order' => 16,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Payment Pending
+        $travelPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 28])->first();
+        if (! $travelPaymentPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 28,
+                'sort_order' => 16,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Transaction Approved
-         $travelTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 15])->first();
-         if (! $travelTransactionApprovedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 15,
-                 'sort_order' => 17,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Transaction Approved
+        $travelTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 15])->first();
+        if (! $travelTransactionApprovedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 15,
+                'sort_order' => 17,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Documents Pending
-         $travelPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 29])->first();
-         if (! $travelPolicyDocumentsPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 29,
-                 'sort_order' => 18,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Documents Pending
+        $travelPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 29])->first();
+        if (! $travelPolicyDocumentsPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 29,
+                'sort_order' => 18,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Issued
-         $travelPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 33])->first();
-         if (! $travelPolicyIssuedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 33,
-                 'sort_order' => 19,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Issued
+        $travelPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 33])->first();
+        if (! $travelPolicyIssuedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 33,
+                'sort_order' => 19,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Lost
-         $travelLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 17])->first();
-         if (! $travelLostdMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 17,
-                 'sort_order' => 20,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Lost
+        $travelLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 17])->first();
+        if (! $travelLostdMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 17,
+                'sort_order' => 20,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Fake
-         $travelFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 9])->first();
-         if (! $travelFakedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 9,
-                 'sort_order' => 21,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Fake
+        $travelFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 9])->first();
+        if (! $travelFakedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 9,
+                'sort_order' => 21,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Duplicate
-         $travelDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 35])->first();
-         if (! $travelDuplicatedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 8,
-                 'quote_status_id' => 35,
-                 'sort_order' => 22,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Duplicate
+        $travelDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 8, 'quote_status_id' => 35])->first();
+        if (! $travelDuplicatedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 8,
+                'quote_status_id' => 35,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // TRAVEL - END
 
@@ -1198,159 +1198,159 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
         }
 
-         // FTC Sent
-         $homeFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 10])->first();
-         if (! $homeFtcSentMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 10,
-                 'sort_order' => 12,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Sent
+        $homeFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 10])->first();
+        if (! $homeFtcSentMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 10,
+                'sort_order' => 12,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Accepted
-         $homeFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 11])->first();
-         if (! $homeFtcAcceptedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 11,
-                 'sort_order' => 13,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Accepted
+        $homeFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 11])->first();
+        if (! $homeFtcAcceptedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 11,
+                'sort_order' => 13,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Resubmitted
-         $homeFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 12])->first();
-         if (! $homeFtcResubmittedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 12,
-                 'sort_order' => 14,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Resubmitted
+        $homeFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 12])->first();
+        if (! $homeFtcResubmittedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 12,
+                'sort_order' => 14,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // KYC Cleared
-         $homeKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 19])->first();
-         if (! $homeKycClearedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 19,
-                 'sort_order' => 15,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // KYC Cleared
+        $homeKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 19])->first();
+        if (! $homeKycClearedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 19,
+                'sort_order' => 15,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Payment Pending
-         $homePaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 28])->first();
-         if (! $homePaymentPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 28,
-                 'sort_order' => 16,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Payment Pending
+        $homePaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 28])->first();
+        if (! $homePaymentPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 28,
+                'sort_order' => 16,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Transaction Approved
-         $homeTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 15])->first();
-         if (! $homeTransactionApprovedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 15,
-                 'sort_order' => 17,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Transaction Approved
+        $homeTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 15])->first();
+        if (! $homeTransactionApprovedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 15,
+                'sort_order' => 17,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Documents Pending
-         $homePolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 29])->first();
-         if (! $homePolicyDocumentsPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 29,
-                 'sort_order' => 18,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Documents Pending
+        $homePolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 29])->first();
+        if (! $homePolicyDocumentsPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 29,
+                'sort_order' => 18,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Issued
-         $homePolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 33])->first();
-         if (! $homePolicyIssuedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 33,
-                 'sort_order' => 19,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Issued
+        $homePolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 33])->first();
+        if (! $homePolicyIssuedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 33,
+                'sort_order' => 19,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Lost
-         $homeLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 17])->first();
-         if (! $homeLostdMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 17,
-                 'sort_order' => 20,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Lost
+        $homeLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 17])->first();
+        if (! $homeLostdMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 17,
+                'sort_order' => 20,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Fake
-         $homeFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 9])->first();
-         if (! $homeFakedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 9,
-                 'sort_order' => 21,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Fake
+        $homeFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 9])->first();
+        if (! $homeFakedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 9,
+                'sort_order' => 21,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Duplicate
-         $homeDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 35])->first();
-         if (! $homeDuplicatedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 2,
-                 'quote_status_id' => 35,
-                 'sort_order' => 22,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Duplicate
+        $homeDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 2, 'quote_status_id' => 35])->first();
+        if (! $homeDuplicatedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 2,
+                'quote_status_id' => 35,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // HOME - END
 
@@ -1510,159 +1510,159 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
         }
 
-         // FTC Sent
-         $lifeFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 10])->first();
-         if (! $lifeFtcSentMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 10,
-                 'sort_order' => 12,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Sent
+        $lifeFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 10])->first();
+        if (! $lifeFtcSentMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 10,
+                'sort_order' => 12,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Accepted
-         $lifeFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 11])->first();
-         if (! $lifeFtcAcceptedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 11,
-                 'sort_order' => 13,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Accepted
+        $lifeFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 11])->first();
+        if (! $lifeFtcAcceptedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 11,
+                'sort_order' => 13,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Resubmitted
-         $lifeFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 12])->first();
-         if (! $lifeFtcResubmittedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 12,
-                 'sort_order' => 14,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Resubmitted
+        $lifeFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 12])->first();
+        if (! $lifeFtcResubmittedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 12,
+                'sort_order' => 14,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // KYC Cleared
-         $lifeKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 19])->first();
-         if (! $lifeKycClearedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 19,
-                 'sort_order' => 15,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // KYC Cleared
+        $lifeKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 19])->first();
+        if (! $lifeKycClearedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 19,
+                'sort_order' => 15,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Payment Pending
-         $lifePaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 28])->first();
-         if (! $lifePaymentPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 28,
-                 'sort_order' => 16,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Payment Pending
+        $lifePaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 28])->first();
+        if (! $lifePaymentPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 28,
+                'sort_order' => 16,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Transaction Approved
-         $lifeTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 15])->first();
-         if (! $lifeTransactionApprovedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 15,
-                 'sort_order' => 17,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Transaction Approved
+        $lifeTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 15])->first();
+        if (! $lifeTransactionApprovedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 15,
+                'sort_order' => 17,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Documents Pending
-         $lifePolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 29])->first();
-         if (! $lifePolicyDocumentsPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 29,
-                 'sort_order' => 18,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Documents Pending
+        $lifePolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 29])->first();
+        if (! $lifePolicyDocumentsPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 29,
+                'sort_order' => 18,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Issued
-         $lifePolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 33])->first();
-         if (! $lifePolicyIssuedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 33,
-                 'sort_order' => 19,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Issued
+        $lifePolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 33])->first();
+        if (! $lifePolicyIssuedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 33,
+                'sort_order' => 19,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Lost
-         $lifeLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 17])->first();
-         if (! $lifeLostdMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 17,
-                 'sort_order' => 20,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Lost
+        $lifeLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 17])->first();
+        if (! $lifeLostdMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 17,
+                'sort_order' => 20,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Fake
-         $lifeFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 9])->first();
-         if (! $lifeFakedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 9,
-                 'sort_order' => 21,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Fake
+        $lifeFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 9])->first();
+        if (! $lifeFakedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 9,
+                'sort_order' => 21,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Duplicate
-         $lifeDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 35])->first();
-         if (! $lifeDuplicatedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 4,
-                 'quote_status_id' => 35,
-                 'sort_order' => 22,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Duplicate
+        $lifeDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 4, 'quote_status_id' => 35])->first();
+        if (! $lifeDuplicatedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 4,
+                'quote_status_id' => 35,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // LIFE - END
 
@@ -1822,159 +1822,159 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
         }
 
-         // FTC Sent
-         $businessFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 10])->first();
-         if (! $businessFtcSentMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 10,
-                 'sort_order' => 12,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Sent
+        $businessFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 10])->first();
+        if (! $businessFtcSentMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 10,
+                'sort_order' => 12,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Accepted
-         $businessFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 11])->first();
-         if (! $businessFtcAcceptedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 11,
-                 'sort_order' => 13,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Accepted
+        $businessFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 11])->first();
+        if (! $businessFtcAcceptedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 11,
+                'sort_order' => 13,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Resubmitted
-         $businessFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 12])->first();
-         if (! $businessFtcResubmittedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 12,
-                 'sort_order' => 14,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Resubmitted
+        $businessFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 12])->first();
+        if (! $businessFtcResubmittedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 12,
+                'sort_order' => 14,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // KYC Cleared
-         $businessKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 19])->first();
-         if (! $businessKycClearedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 19,
-                 'sort_order' => 15,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // KYC Cleared
+        $businessKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 19])->first();
+        if (! $businessKycClearedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 19,
+                'sort_order' => 15,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Payment Pending
-         $businessPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 28])->first();
-         if (! $businessPaymentPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 28,
-                 'sort_order' => 16,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Payment Pending
+        $businessPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 28])->first();
+        if (! $businessPaymentPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 28,
+                'sort_order' => 16,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Transaction Approved
-         $businessTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 15])->first();
-         if (! $businessTransactionApprovedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 15,
-                 'sort_order' => 17,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Transaction Approved
+        $businessTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 15])->first();
+        if (! $businessTransactionApprovedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 15,
+                'sort_order' => 17,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Documents Pending
-         $businessPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 29])->first();
-         if (! $businessPolicyDocumentsPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 29,
-                 'sort_order' => 18,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Documents Pending
+        $businessPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 29])->first();
+        if (! $businessPolicyDocumentsPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 29,
+                'sort_order' => 18,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Issued
-         $businessPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 33])->first();
-         if (! $businessPolicyIssuedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 33,
-                 'sort_order' => 19,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Issued
+        $businessPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 33])->first();
+        if (! $businessPolicyIssuedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 33,
+                'sort_order' => 19,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Lost
-         $businessLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 17])->first();
-         if (! $businessLostdMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 17,
-                 'sort_order' => 20,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Lost
+        $businessLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 17])->first();
+        if (! $businessLostdMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 17,
+                'sort_order' => 20,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Fake
-         $businessFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 9])->first();
-         if (! $businessFakedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 9,
-                 'sort_order' => 21,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Fake
+        $businessFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 9])->first();
+        if (! $businessFakedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 9,
+                'sort_order' => 21,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Duplicate
-         $businessDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 35])->first();
-         if (! $businessDuplicatedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 5,
-                 'quote_status_id' => 35,
-                 'sort_order' => 22,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Duplicate
+        $businessDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 5, 'quote_status_id' => 35])->first();
+        if (! $businessDuplicatedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 5,
+                'quote_status_id' => 35,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // BUSINESS - END
 
@@ -2134,159 +2134,159 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
         }
 
-         // FTC Sent
-         $bikeFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 10])->first();
-         if (! $bikeFtcSentMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 10,
-                 'sort_order' => 12,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Sent
+        $bikeFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 10])->first();
+        if (! $bikeFtcSentMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 10,
+                'sort_order' => 12,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Accepted
-         $bikeFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 11])->first();
-         if (! $bikeFtcAcceptedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 11,
-                 'sort_order' => 13,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Accepted
+        $bikeFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 11])->first();
+        if (! $bikeFtcAcceptedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 11,
+                'sort_order' => 13,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Resubmitted
-         $bikeFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 12])->first();
-         if (! $bikeFtcResubmittedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 12,
-                 'sort_order' => 14,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Resubmitted
+        $bikeFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 12])->first();
+        if (! $bikeFtcResubmittedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 12,
+                'sort_order' => 14,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // KYC Cleared
-         $bikeKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 19])->first();
-         if (! $bikeKycClearedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 19,
-                 'sort_order' => 15,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // KYC Cleared
+        $bikeKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 19])->first();
+        if (! $bikeKycClearedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 19,
+                'sort_order' => 15,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Payment Pending
-         $bikePaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 28])->first();
-         if (! $bikePaymentPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 28,
-                 'sort_order' => 16,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Payment Pending
+        $bikePaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 28])->first();
+        if (! $bikePaymentPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 28,
+                'sort_order' => 16,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Transaction Approved
-         $bikeTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 15])->first();
-         if (! $bikeTransactionApprovedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 15,
-                 'sort_order' => 17,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Transaction Approved
+        $bikeTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 15])->first();
+        if (! $bikeTransactionApprovedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 15,
+                'sort_order' => 17,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Documents Pending
-         $bikePolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 29])->first();
-         if (! $bikePolicyDocumentsPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 29,
-                 'sort_order' => 18,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Documents Pending
+        $bikePolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 29])->first();
+        if (! $bikePolicyDocumentsPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 29,
+                'sort_order' => 18,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Issued
-         $bikePolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 33])->first();
-         if (! $bikePolicyIssuedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 33,
-                 'sort_order' => 19,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Issued
+        $bikePolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 33])->first();
+        if (! $bikePolicyIssuedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 33,
+                'sort_order' => 19,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Lost
-         $bikeLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 17])->first();
-         if (! $bikeLostdMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 17,
-                 'sort_order' => 20,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Lost
+        $bikeLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 17])->first();
+        if (! $bikeLostdMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 17,
+                'sort_order' => 20,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Fake
-         $bikeFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 9])->first();
-         if (! $bikeFakedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 9,
-                 'sort_order' => 21,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Fake
+        $bikeFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 9])->first();
+        if (! $bikeFakedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 9,
+                'sort_order' => 21,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Duplicate
-         $bikeDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 35])->first();
-         if (! $bikeDuplicatedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 6,
-                 'quote_status_id' => 35,
-                 'sort_order' => 22,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Duplicate
+        $bikeDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 6, 'quote_status_id' => 35])->first();
+        if (! $bikeDuplicatedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 6,
+                'quote_status_id' => 35,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // BIKE - END
 
@@ -2446,159 +2446,159 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
         }
 
-         // FTC Sent
-         $yachtFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 10])->first();
-         if (! $yachtFtcSentMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 10,
-                 'sort_order' => 12,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Sent
+        $yachtFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 10])->first();
+        if (! $yachtFtcSentMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 10,
+                'sort_order' => 12,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Accepted
-         $yachtFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 11])->first();
-         if (! $yachtFtcAcceptedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 11,
-                 'sort_order' => 13,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Accepted
+        $yachtFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 11])->first();
+        if (! $yachtFtcAcceptedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 11,
+                'sort_order' => 13,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Resubmitted
-         $yachtFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 12])->first();
-         if (! $yachtFtcResubmittedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 12,
-                 'sort_order' => 14,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Resubmitted
+        $yachtFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 12])->first();
+        if (! $yachtFtcResubmittedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 12,
+                'sort_order' => 14,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // KYC Cleared
-         $yachtKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 19])->first();
-         if (! $yachtKycClearedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 19,
-                 'sort_order' => 15,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // KYC Cleared
+        $yachtKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 19])->first();
+        if (! $yachtKycClearedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 19,
+                'sort_order' => 15,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Payment Pending
-         $yachtPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 28])->first();
-         if (! $yachtPaymentPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 28,
-                 'sort_order' => 16,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Payment Pending
+        $yachtPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 28])->first();
+        if (! $yachtPaymentPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 28,
+                'sort_order' => 16,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Transaction Approved
-         $yachtTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 15])->first();
-         if (! $yachtTransactionApprovedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 15,
-                 'sort_order' => 17,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Transaction Approved
+        $yachtTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 15])->first();
+        if (! $yachtTransactionApprovedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 15,
+                'sort_order' => 17,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Documents Pending
-         $yachtPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 29])->first();
-         if (! $yachtPolicyDocumentsPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 29,
-                 'sort_order' => 18,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Documents Pending
+        $yachtPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 29])->first();
+        if (! $yachtPolicyDocumentsPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 29,
+                'sort_order' => 18,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Issued
-         $yachtPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 33])->first();
-         if (! $yachtPolicyIssuedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 33,
-                 'sort_order' => 19,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Issued
+        $yachtPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 33])->first();
+        if (! $yachtPolicyIssuedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 33,
+                'sort_order' => 19,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Lost
-         $yachtLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 17])->first();
-         if (! $yachtLostdMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 17,
-                 'sort_order' => 20,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Lost
+        $yachtLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 17])->first();
+        if (! $yachtLostdMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 17,
+                'sort_order' => 20,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Fake
-         $yachtFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 9])->first();
-         if (! $yachtFakedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 9,
-                 'sort_order' => 21,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Fake
+        $yachtFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 9])->first();
+        if (! $yachtFakedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 9,
+                'sort_order' => 21,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Duplicate
-         $yachtDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 35])->first();
-         if (! $yachtDuplicatedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 7,
-                 'quote_status_id' => 35,
-                 'sort_order' => 22,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Duplicate
+        $yachtDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 7, 'quote_status_id' => 35])->first();
+        if (! $yachtDuplicatedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 7,
+                'quote_status_id' => 35,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // YACHT - END
 
@@ -2758,159 +2758,159 @@ class QuoteStatusTableSeeder extends Seeder
             ]);
         }
 
-         // FTC Sent
-         $petFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 10])->first();
-         if (! $petFtcSentMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 10,
-                 'sort_order' => 12,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Sent
+        $petFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 10])->first();
+        if (! $petFtcSentMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 10,
+                'sort_order' => 12,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Accepted
-         $petFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 11])->first();
-         if (! $petFtcAcceptedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 11,
-                 'sort_order' => 13,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Accepted
+        $petFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 11])->first();
+        if (! $petFtcAcceptedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 11,
+                'sort_order' => 13,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // FTC Resubmitted
-         $petFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 12])->first();
-         if (! $petFtcResubmittedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 12,
-                 'sort_order' => 14,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // FTC Resubmitted
+        $petFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 12])->first();
+        if (! $petFtcResubmittedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 12,
+                'sort_order' => 14,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // KYC Cleared
-         $petKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 19])->first();
-         if (! $petKycClearedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 19,
-                 'sort_order' => 15,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // KYC Cleared
+        $petKycClearedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 19])->first();
+        if (! $petKycClearedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 19,
+                'sort_order' => 15,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Payment Pending
-         $petPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 28])->first();
-         if (! $petPaymentPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 28,
-                 'sort_order' => 16,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Payment Pending
+        $petPaymentPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 28])->first();
+        if (! $petPaymentPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 28,
+                'sort_order' => 16,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Transaction Approved
-         $petTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 15])->first();
-         if (! $petTransactionApprovedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 15,
-                 'sort_order' => 17,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Transaction Approved
+        $petTransactionApprovedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 15])->first();
+        if (! $petTransactionApprovedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 15,
+                'sort_order' => 17,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Documents Pending
-         $petPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 29])->first();
-         if (! $petPolicyDocumentsPendingMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 29,
-                 'sort_order' => 18,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Documents Pending
+        $petPolicyDocumentsPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 29])->first();
+        if (! $petPolicyDocumentsPendingMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 29,
+                'sort_order' => 18,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Policy Issued
-         $petPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 33])->first();
-         if (! $petPolicyIssuedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 33,
-                 'sort_order' => 19,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Policy Issued
+        $petPolicyIssuedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 33])->first();
+        if (! $petPolicyIssuedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 33,
+                'sort_order' => 19,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Lost
-         $petLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 17])->first();
-         if (! $petLostdMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 17,
-                 'sort_order' => 20,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Lost
+        $petLostdMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 17])->first();
+        if (! $petLostdMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 17,
+                'sort_order' => 20,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Fake
-         $petFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 9])->first();
-         if (! $petFakedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 9,
-                 'sort_order' => 21,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Fake
+        $petFakedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 9])->first();
+        if (! $petFakedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 9,
+                'sort_order' => 21,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
-         // Duplicate
-         $petDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 35])->first();
-         if (! $petDuplicatedMap) {
-             DB::table('quote_status_map')->insert([
-                 'quote_type_id' => 9,
-                 'quote_status_id' => 35,
-                 'sort_order' => 22,
-                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                 'created_at' => now(),
-                 'updated_at' => now(),
-             ]);
-         }
+        // Duplicate
+        $petDuplicatedMap = DB::table('quote_status_map')->where(['quote_type_id' => 9, 'quote_status_id' => 35])->first();
+        if (! $petDuplicatedMap) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 9,
+                'quote_status_id' => 35,
+                'sort_order' => 22,
+                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // PET - END
     }
