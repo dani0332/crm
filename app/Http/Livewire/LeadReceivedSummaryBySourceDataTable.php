@@ -33,7 +33,7 @@ class LeadReceivedSummaryBySourceDataTable extends DataTableComponent
         return CarQuote::query()
             ->select(
                 DB::raw('count(*) as leadSourceCount'),
-                DB::raw("count(*) / (SELECT count(*) FROM car_Quote_Request WHERE created_at between '". now()->startOfDay() ."' and '". now()->endOfDay() ."' ) AS percent"),
+                DB::raw("count(*) / (SELECT count(*) FROM car_Quote_Request WHERE created_at between '".now()->startOfDay()."' and '".now()->endOfDay()."' ) AS percent"),
             )
             ->whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
             ->groupBy('source');
