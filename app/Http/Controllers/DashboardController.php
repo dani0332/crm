@@ -93,9 +93,10 @@ class DashboardController extends Controller
         $totalUnAssignedRevivalLeads = count($allCarQuotesToday->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
         $leadsCountByTier = $this->getLeadsCountByTier($startDate, $endDate);
         $revivalLeadsCount = $this->getLeadsCountRevival($startDate, $endDate);
+
         return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
-        'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
-        'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount];
+            'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
+            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, ];
     }
 
     public function getLeadsCountRevival($startDate, $endDate)
@@ -104,13 +105,12 @@ class DashboardController extends Controller
             DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
             DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
         );
-        if($startDate == null && $endDate == null)
-        {
+        if ($startDate == null && $endDate == null) {
             $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
-        }else
-        {
+        } else {
             $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
         }
+
         return $query->get();
     }
 
@@ -122,13 +122,12 @@ class DashboardController extends Controller
         )
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->groupBy('tiers.name');
-        if($startDate == null && $endDate == null)
-        {
+        if ($startDate == null && $endDate == null) {
             $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
-        }else
-        {
+        } else {
             $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
         }
+
         return $query->get();
     }
 
