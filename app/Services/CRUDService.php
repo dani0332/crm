@@ -226,6 +226,9 @@ class CRUDService extends BaseService
         if (isset($request->lost_approval_reason) && $request->lost_approval_reason != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
             $quoteDetailEntity->lost_approval_reason = $request->lost_approval_reason;
         }
+        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
+            $quoteDetailEntity->next_followup_date = $request->next_followup_date;
+        }
 
         $quoteDetailEntity->save();
 
@@ -242,7 +245,7 @@ class CRUDService extends BaseService
         }
         $entity->save();
         //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $request->leadStatus == QuoteStatusEnum::Quoted) {
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP) {
             $this->sendSibRequest($entity);
         }
 
@@ -407,5 +410,18 @@ class CRUDService extends BaseService
         $model->save();
 
         return $model;
+    }
+
+    public function getOcbCustomerEmailTemplate($quotePlansCount)
+    {
+        if ($quotePlansCount == 1) {
+            $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_SINGLE_PLAN_TEMPLATE';
+        } elseif ($quotePlansCount > 1) {
+            $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE';
+        } else {
+            $key = 'SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE';
+        }
+
+        return $this->applicationstorageService->getValueByKey($key);
     }
 }

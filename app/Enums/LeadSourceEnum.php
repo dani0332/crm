@@ -9,4 +9,6 @@ final class LeadSourceEnum extends Enum
     const REFERRAL = 'REFERRAL';
     const RENEWAL_UPLOAD = 'Renewal_upload';
     const TPL_RENEWALS = 'TPL_RENEWALS';
+    const IMCRM = 'IMCRM';
+    const REVIVAL = 'REVIVAL';
 }

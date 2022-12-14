@@ -49,6 +49,20 @@ class TierService extends BaseService
 
     public function saveTier(Request $request)
     {
+        if (isset($request->min_price) && isset($request->max_price) && ($request->min_price > $request->max_price)) {
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Min price should be less then Max price';
+
+            return $errorResponse;
+        }
+
+        if (isset($request->min_price) && isset($request->max_price) && ($request->max_price < $request->min_price)) {
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Max price should be greater then Min price';
+
+            return $errorResponse;
+        }
+
         if (! isset($request->min_price) && Tier::whereNull('min_price')->get() != null) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as minimum price';
@@ -114,8 +128,8 @@ class TierService extends BaseService
         $tier->is_tpl_renewals = $request->has('is_tpl_renewals') && $request->is_tpl_renewals == 'on' ? 1 : 0;
         $tier->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $tier->save();
+        DB::table('tier_users')->where('tier_id', $tier->id)->delete();
         if (isset($request->tier_users)) {
-            DB::table('tier_users')->where('tier_id', $tier->id)->delete();
             $userIds = $request->tier_users;
             foreach ($userIds as $userId) {
                 DB::table('tier_users')->insert([
@@ -136,9 +150,9 @@ class TierService extends BaseService
             'id' => 'readonly|none',
             'created_at' => 'input|title|date|range|dateRange',
             'name' => 'input|title|required|likeSearch',
-            'min_price' => 'input|number|title|equalSearch',
-            'max_price' => 'input|number|title|equalSearch',
-            'cost_per_lead' => 'input|number|title|equalSearch',
+            'min_price' => 'input|number|title|equalSearch|min:1',
+            'max_price' => 'input|number|title|equalSearch|min:1',
+            'cost_per_lead' => 'input|number|title|equalSearch|min:1',
             'tier_users' => 'select|multiple|multiSearch',
             'can_handle_ecommerce' => 'input|checkbox|title',
             'can_handle_null_value' => 'input|checkbox|title',
@@ -165,19 +179,19 @@ class TierService extends BaseService
                 $title = 'Cost Per Lead';
                 break;
             case 'can_handle_ecommerce':
-                $title = 'Handle Ecommerce ?';
+                $title = 'Is Ecommerce ?';
                 break;
             case 'can_handle_tpl':
-                $title = 'IsTPL ?';
+                $title = 'Is TPL ?';
                 break;
             case 'can_handle_null_value':
-                $title = 'Handle Null Value ?';
+                $title = 'Null Value ?';
                 break;
             case 'is_active':
                 $title = 'Is Active ?';
                 break;
             case 'is_tpl_renewals':
-                $title = 'Handle Renewal Leads ?';
+                $title = 'Renewal?';
                 break;
             case 'created_at':
                 $title = 'Created Date';
@@ -202,5 +216,10 @@ class TierService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['name', 'min_price', 'max_price', 'created_at'];
+    }
+
+    public function fillSortingProperties()
+    {
+        return ['id', 'name', 'min_price', 'max_price'];
     }
 }

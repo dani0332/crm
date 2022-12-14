@@ -138,6 +138,9 @@ class ActivitiesService extends BaseService
                 break;
             default:
                 break;
+            case 'pet':
+                $quoteTypeId = QuoteTypeId::Pet;
+                break;
         }
 
         return $quoteTypeId;

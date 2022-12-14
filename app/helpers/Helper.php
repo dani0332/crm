@@ -366,7 +366,8 @@ function addOrderByClauses($request, $query, $searchPrefix)
 {
     $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
     $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-    if ($column != '' && $column != 0 && $direction != '') {
+
+    if ($column != '' && $direction != '') {
         $columnName = $request->get('columns')[$column]['name'];
 
         return $query->orderBy($searchPrefix.$columnName, $direction);

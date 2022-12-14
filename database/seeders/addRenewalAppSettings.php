@@ -19,7 +19,7 @@ class addRenewalAppSettings extends Seeder
             ApplicationStorage::insert([
                 [
                     'key_name' => 'CAR_LEAD_ALLOCATION_JOB_SWITCH',
-                    'value' => 1,
+                    'value' => 0,
                     'is_active' => 1,
                     'created_at' => now(),
                     'updated_at' => now(),

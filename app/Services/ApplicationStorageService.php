@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\ApplicationStorage;
-use App\Models\LeadAllocation;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
@@ -185,9 +184,6 @@ class ApplicationStorageService extends BaseService
     public function updateLeadAllocationJobStatus()
     {
         $applicationStorage = ApplicationStorage::where('key_name', 'LEAD_ALLOCATION_JOB_SWITCH')->first();
-        if ($applicationStorage->value == '1') {
-            LeadAllocation::whereNotNull('user_id')->update(['is_available' => 0]);
-        }
         $applicationStorage->value = $applicationStorage->value == 1 ? 0 : 1;
         $applicationStorage->save();
 
@@ -196,7 +192,7 @@ class ApplicationStorageService extends BaseService
 
     public function updateCarLeadAllocationJobStatus()
     {
-        $applicationStorage = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_JOB_SWITCH')->first();
+        $applicationStorage = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_MASTER_SWITCH')->first();
         $applicationStorage->value = $applicationStorage->value == 1 ? 0 : 1;
         $applicationStorage->save();
 

@@ -6,9 +6,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script>
     $(document).ready(function() {
-        var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
+        var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var isManagerOrDeputy = $("#isManagerOrDeputy").val();
-        var isRenewalUser = JSON.parse('<?php echo json_encode(Auth::user()->hasAnyRole("GM_RENEWAL_ADVISOR","GM_RENEWAL_MANAGER")); ?>');
+        var isRenewalUser = JSON.parse('<?php echo json_encode(Auth::user()->hasAnyRole('GM_RENEWAL_ADVISOR', 'GM_RENEWAL_MANAGER')); ?>');
         $(document).on("change", "#amtLeadID", function () {
             var idsArray = $('#selectTmLeadId').val();
             idsArray = idsArray+ ',' + $(this).val() + ',';
@@ -442,7 +442,7 @@
                             </div>
                             @if (!Auth::user()->isRenewalAdvisor())
                             <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">ASSIGNED TO</label>
+                                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">ADVISOR</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
                                         <select class="form-control" id="advisor_id" name="advisor_id">
@@ -597,7 +597,7 @@
                                 <th>First Name</th>
                                 <th>Last Name</th>
                                 <th>Lead Status</th>
-                                <th>Assigned To</th>
+                                <th>Advisor</th>
                                 @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Premium</th>@endif
                                 <th>Company Name</th>
                                 @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Previous Quote Premium</th>@endif

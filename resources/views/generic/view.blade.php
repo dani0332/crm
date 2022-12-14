@@ -13,6 +13,41 @@
             word-wrap: break-word;
         }
 
+        div.dataTables_wrapper div.dataTables_processing{
+        font-size: 30px !important;
+        border: none !important;
+        background-color: transparent !important;
+        color: #4183BD !important;
+        padding: 0px  !important;
+        height: 110px !important;
+        width: 250px !important;
+    }
+
+    .pagination{
+        margin-top: 12px !important;
+    }
+
+    .dataTables_paginate .paginate_button.active {
+        background: blue !important;
+    }
+
+    .dataTables_paginate .paginate_button.active a {
+        background: #71A1CC !important;
+        border-radius: 3px;
+        color: white;
+    }
+
+    .select2-results__option--selected {
+            display: none;
+        }
+        .select2-results__option[aria-selected=true] {
+            display: none;
+        }
+        .select2-results__option--highlighted {
+        background: #4183BD !important;
+        color: #fff;
+        cursor: pointer !important;
+    }
     </style>
     <script>
         $(document).ready(function() {
@@ -45,7 +80,10 @@
                     value: obj[key],
                 }));
             }
+            var hideExportForModels = ['Tier', 'Rule', 'Quadrant'];
+            var hideSortingForModels = ['Rule', 'Quadrant'];
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
+            var modelProperties = Object.keys(model.properties);
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole("ADMIN")); ?>');
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
@@ -59,7 +97,7 @@
                                 name: 'id',
                                 render: function(data, type, row) {
                                     var url = '/generic/' + model.modelType.toLowerCase();
-                                    var href = "<a href='" + url + '/' + row.id + "'>" + row.id + "</a>";
+                                    var href = "<a style='font-size: 20px;font-weight: 900;text-decoration: underline;' href='" + url + '/' + row.id + "'>" + row.id + "</a>";
                                     return href;
                                 }
                             });
@@ -73,11 +111,10 @@
                 }
 
             var disableSortColumns = [];
-            var genericDataTable = $("#dtBasicExample").DataTable({
+            var dataTableConfig = {
                 ordering: true,
                 info: true,
                 searching: false,
-                dom: 'rBfrtip',
                 bLengthChange: false,
                 stateSave: false,
                 serverSide: true,
@@ -95,17 +132,40 @@
                         }
                     }
                 },
+                language: {
+                    "processing": "<span class='fa-stack fa-lg'>\n\
+                                        <i class='fa fa-spinner fa-spin fa-stack-2x fa-fw'></i>\n\
+                                </span>&emsp;Processing now ...",
+                },
                 columnDefs: [
                     { orderable: false, targets: disableSortColumns }
                     ],
                 columns: dataTableColumns,
-                buttons: [{
+                buttons: hideExportForModels.indexOf(model.modelType) < 0 ?? [{
                     extend: 'excel',
                     text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
                     title: model.modelType + ' Listing',
                     action: newexportaction
                 }]
+            };
+            if(model.sortProperties.length != 0){
+                var availableListProperties = modelProperties.filter(x => !model.skipProperties.list.split(',').includes(x));
+            availableListProperties.forEach(function(item) {
+                if(!model.sortProperties.includes(item)) {
+                    disableSortColumns.push(availableListProperties.indexOf(item));
+                }
             });
+            }
+            if(!hideExportForModels.includes(model.modelType)) {
+                dataTableConfig.buttons = [{
+                    extend: 'excel',
+                    text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
+                    title: model.modelType + ' Listing',
+                    action: newexportaction
+                }];
+                dataTableConfig.dom = 'rBfrtip';
+            }
+            var genericDataTable = $("#dtBasicExample").DataTable(dataTableConfig);
             genericDataTable.on('draw', function() {
                 var rows = $('#dtBasicExample tr');
                 var headerRowColumns = $(rows[0]).children();
@@ -122,9 +182,9 @@
                         if (checkboxIndexes.includes(i)) {
                             const element = columns[i];
                             if ($(element).text() == '1') {
-                                $(element).text('True');
+                                $(element).text('Yes');
                             } else if ($(element).text() == '0') {
-                                $(element).text('False');
+                                $(element).text('No');
                             }
                         }
                     }
@@ -234,8 +294,8 @@
                                                     for="name">
                                                     {{ strtoupper($customTitles[$property]) . ' START' }}
                                                 </span>
-                                                <input type="date" id="{{ $property }}" name="{{ $property }}"
-                                                    class="form-control">
+                                                <input type="text" id="{{ $property }}" name="{{ $property }}"
+                                                    class="form-control hasDatePicker">
                                                 @if ($errors->has($property))
                                                     <span class="text-danger">{{ $errors->first($property) }}</span>
                                                 @endif
@@ -245,8 +305,8 @@
                                                     for="name">
                                                     {{ strtoupper($customTitles[$property]) . ' END' }}
                                                 </span>
-                                                <input type="date" id="{{ $property . '_end' }}"
-                                                    name="{{ $property . '_end' }}" class="form-control">
+                                                <input type="text" id="{{ $property . '_end' }}"
+                                                    name="{{ $property . '_end' }}" class="form-control hasDatePicker">
                                                 @if ($errors->has($property . '_end'))
                                                     <span
                                                         class="text-danger">{{ $errors->first($property . '_end') }}</span>
@@ -269,7 +329,7 @@
                                                         {{ str_replace('_', ' ', strtoupper($property)) }}
                                                     @endif
                                                 </span>
-                                                <input type={{ explode('|', $value)[1] }} id={{ $property }}
+                                                <input @if(str_contains($value, 'number')) min={{ explode('min:', $value)[1] }} @endif type={{ explode('|', $value)[1] }} id={{ $property }}
                                                     name={{ $property }} class="form-control">
                                                 @if ($errors->has($property))
                                                     <span class="text-danger">{{ $errors->first($property) }}</span>

@@ -32,10 +32,6 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        if (! auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            return false;
-        }
-
         $enabledLOBs = [quoteTypeCode::Car];
         if (in_array($quoteModelType, $enabledLOBs)) {
             return true;
@@ -141,6 +137,10 @@ class QuoteDocumentService extends BaseService
     {
         if (! $record) {
             return 0;
+        }
+
+        if (! auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            return false;
         }
 
         if (! isset($record->policy_number) || ! isset($record->policy_issuance_date) || ! isset($record->policy_start_date) ||

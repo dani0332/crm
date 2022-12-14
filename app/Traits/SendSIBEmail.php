@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 
 trait SendSIBEmail
 {
+    public $to;
     public function sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailTo)
     {
         info('sendEmailUsingSIB -- start');
@@ -38,10 +39,18 @@ trait SendSIBEmail
                 }
             }
 
+            if (str_contains($emailTo, ',')) {
+                $emails = [];
+                foreach (explode(',', $emailTo) as $email) {
+                    array_push($emails, ['email' => $email]);
+                }
+                $to = $emails;
+            } else {
+                $to = $emailTo;
+            }
+            info('Lead send email json : '.json_encode($to));
             $body = json_encode([
-                'to' => [[
-                    'email' => $emailTo,
-                ]],
+                'to' => $to,
                 'templateId' => $emailTemplateId,
                 'params' => $emailData,
                 'tags' => [
@@ -59,7 +68,7 @@ trait SendSIBEmail
                     'timeout' => 10000,
                 ]
             );
-
+            info('email is sent');
             $messageId = json_decode($clientRequest->getBody()->getContents())->messageId;
             $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
             $responseCode = $clientRequest->getStatusCode();
@@ -69,7 +78,7 @@ trait SendSIBEmail
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->quoteCdbId.' Class: '.get_class();
+            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' email data : '.json_encode($emailData);
             Log::error($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;

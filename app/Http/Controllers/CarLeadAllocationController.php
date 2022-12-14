@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\ApplicationStorageService;
+use App\Services\CacheService;
 use App\Services\CarLeadAllocationDashboardService;
 use DataTables;
 use Illuminate\Http\Request;
@@ -10,13 +11,18 @@ use Illuminate\Support\Facades\Gate;
 
 class CarLeadAllocationController extends Controller
 {
-    protected $leadAllocationService;
+    protected $carLeadAllocationService;
     protected $applicationStorageService;
-
-    public function __construct(CarLeadAllocationDashboardService $leadAllocationService, ApplicationStorageService $applicationStorageService)
+    protected $cacheService;
+    protected $teamService;
+    protected $userService;
+    protected $tierService;
+    public function __construct(CarLeadAllocationDashboardService $carLeadAllocationService, ApplicationStorageService $applicationStorageService,
+     CacheService $cacheService)
     {
-        $this->leadAllocationService = $leadAllocationService;
+        $this->carLeadAllocationService = $carLeadAllocationService;
         $this->applicationStorageService = $applicationStorageService;
+        $this->cacheService = $cacheService;
     }
     /**
      * Display a listing of the resource.
@@ -29,13 +35,14 @@ class CarLeadAllocationController extends Controller
             $totalAssignedLeadCount = 0;
             $availableUsers = 0;
             $unAvailableUsers = 0;
-            $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
+            $todayTotalLeadCount = $this->carLeadAllocationService->getTodaysCarTotalLeadsCount();
+            $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
             $isRenewalLeadAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_RENEWAL_LEAD_ALLOCATION');
             $isFIFO = $this->applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
-            $data = $this->leadAllocationService->getGridData();
+            $data = $this->carLeadAllocationService->getGridData();
             foreach ($data as $key => $value) {
                 $totalAssignedLeadCount += $value->allocationCount;
-                $value->is_available == 1 ? $availableUsers++ : $unAvailableUsers++;
+                $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
             }
             if ($request->ajax()) {
                 return Datatables::of($data)
@@ -43,9 +50,14 @@ class CarLeadAllocationController extends Controller
                     ->make(true);
             }
 
-            return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO']));
+            return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO', 'todayTotalLeadCount']));
         } else {
             abort(403, 'Unauthorized action.');
         }
+    }
+
+    public function renderAdvisorConversionReport()
+    {
+        return view('dashboard.advisor-conversion-report');
     }
 }

@@ -32,7 +32,7 @@
                             <h2><b>Assign Lead</b></h2>
                         </div>
                         <div class="col-md-4">
-                            <select class="form-control"  id="assigned_to_id_new"
+                            <select class="form-control" id="assigned_to_id_new"
                             name="assigned_to_id_new">
                                 <option>Select Assignee</option>
                                 @foreach ($advisors as $item)
@@ -50,166 +50,164 @@
                     <div class="clearfix">
                     </div>
                 </form>
-                <form id="demo-form2" method='post'  action="{{ url('medical/amt') }}"  enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                <form id="demo-form2" method='post' action="{{ url('medical/amt') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                     {{csrf_field()}}
                     @method('PUT')
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> ID</b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="id"><b> ID</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->id }}</p>
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="updated_at"><b> CDB ID</b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="code"><b> CDB ID</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->code }}</p>
                             </div>
                         </div>
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="first_name"><b> First Name </b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="first_name"><b>FIRST NAME</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->first_name }}</p>
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="last_name"><b> Last Name </b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="last_name"><b>LAST NAME</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->last_name }}</p>
                             </div>
                         </div>
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="email_address"><b> Email Address </b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="email"><b>EMAIL ADDRESS</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->email }}</p>
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="phone_number"><b> Mobile Number </b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="mobile_no"><b>MOBILE NUMBER</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->mobile_no }}</p>
                             </div>
                         </div>
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Created At </b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b>CREATED AT</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->created_at }}</p>
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="updated_at"><b> Updated At </b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="updated_at"><b>UPDATED AT</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->updated_at }}</p>
                             </div>
                         </div>
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Company Name</b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="company_name"><b>COMPANY NAME</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->company_name }}</p>
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="updated_at"><b> Number Of Employees</b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="number_of_employees"><b>NUMBER OF EMPLOYEES</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->number_of_employees }}</p>
                             </div>
                         </div>
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Business Type Of Insurance</b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="business_insurance_type"><b>BUSINESS INSURANCE TYPE</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">Group Medical</p>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="updated_at"><b>Lead Status</b></label>
-                            <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $selectedLeadStatus }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Premium</b></label>
-                            <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$record->premium}}</p>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="updated_at"><b>Brief Details</b></label>
-                            <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{ $record->brief_details }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Assigned To</b></label>
-                            <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$assignedUserName}}</p>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Group Medical Type</b></label>
-                            <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$assignedGMType}}</p>
-                            </div>
-                        </div>
-                    </div>
-                    @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())
-                    <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_batch"><b>Renewal Batch</b></label>
-                            <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$record->renewal_batch}}</p>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_at"><b> Renewal Expiry Date</b></label>
-                            <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$record->renewal_expiry_date}}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_batch"><b>Previous Quote Policy Number</b></label>
-                            <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$record->previous_quote_policy_number}}</p>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_batch"><b>Previous Quote Expiry Date</b></label>
-                            <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$record->previous_policy_expiry_date}}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_batch"><b>Previous Quote Premium</b></label>
-                            <div class="col-md-6 col-sm-6 ">
-                            <p class="label-align-center">{{$record->previous_quote_policy_premium}}</p>
                             </div>
                         </div>
                         <div class="col">
 
                         </div>
                     </div>
-                    @endif
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_batch"><b>Parent CDB ID</b></label>
-                            <div class="col-md-6 col-sm-6 ">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="premium"><b>PREMIUM</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{$record->premium}}</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="brief_details"><b>BRIEF DETAILS</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $record->brief_details }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="assignedUserName"><b>ASSIGNED TO</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{$assignedUserName}}</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="assignedGMType"><b>GROUP MEDICAL TYPE</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{$assignedGMType}}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_batch"><b>RENEWAL BATCH</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{$record->renewal_batch}}</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_expiry_date"><b>RENEWAL EXPIRY DATE</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{$record->renewal_expiry_date}}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="previous_quote_policy_number"><b>PREVIOUS QUOTE POLICY NUMBER</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{$record->previous_quote_policy_number}}</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="previous_policy_expiry_date"><b>PREVIOUS QUOTE EXPIRY DATE</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{$record->previous_policy_expiry_date}}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="previous_quote_policy_premium"><b>PREVIOUS QUOTE PREMIUM</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{$record->previous_quote_policy_premium}}</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="renewal_import_code"><b>RENEWAL IMPORT CODE</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{$record->renewal_import_code}}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="parent_duplicate_quote_id"><b>PARENT CDB ID</b></label>
+                            <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{$record->parent_duplicate_quote_id}}</p>
                             </div>
                         </div>
