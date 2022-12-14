@@ -38,9 +38,11 @@ class DashboardController extends Controller
     {
         $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
-        $teams = Team::where('parent_team_id', $carTeam->id)->get();
-        $carAdvisors = User::where('team_id', $carTeam->id)->where('sub_team_id', $teams->pluck('id')->toArray())->get();
-        $teamWiseLeadsAssignedAverage = [];
+        $subTeams = Team::where('parent_team_id', $carTeam->id)->get();
+        $carAdvisors = User::where(function ($query) use ($carTeam, $subTeams) {
+            $query->where('team_id', $carTeam->id)
+            ->orWhere('sub_team_id', $subTeams->pluck('id')->toArray());
+        });
         foreach ($teams as $team) {
             $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
             $teamWiseLeadsAssignedAverage[] = [
@@ -61,7 +63,7 @@ class DashboardController extends Controller
         $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData($request);
 
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
-            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', ]));
+            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData']));
     }
 
     public function getLeadsCountRevival($request)
