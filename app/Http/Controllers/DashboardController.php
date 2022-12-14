@@ -71,7 +71,6 @@ class DashboardController extends Controller
         $startDate = explode(',', $request->range)[0];
         $endDate = explode(',', $request->range)[0];
         $allCarQuotesToday = CarQuote::whereBetween('created_at', [$startDate, $endDate])->get();
-        dd($startDate, $endDate);
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
         $carAdvisors = User::where(function ($query) use ($carTeam, $teams) {
