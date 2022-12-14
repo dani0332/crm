@@ -38,12 +38,12 @@ class DashboardController extends Controller
     {
         $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
-        $subTeams = Team::where('parent_team_id', $carTeam->id)->get();
-        $carAdvisors = User::where(function ($query) use ($carTeam, $subTeams) {
+        $teams = Team::where('parent_team_id', $carTeam->id)->get();
+        $carAdvisors = User::where(function ($query) use ($carTeam, $teams) {
             $query->where('team_id', $carTeam->id)
-            ->orWhere('sub_team_id', $subTeams->pluck('id')->toArray());
-        });
-        foreach ($subTeams as $team) {
+            ->orWhere('sub_team_id', $teams->pluck('id')->toArray());
+        })->get();
+        foreach ($teams as $team) {
             $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => count($teamUserIds),
