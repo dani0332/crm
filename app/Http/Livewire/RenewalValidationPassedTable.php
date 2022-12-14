@@ -28,18 +28,18 @@ class RenewalValidationPassedTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make('ID', 'id')->hideIf(true),
-            Column::make('Batch', 'batch'),
+            Column::make('Id')->hideIf(true),
+            Column::make('Batch'),
             Column::make('File name', 'renewalUploadLead.file_name'),
-            Column::make('Quote type', 'quote_type'),
-            Column::make('Policy number', 'policy_number'),
-            Column::make('Status', 'status'),
+            Column::make('Quote type'),
+            Column::make('Policy Number'),
+            Column::make('Status'),
             Column::make('Quote')
               ->label(
-                  fn ($row, Column $column) => '<a target="_blank" href="'.request()->url().'/quote-redirect/'.$row->id.'" class="btn btn-primary btn-sm fetch-plans">View Quote</a>'
+                  fn ($row) => '<a target="_blank" href="./quote-redirect/'.$row->id.'" class="btn btn-primary btn-sm fetch-plans">View Quote</a>'
               )
               ->html(),
-            Column::make('Created at', 'created_at'),
+            Column::make('Created at'),
         ];
     }
 
