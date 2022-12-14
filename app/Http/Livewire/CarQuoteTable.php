@@ -50,23 +50,35 @@ class CarQuoteTable extends DataTableComponent
                     }
                 )
                 ->html(),
+            Column::make('Renewal Batch #', 'renewal_batch'),
             Column::make('Advisor', 'advisor.name'),
             Column::make('First Name'),
             Column::make('Last Name'),
+            Column::make('Date of Birth', 'dob')
+                ->format(
+                    fn ($value) => $value ? date_format($value, 'Y-m-d') : null
+                ),
+            Column::make('Nationality', 'nationality.text'),
+            Column::make('UAE Licence Held For', 'uaeLicenseHeldFor.text'),
+            Column::make('Claim History', 'claimHistory.text'),
+            Column::make('Policy Number'),
             Column::make('Currently Insured With'),
+            Column::make('Type Of Car Insurance', 'carTypeInsurance.text'),
             Column::make('Lead Status', 'quoteStatus.text'),
+            Column::make('Car Make', 'carMake.text'),
+            Column::make('Car Model', 'carModel.text'),
+            Column::make('Car Model Year', 'year_of_manufacture'),
+            Column::make('Car Value'),
             Column::make('Vehicle Type', 'vehicleType.text'),
-            Column::make('Updated at'),
-            Column::make('Created at'),
-            Column::make('Home Country Driving License Held For', 'uaeLicenseHeldFor.text'),
-            Column::make('Seat Capacity'),
-            Column::make('Cylinder'),
-            BooleanColumn::make('Can Provide No-claims Letter From Previous Insurers', 'has_ncd_supporting_documents'),
-            Column::make('Source'),
-            BooleanColumn::make('Ecommerce', 'is_ecommerce'),
+            Column::make('First Registration Date', 'year_of_first_registration'),
+            BooleanColumn::make('Is Gcc Standard'),
+            BooleanColumn::make('Vehicle Modified', 'is_modified'),
             Column::make('Payment Status', 'paymentStatus.text'),
             Column::make('Premium'),
+            Column::make('Last Modified Date', 'updated_at'),
+            Column::make('Created at'),
             Column::make('Quote Link'),
+            Column::make('Source'),
         ];
     }
 
