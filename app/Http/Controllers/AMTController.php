@@ -10,6 +10,7 @@ use App\Models\BusinessQuote;
 use App\Models\GroupMedicalType;
 use App\Models\QuoteStatus;
 use App\Models\User;
+use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -30,6 +31,7 @@ class AMTController extends Controller
     protected $lookupService;
     protected $customerService;
     protected $dropdownSourceService;
+    protected $activityService;
 
     use RolePermissionConditions;
 
@@ -38,13 +40,15 @@ class AMTController extends Controller
         CRUDService $crudService,
         LookupService $lookupService,
         CustomerService $customerService,
-        DropdownSourceService $dropdownSourceService
+        DropdownSourceService $dropdownSourceService,
+        ActivitiesService $activityService
     ) {
         $this->businessQuoteService = $businessQuoteService;
         $this->crudService = $crudService;
         $this->lookupService = $lookupService;
         $this->customerService = $customerService;
         $this->dropdownSourceService = $dropdownSourceService;
+        $this->activityService = $activityService;
     }
 
     /**
@@ -225,9 +229,11 @@ class AMTController extends Controller
      */
     public function show($id)
     {
+        $quoteType = 'business';
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
         $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
         $leadStatuses = $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
         $lostReasons = DB::table('lost_reasons')
             ->select('id', 'text')
             ->get();
@@ -246,7 +252,7 @@ class AMTController extends Controller
             $assignedUser = User::where('id', $record->advisor_id)->first();
             $assignedUserName = $assignedUser->name;
         }
-        $quoteType = 'business';
+
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
@@ -260,9 +266,21 @@ class AMTController extends Controller
 
         $customerAdditionalContacts = $this->customerService->getAddtionalContacts($record->customer_id);
 
-        return view('amt.show', compact('businessInsuranceType', 'record', 'selectedLeadStatus', 'advisors',
-            'assignedUserName', 'assignedGMType', 'leadStatuses', 'lostReasons', 'selectedLostReasonId',
-            'quoteType', 'allowedDuplicateLOB', 'customerAdditionalContacts'));
+        return view('amt.show', compact(
+            'businessInsuranceType',
+            'record',
+            'selectedLeadStatus',
+            'advisors',
+            'assignedUserName',
+            'assignedGMType',
+            'leadStatuses',
+            'lostReasons',
+            'selectedLostReasonId',
+            'quoteType',
+            'allowedDuplicateLOB',
+            'customerAdditionalContacts',
+            'quoteTypeId'
+        ));
     }
 
     /**
