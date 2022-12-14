@@ -4,12 +4,10 @@ namespace App\Imports;
 
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
-use App\Models\Customer;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use App\Traits\RenewalsImportTrait;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\OnEachRow;
@@ -22,7 +20,6 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
 {
@@ -111,11 +108,15 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
             'product_type' => ['index' => 6, 'title' => 'Product Type', 'rules' => 'max:100'],
             'advisor' => ['index' => 7, 'title' => 'Advisor Email', 'rules' => 'max:100'],
             'policy_number' => ['index' => 8, 'title' => 'Policy Number', 'rules' => 'required|max:100'],
-            'start_date' => ['index' => 9, 'title' => 'Policy Start Date', 'rules' => ['max:10', function($attribute, $value, $onFailure){
-                if(!$this->validateDate($value)) {$onFailure('Invalid value provided for ' . $attribute);}
+            'start_date' => ['index' => 9, 'title' => 'Policy Start Date', 'rules' => ['max:10', function ($attribute, $value, $onFailure) {
+                if (! $this->validateDate($value)) {
+                    $onFailure('Invalid value provided for '.$attribute);
+                }
             }], 'type' => 'date'],
-            'end_date' => ['index' => 10, 'title' => 'Policy End date', 'rules' => ['required', 'max:10', function($attribute, $value, $onFailure){
-                if(!$this->validateDate($value)) {$onFailure('Invalid value provided for ' . $attribute);}
+            'end_date' => ['index' => 10, 'title' => 'Policy End date', 'rules' => ['required', 'max:10', function ($attribute, $value, $onFailure) {
+                if (! $this->validateDate($value)) {
+                    $onFailure('Invalid value provided for '.$attribute);
+                }
             }], 'type' => 'date'],
             'batch' => ['index' => 11, 'title' => 'Batch', 'rules' => 'required|max:25'],
             'make' => ['index' => 12, 'title' => 'Car Make', 'rules' => 'max:50'],
@@ -128,7 +129,6 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
             'notes' => ['index' => 19, 'title' => 'Notes', 'rules' => 'max:200'],
         ];
     }
-
 
     /**
      * validation rules for every column in a row.

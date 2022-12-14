@@ -2,7 +2,6 @@
 
 namespace App\Traits;
 
-
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
@@ -58,9 +57,9 @@ trait RenewalsImportTrait
     public function customValidationAttributes()
     {
         $colums = collect($this->getColumns());
+
         return $colums->pluck('title', 'index')->toArray();
     }
-
 
     /**
      * @return array
@@ -90,11 +89,11 @@ trait RenewalsImportTrait
                 $date = Date::excelToDateTimeObject((float) $value);
                 Carbon::instance($date)->format('d/m/Y');
             }
+
             return true;
-        }
-        catch (\Exception $exception)
-        {
-            info('Date Issue value: ' . $value . ' Error: ' . $exception->getMessage());
+        } catch (\Exception $exception) {
+            info('Date Issue value: '.$value.' Error: '.$exception->getMessage());
+
             return false;
         }
     }

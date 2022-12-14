@@ -5,13 +5,10 @@ namespace App\Imports;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
-use App\Models\Customer;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
-use App\Rules\ValidateRenewalsDate;
 use App\Services\RenewalsUploadService;
 use App\Traits\RenewalsImportTrait;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
@@ -25,7 +22,6 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
 {
@@ -61,7 +57,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
     }
 
     /**
-     * @param array $row
+     * @param  array  $row
      * @return RenewalQuoteProcess
      */
     public function model(array $row)
@@ -124,7 +120,6 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
         return $this->failedCount;
     }
 
-
     /**
      * create columns schema, with index, title and rules to be validated for each column.
      *
@@ -141,16 +136,18 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
             'product_type' => ['index' => 5, 'title' => 'Product Type', 'rules' => 'required|max:100'],
             'advisor' => ['index' => 6, 'title' => 'Advisor Email', 'rules' => 'required|max:100'],
             'policy_number' => ['index' => 7, 'title' => 'Policy Number', 'rules' => 'required|required|max:100'],
-            'end_date' => ['index' => 8, 'title' => 'Policy End date', 'rules' => ['required', 'max:10', function($attribute, $value, $onFailure){
-                if(!$this->validateDate($value)) {$onFailure('Invalid value provided for ' . $attribute);}
+            'end_date' => ['index' => 8, 'title' => 'Policy End date', 'rules' => ['required', 'max:10', function ($attribute, $value, $onFailure) {
+                if (! $this->validateDate($value)) {
+                    $onFailure('Invalid value provided for '.$attribute);
+                }
             }], 'type' => 'date'],
             'batch' => ['index' => 9, 'title' => 'Batch', 'rules' => 'required|max:25'],
             'make' => ['index' => 10, 'title' => 'Car Make', 'rules' => 'required|max:50'],
             'model' => ['index' => 11, 'title' => 'Car Model', 'rules' => 'required|max:50'],
             'year' => ['index' => 12, 'title' => 'Model Year', 'rules' => 'required|max:4'],
-            'dob' => ['index' => 13, 'title' => 'Date of Birth', 'rules' => ['required', 'max:10', function($attribute, $value, $onFailure){
-                if(!$this->validateDate($value)) {
-                    $onFailure('Invalid value provided for ' . $attribute);
+            'dob' => ['index' => 13, 'title' => 'Date of Birth', 'rules' => ['required', 'max:10', function ($attribute, $value, $onFailure) {
+                if (! $this->validateDate($value)) {
+                    $onFailure('Invalid value provided for '.$attribute);
                 }
             }], 'type' => 'date'],
             'driving_experience' => ['index' => 14, 'title' => 'Driving Experience', 'rules' => 'required|max:10'],
@@ -182,7 +179,6 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
             'notes' => ['index' => 40, 'title' => 'Notes', 'rules' => 'max:200'],
         ];
     }
-
 
     /**
      * get all validation errors and store records in db along with errors.
