@@ -43,7 +43,7 @@ class DashboardController extends Controller
             $query->where('team_id', $carTeam->id)
             ->orWhere('sub_team_id', $subTeams->pluck('id')->toArray());
         });
-        foreach ($teams as $team) {
+        foreach ($subTeams as $team) {
             $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => count($teamUserIds),
