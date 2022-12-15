@@ -7,6 +7,7 @@ use App\Models\RenewalQuoteProcess;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 
 class RenewalValidationPassedTable extends DataTableComponent
 {
@@ -15,39 +16,41 @@ class RenewalValidationPassedTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id')
-          ->setSearchDisabled()
-          ->setPerPageVisibilityDisabled()
-          ->setColumnSelectDisabled()
-          ->setPaginationVisibilityDisabled()
-          ->setEmptyMessage('No data found')
-          ->setConfigurableAreas([
-              'after-pagination' => 'livewire.pagination',
-          ]);
+            ->setSearchDisabled()
+            ->setPerPageVisibilityDisabled()
+            ->setColumnSelectDisabled()
+            ->setPaginationVisibilityDisabled()
+            ->setEmptyMessage('No data found')
+            ->setConfigurableAreas([
+                'after-pagination' => 'livewire.pagination',
+            ]);
     }
 
     public function columns(): array
     {
         return [
-            Column::make('ID', 'id')->hideIf(true),
-            Column::make('Batch', 'batch'),
+            Column::make('Id')->hideIf(true),
+            Column::make('Batch'),
             Column::make('File name', 'renewalUploadLead.file_name'),
-            Column::make('Quote type', 'quote_type'),
-            Column::make('Policy number', 'policy_number'),
-            Column::make('Status', 'status'),
-            Column::make('Quote')
-              ->label(
-                  fn ($row, Column $column) => '<a target="_blank" href="'.request()->url().'/quote-redirect/'.$row->id.'" class="btn btn-primary btn-sm fetch-plans">View Quote</a>'
-              )
-              ->html(),
-            Column::make('Created at', 'created_at'),
+            Column::make('Quote type'),
+            Column::make('Policy Number'),
+            Column::make('Status'),
+            LinkColumn::make('Quote')
+                ->title(fn () => 'View Quote')
+                ->attributes(fn () => [
+                    'class' => 'btn btn-primary btn-sm fetch-plans',
+                    'target' => '_blank',
+                ])
+                ->location(fn ($row) => route('viewQuoteRedirect', ['id' => $this->batch_id, 'leadId' => $row->id])),
+            Column::make('Created at'),
         ];
     }
 
     public function builder(): Builder
     {
         return RenewalQuoteProcess::query()
-          ->where('renewals_upload_lead_id', $this->batch_id)
-          ->whereIn('renewal_quote_processes.status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT]);
+            ->where('renewals_upload_lead_id', $this->batch_id)
+            ->whereIn('renewal_quote_processes.status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT]);
     }
 
     public function getCurrentPage()
