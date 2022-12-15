@@ -65,7 +65,7 @@ class DashboardController extends Controller
 
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
             'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
-            'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', 'assignedLeadsBySource']));
+            'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
     }
 
     public function getAssignedLeadsCountBySource($startDate, $endDate)
@@ -198,6 +198,7 @@ class DashboardController extends Controller
     public function renderTplDashboard(Request $request)
     {
         $tplDashboardStats = $this->getTPLDashboardStats($request);
+
         return view('dashboard.tpl_dashboard', compact('tplDashboardStats'));
     }
 
@@ -240,8 +241,9 @@ class DashboardController extends Controller
         foreach ($records->get() as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
             $data[] = number_format((float) $percentage, 2, '.', '');
-            $labels[] = $record->name . '-('. $record->start_date . ' to '. $record->end_date. ')';
+            $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
+
         return isset($request->tier_filter) || isset($request->source) ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
     }
 
