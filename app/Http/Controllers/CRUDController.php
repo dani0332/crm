@@ -777,6 +777,10 @@ class CRUDController extends Controller
                     'next_followup_date' => 'required',
                     'next_followup_date' => 'date_format:Y-m-d H:i:s|after_or_equal:'.date('Y-m-d H:i:s'),
                 ]);
+                if (isset($request->quote_uuid)) {
+                    $record = $this->crudService->getEntity($request->modelType, $request->quote_uuid);
+                    $this->activityService->createActivity($request, $record);
+                }
             }
         }
         $entity = $this->crudService->updateQuoteStatus($request);
