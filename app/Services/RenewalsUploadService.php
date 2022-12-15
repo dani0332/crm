@@ -322,7 +322,7 @@ class RenewalsUploadService
             return true;
         }
 
-        if(!empty($quotePlans->message)) {
+        if (! empty($quotePlans->message)) {
             return $quotePlans->message;
         }
 
@@ -426,7 +426,7 @@ class RenewalsUploadService
 
             info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
             $plansResponse = $this->getPlans($quote->uuid);
-            if ($plansResponse === true ) {
+            if ($plansResponse === true) {
                 info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
                 //update status to plans fetched
                 $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
