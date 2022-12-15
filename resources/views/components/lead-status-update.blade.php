@@ -113,6 +113,8 @@
                     {{csrf_field()}}
                     <input type="hidden" value="{{$lead->id}}" name="leadId">
                     <input type="hidden" value="{{$modeltype}}" name="modelType">
+                    <input type="hidden" value="{{$lead->uuid}}" name="quote_uuid">
+                    <input type="hidden" value="{{$lead->advisor_id}}" name="assigned_to_user_id">
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead Status</b></label>
