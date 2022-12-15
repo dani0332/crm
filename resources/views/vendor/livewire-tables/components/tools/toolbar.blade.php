@@ -317,7 +317,7 @@
     @if ($component->filtersAreEnabled() && $component->filtersVisibilityIsEnabled() && $component->hasVisibleFilters() && $component->isFilterLayoutSlideDown())
         <div
             x-cloak
-            x-show="filtersOpen"
+            x-show="!filtersOpen"
             x-transition:enter="transition ease-out duration-100"
             x-transition:enter-start="transform opacity-0"
             x-transition:enter-end="transform opacity-100"

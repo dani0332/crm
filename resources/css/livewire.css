@@ -93,3 +93,7 @@ table.min-w-full > tfoot {
 .btn-failed {
   @apply inline-flex items-center justify-center rounded-full bg-red-200 px-2.5 py-0.5 text-red-900 hover:shadow-lg;
 }
+
+.active-menu {
+  @apply bg-gray-900/50;
+}

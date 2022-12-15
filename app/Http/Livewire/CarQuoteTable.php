@@ -32,6 +32,7 @@ class CarQuoteTable extends DataTableComponent
             ->setAdditionalSelects(['car_quote_request.uuid as uuid'])
             ->setSearchDisabled()
             ->setPerPageVisibilityDisabled()
+            ->setColumnSelectDisabled()
             ->setFilterLayoutSlideDown();
         // disabled pagination count & pagination view
         $this->setPaginationVisibilityDisabled();
@@ -46,7 +47,7 @@ class CarQuoteTable extends DataTableComponent
             Column::make('CDB ID', 'code')
                 ->format(
                     function ($value, $row, Column $column) {
-                        return '<a href="'.url('/quotes').'/car/'.$row->uuid.'" target="_blank" title="View" class="text-sky-700">'.$value.'</a>';
+                        return '<a href="'.url('/quotes').'/car/'.$row->uuid.'" target="_blank" title="View Detail" class="text-sky-700">'.$value.'</a>';
                     }
                 )
                 ->html(),

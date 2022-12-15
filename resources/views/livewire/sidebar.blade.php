@@ -47,11 +47,11 @@ use App\Enums\PermissionsEnum;
     const route = window.location;
 
     if (elements) {
-      const element = Array.from(elements).find(el => el.href === route.href);
+      const element = Array.from(elements).find(el => el.pathname == route.pathname && el.attributes.href.value != '#');
 
       if (element) {
         element.parentElement.parentElement.parentElement.classList.add('active');
-        element.parentElement.classList.add('active');
+        element.parentElement.classList.add('active-menu');
       }
       
       elements.forEach(function(el, key) {
