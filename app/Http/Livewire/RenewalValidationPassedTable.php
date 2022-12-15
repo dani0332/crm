@@ -7,6 +7,7 @@ use App\Models\RenewalQuoteProcess;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
+use Rappasoft\LaravelLivewireTables\Views\Columns\LinkColumn;
 
 class RenewalValidationPassedTable extends DataTableComponent
 {
@@ -15,14 +16,14 @@ class RenewalValidationPassedTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id')
-          ->setSearchDisabled()
-          ->setPerPageVisibilityDisabled()
-          ->setColumnSelectDisabled()
-          ->setPaginationVisibilityDisabled()
-          ->setEmptyMessage('No data found')
-          ->setConfigurableAreas([
-              'after-pagination' => 'livewire.pagination',
-          ]);
+            ->setSearchDisabled()
+            ->setPerPageVisibilityDisabled()
+            ->setColumnSelectDisabled()
+            ->setPaginationVisibilityDisabled()
+            ->setEmptyMessage('No data found')
+            ->setConfigurableAreas([
+                'after-pagination' => 'livewire.pagination',
+            ]);
     }
 
     public function columns(): array
@@ -34,11 +35,13 @@ class RenewalValidationPassedTable extends DataTableComponent
             Column::make('Quote type'),
             Column::make('Policy Number'),
             Column::make('Status'),
-            Column::make('Quote')
-              ->label(
-                  fn ($row) => '<a target="_blank" href="./quote-redirect/'.$row->id.'" class="btn btn-primary btn-sm fetch-plans">View Quote</a>'
-              )
-              ->html(),
+            LinkColumn::make('Quote')
+                ->title(fn () => 'View Quote')
+                ->attributes(fn () => [
+                    'class' => 'btn btn-primary btn-sm fetch-plans',
+                    'target' => '_blank',
+                ])
+                ->location(fn ($row) => route('viewQuoteRedirect', ['id' => $this->batch_id, 'leadId' => $row->id])),
             Column::make('Created at'),
         ];
     }
@@ -46,8 +49,8 @@ class RenewalValidationPassedTable extends DataTableComponent
     public function builder(): Builder
     {
         return RenewalQuoteProcess::query()
-          ->where('renewals_upload_lead_id', $this->batch_id)
-          ->whereIn('renewal_quote_processes.status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT]);
+            ->where('renewals_upload_lead_id', $this->batch_id)
+            ->whereIn('renewal_quote_processes.status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT]);
     }
 
     public function getCurrentPage()
