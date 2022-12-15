@@ -59,11 +59,28 @@ class DashboardController extends Controller
         $leadsCountByTier = $this->getLeadsCountByTier(null, null);
         $unAssignedLeadsByTier = $this->getUnAssignedLeadsCountByTier($request);
         $revivalLeadsCount = $this->getLeadsCountRevival(null, null);
+        $assignedLeadsBySource = $this->getAssignedLeadsCountBySource(null, null);
         $advisorConversionData = $this->getAdvisorConversionData($request);
         $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData($request);
 
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
-            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier', 'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', ]));
+            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
+            'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', 'assignedLeadsBySource']));
+    }
+
+    public function getAssignedLeadsCountBySource($startDate, $endDate)
+    {
+        $query = CarQuote::select(
+            DB::raw('distinct(source) as sourceName'),
+            DB::raw('count(*) as sourceCount'),
+        );
+        if ($startDate == null && $endDate == null) {
+            $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
+        } else {
+            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
+        }
+
+        return $query->get();
     }
 
     public function getRecentDailyStats(Request $request)
@@ -180,9 +197,8 @@ class DashboardController extends Controller
 
     public function renderTplDashboard(Request $request)
     {
-        $stats = $this->getTPLDashboardStats($request);
-
-        return view('dashboard.tpl_dashboard', compact('labels', 'data'));
+        $tplDashboardStats = $this->getTPLDashboardStats($request);
+        return view('dashboard.tpl_dashboard', compact('tplDashboardStats'));
     }
 
     public function getTPLDashboardStats(Request $request): array
@@ -191,6 +207,7 @@ class DashboardController extends Controller
         $tplTiers = $tiers->pluck('id');
         $records = QuoteBatches::query()
         ->select(
+            'quote_batches.id',
             'quote_batches.name',
             'quote_batches.start_date',
             'quote_batches.end_date',
@@ -202,7 +219,7 @@ class DashboardController extends Controller
         )
         ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
+        ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
 
         if (isset($request->tier_filter)) {
             $records = $this->applyFilter($records, 'tiers.id', $request->tier_filter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
@@ -218,16 +235,14 @@ class DashboardController extends Controller
                 $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::NOT_EQUAL);
             }
         }
-
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
             $data[] = number_format((float) $percentage, 2, '.', '');
-            $labels[] = $record->name;
+            $labels[] = $record->name . '-('. $record->start_date . ' to '. $record->end_date. ')';
         }
-
-        return [$labels, $data];
+        return isset($request->tier_filter) || isset($request->source) ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
     }
 
     private function applyFilter($query, $column, $value, $searchType)
@@ -276,14 +291,11 @@ class DashboardController extends Controller
         ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
-        if (isset($request->tier_filter)) {
-            $records = $this->applyFilter($records, 'tiers.id', $request->tier_filter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
-        }
         if ($request->tier_filter == '') {
             $records = $this->applyFilter($records, 'tiers.id', $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->userFilter)) {
-            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
+            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         $labels = [];
         $data = [];

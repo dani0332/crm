@@ -245,10 +245,17 @@ input[type="number"] {
     <div style="clear: both;">
     </div>
     <div class="row mt-12">
-        <div class="col-md-6 ml-10 col-md-offset-1" style="width: 700px; float:left;margin-left: 50px;">
+        <div class="col-md-6 ml-10 col-md-offset-1" style="width: 50%; float:left;margin-left: 50px;">
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div id="UnAssignedLeadRcdSummaryByLeadSource" style="margin-top: 60px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 ml-10 col-md-offset-1" style="width:  40%; float:left;">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <div id="AssignedLeadRcdSummaryByLeadSource" style="margin-top: 60px;"></div>
                 </div>
             </div>
         </div>
@@ -267,7 +274,7 @@ input[type="number"] {
     </div>
     <div class="row">
         <div class="col-md-3" style="float: right;">
-            <select
+            <select multiple
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
                 id="source-filter" style="margin-left: 10px;">
                 <option value="">Select Advisor</option>
@@ -318,8 +325,11 @@ input[type="number"] {
    var revivalLeadsCount = <?php echo json_encode($revivalLeadsCount)?>;
    var advisorConversionData  = <?php echo json_encode($advisorConversionData)?>;
    var advisorLeadsAssignedData = <?php echo json_encode($advisorLeadsAssignedData)?>;
+   var assignedLeadsBySource = <?php echo json_encode($assignedLeadsBySource)?>;
    var leadRcdSummaryByTierPieChart = {};
    var revivalLeadsCountChart = {};
+   var assignedLeadsBySourceChart = {};
+   debugger;
    $(function(){
         const picker = new easepick.create({
             element: document.getElementById('reloadDailyStatsDate'),
@@ -390,6 +400,11 @@ input[type="number"] {
         var cData = [{name : 'Revival Leads', y: parseInt(revivalLeadsCount[0]['revival_leads']) },
         {name : 'Non Revival Leads', y: parseInt(revivalLeadsCount[0]['non_revival_leads']) }];
         createUnAssignedLeadRcdSummaryByLeadSourceChart(cData);
+        var cData = [];
+        for (let index = 0; index < assignedLeadsBySource.length; index++) {
+            cData.push({name: assignedLeadsBySource[index]['sourceName'], y: parseFloat(assignedLeadsBySource[index]['sourceCount'])});
+        }
+        createAssignedLeadRcdSummaryByLeadSourceChart(cData);
         createAdvisorConversionChart(advisorConversionData);
         createLeadAssignCountSummaryByAdvisorChart(advisorLeadsAssignedData);
 
@@ -422,7 +437,7 @@ input[type="number"] {
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: '<b>{y} Leads'
+                        format: 'Tier {point.name} - <b>{y} Leads'
                     }
                 }
             },
@@ -445,7 +460,7 @@ input[type="number"] {
                 type: 'pie'
             },
             title: {
-                text: 'Total Leads Received Summary (by tier)',
+                text: 'Unassigned Leads Received Summary (by tier)',
                 align: 'center'
             },
             tooltip: {
@@ -462,7 +477,7 @@ input[type="number"] {
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: '<b>{y} Leads'
+                        format: 'Tier {point.name} - <b>{y} Leads'
                     }
                 }
             },
@@ -501,7 +516,46 @@ input[type="number"] {
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: '<b>{y} Leads'
+                        format: '{point.name} - <b>{y} Leads'
+                    }
+                }
+            },
+            series: [{
+                name: 'Leads',
+                colorByPoint: true,
+                data: data
+            }]
+        });
+    }
+
+    function createAssignedLeadRcdSummaryByLeadSourceChart(data)
+   {
+    assignedLeadsBySourceChart = Highcharts.chart('AssignedLeadRcdSummaryByLeadSource', {
+            chart: {
+                plotBackgroundColor: null,
+                plotBorderWidth: null,
+                plotShadow: false,
+                type: 'pie'
+            },
+            title: {
+                text: 'Total Leads Received Summary (by LeadSource)',
+                align: 'center'
+            },
+            tooltip: {
+                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+            },
+            accessibility: {
+                point: {
+                    valueSuffix: '%'
+                }
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.name} - <b>{y} Leads'
                     }
                 }
             },

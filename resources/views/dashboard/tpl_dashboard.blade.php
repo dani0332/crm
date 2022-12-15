@@ -1,121 +1,170 @@
 @extends('layouts.app_livewire')
 @section('title','TPL Dashboard')
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-10 col-md-offset-1">
-            <div class="panel panel-default">
-                <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:left;">TPL Conversion </div>
-                <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:right;">
-                    <select
-                        class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                        id="source-filter" style="margin-left: 10px;">
-                        <option value="">Exclude manual created leads</option>
-                        <option value="yes">Yes</option>
-                        <option value="no">No</option>
-                    </select>
-                </div>
-                <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:right;">
-                    <select
-                        class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                        id="tier-filter">
-                        <option value="">Select Tier</option>
-                        <option value="tr">Tier R</option>
-                        <option value="t6">Tier 6</option>
-                    </select>
-                </div>
-                <div class="panel-body">
-                    <canvas id="myChart"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<style>
+    .highcharts-figure,
+    .highcharts-data-table table {
+        min-width: 320px;
+        max-width: 800px;
+        margin: 1em auto;
+    }
+
+    .highcharts-data-table table {
+        font-family: Verdana, sans-serif;
+        border-collapse: collapse;
+        border: 1px solid #ebebeb;
+        margin: 10px auto;
+        text-align: center;
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .highcharts-data-table caption {
+        padding: 1em 0;
+        font-size: 1.2em;
+        color: #555;
+    }
+
+    .highcharts-data-table th {
+        font-weight: 600;
+        padding: 0.5em;
+    }
+
+    .highcharts-data-table td,
+    .highcharts-data-table th,
+    .highcharts-data-table caption {
+        padding: 0.5em;
+    }
+
+    .highcharts-data-table thead tr,
+    .highcharts-data-table tr:nth-child(even) {
+        background: #f8f8f8;
+    }
+
+    .highcharts-data-table tr:hover {
+        background: #f1f7ff;
+    }
+
+    input[type="number"] {
+        min-width: 50px;
+    }
+</style>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script>
-    var tpl_conversion_chart = {};
-    var backgroundColors =   ['#FFBF00', '#DE3163', '#40E0D0', '#7B68EE', '#FF7F50', '#50C878', '#6495ED', '#F06292', '#4DD0E1'];
-    function initializeChart(labels, data)
+    var tplDashboardStatsBarChart = {};
+    var tplDashboardStats = <?php echo json_encode($tplDashboardStats)?>;
+    function createLeadRcdSummaryByTierPieChart(tplDashboardStats)
     {
-        const percentages = [];
-        for (let i = 0; i < data.length; i++) {
-            percentages.push(data[i] + ' %');
+        var data = [];
+        for (let index = 0; index < tplDashboardStats[0].length; index++) {
+            data.push({name : tplDashboardStats[0][index] , y: parseFloat(tplDashboardStats[1][index])})
         }
-        const ctx = document.getElementById('myChart');
-        tpl_conversion_chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                label: 'Net Conversion',
-                data: data,
-                borderWidth: 1,
-                borderColor: '#2989CB',
-                backgroundColor: backgroundColors,
-                }]
+        tplDashboardStatsBarChart = Highcharts.chart('tplConversionDiv', {
+            chart: {
+                type: 'column'
             },
-            options: {
-                scales: {
-                    y: {
-                        ticks: {
-                            // Include a dollar sign in the ticks
-                            callback: function(value, index, ticks) {
-                                return Chart.Ticks.formatters.numeric.apply(this, [value, index, ticks]) + ' % ' ;
-                            }
-                        },
-                        beginAtZero: true,
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
+            title: {
+                align: 'center',
+                text: 'TPL CONVERSION REPORT',
+                fontSize: '40'
+            },
+            xAxis: {
+                type: 'category'
+            },
+            yAxis: {
+                title: {
+                    text: 'Total Net Conversion'
+                }
 
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== null) {
-                                    label += context.parsed.y + ' %';
-                                }
-                                return label;
-                            },
-                            labelPointStyle: function(context) {
-                                return {
-                                    pointStyle: 'triangle',
-                                    rotation: 0
-                                };
-                            }
-                        },
-                        usePointStyle: true,
+            },
+            legend: {
+                enabled: false
+            },
+            plotOptions: {
+                series: {
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.y:.1f}%'
                     }
                 }
             },
+
+            tooltip: {
+                headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+                pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b>'
+            },
+
+            series: [
+                {
+                    name: 'Net Conversion',
+                    colorByPoint: true,
+                    data: data
+                }
+            ]
         });
+
     }
     $(function(){
+        createLeadRcdSummaryByTierPieChart(tplDashboardStats);
         $('#tier-filter,#source-filter').on('change', function (e) {
             var tierFilterValue = $('#tier-filter option:selected').val();
             var sourceFilterValue = $('#source-filter option:selected').val();
-            $.get('/get-tpl-filter-stats?tier_filter=' + tierFilterValue + '&source='+ sourceFilterValue, function (data) {
-               if(data){
-                var labels = (typeof data[0]) == 'string' ? JSON.parse(data[0]) : data[0];
-                var data = (typeof data[1]) == 'string' ? JSON.parse(data[1]) : data[1];
+            $.get('/get-tpl-filter-stats?tier_filter=' + tierFilterValue + '&source='+ sourceFilterValue, function (result) {
+               if(result){
+                var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
+                var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
+                var numbers = [];
+                for (let index = 0; index < data.length; index++) {
+                    numbers.push(parseFloat(data[index]));
+                }
                 if(labels.length > 0 ){
-                    tpl_conversion_chart.destroy();
-                    initializeChart(labels, data);
+                    tplDashboardStatsBarChart.destroy();
+                    createLeadRcdSummaryByTierPieChart([labels,numbers]);
                 }else{
                     tpl_conversion_chart.destroy();
-                    initializeChart([''], [0]);
+                    createLeadRcdSummaryByTierPieChart([]);
                 }
                }
             });
         });
     });
-    var labels = <?php echo $labels; ?>;
-    var data = <?php echo $data; ?>;
-    initializeChart(labels, data);
+</script>
+<div class="container">
+    <div class="row">
+        <div class="col-md-2" style="float: right;">
+            <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:right;">
+                <select
+                    class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+                    id="source-filter" style="margin-left: 10px;">
+                    <option value="">Exclude manual created leads</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:right;">
+                <select
+                    class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+                    id="tier-filter">
+                    <option value="">Select Tier</option>
+                    <option value="tr">Tier R</option>
+                    <option value="t6">Tier 6</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div style="clear: both;"></div>
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="panel panel-default">
+                <div class="panel-body" style="min-height: 700px;">
+                    <div id="tplConversionDiv"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </script>
 @endsection
