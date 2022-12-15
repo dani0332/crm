@@ -170,13 +170,14 @@ class DashboardController extends Controller
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
-        if(isset($teamIds)){
+        if (isset($teamIds)) {
             $userIds = User::where(function ($query) use ($teamIds) {
                 $query->whereIn('team_id', [$teamIds])
                 ->orWhere('sub_team_id', [$teamIds]);
             })->pluck('id');
             $query->whereIn('users.id', $userIds);
         }
+
         return $query->get();
     }
 
@@ -187,7 +188,6 @@ class DashboardController extends Controller
 
     public function getAdvisorConversionData($advisorId)
     {
-
         $query = CarQuote::select(
             'quote_batches.name',
             'quote_batches.start_date',
@@ -203,7 +203,10 @@ class DashboardController extends Controller
         ->groupBy('quote_batches.name')
         ->orderBy('quote_batches.id', 'desc')
         ->take(10);
-        if(isset($advisorId)) $query->where('car_quote_request.advisor_id', $advisorId);
+        if (isset($advisorId)) {
+            $query->where('car_quote_request.advisor_id', $advisorId);
+        }
+
         return $query->get();
     }
 
@@ -324,7 +327,7 @@ class DashboardController extends Controller
         foreach ($records->get() as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
             $data[] = number_format((float) $percentage, 2, '.', '');
-            $labels[] =  $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
+            $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
 
         return isset($request->tier_filter) || isset($request->userFilter) ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
