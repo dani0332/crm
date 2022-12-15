@@ -274,9 +274,9 @@ input[type="number"] {
     </div>
     <div class="row">
         <div class="col-md-3" style="float: right;">
-            <select multiple
+            <select
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                id="source-filter" style="margin-left: 10px;">
+                id="advisor-filter" style="margin-left: 10px;">
                 <option value="">Select Advisor</option>
                 @foreach ($carAdvisors as $team)
                 <option value="{{$team->id}}">{{$team->name}}</option>
@@ -297,7 +297,7 @@ input[type="number"] {
         <div class="col-md-3" style="float: right;">
             <select
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                id="source-filter" style="margin-left: 10px;">
+                id="team-filter" style="margin-left: 10px;">
                 <option value="">Select Team</option>
                 @foreach ($teams as $team)
                 <option value="{{$team->id}}">{{$team->name}}</option>
@@ -326,10 +326,7 @@ input[type="number"] {
    var advisorConversionData  = <?php echo json_encode($advisorConversionData)?>;
    var advisorLeadsAssignedData = <?php echo json_encode($advisorLeadsAssignedData)?>;
    var assignedLeadsBySource = <?php echo json_encode($assignedLeadsBySource)?>;
-   var leadRcdSummaryByTierPieChart = {};
-   var revivalLeadsCountChart = {};
-   var assignedLeadsBySourceChart = {};
-   debugger;
+   var leadRcdSummaryByTierPieChart =  revivalLeadsCountChart = assignedLeadsBySourceChart = advisorConversionChart = leadAssignCountByAdvisorChart = {};
    $(function(){
         const picker = new easepick.create({
             element: document.getElementById('reloadDailyStatsDate'),
@@ -385,11 +382,58 @@ input[type="number"] {
                }
             });
         });
+        $('#advisor-filter').on('change', function (e) {
+            var advisorFitlerValue = $('#advisor-filter option:selected').val();
+            $.get('/get-advisor-conversion-stats?advisorFilter=' + advisorFitlerValue, function (result) {
+               if(result){
+                var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
+                var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
+                var numbers = [];
+                var cData = [];
+                for (let index = 0; index < result.length; index++) {
+                    var node = result[index];
+                    cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( ( node.sale_leads - node.created_sale_leads ) / (node.total_leads - node.bad_leads - node.manual_created )  )});
+                }
+                if(cData.length > 0 ){
+                    advisorConversionChart.destroy();
+                    createAdvisorConversionChart(cData);
+                }else{
+                    advisorConversionChart.destroy();
+                    createAdvisorConversionChart([{name: '', y: 0}]);
+                }
+               }
+            });
+        });
+
+        $('#team-filter').on('change', function (e) {
+            var teamFilteValue = $('#team-filter option:selected').val();
+            $.get('/get-team-conversion-stats?teamFilter=' + teamFilteValue, function (result) {
+               if(result){
+                var cData = [];
+                for (let index = 0; index < result.length; index++) {
+                    var node = result[index];
+                    cData.push({name: node.name, y: parseFloat( node.total_leads )});
+                }
+                if(cData.length > 0 ){
+                    leadAssignCountByAdvisorChart.destroy();
+                    createLeadAssignCountSummaryByAdvisorChart(cData);
+                }else{
+                    leadAssignCountByAdvisorChart.destroy();
+                    createLeadAssignCountSummaryByAdvisorChart([{name: '', y: 0}]);
+                }
+               }
+            });
+        });
+
+
+
         var cData = [];
         for (let index = 0; index < leadsCountByTier.length; index++) {
             cData.push({name: leadsCountByTier[index]['tierNames'], y: parseFloat(leadsCountByTier[index]['leadCount'])});
         }
         createLeadRcdSummaryByTierPieChart(cData);
+
+
 
         var cData = [];
         for (let index = 0; index < unAssignedLeadsByTier.length; index++) {
@@ -397,16 +441,34 @@ input[type="number"] {
         }
         createUnAssignedLeadRcdSummaryByTierChart(cData);
 
+
         var cData = [{name : 'Revival Leads', y: parseInt(revivalLeadsCount[0]['revival_leads']) },
         {name : 'Non Revival Leads', y: parseInt(revivalLeadsCount[0]['non_revival_leads']) }];
         createUnAssignedLeadRcdSummaryByLeadSourceChart(cData);
+
+
+
         var cData = [];
         for (let index = 0; index < assignedLeadsBySource.length; index++) {
             cData.push({name: assignedLeadsBySource[index]['sourceName'], y: parseFloat(assignedLeadsBySource[index]['sourceCount'])});
         }
         createAssignedLeadRcdSummaryByLeadSourceChart(cData);
-        createAdvisorConversionChart(advisorConversionData);
-        createLeadAssignCountSummaryByAdvisorChart(advisorLeadsAssignedData);
+
+
+        var cData = [];
+        for (let index = 0; index < advisorConversionData.length; index++) {
+            var node = advisorConversionData[index];
+            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( (node.total_leads - node.bad_leads - node.manual_created ) / ( node.sale_leads - node.created_sale_leads ) )});
+        }
+        createAdvisorConversionChart(cData);
+
+
+        var cData = [];
+        for (let index = 0; index < advisorLeadsAssignedData.length; index++) {
+            var node = advisorLeadsAssignedData[index];
+            cData.push({name: node.name, y: parseFloat( node.total_leads )});
+        }
+        createLeadAssignCountSummaryByAdvisorChart(cData);
 
    });
    function createLeadRcdSummaryByTierPieChart(data)
@@ -567,14 +629,10 @@ input[type="number"] {
         });
     }
 
-    function createAdvisorConversionChart(advisorConversionData)
+    function createAdvisorConversionChart(data)
     {
-        var cData = [];
-        for (let index = 0; index < advisorConversionData.length; index++) {
-            var node = advisorConversionData[index];
-            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( (node.total_leads - node.bad_leads - node.manual_created ) / ( node.sale_leads - node.created_sale_leads ) )});
-        }
-        Highcharts.chart('advisorConversion', {
+
+        advisorConversionChart =  Highcharts.chart('advisorConversion', {
             chart: {
                 type: 'column'
             },
@@ -613,7 +671,7 @@ input[type="number"] {
                 {
                     name: 'Gross Conversion',
                     colorByPoint: true,
-                    data: cData
+                    data: data
                 }
             ]
         });
@@ -622,12 +680,8 @@ input[type="number"] {
 
     function createLeadAssignCountSummaryByAdvisorChart(data)
     {
-        var cData = [];
-        for (let index = 0; index < data.length; index++) {
-            var node = data[index];
-            cData.push({name: node.name, y: parseFloat( node.total_leads )});
-        }
-        Highcharts.chart('leadAssignCountSummaryByAdvisor', {
+
+        leadAssignCountByAdvisorChart = Highcharts.chart('leadAssignCountSummaryByAdvisor', {
             chart: {
                 type: 'column'
             },
@@ -666,7 +720,7 @@ input[type="number"] {
                 {
                     name: 'Leads Assigned',
                     colorByPoint: true,
-                    data: cData
+                    data: data
                 }
             ]
         });

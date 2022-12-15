@@ -60,8 +60,8 @@ class DashboardController extends Controller
         $unAssignedLeadsByTier = $this->getUnAssignedLeadsCountByTier($request);
         $revivalLeadsCount = $this->getLeadsCountRevival(null, null);
         $assignedLeadsBySource = $this->getAssignedLeadsCountBySource(null, null);
-        $advisorConversionData = $this->getAdvisorConversionData($request);
-        $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData($request);
+        $advisorConversionData = $this->getAdvisorConversionData(null);
+        $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData(null);
 
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
             'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
@@ -161,23 +161,34 @@ class DashboardController extends Controller
         ->get();
     }
 
-    public function getAdvisorLeadAssignedData($request)
+    public function getAdvisorLeadAssignedData($teamIds)
     {
-        return
-        CarQuote::select(
+        $query = CarQuote::select(
             'users.name',
             DB::raw('COUNT(car_quote_request.id) AS total_leads'),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])
-        ->groupBy('users.name')
-        ->get();
+        ->groupBy('users.name');
+        if(isset($teamIds)){
+            $userIds = User::where(function ($query) use ($teamIds) {
+                $query->whereIn('team_id', [$teamIds])
+                ->orWhere('sub_team_id', [$teamIds]);
+            })->pluck('id');
+            $query->whereIn('users.id', $userIds);
+        }
+        return $query->get();
     }
 
-    public function getAdvisorConversionData($request)
+    public function getTeamAdvisorConversionStats(Request $request)
     {
-        return
-        CarQuote::select(
+        return $this->getAdvisorLeadAssignedData($request->teamFilter);
+    }
+
+    public function getAdvisorConversionData($advisorId)
+    {
+
+        $query = CarQuote::select(
             'quote_batches.name',
             'quote_batches.start_date',
             'quote_batches.end_date',
@@ -191,8 +202,14 @@ class DashboardController extends Controller
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->groupBy('quote_batches.name')
         ->orderBy('quote_batches.id', 'desc')
-        ->take(10)
-        ->get();
+        ->take(10);
+        if(isset($advisorId)) $query->where('car_quote_request.advisor_id', $advisorId);
+        return $query->get();
+    }
+
+    public function getAdvisorConversionStats(Request $request)
+    {
+        return $this->getAdvisorConversionData($request->advisorFilter);
     }
 
     public function renderTplDashboard(Request $request)
@@ -226,7 +243,7 @@ class DashboardController extends Controller
             $records = $this->applyFilter($records, 'tiers.id', $request->tier_filter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
         if ($request->tier_filter == '') {
-            $records = $this->applyFilter($records, 'tiers.id', $tplTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
+            $records = $this->applyFilter($records, 'tiers.id', [$tplTiers], IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->source)) {
             if ($request->source == 'no') {
@@ -260,7 +277,7 @@ class DashboardController extends Controller
                 $query = $query->whereIn($column, $value);
                 break;
             case IMCRMSearchTypesEnum::NOT_EQUAL:
-                $query = $query->whereNotIn($column, '!=', $value);
+                $query = $query->where($column, '!=', $value);
                 break;
             case IMCRMSearchTypesEnum::NOT_NULL:
                 $query = $query->whereNotNull($column);
@@ -296,18 +313,21 @@ class DashboardController extends Controller
         if ($request->tier_filter == '') {
             $records = $this->applyFilter($records, 'tiers.id', $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
+        if (isset($request->tier_filter)) {
+            $records = $this->applyFilter($records, 'tiers.id', [$request->tier_filter], IMCRMSearchTypesEnum::MULTI_SEARCH);
+        }
         if (isset($request->userFilter)) {
-            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, IMCRMSearchTypesEnum::MULTI_SEARCH);
+            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', [$request->userFilter], IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
             $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
             $data[] = number_format((float) $percentage, 2, '.', '');
-            $labels[] = $record->name;
+            $labels[] =  $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
 
-        return $request->tier_filter ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
+        return isset($request->tier_filter) || isset($request->userFilter) ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
     }
 
     public function renderComprehensiveDashboard(Request $request)
@@ -315,11 +335,9 @@ class DashboardController extends Controller
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $carUsers = User::where('team_id', $carTeam->id)->orderBy('name', 'asc')->get();
         $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->orderBy('name', 'asc')->get();
-        $stats = $this->getComprehensiveDashboardStats($request);
+        $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request);
 
-        return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers'))
-                ->with('labels', json_encode($stats[0], JSON_OBJECT_AS_ARRAY))
-                ->with('data', json_encode($stats[1], JSON_OBJECT_AS_ARRAY));
+        return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers', 'comprehensiveDashboardStats'));
     }
 
     public function conversionStats($quoteType)
