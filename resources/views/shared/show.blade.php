@@ -211,7 +211,7 @@
                                     <label class="col-form-label col-md-6 col-sm-6"
                                         for="Status Description"><b>{{ strtoupper($customTitles[$property]) }}</b></label>
                                 @else
-                                @if($property == DatabaseColumnsString::Source && auth()->user()->hasRole(RolesEnum::CarAdvisor))
+                                @if($property == DatabaseColumnsString::SOURCE && auth()->user()->hasRole(RolesEnum::CarAdvisor))
                                     <label class="col-form-label col-md-6 col-sm-6" for="Status Description">&nbsp;</label>
                                 @else
                                     <label class="col-form-label col-md-6 col-sm-6" for="Status Description">
@@ -258,7 +258,7 @@
                                                 @if($property == DatabaseColumnsString::CAR_VALUE)
                                                     {{ number_format($record->$property, 2) }}
                                                 @else
-                                                    @if($property == DatabaseColumnsString::Source)
+                                                    @if($property == DatabaseColumnsString::SOURCE)
                                                         @if(!auth()->user()->hasRole(RolesEnum::CarAdvisor))
                                                             {{$record->$property }}
                                                         @endif
