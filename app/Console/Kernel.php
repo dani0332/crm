@@ -28,7 +28,7 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('LeadAllocation:cron')
             ->timezone('Asia/Dubai')
-            ->everyThreeMinutes()
+            ->everyMinute()
             ->onOneServer()
             ->withoutOverlapping(1);
 
