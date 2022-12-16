@@ -78,6 +78,7 @@ class CarQuoteTable extends DataTableComponent
             Column::make('Premium'),
             Column::make('Last Modified Date', 'updated_at'),
             Column::make('Created at'),
+            Column::make('Lost Reason', 'carQuoteRequestDetail.lostReason.text'),
             Column::make('Quote Link'),
             Column::make('Source'),
         ];
@@ -272,7 +273,6 @@ class CarQuoteTable extends DataTableComponent
     public function builder(): Builder
     {
         return CarQuote::query()
-            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
             ->where('quote_status.id', '!=', 9);
     }
 
