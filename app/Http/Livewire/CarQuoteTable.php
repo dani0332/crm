@@ -153,7 +153,7 @@ class CarQuoteTable extends DataTableComponent
                 ->filter(function (Builder $builder, string $value) {
                     if (preg_match('/^(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
                         $builder
-                            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+
                             ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$matches[1], $matches[2]]);
                     }
                 }),
@@ -272,6 +272,7 @@ class CarQuoteTable extends DataTableComponent
     public function builder(): Builder
     {
         return CarQuote::query()
+            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
             ->where('quote_status.id', '!=', 9);
     }
 

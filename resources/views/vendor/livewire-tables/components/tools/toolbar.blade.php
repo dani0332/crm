@@ -339,6 +339,10 @@
                     @endif
                 @endforeach
             </div>
+            <div class="flex justify-end gap-4 mb-6 px-4 md:p-0">
+                <button wire:click.prevent="setFilterDefaults" class="btn !text-base">Reset</button>
+                <button wire:click.prevent="applyFilters" class="btn-2 !px-6 !text-base">Search</button>
+            </div>
         </div>
     @endif
 @elseif ($theme === 'bootstrap-4')

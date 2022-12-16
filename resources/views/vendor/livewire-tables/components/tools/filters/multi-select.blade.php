@@ -18,7 +18,7 @@ $theme = $component->getTheme();
     <ul x-show="show" style="display: none" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-56 rounded-md p-1.5 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm divide-y" tabindex="-1" role="listbox" aria-labelledby="listbox-label" aria-activedescendant="listbox-option-3">
         @foreach($filter->getOptions() as $key => $value)
         <li wire:key="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-multiselect-{{ $key }}" class="flex gap-1.5 py-1.5">
-            <input type="checkbox" id="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" value="{{ $key }}" wire:key="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" wire:model.lazy="{{ $component->getTableName() }}.filters.{{ $filter->getKey() }}" @if($filter->hasConfig('max'))
+            <input type="checkbox" id="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" value="{{ $key }}" wire:key="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" wire:model.defer="{{ $component->getTableName() }}.filters.{{ $filter->getKey() }}" @if($filter->hasConfig('max'))
             {{ in_array($key, $component->getAppliedFilterWithValue($filter->getKey()) ?? []) ? 'checked' : (count($component->getAppliedFilterWithValue($filter->getKey()) ?? []) !== $filter->getConfig('max') ? '' : 'disabled') }}
             @endif
             :class="{'disabled:bg-gray-400 disabled:hover:bg-gray-400' : {{ count($component->getAppliedFilterWithValue($filter->getKey()) ?? []) === count($filter->getOptions()) ? 'true' : 'false' }}}"

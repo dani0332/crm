@@ -57,15 +57,15 @@ li.active > a {
 }
 
 .btn {
-  @apply inline-block bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus-visible:ring ring-sky-400 text-white text-sm font-semibold text-center rounded-lg outline-none transition px-3 py-1.5;
+  @apply inline-block bg-sky-600 hover:bg-sky-700 active:bg-sky-800 focus-visible:ring ring-sky-400 text-white text-sm font-semibold text-center rounded-lg outline-none transition px-4 py-2;
 }
 
 .btn-2 {
-  @apply inline-block bg-orange-600 hover:bg-orange-700 active:bg-orange-800 focus-visible:ring ring-orange-400 text-white text-sm font-semibold text-center rounded-lg outline-none transition px-3 py-1.5;
+  @apply inline-block bg-orange-600 hover:bg-orange-700 active:bg-orange-800 focus-visible:ring ring-orange-400 text-white text-sm font-semibold text-center rounded-lg outline-none transition px-4 py-2;
 }
 
 .btn-3 {
-  @apply inline-block bg-green-300 hover:bg-green-400 active:bg-green-800 focus-visible:ring ring-green-400 text-green-900 text-sm font-semibold text-center rounded-lg outline-none transition px-3 py-1.5;
+  @apply inline-block bg-green-300 hover:bg-green-400 active:bg-green-800 focus-visible:ring ring-green-400 text-green-900 text-sm font-semibold text-center rounded-lg outline-none transition px-4 py-2;
 }
 
 .alert {
