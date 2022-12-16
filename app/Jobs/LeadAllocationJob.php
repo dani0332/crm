@@ -102,6 +102,6 @@ class LeadAllocationJob implements ShouldQueue
 
     public function middleware()
     {
-        return [(new WithoutOverlapping($this->leadAllocationJobId))->dontRelease()];
+        return [(new WithoutOverlapping('lead_allocation'))->dontRelease()];
     }
 }

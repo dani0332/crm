@@ -32,7 +32,7 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('/comprehensive-conversion-dashboard') }}">Comprehensive Conversion</a></li>
                             @endcan
                             @can(PermissionsEnum::MAIN_DASHBOARD_VIEW)
-                            <li><a href="{{ url('/accumulative- dashboard') }}">Accumulative Dashboard</a></li>
+                            <li><a href="{{ url('/accumulative-dashboard') }}">Accumulative Dashboard</a></li>
                             @endcan
                         </ul>
                     </li>

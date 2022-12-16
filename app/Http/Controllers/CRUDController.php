@@ -149,8 +149,8 @@ class CRUDController extends Controller
         // Checking if the loggedIn user has Manager or Deputy Role
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
 
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
         $dropdownSource = $customTitles = [];
-
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 // Getting custom title for each property where title is mentioned in the property meta data
@@ -158,7 +158,7 @@ class CRUDController extends Controller
             }
             if (str_contains($value, 'select')) {
                 // Getting the dropdown source for each property where select is mentioned in the property meta data
-                $dropdownValue = $this->dropdownSourceService->getDropdownSource($property);
+                $dropdownValue = $this->dropdownSourceService->getDropdownSource($property, $quoteTypeId);
                 $dropdownSource[$property] = $dropdownValue;
             }
         }
@@ -268,6 +268,7 @@ class CRUDController extends Controller
             return redirect(request()->url());
         }
         $quoteType = strtolower($this->genericModel->modelType);
+        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (! $record) {
             abort(404);
@@ -308,7 +309,7 @@ class CRUDController extends Controller
             $this->crudService->fillNewBusinessData($this->genericModel);
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
-        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id');
+        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
         $lostReasons = $this->lookupService->getLostReasons();
         $selectedLostReasonId = '';
         if (strtolower($this->genericModel->modelType) != 'teams' && strtolower($this->genericModel->modelType) != 'leadstatus') {
@@ -351,7 +352,6 @@ class CRUDController extends Controller
             array_push($activities, $updatedActivity);
         }
         $audits = [];
-        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $record->id);
         $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);
         $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
@@ -750,7 +750,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function UpdateLeadStatus(Request $request)
+    public function updateLeadStatus(Request $request)
     {
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
@@ -767,6 +767,21 @@ class CRUDController extends Controller
             $this->validate($request, [
                 'trans_code' => 'required',
             ]);
+        }
+        // Car Quote: validate next_followup_date
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
+            if ($request->leadStatus == QuoteStatusEnum::FollowupCall ||
+            $request->leadStatus == QuoteStatusEnum::Interested ||
+            $request->leadStatus == QuoteStatusEnum::NoAnswer) {
+                $this->validate($request, [
+                    'next_followup_date' => 'required',
+                    'next_followup_date' => 'date_format:Y-m-d H:i:s|after_or_equal:'.date('Y-m-d H:i:s'),
+                ]);
+                if (isset($request->quote_uuid)) {
+                    $record = $this->crudService->getEntity($request->modelType, $request->quote_uuid);
+                    $this->activityService->createActivity($request, $record);
+                }
+            }
         }
         $entity = $this->crudService->updateQuoteStatus($request);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
