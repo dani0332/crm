@@ -168,6 +168,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(VehicleDetailCarQuote::class, 'car_quote_id', 'id');
     }
 
+    public function vehicleType()
+    {
+        return $this->hasOne(VehicleType::class, 'id', 'vehicle_type_id');
+    }
+
     public function payment_detail()
     {
         return $this->hasOne(CarQuotePayment::class, 'car_quote_id', 'id');
