@@ -256,7 +256,7 @@
                                                     @endif
                                                 @else
                                                 @if($property == DatabaseColumnsString::CAR_VALUE)
-                                                    number_format($record->$property, 2)
+                                                    {{ number_format($record->$property, 2) }}
                                                 @else
                                                     @if($property == DatabaseColumnsString::Source)
                                                         @if(!auth()->user()->hasRole(RolesEnum::CarAdvisor))
