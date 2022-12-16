@@ -426,7 +426,6 @@ input[type="number"] {
         });
 
 
-
         var cData = [];
         for (let index = 0; index < leadsCountByTier.length; index++) {
             cData.push({name: leadsCountByTier[index]['tierNames'], y: parseFloat(leadsCountByTier[index]['leadCount'])});
@@ -466,7 +465,7 @@ input[type="number"] {
         var cData = [];
         for (let index = 0; index < advisorLeadsAssignedData.length; index++) {
             var node = advisorLeadsAssignedData[index];
-            cData.push({name: node.name, y: parseFloat( node.total_leads )});
+            cData.push({name: node['name'], y: parseFloat( node['total_leads'] )});
         }
         createLeadAssignCountSummaryByAdvisorChart(cData);
 

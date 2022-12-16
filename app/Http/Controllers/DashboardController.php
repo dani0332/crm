@@ -246,7 +246,7 @@ class DashboardController extends Controller
             $records = $this->applyFilter($records, 'tiers.id', $request->tier_filter, IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
         if ($request->tier_filter == '') {
-            $records = $this->applyFilter($records, 'tiers.id', [$tplTiers], IMCRMSearchTypesEnum::MULTI_SEARCH);
+            $records = $this->applyFilter($records, 'tiers.id', $tplTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->source)) {
             if ($request->source == 'no') {
