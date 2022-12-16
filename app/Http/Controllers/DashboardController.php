@@ -86,7 +86,7 @@ class DashboardController extends Controller
     public function getRecentDailyStats(Request $request)
     {
         $startDate = explode(',', $request->range)[0];
-        $endDate = explode(',', $request->range)[0];
+        $endDate = explode(',', $request->range)[1];
         $allCarQuotesToday = CarQuote::whereBetween('created_at', [$startDate, $endDate])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
