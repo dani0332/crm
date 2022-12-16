@@ -317,7 +317,7 @@
     @if ($component->filtersAreEnabled() && $component->filtersVisibilityIsEnabled() && $component->hasVisibleFilters() && $component->isFilterLayoutSlideDown())
         <div
             x-cloak
-            x-show="filtersOpen"
+            x-show="!filtersOpen"
             x-transition:enter="transition ease-out duration-100"
             x-transition:enter-start="transform opacity-0"
             x-transition:enter-end="transform opacity-100"
@@ -338,6 +338,10 @@
                         </div>
                     @endif
                 @endforeach
+            </div>
+            <div class="flex justify-end gap-4 mb-6 px-4 md:p-0">
+                <button wire:click.prevent="setFilterDefaults" class="btn !text-base">Reset</button>
+                <button wire:click.prevent="applyFilters" class="btn-2 !px-6 !text-base">Search</button>
             </div>
         </div>
     @endif
