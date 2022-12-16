@@ -171,6 +171,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard']);
     Route::get('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
     Route::get('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
+    Route::get('/get-advisor-conversion-stats', [DashboardController::class, 'getAdvisorConversionStats']);
+    Route::get('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
+    Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
     Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard']);
     Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport']);
     Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport']);
@@ -200,7 +203,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
 
-        Route::get('car', [CarQuoteTable::class, 'index']);
+        //Route::get('car', [CarQuoteTable::class, 'index']);
 
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
@@ -208,7 +211,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('travel', CRUDController::class);
         Route::resource('pet', CRUDController::class);
         Route::resource('teams', CRUDController::class);
-        // Route::resource('leadstatus', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
@@ -217,7 +219,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('{quoteType}/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
         Route::post('wcuAssign', [CRUDController::class, 'wcuAssign'])->name('wcuAssign');
-        Route::post('/{modelType}/{QuoteUId}/UpdateLeadStatus', [CRUDController::class, 'UpdateLeadStatus'])->name('UpdateLeadStatus');
+        Route::post('/{modelType}/{QuoteUId}/update-lead-status', [CRUDController::class, 'updateLeadStatus'])->name('updateLeadStatus');
         Route::post('health/healthTeamAssign', [CRUDController::class, 'healthTeamAssign'])->name('healthTeamAssign');
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/create-quote', [CRUDController::class, 'addCarQuotePlan']);

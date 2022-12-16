@@ -236,7 +236,8 @@
     :status="$record->quote_status_id"
     :statuses="$leadStatuses"
     :lostreasons="$lostReasons"
-    :selectedlostreason="$selectedLostReasonId" />
+    :selectedlostreason="$selectedLostReasonId" 
+    :quoteTypeId="$quoteTypeId" />
 
     <div class="row">
     <div class="col-md-12 col-sm-12">
