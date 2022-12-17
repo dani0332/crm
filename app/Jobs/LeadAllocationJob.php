@@ -37,7 +37,6 @@ class LeadAllocationJob implements ShouldQueue
      */
     public function handle(LeadAllocationService $leadAllocationService)
     {
-        throw new Exception('you jsss');
         try {
             Log::info('Lead Allocation Job Started');
             $leadAllocationService->setAdvisorsToUnavailable();
