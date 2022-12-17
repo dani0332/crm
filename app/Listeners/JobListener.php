@@ -2,7 +2,6 @@
 
 namespace App\Listeners;
 
-
 class JobListener
 {
     /**
@@ -15,7 +14,7 @@ class JobListener
         //
     }
 
-       /**
+    /**
      * Handle the job processing event.
      *
      * @param  object  $event
@@ -23,7 +22,7 @@ class JobListener
      */
     public function handleJobProcessing($event)
     {
-        info('The job '. json_decode($event->job->getRawBody())->displayName . ' is about to be processed.');
+        info('The job '.json_decode($event->job->getRawBody())->displayName.' is about to be processed.');
     }
 
     /**
