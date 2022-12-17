@@ -438,7 +438,7 @@ class CarQuoteService extends BaseService
                 $title = 'Policy Number';
                 break;
             case 'next_followup_date':
-                $title = 'Next Followup Date';
+                $title = 'Follow up date';
                 break;
             case 'seat_capacity':
                 $title = 'Seat Capacity';
