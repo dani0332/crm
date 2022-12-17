@@ -28,7 +28,7 @@ return [
     |
     */
 
-    'path' => env('HORIZON_PATH', 'horizon'),
+    'path' => env('HORIZON_PATH', 'queue-dashboard'),
 
     /*
     |--------------------------------------------------------------------------
@@ -120,8 +120,8 @@ return [
 
     'metrics' => [
         'trim_snapshots' => [
-            'job' => 24,
-            'queue' => 24,
+            'job' => 100,
+            'queue' => 100,
         ],
     ],
 
@@ -151,7 +151,7 @@ return [
     |
     */
 
-    'memory_limit' => 64,
+    'memory_limit' => 256,
 
     /*
     |--------------------------------------------------------------------------
@@ -169,10 +169,10 @@ return [
             'connection' => 'redis',
             'queue' => ['default'],
             'balance' => 'auto',
-            'maxProcesses' => 1,
+            'maxProcesses' => 4,
             'maxTime' => 0,
             'maxJobs' => 0,
-            'memory' => 128,
+            'memory' => 256,
             'tries' => 1,
             'timeout' => 60,
             'nice' => 0,
@@ -185,9 +185,9 @@ return [
                 'connection' => 'redis',
                 'queue' => ['default,email,scout'],
                 'balance' => 'auto',
-                'processes' => 10,
+                'processes' => 4,
                 'tries' => 3,
-                'timeout' => 570,
+                'timeout' => 60,
             ],
         ],
         'staging' => [
@@ -195,9 +195,9 @@ return [
                 'connection' => 'redis',
                 'queue' => ['default,email,scout'],
                 'balance' => 'auto',
-                'processes' => 10,
+                'processes' => 4,
                 'tries' => 3,
-                'timeout' => 570,
+                'timeout' => 60,
             ],
         ],
         'local' => [
