@@ -11,8 +11,12 @@ use BenSampo\Enum\Enum;
  */
 final class DatabaseColumnsString extends Enum
 {
-    const QUOTE_STATUS_ID = 'quote_status_id';
-    const MOBILE = 'mobile_no';
-    const EMAIL = 'email';
-    const CAR_VALUE = 'car_value';
+    public const QUOTE_STATUS_ID = 'quote_status_id';
+    public const MOBILE = 'mobile_no';
+    public const EMAIL = 'email';
+    public const CAR_VALUE = 'car_value';
+    public const RENEWAL_BATCH = 'renewal_batch';
+    public const PREVIOUS_QUOTE_POLICY_NUMBER = 'previous_quote_policy_number';
+    public const PREVIOUS_POLICY_EXPIRY_DATE = 'previous_policy_expiry_date';
+    public const SOURCE = 'source';
 }

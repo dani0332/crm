@@ -41,7 +41,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="quote_policy_start_date"><b>Start Date</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
-                            <input type="text" class="form-control" id="quote_policy_start_date" name="quote_policy_start_date" value="{{ $record->policy_start_date ? Carbon\Carbon::parse($record->policy_start_date)->format($dateFormat) : '' }}">
+                            <input type="text" class="form-control" id="quote_policy_start_date" name="quote_policy_start_date" value="{{ $record->policy_start_date ? Carbon\Carbon::createFromFormat('d/m/Y',$record->policy_start_date)->format($dateFormat) : '' }}">
                             </p>
                         </div>
                     </div>

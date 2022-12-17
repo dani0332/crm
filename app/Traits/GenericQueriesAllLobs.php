@@ -69,13 +69,16 @@ trait GenericQueriesAllLobs
             $record = $model::where('uuid', $response->quoteUID)->first();
             if ($record) {
                 $record->parent_duplicate_quote_id = $parentRecord->code;
+                $record->advisor_id = auth()->user()->id;
+                if (strtolower($lob) == strtolower(quoteTypeCode::Health)) {
+                    $subTeam = null;
+                    if (auth()->user()->subTeam) {
+                        $subTeam = auth()->user()->subTeam->name;
+                    }
+                    $record->health_team_type = $subTeam;
+                }
                 $record->save();
             }
         }
-    }
-
-    public function getEComQuoteLink($lob, $quoteRequest)
-    {
-        return $quoteRequest->uuid ? config('constants.AFIA_WEBSITE_DOMAIN').'/'.$lob.'-insurance/quote/'.$quoteRequest->uuid : null;
     }
 }

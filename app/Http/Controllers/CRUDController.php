@@ -13,6 +13,7 @@ use App\Models\GenericModel;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
+use App\Models\QuoteViewCount;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
@@ -148,8 +149,8 @@ class CRUDController extends Controller
         // Checking if the loggedIn user has Manager or Deputy Role
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
 
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
         $dropdownSource = $customTitles = [];
-
         foreach ($this->genericModel->properties as $property => $value) {
             if (str_contains($value, 'title')) {
                 // Getting custom title for each property where title is mentioned in the property meta data
@@ -157,7 +158,7 @@ class CRUDController extends Controller
             }
             if (str_contains($value, 'select')) {
                 // Getting the dropdown source for each property where select is mentioned in the property meta data
-                $dropdownValue = $this->dropdownSourceService->getDropdownSource($property);
+                $dropdownValue = $this->dropdownSourceService->getDropdownSource($property, $quoteTypeId);
                 $dropdownSource[$property] = $dropdownValue;
             }
         }
@@ -229,7 +230,7 @@ class CRUDController extends Controller
             }
         }
         $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
-
+        $request->policy_start_date = isset($request->policy_start_date) ? Carbon::createFromFormat('d/m/Y', $request->policy_start_date)->format(get_dob_date_format()) : null;
         if ($request->has('email')) {
             $this->validate($request, [
                 'email' => 'required|email:rfc,dns|max:150',
@@ -267,6 +268,7 @@ class CRUDController extends Controller
             return redirect(request()->url());
         }
         $quoteType = strtolower($this->genericModel->modelType);
+        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         if (! $record) {
             abort(404);
@@ -274,6 +276,21 @@ class CRUDController extends Controller
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
+        }
+        if ($quoteType == strtolower(quoteTypeCode::Car)) {
+            if ($record->advisor_id != null) {
+                if ($record->advisor_id == Auth::user()->id) {
+                    QuoteViewCount::firstOrCreate([
+                        'quote_id' => $record->id, 'user_id' => Auth::user()->id,
+                    ], [
+                        'quote_id' => $record->id,
+                        'quote_type_id' => 1,
+                        'user_id' => Auth::user()->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ])->increment('visit_count');
+                }
+            }
         }
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
@@ -292,7 +309,7 @@ class CRUDController extends Controller
             $this->crudService->fillNewBusinessData($this->genericModel);
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
-        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id');
+        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
         $lostReasons = $this->lookupService->getLostReasons();
         $selectedLostReasonId = '';
         if (strtolower($this->genericModel->modelType) != 'teams' && strtolower($this->genericModel->modelType) != 'leadstatus') {
@@ -335,11 +352,12 @@ class CRUDController extends Controller
             array_push($activities, $updatedActivity);
         }
         $audits = [];
-        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $record->id);
         $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);
         $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
+        $advisor = isset($record->advisor_id) ? $this->userService->getUserById((int) $record->advisor_id) : null;
 
+        $record->policy_start_date = isset($record->policy_start_date) ? date('d/m/Y', strtotime($record->policy_start_date)) : null;
         $isQuoteDocumentEnabled = $this->quoteDocumentService->isEnabled($model->modelType);
         $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($model->modelType, $record->id);
         $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
@@ -353,6 +371,8 @@ class CRUDController extends Controller
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
+            $carMakeText = $record->car_make_id_text ? $record->car_make_id_text : '';
+            $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
@@ -361,6 +381,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'carMakeText', 'carModelText', 'advisor',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
@@ -385,6 +406,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'quoteTypeId',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -409,12 +431,14 @@ class CRUDController extends Controller
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'membersDetail', 'memberCategories', 'salaryBands', 'autoAllocationDisabled', 'ecomDetails', 'ecomHealthInsuranceQuoteUrl',
                 'quoteType', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'quoteTypeId',
             ]));
         } else {
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType',
+                'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
+                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId',
             ]));
         }
     }
@@ -451,6 +475,7 @@ class CRUDController extends Controller
         }
 
         $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
+        $record->policy_start_date = isset($record->policy_start_date) ? date('d/m/Y', strtotime($record->policy_start_date)) : null;
 
         return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));
     }
@@ -479,6 +504,7 @@ class CRUDController extends Controller
             }
         }
         $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
+        $request->policy_start_date = isset($request->policy_start_date) ? Carbon::createFromFormat('d/m/Y', $request->policy_start_date)->format(get_dob_date_format()) : null;
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
@@ -620,7 +646,8 @@ class CRUDController extends Controller
                     $providerName = $listQuotePlan->providerName;
                     $actualPremium = $listQuotePlan->actualPremium;
                     $discountPremium = $listQuotePlan->discountPremium;
-                    $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                    $listQuotePlanBenefitsInpatient = isset($listQuotePlan->benefits->inpatient) ? $listQuotePlan->benefits->inpatient : [];
+                    $listQuotePlanBenefitsOutpatient = isset($listQuotePlan->benefits->outpatient) ? $listQuotePlan->benefits->outpatient : [];
                     $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
                     $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
                     $listQuotePlanBenefitsCoInsurance = $listQuotePlan->benefits->coInsurance;
@@ -638,11 +665,11 @@ class CRUDController extends Controller
 
             return view('shared.plan_details', compact([
                 'listQuotePlanName', 'providerCode', 'providerName',
-                'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInclusions',
+                'actualPremium', 'discountPremium', 'listQuotePlanBenefitsInpatient',
                 'listQuotePlanBenefitsExclusions', 'listQuotePlanBenefitsFeatures',
                 'listQuotePlanBenefitsPolicyDetails', 'listQuotePlanBenefitsPolicyDetailLink', 'modelName',
                 'listQuotePlanBenefitsCoInsurance', 'listQuotePlanBenefitsRegionCover',
-                'listQuotePlanBenefitsMaternityCover', 'members', 'planId', 'quoteId', 'isManualPlan',
+                'listQuotePlanBenefitsMaternityCover', 'members', 'planId', 'quoteId', 'isManualPlan', 'listQuotePlanBenefitsOutpatient',
             ]));
         }
     }
@@ -699,7 +726,15 @@ class CRUDController extends Controller
     {
         $selectedTeam = $request->get('assign_team');
 
-        $lead = $this->healthQuoteService->getEntityPlain($request->get('entityId'));
+        $entityId = $request->get('entityId');
+
+        info('Inside Health Team Assign with team : '.$selectedTeam.'  and entity Id : '.$entityId);
+
+        $lead = $this->healthQuoteService->getEntityPlain($entityId);
+
+        if (! $lead || $lead == null) {
+            return redirect()->to('/quotes/health')->with('message', ' Lead not found. Please try again.');
+        }
 
         $isAssigned = $this->healthQuoteService->assignHealthTeam($request, $lead);
 
@@ -715,7 +750,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function UpdateLeadStatus(Request $request)
+    public function updateLeadStatus(Request $request)
     {
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
@@ -732,6 +767,21 @@ class CRUDController extends Controller
             $this->validate($request, [
                 'trans_code' => 'required',
             ]);
+        }
+        // Car Quote: validate next_followup_date
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
+            if ($request->leadStatus == QuoteStatusEnum::FollowupCall ||
+            $request->leadStatus == QuoteStatusEnum::Interested ||
+            $request->leadStatus == QuoteStatusEnum::NoAnswer) {
+                $this->validate($request, [
+                    'next_followup_date' => 'required',
+                    'next_followup_date' => 'date_format:Y-m-d H:i:s|after_or_equal:'.date('Y-m-d H:i:s'),
+                ]);
+                if (isset($request->quote_uuid)) {
+                    $record = $this->crudService->getEntity($request->modelType, $request->quote_uuid);
+                    $this->activityService->createActivity($request, $record);
+                }
+            }
         }
         $entity = $this->crudService->updateQuoteStatus($request);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
@@ -999,5 +1049,48 @@ class CRUDController extends Controller
         $payment->update($paymentInformation);
 
         return back()->with('success', 'Payment has been updated');
+    }
+
+    public function sendEmailOneClickBuy(Request $request)
+    {
+        Log::info('sendEmailOneClickBuy START');
+        // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
+        $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true, true);
+        $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
+        $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
+
+        $emailData = (object) [
+            'quoteTypeId' => $request->quote_type_id,
+            'quoteId' => $request->quote_id,
+            'templateId' => $emailTemplateId,
+            'quoteCdbId' => $request->quote_cdb_id,
+            'customerName' => $request->customer_name,
+            'customerEmail' => $request->customer_email,
+            'previousPolicyExpiryDate' => $request->quote_previous_expiry_date,
+            'currentlyInsuredWith' => $request->quote_currently_insured_with,
+            'carMake' => $request->quote_car_make,
+            'carModel' => $request->quote_car_model,
+            'carManufactureYear' => $request->quote_car_year_of_manufacture,
+            'previousPolicyNumber' => $request->quote_previous_policy_number,
+            'advisorName' => $request->advisor_name,
+            'advisorEmailAddress' => $request->advisor_email,
+            'advisorMobileNo' => $request->advisor_mobile_no,
+            'advisorLandlineNo' => $request->advisor_landline_no,
+            'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$request->quote_uuid,
+            'listQuotePlans' => $listQuotePlans,
+            'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode=',
+            'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
+        ];
+
+        $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
+
+        if ($responseCode == 201) {
+            return response()->json(['success' => 'OCB email sent to customer']);
+        } else {
+            Log::info('sendEmailOneClickBuy ('.$request->quote_cdb_id.') OCB email sending failed Error Code: '.$responseCode);
+
+            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
+        }
+        Log::info('sendEmailOneClickBuy END');
     }
 }

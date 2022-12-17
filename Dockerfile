@@ -1,4 +1,4 @@
-FROM php:8.0-fpm
+FROM php:8.1-fpm
 ARG IMCRM_TOKEN
 #ARG NGINX_FILE
 #ARG NEW_RELIC_LICENSE_KEY
@@ -34,7 +34,7 @@ RUN apt-get update && apt-get install -y \
     nginx \
     wget \
     gnupg
-   
+
 # Install node 16
 RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
 RUN bash /tmp/nodesource_setup.sh
@@ -43,7 +43,7 @@ RUN apt install nodejs -y
 # Install yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN apt update 
+RUN apt update
 RUN apt install yarn -y
 
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
@@ -66,8 +66,38 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Add user for laravel application
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
+RUN doppler configure set token ${IMCRM_TOKEN}
+
+RUN \
+  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.4.0.316-linux.tar.gz | tar -C /tmp -zx && \
+  export NR_INSTALL_USE_CP_NOT_LN=1 && \
+  export NR_INSTALL_SILENT=1 && \
+  /tmp/newrelic-php5-*/newrelic-install install && \
+  rm -rf /tmp/newrelic-php5-* /tmp/nrinstall* && \
+  sed -i \
+      -e 's/"REPLACE_WITH_REAL_KEY"/"${NEW_RELIC_LICENSE_KEY}"/' \
+      -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
+      -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
+      -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
+      /usr/local/etc/php/conf.d/newrelic.ini
+# PHP Error Log Files
+RUN mkdir /var/log/php
+RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
+
+EXPOSE 80
+EXPOSE 443
 
 # Copy code to /var/www
+#ARG CACHEBUST=1
+
+# Check yarn packages
+COPY --chown=www:www-data package*.json yarn.lock /var/www/
+RUN yarn install --pure-lockfile
+
+#Check composer packages
+#COPY --chown=www:www-data composer*.json composer.lock /var/www/
+#RUN composer install --optimize-autoloader --no-dev
+
 COPY --chown=www:www-data . /var/www
 
 # add root to www group
@@ -81,31 +111,10 @@ RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
 RUN cp -r docker/*.pem /etc/nginx/conf.d/
 RUN cp docker/log_files.yml /etc/
 
-RUN doppler configure set token ${IMCRM_TOKEN}
-
-# PHP Error Log Files
-RUN mkdir /var/log/php
-RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
-
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
-RUN yarn 
-RUN yarn run prod
+#RUN yarn
+# RUN yarn run prod
 RUN chmod +x /var/www/docker/run.sh
 
-RUN \
-  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.2.0.314-linux.tar.gz | tar -C /tmp -zx && \
-  export NR_INSTALL_USE_CP_NOT_LN=1 && \
-  export NR_INSTALL_SILENT=1 && \
-  /tmp/newrelic-php5-*/newrelic-install install && \
-  rm -rf /tmp/newrelic-php5-* /tmp/nrinstall* && \
-  sed -i \
-      -e 's/"REPLACE_WITH_REAL_KEY"/"${NEW_RELIC_LICENSE_KEY}"/' \
-      -e 's/newrelic.appname = "PHP Application"/newrelic.appname = "${NEW_RELIC_APP_NAME}"/' \
-      -e 's/;newrelic.daemon.app_connect_timeout =.*/newrelic.daemon.app_connect_timeout=15s/' \
-      -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
-      /usr/local/etc/php/conf.d/newrelic.ini
-
-EXPOSE 80
-EXPOSE 443
 ENTRYPOINT ["/var/www/docker/run.sh"]

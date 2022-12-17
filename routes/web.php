@@ -8,6 +8,7 @@ use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
+use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CarQuoteController;
 use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\ClaimsStatusController;
 use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FailedJobsController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\FtcFormController;
 use App\Http\Controllers\GenericCrudController;
@@ -35,6 +37,7 @@ use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RewardCategoryController;
 use App\Http\Controllers\RewardController;
 use App\Http\Controllers\RewardSliderController;
@@ -55,6 +58,7 @@ use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use App\Http\Livewire\CarQuoteTable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -80,7 +84,7 @@ Route::middleware(['auth'])->get('/home', function () {
     return view('home');
 });
 
-Route::group(['middleware' => ['auth']], function () {
+Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
         Artisan::call('view:cache');
@@ -115,8 +119,8 @@ Route::group(['middleware' => ['auth']], function () {
         'index' => 'activities.index',
         'destroy' => 'activities.destroy',
     ]);
-    Route::post('/activities/createActivity', [ActivitesController::class, 'store'])->name('activities.store');
-    Route::post('activities/{id}/update', [ActivitesController::class, 'update'])->name('activities.update');
+    Route::post('/activities/create-activity', [ActivitesController::class, 'store']);
+    Route::post('activities/{id}/update', [ActivitesController::class, 'update']);
     Route::post('activities/{id}/delete', [ActivitesController::class, 'destroy'])->name('activities.destroy');
     Route::post('activities/updateStatus', [ActivitesController::class, 'updateStatus'])->name('activities.updateStatus');
     Route::post('activities/getEditView', [ActivitesController::class, 'getEditView'])->name('activities.getEditView');
@@ -132,8 +136,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/customer-additional-contact/add', [CustomerController::class, 'addAdditionalContact']);
 
     Route::resource('lead-allocation', LeadAllocationController::class);
+    Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
-    Route::post('/lead-allocation/setLeadAllocationJobStatus', [LeadAllocationController::class, 'setLeadAllocationJobStatus']);
+    Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
+    Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
+    Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
+    Route::post('/lead-allocation/toggle-car-lead-fetch-sequence', [LeadAllocationController::class, 'toggleCarLeadFetchSequence']);
 
     Route::get('quotes/{quoteType}/{quoteUuId}/documents', [QuoteDocumentController::class, 'list']);
     Route::post('quotes/{quoteType}/documents/store', [QuoteDocumentController::class, 'store']);
@@ -144,15 +152,36 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::group(['prefix' => 'renewals'], function () {
         Route::resource('uploaded-leads', RenewalsUploadController::class);
+        Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed']);
+        Route::get('uploaded-leads/{id}/validation-failed/download', [RenewalsUploadController::class, 'downloadValidationFailed']);
+        Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);
+        Route::get('uploaded-leads/{id}/validation-passed/quote-redirect/{leadId}', [RenewalsUploadController::class, 'viewQuoteRedirect'])->name('viewQuoteRedirect');
         Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals']);
         Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('listRenewalBatches');
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batchDetail');
         Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('runBatchProcess');
-        Route::post('upload-process', [RenewalsUploadController::class, 'processRenewalsCSV']);
+        Route::post('upload-process', [RenewalsUploadController::class, 'renewalsUploadProcess']);
+        Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate']);
+        Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate']);
+        Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses']);
+        Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
-
+    Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard']);
+    Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard']);
+    Route::get('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
+    Route::get('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
+    Route::get('/get-advisor-conversion-stats', [DashboardController::class, 'getAdvisorConversionStats']);
+    Route::get('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
+    Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
+    Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard']);
+    Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport']);
+    Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport']);
+    Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport']);
+    Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport']);
+    Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
+    Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
     Route::group(['prefix' => 'rewards'], function () {
         Route::resource('partner', PartnerController::class);
         Route::resource('reward', RewardController::class);
@@ -173,13 +202,15 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
+
+        //Route::get('car', [CarQuoteTable::class, 'index']);
+
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
         Route::resource('travel', CRUDController::class);
         Route::resource('pet', CRUDController::class);
         Route::resource('teams', CRUDController::class);
-        // Route::resource('leadstatus', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
@@ -188,7 +219,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('{quoteType}/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
         Route::post('wcuAssign', [CRUDController::class, 'wcuAssign'])->name('wcuAssign');
-        Route::post('/{modelType}/{QuoteUId}/UpdateLeadStatus', [CRUDController::class, 'UpdateLeadStatus'])->name('UpdateLeadStatus');
+        Route::post('/{modelType}/{QuoteUId}/update-lead-status', [CRUDController::class, 'updateLeadStatus'])->name('updateLeadStatus');
         Route::post('health/healthTeamAssign', [CRUDController::class, 'healthTeamAssign'])->name('healthTeamAssign');
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/create-quote', [CRUDController::class, 'addCarQuotePlan']);
@@ -207,6 +238,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
         Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
         Route::post('{quoteType}/export-plans-pdf', [CRUDController::class, 'exportPlansPdf'])->name('exportPlansPdf');
+        Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
     });
 
     Route::group(['prefix' => 'generic'], function () {
@@ -218,6 +250,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::resource('applicationstorage', GenericCrudController::class);
         Route::resource('teams', GenericCrudController::class);
         Route::resource('leadstatus', GenericCrudController::class);
+        Route::resource('tier', GenericCrudController::class);
+        Route::resource('quadrant', GenericCrudController::class);
+        Route::resource('rule', GenericCrudController::class);
         Route::post('save', [GenericCrudController::class, 'store'])->name('save');
         Route::post('update', [GenericCrudController::class, 'update'])->name('update');
     });

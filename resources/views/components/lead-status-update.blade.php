@@ -4,6 +4,7 @@
     use App\Enums\GenericRequestEnum;
     use App\Enums\quoteTypeCode;
     use App\Enums\RolesEnum;
+    use App\Enums\QuoteTypeId;
 @endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
@@ -41,6 +42,7 @@
             }
         });
         $('#leadStatus').on('change', function(){
+            var lead_status_code = $(this).val();
             if(showFollowupStatuses.find((str) => str == $('#leadStatus option:selected').text())){
                 $('#followup-div').show();
             }
@@ -59,9 +61,45 @@
                 $('#lost-reason-div').hide();
                 $('#trans-div').hide();
             }
+
+            // Car Quote: on lead_status change hideshow next_followup_date conditionally
+            next_followup_date_visibility(lead_status_code);
         });
 
+        var quoteTypeId = JSON.parse('<?php echo json_encode($quoteTypeId) ?>');
+        var quoteTypeCar = JSON.parse('<?php echo json_encode(QuoteTypeId::Car) ?>');
+        var hasRoles = JSON.parse('<?php echo json_encode(auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) ?>');
+        if(quoteTypeId == quoteTypeCar) {
+            // Car Quote: display calendar on next_followup_date
+            $('#next_followup_date').daterangepicker({
+                timePicker: true,
+                singleDatePicker: true,
+                timePicker24Hour: true,
+                locale: {
+                    format: 'YYYY-MM-DD HH:mm:ss',
+                },
+            });
+            // Car Quote: lock lead status options (Fake, Duplicate) conditionally
+            if(!hasRoles) {
+                $("#leadStatus option[value='9']").hide();
+                $("#leadStatus option[value='35']").hide();
+            }
+            // Car Quote: on page load hideshow next_followup_date conditionally
+            var lead_status_code = $('#leadStatus option:selected').val();
+            next_followup_date_visibility(lead_status_code);
+        }
     });
+
+    function next_followup_date_visibility(lead_status_code) {
+        if(lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::FollowupCall) ?>') || 
+        lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::Interested) ?>') || 
+        lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::NoAnswer) ?>')) {
+            $('#quote-next-followup-date').show();
+        } else {
+            $('#quote-next-followup-date').hide();
+        }
+        return false;
+    }
 </script>
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -71,33 +109,42 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/UpdateLeadStatus"
-                    id="lead-status-form">
+                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/update-lead-status" id="lead-status-form">
                     {{csrf_field()}}
                     <input type="hidden" value="{{$lead->id}}" name="leadId">
                     <input type="hidden" value="{{$modeltype}}" name="modelType">
+                    <input type="hidden" value="{{$lead->uuid}}" name="quote_uuid">
+                    <input type="hidden" value="{{$lead->advisor_id}}" name="assigned_to_user_id">
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead
-                                    Status</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead Status</b></label>
                             <div class="col-md-6 col-sm-6">
-                                <select @if($lead->quote_status_id ==
-                                    QuoteStatusEnum::TransactionApproved) disabled @endif class="form-control"
-                                    id="leadStatus" name="leadStatus">
+                                <select @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved || 
+                                        ($quoteTypeId == QuoteTypeId::Car && ($lead->quote_status_id == QuoteStatusEnum::Duplicate || $lead->quote_status_id == QuoteStatusEnum::Fake) 
+                                        && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin]))) 
+                                            disabled 
+                                        @endif 
+                                        class="form-control" id="leadStatus" name="leadStatus">
                                     <option value="">Select Lead Status</option>
                                     @foreach ($statuses as $item)
                                         @if($item->id == QuoteStatusEnum::PolicyIssued && isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
                                         <option @if($status==$item->id) selected="selected" @endif
-                                            value="{{$item->id}}" >{{$item->text}}</option>
+                                            value="{{$item->id}}">{{$item->text}}</option>
                                         @elseif($item->id != QuoteStatusEnum::PolicyIssued)
                                             <option @if($status==$item->id) selected="selected" @endif
-                                                value="{{$item->id}}" >{{$item->text}}</option>
+                                                value="{{$item->id}}">{{$item->text}}</option>
                                         @endif
                                     @endforeach
                                 </select>
                             </div>
                         </div>
                         <div class="col">
+                            <div id="quote-next-followup-date" style="display: none;">
+                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Followup Date</b> <span class='required'>*</span></label>
+                                <div class="col-md-6 col-sm-6">
+                                    <input type="text" id="next_followup_date" name="next_followup_date" value="{{ $lead->next_followup_date }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select follow-up date & time">
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="item form-group">
@@ -153,7 +200,7 @@
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Rejection Reason</b><span
                                         class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <input class="form-control" type="text" name="lost_approval_reason" value="{{ $lead->lost_approval_reason ?? null }}" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations) )disabled @endif>
+                                        <input class="form-control" type="text" name="lost_approval_reason" value="{{ $lead->lost_approval_reason ?? null }}" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @else required @endif>
                                         @if ($errors->has('lostReason'))
                                             <span class="text-danger">{{ $errors->first('lostReason') }}</span>
                                         @endif

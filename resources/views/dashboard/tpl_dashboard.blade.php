@@ -1,0 +1,122 @@
+@extends('layouts.app_livewire')
+@section('title','TPL Dashboard')
+@section('content')
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script>
+    var tplDashboardStatsBarChart = {};
+    var tplDashboardStats = <?php echo json_encode($tplDashboardStats)?>;
+    function createLeadRcdSummaryByTierPieChart(tplDashboardStats)
+    {
+        var data = [];
+        for (let index = 0; index < tplDashboardStats[0].length; index++) {
+            data.push({name : tplDashboardStats[0][index] , y: parseFloat(tplDashboardStats[1][index])})
+        }
+        tplDashboardStatsBarChart = Highcharts.chart('tplConversionDiv', {
+            chart: {
+                type: 'column'
+            },
+            title: {
+                align: 'center',
+                text: 'TPL CONVERSION REPORT',
+                fontSize: '40'
+            },
+            xAxis: {
+                type: 'category'
+            },
+            yAxis: {
+                title: {
+                    text: 'Total Net Conversion'
+                }
+
+            },
+            legend: {
+                enabled: false
+            },
+            plotOptions: {
+                series: {
+                    borderWidth: 0,
+                    dataLabels: {
+                        enabled: true,
+                        format: '{point.y:.1f}%'
+                    }
+                }
+            },
+
+            tooltip: {
+                headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+                pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b>'
+            },
+
+            series: [
+                {
+                    name: 'Net Conversion',
+                    colorByPoint: true,
+                    data: data
+                }
+            ]
+        });
+
+    }
+    $(function(){
+        createLeadRcdSummaryByTierPieChart(tplDashboardStats);
+        $('#tier-filter,#source-filter').on('change', function (e) {
+            var tierFilterValue = $('#tier-filter option:selected').val();
+            var sourceFilterValue = $('#source-filter option:selected').val();
+            $.get('/get-tpl-filter-stats?tier_filter=' + tierFilterValue + '&source='+ sourceFilterValue, function (result) {
+               if(result){
+                var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
+                var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
+                var numbers = [];
+                for (let index = 0; index < data.length; index++) {
+                    numbers.push(parseFloat(data[index]));
+                }
+                if(labels.length > 0 ){
+                    tplDashboardStatsBarChart.destroy();
+                    createLeadRcdSummaryByTierPieChart([labels,numbers]);
+                }else{
+                    tplDashboardStatsBarChart.destroy();
+                    createLeadRcdSummaryByTierPieChart([[''], [0]]);
+                }
+               }
+            });
+        });
+    });
+</script>
+<div class="container">
+    <div class="row">
+        <div class="col-md-2" style="float: right;">
+            <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:right;">
+                <select
+                    class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+                    id="source-filter" style="margin-left: 10px;">
+                    <option value="">Exclude manual created leads</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:right;">
+                <select
+                    class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+                    id="tier-filter">
+                    <option value="">Select Tier</option>
+                    <option value="tr">Tier R</option>
+                    <option value="t6">Tier 6</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div style="clear: both;"></div>
+    <div class="row">
+        <div class="col-md-10 col-md-offset-1">
+            <div class="panel panel-default">
+                <div class="panel-body" style="min-height: 700px;">
+                    <div id="tplConversionDiv"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</script>
+@endsection

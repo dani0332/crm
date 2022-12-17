@@ -18,6 +18,7 @@ class DocumentTypeResource extends JsonResource
             'id' => $this->id,
             'code' => $this->code,
             'text' => $this->text,
+            'description' => $this->description,
             'quote_type_id' => $this->quote_type_id,
             'accepted_files' => $this->accepted_files,
             'max_files' => $this->max_files,

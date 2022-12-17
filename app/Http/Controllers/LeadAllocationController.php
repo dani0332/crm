@@ -132,8 +132,20 @@ class LeadAllocationController extends Controller
         $leadAllocationUser->save();
     }
 
-    public function setLeadAllocationJobStatus()
+    public function toggleLeadAllocationJobStatus()
     {
         $this->applicationStorageService->updateLeadAllocationJobStatus();
+    }
+    public function toggleCarLeadAllocationJobStatus()
+    {
+        $this->applicationStorageService->updateCarLeadAllocationJobStatus();
+    }
+    public function toggleRenewalCarLeadAllocationStatus()
+    {
+        $this->applicationStorageService->updateRenewalCarLeadAllocationStatus();
+    }
+    public function toggleCarLeadFetchSequence()
+    {
+        $this->applicationStorageService->updateCarLeadFetchSequence();
     }
 }

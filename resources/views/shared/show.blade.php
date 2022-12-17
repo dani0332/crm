@@ -211,8 +211,13 @@
                                     <label class="col-form-label col-md-6 col-sm-6"
                                         for="Status Description"><b>{{ strtoupper($customTitles[$property]) }}</b></label>
                                 @else
-                                    <label class="col-form-label col-md-6 col-sm-6"
-                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper($property)) }}</b></label>
+                                @if($property == DatabaseColumnsString::SOURCE && auth()->user()->hasRole(RolesEnum::CarAdvisor))
+                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description">&nbsp;</label>
+                                @else
+                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description">
+                                        <b>{{ str_replace('_', ' ', strtoupper($property)) }}</b>
+                                    </label>
+                                @endif
                                 @endif
                                 @if (str_contains($value, 'select'))
                                     @if (str_contains($value, 'customTable'))
@@ -249,15 +254,18 @@
                                                     @elseif($record->$property == GenericRequestEnum::FEMALE_MARRIED_VALUE) {{GenericRequestEnum::FEMALE_MARRIED}}
                                                     @else {{ $record->$property }}
                                                     @endif
-                                                @elseif($property == 'previous_quote_id')
-                                                    @php
-                                                        $previousQuote = CarQuote::select('uuid')->where('id', $record->previous_quote_id)->first();
-                                                    @endphp
-                                                    @if($previousQuote)
-                                                        <a href="/quotes/{{strtolower($model->modelType)}}/{{ $previousQuote->uuid }}" target="_blank" style="text-decoration: underline;">{{ $record->$property }}</a>
-                                                    @endif
                                                 @else
-                                                    {{ $property==DatabaseColumnsString::CAR_VALUE ? number_format($record->$property, 2) : $record->$property }}
+                                                @if($property == DatabaseColumnsString::CAR_VALUE)
+                                                    {{ number_format($record->$property, 2) }}
+                                                @else
+                                                    @if($property == DatabaseColumnsString::SOURCE)
+                                                        @if(!auth()->user()->hasRole(RolesEnum::CarAdvisor))
+                                                            {{$record->$property }}
+                                                        @endif
+                                                    @else
+                                                        {{$record->$property }}
+                                                    @endif
+                                                @endif
                                                 @endif
                                             </p>
                                         </div>
@@ -303,8 +311,12 @@
     @endif
 
     @if (strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
+        @if ($model->modelType == quoteTypeCode::Car)
+            <x-quote-renewal-card :record="$record" />
+        @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
-            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled" />
+            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled" 
+            :quoteTypeId="$quoteTypeId" />
     @endif
     @if (count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
@@ -336,7 +348,7 @@
                                 @endforeach
                             </select>
                             <select class="form-control" style="display:none;margin-top:10px" id="lob_team_sub_selection" name="lob_team_sub_selection">
-                            <option value="" disabled selected>Select your option</option>    
+                            <option value="" disabled selected>Select your option</option>
                             <option value="new_enquiry">New enquiry</option>
                             <option value="record_only">Record purposes only</option>
                             </select>
@@ -380,7 +392,7 @@
         @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
         <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" />
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />

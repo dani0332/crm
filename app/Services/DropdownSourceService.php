@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarAddOn;
@@ -17,6 +16,7 @@ use App\Models\HealthCoverFor;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\InsuranceProvider;
+use App\Models\LeadSource;
 use App\Models\LifeChildren;
 use App\Models\LifeInsuranceTenure;
 use App\Models\LifeNumberOfYears;
@@ -25,9 +25,11 @@ use App\Models\MartialStatus;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
 use App\Models\PaymentStatus;
+use App\Models\Quadrants;
 use App\Models\QuoteStatus;
 use App\Models\Regions;
 use App\Models\Team;
+use App\Models\Tier;
 use App\Models\TravelCoverFor;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
@@ -51,6 +53,18 @@ class DropdownSourceService extends BaseService
                 $data = DB::select('select u.id, u.name from users u
                 inner join user_team ut on ut.user_id = u.id
                 where ut.team_id ='.$id);
+                break;
+            case 'tier_users':
+                $data = DB::table('tiers as t')
+                ->select('u.id', DB::raw('group_concat(u.name) as name'))
+                ->leftJoin('tiers_has_users as thu', 'thu.tier_id', 't.id')
+                ->leftJoin('users as u', 'u.id', 'thu.user_id')
+                ->where('t.id', $id)
+                ->groupBy('t.id')->get();
+                break;
+            case 'quad_tiers':
+                $query = 'select t.id, t.name from quadrants q inner join tiers t on t.quad_id = q.id where q.id = '.$id.' group by t.id';
+                $data = DB::select($query);
                 break;
             default:
                 break;
@@ -80,7 +94,7 @@ class DropdownSourceService extends BaseService
         return $data;
     }
 
-    public function getDropdownSource($type)
+    public function getDropdownSource($type, $quoteTypeId = false)
     {
         $advisorType = strtoupper(explode('/', $_SERVER['REQUEST_URI'])[2]);
         $data = '';
@@ -96,14 +110,10 @@ class DropdownSourceService extends BaseService
                 $data = Nationality::select('id', 'text')->where('is_active', true)->orderBy('text')->get();
                 break;
             case 'quote_status_id':
-                $data = QuoteStatus::select('id', 'text')
-                    ->whereNotIn('id', [
-                        QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
-                        QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyInvoiced, QuoteStatusEnum::Issued,
-                    ])
-                    ->where('is_active', true)
-                    ->orderBy('sort_order', 'asc')
-                    ->get();
+                $data = QuoteStatus::select('quote_status.id as id', 'quote_status.text as text', 'quote_status.code as code')
+                    ->where(['quote_status.is_active' => true, 'quote_status_map.quote_type_id' => $quoteTypeId])
+                    ->leftjoin('quote_status_map', 'quote_status.id', 'quote_status_map.quote_status_id')
+                    ->orderBy('quote_status_map.sort_order', 'asc')->get();
                 break;
             case 'cover_for_id':
                 $data = HealthCoverFor::select('id', 'text')->where('is_active', true)->get();
@@ -111,8 +121,32 @@ class DropdownSourceService extends BaseService
             case 'emirate_of_your_visa_id':
                 $data = Emirate::select('id', 'text')->where('is_active', true)->get();
                 break;
+            case 'tier_users':
+                $data = User::select('id', 'name')->where('is_active', true)->get();
+                break;
+            case 'quad_users':
+                $data = User::select('id', 'name')->where('is_active', true)->get();
+                break;
+            case 'lead_source_id':
+                $data = LeadSource::select('id', 'name')->where('is_active', true)->get();
+                break;
+            case 'rule_users':
+                $data = User::select('id', 'name')->where('is_active', true)->get();
+                break;
             case 'team_users':
-                $data = User::select('id', 'name')->get();
+                $data = User::select('id', 'name')->where('is_active', true)->get();
+                break;
+            case 'quad_tiers':
+                $data = Tier::select('id', 'name')->where('is_active', true)->get();
+                break;
+            case 'tiers':
+                $data = Tier::select('id', 'name')->where('is_active', true)->get();
+                break;
+            case 'quadrants':
+                $data = Quadrants::select('id', 'name')->where('is_active', true)->get();
+                break;
+            case 'users':
+                $data = User::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'car_make_id':
                 $data = CarMake::select('code as id', 'text')->where('is_active', true)->get();
