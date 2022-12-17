@@ -2,15 +2,18 @@
 
 namespace App\Jobs;
 
+use App\Mail\LeadAllocationFailedNotification as MailLeadAllocationFailedNotification;
 use App\Models\LeadAllocation;
 use App\Services\LeadAllocationService;
 use App\Traits\GetUserTree;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class LeadAllocationJob implements ShouldQueue
 {
@@ -98,6 +101,11 @@ class LeadAllocationJob implements ShouldQueue
             info('Lead Allocation Job Failed');
             info('message: '.$e->getMessage());
         }
+    }
+
+    public function failed(Exception $exception)
+    {
+        Mail::send(new MailLeadAllocationFailedNotification($exception));
     }
 
     public function middleware()
