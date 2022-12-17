@@ -164,26 +164,11 @@ return [
     |
     */
 
-    'defaults' => [
-        'supervisor-1' => [
-            'connection' => 'redis',
-            'queue' => ['default'],
-            'balance' => 'auto',
-            'maxProcesses' => 4,
-            'maxTime' => 0,
-            'maxJobs' => 0,
-            'memory' => 256,
-            'tries' => 1,
-            'timeout' => 60,
-            'nice' => 0,
-        ],
-    ],
-
     'environments' => [
         'production' => [
             'supervisor-prod' => [
                 'connection' => 'redis',
-                'queue' => ['default,email,scout'],
+                'queue' => ['default,renewals'],
                 'balance' => 'auto',
                 'processes' => 4,
                 'tries' => 3,
@@ -193,15 +178,15 @@ return [
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
-                'queue' => ['default,email,scout'],
+                'queue' => ['default,renewals'],
                 'balance' => 'auto',
                 'processes' => 4,
                 'tries' => 3,
                 'timeout' => 60,
             ],
         ],
-        'local' => [
-            'supervisor-local' => [
+        'development' => [
+            'supervisor-dev' => [
                 'maxProcesses' => 3,
                 'connection' => 'redis',
                 'balance' => 'auto',
