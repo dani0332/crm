@@ -22,7 +22,7 @@ class JobListener
      */
     public function handleJobProcessing($event)
     {
-        info('The job '.json_decode($event->job->getRawBody())->displayName.' - '. now()->toDateTimeString() .' is about to be processed.');
+        info('The job '.json_decode($event->job->getRawBody())->displayName.' - '.now()->toDateTimeString().' is about to be processed.');
     }
 
     /**
@@ -33,6 +33,6 @@ class JobListener
      */
     public function handleJobProcessed($event)
     {
-        info('The job '.json_decode($event->job->getRawBody())->displayName.' - '. now()->toDateTimeString() .' has been successfully processed.');
+        info('The job '.json_decode($event->job->getRawBody())->displayName.' - '.now()->toDateTimeString().' has been successfully processed.');
     }
 }
