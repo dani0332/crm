@@ -181,7 +181,7 @@ return [
 
     'environments' => [
         'production' => [
-            'supervisor-1' => [
+            'supervisor-prod' => [
                 'connection' => 'redis',
                 'queue' => ['default,email,scout'],
                 'balance' => 'auto',
@@ -191,7 +191,7 @@ return [
             ],
         ],
         'staging' => [
-            'supervisor-1' => [
+            'supervisor-stg' => [
                 'connection' => 'redis',
                 'queue' => ['default,email,scout'],
                 'balance' => 'auto',
@@ -201,7 +201,7 @@ return [
             ],
         ],
         'local' => [
-            'supervisor-1' => [
+            'supervisor-local' => [
                 'maxProcesses' => 3,
                 'connection' => 'redis',
                 'balance' => 'auto',
