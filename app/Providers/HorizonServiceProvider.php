@@ -29,7 +29,7 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
      */
     protected function gate()
     {
-        Gate::define('viewHorizon', function ($user) {
+        Gate::define('viewHorizon', function () {
             if (Auth::user()->hasRole(RolesEnum::Admin)) {
                 return true;
             } else {
