@@ -202,7 +202,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
 
-        //Route::get('car', [CarQuoteTable::class, 'index']);
+        Route::get('car', [CarQuoteTable::class, 'index']);
 
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
