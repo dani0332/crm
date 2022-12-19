@@ -50,7 +50,7 @@ class ProcessSIBCustomerMail implements ShouldQueue
             info('ProcessSIBCustomerMail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
 
             if ($getStatusCode == 201) {
-                info('MyAlfred welcome email sent to coporate customer '.$this->email);
+                info('ProcessSIBCustomerMail MyAlfred welcome email sent to coporate customer '.$this->email);
                 $customer = CustomerService::getCustomerByEmail($this->email);
                 if ($customer) {
                     $updateCustomer = $customer->first();

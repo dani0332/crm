@@ -154,7 +154,7 @@ class TransAppService extends BaseService
         $getStatusCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
 
         if ($getStatusCode == 201) {
-            info('MyAlfred welcome email sent to customer '.$customer->email);
+            info('sendWelcomeEmail MyAlfred welcome email sent to customer '.$customer->email);
             $customer->is_we_sent = true;
             $customer->save();
 
