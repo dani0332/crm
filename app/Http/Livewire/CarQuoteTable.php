@@ -189,10 +189,9 @@ class CarQuoteTable extends DataTableComponent
             MultiSelectFilter::make('Lead Status')
                 ->options(
                     QuoteStatus::query()
-                        ->whereNotIn('id', [6, 1, 3, 7, 32, 34, 4])
-                        ->where('is_active', 1)
-                        ->orderBy('sort_order')
-                        ->get()
+                        ->where(['quote_status.is_active' => true, 'quote_status_map.quote_type_id' => 1])
+                        ->leftjoin('quote_status_map', 'quote_status.id', 'quote_status_map.quote_status_id')
+                        ->orderBy('quote_status_map.sort_order', 'asc')->get()
                         ->keyBy('id')
                         ->map(fn ($status) => $status->text)
                         ->toArray(),
