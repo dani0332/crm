@@ -59,8 +59,11 @@
             name: 'maxCapacity',
             orderable: true,
             searchable: false
-        },
-        {
+        }
+    ];
+
+    @if(auth()->user()->hasRole(RolesEnum::LeadPool))
+        columns.push({
             data: 'isAvailable',
             name: 'isAvailable',
             orderable: true,
@@ -68,20 +71,30 @@
             render: function(data, type, row) {
                 if (data == 1) {
                     var html = `<span class="status-text">Available</span><label class="switch " style="margin-left: 20px;">
-                                    <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" checked="checked" class="chk success" id="is_active" name="is_active">
-                                    <span class="slider round"></span>
-                                </label>`;
+                                                <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" checked="checked" class="chk success" id="is_active" name="is_active">
+                                                <span class="slider round"></span>
+                                            </label>`;
                     return html;
                 } else {
                     var html = `<span class="status-text">UnAvailable</span><label class="switch " style="margin-left: 20px;">
-                                    <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" class="chk danger" id="is_active" name="is_active">
-                                    <span class="slider round"></span>
-                                </label>`;
+                                                <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" class="chk danger" id="is_active" name="is_active">
+                                                <span class="slider round"></span>
+                                            </label>`;
                     return html;
                 }
             },
-        }
-    ];
+        });
+    @else
+        columns.push({
+            data: 'isAvailable',
+            name: 'isAvailable',
+            orderable: true,
+            searchable: false,
+            render: function(data, type, row) {
+                return '<span class="status-text">'+ ((data == 1) ? 'Available' : 'Unavailable') + '</span>';
+            },
+        });
+    @endif
 
     @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager]))
     columns.push({
@@ -91,6 +104,7 @@
         searchable: false,
     })
     @endif
+
 </script>
 
 <script>
@@ -119,44 +133,45 @@
                 }
             });
 
-
-            $('body').on('dblclick', 'table:first td:nth-last-child(3)', function() {
-                var maxCapValue = parseInt($(this).text());
-                if(maxCapValue !== NaN){
-                    $(this).html(`<input type="text" class="form-control" value="${maxCapValue}" />`);
-                }else{
-                    $(this).html(`<input type="text" class="form-control" value="0" />`);
-                }
-                $(this).focusout(function() {
-                    var activeElement = $(this);
-                    var maxCap = parseInt($(this).find('input').val());
-                    if(maxCap < -1 || maxCap == 0){
-                        alert('Please enter valid value for max capacity');
-                        leadAllocationDataTable.draw();
-                        return false;
+            @if(auth()->user()->hasRole(RolesEnum::LeadPool))
+                $('body').on('dblclick', 'table:first td:nth-last-child(3)', function() {
+                    var maxCapValue = parseInt($(this).text());
+                    if(maxCapValue !== NaN){
+                        $(this).html(`<input type="text" class="form-control" value="${maxCapValue}" />`);
                     }else{
-                        var aid = $(this).next().find('input').attr('data-aid');
-                        var id = $(this).next().find('input').attr('data-id');
-                        var data = {
-                            'max_cap': maxCap,
-                            'aid': aid,
-                            'id': id,
-                            '_token': $('meta[name="csrf-token"]').attr('content')
-                        };
-                        $.ajax({
-                            url: '/lead-allocation/updateAvailability',
-                            type: 'POST',
-                            data: data,
-                            success: function(data) {
-                                $(activeElement).html(maxCap);
-                            }
-                        });
+                        $(this).html(`<input type="text" class="form-control" value="0" />`);
                     }
+                    $(this).focusout(function() {
+                        var activeElement = $(this);
+                        var maxCap = parseInt($(this).find('input').val());
+                        if(maxCap < -1 || maxCap == 0){
+                            alert('Please enter valid value for max capacity');
+                            leadAllocationDataTable.draw();
+                            return false;
+                        }else{
+                            var aid = $(this).next().find('input').attr('data-aid');
+                            var id = $(this).next().find('input').attr('data-id');
+                            var data = {
+                                'max_cap': maxCap,
+                                'aid': aid,
+                                'id': id,
+                                '_token': $('meta[name="csrf-token"]').attr('content')
+                            };
+                            $.ajax({
+                                url: '/lead-allocation/updateAvailability',
+                                type: 'POST',
+                                data: data,
+                                success: function(data) {
+                                    $(activeElement).html(maxCap);
+                                }
+                            });
+                        }
 
+                    });
+                    $(this).focus();
+                    $(this).blur(endEdition);
                 });
-                $(this).focus();
-                $(this).blur(endEdition);
-            });
+            @endif
 
             function endEdition() {
                 var el = $(this);
