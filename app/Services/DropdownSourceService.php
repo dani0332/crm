@@ -57,11 +57,11 @@ class DropdownSourceService extends BaseService
                 break;
             case 'tier_users':
                 $data = DB::table('tiers as t')
-                ->select('u.id', DB::raw('group_concat(u.name) as name'))
-                ->leftJoin('tiers_has_users as thu', 'thu.tier_id', 't.id')
-                ->leftJoin('users as u', 'u.id', 'thu.user_id')
-                ->where('t.id', $id)
-                ->groupBy('t.id')->get();
+                    ->select('u.id', DB::raw('group_concat(u.name) as name'))
+                    ->leftJoin('tiers_has_users as thu', 'thu.tier_id', 't.id')
+                    ->leftJoin('users as u', 'u.id', 'thu.user_id')
+                    ->where('t.id', $id)
+                    ->groupBy('t.id')->get();
                 break;
             case 'quad_tiers':
                 $query = 'select t.id, t.name from quadrants q inner join tiers t on t.quad_id = q.id where q.id = '.$id.' group by t.id';
@@ -114,7 +114,7 @@ class DropdownSourceService extends BaseService
                 $data = QuoteStatus::select('id', 'text')
                     ->whereNotIn('id', [
                         QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
-                        QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyInvoiced, QuoteStatusEnum::Issued,
+                        QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyInvoiced, QuoteStatusEnum::Issued, QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::AfiaRenewal, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec,
                     ])
                     ->where('is_active', true)
                     ->orderBy('sort_order', 'asc')
