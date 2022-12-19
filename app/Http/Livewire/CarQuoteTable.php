@@ -32,6 +32,7 @@ class CarQuoteTable extends DataTableComponent
             ->setAdditionalSelects(['car_quote_request.uuid as uuid'])
             ->setSearchDisabled()
             ->setPerPageVisibilityDisabled()
+            ->setColumnSelectDisabled()
             ->setFilterLayoutSlideDown();
         // disabled pagination count & pagination view
         $this->setPaginationVisibilityDisabled();
@@ -46,27 +47,40 @@ class CarQuoteTable extends DataTableComponent
             Column::make('CDB ID', 'code')
                 ->format(
                     function ($value, $row, Column $column) {
-                        return '<a href="'.url('/quotes').'/car/'.$row->uuid.'" target="_blank" title="View" class="text-sky-700">'.$value.'</a>';
+                        return '<a href="'.url('/quotes').'/car/'.$row->uuid.'" target="_blank" title="View Detail" class="text-sky-700">'.$value.'</a>';
                     }
                 )
                 ->html(),
+            Column::make('Renewal Batch #', 'renewal_batch'),
             Column::make('Advisor', 'advisor.name'),
             Column::make('First Name'),
             Column::make('Last Name'),
+            Column::make('Date of Birth', 'dob')
+                ->format(
+                    fn ($value) => $value ? date_format($value, 'Y-m-d') : null
+                ),
+            Column::make('Nationality', 'nationality.text'),
+            Column::make('UAE Licence Held For', 'uaeLicenseHeldFor.text'),
+            Column::make('Claim History', 'claimHistory.text'),
+            Column::make('Policy Number'),
             Column::make('Currently Insured With'),
+            Column::make('Type Of Car Insurance', 'carTypeInsurance.text'),
             Column::make('Lead Status', 'quoteStatus.text'),
+            Column::make('Car Make', 'carMake.text'),
+            Column::make('Car Model', 'carModel.text'),
+            Column::make('Car Model Year', 'year_of_manufacture'),
+            Column::make('Car Value'),
             Column::make('Vehicle Type', 'vehicleType.text'),
-            Column::make('Updated at'),
-            Column::make('Created at'),
-            Column::make('Home Country Driving License Held For', 'uaeLicenseHeldFor.text'),
-            Column::make('Seat Capacity'),
-            Column::make('Cylinder'),
-            BooleanColumn::make('Can Provide No-claims Letter From Previous Insurers', 'has_ncd_supporting_documents'),
-            Column::make('Source'),
-            BooleanColumn::make('Ecommerce', 'is_ecommerce'),
+            Column::make('First Registration Date', 'year_of_first_registration'),
+            BooleanColumn::make('Is Gcc Standard'),
+            BooleanColumn::make('Vehicle Modified', 'is_modified'),
             Column::make('Payment Status', 'paymentStatus.text'),
             Column::make('Premium'),
+            Column::make('Last Modified Date', 'updated_at'),
+            Column::make('Created at'),
+            Column::make('Lost Reason', 'carQuoteRequestDetail.lostReason.text'),
             Column::make('Quote Link'),
+            Column::make('Source'),
         ];
     }
 
@@ -140,7 +154,7 @@ class CarQuoteTable extends DataTableComponent
                 ->filter(function (Builder $builder, string $value) {
                     if (preg_match('/^(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
                         $builder
-                            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+
                             ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$matches[1], $matches[2]]);
                     }
                 }),
