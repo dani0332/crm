@@ -189,6 +189,7 @@ return [
             'supervisor-dev' => [
                 'maxProcesses' => 3,
                 'connection' => 'redis',
+                'queue' => 'default,renewals',
                 'balance' => 'auto',
                 'processes' => 3,
                 'tries' => 3,
@@ -198,6 +199,7 @@ return [
             'supervisor-dev' => [
                 'maxProcesses' => 3,
                 'connection' => 'redis',
+                'queue' => 'default,renewals',
                 'balance' => 'auto',
                 'processes' => 3,
                 'tries' => 3,
