@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
@@ -189,9 +190,12 @@ class CarQuoteTable extends DataTableComponent
             MultiSelectFilter::make('Lead Status')
                 ->options(
                     QuoteStatus::query()
-                        ->where(['quote_status.is_active' => true, 'quote_status_map.quote_type_id' => 1])
-                        ->leftjoin('quote_status_map', 'quote_status.id', 'quote_status_map.quote_status_id')
-                        ->orderBy('quote_status_map.sort_order', 'asc')->get()
+                        ->whereNotIn('id', [
+                            QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
+                            QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyInvoiced, QuoteStatusEnum::Issued,
+                        ])
+                        ->where('is_active', true)
+                        ->orderBy('sort_order', 'asc')->get()
                         ->keyBy('id')
                         ->map(fn ($status) => $status->text)
                         ->toArray(),
