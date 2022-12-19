@@ -194,5 +194,14 @@ return [
                 'tries' => 3,
             ],
         ],
+        'local' => [
+            'supervisor-dev' => [
+                'maxProcesses' => 3,
+                'connection' => 'redis',
+                'balance' => 'auto',
+                'processes' => 3,
+                'tries' => 3,
+            ],
+        ],
     ],
 ];

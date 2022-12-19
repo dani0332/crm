@@ -117,7 +117,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     ]);
     Route::resource('activities', ActivitesController::class)->names([
         'index' => 'activities.index',
-        'destroy' => 'activities.destroy',
     ]);
     Route::post('/activities/create-activity', [ActivitesController::class, 'store']);
     Route::post('activities/{id}/update', [ActivitesController::class, 'update']);
