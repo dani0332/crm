@@ -35,7 +35,7 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('AddBatchNumber:cron')
             ->timezone('Asia/Dubai')
-            ->everyMinute()
+            ->everyTwoMinutes()
             ->onOneServer()
             ->withoutOverlapping(1);
     }
