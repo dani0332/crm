@@ -168,7 +168,7 @@ return [
         'production' => [
             'supervisor-prod' => [
                 'connection' => 'redis',
-                'queue' => ['default,renewals'],
+                'queue' => 'default,renewals',
                 'balance' => 'auto',
                 'processes' => 4,
                 'tries' => 3,
@@ -178,7 +178,7 @@ return [
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
-                'queue' => ['default,renewals'],
+                'queue' => 'default,renewals',
                 'balance' => 'auto',
                 'processes' => 4,
                 'tries' => 3,
@@ -186,6 +186,15 @@ return [
             ],
         ],
         'development' => [
+            'supervisor-dev' => [
+                'maxProcesses' => 3,
+                'connection' => 'redis',
+                'balance' => 'auto',
+                'processes' => 3,
+                'tries' => 3,
+            ],
+        ],
+        'local' => [
             'supervisor-dev' => [
                 'maxProcesses' => 3,
                 'connection' => 'redis',
