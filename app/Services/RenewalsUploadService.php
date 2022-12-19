@@ -44,6 +44,7 @@ use DateTime;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class RenewalsUploadService
@@ -317,19 +318,15 @@ class RenewalsUploadService
     {
         $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true);
 
-        if (isset($quotePlans->message) && $quotePlans->message != '') {
-            $listQuotePlans = $quotePlans->message;
-        } else {
-            if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
-                $listQuotePlans = $quotePlans->quotes->plans;
-            } elseif (! isset($quotePlans->quotes->plans)) {
-                $listQuotePlans = 'Plans not available!';
-            } else {
-                $listQuotePlans = $quotePlans;
-            }
+        if (isset($quotePlans->quotes)) {
+            return true;
         }
 
-        return $listQuotePlans;
+        if (! empty($quotePlans->message)) {
+            return $quotePlans->message;
+        }
+
+        return $quotePlans;
     }
 
     /**
@@ -428,14 +425,14 @@ class RenewalsUploadService
             }
 
             info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
-            $plans = $this->getPlans($quote->uuid);
-            if (isset($plans[0]->id)) {
+            $plansResponse = $this->getPlans($quote->uuid);
+            if ($plansResponse === true) {
                 info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
                 //update status to plans fetched
                 $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
             } else {
-                info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plans)) ? $plans : json_encode($plans));
+                info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
             }
         } else {

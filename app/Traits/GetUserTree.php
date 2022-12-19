@@ -8,7 +8,7 @@ trait GetUserTree
 {
     public function walkTree($userId)
     {
-        $childUserIds = [];
+        $childUserIds = [$userId];
         $childs = User::where('manager_id', $userId)->pluck('id');
         foreach ($childs as $child) {
             $nextChilds = User::where('manager_id', $child)->pluck('id');

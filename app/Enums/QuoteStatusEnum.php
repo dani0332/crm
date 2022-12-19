@@ -39,4 +39,15 @@ final class QuoteStatusEnum extends Enum
     const PolicyIssued = 33;
     const PolicyInvoiced = 34;
     const Duplicate = 35;
+    const PriceTooHigh = 40;
+    const PolicyPurchasedBeforeFirstCall = 41;
+    const NotContactablePe = 42;
+    const FollowupCall = 43;
+    const Interested = 44;
+    const NoAnswer = 45;
+    const NotInterested = 46;
+    const NotEligibleForInsurance = 47;
+    const AfiaRenewal = 48;
+    const NotLookingForMotorInsurance = 49;
+    const NonGccSpec = 50;
 }

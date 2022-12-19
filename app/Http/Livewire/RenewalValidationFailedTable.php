@@ -28,12 +28,12 @@ class RenewalValidationFailedTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make('Batch', 'batch'),
-            Column::make('File name', 'renewalUploadLead.file_name'),
-            Column::make('Quote type', 'quote_type'),
-            Column::make('Policy number', 'policy_number'),
-            Column::make('Status', 'status'),
-            Column::make('Validation Errors', 'validation_errors')
+            Column::make('Batch'),
+            Column::make('File Name', 'renewalUploadLead.file_name'),
+            Column::make('Quote Type'),
+            Column::make('Policy Number'),
+            Column::make('Status'),
+            Column::make('Validation Errors')
               ->format(
                   function ($value, $row, Column $column) {
                       $html = '';
