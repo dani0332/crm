@@ -117,7 +117,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     ]);
     Route::resource('activities', ActivitesController::class)->names([
         'index' => 'activities.index',
-        'destroy' => 'activities.destroy',
     ]);
     Route::post('/activities/create-activity', [ActivitesController::class, 'store']);
     Route::post('activities/{id}/update', [ActivitesController::class, 'update']);
@@ -203,7 +202,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
 
-        //Route::get('car', [CarQuoteTable::class, 'index']);
+        Route::get('cartest', [CarQuoteTable::class, 'index']);
 
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
