@@ -18,6 +18,7 @@ use App\Http\Controllers\ClaimsStatusController;
 use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FailedJobsController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\FtcFormController;
 use App\Http\Controllers\GenericCrudController;
@@ -180,6 +181,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport']);
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
+    Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
     Route::group(['prefix' => 'rewards'], function () {
         Route::resource('partner', PartnerController::class);
         Route::resource('reward', RewardController::class);
