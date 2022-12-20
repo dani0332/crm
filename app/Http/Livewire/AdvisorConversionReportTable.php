@@ -5,9 +5,7 @@ namespace App\Http\Livewire;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
 use App\Models\QuoteBatches;
-use App\Models\Team;
 use App\Models\Tier;
-use App\Models\User;
 use App\Traits\GetUserTree;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -162,16 +160,6 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ])->filter(function (Builder $builder, string $value) {
                     $builder->where('car_quote_request.is_ecommerce', $value == 'no' ? false : true);
                 }),
-            SelectFilter::make('Exclude Created Leads')
-            ->options([
-                '' => 'All',
-                'yes' => 'Yes',
-                'no' => 'No',
-            ])->filter(function (Builder $builder, string $value) {
-                if ($value == 'yes') {
-                    $builder->where('car_quote_request.source', 'IMCRM');
-                }
-            }),
             MultiSelectFilter::make('Batch Number')
                 ->options(
                     QuoteBatches::query()
@@ -184,31 +172,6 @@ class AdvisorConversionReportTable extends DataTableComponent
                     'max' => 4,
                 ])->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.quote_batch_id', $value);
-                }),
-            MultiSelectFilter::make('Teams')
-                ->options(
-                    Team::query()
-                        ->orderBy('name')
-                        ->whereNotNull('parent_team_id')
-                        ->where('parent_team_id', 2)
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($Teams) => $Teams->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
-                    $builder->whereIn('teams.id', $value);
-                }),
-            MultiSelectFilter::make('Advisor Name')
-                ->options(
-                    User::query()
-                        ->orderBy('name')
-                        ->where('is_active', 1)
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($users) => $users->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
-                    $builder->whereIn('car_quote_request.advisor_id', $value);
                 }),
             MultiSelectFilter::make('Tiers')
                 ->options(
