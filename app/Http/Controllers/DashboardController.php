@@ -40,14 +40,8 @@ class DashboardController extends Controller
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
         $carAdvisors = User::where('sub_team_id', $teams->pluck('id')->toArray())->get();
-        foreach ($teams as $team) {
-            $teamUserIds = $carAdvisors->where('sub_team_id', $team->id)->pluck('id');
-            $teamWiseLeadsAssignedAverage[] = [
-                'totalUsersUnderTeam' => count($teamUserIds),
-                'teamName' => $team->name,
-                'totalLeadsCount' => $todaysLeads->whereIn('advisor_id', $teamUserIds)->count(),
-            ];
-        }
+        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams, $carAdvisors);
+
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
         $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
@@ -92,16 +86,6 @@ class DashboardController extends Controller
         return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
             'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, ];
-    }
-
-    public function getTeamAdvisorConversionStats(Request $request)
-    {
-        return $this->getAdvisorLeadAssignedData($request->teamFilter);
-    }
-
-    public function getAdvisorConversionStats(Request $request)
-    {
-        return $this->getAdvisorConversionData($request->advisorFilter);
     }
 
     public function renderTplDashboard(Request $request)
@@ -274,5 +258,15 @@ class DashboardController extends Controller
             '3WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(2),
             '4WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(3),
         ];
+    }
+
+    public function getTeamAdvisorConversionStats(Request $request)
+    {
+        return $this->getAdvisorLeadAssignedData($request->teamFilter);
+    }
+
+    public function getAdvisorConversionStats(Request $request)
+    {
+        return $this->getAdvisorConversionData($request->advisorFilter);
     }
 }
