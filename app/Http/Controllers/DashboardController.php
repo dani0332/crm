@@ -66,8 +66,6 @@ class DashboardController extends Controller
             'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
     }
 
-
-
     public function getRecentDailyStats(Request $request)
     {
         $startDate = explode(',', $request->range)[0];
@@ -96,20 +94,10 @@ class DashboardController extends Controller
             'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, ];
     }
 
-
-
-
-
-
-
-
-
     public function getTeamAdvisorConversionStats(Request $request)
     {
         return $this->getAdvisorLeadAssignedData($request->teamFilter);
     }
-
-
 
     public function getAdvisorConversionStats(Request $request)
     {
