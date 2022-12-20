@@ -7,6 +7,8 @@ use App\Services\LeadAllocationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Blade;
+use Barryvdh\Debugbar\Facade as Debugbar;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +31,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        if (config('APP_ENV') == 'local') {
+            Debugbar::enable();
+        }
         // DB::listen(function($query) {
         //     Log::info(
         //         $query->sql,

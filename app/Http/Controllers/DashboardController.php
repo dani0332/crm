@@ -36,7 +36,7 @@ class DashboardController extends Controller
 
     public function renderMainDashboard(Request $request)
     {
-        $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])->get();
+        $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
         $carAdvisors = User::where(function ($query) use ($carTeam, $teams) {
@@ -48,7 +48,7 @@ class DashboardController extends Controller
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => count($teamUserIds),
                 'teamName' => $team->name,
-                'totalLeadsCount' => CarQuote::whereIn('advisor_id', $teamUserIds)->whereBetween('created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])->count(),
+                'totalLeadsCount' => $allCarQuotesToday->whereIn('advisor_id', $teamUserIds)->count(),
             ];
         }
         $totalLeadsReceived = count($allCarQuotesToday);
@@ -56,6 +56,7 @@ class DashboardController extends Controller
         $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
         $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
         $totalUnAssignedRevivalLeads = count($allCarQuotesToday->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
+
         $leadsCountByTier = $this->getLeadsCountByTier(null, null);
         $unAssignedLeadsByTier = $this->getUnAssignedLeadsCountByTier($request);
         $revivalLeadsCount = $this->getLeadsCountRevival(null, null);
@@ -75,7 +76,7 @@ class DashboardController extends Controller
             DB::raw('count(*) as sourceCount'),
         );
         if ($startDate == null && $endDate == null) {
-            $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
+            $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
         } else {
             $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
         }
@@ -90,10 +91,6 @@ class DashboardController extends Controller
         $allCarQuotesToday = CarQuote::whereBetween('created_at', [$startDate, $endDate])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
-        $carAdvisors = User::where(function ($query) use ($carTeam, $teams) {
-            $query->where('team_id', $carTeam->id)
-            ->orWhere('sub_team_id', $teams->pluck('id')->toArray());
-        })->get();
         foreach ($teams as $team) {
             $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
             $teamWiseLeadsAssignedAverage[] = [
@@ -122,7 +119,7 @@ class DashboardController extends Controller
             DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
         );
         if ($startDate == null && $endDate == null) {
-            $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
+            $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
         } else {
             $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
         }
@@ -139,7 +136,7 @@ class DashboardController extends Controller
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->groupBy('tiers.name');
         if ($startDate == null && $endDate == null) {
-            $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
+            $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
         } else {
             $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
         }
@@ -156,7 +153,7 @@ class DashboardController extends Controller
         )
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->whereNull('car_quote_request.advisor_id')
-        ->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])
+        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('tiers.name')
         ->get();
     }
@@ -168,7 +165,7 @@ class DashboardController extends Controller
             DB::raw('COUNT(car_quote_request.id) AS total_leads'),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])
+        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
         if (isset($teamIds)) {
             $userIds = User::where(function ($query) use ($teamIds) {
@@ -201,6 +198,7 @@ class DashboardController extends Controller
         )
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->groupBy('quote_batches.name')
+        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->orderBy('quote_batches.id', 'desc')
         ->take(10);
         if (isset($advisorId)) {
