@@ -36,51 +36,28 @@ class DashboardController extends Controller
 
     public function renderMainDashboard(Request $request)
     {
-        $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])->get();
+        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
-        $carAdvisors = User::where(function ($query) use ($carTeam, $teams) {
-            $query->where('team_id', $carTeam->id)
-            ->orWhere('sub_team_id', $teams->pluck('id')->toArray());
-        })->get();
-        foreach ($teams as $team) {
-            $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
-            $teamWiseLeadsAssignedAverage[] = [
-                'totalUsersUnderTeam' => count($teamUserIds),
-                'teamName' => $team->name,
-                'totalLeadsCount' => CarQuote::whereIn('advisor_id', $teamUserIds)->whereBetween('created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])->count(),
-            ];
-        }
-        $totalLeadsReceived = count($allCarQuotesToday);
-        $totalLeadsReceivedEcommerce = count($allCarQuotesToday->where('is_ecommerce', 1));
-        $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
-        $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($allCarQuotesToday->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
-        $leadsCountByTier = $this->getLeadsCountByTier(null, null);
-        $unAssignedLeadsByTier = $this->getUnAssignedLeadsCountByTier($request);
-        $revivalLeadsCount = $this->getLeadsCountRevival(null, null);
-        $assignedLeadsBySource = $this->getAssignedLeadsCountBySource(null, null);
-        $advisorConversionData = $this->getAdvisorConversionData(null);
-        $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData(null);
+        $carAdvisors = User::where('sub_team_id', $teams->pluck('id')->toArray())->get();
+        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams, $carAdvisors);
+
+        $totalLeadsReceived = count($todaysLeads);
+        $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
+        $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
+        $totalUnAssignedLeadsReceivedEcommerce = count($todaysLeads->whereNull('advisor_id')->where('is_ecommerce', 1));
+        $totalUnAssignedRevivalLeads = count($todaysLeads->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
+
+        $leadsCountByTier = $this->dashboardService->getLeadsCountByTier(null, null);
+        $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($request);
+        $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival(null, null);
+        $assignedLeadsBySource = $this->dashboardService->getAssignedLeadsCountBySource(null, null);
+        $advisorConversionData = $this->dashboardService->getAdvisorConversionData(null);
+        $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData(null);
 
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
             'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
             'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
-    }
-
-    public function getAssignedLeadsCountBySource($startDate, $endDate)
-    {
-        $query = CarQuote::select(
-            DB::raw('distinct(source) as sourceName'),
-            DB::raw('count(*) as sourceCount'),
-        );
-        if ($startDate == null && $endDate == null) {
-            $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
-        } else {
-            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
-        }
-
-        return $query->get();
     }
 
     public function getRecentDailyStats(Request $request)
@@ -90,10 +67,6 @@ class DashboardController extends Controller
         $allCarQuotesToday = CarQuote::whereBetween('created_at', [$startDate, $endDate])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
-        $carAdvisors = User::where(function ($query) use ($carTeam, $teams) {
-            $query->where('team_id', $carTeam->id)
-            ->orWhere('sub_team_id', $teams->pluck('id')->toArray());
-        })->get();
         foreach ($teams as $team) {
             $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
             $teamWiseLeadsAssignedAverage[] = [
@@ -113,106 +86,6 @@ class DashboardController extends Controller
         return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
             'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, ];
-    }
-
-    public function getLeadsCountRevival($startDate, $endDate)
-    {
-        $query = CarQuote::select(
-            DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
-            DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
-        );
-        if ($startDate == null && $endDate == null) {
-            $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
-        } else {
-            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
-        }
-
-        return $query->get();
-    }
-
-    public function getLeadsCountByTier($startDate, $endDate)
-    {
-        $query = CarQuote::select(
-            'tiers.name as tierNames',
-            DB::raw('count(*) as leadCount')
-        )
-        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->groupBy('tiers.name');
-        if ($startDate == null && $endDate == null) {
-            $query->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()]);
-        } else {
-            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
-        }
-
-        return $query->get();
-    }
-
-    public function getUnAssignedLeadsCountByTier($request)
-    {
-        return
-        CarQuote::select(
-            'tiers.name as tierNames',
-            DB::raw('count(*) as leadCount')
-        )
-        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->whereNull('car_quote_request.advisor_id')
-        ->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])
-        ->groupBy('tiers.name')
-        ->get();
-    }
-
-    public function getAdvisorLeadAssignedData($teamIds)
-    {
-        $query = CarQuote::select(
-            'users.name',
-            DB::raw('COUNT(car_quote_request.id) AS total_leads'),
-        )
-        ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->whereBetween('car_quote_request.created_at', [now()->addDays(-90)->startOfDay(), now()->endOfDay()])
-        ->groupBy('users.name');
-        if (isset($teamIds)) {
-            $userIds = User::where(function ($query) use ($teamIds) {
-                $query->whereIn('team_id', [$teamIds])
-                ->orWhere('sub_team_id', [$teamIds]);
-            })->pluck('id');
-            $query->whereIn('users.id', $userIds);
-        }
-
-        return $query->get();
-    }
-
-    public function getTeamAdvisorConversionStats(Request $request)
-    {
-        return $this->getAdvisorLeadAssignedData($request->teamFilter);
-    }
-
-    public function getAdvisorConversionData($advisorId)
-    {
-        $query = CarQuote::select(
-            'quote_batches.name',
-            'quote_batches.start_date',
-            'quote_batches.end_date',
-            DB::raw('COUNT(car_quote_request.id) AS total_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) AS manual_created'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id IN (9, 35) THEN 1 ELSE 0 END) AS bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) AS sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM"
-            AND car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) AS created_sale_leads'),
-        )
-        ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->groupBy('quote_batches.name')
-        ->orderBy('quote_batches.id', 'desc')
-        ->take(10);
-        if (isset($advisorId)) {
-            $query->where('car_quote_request.advisor_id', $advisorId);
-        }
-
-        return $query->get();
-    }
-
-    public function getAdvisorConversionStats(Request $request)
-    {
-        return $this->getAdvisorConversionData($request->advisorFilter);
     }
 
     public function renderTplDashboard(Request $request)
@@ -385,5 +258,15 @@ class DashboardController extends Controller
             '3WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(2),
             '4WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(3),
         ];
+    }
+
+    public function getTeamAdvisorConversionStats(Request $request)
+    {
+        return $this->getAdvisorLeadAssignedData($request->teamFilter);
+    }
+
+    public function getAdvisorConversionStats(Request $request)
+    {
+        return $this->getAdvisorConversionData($request->advisorFilter);
     }
 }
