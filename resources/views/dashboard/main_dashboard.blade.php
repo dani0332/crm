@@ -204,7 +204,7 @@
                     <b  style="color: cornflowerblue;">{{strtoupper($item['teamName'])}}</b>
                     <div style="text-align: center;">
                         <b id={{str_replace(' ', '', $item['teamName'])}}>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
-                            number_format((float)$item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
+                            number_format((float)$item['totalUsersUnderTeam'] == 0 ? 0 : $item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
                             }}</b>
                     </div>
                 </div>

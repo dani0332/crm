@@ -39,12 +39,9 @@ class DashboardController extends Controller
         $allCarQuotesToday = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('parent_team_id', $carTeam->id)->get();
-        $carAdvisors = User::where(function ($query) use ($carTeam, $teams) {
-            $query->where('team_id', $carTeam->id)
-            ->orWhere('sub_team_id', $teams->pluck('id')->toArray());
-        })->get();
+        $carAdvisors = User::where('sub_team_id', $teams->pluck('id')->toArray())->get();
         foreach ($teams as $team) {
-            $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
+            $teamUserIds = $carAdvisors->where('sub_team_id', $team->id)->pluck('id');
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => count($teamUserIds),
                 'teamName' => $team->name,
@@ -63,9 +60,8 @@ class DashboardController extends Controller
         $assignedLeadsBySource = $this->getAssignedLeadsCountBySource(null, null);
         $advisorConversionData = $this->getAdvisorConversionData(null);
         $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData(null);
-
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
-            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
+            'teams', 'carAdvisors' , 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
             'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
     }
 
