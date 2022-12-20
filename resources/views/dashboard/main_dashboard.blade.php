@@ -107,52 +107,51 @@
     }
 
 
-    .highcharts-figure,
-.highcharts-data-table table {
-    min-width: 320px;
-    max-width: 800px;
-    margin: 1em auto;
-}
+    .highcharts-figure, .highcharts-data-table table {
+        min-width: 320px;
+        max-width: 800px;
+        margin: 1em auto;
+    }
 
-.highcharts-data-table table {
-    font-family: Verdana, sans-serif;
-    border-collapse: collapse;
-    border: 1px solid #ebebeb;
-    margin: 10px auto;
-    text-align: center;
-    width: 100%;
-    max-width: 500px;
-}
+    .highcharts-data-table table {
+        font-family: Verdana, sans-serif;
+        border-collapse: collapse;
+        border: 1px solid #ebebeb;
+        margin: 10px auto;
+        text-align: center;
+        width: 100%;
+        max-width: 500px;
+    }
 
-.highcharts-data-table caption {
-    padding: 1em 0;
-    font-size: 1.2em;
-    color: #555;
-}
+    .highcharts-data-table caption {
+        padding: 1em 0;
+        font-size: 1.2em;
+        color: #555;
+    }
 
-.highcharts-data-table th {
-    font-weight: 600;
-    padding: 0.5em;
-}
+    .highcharts-data-table th {
+        font-weight: 600;
+        padding: 0.5em;
+    }
 
-.highcharts-data-table td,
-.highcharts-data-table th,
-.highcharts-data-table caption {
-    padding: 0.5em;
-}
+    .highcharts-data-table td,
+    .highcharts-data-table th,
+    .highcharts-data-table caption {
+        padding: 0.5em;
+    }
 
-.highcharts-data-table thead tr,
-.highcharts-data-table tr:nth-child(even) {
-    background: #f8f8f8;
-}
+    .highcharts-data-table thead tr,
+    .highcharts-data-table tr:nth-child(even) {
+        background: #f8f8f8;
+    }
 
-.highcharts-data-table tr:hover {
-    background: #f1f7ff;
-}
+    .highcharts-data-table tr:hover {
+        background: #f1f7ff;
+    }
 
-input[type="number"] {
-    min-width: 50px;
-}
+    input[type="number"] {
+        min-width: 50px;
+    }
 
 </style>
 
@@ -205,7 +204,7 @@ input[type="number"] {
                     <b  style="color: cornflowerblue;">{{strtoupper($item['teamName'])}}</b>
                     <div style="text-align: center;">
                         <b id={{str_replace(' ', '', $item['teamName'])}}>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
-                            number_format((float)$item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
+                            number_format((float)$item['totalUsersUnderTeam'] == 0 ? 0 : $item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
                             }}</b>
                     </div>
                 </div>
@@ -233,7 +232,7 @@ input[type="number"] {
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 ml-10 col-md-offset-1" style="width: 50%; float:right;margin-top: 45px;">
+            <div class="col-md-6 ml-10 col-md-offset-1" style="width: 40%; float:right;margin-top: 45px;">
                 <div class="panel panel-default">
                     <div class="panel-body">
                         <div id="UnAssignedLeadRcdSummaryByTier"></div>
@@ -709,12 +708,10 @@ input[type="number"] {
                     }
                 }
             },
-
             tooltip: {
                 headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
                 pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}</b>'
             },
-
             series: [
                 {
                     name: 'Leads Assigned',
@@ -724,6 +721,9 @@ input[type="number"] {
             ]
         });
     }
+    function createColumnChart(dataSource, titleText, leftTitle, toolTipHeading, chartVariable)
+    {
 
+    }
 </script>
 @endsection
