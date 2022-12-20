@@ -15,12 +15,13 @@ class CreateHealthFacilityCategoryTable extends Migration
     {
         Schema::create('health_facility_category', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
             $table->string('code', 50);
             $table->string('text', 50)->nullable();
             $table->string('text_ar', 50)->nullable();
             $table->boolean('is_active')->default(true);
             $table->unique('code');
+            $table->timestamps();
+            $table->softDeletes('deleted_at');
         });
     }
 
