@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Team;
 use App\Models\Tier;
@@ -104,7 +105,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
         ->toArray();
         array_unshift($teams, ['' => 'All']);
 
-        return [
+        $filters = [
             DateFilter::make('Start Date')
               ->filter(function (Builder $builder, string $value) {
                   $builder->whereDate('car_quote_request.created_at', '>=', $value);
@@ -113,7 +114,11 @@ class AdvisorDistributionReportTable extends DataTableComponent
               ->filter(function (Builder $builder, string $value) {
                   $builder->whereDate('car_quote_request.created_at', '<=', $value);
               }),
-            SelectFilter::make('Teams')
+        ];
+        if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+            array_push(
+                $filters,
+                SelectFilter::make('Teams')
             ->options(Team::query()
             ->orderBy('name')
             ->get()
@@ -122,19 +127,21 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->toArray())->filter(function (Builder $builder, $value) {
                 $builder->where('users.team_id', $value);
             }),
-            SelectFilter::make('Tiers')
-            ->options(
-                Tier::query()
-                    ->orderBy('name')
-                    ->where('is_active', 1)
-                    ->get()
-                    ->keyBy('id')
-                    ->map(fn ($tier) => $tier->name)
-                    ->toArray(),
-            )->filter(function (Builder $builder, $value) {
-                $builder->where('car_quote_request.tier_id', $value);
-            }),
+                SelectFilter::make('Tiers')
+                ->options(
+                    Tier::query()
+                        ->orderBy('name')
+                        ->where('is_active', 1)
+                        ->get()
+                        ->keyBy('id')
+                        ->map(fn ($tier) => $tier->name)
+                        ->toArray(),
+                )->filter(function (Builder $builder, $value) {
+                    $builder->where('car_quote_request.tier_id', $value);
+                })
+            );
+        }
 
-        ];
+        return $filters;
     }
 }
