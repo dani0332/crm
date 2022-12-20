@@ -3,9 +3,7 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\quoteTypeCode;
 use App\Models\CarQuote;
-use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use DB;
@@ -170,6 +168,7 @@ class DashboardService extends BaseService
                 'totalLeadsCount' => $todaysLeads->whereIn('advisor_id', $teamUserIds)->count(),
             ];
         }
+
         return $teamWiseLeadsAssignedAverage;
     }
 }

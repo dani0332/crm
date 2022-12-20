@@ -30,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         $allowedEnvs = [EnvEnum::LOCAL, EnvEnum::DEVELOPMENT, EnvEnum::STAGING];
-        if (in_array(config('APP_ENV','production'), $allowedEnvs)) {
+        if (in_array(config('APP_ENV', 'production'), $allowedEnvs)) {
             Debugbar::enable();
         }
         // DB::listen(function($query) {
