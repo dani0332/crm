@@ -211,8 +211,13 @@
                                     <label class="col-form-label col-md-6 col-sm-6"
                                         for="Status Description"><b>{{ strtoupper($customTitles[$property]) }}</b></label>
                                 @else
-                                    <label class="col-form-label col-md-6 col-sm-6"
-                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper($property)) }}</b></label>
+                                @if($property == DatabaseColumnsString::SOURCE && auth()->user()->hasRole(RolesEnum::CarAdvisor))
+                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description">&nbsp;</label>
+                                @else
+                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description">
+                                        <b>{{ str_replace('_', ' ', strtoupper($property)) }}</b>
+                                    </label>
+                                @endif
                                 @endif
                                 @if (str_contains($value, 'select'))
                                     @if (str_contains($value, 'customTable'))
@@ -250,7 +255,17 @@
                                                     @else {{ $record->$property }}
                                                     @endif
                                                 @else
-                                                    {{ $property==DatabaseColumnsString::CAR_VALUE ? number_format($record->$property, 2) : $record->$property }}
+                                                @if($property == DatabaseColumnsString::CAR_VALUE)
+                                                    {{ number_format($record->$property, 2) }}
+                                                @else
+                                                    @if($property == DatabaseColumnsString::SOURCE)
+                                                        @if(!auth()->user()->hasRole(RolesEnum::CarAdvisor))
+                                                            {{$record->$property }}
+                                                        @endif
+                                                    @else
+                                                        {{$record->$property }}
+                                                    @endif
+                                                @endif
                                                 @endif
                                             </p>
                                         </div>
@@ -296,8 +311,12 @@
     @endif
 
     @if (strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
+        @if ($model->modelType == quoteTypeCode::Car)
+            <x-quote-renewal-card :record="$record" />
+        @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
-            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled" />
+            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled" 
+            :quoteTypeId="$quoteTypeId" />
     @endif
     @if (count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"

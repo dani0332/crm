@@ -44,6 +44,7 @@ use DateTime;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class RenewalsUploadService
@@ -317,19 +318,15 @@ class RenewalsUploadService
     {
         $quotePlans = $this->carQuoteService->getQuotePlans($id, false, true);
 
-        if (isset($quotePlans->message) && $quotePlans->message != '') {
-            $listQuotePlans = $quotePlans->message;
-        } else {
-            if (gettype($quotePlans) != 'string' && isset($quotePlans->quotes->plans)) {
-                $listQuotePlans = $quotePlans->quotes->plans;
-            } elseif (! isset($quotePlans->quotes->plans)) {
-                $listQuotePlans = 'Plans not available!';
-            } else {
-                $listQuotePlans = $quotePlans;
-            }
+        if (isset($quotePlans->quotes)) {
+            return true;
         }
 
-        return $listQuotePlans;
+        if (! empty($quotePlans->message)) {
+            return $quotePlans->message;
+        }
+
+        return $quotePlans;
     }
 
     /**
@@ -428,14 +425,14 @@ class RenewalsUploadService
             }
 
             info('FetchPlans FN: fetchRenewalPlans'.' fetching plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
-            $plans = $this->getPlans($quote->uuid);
-            if (isset($plans[0]->id)) {
+            $plansResponse = $this->getPlans($quote->uuid);
+            if ($plansResponse === true) {
                 info('FetchPlans FN: fetchRenewalPlans'.' Plans Fetched for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid);
                 //update status to plans fetched
                 $renewalQuoteProcess->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_completed' => DB::raw('total_completed+1')]);
             } else {
-                info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plans)) ? $plans : json_encode($plans));
+                info('FetchPlans FN: fetchRenewalPlans'.' Failed to fetch plans for quoteType: '.$renewalQuoteProcess->quote_type.' UUID: '.$quote->uuid.' Error: '.(is_string($plansResponse)) ? $plansResponse : json_encode($plansResponse));
                 RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
             }
         } else {
@@ -827,6 +824,14 @@ class RenewalsUploadService
             info($logPrefix.' update quote started for PolicyNo: '.$data['policy_number'].' ID: '.$renewalQuoteProcess->id.' UploadLeadId: '.$renewalUploadLead->id);
 
             $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
+            // Previous Car Lead
+            $quoteObject = $this->createQuoteObject(ucfirst($quoteType->code));
+
+            $quote = $quoteObject->where('previous_quote_policy_number', $data['policy_number'])
+                ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))->first();
+
+            throw_unless($quote, ('Quote not found for PolicyNumber: '.$data['policy_number'].' EndDate: '.$data['end_date'].' Batch: '.$renewalQuoteProcess->batch));
+
             $carMake = $this->renewalsAddonService->getCarMake($data['make']);
             $carModel = $this->renewalsAddonService->getCarModel($data['model']);
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
@@ -846,89 +851,82 @@ class RenewalsUploadService
                 $carTypeOfInsurance = $this->renewalsAddonService->getCarTypeOfInsurance($data['product_type']);
             }
 
-            // Previous Car Lead
-            $quoteObject = $this->createQuoteObject(ucfirst($quoteType->code));
-            if (($quote = $quoteObject->where('previous_quote_policy_number', $data['policy_number'])
-                ->where('previous_policy_expiry_date', $this->formatDate($data['end_date']))->first())) {
-                info($logPrefix.' quote found to update with UUID: '.$quote->uuid);
+            info($logPrefix.' quote found to update with UUID: '.$quote->uuid);
 
-                $customerData = $this->buildCustomerData($data);
-                $this->updateCustomer($customerData, $quote->customer_id);
+            $customerData = $this->buildCustomerData($data);
+            $this->updateCustomer($customerData, $quote->customer_id);
 
-                $quoteData = $this->getNonEmptyValues([
-                    'first_name' => $customerData['first_name'],
-                    'last_name' => $customerData['last_name'],
-                    'email' => $customerData['email'],
-                    'mobile_no' => $customerData['mobile_no'],
-                    'dob' => (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null,
-                    'car_type_insurance_id' => $carTypeOfInsurance->id ?? null,
-                    'claim_history_id' => $claimHistory->id ?? null,
-                    'nationality_id' => $nationality->id ?? null,
-                    'emirate_of_registration_id' => $emirate->id ?? null,
-                    'uae_license_held_for_id' => $uaeLicenseHeldFor->id ?? null,
-                    'car_value' => $data['car_value'],
-                    'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
-                    'advisor_id' => $advisorId,
-                    'renewal_batch' => $data['batch'],
-                    'additional_notes' => $data['notes'],
-                    'car_make_id' => $carMake->id ?? null,
-                    'car_model_id' => $carModel->id ?? null,
-                    'cylinder' => $carModel->cylinder ?? null,
-                    'vehicle_category' => $vehicleType->category ?? null,
-                    'year_of_manufacture' => $data['year'] ?? null,
-                    'previous_advisor_id' => $previousAdvisorId,
-                    'quote_updated_at' => Carbon::now(),
-                    'has_ncd_supporting_documents' => $data['nc_letter'],
-                ]);
+            $quoteData = $this->getNonEmptyValues([
+                'first_name' => $customerData['first_name'],
+                'last_name' => $customerData['last_name'],
+                'email' => $customerData['email'],
+                'mobile_no' => $customerData['mobile_no'],
+                'dob' => (! empty($data['dob'])) ? $this->formatDate($data['dob']) : null,
+                'car_type_insurance_id' => $carTypeOfInsurance->id ?? null,
+                'claim_history_id' => $claimHistory->id ?? null,
+                'nationality_id' => $nationality->id ?? null,
+                'emirate_of_registration_id' => $emirate->id ?? null,
+                'uae_license_held_for_id' => $uaeLicenseHeldFor->id ?? null,
+                'car_value' => $data['car_value'],
+                'previous_policy_expiry_date' => (! empty($data['end_date'])) ? $this->formatDate($data['end_date']) : null,
+                'advisor_id' => $advisorId,
+                'renewal_batch' => $data['batch'],
+                'additional_notes' => $data['notes'],
+                'car_make_id' => $carMake->id ?? null,
+                'car_model_id' => $carModel->id ?? null,
+                'cylinder' => $carModel->cylinder ?? null,
+                'vehicle_category' => $vehicleType->category ?? null,
+                'year_of_manufacture' => $data['year'] ?? null,
+                'previous_advisor_id' => $previousAdvisorId,
+                'quote_updated_at' => Carbon::now(),
+                'has_ncd_supporting_documents' => $data['nc_letter'],
+            ]);
 
-                if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
-                    $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];
-                } elseif ($quoteType->code == quoteTypeCode::Car && ! empty($data['year'])) {
-                    $quoteData['year_of_first_registration'] = $data['year'];
-                }
-
-                if (! empty($data['plan_type']) && in_array($data['plan_type'], [CarPlanType::TPL, CarPlanType::COMP])) {
-                    $quoteData['current_insurance_status'] = 'ACTIVE_'.$data['plan_type'];
-                }
-
-                if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike]) && ($insurer = $this->insuranceProviderService->getProviderByCode($data['insurer']))) {
-                    $quoteData['currently_insured_with'] = $insurer->text;
-                }
-
-                info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
-
-                $quote->update($quoteData);
-
-                info($logPrefix.' quote updated UUID: '.$quote->uuid);
-
-                if (! empty($advisorId)) {
-                    $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
-                    info($logPrefix.' quote advisor assigned datetime updated UUID: '.$quote->uuid);
-                }
-
-                //mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
-                RenewalQuoteProcess::where([
-                    'quote_id' => $quote->id,
-                    'status' => RenewalProcessStatuses::PROCESSED,
-                    'type' => RenewalsUploadType::UPDATE_LEADS,
-                    'fetch_plans_status' => FetchPlansStatuses::PENDING,
-                ])->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
-
-                //mark renewal quote process as processed and assign quote id
-                $renewalQuoteProcess->update([
-                    'status' => RenewalProcessStatuses::PROCESSED,
-                    'quote_id' => $quote->id,
-                    'fetch_plans_status' => FetchPlansStatuses::PENDING,
-                ]);
-
-                RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
-
-                info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
-
-                return $quote;
+            if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
+                $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];
+            } elseif ($quoteType->code == quoteTypeCode::Car && ! empty($data['year'])) {
+                $quoteData['year_of_first_registration'] = $data['year'];
             }
 
-            info($logPrefix.' Quote not found for PolicyNumber: '.$data['policy_number'].' EndDate: '.$data['end_date'].' Batch: '.$renewalQuoteProcess->batch);
+            if (! empty($data['plan_type']) && in_array($data['plan_type'], [CarPlanType::TPL, CarPlanType::COMP])) {
+                $quoteData['current_insurance_status'] = 'ACTIVE_'.$data['plan_type'];
+            }
+
+            if (in_array($quoteType->code, [quoteTypeCode::Car, quoteTypeCode::Bike]) && ($insurer = $this->insuranceProviderService->getProviderByCode($data['insurer']))) {
+                $quoteData['currently_insured_with'] = $insurer->text;
+            }
+
+            info($logPrefix.' quote data setup to update for UUID: '.$quote->uuid);
+
+            $quote->update($quoteData);
+
+            info($logPrefix.' quote updated UUID: '.$quote->uuid);
+
+            if (! empty($advisorId)) {
+                $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
+                info($logPrefix.' quote advisor assigned datetime updated UUID: '.$quote->uuid);
+            }
+
+            //mark all other fetch plans pending records as outdated, it will help to target unique records during fetch plans process
+            RenewalQuoteProcess::where([
+                'quote_id' => $quote->id,
+                'status' => RenewalProcessStatuses::PROCESSED,
+                'type' => RenewalsUploadType::UPDATE_LEADS,
+                'fetch_plans_status' => FetchPlansStatuses::PENDING,
+            ])->update(['fetch_plans_status' => FetchPlansStatuses::OUTDATED]);
+
+            //mark renewal quote process as processed and assign quote id
+            $renewalQuoteProcess->update([
+                'status' => RenewalProcessStatuses::PROCESSED,
+                'quote_id' => $quote->id,
+                'fetch_plans_status' => FetchPlansStatuses::PENDING,
+            ]);
+
+            RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
+
+            info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
+
+            return $quote;
         });
     }
 

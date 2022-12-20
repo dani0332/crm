@@ -5,11 +5,10 @@ namespace App\Imports;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
-use App\Models\Customer;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
-use Carbon\Carbon;
+use App\Traits\RenewalsImportTrait;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
@@ -23,11 +22,10 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
 {
-    use Importable, SkipsFailures, RegistersEventListeners;
+    use Importable, SkipsFailures, RegistersEventListeners, RenewalsImportTrait;
 
     private $validCount = 0;
     private $failedCount = 0;
@@ -48,6 +46,20 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
         $this->renewalsUploadLead = $renewalsUploadLead;
     }
 
+    /**
+     * validation rules for every column in a row.
+     *
+     * @return string[]
+     */
+    public function rules(): array
+    {
+        return $this->getRules();
+    }
+
+    /**
+     * @param  array  $row
+     * @return RenewalQuoteProcess
+     */
     public function model(array $row)
     {
         $this->validCount++;
@@ -100,6 +112,9 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
         return $this->validCount;
     }
 
+    /**
+     * @return int
+     */
     public function getFailedCount(): int
     {
         return $this->failedCount;
@@ -114,19 +129,27 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
     {
         return  [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
-            'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'required|max:255'],
-            'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'required|max:100'],
+            'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'max:255'],
+            'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'max:100'],
             'quote_type' => ['index' => 3, 'title' => 'Insurance Type', 'rules' => 'required|required|max:4'],
             'insurer' => ['index' => 4, 'title' => 'Insurance Provider', 'rules' => 'required|max:100'],
             'product_type' => ['index' => 5, 'title' => 'Product Type', 'rules' => 'required|max:100'],
             'advisor' => ['index' => 6, 'title' => 'Advisor Email', 'rules' => 'required|max:100'],
             'policy_number' => ['index' => 7, 'title' => 'Policy Number', 'rules' => 'required|required|max:100'],
-            'end_date' => ['index' => 8, 'title' => 'Policy End date', 'rules' => 'required|max:10', 'type' => 'date'],
+            'end_date' => ['index' => 8, 'title' => 'Policy End date', 'rules' => ['required', 'max:10', function ($attribute, $value, $onFailure) {
+                if (! $this->validateDate($value)) {
+                    $onFailure('Invalid value provided for '.$attribute);
+                }
+            }], 'type' => 'date'],
             'batch' => ['index' => 9, 'title' => 'Batch', 'rules' => 'required|max:25'],
             'make' => ['index' => 10, 'title' => 'Car Make', 'rules' => 'required|max:50'],
             'model' => ['index' => 11, 'title' => 'Car Model', 'rules' => 'required|max:50'],
             'year' => ['index' => 12, 'title' => 'Model Year', 'rules' => 'required|max:4'],
-            'dob' => ['index' => 13, 'title' => 'Date of Birth', 'rules' => 'required|max:10', 'type' => 'date'],
+            'dob' => ['index' => 13, 'title' => 'Date of Birth', 'rules' => ['required', 'max:10', function ($attribute, $value, $onFailure) {
+                if (! $this->validateDate($value)) {
+                    $onFailure('Invalid value provided for '.$attribute);
+                }
+            }], 'type' => 'date'],
             'driving_experience' => ['index' => 14, 'title' => 'Driving Experience', 'rules' => 'required|max:10'],
             'nationality' => ['index' => 15, 'title' => 'Nationality', 'rules' => 'required|max:50'],
             'provider_name' => ['index' => 16, 'title' => 'Provider Name', 'rules' => 'max:100'],
@@ -158,73 +181,6 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
     }
 
     /**
-     * custom validation message
-     *
-     * @return string[]
-     */
-    public function customValidationMessages()
-    {
-        return [
-            '0.regex' => ':attribute should only be in letters - no numbers allowed.',
-        ];
-    }
-
-    /**
-     * map row with keys.
-     *
-     * @param $row
-     * @return array
-     */
-    public function mapQuoteData($row)
-    {
-        $columns = $this->getColumns();
-
-        $quoteData = [];
-        foreach ($columns as $key => $column) {
-            if (! empty($column['type']) && $column['type'] == 'date') {
-                if (strpos($row[$column['index']], '/')) {
-                    $quoteData[$key] = Carbon::createFromFormat('d/m/Y', $row[$column['index']])->format('d/m/Y');
-                } else {
-                    $quoteData[$key] = Carbon::instance(Date::excelToDateTimeObject((float) $row[$column['index']]))->format('d/m/Y');
-                }
-            } else {
-                $quoteData[$key] = isset($row[$column['index']]) ? $row[$column['index']] : null;
-            }
-        }
-
-        return $quoteData;
-    }
-
-    /**
-     * Attributes Mapping, pluck titles from columns and these will be used in validation as field name.
-     *
-     * @return string[] e.g 0 => Customer Name, 1 => Customer Email
-     */
-    public function customValidationAttributes()
-    {
-        $colums = collect($this->getColumns());
-
-        return $colums->pluck('title', 'index')->toArray();
-    }
-
-    /**
-     * validation rules for every column in a row.
-     *
-     * @return string[]
-     */
-    public function rules(): array
-    {
-        $rules = [];
-        $columns = collect($this->getColumns())->pluck('rules', 'index');
-
-        $columns->each(function ($item, $index) use (&$rules) {
-            $rules['*.'.$index] = $item;
-        });
-
-        return $rules;
-    }
-
-    /**
      * get all validation errors and store records in db along with errors.
      *
      * @return \Closure[]
@@ -237,7 +193,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
                 $failed = [];
                 foreach ($this->failures() as $failure) {
                     if (! isset($failed[$failure->row()])) {
-                        $quoteData = $this->mapQuoteData($failure->values());
+                        $quoteData = $this->mapData($failure->values());
                         $failed[$failure->row()] = [
                             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
                             'quote_type' => $quoteData['quote_type'],

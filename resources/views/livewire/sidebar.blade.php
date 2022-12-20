@@ -43,10 +43,18 @@ use App\Enums\PermissionsEnum;
   })
 
   document.addEventListener('alpine:initialized', () => {
-    const element = document.querySelectorAll('.side-menu li a');
+    const elements = document.querySelectorAll('.side-menu li a');
+    const route = window.location;
 
-    if (element) {
-      element.forEach(function(el, key) {
+    if (elements) {
+      const element = Array.from(elements).find(el => el.pathname == route.pathname && el.attributes.href.value != '#');
+
+      if (element) {
+        element.parentElement.parentElement.parentElement.classList.add('active');
+        element.parentElement.classList.add('active-menu');
+      }
+      
+      elements.forEach(function(el, key) {
         el.addEventListener('click', function() {
           el.parentElement.classList.toggle('active');
         });

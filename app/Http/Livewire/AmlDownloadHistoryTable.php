@@ -8,6 +8,7 @@ use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Columns\BooleanColumn;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AmlDownloadHistoryTable extends DataTableComponent
 {
@@ -18,6 +19,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
         $this->setPrimaryKey('id')
             ->setDefaultSort('updated_at', 'desc')
             ->setColumnSelectDisabled()
+            ->setSearchDisabled()
             ->setPerPageVisibilityDisabled()
             ->setFilterLayoutSlideDown();
 
@@ -57,6 +59,13 @@ class AmlDownloadHistoryTable extends DataTableComponent
     public function filters(): array
     {
         return [
+            TextFilter::make('File Name')
+                ->config([
+                    'placeholder' => 'Search by File Name',
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    $builder->where('sanction_list_downloads.file_name', $value);
+                }),
             SelectFilter::make('Is Processed')
                 ->options([
                     '' => 'All',

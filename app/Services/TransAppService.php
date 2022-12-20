@@ -140,6 +140,7 @@ class TransAppService extends BaseService
 
     public function sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, $tag)
     {
+        info('sendWelcomeEmail START');
         $customer = CustomerService::getCustomerById($customerId);
         $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //405
         $redirect_url = config('constants.SIB_MYALFRED_CUSTOMER_REDIRECT_URL');
@@ -150,10 +151,12 @@ class TransAppService extends BaseService
             'signUpButtonUrl' => $redirect_url,
             'inviteCode' => $WEGenerateInviteCodeResponse,
         ];
+        info('sendWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
 
         $getStatusCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
 
         if ($getStatusCode == 201) {
+            info('sendWelcomeEmail MyAlfred welcome email sent to customer '.$customer->email);
             $customer->is_we_sent = true;
             $customer->save();
 
@@ -164,7 +167,10 @@ class TransAppService extends BaseService
             $newMyAlFredUser->code = $WEGenerateInviteCodeResponse;
             $newMyAlFredUser->source = 'TRANSAPP';
             $newMyAlFredUser->save();
+        } else {
+            info('MyAlfred welcome email not sent to customer '.$customer->email.' getStatusCode: '.$getStatusCode);
         }
+        info('sendWelcomeEmail END');
     }
 
     public function sendWelcomeSms($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $recordId)
