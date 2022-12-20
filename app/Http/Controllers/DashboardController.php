@@ -60,8 +60,9 @@ class DashboardController extends Controller
         $assignedLeadsBySource = $this->getAssignedLeadsCountBySource(null, null);
         $advisorConversionData = $this->getAdvisorConversionData(null);
         $advisorLeadsAssignedData = $this->getAdvisorLeadAssignedData(null);
+
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
-            'teams', 'carAdvisors' , 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
+            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
             'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
     }
 
