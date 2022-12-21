@@ -804,7 +804,7 @@ class CRUDController extends Controller
                     $emailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
                     $lead = CarQuote::find($request->leadId);
                     if($lead) {
-                        $emailData = $this->emailDataService->emailDataTierR($lead);
+                        $emailData = $this->emailDataService->generateTierREmailData($lead);
 
                         // Send Email
                         if($emailData) {
