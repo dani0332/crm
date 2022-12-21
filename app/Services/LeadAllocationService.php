@@ -30,6 +30,7 @@ class LeadAllocationService extends BaseService
     use GetUserTree;
     use CreateUpdateSIbContact;
     use SendSIBEmail;
+
     protected $emailDataService;
 
     public function __construct(EmailDataService $emailDataService)
@@ -578,7 +579,7 @@ class LeadAllocationService extends BaseService
         $subject = ucwords(config('constants.APP_ENV')).' - '.$lead->first_name.' '.$lead->last_name.' has approached Alfred';
 
         info('car lead allocation renewal lead email subject is : '.$subject);
-        $emailData = $this->emailDataService->emailDataTierR($lead);
+        $emailData = $this->emailDataService->generateTierREmailData($lead);
 
         info('car lead allocation renewal lead email data is : '.json_encode($emailData));
         $templateId = (int) $this->getAppStorageValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');

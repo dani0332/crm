@@ -17,11 +17,11 @@ class EmailDataService extends BaseService
         $this->lookupService = $lookupService;
     }
 
-    public function emailDataTierR($lead)
+    public function generateTierREmailData($lead)
     {
         $emailDataArr = [];
 
-        if($lead) {
+        if ($lead) {
             $emailDataArr = [
                 'clientFullName' => $lead->first_name.' '.$lead->last_name,
                 'email' => isset($lead->email) ? $lead->email : '',
