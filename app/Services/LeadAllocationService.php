@@ -10,13 +10,10 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Events\AdvisorAssigned;
 use App\Models\ApplicationStorage;
-use App\Models\CarMake;
-use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
-use App\Models\Nationality;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
@@ -33,6 +30,12 @@ class LeadAllocationService extends BaseService
     use GetUserTree;
     use CreateUpdateSIbContact;
     use SendSIBEmail;
+    protected $emailDataService;
+
+    public function __construct(EmailDataService $emailDataService)
+    {
+        $this->emailDataService = $emailDataService;
+    }
 
     public function getGridData()
     {
@@ -575,20 +578,7 @@ class LeadAllocationService extends BaseService
         $subject = ucwords(config('constants.APP_ENV')).' - '.$lead->first_name.' '.$lead->last_name.' has approached Alfred';
 
         info('car lead allocation renewal lead email subject is : '.$subject);
-        $emailData = [
-            'clientFullName' => $lead->first_name.' '.$lead->last_name,
-            'email' => $lead->email,
-            'customerEmail' => $lead->email,
-            'phone' => $lead->mobile_no,
-            'nationality' => $lead->nationality_id != null ? Nationality::where('id', $lead->nationality_id)->first()->text : '',
-            'dob' => $lead->dob,
-            'yearsOfDriving' => $lead->year_of_manufacturing,
-            'yearOfManufacturing' => $lead->year_of_manufacture,
-            'model' => $lead->car_model_id != null ? CarModel::where('id', $lead->car_model_id)->first()->text : '',
-            'make' => $lead->car_make_id != null ? CarMake::where('id', $lead->car_make_id)->first()->text : '',
-            'carValue' => $lead->car_value,
-            'quoteLink' => config('constants.APP_URL').'/quotes/car/'.$lead->uuid,
-        ];
+        $emailData = $this->emailDataService->emailDataTierR($lead);
 
         info('car lead allocation renewal lead email data is : '.json_encode($emailData));
         $templateId = (int) $this->getAppStorageValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
