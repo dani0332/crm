@@ -83,6 +83,10 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             info('inside lead type in progress');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
+        if ($this->leadType == 'afia_renewals_count') {
+            info('inside lead type in progress');
+            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::AfiaRenewal);
+        }
         if ($this->leadType == 'sale_leads') {
             info('inside lead type in progress');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::PolicyIssued);

@@ -35,14 +35,14 @@ class LeadDistributionReportTable extends DataTableComponent
     {
         return [
             Column::make('Tier Name', 'tier.name')->sortable(),
-            Column::make('Received Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
+            Column::make('Received Leads')->label(fn ($row) => $row->received_leads)->footer(function ($rows) {
                 return $rows->sum('received_leads');
             }),
             Column::make('Leads Created')->label(fn ($row) => $row->lead_created)->footer(function ($rows) {
                 return $rows->sum('lead_created');
             })->sortable(),
-            Column::make('Total Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
-                return $rows->sum('total_leads');
+            Column::make('Total Leads')->label(fn ($row) => $row->lead_created + $row->received_leads)->footer(function ($rows) {
+                return $rows->sum('lead_created') + $rows->sum('received_leads');
             })->sortable(),
             Column::make('UnAssigned Leads')->label(fn ($row) => $row->unassigned_leads)->footer(function ($rows) {
                 return $rows->sum('unassigned_leads');
