@@ -249,8 +249,9 @@ class RenewalsUploadService
                    ->allowFailures()
                    ->withDelay(1)
                    ->dispatch();
+
             } else {
-                info('BATCH: no jobs to create quotes');
+                info($logPrefix . ' No jobs to create quotes');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
             }
         } catch (\Exception $exception) {
@@ -1207,17 +1208,20 @@ class RenewalsUploadService
                     $leadValidationErrors->push('Invalid Policy End date');
                 }
 
-                if (isset($leadData->dob) && $leadData->dob && ! $this->validateDate($leadData->dob)) {
-                    $leadValidationErrors->push('Invalid Date of Birth');
-                } else {
-                    $dob = Carbon::createFromFormat('d/m/Y', $leadData->dob);
-                    $minDate = Carbon::createFromFormat('d/m/Y', '01/01/1930');
+                if (isset($leadData->dob) && $leadData->dob)
+                {
+                    if(! $this->validateDate($leadData->dob)) {
+                        $leadValidationErrors->push('Invalid Date of Birth');
+                    } else {
+                        $dob = Carbon::createFromFormat('d/m/Y', $leadData->dob);
+                        $minDate = Carbon::createFromFormat('d/m/Y', '01/01/1930');
 
-                    if ($dob->lt($minDate)) {
-                        $leadValidationErrors->push('Date of birth cannot be earlier than 01/01/1930');
-                    }
-                    if ($dob->age < 18) {
-                        $leadValidationErrors->push('Customer age should be 18 years or more');
+                        if ($dob->lt($minDate)) {
+                            $leadValidationErrors->push('Date of birth cannot be earlier than 01/01/1930');
+                        }
+                        if ($dob->age < 18) {
+                            $leadValidationErrors->push('Customer age should be 18 years or more');
+                        }
                     }
                 }
 
