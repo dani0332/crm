@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\TiersEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -13,6 +14,7 @@ use App\Models\MemberCategory;
 use App\Models\PaymentMethod;
 use App\Models\QuoteStatus;
 use App\Models\SalaryBand;
+use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
@@ -96,5 +98,12 @@ class LookupService extends BaseService
     public function getCarModel($id)
     {
         return CarModel::find($id);
+    }
+
+    public function getTier()
+    {
+        return Tier::select('id', 'name')
+        ->where(['is_active' => true, 'name' => TiersEnum::TierR])
+        ->orderBy('name', 'asc')->get();
     }
 }

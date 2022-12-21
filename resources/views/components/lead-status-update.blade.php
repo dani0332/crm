@@ -91,12 +91,17 @@
     });
 
     function next_followup_date_visibility(lead_status_code) {
-        if(lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::FollowupCall) ?>') || 
-        lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::Interested) ?>') || 
-        lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::NoAnswer) ?>')) {
+        if(lead_status_code == <?php echo QuoteStatusEnum::FollowupCall; ?> || 
+        lead_status_code == <?php echo QuoteStatusEnum::Interested; ?> || 
+        lead_status_code == <?php echo QuoteStatusEnum::NoAnswer; ?>) {
             $('#quote-next-followup-date').show();
         } else {
             $('#quote-next-followup-date').hide();
+        }
+        if(lead_status_code == <?php echo json_encode(QuoteStatusEnum::AfiaRenewal) ?>) {
+            $('#quote-tier').show();
+        } else {
+            $('#quote-tier').hide();
         }
         return false;
     }
@@ -131,7 +136,7 @@
                                         <option @if($status==$item->id) selected="selected" @endif
                                             value="{{$item->id}}">{{$item->text}}</option>
                                         @elseif($item->id != QuoteStatusEnum::PolicyIssued)
-                                            <option @if($status==$item->id) selected="selected" @endif
+                                            <option {{ $item->id == old('leadStatus', $status) ? 'selected' : ''}}
                                                 value="{{$item->id}}">{{$item->text}}</option>
                                         @endif
                                     @endforeach
@@ -145,6 +150,22 @@
                                     <input type="text" id="next_followup_date" name="next_followup_date" value="{{ $lead->next_followup_date }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select follow-up date & time">
                                 </div>
                             </div>
+                            <div id="quote-tier" style="display: none;">
+                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Tier</b> <span class='required'>*</span></label>
+                                <div class="col-md-6 col-sm-6">
+                                    <select id="tier_id" name="tier_id" class="form-control">
+                                        <option value="">Please Select Tier</option>
+                                        @foreach($tiers as $tier)
+                                            <option value="{{$tier->id}}" {{ $tier->id == old('tier_id', $lead->tier_id ?? '') ? 'selected' : ''}}>
+                                                {{ $tier->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @if ($errors->has('tier_id'))
+                                    <span class="text-danger">{{ $errors->first('tier_id') }}</span>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="item form-group">
@@ -153,7 +174,7 @@
                             <div class="col-md-6 col-sm-6">
                                 <textarea @if($lead->quote_status_id ==
                                     QuoteStatusEnum::TransactionApproved) disabled @endif class="form-control" id="notes" name="notes"
-                                    placeholder="Notes">{{$lead->notes ?? ''}}</textarea>
+                                    placeholder="Notes">{{ old('notes', $lead->notes) }}</textarea>
                             </div>
                         </div>
                         <div class="col">
