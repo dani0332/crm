@@ -10,13 +10,10 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Events\AdvisorAssigned;
 use App\Models\ApplicationStorage;
-use App\Models\CarMake;
-use App\Models\CarModel;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
-use App\Models\Nationality;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
@@ -33,6 +30,12 @@ class LeadAllocationService extends BaseService
     use GetUserTree;
     use CreateUpdateSIbContact;
     use SendSIBEmail;
+    protected $emailDataService;
+
+    public function __construct(EmailDataService $emailDataService)
+    {
+        $this->emailDataService = $emailDataService;
+    }
 
     public function getGridData()
     {
@@ -371,9 +374,15 @@ class LeadAllocationService extends BaseService
                             ->groupBy('users.name', 'users.id', 'la.id')
                             ->select(
                                 'users.id as userId',
-                                'users.name as userName', DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'), DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
-                                'la.allocation_count as allocationCount', 'la.last_allocated as lastAllocation', 'la.max_capacity as maxCapacity', 'la.is_available as isAvailable',
-                                'users.last_login as lastLogin', 'la.id as id'
+                                'users.name as userName',
+                                DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
+                                DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
+                                'la.allocation_count as allocationCount',
+                                'la.last_allocated as lastAllocation',
+                                'la.max_capacity as maxCapacity',
+                                'la.is_available as isAvailable',
+                                'users.last_login as lastLogin',
+                                'la.id as id'
                             )->get();
         info('going to update the max cap for users : '.json_encode($users->pluck('id')));
         foreach ($users as $user) {
@@ -393,6 +402,7 @@ class LeadAllocationService extends BaseService
 
         return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') == '1';
     }
+
     public function leadAllocationSwitchStatus()
     {
         return $this->getAppStorageValueByKey('LEAD_ALLOCATION_JOB_SWITCH') == '1';
@@ -568,20 +578,7 @@ class LeadAllocationService extends BaseService
         $subject = ucwords(config('constants.APP_ENV')).' - '.$lead->first_name.' '.$lead->last_name.' has approached Alfred';
 
         info('car lead allocation renewal lead email subject is : '.$subject);
-        $emailData = [
-            'clientFullName' => $lead->first_name.' '.$lead->last_name,
-            'email' => $lead->email,
-            'customerEmail' => $lead->email,
-            'phone' => $lead->mobile_no,
-            'nationality' => $lead->nationality_id != null ? Nationality::where('id', $lead->nationality_id)->first()->text : '',
-            'dob' => $lead->dob,
-            'yearsOfDriving' => $lead->year_of_manufacturing,
-            'yearOfManufacturing' => $lead->year_of_manufacture,
-            'model' => $lead->car_model_id != null ? CarModel::where('id', $lead->car_model_id)->first()->text : '',
-            'make' => $lead->car_make_id != null ? CarMake::where('id', $lead->car_make_id)->first()->text : '',
-            'carValue' => $lead->car_value,
-            'quoteLink' => config('constants.APP_URL').'/quotes/car/'.$lead->uuid,
-        ];
+        $emailData = $this->emailDataService->emailDataTierR($lead);
 
         info('car lead allocation renewal lead email data is : '.json_encode($emailData));
         $templateId = (int) $this->getAppStorageValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
@@ -643,8 +640,14 @@ class LeadAllocationService extends BaseService
                     })
                     ->where('u.last_login', '>', Carbon::now()->addDays(-1)->endOfDay())
                     ->whereIn('u.id', $tierUsers)
-                    ->select('u.id', 'u.name', 'u.email', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity',
-                        'lead_allocation.last_allocated')
+                    ->select(
+                        'u.id',
+                        'u.name',
+                        'u.email',
+                        'lead_allocation.allocation_count',
+                        'lead_allocation.max_capacity',
+                        'lead_allocation.last_allocated'
+                    )
                     ->orderBy('lead_allocation.last_allocated', 'asc')->get();
     }
 

@@ -339,7 +339,7 @@
     <div class="row">
         <div class="x_panel" style="overflow:hidden">
             <div class="x_title">
-                <h2>Group Medical Leads</h2>
+                <h2>Lead List</h2>
                 <ul class="nav navbar-right panel_toolbox">
                     @can('gm-quotes-create')
                     <li><a href="{{ url('medical/amt/create') }}" class="btn btn-warning btn-sm">Create Lead</a></li>
