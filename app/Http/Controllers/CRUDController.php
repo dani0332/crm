@@ -36,6 +36,7 @@ use App\Services\SendEmailCustomerService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
+use App\Services\EmailDataService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
@@ -68,6 +69,7 @@ class CRUDController extends Controller
     protected $customerService;
     protected $sendEmailCustomerService;
     protected $quoteDocumentService;
+    protected $emailDataService;
 
     use GenericQueriesAllLobs;
     use SendSIBEmail;
@@ -93,7 +95,8 @@ class CRUDController extends Controller
         NotesForCustomerService $notesForCustomerService,
         CustomerService $customerService,
         SendEmailCustomerService $sendEmailCustomerService,
-        QuoteDocumentService $quoteDocumentService
+        QuoteDocumentService $quoteDocumentService,
+        EmailDataService $emailDataService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -116,6 +119,7 @@ class CRUDController extends Controller
         $this->customerService = $customerService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->quoteDocumentService = $quoteDocumentService;
+        $this->emailDataService = $emailDataService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -800,22 +804,12 @@ class CRUDController extends Controller
                     $emailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
                     $lead = CarQuote::find($request->leadId);
                     if($lead) {
-                        $emailData = [
-                            'clientFullName' => $lead->first_name.' '.$lead->last_name,
-                            'email' => isset($lead->email) ? $lead->email : '',
-                            'customerEmail' => isset($lead->email) ? $lead->email : '',
-                            'phone' => isset($lead->mobile_no) ? $lead->mobile_no : '',
-                            'nationality' => isset($lead->nationality_id) ? $this->lookupService->getNationality($lead->nationality_id)->text : '',
-                            'dob' => isset($lead->dob) ? Carbon::parse($lead->dob)->format('d-m-Y') : '',
-                            'yearsOfDriving' => $lead->year_of_manufacturing,
-                            'yearOfManufacturing' => $lead->year_of_manufacture,
-                            'model' => isset($lead->car_model_id) ? $this->lookupService->getCarModel($lead->car_model_id)->text : '',
-                            'make' => isset($lead->car_make_id) ? $this->lookupService->getCarMake($lead->car_make_id)->text : '',
-                            'carValue' => isset($lead->car_value) ? number_format($lead->car_value, 2) : '0.00',
-                            'quoteLink' => config('constants.APP_URL').'/quotes/car/'.$lead->uuid,
-                        ];
+                        $emailData = $this->emailDataService->emailDataTierR($lead);
+
                         // Send Email
-                        $this->sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailRecipients);
+                        if($emailData) {
+                            $this->sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailRecipients);
+                        }
                     }
                 }
             }

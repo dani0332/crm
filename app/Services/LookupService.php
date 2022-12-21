@@ -108,8 +108,13 @@ class LookupService extends BaseService
         ->orderBy('name', 'asc')->get();
     }
 
-    public function getNationality($id) {
+    public function getNationality($id)
+    {
         return Nationality::find($id);
     }
-    
+
+    public function getUaeLicenseHeldFor($id)
+    {
+        return UAELicenseHeldFor::find($id);
+    }
 }
