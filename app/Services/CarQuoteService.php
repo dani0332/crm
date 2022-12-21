@@ -293,7 +293,7 @@ class CarQuoteService extends BaseService
             'next_followup_date' => 'input|date|title|range',
             'year_of_first_registration' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
-            'updated_by' => 'readonly|none', // advisor
+            'updated_by' => 'readonly|none',
             'additional_notes' => 'textarea|',
             'advisor_id' => 'select|title||multiple',
             'advisor_assigned_date' => 'input|date|title|range',
