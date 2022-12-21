@@ -33,6 +33,7 @@ class ProcessSIBCustomerMail implements ShouldQueue
 
     public function handle(CustomerWEGenerateUrlService $customerWEGenerateUrlService)
     {
+        info('ProcessSIBCustomerMail handle START');
         try {
             $this->customerWEGenerateUrlService = $customerWEGenerateUrlService;
             $emailTemplateId = (int) config('constants.SIB_CORPORATE_TEMPLATE');
@@ -46,7 +47,10 @@ class ProcessSIBCustomerMail implements ShouldQueue
 
             $getStatusCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, 'corporate-myalfred-we');
 
+            info('ProcessSIBCustomerMail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
+
             if ($getStatusCode == 201) {
+                info('ProcessSIBCustomerMail MyAlfred welcome email sent to coporate customer '.$this->email);
                 $customer = CustomerService::getCustomerByEmail($this->email);
                 if ($customer) {
                     $updateCustomer = $customer->first();
@@ -71,5 +75,6 @@ class ProcessSIBCustomerMail implements ShouldQueue
         } finally {
             DB::disconnect('mysql');
         }
+        info('ProcessSIBCustomerMail handle End');
     }
 }

@@ -261,7 +261,6 @@
         });
         $.fn.dataTable.ext.errMode = 'none'; // disable datatables error prompt
     </script>
-
 </body>
 
 </html>
