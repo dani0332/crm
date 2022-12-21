@@ -111,14 +111,6 @@ class DropdownSourceService extends BaseService
                 $data = Nationality::select('id', 'text')->where('is_active', true)->orderBy('text')->get();
                 break;
             case 'quote_status_id':
-                // $data = QuoteStatus::select('id', 'text')
-                //     ->whereNotIn('id', [
-                //         QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
-                //         QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyInvoiced, QuoteStatusEnum::Issued, QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::AfiaRenewal, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec,
-                //     ])
-                //     ->where('is_active', true)
-                //     ->orderBy('sort_order', 'asc')
-                //     ->get();
                 $data = QuoteStatus::select('quote_status.id as id', 'quote_status.text as text', 'quote_status.code as code')
                     ->where(['quote_status.is_active' => true, 'quote_status_map.quote_type_id' => $quoteTypeId])
                     ->leftjoin('quote_status_map', 'quote_status.id', 'quote_status_map.quote_status_id')
