@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\QuoteTypeId;
 use App\Models\Activities;
+use App\Models\QuoteStatus;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -99,13 +100,18 @@ class ActivitiesService extends BaseService
         $activity->uuid = $this->helperService->generateUUID();
         if (isset($record) && $record != '') {
             $activity->client_name = $record->first_name.' '.$record->last_name;
-            $activity->quote_request_id = $request->entityId;
-            $activity->quote_type_id = $this->getQuoteTypeId($request->modelType);
-            $activity->quote_uuid = $request->entityUId;
+            $activity->quote_request_id = isset($request->entityId) ? $request->entityId : $request->leadId;
+            $activity->quote_type_id = $this->getQuoteTypeId(strtolower($request->modelType));
+            $activity->quote_uuid = isset($request->entityUId) ? $request->entityUId : $request->quote_uuid;
         }
-        $activity->due_date = $request->due_date;
-        $activity->assignee_id = isset($request->assignee_id) ? $request->assignee_id : Auth::user()->id;
-        $activity->description = $request->description;
+        if (isset($request->leadStatus)) {
+            $quoteStatus = QuoteStatus::select('text')->where('id', $request->leadStatus)->first();
+            $request->title = $quoteStatus->text;
+        }
+        $request->assignee_id = isset($request->assigned_to_user_id) ? $request->assigned_to_user_id : $request->assignee_id;
+        $activity->due_date = isset($request->due_date) ? $request->due_date : $request->next_followup_date;
+        $activity->assignee_id = isset($request->assignee_id) ? $request->assignee_id : auth()->id();
+        $activity->description = isset($request->description) ? $request->description : $request->notes;
         $activity->title = $request->title;
         $activity->created_at = Carbon::now();
         $activity->updated_at = Carbon::now();
@@ -137,6 +143,9 @@ class ActivitiesService extends BaseService
                 $quoteTypeId = QuoteTypeId::Business;
                 break;
             default:
+                break;
+            case 'pet':
+                $quoteTypeId = QuoteTypeId::Pet;
                 break;
         }
 

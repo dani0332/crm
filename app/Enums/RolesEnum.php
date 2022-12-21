@@ -80,4 +80,5 @@ final class RolesEnum extends Enum
     public const RenewalsManager = 'RENEWALS_MANAGER';
     public const CarDeputyManager = 'CAR_DEPUTY_MANAGER';
     public const CarManager = 'CAR_MANAGER';
+    public const LeadPool = 'LEAD_POOL';
 }

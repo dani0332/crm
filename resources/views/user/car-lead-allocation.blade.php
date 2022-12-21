@@ -11,6 +11,89 @@
 <script src="{{ asset('js/bootstrap-toggle.min.js') }}"></script>
 
 <script>
+    let columns = [{
+        data: 'userId',
+        name: 'userId',
+        orderable: true,
+        searchable: false
+    },
+        {
+            data: 'userName',
+            name: 'userName',
+            orderable: true,
+            searchable: false
+        },
+        {
+            data: 'tiers',
+            name: 'tiers',
+            orderable: true,
+            searchable: false
+        },
+        {
+            data: 'quads',
+            name: 'quads',
+            orderable: true,
+            searchable: false
+        },
+        {
+            data: 'allocationCount',
+            name: 'allocationCount',
+            orderable: true,
+            searchable: false
+        },
+        {
+            data: 'lastAllocation',
+            name: 'lastAllocation',
+            orderable: true,
+            searchable: false,
+            render: function(data, type, row) {
+                if (data == null) {
+                    return '-';
+                } else {
+                    return new Date(data * 1000).toLocaleString();
+                }
+            }
+        },
+        {
+            data: 'maxCapacity',
+            name: 'maxCapacity',
+            orderable: true,
+            searchable: false
+        },
+        {
+            data: 'isAvailable',
+            name: 'isAvailable',
+            orderable: true,
+            searchable: false,
+            render: function(data, type, row) {
+                if (data == 1) {
+                    var html = `<span class="status-text">Available</span><label class="switch " style="margin-left: 20px;">
+                                    <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" checked="checked" class="chk success" id="is_active" name="is_active">
+                                    <span class="slider round"></span>
+                                </label>`;
+                    return html;
+                } else {
+                    var html = `<span class="status-text">UnAvailable</span><label class="switch " style="margin-left: 20px;">
+                                    <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" class="chk danger" id="is_active" name="is_active">
+                                    <span class="slider round"></span>
+                                </label>`;
+                    return html;
+                }
+            },
+        }
+    ];
+
+    @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager]))
+    columns.push({
+        data: 'lastLogin',
+        name: 'lastLogin',
+        orderable: true,
+        searchable: false,
+    })
+    @endif
+</script>
+
+<script>
     var leadAllocationDataTable = null;
     $(document).ready(function() {
         var isAutoAllocationWorking = JSON.parse('<?php echo json_encode($isAutoAllocationWorking); ?>');
@@ -24,83 +107,7 @@
                 lengthChange: false,
                 ordering: false,
                 ajax: config.routes.car_lead_allocation_index_route,
-                columns: [{
-                        data: 'userId',
-                        name: 'userId',
-                        orderable: true,
-                        searchable: false
-                    },
-                    {
-                        data: 'userName',
-                        name: 'userName',
-                        orderable: true,
-                        searchable: false
-                    },
-                    {
-                        data: 'tiers',
-                        name: 'tiers',
-                        orderable: true,
-                        searchable: false
-                    },
-                    {
-                        data: 'quads',
-                        name: 'quads',
-                        orderable: true,
-                        searchable: false
-                    },
-                    {
-                        data: 'allocationCount',
-                        name: 'allocationCount',
-                        orderable: true,
-                        searchable: false
-                    },
-                    {
-                        data: 'lastAllocation',
-                        name: 'lastAllocation',
-                        orderable: true,
-                        searchable: false,
-                        render: function(data, type, row) {
-                            if (data == null) {
-                                return '-';
-                            } else {
-                                return new Date(data * 1000).toLocaleString();
-                            }
-                        }
-                    },
-                    {
-                        data: 'maxCapacity',
-                        name: 'maxCapacity',
-                        orderable: true,
-                        searchable: false
-                    },
-                    {
-                        data: 'isAvailable',
-                        name: 'isAvailable',
-                        orderable: true,
-                        searchable: false,
-                        render: function(data, type, row) {
-                            if (data == 1) {
-                                var html = `<span class="status-text">Available</span><label class="switch " style="margin-left: 20px;">
-                                    <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" checked="checked" class="chk success" id="is_active" name="is_active">
-                                    <span class="slider round"></span>
-                                </label>`;
-                                return html;
-                            } else {
-                                var html = `<span class="status-text">UnAvailable</span><label class="switch " style="margin-left: 20px;">
-                                    <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" class="chk danger" id="is_active" name="is_active">
-                                    <span class="slider round"></span>
-                                </label>`;
-                                return html;
-                            }
-                        },
-                    },
-                    {
-                        data: 'lastLogin',
-                        name: 'lastLogin',
-                        orderable: true,
-                        searchable: false,
-                    },
-                ],
+                columns: columns,
                 drawCallback: function (settings) {
                     $('.car_lead_allocation_table tr').each(function(){
                         $(this).find('td:last').attr('style', 'float:left;');
@@ -335,7 +342,9 @@
                                     data-placement="top" title="For Unlimited Capactiy Add ( -1 )"></i>
                             </th>
                             <th>Status</th>
-                            <th>Last Login</th>
+                            @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager]))
+                                <th>Last Login</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
