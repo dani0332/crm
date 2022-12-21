@@ -11,6 +11,7 @@ use App\Models\CarModelDetail;
 use App\Models\InsuranceProvider;
 use App\Models\LostReasons;
 use App\Models\MemberCategory;
+use App\Models\Nationality;
 use App\Models\PaymentMethod;
 use App\Models\QuoteStatus;
 use App\Models\SalaryBand;
@@ -106,4 +107,9 @@ class LookupService extends BaseService
         ->where(['is_active' => true, 'name' => TiersEnum::TierR])
         ->orderBy('name', 'asc')->get();
     }
+
+    public function getNationality($id) {
+        return Nationality::find($id);
+    }
+    
 }

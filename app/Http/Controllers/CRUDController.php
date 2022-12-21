@@ -9,6 +9,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Models\CarQuote;
 use App\Models\GenericModel;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -42,7 +43,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use PDF;
+use App\Traits\SendSIBEmail;
 
 class CRUDController extends Controller
 {
@@ -69,6 +70,7 @@ class CRUDController extends Controller
     protected $quoteDocumentService;
 
     use GenericQueriesAllLobs;
+    use SendSIBEmail;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -784,13 +786,38 @@ class CRUDController extends Controller
                     $this->activityService->createActivity($request, $record);
                 }
             }
-            if($request->leadStatus == QuoteStatusEnum::AfiaRenewal && $request->tier_id == null) {
-                $this->validate($request, [
-                    'tier_id' => 'required',
-                ]);
+            if($request->leadStatus == QuoteStatusEnum::AfiaRenewal) {
+                if($request->tier_id == null) {
+                    $this->validate($request, [
+                        'tier_id' => 'required',
+                    ]);
+                }
 
-                // Send Email
-                
+                // MS: Send email
+                if(isset($request->leadId)) {
+                    $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
+                    $tag = config('constants.APP_ENV').'-car-quote-tier-r';
+                    $emailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
+                    $lead = CarQuote::find($request->leadId);
+                    if($lead) {
+                        $emailData = [
+                            'clientFullName' => $lead->first_name.' '.$lead->last_name,
+                            'email' => isset($lead->email) ? $lead->email : '',
+                            'customerEmail' => isset($lead->email) ? $lead->email : '',
+                            'phone' => isset($lead->mobile_no) ? $lead->mobile_no : '',
+                            'nationality' => isset($lead->nationality_id) ? $this->lookupService->getNationality($lead->nationality_id)->text : '',
+                            'dob' => isset($lead->dob) ? Carbon::parse($lead->dob)->format('d-m-Y') : '',
+                            'yearsOfDriving' => $lead->year_of_manufacturing,
+                            'yearOfManufacturing' => $lead->year_of_manufacture,
+                            'model' => isset($lead->car_model_id) ? $this->lookupService->getCarModel($lead->car_model_id)->text : '',
+                            'make' => isset($lead->car_make_id) ? $this->lookupService->getCarMake($lead->car_make_id)->text : '',
+                            'carValue' => isset($lead->car_value) ? number_format($lead->car_value, 2) : '0.00',
+                            'quoteLink' => config('constants.APP_URL').'/quotes/car/'.$lead->uuid,
+                        ];
+                        // Send Email
+                        $this->sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailRecipients);
+                    }
+                }
             }
         }
         $entity = $this->crudService->updateQuoteStatus($request);
