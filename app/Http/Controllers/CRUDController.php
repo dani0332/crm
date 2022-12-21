@@ -9,6 +9,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Models\CarQuote;
 use App\Models\GenericModel;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -35,6 +36,7 @@ use App\Services\SendEmailCustomerService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
+use App\Services\EmailDataService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
@@ -42,7 +44,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use PDF;
+use App\Traits\SendSIBEmail;
 
 class CRUDController extends Controller
 {
@@ -67,8 +69,10 @@ class CRUDController extends Controller
     protected $customerService;
     protected $sendEmailCustomerService;
     protected $quoteDocumentService;
+    protected $emailDataService;
 
     use GenericQueriesAllLobs;
+    use SendSIBEmail;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -91,7 +95,8 @@ class CRUDController extends Controller
         NotesForCustomerService $notesForCustomerService,
         CustomerService $customerService,
         SendEmailCustomerService $sendEmailCustomerService,
-        QuoteDocumentService $quoteDocumentService
+        QuoteDocumentService $quoteDocumentService,
+        EmailDataService $emailDataService
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -114,6 +119,7 @@ class CRUDController extends Controller
         $this->customerService = $customerService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->quoteDocumentService = $quoteDocumentService;
+        $this->emailDataService = $emailDataService;
 
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
@@ -784,13 +790,28 @@ class CRUDController extends Controller
                     $this->activityService->createActivity($request, $record);
                 }
             }
-            if($request->leadStatus == QuoteStatusEnum::AfiaRenewal && $request->tier_id == null) {
-                $this->validate($request, [
-                    'tier_id' => 'required',
-                ]);
+            if($request->leadStatus == QuoteStatusEnum::AfiaRenewal) {
+                if(!isset($request->tier_id)) {
+                    $this->validate($request, [
+                        'tier_id' => 'required',
+                    ]);
+                }
 
-                // Send Email
-                
+                // MS: Send email
+                if(isset($request->leadId)) {
+                    $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
+                    $tag = config('constants.APP_ENV').'-car-quote-tier-r';
+                    $emailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
+                    $lead = CarQuote::find($request->leadId);
+                    if($lead) {
+                        $emailData = $this->emailDataService->emailDataTierR($lead);
+
+                        // Send Email
+                        if($emailData) {
+                            $this->sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailRecipients);
+                        }
+                    }
+                }
             }
         }
         $entity = $this->crudService->updateQuoteStatus($request);
