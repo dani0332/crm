@@ -791,7 +791,7 @@ class CRUDController extends Controller
                 }
             }
             if($request->leadStatus == QuoteStatusEnum::AfiaRenewal) {
-                if($request->tier_id == null) {
+                if(!isset($request->tier_id)) {
                     $this->validate($request, [
                         'tier_id' => 'required',
                     ]);
