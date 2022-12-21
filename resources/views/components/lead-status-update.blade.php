@@ -91,14 +91,14 @@
     });
 
     function next_followup_date_visibility(lead_status_code) {
-        if(lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::FollowupCall) ?>') || 
-        lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::Interested) ?>') || 
-        lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::NoAnswer) ?>')) {
+        if(lead_status_code == <?php echo QuoteStatusEnum::FollowupCall; ?> || 
+        lead_status_code == <?php echo QuoteStatusEnum::Interested; ?> || 
+        lead_status_code == <?php echo QuoteStatusEnum::NoAnswer; ?>) {
             $('#quote-next-followup-date').show();
         } else {
             $('#quote-next-followup-date').hide();
         }
-        if(lead_status_code == JSON.parse('<?php echo json_encode(QuoteStatusEnum::AfiaRenewal) ?>')) {
+        if(lead_status_code == <?php echo json_encode(QuoteStatusEnum::AfiaRenewal) ?>) {
             $('#quote-tier').show();
         } else {
             $('#quote-tier').hide();

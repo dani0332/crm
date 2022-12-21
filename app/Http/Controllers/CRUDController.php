@@ -788,6 +788,9 @@ class CRUDController extends Controller
                 $this->validate($request, [
                     'tier_id' => 'required',
                 ]);
+
+                // Send Email
+                
             }
         }
         $entity = $this->crudService->updateQuoteStatus($request);
