@@ -549,7 +549,7 @@ use App\Enums\PermissionsEnum;
         <div class="x_panel" style="overflow:hidden">
             <div class="x_title">
                 <h2>{{ str_contains(strtolower($model->modelType), 'teams')? 'Teams':
-                    (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': $model->modelType) }}
+                    (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}
                     List</h2>
                 @cannot(PermissionsEnum::ApprovePayments)
                 <ul class="nav navbar-right panel_toolbox">
@@ -562,22 +562,23 @@ use App\Enums\PermissionsEnum;
                     </li>
                     @endif
                     @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Business))
-                    @can('corpline-quotes-create')
-                    <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
-                            class="btn btn-warning btn-sm">Create
-                            {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
-                            (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
-                    </li>
-                    @endcan
+                        @can('corpline-quotes-create')
+                        <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
+                                class="btn btn-warning btn-sm">Create
+                                {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
+                                (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
+                        </li>
+                        @endcan
                     @endif
-                    @can(strtolower($model->modelType) . '-quotes-create')
-                    <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
-                            class="btn btn-warning btn-sm">Create
-                            {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
-                            (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
-                    </li>
-                    @endcan
-
+                    @if (strtolower($model->modelType) != strtolower(quoteTypeCode::Business))
+                        @can(strtolower($model->modelType) . '-quotes-create')
+                        <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
+                                class="btn btn-warning btn-sm">Create
+                                {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
+                                (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
+                        </li>
+                        @endcan
+                    @endif
                 </ul>
                 @endcannot
                 <div class="clearfix"></div>

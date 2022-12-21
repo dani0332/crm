@@ -69,7 +69,7 @@ $(document).ready(function() {
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Vehicle Type"><b>Vehicle Type</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Vehicle Body Type"><b>Vehicle Body Type</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
                                 <select class="form-control" id="vehicle_type_id" name="vehicle_type_id">
