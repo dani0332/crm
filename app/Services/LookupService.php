@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\TiersEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -101,6 +102,8 @@ class LookupService extends BaseService
 
     public function getTier()
     {
-        return Tier::select('id','name')->where('is_active', true)->orderBy('name', 'asc')->get();
+        return Tier::select('id','name')
+        ->where(['is_active' => true, 'name' => TiersEnum::TierR])
+        ->orderBy('name', 'asc')->get();
     }
 }

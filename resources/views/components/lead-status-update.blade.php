@@ -174,7 +174,7 @@
                             <div class="col-md-6 col-sm-6">
                                 <textarea @if($lead->quote_status_id ==
                                     QuoteStatusEnum::TransactionApproved) disabled @endif class="form-control" id="notes" name="notes"
-                                    placeholder="Notes">{{$lead->notes ?? ''}}</textarea>
+                                    placeholder="Notes">{{ old('notes', $lead->notes) }}</textarea>
                             </div>
                         </div>
                         <div class="col">

@@ -777,6 +777,7 @@ class CRUDController extends Controller
                 $this->validate($request, [
                     'next_followup_date' => 'required',
                     'next_followup_date' => 'date_format:Y-m-d H:i:s|after_or_equal:'.date('Y-m-d H:i:s'),
+                    'notes' => 'required',
                 ]);
                 if (isset($request->quote_uuid)) {
                     $record = $this->crudService->getEntity($request->modelType, $request->quote_uuid);
