@@ -4,9 +4,13 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\Team;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -633,13 +637,27 @@ class CarQuoteService extends BaseService
 
     public function walkTree($userId)
     {
-        $childs = User::where('manager_id', $userId)->pluck('id');
-        foreach ($childs as $child) {
-            $nextChilds = User::where('manager_id', $child)->pluck('id');
-            if (count($nextChilds) > 0) {
-                $this->walkTree($child);
+        if( auth()->user()->team_id == 2 )
+        {
+            return abort(500, 'An error occurred while processing your request');
+        }
+        array_push($this->childUserIds, $userId);
+        if(auth()->user()->hasRole(RolesEnum::CarManager))
+        {
+
+            $teamMates = User::where('team_id', Team::where('name', auth()->user()->team_id))->get()->pluck('id');
+            array_push($this->childUserIds, $teamMates);
+        }
+        else{
+
+            $teamMates = User::where('manager_id', $userId)->pluck('id');
+            foreach ($teamMates as $teamMate) {
+                $nextChild = User::where('manager_id', $teamMate)->pluck('id');
+                if (count($nextChild) > 0) {
+                    $this->walkTree($teamMate);
+                }
+                array_push($this->childUserIds, $teamMate);
             }
-            array_push($this->childUserIds, $child);
         }
     }
 
