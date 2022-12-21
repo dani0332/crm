@@ -243,6 +243,9 @@ class CRUDService extends BaseService
         if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
             $entity->wcu_id = null;
         }
+        if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
+            $entity->tier_id = $request->tier_id;
+        }
         $entity->save();
         //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP) {
