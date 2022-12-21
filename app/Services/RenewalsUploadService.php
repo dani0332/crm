@@ -1209,7 +1209,18 @@ class RenewalsUploadService
 
                 if (isset($leadData->dob) && $leadData->dob && ! $this->validateDate($leadData->dob)) {
                     $leadValidationErrors->push('Invalid Date of Birth');
+                } else {
+                    $dob = Carbon::createFromFormat('d/m/Y', $leadData->dob);
+                    $minDate = Carbon::createFromFormat('d/m/Y', '01/01/1930');
+
+                    if ($dob->lt($minDate)) {
+                        $leadValidationErrors->push('Date of birth can not be earlier than 01/01/1930');
+                    }
+                    if ($dob->age < 18) {
+                        $leadValidationErrors->push('Customer age should be 18 years or more');
+                    }
                 }
+
                 if ($lead->type == RenewalsUploadType::CREATE_LEADS && $lead->policy_number && $quoteTypeObject) {
                     if ($quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
                         $leadValidationErrors->push('Quote already created for this policy number, use upload and update');
