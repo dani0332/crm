@@ -156,7 +156,7 @@
                                     <select id="tier_id" name="tier_id" class="form-control">
                                         <option value="">Please Select Tier</option>
                                         @foreach($tiers as $tier)
-                                            <option value="{{$tier->id}}" {{ $tier->id == old('tier_id', $lead->tier_id) ? 'selected' : ''}}>
+                                            <option value="{{$tier->id}}" {{ $tier->id == old('tier_id', $lead->tier_id ?? '') ? 'selected' : ''}}>
                                                 {{ $tier->name }}
                                             </option>
                                         @endforeach
