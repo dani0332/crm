@@ -1214,7 +1214,7 @@ class RenewalsUploadService
                     $minDate = Carbon::createFromFormat('d/m/Y', '01/01/1930');
 
                     if ($dob->lt($minDate)) {
-                        $leadValidationErrors->push('Date of birth can not be earlier than 01/01/1930');
+                        $leadValidationErrors->push('Date of birth cannot be earlier than 01/01/1930');
                     }
                     if ($dob->age < 18) {
                         $leadValidationErrors->push('Customer age should be 18 years or more');
