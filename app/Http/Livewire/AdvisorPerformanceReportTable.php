@@ -3,7 +3,6 @@
 namespace App\Http\Livewire;
 
 use App\Models\CarQuote;
-use App\Models\LeadSource;
 use App\Models\Team;
 use App\Models\Tier;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 
 class AdvisorPerformanceReportTable extends DataTableComponent
@@ -131,18 +131,20 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             )->filter(function (Builder $builder, $value) {
                 $builder->where('car_quote_request.tier_id', $value);
             }),
-            SelectFilter::make('Lead Source')
-            ->options(
-                LeadSource::query()
+            MultiSelectFilter::make('Lead Source')
+                ->options(
+                    CarQuote::query()
+                    ->select('source as name')
+                    ->distinct()
+                    ->whereNotNull('source')
                     ->orderBy('name')
-                    ->where('is_active', 1)
                     ->get()
                     ->keyBy('name')
                     ->map(fn ($users) => $users->name)
                     ->toArray(),
-            )->filter(function (Builder $builder, $value) {
-                $builder->where('car_quote_request.source', $value);
-            }),
+                )->filter(function (Builder $builder, $value) {
+                    $builder->whereIn('car_quote_request.source', $value);
+                }),
 
         ];
     }
