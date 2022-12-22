@@ -32,6 +32,8 @@ class DatabaseSeeder extends Seeder
             addPermissionsForDashboard::class,
             //CarQuoteRequestSeeder::class,
             //QuoteStatusTableSeeder::class,
+            HealthFacilityCategorySeeder::class,
+            HealthPlanTypeSeeder::class,
         ]);
     }
 }
