@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeId;
+use App\Enums\QuoteTypeId;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -141,9 +141,9 @@ class CarQuoteService extends BaseService
             ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
             ->leftJoin('car_model_detail as cmd', 'cmd.id', '=', 'cqr.car_model_detail_id')
             ->leftJoin('tiers as t', 't.id', '=', 'cqr.tier_id')
-            ->leftJoin('quote_view_count as qvc', function($join) {
+            ->leftJoin('quote_view_count as qvc', function ($join) {
                 $join->on('qvc.quote_id', 'cqr.id');
-                $join->where('qvc.quote_type_id', quoteTypeId::Car);
+                $join->where('qvc.quote_type_id', QuoteTypeId::Car);
             });
     }
 
