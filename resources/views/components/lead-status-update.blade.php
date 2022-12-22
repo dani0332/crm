@@ -29,7 +29,7 @@ use App\Enums\QuoteTypeId;
             $('#followup-date').val(followupDate);
             $('#followup-div').show();
         }
-        $("#nextFollowUpDate").daterangepicker({ // TM Leads
+        $("#nextFollowUpDate").daterangepicker({
             timePicker: true,
             singleDatePicker: true,
             timePicker24Hour: true,
@@ -61,9 +61,9 @@ use App\Enums\QuoteTypeId;
             next_followup_date_visibility(lead_status_code);
         });
 
-        var quoteTypeId = JSON.parse('<?php echo json_encode($quoteTypeId) ?>');
-        var quoteTypeCar = JSON.parse('<?php echo json_encode(QuoteTypeId::Car) ?>');
-        var hasRoles = JSON.parse('<?php echo json_encode(auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) ?>');
+        var quoteTypeId = <?php echo $quoteTypeId; ?>;
+        var quoteTypeCar = <?php echo QuoteTypeId::Car; ?>;
+        var hasRoles = <?php echo auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin]); ?>;
         if (quoteTypeId == quoteTypeCar) {
             // Car Quote: display calendar on next_followup_date
             $('#next_followup_date').daterangepicker({
@@ -93,7 +93,7 @@ use App\Enums\QuoteTypeId;
         } else {
             $('#quote-next-followup-date').hide();
         }
-        if (lead_status_code == <?php echo json_encode(QuoteStatusEnum::AfiaRenewal) ?>) {
+        if (lead_status_code == <?php echo QuoteStatusEnum::AfiaRenewal; ?>) {
             $('#quote-tier').show();
         } else {
             $('#quote-tier').hide();
