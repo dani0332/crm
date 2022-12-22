@@ -98,9 +98,6 @@ class AdvisorPerformanceReportTable extends DataTableComponent
     {
         return [
             DateFilter::make('Start Date')
-            ->config([
-                'min' => '2021-31-01',
-            ])
               ->filter(function (Builder $builder, string $value) {
                   $builder->whereDate('car_quote_request.created_at', '>=', $value);
               }),
