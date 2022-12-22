@@ -34,19 +34,25 @@ class LeadDistributionReportTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make('Tier Name', 'tier.name')->searchable(),
-            Column::make('Received Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
+            Column::make('Tier Name', 'tier.name')->sortable(),
+            Column::make('Received Leads')->label(fn ($row) => $row->received_leads)->footer(function ($rows) {
                 return $rows->sum('received_leads');
             }),
             Column::make('Leads Created')->label(fn ($row) => $row->lead_created)->footer(function ($rows) {
                 return $rows->sum('lead_created');
-            }),
-            Column::make('Total Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
-                return $rows->sum('total_leads');
-            }),
+            })->sortable(),
+            Column::make('Total Leads')->label(fn ($row) => $row->lead_created + $row->received_leads)->footer(function ($rows) {
+                return $rows->sum('lead_created') + $rows->sum('received_leads');
+            })->sortable(),
             Column::make('UnAssigned Leads')->label(fn ($row) => $row->unassigned_leads)->footer(function ($rows) {
                 return $rows->sum('unassigned_leads');
-            }),
+            })->sortable(),
+            Column::make('Auto Assigned')->label(fn ($row) => $row->auto_assigned)->footer(function ($rows) {
+                return $rows->sum('auto_assigned');
+            })->sortable(),
+            Column::make('Manually Assigned')->label(fn ($row) => $row->manually_assigned)->footer(function ($rows) {
+                return $rows->sum('manually_assigned');
+            })->sortable(),
         ];
     }
 
@@ -58,8 +64,11 @@ class LeadDistributionReportTable extends DataTableComponent
               DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as lead_created'),
               DB::raw('count(car_quote_request.id) as total_leads'),
               DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
+              DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as auto_assigned'),
+              DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is not null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as manually_assigned'),
           )
           ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+          ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
           ->groupBy('tiers.name');
     }
 
