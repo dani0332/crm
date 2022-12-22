@@ -23,6 +23,7 @@ use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\EmailDataService;
 use App\Services\EmailStatusService;
 use App\Services\HealthQuoteService;
 use App\Services\HomeQuoteService;
@@ -36,15 +37,14 @@ use App\Services\SendEmailCustomerService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
-use App\Services\EmailDataService;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\SendSIBEmail;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use App\Traits\SendSIBEmail;
 
 class CRUDController extends Controller
 {
@@ -388,7 +388,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers'
+                'carMakeText', 'carModelText', 'advisor', 'tiers',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
@@ -413,7 +413,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers'
+                'quoteTypeId', 'tiers',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = '';
@@ -438,14 +438,14 @@ class CRUDController extends Controller
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'membersDetail', 'memberCategories', 'salaryBands', 'autoAllocationDisabled', 'ecomDetails', 'ecomHealthInsuranceQuoteUrl',
                 'quoteType', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers'
+                'quoteTypeId', 'tiers',
             ]));
         } else {
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
-                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId', 'tiers'
+                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId', 'tiers',
             ]));
         }
     }
@@ -790,24 +790,24 @@ class CRUDController extends Controller
                     $this->activityService->createActivity($request, $record);
                 }
             }
-            if($request->leadStatus == QuoteStatusEnum::AfiaRenewal) {
-                if(!isset($request->tier_id)) {
+            if ($request->leadStatus == QuoteStatusEnum::AfiaRenewal) {
+                if (! isset($request->tier_id)) {
                     $this->validate($request, [
                         'tier_id' => 'required',
                     ]);
                 }
 
                 // MS: Send email
-                if(isset($request->leadId)) {
+                if (isset($request->leadId)) {
                     $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
                     $tag = config('constants.APP_ENV').'-car-quote-tier-r';
                     $emailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
                     $lead = CarQuote::find($request->leadId);
-                    if($lead) {
+                    if ($lead) {
                         $emailData = $this->emailDataService->generateTierREmailData($lead);
 
                         // Send Email
-                        if($emailData) {
+                        if ($emailData) {
                             $this->sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailRecipients);
                         }
                     }
