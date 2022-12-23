@@ -279,7 +279,7 @@
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Sub-teams</label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Sub-Team</label>
                         <div class="col-md-6 col-sm-6">
                             <select name="sub_team_id" id="sub-team" class="form-control">
                                 <option @if ($user->sub_team_id == null) selected="selected" @endif value="0">None</option>
