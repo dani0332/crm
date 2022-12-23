@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Edit User')
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <link href="{{ asset('css/bootstrap-toggle.css') }}" rel="stylesheet">
 <style>
@@ -37,83 +38,132 @@
     }
 </style>
 <script>
-    function loadManagers(teamId, manager_id) {
-        $.ajax({
-            url: '/getTeamManagers?teamId=' + teamId + '&userId=' + JSON.parse('<?php echo json_encode("$user->id"); ?>'),
-            type: "get",
-            success: function(response) {
-                $('#user-manager-select').find('option').remove().end().append(
-                    '<option value="0" selected="selected">None</option>');
-                for (let index = 0; index < response.length; index++) {
-                    const element = response[index];
-                    if (manager_id == element.id) {
-                        $('#user-manager-select').append('<option value="' + element.id +
-                            '" selected="selected">' + element.name + '</option>');
-                    } else {
-                        $('#user-manager-select').append($("<option></option>").attr("value", element.id)
-                            .text(element.name));
-                    }
-                }
-                $('.select-manager').removeAttr('disabled');
-                $(".loader").hide();
-            },
-        });
-    }
-
-    function loadAdditionalTeams(additionalTeams) {
-        $("#additionalTeams-select").empty();
+    function loadAdditionalTeams(additionalTeams, previous_selected_additional_teams){
+        console.log(previous_selected_additional_teams);
         additionalTeams.forEach(element => {
-            var select = $("#additionalTeams-select");
+            var select  = $("#additionalTeams-select");
             var parentTeamId = $("#user-team-select").val();
-            if (parseInt(element.id) !== parseInt(parentTeamId)) {
-                select.append('<option value="' + element.id + '">' + element.name + '</option>');
+            if(element.id != parentTeamId){
+                select.append('<option value="'+element.id+'">'+element.name+'</option>');
             }
         });
+        $('#additionalTeams-select').val(previous_selected_additional_teams);
     }
 
-    function loadSubTeams(team_id, previous_sub_team_id) {
+    function loadSubTeams(team_id, previous_sub_team_id){
+        $(".loader").show();
+        if(typeof team_id == 'string'){
+            team_id = [team_id];
+        }
+        $.ajax({
+                url: '/getSubTeams',
+                type: "post",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: { 'teamId' : team_id },
+                success: function(response) {
+                    $('#sub-team').find('option').remove().end().append('<option value="0" selected="selected">None</option>');
+                    for (let index = 0; index < response.length; index++) {
+                        const element = response[index];
+                        $('#sub-team').append($("<option></option>").attr("value", element.id).text(element.name));
+                    }
+                    if(previous_sub_team_id != 0){
+                        $('#sub-team').val(previous_sub_team_id);
+                    }
+                    $(".loader").hide();
+                },
+            });
+    }
+
+    function loadManagerByTeam(team_id, previous_selected_manager){
+        $(".loader").show();
+        if(typeof team_id == 'string'){
+            team_id = [team_id];
+        }
+        $.ajax({
+                url: '/getTeamManagers',
+                type: "post",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: { 'teamId' : team_id },
+                success: function(response) {
+                    $('#user-manager-select').find('option').remove().end();
+                    for (let index = 0; index < response.length; index++) {
+                        const element = response[index];
+                        $('#user-manager-select').append($("<option></option>").attr("value", element.id).text(element.name));
+                    }
+                    $('#user-manager-select').removeAttr('disabled');
+                    $("#user-manager-select").val(previous_selected_manager);
+                    $(".loader").hide();
+                },
+            });
+    }
+
+    function loadTeamsByProduct(productIds){
+        if(typeof productIds == 'string'){
+            productIds = [productIds];
+        }
         $(".loader").show();
         $.ajax({
-            url: '/getSubTeams?teamId=' + team_id,
-            type: "get",
+            url: '/get-product-teams',
+            type: "post",
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data: { 'productIds' : productIds },
             success: function(response) {
-                $('#sub-team').find('option').remove().end().append(
-                    '<option value="0" selected="selected">None</option>');
+                $('#user-team-select').find('option').remove().end();
                 for (let index = 0; index < response.length; index++) {
                     const element = response[index];
-                    $('#sub-team').append($("<option></option>").attr("value", element.id).text(element
-                        .name));
-                }
-                if (previous_sub_team_id != 0) {
-                    $('#sub-team').val(previous_sub_team_id);
+                    $('#user-team-select').append($("<option></option>").attr("value", element.id).text(element.name));
                 }
                 $(".loader").hide();
             },
         });
     }
-    $(document).ready(function() {
-        var additionalTeams = JSON.parse('<?php echo json_encode($teams); ?>');
-        var previous_sub_team_id = JSON.parse('<?php echo json_encode("$user->sub_team_id"); ?>');
-        var previous_selected_additional_teams = JSON.parse('<?php echo json_encode("$user->additional_team_ids"); ?>');
-        var previous_selected_manager = JSON.parse('<?php echo json_encode("$user->manager_id"); ?>');
-        var previous_selected_teamId = JSON.parse('<?php echo json_encode("$user->team_id"); ?>');
-        loadAdditionalTeams(additionalTeams);
+
+    $(document).ready(function(){
+        var previous_sub_team_id = JSON.parse('<?php echo json_encode(old('sub_team_id')); ?>');
+        var previous_team = JSON.parse('<?php echo json_encode(old('teams')); ?>');
+        var previous_product = JSON.parse('<?php echo json_encode(old('products')); ?>');
+        var previous_selected_additional_teams = JSON.parse('<?php echo json_encode(old('additionalTeams')); ?>');
+        var previous_selected_manager = JSON.parse('<?php echo json_encode(old('manager')); ?>');
+        var previous_selected_roles = JSON.parse('<?php echo json_encode(old('roles')); ?>');
+        var additionalTeams = JSON.parse('<?php echo json_encode($products); ?>');
+
+        $("#user-product-select").on('change', function(){
+            if(this.value == '') {
+                 $("#user-team-select").empty();
+            }
+            else {
+                loadTeamsByProduct($(this).val());
+                loadManagerByTeam($(this).val(), previous_selected_manager);
+            }
+        });
+
+        $('#roles').val(previous_selected_roles);
+        loadSubTeams($("#user-team-select").val(), previous_sub_team_id);
+
         $('#additionalTeams-select').select2({
             placeholder: 'Select teams for MyLeads Tab visiblity',
             width: '100%',
             allowClear: true
         });
-        loadManagers(previous_selected_teamId, previous_selected_manager);
-        $('#additionalTeams-select').val(previous_selected_additional_teams.split(',')).trigger('change');
-        $("#user-team-select").on('change', function() {
-            $(".loader").show();
-            loadAdditionalTeams(additionalTeams);
-            loadSubTeams($(this).val(), previous_sub_team_id);
 
-            loadManagers($(this).val(), previous_selected_manager);
-            $(".loader").hide();
+        loadAdditionalTeams(additionalTeams, previous_selected_additional_teams);
+
+        $("#user-team-select").on('change', function(){
+            if($(this).val()){
+                $("#additionalTeams-select").empty();
+                loadSubTeams($(this).val());
+                loadAdditionalTeams(additionalTeams);
+            }
+
         });
     });
+
 </script>
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -202,11 +252,9 @@
                         <div class="col-md-6 col-sm-6">
                             <select name="products[]" id="user-product-select" class="form-control select2" multiple="multiple">>
                                 @foreach ($products as $product)
-                                    @if (old('product') == $product->id)
-                                        <option value="{{ $product->id }}" selected>{{ $product->name }}</option>
-                                    @else
-                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
-                                    @endif
+                                    <option value="{{ $product->id }}" @if (in_array($product->id, $userProductIds)) selected="selected" @endif>
+                                        {{ $product->name }}
+                                    </option>
                                 @endforeach
                             </select>
                             @if ($errors->has('product'))
@@ -216,12 +264,11 @@
                     </div>
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Teams <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6">
-                            <select name="team" id=user-team-select class="form-control select2">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Teams<span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select name="teams[]" id="user-team-select" class="form-control select2" multiple="multiple">>
                                 @foreach ($teams as $team)
-                                    <option value="{{ $team->id }}" @if ($team->id == $selectedTeam) selected="selected"
-                                        @endif>
+                                    <option value="{{ $team->id }}" @if (in_array($team->id, $userTeamIds)) selected="selected" @endif>
                                         {{ $team->name }}
                                     </option>
                                 @endforeach
@@ -261,7 +308,24 @@
                             <i class="fa fa-info-circle" id="tooltipGm" style="margin-top: 15px;" title="Additional teams selection helps advisor see leads from selected teams as well"></i>
                         </div>
                     </div>
+
                     <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select id='user-manager-select' name="manager[]" class="form-control select2" multiple="multiple">
+                                @foreach ($managers as $manager)
+                                    <option value="{{ $manager->id }}" @if (in_array($manager->id, $userManagerIds)) selected="selected" @endif>
+                                        {{ $manager->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @if ($errors->has('manager'))
+                                <span class="text-danger">{{ $errors->first('manager') }}</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{--<div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>
                         <div class="col-md-6 col-sm-6">
                             <select name="manager_id" id=user-manager-select class="form-control">
@@ -276,7 +340,7 @@
                                 <span class="text-danger">{{ $errors->first('manager_id') }}</span>
                             @endif
                         </div>
-                    </div>
+                    </div>--}}
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">IsActive</label>
                         <ul class="list-group list-group-flush">

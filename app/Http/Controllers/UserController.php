@@ -189,28 +189,29 @@ class UserController extends Controller
     {
         $roles = Role::pluck('name', 'name')->all(); // get all roles
         $userRole = $user->roles->pluck('name', 'name')->all(); // get all roles of current user
-        $teams = Team::whereNull('parent_team_id')->orderBy('name', 'asc')->get(); // get all teams
+        $teams = Team::where('type', TeamTypeEnum::Team)->orderBy('name', 'asc')->get(); // get all teams
         $subTeams = Team::where('parent_team_id', $user->team_id)->orderBy('name', 'asc')->get();
-        $managers = [];
-        if ($user->teamId) {
-            $managers = $this->getManagersBasedOnTeamId($user->team_id, $user->id);
-        } // get all managers based on current user's team
         $selectedAdditionalTeams = $user->additional_team_ids; // get all additional teams of current user
-        $selectedTeam = $user->team_id; // current user team
         $selectedManager = $user->manager_id; // current user manager
         $products = Team::where('type', TeamTypeEnum::Product)->orderBy('name', 'asc')->get(); // get all products
-
+        $userProductIds = DB::table('user_products')->where('user_id', $user->id)->get()->pluck('product_id')->toArray();
+        $userTeamIds = DB::table('user_team')->where('user_id', $user->id)->get()->pluck('team_id')->toArray();
+        $managers = $this->getManagersBasedOnTeamId($userProductIds, $user->id); // get all managers based on current user's team
+        $userManagerIds = DB::table('user_manager')->where('user_id', $user->id)->get()->pluck('manager_id')->toArray();
+        //dd($managers, $userManagerIds);
         return view('user.edit', compact(
             'user',
             'roles',
             'userRole',
-            'teams',
-            'selectedTeam',
-            'managers',
             'selectedManager',
             'selectedAdditionalTeams',
             'subTeams',
-            'products'
+            'products',
+            'userProductIds',
+            'teams',
+            'userTeamIds',
+            'managers',
+            'userManagerIds'
         ));
     }
 
@@ -337,7 +338,6 @@ class UserController extends Controller
             ->select(
                 'users.id',
                 DB::raw('CONCAT(users.name, " - ", roles.name) as name')
-            )
-            ->get();
+            )->get();
     }
 }
