@@ -93,7 +93,12 @@ class ActivitesController extends Controller
     public function show($id)
     {
         $record = $this->activitesService->getActivityByUUID($id);
-        $record->assignee_name = User::where('id', $record->assignee_id)->first()->name;
+
+        if ($record) {
+            $record->assignee_name = User::where('id', $record->assignee_id)->first()->name;
+        } else {
+            abort(404);
+        }
 
         return view('activities.show', compact('record'));
     }
