@@ -5,19 +5,19 @@ namespace App\Http\Controllers;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\TeamTypeEnum;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
-use App\Models\Team;
 use App\Models\Tier;
-use App\Models\User;
 use App\Services\DashboardService;
+use App\Traits\TeamHierarchyHelpers;
 use DB;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
+    use TeamHierarchyHelpers;
+
     protected $dashboardService;
 
     public function __construct(DashboardService $dashboardService)
@@ -38,10 +38,10 @@ class DashboardController extends Controller
     public function renderMainDashboard(Request $request)
     {
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->get();
-        $carTeam = Team::where('name', quoteTypeCode::Car)->first();
-        $teams = Team::where('type', TeamTypeEnum::Team)->where('parent_team_id', $carTeam->id)->get();
-        $carAdvisors = User::whereIn('id', DB::table('user_team')->where('team_id', $carTeam->id)->get()->pluck('user_id'))->get();
-        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams, $carAdvisors);
+        $car = $this->getProductByName(quoteTypeCode::Car);
+        $teams = $this->getTeamsByProductId($car->id);
+        $carAdvisors = $this->getUsersByTeamId($car->id);
+        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams);
 
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
@@ -66,10 +66,10 @@ class DashboardController extends Controller
         $startDate = explode(',', $request->range)[0];
         $endDate = explode(',', $request->range)[1];
         $allCarQuotesToday = CarQuote::whereBetween('created_at', [$startDate, $endDate])->get();
-        $carTeam = Team::where('name', quoteTypeCode::Car)->first();
-        $teams = Team::where('parent_team_id', $carTeam->id)->get();
+        $car = $this->getProductByName(quoteTypeCode::Car);
+        $teams = $this->getTeamsByProductId($car->id);
         foreach ($teams as $team) {
-            $teamUserIds = User::where('sub_team_id', $team->id)->pluck('id');
+            $teamUserIds = $this->getUsersByTeamId($team->id)->pluck('id');
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => count($teamUserIds),
                 'teamName' => $team->name,
@@ -92,8 +92,8 @@ class DashboardController extends Controller
     public function renderTplDashboard(Request $request)
     {
         $tplDashboardStats = $this->getTPLDashboardStats($request);
-        $carTeam = Team::where('name', quoteTypeCode::Car)->first();
-        $teams = Team::where('type', TeamTypeEnum::Team)->where('parent_team_id', $carTeam->id)->get();
+        $car = $this->getProductByName(quoteTypeCode::Car);
+        $teams = $this->getTeamsByProductId($car->id);
 
         return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams'));
     }
@@ -217,11 +217,10 @@ class DashboardController extends Controller
 
     public function renderComprehensiveDashboard(Request $request)
     {
-        $carTeam = Team::where('name', quoteTypeCode::Car)->first();
-        $carUsers = User::whereIn('id', DB::table('user_team')->where('team_id', $carTeam->id)->get()->pluck('user_id'))->get();
+        $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
         $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->orderBy('name', 'asc')->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request);
-        $teams = $carTeam = Team::where('type', TeamTypeEnum::Team)->where('parent_team_id', $carTeam->id)->get();
+        $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
 
         return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers', 'comprehensiveDashboardStats', 'teams'));
     }

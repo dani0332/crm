@@ -4,11 +4,14 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Models\CarQuote;
+use App\Traits\TeamHierarchyHelpers;
 use Carbon\Carbon;
 use DB;
 
 class DashboardService extends BaseService
 {
+    use TeamHierarchyHelpers;
+
     public function getDashboardStatsByDate($start, $end, $type)
     {
         $tableName = $type.'_quote_request';
@@ -146,22 +149,22 @@ class DashboardService extends BaseService
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
         if (isset($teamIds)) {
-            $userIds = DB::table('user_team')->whereIn('team_id', $teamIds)->get()->pluck('user_id');
+            $userIds = $this->getUsersByTeamIds($teamIds)->pluck('user_id');
             $query->whereIn('users.id', $userIds);
         }
 
         return $query->get();
     }
 
-    public function getTeamWiseLeadStats($todaysLeads, $teams, $carAdvisors)
+    public function getTeamWiseLeadStats($todaysLeads, $teams)
     {
         $teamWiseLeadsAssignedAverage = [];
         foreach ($teams as $team) {
-            $teamUserIds = $carAdvisors->where('sub_team_id', $team->id)->pluck('id');
+            $teamUsers = $this->getUsersByTeamId($team->id);
             $teamWiseLeadsAssignedAverage[] = [
-                'totalUsersUnderTeam' => count($teamUserIds),
+                'totalUsersUnderTeam' => count($teamUsers),
                 'teamName' => $team->name,
-                'totalLeadsCount' => $todaysLeads->whereIn('advisor_id', $teamUserIds)->count(),
+                'totalLeadsCount' => $todaysLeads->whereIn('advisor_id', $teamUsers->pluck('id'))->count(),
             ];
         }
 
