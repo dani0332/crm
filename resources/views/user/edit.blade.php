@@ -116,7 +116,7 @@
     });
 </script>
 <div class="row">
-    <div class="col-md-12 col-sm-12 ">
+    <div class="col-md-12 col-sm-12">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Edit User</h2>
@@ -130,117 +130,132 @@
                 @if (session()->has('success'))
                 <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ route('users.update', ['user' => $user->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                <form id="demo-form2" method="post" action="{{ route('users.update', ['user' => $user->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                     {{ csrf_field() }}
                     @method('PUT')
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6 ">
-                            <input type="text" id="name" name="name" value="{{ $user->name }}" class="form-control ">
+                        <div class="col-md-6 col-sm-6">
+                            <input type="text" id="name" name="name" value="{{ $user->name }}" class="form-control">
                             @if ($errors->has('name'))
-                            <span class="text-danger">{{ $errors->first('name') }}</span>
+                                <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="email">Email <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <div class="col-md-6 col-sm-6">
                             <input type="email" id="email" name="email" value="{{ $user->email }}" class="form-control">
                             @if ($errors->has('email'))
-                            <span class="text-danger">{{ $errors->first('email') }}</span>
+                                <span class="text-danger">{{ $errors->first('email') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="mobile_no">Mobile Number
-                        </label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="mobile_no">Mobile Number</label>
+                        <div class="col-md-6 col-sm-6">
                             <input type="text" id="mobile_no" name="mobile_no" value="{{ $user->mobile_no }}" class="form-control" pattern="^(?:\+971|00971|0)(?!2)((?:2|3|4|5|6|7|9|50|51|52|55|56)[0-9]{7,})$">
                             @if ($errors->has('mobile_no'))
-                            <span class="text-danger">{{ $errors->first('mobile_no') }}</span>
+                                <span class="text-danger">{{ $errors->first('mobile_no') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="landline_no">Landline Number
-                        </label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="landline_no">Landline Number</label>
+                        <div class="col-md-6 col-sm-6">
                             <input type="text" id="landline_no" name="landline_no" value="{{ $user->landline_no }}" class="form-control" pattern="^(?:\+971|00971|0)((?:2|3|4|5|6|7|9|50|51|52|55|56)[0-9]{7,})$">
                             @if ($errors->has('landline_no'))
-                            <span class="text-danger">{{ $errors->first('landline_no') }}</span>
+                                <span class="text-danger">{{ $errors->first('landline_no') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="password">Password</label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <div class="col-md-6 col-sm-6">
                             <input type="password" id="password" name="password" value="{{ $user->password }}" class="form-control">
                             @if ($errors->has('password'))
-                            <span class="text-danger">{{ $errors->first('password') }}</span>
+                                <span class="text-danger">{{ $errors->first('password') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Roles <span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <div class="col-md-6 col-sm-6">
                             <select name="roles[]" multiple="multiple" style="margin-bottom:15px;" class="form-control select2 select-roles">
                                 @foreach (array_chunk($roles, 6) as $chunk)
-                                @foreach ($chunk as $skey => $item)
-                                <option value="{{ $item }}" @if (in_array($item, $userRole)) selected="selected" @endif>
-                                    {{ $item }}
-                                </option>
-                                @endforeach
+                                    @foreach ($chunk as $skey => $item)
+                                        <option value="{{ $item }}" @if (in_array($item, $userRole)) selected="selected" @endif>
+                                            {{ $item }}
+                                        </option>
+                                    @endforeach
                                 @endforeach
                             </select>
                             @if ($errors->has('roles'))
-                            <span class="text-danger">{{ $errors->first('roles') }}</span>
+                                <span class="text-danger">{{ $errors->first('roles') }}</span>
                             @endif
                         </div>
                     </div>
+
+                    <!-- MS Start -->
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Main Team<span class="required">*</span></label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Product <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                            <select name="products[]" id="user-product-select" class="form-control select2" multiple="multiple">>
+                                @foreach ($products as $product)
+                                    @if (old('product') == $product->id)
+                                        <option value="{{ $product->id }}" selected>{{ $product->name }}</option>
+                                    @else
+                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                            @if ($errors->has('product'))
+                                <span class="text-danger">{{ $errors->first('product') }}</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Teams <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
                             <select name="team" id=user-team-select class="form-control select2">
                                 @foreach ($teams as $team)
-                                <option value="{{ $team->id }}" @if ($team->id == $selectedTeam) selected="selected"
-                                    @endif>
-                                    {{ $team->name }}
-                                </option>
+                                    <option value="{{ $team->id }}" @if ($team->id == $selectedTeam) selected="selected"
+                                        @endif>
+                                        {{ $team->name }}
+                                    </option>
                                 @endforeach
                             </select>
                             @if ($errors->has('team'))
-                            <span class="text-danger">{{ $errors->first('team') }}</span>
+                                <span class="text-danger">{{ $errors->first('team') }}</span>
                             @endif
                         </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Sub-teams</label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <div class="col-md-6 col-sm-6">
                             <select name="sub_team_id" id="sub-team" class="form-control">
-                                <option @if ($user->sub_team_id == null) selected="selected" @endif value="0">None
-                                </option>
+                                <option @if ($user->sub_team_id == null) selected="selected" @endif value="0">None</option>
                                 @foreach ($subTeams as $team)
-                                @if ($user->sub_team_id == $team->id)
-                                <option value="{{ $team->id }}" selected>{{ $team->name }}</option>
-                                @else
-                                <option value="{{ $team->id }}">{{ $team->name }}</option>
-                                @endif
+                                    @if ($user->sub_team_id == $team->id)
+                                        <option value="{{ $team->id }}" selected>{{ $team->name }}</option>
+                                    @else
+                                        <option value="{{ $team->id }}">{{ $team->name }}</option>
+                                    @endif
                                 @endforeach
                             </select>
                         </div>
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">LOB Visibility</label>
-                        <div class="col-md-6 col-sm-6 ">
-                            <select name="additionalTeams[]" id="additionalTeams-select" class="form-control select2 " multiple="multiple">
+                        <div class="col-md-6 col-sm-6">
+                            <select name="additionalTeams[]" id="additionalTeams-select" class="form-control select2" multiple="multiple">
                                 @foreach ($teams as $team)
-                                <option value="{{ $team->id }}" @if (str_contains($selectedAdditionalTeams, $team->id))
-                                    selected="selected" @endif>
-                                    {{ $team->name }}
-                                </option>
+                                    <option value="{{ $team->id }}" @if (str_contains($selectedAdditionalTeams, $team->id))
+                                        selected="selected" @endif>{{ $team->name }}
+                                    </option>
                                 @endforeach
                             </select>
-
                         </div>
                         <div class="col-md-3 col-sm-3">
                             <i class="fa fa-info-circle" id="tooltipGm" style="margin-top: 15px;" title="Additional teams selection helps advisor see leads from selected teams as well"></i>
@@ -248,19 +263,17 @@
                     </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>
-                        <div class="col-md-6 col-sm-6 ">
+                        <div class="col-md-6 col-sm-6">
                             <select name="manager_id" id=user-manager-select class="form-control">
-                                <option @if (count($managers)==0) selected="selected" @endif value="0">None
-                                </option>
+                                <option @if (count($managers)==0) selected="selected" @endif value="0">None</option>
                                 @foreach ($managers as $manager)
-                                <option value="{{ $manager['id'] }}" {{ $manager['id']==old('manager_id', $user->
-                                    manager_id) ? 'selected' : '' }}>
-                                    {{ $manager['name'] }}
-                                </option>
+                                    <option value="{{ $manager['id'] }}" {{ $manager['id']==old('manager_id', $user->
+                                    manager_id) ? 'selected' : '' }}>{{ $manager['name'] }}
+                                    </option>
                                 @endforeach
                             </select>
                             @if ($errors->has('manager_id'))
-                            <span class="text-danger">{{ $errors->first('manager_id') }}</span>
+                                <span class="text-danger">{{ $errors->first('manager_id') }}</span>
                             @endif
                         </div>
                     </div>
@@ -268,14 +281,13 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">IsActive</label>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item" style="border: 0 !important;">
-                                <label class="switch ">
-                                    <input type="checkbox" @if ($user->is_active) checked="checked" @endif
-                                    class="success" id="is_active" name="is_active">
+                                <label class="switch">
+                                    <input type="checkbox" @if ($user->is_active) checked="checked" @endif class="success" id="is_active" name="is_active">
                                     <span class="slider round"></span>
                                 </label>
                             </li>
                             @if ($errors->has('password'))
-                            <span class="is_active">{{ $errors->first('is_active') }}</span>
+                                <span class="is_active">{{ $errors->first('is_active') }}</span>
                             @endif
                         </ul>
                     </div>
