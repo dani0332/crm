@@ -21,7 +21,9 @@ $(document).ready(function () {
     width: '100%',
     allowClear: true,
   });
-  $('.select-roles').select2({
+  $(
+    '.select-roles,#user-team-select,#user-product-select,#user-manager-select',
+  ).select2({
     width: '100%',
     allowClear: true,
   });

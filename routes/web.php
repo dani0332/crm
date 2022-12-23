@@ -125,8 +125,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('activities/getEditView', [ActivitesController::class, 'getEditView'])->name('activities.getEditView');
     Route::post('updateActivity', [CRUDController::class, 'updateActivity'])->name('updateActivity');
     Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
-    Route::get('getTeamManagers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
-    Route::get('getSubTeams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
+    Route::post('getTeamManagers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
+    Route::post('getSubTeams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
+    Route::post('get-product-teams', [UserController::class, 'getProductTeams'])->name('getProductTeams');
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);

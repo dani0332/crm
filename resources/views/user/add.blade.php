@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title','Add User')
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <style>
     .select2-results__option[aria-selected=true] {
@@ -44,9 +45,16 @@
 
     function loadSubTeams(team_id, previous_sub_team_id){
         $(".loader").show();
+        if(typeof team_id == 'string'){
+            team_id = [team_id];
+        }
         $.ajax({
-                url: '/getSubTeams?teamId=' + team_id,
-                type: "get",
+                url: '/getSubTeams',
+                type: "post",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: { 'teamId' : team_id },
                 success: function(response) {
                     $('#sub-team').find('option').remove().end().append('<option value="0" selected="selected">None</option>');
                     for (let index = 0; index < response.length; index++) {
@@ -63,31 +71,73 @@
 
     function loadManagerByTeam(team_id, previous_selected_manager){
         $(".loader").show();
+        if(typeof team_id == 'string'){
+            team_id = [team_id];
+        }
         $.ajax({
-                url: '/getTeamManagers?teamId=' + team_id,
-                type: "get",
+                url: '/getTeamManagers',
+                type: "post",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: { 'teamId' : team_id },
                 success: function(response) {
-                    $('#user-manager-select').find('option').remove().end().append('<option value="0" selected="selected">None</option>');
+                    $('#user-manager-select').find('option').remove().end();
                     for (let index = 0; index < response.length; index++) {
                         const element = response[index];
                         $('#user-manager-select').append($("<option></option>").attr("value", element.id).text(element.name));
                     }
-                    $('.select-manager').removeAttr('disabled');
+                    $('#user-manager-select').removeAttr('disabled');
                     $("#user-manager-select").val(previous_selected_manager);
                     $(".loader").hide();
                 },
             });
     }
 
+    function loadTeamsByProduct(productIds){
+        if(typeof productIds == 'string'){
+            productIds = [productIds];
+        }
+        $(".loader").show();
+        $.ajax({
+            url: '/get-product-teams',
+            type: "post",
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            data: { 'productIds' : productIds },
+            success: function(response) {
+                $('#user-team-select').find('option').remove().end();
+                for (let index = 0; index < response.length; index++) {
+                    const element = response[index];
+                    $('#user-team-select').append($("<option></option>").attr("value", element.id).text(element.name));
+                }
+                $(".loader").hide();
+            },
+        });
+    }
+
     $(document).ready(function(){
         var previous_sub_team_id = JSON.parse('<?php echo json_encode(old("sub_team_id")); ?>');
+        var previous_team = JSON.parse('<?php echo json_encode(old("teams")); ?>');
+        var previous_product = JSON.parse('<?php echo json_encode(old("products")); ?>');
         var previous_selected_additional_teams = JSON.parse('<?php echo json_encode(old("additionalTeams")); ?>');
         var previous_selected_manager = JSON.parse('<?php echo json_encode(old("manager")); ?>');
         var previous_selected_roles = JSON.parse('<?php echo json_encode(old("roles")); ?>');
-        var additionalTeams = JSON.parse('<?php echo json_encode($teams); ?>');
+        var additionalTeams = JSON.parse('<?php echo json_encode($products); ?>');
+
+        $("#user-product-select").on('change', function(){
+            if(this.value == '') {
+                 $("#user-team-select").empty();
+            }
+            else {
+                loadTeamsByProduct($(this).val());
+                loadManagerByTeam($(this).val(), previous_selected_manager);
+            }
+        });
 
         $('#roles').val(previous_selected_roles);
-        loadManagerByTeam($("#user-team-select").val(), previous_selected_manager);
+        loadManagerByTeam($("#user-team-select  ").val(), previous_selected_manager);
         loadSubTeams($("#user-team-select").val(), previous_sub_team_id);
 
         $('#additionalTeams-select').select2({
@@ -96,16 +146,15 @@
             allowClear: true
         });
 
-
-
         loadAdditionalTeams(additionalTeams, previous_selected_additional_teams);
 
         $("#user-team-select").on('change', function(){
-            $("#additionalTeams-select").empty();
-            debugger;
-            loadSubTeams(this.value);
-            loadAdditionalTeams(additionalTeams);
-            loadManagerByTeam(this.value);
+            if($(this).val()){
+                $("#additionalTeams-select").empty();
+                loadSubTeams($(this).val());
+                loadAdditionalTeams(additionalTeams);
+            }
+
         });
     });
 
@@ -193,9 +242,27 @@
                     </div>
 
                     <div class="item form-group">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Main Team <span class="required">*</span></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Product<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select name="team" id="user-team-select" class="form-control">
+                            <select name="products[]" id="user-product-select" class="form-control select2 " multiple="multiple">>
+                                @foreach ($products as $product)
+
+                                @if (old('product') == $product->id)
+                                <option value="{{ $product->id }}" selected>{{ $product->name }}</option>
+                                @else
+                                <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                @endif
+                                @endforeach
+                            </select>
+                            @if ($errors->has('product'))
+                                <span class="text-danger">{{ $errors->first('product') }}</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Teams<span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select name="teams[]" id="user-team-select" class="form-control select2 " multiple="multiple">>
                                 @foreach ($teams as $team)
 
                                 @if (old('team') == $team->id)
@@ -241,8 +308,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>
                         <div class="col-md-6 col-sm-6 ">
-                            <select disabled="disabled" id='user-manager-select' name="manager" class="form-control select2 select-manager">
-                                <option value="0" selected="selected" >None</option>
+                            <select disabled="disabled" id='user-manager-select' name="manager[]" class="form-control select2" multiple="multiple">
                             </select>
                             @if ($errors->has('manager'))
                                 <span class="text-danger">{{ $errors->first('manager') }}</span>

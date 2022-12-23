@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use App\Models\User;
+use App\Models\UserTeams;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
 use Auth;
@@ -97,10 +99,15 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::pluck('name', 'name')->all(); // get all roles
-        $teams = Team::whereNull('parent_team_id')->orderBy('name', 'asc')->get(); // get all teams
+        $products = Team::where('type', TeamTypeEnum::Product)->orderBy('name', 'asc')->get(); // get all products
+        $teams = [];
+        // $teams = Team::where(function ($query) {
+        //     $query->where('type', TeamTypeEnum::Team)
+        //         ->orWhereNull('parent_team_id');
+        // })->orderBy('name', 'asc')->get();
         $subTeams = [];
 
-        return view('user.add', compact('roles', 'teams', 'subTeams'));
+        return view('user.add', compact('roles', 'products',  'teams' , 'subTeams'));
     }
 
     /**
@@ -116,7 +123,8 @@ class UserController extends Controller
             'email' => 'required|email|unique:users',
             'roles' => 'required',
             'password' => 'required',
-            'team' => 'required',
+            'products' => 'required',
+            'teams' => 'required',
         ]);
 
         $user = $this->userService->createUserRecord($request);
@@ -247,6 +255,11 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('message', 'User has been deleted');
     }
 
+    public function getProductTeams(Request $request)
+    {
+        return Team::where('type', TeamTypeEnum::Team)->whereIn('parent_team_id', $request->productIds)->orderBy('name', 'asc')->get();
+    }
+
     public function me(Request $request)
     {
         return ['name' => Auth::user()->name, 'email' => Auth::user()->email, 'id' => Auth::user()->id, 'role' => strtolower(Auth::user()->usersroles[0]->name)];
@@ -254,49 +267,49 @@ class UserController extends Controller
 
     public function getSubTeams(Request $request)
     {
-        $teamId = $request->query()['teamId'];
-
-        return Team::where('parent_team_id', $teamId)->select('id', 'name')->orderBy('name', 'asc')->get();
+        if($request->teamId == null) {
+            return [];
+        }
+        return Team::whereIn('parent_team_id', $request->teamId)->where('type', TeamTypeEnum::SubTeam)->select('id', 'name')->orderBy('name', 'asc')->get();
     }
 
     public function getTeamManagers(Request $request)
     {
-        $teamId = $request->query()['teamId'];
-
-        return $this->getManagersBasedOnTeamId($teamId, $request->userId);
+        if($request->teamId == null) {
+            return [];
+        }
+        return $this->getManagersBasedOnTeamId($request->teamId, $request->userId);
     }
 
     private function getManagersBasedOnTeamId($teamId, $userId = null)
     {
-        $team = Team::find($teamId);
-        if (! $team) {
+        $teams = Team::whereIn('id', $teamId)->get();
+        if (! $teams) {
             return [];
         }
-        $teamUsers = User::Where('team_id', $teamId)->where('id', '!=', $userId)->get();
-        $teamName = strtoupper($team->name);
-        // devicing role name based on primary team name as we have to show manager name based on primary team name
+
+        // devising role name based on primary team name as we have to show manager name based on primary team name
         $roleNames = [];
-        if ($teamName == strtoupper(quoteTypeCode::Health)) {
-            $roleNames = [RolesEnum::RMManager, RolesEnum::RMDeputyManager, RolesEnum::EBPManager, RolesEnum::EBPDeputyManager, RolesEnum::HealthManager, RolesEnum::HealthDeputyManager, RolesEnum::HealthRenewalManager, RolesEnum::HealthNewBusinessManager];
-        } elseif ($teamName == strtoupper(quoteTypeCode::Business)) {
-            $roleNames = [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::CorplineManager, RolesEnum::CorplineDeputyManager, RolesEnum::BusinessManager, RolesEnum::BusinessDeputyManager, RolesEnum::GMRenewalManager, RolesEnum::CorplineRenewalManager, RolesEnum::GMNewBusinessManager, RolesEnum::CorplineNewBusinessManager];
-        } else {
-            $roleNames = [$teamName.'_MANAGER', $teamName.'_DEPUTY_MANAGER', $teamName.'_RENEWAL_MANAGER', $teamName.'_NEW_BUSINESS_MANAGER'];
-        }
-        $teamManagers = [];
-        foreach ($teamUsers as $teamUser) {
-            // getting all role of each user
-            $userRoles = $teamUser->roles->pluck('name')->all();
-            // checking if user has any of the roles we are looking for
-            $filteredRoles = array_filter($userRoles, function ($item) use ($roleNames) {
-                return in_array($item, $roleNames);
-            });
-            // if user has any of the roles we are looking for then add him to the list of managers
-            if (count($filteredRoles) > 0) {
-                array_push($teamManagers, ['id' => $teamUser->id, 'name' => $teamUser->name.' - '.implode(', ', $filteredRoles)]);
+        $combinedRoleNames = [];
+        foreach ($teams as $team) {
+            $teamName = $team->name;
+            if ($teamName == strtoupper(quoteTypeCode::Health)) {
+                $roleNames = [RolesEnum::RMManager, RolesEnum::RMDeputyManager, RolesEnum::EBPManager, RolesEnum::EBPDeputyManager, RolesEnum::HealthManager, RolesEnum::HealthDeputyManager, RolesEnum::HealthRenewalManager, RolesEnum::HealthNewBusinessManager];
+            } elseif ($teamName == strtoupper(quoteTypeCode::Business)) {
+                $roleNames = [RolesEnum::GMManager, RolesEnum::GMDeputyManager, RolesEnum::CorplineManager, RolesEnum::CorplineDeputyManager, RolesEnum::BusinessManager, RolesEnum::BusinessDeputyManager, RolesEnum::GMRenewalManager, RolesEnum::CorplineRenewalManager, RolesEnum::GMNewBusinessManager, RolesEnum::CorplineNewBusinessManager];
+            } else {
+                $roleNames = [$teamName.'_MANAGER', $teamName.'_DEPUTY_MANAGER', $teamName.'_RENEWAL_MANAGER', $teamName.'_NEW_BUSINESS_MANAGER'];
+            }
+            foreach ($roleNames as $role) {
+                array_push($combinedRoleNames, $role);
             }
         }
-
-        return $teamManagers;
+        return User::join('model_has_roles', 'model_has_roles.model_id', 'users.id')
+            ->join('roles', 'roles.id', 'model_has_roles.role_id')
+            ->whereIn('roles.name', $combinedRoleNames)
+            ->select('users.id',
+            DB::raw('CONCAT(users.name, " - ", roles.name) as name')
+            )
+            ->get();
     }
 }

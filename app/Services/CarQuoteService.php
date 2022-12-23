@@ -651,9 +651,6 @@ class CarQuoteService extends BaseService
 
     public function walkTree($userId)
     {
-        if (auth()->user()->team_id == 2) {
-            return abort(500, 'An error occurred while processing your request');
-        }
         array_push($this->childUserIds, $userId);
         if (auth()->user()->hasRole(RolesEnum::CarManager)) {
             $teamMates = User::where('team_id', Team::where('name', auth()->user()->team_id))->get()->pluck('id');
