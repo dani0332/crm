@@ -197,6 +197,26 @@
                             @endif
                         </div>
                     </div>
+
+                    <!-- MS Start -->
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Product<span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6 ">
+                            <select name="products[]" id="user-product-select" class="form-control select2 " multiple="multiple">>
+                                @foreach ($products as $product)
+                                    @if (old('product') == $product->id)
+                                        <option value="{{ $product->id }}" selected>{{ $product->name }}</option>
+                                    @else
+                                        <option value="{{ $product->id }}">{{ $product->name }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                            @if ($errors->has('product'))
+                                <span class="text-danger">{{ $errors->first('product') }}</span>
+                            @endif
+                        </div>
+                    </div>
+
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Main Team<span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6 ">

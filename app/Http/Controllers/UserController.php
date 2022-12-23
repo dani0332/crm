@@ -185,8 +185,20 @@ class UserController extends Controller
         $selectedAdditionalTeams = $user->additional_team_ids; // get all additional teams of current user
         $selectedTeam = $user->team_id; // current user team
         $selectedManager = $user->manager_id; // current user manager
+        $products = Team::where('type', TeamTypeEnum::Product)->orderBy('name', 'asc')->get(); // get all products
 
-        return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'selectedTeam', 'managers', 'selectedManager', 'selectedAdditionalTeams', 'subTeams'));
+        return view('user.edit', compact(
+            'user',
+            'roles',
+            'userRole',
+            'teams',
+            'selectedTeam',
+            'managers',
+            'selectedManager',
+            'selectedAdditionalTeams',
+            'subTeams',
+            'products'
+        ));
     }
 
     /**
@@ -309,7 +321,8 @@ class UserController extends Controller
         return User::join('model_has_roles', 'model_has_roles.model_id', 'users.id')
             ->join('roles', 'roles.id', 'model_has_roles.role_id')
             ->whereIn('roles.name', $combinedRoleNames)
-            ->select('users.id',
+            ->select(
+                'users.id',
                 DB::raw('CONCAT(users.name, " - ", roles.name) as name')
             )
             ->get();
