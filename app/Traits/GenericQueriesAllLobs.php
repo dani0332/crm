@@ -41,6 +41,24 @@ trait GenericQueriesAllLobs
         return (isset($quote->id)) ? $quote : false;
     }
 
+    /**
+     * get Quote Request Member Detail by Quote Type e.g health, travel etc
+     * @param $quoteType
+     * @param $id
+     * @return false|mixed
+     */
+    public function getMemberDetailObject($quoteType, $id)
+    {
+        $nameSpace = '\\App\\Models\\';
+        $model = $nameSpace.ucwords($quoteType).'QuoteMemberDetail';
+
+        if (! class_exists($model)) {
+            return false;
+        }
+
+        return $model::find($id);
+    }
+
     public function createDuplicateRecord($lob, $parentRecord)
     {
         if (! ($lob) || ! isset($parentRecord->enquiryType) || ! isset($parentRecord->id)) {

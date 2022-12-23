@@ -63,4 +63,12 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function members()
+    {
+        return $this->hasMany(HealthMemberDetail::class, 'health_quote_request_id');
+    }
 }
