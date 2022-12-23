@@ -177,6 +177,7 @@ class UserController extends Controller
         $userTeamIds = $this->getUserTeams($user->id)->pluck('id')->toArray();
         $managers = $this->getManagersBasedOnTeamId($userProductIds, $user->id);
         $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
+
         return view('user.edit', compact(
             'user',
             'roles',
@@ -297,6 +298,7 @@ class UserController extends Controller
         if ($request->teamId == null) {
             return [];
         }
+
         return  $this->getSubTeamsByTeamIds($request->teamId)->select('id', 'name')->orderBy('name', 'asc')->get();
     }
 
