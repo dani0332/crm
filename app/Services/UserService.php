@@ -43,7 +43,7 @@ class UserService extends BaseService
             foreach ($request->manager as $managerId) {
                 DB::table('user_manager')->insert([
                     'user_id' => $user->id,
-                    'manager_id' => $managerId
+                    'manager_id' => $managerId,
                 ]);
             }
         }
@@ -52,7 +52,7 @@ class UserService extends BaseService
             foreach ($request->teams as $teamId) {
                 DB::table('user_team')->insert([
                     'user_id' => $user->id,
-                    'team_id' => $teamId
+                    'team_id' => $teamId,
                 ]);
             }
         }
@@ -61,10 +61,11 @@ class UserService extends BaseService
             foreach ($request->products as $productId) {
                 DB::table('user_products')->insert([
                     'user_id' => $user->id,
-                    'product_id' => $productId
+                    'product_id' => $productId,
                 ]);
             }
         }
+
         return $user;
     }
 

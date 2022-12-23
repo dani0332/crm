@@ -7,7 +7,6 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\UserTeams;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
 use Auth;
@@ -107,7 +106,7 @@ class UserController extends Controller
         // })->orderBy('name', 'asc')->get();
         $subTeams = [];
 
-        return view('user.add', compact('roles', 'products',  'teams' , 'subTeams'));
+        return view('user.add', compact('roles', 'products', 'teams', 'subTeams'));
     }
 
     /**
@@ -267,17 +266,19 @@ class UserController extends Controller
 
     public function getSubTeams(Request $request)
     {
-        if($request->teamId == null) {
+        if ($request->teamId == null) {
             return [];
         }
+
         return Team::whereIn('parent_team_id', $request->teamId)->where('type', TeamTypeEnum::SubTeam)->select('id', 'name')->orderBy('name', 'asc')->get();
     }
 
     public function getTeamManagers(Request $request)
     {
-        if($request->teamId == null) {
+        if ($request->teamId == null) {
             return [];
         }
+
         return $this->getManagersBasedOnTeamId($request->teamId, $request->userId);
     }
 
@@ -304,11 +305,12 @@ class UserController extends Controller
                 array_push($combinedRoleNames, $role);
             }
         }
+
         return User::join('model_has_roles', 'model_has_roles.model_id', 'users.id')
             ->join('roles', 'roles.id', 'model_has_roles.role_id')
             ->whereIn('roles.name', $combinedRoleNames)
             ->select('users.id',
-            DB::raw('CONCAT(users.name, " - ", roles.name) as name')
+                DB::raw('CONCAT(users.name, " - ", roles.name) as name')
             )
             ->get();
     }
