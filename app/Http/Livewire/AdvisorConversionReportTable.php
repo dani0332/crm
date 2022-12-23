@@ -39,9 +39,8 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function mount()
     {
-        $latestBatch = QuoteBatches::orderBy('id', 'desc')->first();
-        if (! $this->getAppliedFilterWithValue('batch_number') && $latestBatch != null) {
-            $this->setFilter('batch_number', [$latestBatch->id]);
+        if (! $this->getAppliedFilterWithValue('created_at')) {
+            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'-'.now()->format('Y-m-d'));
         }
     }
 
@@ -148,7 +147,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Range Date')
+            TextFilter::make('Created Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
@@ -175,7 +174,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                         ->map(fn ($batch) => $batch->name.'-('.$batch->start_date.' to '.$batch->end_date.')')
                         ->toArray(),
                 )->config([
-                    'max' => 4,
+                    'max' => 12,
                 ])->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.quote_batch_id', $value);
                 }),

@@ -1,12 +1,12 @@
 @extends('layouts.app_livewire')
 @section('title','TPL Dashboard')
 @section('content')
-
 @push('scripts')
+<meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" />
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script>
     var tplDashboardStatsBarChart = {};
@@ -67,27 +67,38 @@
     $(function() {
         createLeadRcdSummaryByTierPieChart(tplDashboardStats);
         $('#tier-filter, #source-filter, #team-filter').on('change', function(e) {
-            var tierFilterValue = $('#tier-filter option:selected').val();
+            var tierFilterValue = $('#tier-filter').val();
             var sourceFilterValue = $('#source-filter option:selected').val();
             var teamFilterValue = $('#team-filter').val();
-            $.get('/get-tpl-filter-stats?tier_filter=' + tierFilterValue + '&team_filter=' + teamFilterValue + '&source=' + sourceFilterValue, function(result) {
-                if (result) {
-                    var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
-                    var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
-                    var numbers = [];
-                    for (let index = 0; index < data.length; index++) {
-                        numbers.push(parseFloat(data[index]));
+            $.ajax({
+                url: "/get-tpl-filter-stats",
+                type: "post",
+                data: { 'tier_filter' : tierFilterValue, 'team_filter' : teamFilterValue , 'source' : sourceFilterValue } ,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (result) {
+                    if (result) {
+                        var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
+                        var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
+                        var numbers = [];
+                        for (let index = 0; index < data.length; index++) {
+                            numbers.push(parseFloat(data[index]));
+                        }
+                        if (labels.length > 0) {
+                            tplDashboardStatsBarChart.destroy();
+                            createLeadRcdSummaryByTierPieChart([labels, numbers]);
+                        } else {
+                            tplDashboardStatsBarChart.destroy();
+                            createLeadRcdSummaryByTierPieChart([
+                                [''],
+                                [0]
+                            ]);
+                        }
                     }
-                    if (labels.length > 0) {
-                        tplDashboardStatsBarChart.destroy();
-                        createLeadRcdSummaryByTierPieChart([labels, numbers]);
-                    } else {
-                        tplDashboardStatsBarChart.destroy();
-                        createLeadRcdSummaryByTierPieChart([
-                            [''],
-                            [0]
-                        ]);
-                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log(textStatus, errorThrown);
                 }
             });
         });

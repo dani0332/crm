@@ -169,10 +169,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard']);
     Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard']);
-    Route::get('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
+    Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
     Route::get('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
-    Route::get('/get-advisor-conversion-stats', [DashboardController::class, 'getAdvisorConversionStats']);
-    Route::get('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
+    Route::post('/get-advisor-conversion-stats', [DashboardController::class, 'getAdvisorConversionStats']);
+    Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
     Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard']);
     Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport']);

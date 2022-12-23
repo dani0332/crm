@@ -147,10 +147,8 @@ class DashboardService extends BaseService
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
         if (isset($teamIds)) {
-            $userIds = User::where(function ($query) use ($teamIds) {
-                $query->whereIn('team_id', [$teamIds])
-                ->orWhere('sub_team_id', [$teamIds]);
-            })->pluck('id');
+
+            $userIds = DB::table('user_team')->whereIn('team_id', $teamIds)->get()->pluck('user_id');
             $query->whereIn('users.id', $userIds);
         }
 
