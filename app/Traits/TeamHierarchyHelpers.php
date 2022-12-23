@@ -9,7 +9,6 @@ use DB;
 
 trait TeamHierarchyHelpers
 {
-
     public function getAllProducts()
     {
         return Team::where('type', TeamTypeEnum::Product)->get();
@@ -33,6 +32,7 @@ trait TeamHierarchyHelpers
     public function getTeamsByProductName($productName)
     {
         $product = Team::where('type', TeamTypeEnum::Product)->where('name', $productName)->first();
+
         return Team::where('type', TeamTypeEnum::Team)->where('parent_team_id', $product->id)->get();
     }
 
@@ -60,10 +60,7 @@ trait TeamHierarchyHelpers
     {
         $product = Team::where('type', TeamTypeEnum::Product)->where('name', $productName)->first();
         $productTeams = Team::where('type', TeamTypeEnum::Team)->where('parent_team_id', $product->id)->get();
+
         return User::whereIn('id', DB::table('user_team')->whereIn('team_id', $productTeams->pluck('id'))->pluck('user_id'))->get();
     }
-
-
-
-
 }
