@@ -149,21 +149,34 @@ class UserController extends Controller
         $subTeamName = '';
         $additionalTeamNames = '';
         $managerName = '';
-        if ($user->manager_id) {
-            $managerName = User::find($user->manager_id)->name;
+        $managerNames = User::whereIn('id', DB::table('user_manager')->where('user_id', $user->id)->get()->pluck('manager_id'))->get()->pluck('name');
+        foreach ($managerNames as $mName) {
+            $managerName = $managerName.$mName.' , ';
         }
+        $managerName = rtrim($managerName, ' ,');
+
         if ($user->additional_team_ids != '') {
-            $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->pluck('name')->toArray();
+            $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::Product)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
         }
         if ($user->sub_team_id) {
             $subTeamName = Team::find($user->sub_team_id)->name;
         }
-        if ($user->team_id) {
-            $teamName = Team::find($user->team_id)->name;
+        $teamName = '';
+        $teamNames = Team::whereIn('id', DB::table('user_team')->where('user_id', $user->id)->get()->pluck('team_id'))->get()->pluck('name');
+        foreach ($teamNames as $mName) {
+            $teamName = $teamName.$mName.' , ';
         }
+        $teamName = rtrim($teamName, ' ,');
 
-        return view('user.show', compact('user', 'teamName', 'subTeamName', 'additionalTeamNames', 'managerName'));
+        $productName = '';
+        $productNames = Team::whereIn('id', DB::table('user_products')->where('user_id', $user->id)->get()->pluck('product_id'))->get()->pluck('name');
+        foreach ($productNames as $mName) {
+            $productName = $productName.$mName.' , ';
+        }
+        $productName = rtrim($productName, ' ,');
+
+        return view('user.show', compact('user', 'teamName', 'subTeamName', 'additionalTeamNames', 'managerName', 'productName'));
     }
 
     /**
@@ -176,17 +189,30 @@ class UserController extends Controller
     {
         $roles = Role::pluck('name', 'name')->all(); // get all roles
         $userRole = $user->roles->pluck('name', 'name')->all(); // get all roles of current user
-        $teams = Team::whereNull('parent_team_id')->orderBy('name', 'asc')->get(); // get all teams
-        $subTeams = Team::where('parent_team_id', $user->team_id)->orderBy('name', 'asc')->get();
-        $managers = [];
-        if ($user->teamId) {
-            $managers = $this->getManagersBasedOnTeamId($user->team_id, $user->id);
-        } // get all managers based on current user's team
+        $teams = Team::where('type', TeamTypeEnum::Team)->orderBy('name', 'asc')->get(); // get all teams
+        $subTeams = Team::where('type', TeamTypeEnum::SubTeam)->whereIn('parent_team_id', $teams->pluck('id'))->orderBy('name', 'asc')->get();
         $selectedAdditionalTeams = $user->additional_team_ids; // get all additional teams of current user
-        $selectedTeam = $user->team_id; // current user team
         $selectedManager = $user->manager_id; // current user manager
-
-        return view('user.edit', compact('user', 'roles', 'userRole', 'teams', 'selectedTeam', 'managers', 'selectedManager', 'selectedAdditionalTeams', 'subTeams'));
+        $products = Team::where('type', TeamTypeEnum::Product)->orderBy('name', 'asc')->get(); // get all products
+        $userProductIds = DB::table('user_products')->where('user_id', $user->id)->get()->pluck('product_id')->toArray();
+        $userTeamIds = DB::table('user_team')->where('user_id', $user->id)->get()->pluck('team_id')->toArray();
+        $managers = $this->getManagersBasedOnTeamId($userProductIds, $user->id); // get all managers based on current user's team
+        $userManagerIds = DB::table('user_manager')->where('user_id', $user->id)->get()->pluck('manager_id')->toArray();
+        //dd($managers, $userManagerIds);
+        return view('user.edit', compact(
+            'user',
+            'roles',
+            'userRole',
+            'selectedManager',
+            'selectedAdditionalTeams',
+            'subTeams',
+            'products',
+            'userProductIds',
+            'teams',
+            'userTeamIds',
+            'managers',
+            'userManagerIds'
+        ));
     }
 
     /**
@@ -202,7 +228,7 @@ class UserController extends Controller
             'name' => 'required|max:120',
             'email' => 'required|email',
             'roles' => 'required',
-            'team' => 'required',
+            'teams' => 'required',
         ]);
         // Updating user
         $user->name = $request->name;
@@ -211,12 +237,9 @@ class UserController extends Controller
         $user->landline_no = $request->landline_no;
         $user->password = bcrypt($request->password);
         $user->is_active = $request->is_active == 'on' ? 1 : 0;
+
         $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active);
-        if ($request->manager_id != '0') {
-            $user->manager_id = $request->manager_id;
-        } else {
-            $user->manager_id = null;
-        }
+
         if (isset($request->additionalTeams)) {
             if (count((array) $request->additionalTeams) > 1) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);
@@ -227,10 +250,38 @@ class UserController extends Controller
         if ($request->sub_team_id != '0') {
             $user->sub_team_id = $request->sub_team_id;
         }
-        if ($request->team != '0' || $request->team != null) {
-            $user->team_id = $request->team;
-        }
+
         $user->save();
+
+        if ($request->manager_id != '0') {
+            DB::table('user_manager')->where('user_id', $user->id)->delete();
+            foreach ($request->manager as $managerId) {
+                DB::table('user_manager')->insert([
+                    'user_id' => $user->id,
+                    'manager_id' => $managerId,
+                ]);
+            }
+        }
+
+        if ($request->teams != '0') {
+            DB::table('user_team')->where('user_id', $user->id)->delete();
+            foreach ($request->teams as $teamId) {
+                DB::table('user_team')->insert([
+                    'user_id' => $user->id,
+                    'team_id' => $teamId,
+                ]);
+            }
+        }
+
+        if ($request->products != '0') {
+            DB::table('user_products')->where('user_id', $user->id)->delete();
+            foreach ($request->products as $productId) {
+                DB::table('user_products')->insert([
+                    'user_id' => $user->id,
+                    'product_id' => $productId,
+                ]);
+            }
+        }
 
         // Updating user roles
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
@@ -309,9 +360,9 @@ class UserController extends Controller
         return User::join('model_has_roles', 'model_has_roles.model_id', 'users.id')
             ->join('roles', 'roles.id', 'model_has_roles.role_id')
             ->whereIn('roles.name', $combinedRoleNames)
-            ->select('users.id',
+            ->select(
+                'users.id',
                 DB::raw('CONCAT(users.name, " - ", roles.name) as name')
-            )
-            ->get();
+            )->get();
     }
 }
