@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Models\CarQuote;
-use App\Models\User;
 use Carbon\Carbon;
 use DB;
 
@@ -147,7 +146,6 @@ class DashboardService extends BaseService
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
         if (isset($teamIds)) {
-
             $userIds = DB::table('user_team')->whereIn('team_id', $teamIds)->get()->pluck('user_id');
             $query->whereIn('users.id', $userIds);
         }

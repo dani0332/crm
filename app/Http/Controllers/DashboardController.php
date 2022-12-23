@@ -40,7 +40,7 @@ class DashboardController extends Controller
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->get();
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
         $teams = Team::where('type', TeamTypeEnum::Team)->where('parent_team_id', $carTeam->id)->get();
-        $carAdvisors = User::whereIn('id',  DB::table('user_team')->where('team_id', $carTeam->id)->get()->pluck('user_id'))->get();
+        $carAdvisors = User::whereIn('id', DB::table('user_team')->where('team_id', $carTeam->id)->get()->pluck('user_id'))->get();
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams, $carAdvisors);
 
         $totalLeadsReceived = count($todaysLeads);
@@ -119,10 +119,10 @@ class DashboardController extends Controller
         ->join('teams', 'teams.id', 'user_team.team_id')
         ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
 
-        $isTierDefined = isset($request->tier_filter) &&  $request->tier_filter != 'undefined';
-        $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $tiers, $isTierDefined  ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
+        $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'undefined';
+        $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $tiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
 
-        if (isset($request->team_filter) && $request->team_filter != 'undefined' ) {
+        if (isset($request->team_filter) && $request->team_filter != 'undefined') {
             $records = $this->applyFilter($records, 'teams.id', $request->team_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->source)) {
@@ -193,14 +193,14 @@ class DashboardController extends Controller
         ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
         ->join('teams', 'teams.id', 'user_team.team_id')
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
-        $isTierDefined = isset($request->tier_filter) &&  $request->tier_filter != 'null';
-        $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, $isTierDefined  ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
+        $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'null';
+        $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
 
-        if (isset($request->team_filter) && $request->team_filter != 'undefined' ) {
+        if (isset($request->team_filter) && $request->team_filter != 'undefined') {
             $records = $this->applyFilter($records, 'teams.id', $request->team_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
 
-        if (isset($request->userFilter)  &&  $request->userFilter != 'null') {
+        if (isset($request->userFilter) && $request->userFilter != 'null') {
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
 
@@ -218,7 +218,7 @@ class DashboardController extends Controller
     public function renderComprehensiveDashboard(Request $request)
     {
         $carTeam = Team::where('name', quoteTypeCode::Car)->first();
-        $carUsers = User::whereIn('id',  DB::table('user_team')->where('team_id', $carTeam->id)->get()->pluck('user_id'))->get();
+        $carUsers = User::whereIn('id', DB::table('user_team')->where('team_id', $carTeam->id)->get()->pluck('user_id'))->get();
         $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->orderBy('name', 'asc')->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request);
         $teams = $carTeam = Team::where('type', TeamTypeEnum::Team)->where('parent_team_id', $carTeam->id)->get();
