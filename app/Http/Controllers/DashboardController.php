@@ -91,8 +91,10 @@ class DashboardController extends Controller
     public function renderTplDashboard(Request $request)
     {
         $tplDashboardStats = $this->getTPLDashboardStats($request);
+        $carTeam = Team::where('name', quoteTypeCode::Car)->first();
+        $teams = Team::where('parent_team_id', $carTeam->id)->get();
 
-        return view('dashboard.tpl_dashboard', compact('tplDashboardStats'));
+        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams'));
     }
 
     public function getTPLDashboardStats(Request $request): array
@@ -212,8 +214,9 @@ class DashboardController extends Controller
         $carUsers = User::where('team_id', $carTeam->id)->orderBy('name', 'asc')->get();
         $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->orderBy('name', 'asc')->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request);
+        $teams = Team::where('parent_team_id', $carTeam->id)->get();
 
-        return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers', 'comprehensiveDashboardStats'));
+        return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers', 'comprehensiveDashboardStats', 'teams'));
     }
 
     public function conversionStats($quoteType)

@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class LeadDistributionReportTable extends DataTableComponent
 {
@@ -18,17 +18,17 @@ class LeadDistributionReportTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id')
-          ->setColumnSelectDisabled()
-          ->setPaginationDisabled()
-          ->setFilterLayoutSlideDown()
-          ->setFooterEnabled()
-          ->setFooterTdAttributes(function ($rows) {
-              return [
-                  'default' => true,
-                  'class' => 'font-black',
-                  'style' => 'color:black;font-weight:900 !important;',
-              ];
-          });
+            ->setColumnSelectDisabled()
+            ->setPaginationDisabled()
+            ->setFilterLayoutSlideDown()
+            ->setFooterEnabled()
+            ->setFooterTdAttributes(function ($rows) {
+                return [
+                    'default' => true,
+                    'class' => 'font-black',
+                    'style' => 'color:black;font-weight:900 !important;',
+                ];
+            });
     }
 
     public function columns(): array
@@ -59,42 +59,45 @@ class LeadDistributionReportTable extends DataTableComponent
     public function builder(): Builder
     {
         return CarQuote::query()
-          ->select(
-              DB::raw('SUM(CASE WHEN car_quote_request.source not in ("Renewal_upload", "IMCRM", "TPL_RENEWALS") THEN 1 ELSE 0 END) as received_leads'),
-              DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as lead_created'),
-              DB::raw('count(car_quote_request.id) as total_leads'),
-              DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
-              DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as auto_assigned'),
-              DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is not null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as manually_assigned'),
-          )
-          ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-          ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-          ->groupBy('tiers.name');
+            ->select(
+                DB::raw('SUM(CASE WHEN car_quote_request.source not in ("Renewal_upload", "IMCRM", "TPL_RENEWALS") THEN 1 ELSE 0 END) as received_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as lead_created'),
+                DB::raw('count(car_quote_request.id) as total_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as auto_assigned'),
+                DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is not null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as manually_assigned'),
+            )
+            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->groupBy('tiers.name');
     }
 
     public function filters(): array
     {
         return [
-            DateFilter::make('Start Date')
-              ->filter(function (Builder $builder, string $value) {
-                  $builder->whereDate('car_quote_request.created_at', '>=', $value);
-              }),
-            DateFilter::make('Stop Date')
-              ->filter(function (Builder $builder, string $value) {
-                  $builder->whereDate('car_quote_request.created_at', '<=', $value);
-              }),
+            TextFilter::make('Created Date', 'created_at')
+                ->config([
+                    'placeholder' => 'Select Start & End Date',
+                    'range' => true,
+                    'max_days' => 365,
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if (preg_match('/^(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
+                        $builder->whereBetween('car_quote_request.created_at', [$matches[1], $matches[2]]);
+                    }
+                }),
             MultiSelectFilter::make('Tiers')
-            ->options(
-                Tier::query()
-                    ->orderBy('name')
-                    ->where('is_active', 1)
-                    ->get()
-                    ->keyBy('id')
-                    ->map(fn ($users) => $users->name)
-                    ->toArray(),
-            )->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.tier_id', $value);
-            }),
+                ->options(
+                    Tier::query()
+                        ->orderBy('name')
+                        ->where('is_active', 1)
+                        ->get()
+                        ->keyBy('id')
+                        ->map(fn ($users) => $users->name)
+                        ->toArray(),
+                )->filter(function (Builder $builder, $value) {
+                    $builder->whereIn('car_quote_request.tier_id', $value);
+                }),
 
         ];
     }

@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorDistributionReportTable extends DataTableComponent
 {
@@ -20,17 +20,17 @@ class AdvisorDistributionReportTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id')
-          ->setColumnSelectDisabled()
-          ->setFilterLayoutSlideDown()
-          ->setPaginationDisabled()
-          ->setFooterEnabled()
-          ->setFooterTdAttributes(function ($rows) {
-              return [
-                  'default' => true,
-                  'class' => 'font-black',
-                  'style' => 'color:black;font-weight:900 !important;',
-              ];
-          });
+            ->setColumnSelectDisabled()
+            ->setFilterLayoutSlideDown()
+            ->setPaginationDisabled()
+            ->setFooterEnabled()
+            ->setFooterTdAttributes(function ($rows) {
+                return [
+                    'default' => true,
+                    'class' => 'font-black',
+                    'style' => 'color:black;font-weight:900 !important;',
+                ];
+            });
     }
 
     public function columns(): array
@@ -76,69 +76,72 @@ class AdvisorDistributionReportTable extends DataTableComponent
     public function builder(): Builder
     {
         return CarQuote::query()
-          ->select(
-              DB::raw('count(car_quote_request.id) as total_leads'),
-              DB::raw("SUM(CASE WHEN tiers.name = 'T0' THEN 1 ELSE 0 END) as tier_0_lead_count"),
-              DB::raw("SUM(CASE WHEN tiers.name = 'T1' THEN 1 ELSE 0 END) as tier_1_lead_count"),
-              DB::raw("SUM(CASE WHEN tiers.name = 'T2' THEN 1 ELSE 0 END) as tier_2_lead_count"),
-              DB::raw("SUM(CASE WHEN tiers.name = 'T3' THEN 1 ELSE 0 END) as tier_3_lead_count"),
-              DB::raw("SUM(CASE WHEN tiers.name = 'T4' THEN 1 ELSE 0 END) as tier_4_lead_count"),
-              DB::raw("SUM(CASE WHEN tiers.name = 'T5' THEN 1 ELSE 0 END) as tier_5_lead_count"),
-              DB::raw("SUM(CASE WHEN tiers.name = 'T6' THEN 1 ELSE 0 END) as tier_6_lead_count"),
-              DB::raw("SUM(CASE WHEN tiers.name = 'TL' THEN 1 ELSE 0 END) as tier_l_lead_count"),
-              DB::raw("SUM(CASE WHEN tiers.name = 'TH' THEN 1 ELSE 0 END) as tier_h_lead_count"),
-              DB::raw('SUM(tiers.cost_per_lead) as total_lead_cost'),
-          )
-          ->join('users', 'users.id', 'car_quote_request.advisor_id')
-          ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-          ->groupBy('users.email')
-          ->orderBy('users.name');
+            ->select(
+                DB::raw('count(car_quote_request.id) as total_leads'),
+                DB::raw("SUM(CASE WHEN tiers.name = 'T0' THEN 1 ELSE 0 END) as tier_0_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'T1' THEN 1 ELSE 0 END) as tier_1_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'T2' THEN 1 ELSE 0 END) as tier_2_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'T3' THEN 1 ELSE 0 END) as tier_3_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'T4' THEN 1 ELSE 0 END) as tier_4_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'T5' THEN 1 ELSE 0 END) as tier_5_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'T6' THEN 1 ELSE 0 END) as tier_6_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'TL' THEN 1 ELSE 0 END) as tier_l_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'TH' THEN 1 ELSE 0 END) as tier_h_lead_count"),
+                DB::raw('SUM(tiers.cost_per_lead) as total_lead_cost'),
+            )
+            ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->groupBy('users.email')
+            ->orderBy('users.name');
     }
 
     public function filters(): array
     {
         $teams = Team::query()
-        ->orderBy('name')
-        ->get()
-        ->keyBy('id')
-        ->map(fn ($team) => $team->name)
-        ->toArray();
+            ->orderBy('name')
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($team) => $team->name)
+            ->toArray();
         array_unshift($teams, ['' => 'All']);
 
         $filters = [
-            DateFilter::make('Start Date')
-              ->filter(function (Builder $builder, string $value) {
-                  $builder->whereDate('car_quote_request.created_at', '>=', $value);
-              }),
-            DateFilter::make('Stop Date')
-              ->filter(function (Builder $builder, string $value) {
-                  $builder->whereDate('car_quote_request.created_at', '<=', $value);
-              }),
+            TextFilter::make('Created Date', 'created_at')
+                ->config([
+                    'placeholder' => 'Select Start & End Date',
+                    'range' => true,
+                    'max_days' => 365,
+                ])
+                ->filter(function (Builder $builder, string $value) {
+                    if (preg_match('/^(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
+                        $builder->whereBetween('car_quote_request.created_at', [$matches[1], $matches[2]]);
+                    }
+                }),
         ];
         if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             array_push(
                 $filters,
                 SelectFilter::make('Teams')
-            ->options(Team::query()
-            ->orderBy('name')
-            ->get()
-            ->keyBy('id')
-            ->map(fn ($team) => $team->name)
-            ->toArray())->filter(function (Builder $builder, $value) {
-                $builder->where('users.team_id', $value);
-            }),
-                SelectFilter::make('Tiers')
-                ->options(
-                    Tier::query()
+                    ->options(Team::query()
                         ->orderBy('name')
-                        ->where('is_active', 1)
                         ->get()
                         ->keyBy('id')
-                        ->map(fn ($tier) => $tier->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
-                    $builder->where('car_quote_request.tier_id', $value);
-                })
+                        ->map(fn ($team) => $team->name)
+                        ->toArray())->filter(function (Builder $builder, $value) {
+                            $builder->where('users.team_id', $value);
+                        }),
+                SelectFilter::make('Tiers')
+                    ->options(
+                        Tier::query()
+                            ->orderBy('name')
+                            ->where('is_active', 1)
+                            ->get()
+                            ->keyBy('id')
+                            ->map(fn ($tier) => $tier->name)
+                            ->toArray(),
+                    )->filter(function (Builder $builder, $value) {
+                        $builder->where('car_quote_request.tier_id', $value);
+                    })
             );
         }
 
