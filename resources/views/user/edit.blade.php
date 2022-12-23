@@ -144,7 +144,7 @@
         });
 
         $('#roles').val(previous_selected_roles);
-        loadSubTeams($("#user-team-select").val(), previous_sub_team_id);
+        //loadSubTeams($("#user-team-select").val(), previous_sub_team_id);
 
         $('#additionalTeams-select').select2({
             placeholder: 'Select teams for MyLeads Tab visiblity',
@@ -281,7 +281,17 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Sub-Team</label>
                         <div class="col-md-6 col-sm-6">
-                            <select name="sub_team_id" id="sub-team" class="form-control">
+                            <select class="form-control" id='sub-team' name='sub_team_id'>
+                                <option @if ($user->sub_team_id == null) selected="selected" @endif value="0">None</option>
+                                @foreach($subTeams as $team)
+                                    <option value="{{$team->id}}" 
+                                        {{ $team->id == old('sub_team_id', $user->sub_team_id) ? 'selected' : ''}}>
+                                        {{ $team->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            {{--<select name="sub_team_id" id="sub-team" class="form-control">
                                 <option @if ($user->sub_team_id == null) selected="selected" @endif value="0">None</option>
                                 @foreach ($subTeams as $team)
                                     @if ($user->sub_team_id == $team->id)
@@ -290,7 +300,7 @@
                                         <option value="{{ $team->id }}">{{ $team->name }}</option>
                                     @endif
                                 @endforeach
-                            </select>
+                            </select>--}}
                         </div>
                     </div>
                     <div class="item form-group">
@@ -360,7 +370,6 @@
                     <div class="row">
                         <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <button type="submit" class="btn btn-warning btn-sm">Update & Continue Updating</button>
                             <button type="submit" class="btn btn-warning btn-sm" id="return_to_view">Update</button>
                         </div>
                     </div>

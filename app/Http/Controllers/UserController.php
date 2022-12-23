@@ -190,7 +190,7 @@ class UserController extends Controller
         $roles = Role::pluck('name', 'name')->all(); // get all roles
         $userRole = $user->roles->pluck('name', 'name')->all(); // get all roles of current user
         $teams = Team::where('type', TeamTypeEnum::Team)->orderBy('name', 'asc')->get(); // get all teams
-        $subTeams = Team::where('parent_team_id', $user->team_id)->orderBy('name', 'asc')->get();
+        $subTeams = Team::where('type', TeamTypeEnum::SubTeam)->whereIn('parent_team_id', $teams->pluck('id'))->orderBy('name', 'asc')->get();
         $selectedAdditionalTeams = $user->additional_team_ids; // get all additional teams of current user
         $selectedManager = $user->manager_id; // current user manager
         $products = Team::where('type', TeamTypeEnum::Product)->orderBy('name', 'asc')->get(); // get all products
@@ -251,6 +251,8 @@ class UserController extends Controller
             $user->sub_team_id = $request->sub_team_id;
         }
 
+        $user->save();
+
         if ($request->manager_id != '0') {
             DB::table('user_manager')->where('user_id', $user->id)->delete();
             foreach ($request->manager as $managerId) {
@@ -280,11 +282,6 @@ class UserController extends Controller
                 ]);
             }
         }
-
-        if ($request->team != '0' || $request->team != null) {
-            $user->team_id = $request->team;
-        }
-        $user->save();
 
         // Updating user roles
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();
