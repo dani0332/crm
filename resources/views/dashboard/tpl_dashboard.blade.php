@@ -68,7 +68,7 @@
             var tierFilterValue = $('#tier-filter option:selected').val();
             var sourceFilterValue = $('#source-filter option:selected').val();
             var teamFilterValue = $('#team-filter option:selected').val();
-            $.get('/get-tpl-filter-stats?tier_filter=' + tierFilterValue + '&teamFilter=' + teamFilterValue + '&source=' + sourceFilterValue, function(result) {
+            $.get('/get-tpl-filter-stats?tier_filter=' + tierFilterValue + '&team_filter=' + teamFilterValue + '&source=' + sourceFilterValue, function(result) {
                 if (result) {
                     var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
                     var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];

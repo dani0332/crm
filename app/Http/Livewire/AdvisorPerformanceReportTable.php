@@ -33,6 +33,13 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             });
     }
 
+    public function mount()
+    {
+        if (! $this->getAppliedFilterWithValue('created_at')) {
+            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'-'.now()->format('Y-m-d'));
+        }
+    }
+
     public function columns(): array
     {
         return [
