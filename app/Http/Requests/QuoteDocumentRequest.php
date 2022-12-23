@@ -69,6 +69,10 @@ class QuoteDocumentRequest extends FormRequest
                 }
             }
 
+            if(ucfirst(request()->quoteType) != quoteTypeCode::Health && !empty(request()->member_detail_id)) {
+                $validator->errors()->add('member_detail_id', 'Member can be attached only for Health Insurance type');
+            }
+
             //validate if payment is authorized
             if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
                 $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
