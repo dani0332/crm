@@ -126,7 +126,8 @@ class DashboardController extends Controller
             $records = $this->applyFilter($records, 'tiers.id', $tplTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->team_filter)) {
-            $records = $this->applyFilter($records, 'teams.id', $request->team_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
+            $values = explode(',', $request->team_filter);
+            $records = $this->applyFilter($records, 'teams.id', $values, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->source)) {
             if ($request->source == 'no') {
@@ -193,15 +194,22 @@ class DashboardController extends Controller
         )
         ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
+        ->join('teams', 'teams.id', 'user_team.team_id')
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
         if ($request->tier_filter == '') {
             $records = $this->applyFilter($records, 'tiers.id', $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->tier_filter)) {
-            $records = $this->applyFilter($records, 'tiers.id', [$request->tier_filter], IMCRMSearchTypesEnum::MULTI_SEARCH);
+            $tier_filter = explode(',', $request->tier_filter);
+            $records = $this->applyFilter($records, 'tiers.id', $tier_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         if (isset($request->userFilter)) {
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', [$request->userFilter], IMCRMSearchTypesEnum::MULTI_SEARCH);
+        }
+        if (isset($request->team_filter)) {
+            $team_filter = explode(',', $request->team_filter);
+            $records = $this->applyFilter($records, 'teams.id', $team_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
         }
         $labels = [];
         $data = [];

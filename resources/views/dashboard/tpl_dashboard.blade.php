@@ -6,6 +6,8 @@
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" />
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script>
     var tplDashboardStatsBarChart = {};
     var tplDashboardStats = <?php echo json_encode($tplDashboardStats) ?>;
@@ -67,7 +69,7 @@
         $('#tier-filter, #source-filter, #team-filter').on('change', function(e) {
             var tierFilterValue = $('#tier-filter option:selected').val();
             var sourceFilterValue = $('#source-filter option:selected').val();
-            var teamFilterValue = $('#team-filter option:selected').val();
+            var teamFilterValue = $('#team-filter').val();
             $.get('/get-tpl-filter-stats?tier_filter=' + tierFilterValue + '&team_filter=' + teamFilterValue + '&source=' + sourceFilterValue, function(result) {
                 if (result) {
                     var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
@@ -91,6 +93,17 @@
         });
     });
 
+    const selectSettings = {
+        plugins: ['remove_button', 'checkbox_options'],
+        create: true,
+        onItemAdd: function() {
+            this.setTextboxValue('');
+            this.refreshOptions();
+        },
+    }
+
+    new TomSelect(["#tier-filter"], selectSettings);
+    new TomSelect(["#team-filter"], selectSettings);
 </script>
 @endpush
 
@@ -104,14 +117,14 @@
             </select>
         </div>
         <div>
-            <select id="tier-filter" class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
+            <select multiple name="tiers[]" id="tier-filter">
                 <option value="">Select Tier</option>
                 <option value="tr">Tier R</option>
                 <option value="t6">Tier 6</option>
             </select>
         </div>
         <div>
-            <select id="team-filter" class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
+            <select multiple name="teams[]" id="team-filter">
                 <option value="">Select Team</option>
                 @foreach ($teams as $team)
                 <option value="{{$team->id}}">{{$team->name}}</option>
@@ -123,4 +136,12 @@
         <div id="tplConversionDiv"></div>
     </div>
 </div>
+
+<style>
+.ts-control {
+    width: 210px !important;
+    padding: 9px 9px !important;
+    border-radius: 6px !important;
+}
+</style>
 @endsection
