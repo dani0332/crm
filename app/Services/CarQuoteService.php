@@ -656,7 +656,7 @@ class CarQuoteService extends BaseService
         array_push($this->childUserIds, $userId);
         if (auth()->user()->hasRole(RolesEnum::CarManager)) {
             $teamMates = User::where('team_id', Team::where('name', auth()->user()->team_id))->get()->pluck('id');
-            array_push($this->childUserIds, $teamMates);    
+            array_push($this->childUserIds, $teamMates);
         } else {
             $teamMates = DB::table('user_manager')->where('user_id', $userId)->pluck('manager_id');
             foreach ($teamMates as $teamMate) {

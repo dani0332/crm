@@ -150,9 +150,8 @@ class UserController extends Controller
         $additionalTeamNames = '';
         $managerName = '';
         $managerNames = User::whereIn('id', DB::table('user_manager')->where('user_id', $user->id)->get()->pluck('manager_id'))->get()->pluck('name');
-        foreach($managerNames as $mName)
-        {
-            $managerName = $managerName . $mName . ' , ';
+        foreach ($managerNames as $mName) {
+            $managerName = $managerName.$mName.' , ';
         }
         $managerName = rtrim($managerName, ' ,');
 
@@ -165,17 +164,15 @@ class UserController extends Controller
         }
         $teamName = '';
         $teamNames = Team::whereIn('id', DB::table('user_team')->where('user_id', $user->id)->get()->pluck('team_id'))->get()->pluck('name');
-        foreach($teamNames as $mName)
-        {
-            $teamName = $teamName . $mName . ' , ';
+        foreach ($teamNames as $mName) {
+            $teamName = $teamName.$mName.' , ';
         }
         $teamName = rtrim($teamName, ' ,');
 
         $productName = '';
         $productNames = Team::whereIn('id', DB::table('user_products')->where('user_id', $user->id)->get()->pluck('product_id'))->get()->pluck('name');
-        foreach($productNames as $mName)
-        {
-            $productName = $productName . $mName . ' , ';
+        foreach ($productNames as $mName) {
+            $productName = $productName.$mName.' , ';
         }
         $productName = rtrim($productName, ' ,');
 
