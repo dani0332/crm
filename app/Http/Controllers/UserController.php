@@ -149,21 +149,37 @@ class UserController extends Controller
         $subTeamName = '';
         $additionalTeamNames = '';
         $managerName = '';
-        if ($user->manager_id) {
-            $managerName = User::find($user->manager_id)->name;
+        $managerNames = User::whereIn('id', DB::table('user_manager')->where('user_id', $user->id)->get()->pluck('manager_id'))->get()->pluck('name');
+        foreach($managerNames as $mName)
+        {
+            $managerName = $managerName . $mName . ' , ';
         }
+        $managerName = rtrim($managerName, ' ,');
+
         if ($user->additional_team_ids != '') {
-            $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->pluck('name')->toArray();
+            $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::Product)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
         }
         if ($user->sub_team_id) {
             $subTeamName = Team::find($user->sub_team_id)->name;
         }
-        if ($user->team_id) {
-            $teamName = Team::find($user->team_id)->name;
+        $teamName = '';
+        $teamNames = Team::whereIn('id', DB::table('user_team')->where('user_id', $user->id)->get()->pluck('team_id'))->get()->pluck('name');
+        foreach($teamNames as $mName)
+        {
+            $teamName = $teamName . $mName . ' , ';
         }
+        $teamName = rtrim($teamName, ' ,');
 
-        return view('user.show', compact('user', 'teamName', 'subTeamName', 'additionalTeamNames', 'managerName'));
+        $productName = '';
+        $productNames = Team::whereIn('id', DB::table('user_products')->where('user_id', $user->id)->get()->pluck('product_id'))->get()->pluck('name');
+        foreach($productNames as $mName)
+        {
+            $productName = $productName . $mName . ' , ';
+        }
+        $productName = rtrim($productName, ' ,');
+
+        return view('user.show', compact('user', 'teamName', 'subTeamName', 'additionalTeamNames', 'managerName', 'productName'));
     }
 
     /**
