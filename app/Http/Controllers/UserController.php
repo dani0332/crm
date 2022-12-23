@@ -9,6 +9,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
+use App\Traits\TeamHierarchyHelpers;
 use Auth;
 use DataTables;
 use DB;
@@ -17,6 +18,8 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    use TeamHierarchyHelpers;
+
     protected $leadAllocationService;
     protected $userService;
 
@@ -98,12 +101,8 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::pluck('name', 'name')->all(); // get all roles
-        $products = Team::where('type', TeamTypeEnum::Product)->orderBy('name', 'asc')->get(); // get all products
+        $products = $this->getAllProducts()->orderBy('name', 'asc')->get(); // get all products
         $teams = [];
-        // $teams = Team::where(function ($query) {
-        //     $query->where('type', TeamTypeEnum::Team)
-        //         ->orWhereNull('parent_team_id');
-        // })->orderBy('name', 'asc')->get();
         $subTeams = [];
 
         return view('user.add', compact('roles', 'products', 'teams', 'subTeams'));
@@ -144,17 +143,11 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        // getting current user's team names
-        $teamName = '';
         $subTeamName = '';
         $additionalTeamNames = '';
-        $managerName = '';
-        $managerNames = User::whereIn('id', DB::table('user_manager')->where('user_id', $user->id)->get()->pluck('manager_id'))->get()->pluck('name');
-        foreach ($managerNames as $mName) {
-            $managerName = $managerName.$mName.' , ';
-        }
-        $managerName = rtrim($managerName, ' ,');
-
+        $managerName = implode(',', $this->getUserManagers($user->id)->pluck('name')->toArray());
+        $teamName = implode(',', $this->getUserTeams($user->id)->pluck('name')->toArray());
+        $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
         if ($user->additional_team_ids != '') {
             $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::Product)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
@@ -162,19 +155,6 @@ class UserController extends Controller
         if ($user->sub_team_id) {
             $subTeamName = Team::find($user->sub_team_id)->name;
         }
-        $teamName = '';
-        $teamNames = Team::whereIn('id', DB::table('user_team')->where('user_id', $user->id)->get()->pluck('team_id'))->get()->pluck('name');
-        foreach ($teamNames as $mName) {
-            $teamName = $teamName.$mName.' , ';
-        }
-        $teamName = rtrim($teamName, ' ,');
-
-        $productName = '';
-        $productNames = Team::whereIn('id', DB::table('user_products')->where('user_id', $user->id)->get()->pluck('product_id'))->get()->pluck('name');
-        foreach ($productNames as $mName) {
-            $productName = $productName.$mName.' , ';
-        }
-        $productName = rtrim($productName, ' ,');
 
         return view('user.show', compact('user', 'teamName', 'subTeamName', 'additionalTeamNames', 'managerName', 'productName'));
     }
@@ -187,23 +167,20 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $roles = Role::pluck('name', 'name')->all(); // get all roles
-        $userRole = $user->roles->pluck('name', 'name')->all(); // get all roles of current user
-        $teams = Team::where('type', TeamTypeEnum::Team)->orderBy('name', 'asc')->get(); // get all teams
-        $subTeams = Team::where('type', TeamTypeEnum::SubTeam)->whereIn('parent_team_id', $teams->pluck('id'))->orderBy('name', 'asc')->get();
-        $selectedAdditionalTeams = $user->additional_team_ids; // get all additional teams of current user
-        $selectedManager = $user->manager_id; // current user manager
-        $products = Team::where('type', TeamTypeEnum::Product)->orderBy('name', 'asc')->get(); // get all products
-        $userProductIds = DB::table('user_products')->where('user_id', $user->id)->get()->pluck('product_id')->toArray();
-        $userTeamIds = DB::table('user_team')->where('user_id', $user->id)->get()->pluck('team_id')->toArray();
-        $managers = $this->getManagersBasedOnTeamId($userProductIds, $user->id); // get all managers based on current user's team
-        $userManagerIds = DB::table('user_manager')->where('user_id', $user->id)->get()->pluck('manager_id')->toArray();
-        //dd($managers, $userManagerIds);
+        $roles = Role::pluck('name', 'name')->all();
+        $userRole = $user->roles->pluck('name', 'name')->all();
+        $teams = $this->getAllTeams()->orderBy('name', 'asc')->get();
+        $subTeams = $this->getSubTeamsByTeamIds($teams->pluck('id'))->orderBy('name', 'asc')->get();
+        $selectedAdditionalTeams = $user->additional_team_ids;
+        $products = $this->getAllProducts()->orderBy('name', 'asc')->get();
+        $userProductIds = $this->getUserProducts($user->id)->pluck('id')->toArray();
+        $userTeamIds = $this->getUserTeams($user->id)->pluck('id')->toArray();
+        $managers = $this->getManagersBasedOnTeamId($userProductIds, $user->id);
+        $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
         return view('user.edit', compact(
             'user',
             'roles',
             'userRole',
-            'selectedManager',
             'selectedAdditionalTeams',
             'subTeams',
             'products',
@@ -307,7 +284,7 @@ class UserController extends Controller
 
     public function getProductTeams(Request $request)
     {
-        return Team::where('type', TeamTypeEnum::Team)->whereIn('parent_team_id', $request->productIds)->orderBy('name', 'asc')->get();
+        return $this->getTeamsByProductIds($request->productIds)->orderBy('name', 'asc')->get();
     }
 
     public function me(Request $request)
@@ -320,8 +297,7 @@ class UserController extends Controller
         if ($request->teamId == null) {
             return [];
         }
-
-        return Team::whereIn('parent_team_id', $request->teamId)->where('type', TeamTypeEnum::SubTeam)->select('id', 'name')->orderBy('name', 'asc')->get();
+        return  $this->getSubTeamsByTeamIds($request->teamId)->select('id', 'name')->orderBy('name', 'asc')->get();
     }
 
     public function getTeamManagers(Request $request)

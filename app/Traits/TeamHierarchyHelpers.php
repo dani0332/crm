@@ -29,6 +29,11 @@ trait TeamHierarchyHelpers
         return Team::where('type', TeamTypeEnum::Team)->where('parent_team_id', $productId)->get();
     }
 
+    public function getTeamsByProductIds($productIds)
+    {
+        return Team::where('type', TeamTypeEnum::Team)->whereIn('parent_team_id', $productIds)->get();
+    }
+
     public function getTeamsByProductName($productName)
     {
         $product = Team::where('type', TeamTypeEnum::Product)->where('name', $productName)->first();
@@ -46,14 +51,21 @@ trait TeamHierarchyHelpers
         return Team::where('type', TeamTypeEnum::SubTeam)->where('parent_team_id', $teamId)->get();
     }
 
+    public function getSubTeamsByTeamIds($teamIds)
+    {
+        return Team::where('type', TeamTypeEnum::SubTeam)->whereIn('parent_team_id', $teamIds)->get();
+    }
+
     public function getUsersByTeamId($teamId)
     {
-        return User::whereIn('id', DB::table('user_team')->where('team_id', $teamId)->pluck('user_id'))->get();
+        $teamUserId = DB::table('user_team')->where('team_id', $teamId)->user_id;
+        return User::whereIn('id', $teamUserId)->get();
     }
 
     public function getUsersByTeamIds($teamIds)
     {
-        return User::whereIn('id', DB::table('user_team')->whereIn('team_id', $teamIds)->pluck('user_id'))->get();
+        $teamUserIds = DB::table('user_team')->whereIn('team_id', $teamIds)->pluck('user_id');
+        return User::whereIn('id', $teamUserIds)->get();
     }
 
     public function getUsersByProductName($productName)
@@ -62,5 +74,23 @@ trait TeamHierarchyHelpers
         $productTeams = Team::where('type', TeamTypeEnum::Team)->where('parent_team_id', $product->id)->get();
 
         return User::whereIn('id', DB::table('user_team')->whereIn('team_id', $productTeams->pluck('id'))->pluck('user_id'))->get();
+    }
+
+    public function getUserManagers($userId)
+    {
+        $managerIds = DB::table('user_manager')->where('user_id', $userId)->get()->pluck('manager_id');
+        return User::whereIn('id', $managerIds)->get();
+    }
+
+    public function getUserTeams($userId)
+    {
+        $teamIds = DB::table('user_team')->where('user_id', $userId)->get()->pluck('team_id');
+        return Team::whereIn('id', $teamIds)->where('type', TeamTypeEnum::Team)->get();
+    }
+
+    public function getUserProducts($userId)
+    {
+        $productIds = DB::table('user_products')->where('user_id', $userId)->get()->pluck('product_id');
+        return Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::Product)->get();
     }
 }
