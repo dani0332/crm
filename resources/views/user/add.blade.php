@@ -73,7 +73,7 @@
         });
     }
 
-    function loadManagerByTeam(team_id, previous_selected_manager) {
+    function loadManagerByTeam(team_id) {
         $(".loader").show();
         if (typeof team_id == 'string') {
             team_id = [team_id];
@@ -94,7 +94,7 @@
                     $('#user-manager-select').append($("<option></option>").attr("value", element.id).text(element.name));
                 }
                 $('#user-manager-select').removeAttr('disabled');
-                $("#user-manager-select").val(previous_selected_manager);
+                $("#user-manager-select").val(window.previous_manager);
                 $(".loader").hide();
             },
         });
@@ -116,18 +116,12 @@
             },
             success: function(response) {
                 $('#user-team-select').find('option').remove().end();
+
                 for (let index = 0; index < response.length; index++) {
                     const element = response[index];
-                    
-                    if(previous_team && previous_team.indexOf(element.id) > -1) {
-                        console.log('111productIds: ', previous_team);
-                        console.log('222element.id: ', element.id);
-                        console.log('333productIds.indexOf(element.id): ', previous_team.indexOf(element.id));
-                        $('#user-team-select').append($("<option></option>").attr("selected", "selected").attr("value", element.id).text(element.name));
-                    } else {
-                        $('#user-team-select').append($("<option></option>").attr("value", element.id).text(element.name));
-                    }
+                    $('#user-team-select').append($("<option></option>").attr("value", element.id).text(element.name));
                 }
+                $('#user-team-select').val(window.previous_team);
                 $(".loader").hide();
             },
         });
@@ -137,26 +131,24 @@
         window.previous_sub_team_id = JSON.parse('<?php echo json_encode(old('sub_team_id')); ?>');
         window.previous_team = @json(old('teams'));
         window.previous_product = @json(old('products'));
+        window.previous_manager = @json(old('manager'));
         var previous_selected_additional_teams = JSON.parse('<?php echo json_encode(old('additionalTeams')); ?>');
-        var previous_selected_manager = JSON.parse('<?php echo json_encode(old('manager')); ?>');
         var previous_selected_roles = JSON.parse('<?php echo json_encode(old('roles')); ?>');
         var additionalTeams = JSON.parse('<?php echo json_encode($products); ?>');
-
         $("#user-product-select").on('change', function() {
             if (this.value == '') {
                 $("#user-team-select").empty();
             } else {
                 loadTeamsByProduct($(this).val());
-                loadManagerByTeam($(this).val(), previous_selected_manager);
+                loadManagerByTeam($(this).val());
             }
         });
-
         if(previous_product) {
             loadTeamsByProduct(previous_product);
         }
 
         $('#roles').val(previous_selected_roles);
-        loadManagerByTeam($("#user-team-select").val(), previous_selected_manager);
+        loadManagerByTeam($("#user-product-select").val());
         loadSubTeams($("#user-team-select").val(), previous_sub_team_id);
 
         $('#additionalTeams-select').select2({

@@ -228,7 +228,7 @@ class UserController extends Controller
             'name' => 'required|max:120',
             'email' => 'required|email',
             'roles' => 'required',
-            'team' => 'required',
+            'teams' => 'required',
         ]);
         // Updating user
         $user->name = $request->name;
