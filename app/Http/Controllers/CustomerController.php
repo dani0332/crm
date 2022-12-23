@@ -139,17 +139,17 @@ class CustomerController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @param \Illuminate\Http\Response
      */
-    public function processCustomerCSV(Request $request)
+    public function processCustomerUpload(Request $request)
     {
         $this->validate($request, [
-            'file_name' => 'required|mimetypes:text/csv,text/plain,application/csv,text/comma-separated-values,text/anytext,application/octet-stream,application/txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet|max:2048',
+            'file_name' => 'required|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
             'cdb_id' => 'required',
             'myalfred_expiry_date' => 'required',
         ]);
 
-        $customerUploadID = $this->customerUploadFileService->customerUploadRecordsCreate($request);
+        $customerUploadId = $this->customerUploadFileService->customerUploadRecordsCreate($request);
 
-        if ($customerUploadID == 0) {
+        if ($customerUploadId == 0) {
             return redirect('customer-upload')->with('message', 'CDB Id : '.$request->cdb_id." doesn't exists in system.")->withInput();
         }
 
