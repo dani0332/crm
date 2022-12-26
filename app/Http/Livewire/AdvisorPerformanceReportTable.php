@@ -119,7 +119,6 @@ class AdvisorPerformanceReportTable extends DataTableComponent
                 ->options(
                     Team::query()
                         ->orderBy('name')
-                        ->whereNotNull('parent_team_id')
                         ->where('parent_team_id', 2)
                         ->get()
                         ->keyBy('id')

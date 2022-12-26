@@ -58,7 +58,7 @@ trait TeamHierarchyHelpers
 
     public function getUsersByTeamId($teamId)
     {
-        $teamUserId = DB::table('user_team')->where('team_id', $teamId)->user_id;
+        $teamUserId = DB::table('user_team')->where('team_id', $teamId)->pluck('user_id');
 
         return User::whereIn('id', $teamUserId)->get();
     }
