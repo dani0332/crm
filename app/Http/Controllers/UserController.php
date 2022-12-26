@@ -231,7 +231,7 @@ class UserController extends Controller
 
         $user->save();
 
-        if ($request->manager_id != '0') {
+        if ($request->manager != '0' && isset($request->manager)) {
             DB::table('user_manager')->where('user_id', $user->id)->delete();
             foreach ($request->manager as $managerId) {
                 DB::table('user_manager')->insert([
