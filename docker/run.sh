@@ -15,5 +15,3 @@ php artisan view:cache
 yes | doppler run -- php artisan db:seed
 
 doppler run -- /usr/bin/supervisord -c /etc/supervisord.conf
-
-php artisan queue:restart
