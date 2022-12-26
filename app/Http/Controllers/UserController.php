@@ -241,7 +241,7 @@ class UserController extends Controller
             }
         }
 
-        if ($request->teams != '0') {
+        if ($request->teams != '0' && isset($request->teams)) {
             DB::table('user_team')->where('user_id', $user->id)->delete();
             foreach ($request->teams as $teamId) {
                 DB::table('user_team')->insert([
@@ -251,7 +251,7 @@ class UserController extends Controller
             }
         }
 
-        if ($request->products != '0') {
+        if ($request->products != '0' && isset($request->products)) {
             DB::table('user_products')->where('user_id', $user->id)->delete();
             foreach ($request->products as $productId) {
                 DB::table('user_products')->insert([
