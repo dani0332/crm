@@ -896,7 +896,7 @@ use App\Enums\PermissionsEnum;
                         width="100%">
                         <thead>
                             <tr>
-                                @if ($isManagerORDeputy == '1' &&
+                                @if ($isLeadPool == '1' &&
                                 str_contains('home,health,life,business,travel,car,pet',
                                 strtolower($model->modelType)))
                                 <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"

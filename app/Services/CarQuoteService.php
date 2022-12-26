@@ -663,7 +663,9 @@ class CarQuoteService extends BaseService
                 ->where('user_id', $userId)
                 ->where('teams.parent_team_id', $carTeam->id)->select('teams.id');
             $teamMates = DB::table('user_team')->whereIn('team_id', $userAllTeams)->pluck('user_id');
-            array_push($this->childUserIds, $teamMates);
+            foreach ($teamMates as $teamMateId) {
+                array_push($this->childUserIds, $teamMateId);
+            }
         } else {
             $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
             $teamMates = DB::table('user_manager')->where('manager_id', $userId)->whereIn('user_id', $carUserIds)->pluck('user_id');
@@ -689,22 +691,14 @@ class CarQuoteService extends BaseService
         }
 
         if ($request->ajax()) {
-            if (Auth::user()->isManagerOrDeputy()) {
+
+            if (Auth::user()->isManagerOrDeputy() || Auth::user()->isLeadPool() ) {
                 if (! Auth::user()->hasRole('CAR_RENEWAL_MANAGER')) {
                     $this->walkTree(Auth::user()->id); // get all childs of the user
-                    array_push($this->childUserIds, Auth::user()->id); // add the user id to the array to fetch directly assigned leads as well
-                    if (Auth::user()->hasRole('CAR_MANAGER')) {
-                        $this->query->where(function ($query) {
-                            $query->whereIn('cqr.advisor_id', $this->childUserIds) // fetch leads assigned to the user or his childs
-                                ->orWhereNull('cqr.advisor_id'); // fetch unassigned leads
-                        });
-                    } else {
-                        $this->query->where(function ($query) {
-                            $query->whereIn('cqr.advisor_id', $this->childUserIds); // fetch unassigned leads
-                        });
-                    }
+                    $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
                 }
             }
+
 
             if (Auth::user()->isSpecificTeamAdvisor('Car')) {
                 // if user has advisor Role then fetch leads assigned to the user only
@@ -714,6 +708,7 @@ class CarQuoteService extends BaseService
             if (! isset($request->email) && $request->email == '') {
                 $this->query->where('qs.id', '!=', 9);
             }
+
             if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
                 $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
                 $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
