@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Events\AdvisorAssigned;
+use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
@@ -21,17 +22,15 @@ use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
-use App\Traits\CreateUpdateSIbContact;
 use App\Traits\GetUserTree;
 use App\Traits\SendSIBEmail;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationService extends BaseService
 {
     use GetUserTree;
-    use CreateUpdateSIbContact;
     use SendSIBEmail;
 
     public function getGridData()
@@ -144,8 +143,7 @@ class LeadAllocationService extends BaseService
                 $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
                 $leadCreated = Carbon::parse($lead->created_at)->timestamp;
                 if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-                    info('Contact upload Request '.$lead->uuid);
-                    $this->sendSibRequest($lead);
+                    SyncSIBContactJob::dispatch($lead);
                 }
                 DB::commit();
 
@@ -371,9 +369,15 @@ class LeadAllocationService extends BaseService
                             ->groupBy('users.name', 'users.id', 'la.id')
                             ->select(
                                 'users.id as userId',
-                                'users.name as userName', DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'), DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
-                                'la.allocation_count as allocationCount', 'la.last_allocated as lastAllocation', 'la.max_capacity as maxCapacity', 'la.is_available as isAvailable',
-                                'users.last_login as lastLogin', 'la.id as id'
+                                'users.name as userName',
+                                DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
+                                DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
+                                'la.allocation_count as allocationCount',
+                                'la.last_allocated as lastAllocation',
+                                'la.max_capacity as maxCapacity',
+                                'la.is_available as isAvailable',
+                                'users.last_login as lastLogin',
+                                'la.id as id'
                             )->get();
         info('going to update the max cap for users : '.json_encode($users->pluck('id')));
         foreach ($users as $user) {
@@ -393,6 +397,7 @@ class LeadAllocationService extends BaseService
 
         return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') == '1';
     }
+
     public function leadAllocationSwitchStatus()
     {
         return $this->getAppStorageValueByKey('LEAD_ALLOCATION_JOB_SWITCH') == '1';
@@ -643,8 +648,14 @@ class LeadAllocationService extends BaseService
                     })
                     ->where('u.last_login', '>', Carbon::now()->addDays(-1)->endOfDay())
                     ->whereIn('u.id', $tierUsers)
-                    ->select('u.id', 'u.name', 'u.email', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity',
-                        'lead_allocation.last_allocated')
+                    ->select(
+                        'u.id',
+                        'u.name',
+                        'u.email',
+                        'lead_allocation.allocation_count',
+                        'lead_allocation.max_capacity',
+                        'lead_allocation.last_allocated'
+                    )
                     ->orderBy('lead_allocation.last_allocated', 'asc')->get();
     }
 

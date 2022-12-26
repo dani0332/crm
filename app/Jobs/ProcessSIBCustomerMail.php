@@ -6,7 +6,6 @@ use App\Models\MyAlFredUser;
 use App\Services\CustomerService;
 use App\Services\CustomerWEGenerateUrlService;
 use App\Services\SendEmailCustomerService;
-use DB;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -53,15 +52,14 @@ class ProcessSIBCustomerMail implements ShouldQueue
                 info('ProcessSIBCustomerMail MyAlfred welcome email sent to coporate customer '.$this->email);
                 $customer = CustomerService::getCustomerByEmail($this->email);
                 if ($customer) {
-                    $updateCustomer = $customer->first();
-                    $updateCustomer->is_we_sent = true;
-                    $updateCustomer->save();
+                    $customer->is_we_sent = true;
+                    $customer->save();
 
-                    $myAlfredUser = MyAlFredUser::where('customer_id', $updateCustomer->id)->get();
+                    $myAlfredUser = MyAlFredUser::where('customer_id', $customer->id)->get();
                     if ($myAlfredUser->isEmpty()) {
                         $newMyAlfredUser = new MyAlFredUser;
                         $newMyAlfredUser->signup_url = $myAlfredSignupUrl;
-                        $newMyAlfredUser->customer_id = $updateCustomer->id;
+                        $newMyAlfredUser->customer_id = $customer->id;
                         $newMyAlfredUser->code = substr($myAlfredSignupUrl, strpos($myAlfredSignupUrl, 'signup/') + 7);
                         $newMyAlfredUser->source = 'CORPORATE';
                         $newMyAlfredUser->save();
@@ -72,8 +70,6 @@ class ProcessSIBCustomerMail implements ShouldQueue
             Log::error('ProcessSIBCustomerMail Error - Customer Email: '.$this->email.' Message: '.$e->getMessage());
 
             return $e->getMessage();
-        } finally {
-            DB::disconnect('mysql');
         }
         info('ProcessSIBCustomerMail handle End');
     }

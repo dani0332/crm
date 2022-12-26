@@ -16,8 +16,8 @@ use App\Models\User;
 use Auth;
 use Carbon\Carbon;
 use Config;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use LookUpModel;
 
@@ -42,12 +42,12 @@ class TransAppService extends BaseService
         $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
 
         if (gettype($WEGenerateUrlResponse) == 'string') {
-            $existingCustomer = CustomerService::getCustomerByEmail($request->email)->first();
+            $existingCustomer = CustomerService::getCustomerByEmail($request->email);
             $sendWelcomeEmail = ($existingCustomer && ! $existingCustomer->is_we_sent) || ! $existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
             $statusId = DB::table('statuses')->where('name', 'Active')->value('id');
 
-            if ($existingCustomer != null) { // Existing customer
+            if ($existingCustomer) { // Existing customer
                 if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
                     $responseExtend = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
