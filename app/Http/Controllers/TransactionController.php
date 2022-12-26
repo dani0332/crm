@@ -48,8 +48,16 @@ class TransactionController extends Controller
         $isTransappNonAdmin = $this->transactionService->checkTransappNonAdmin();
 
         if ($request->ajax()) {
-            $dataTransapp = $transaction::select('transactions.*', 'statuses.name as status', 'insurance_companies.name as insurance', 'type_of_insurances.text as type_of_insurance',
-                'handlers.name as handler_name', 'creaters.name as created_by_name', 'payment_modes.name as payment_mode', DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name'))
+            $dataTransapp = $transaction::select(
+                'transactions.*',
+                'statuses.name as status',
+                'insurance_companies.name as insurance',
+                'type_of_insurances.text as type_of_insurance',
+                'handlers.name as handler_name',
+                'creaters.name as created_by_name',
+                'payment_modes.name as payment_mode',
+                DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name')
+            )
             ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
             ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
             ->leftjoin('users as handlers', 'transactions.assigned_to_id', 'handlers.id')
@@ -392,7 +400,7 @@ class TransactionController extends Controller
         $transaction = new Transaction;
         $transaction->insurance_company_id = $request->insurance_company;
         $customer = $this->customerService->getCustomerByEmail($request->email);
-        $transaction->customer_id = $customer->first()->id;
+        $transaction->customer_id = $customer->id;
         $transaction->assigned_to_id = $request->assigned_to_id;
         $transaction->payment_mode_id = $request->paymentmode;
         $transaction->risk_details = $request->risk_detail;
