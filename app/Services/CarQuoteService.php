@@ -656,16 +656,16 @@ class CarQuoteService extends BaseService
 
     public function walkTree($userId)
     {
+        $carTeam = $this->getProductByName(quoteTypeCode::Car);
         array_push($this->childUserIds, $userId);
         if (auth()->user()->hasRole(RolesEnum::CarManager)) {
-            $teamMates = User::where('team_id', Team::where('name', auth()->user()->team_id))->get()->pluck('id');
+            $teamMates = DB::table('user_team')->where('team_id', $carTeam->id)->pluck('user_id');
             array_push($this->childUserIds, $teamMates);
         } else {
-            $carTeam = $this->getProductByName(quoteTypeCode::Car);
+
             $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
             $teamMates = DB::table('user_manager')->where('manager_id', $userId)->whereIn('user_id', $carUserIds)->pluck('user_id');
             foreach ($teamMates as $teamMateId) {
-                $carTeam = $this->getProductByName(quoteTypeCode::Car);
                 $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
                 $nextChild = DB::table('user_manager')->where('manager_id', $teamMateId)->whereIn('user_id', $carUserIds)->pluck('user_id');
                 if (count($nextChild) > 0) {
