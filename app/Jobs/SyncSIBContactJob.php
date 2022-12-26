@@ -16,7 +16,7 @@ class SyncSIBContactJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 15;
     public $backoff = 20;
-    protected $entity;
+    protected $entity = null;
 
     /**
      * Create a new job instance.
@@ -35,6 +35,10 @@ class SyncSIBContactJob implements ShouldQueue
      */
     public function handle()
     {
+        if (! $this->entity) {
+            return false;
+        }
+
         $data = [
             'customerName' => isset($this->entity->full_name) ? $this->entity->full_name : null,
             'advisorName' => isset($this->entity->advisor) ? $this->entity->advisor->name : null,
@@ -48,6 +52,6 @@ class SyncSIBContactJob implements ShouldQueue
             'advisorLandline' => isset($this->entity->advisor) ? $this->entity->advisor->landline_no : null,
         ];
 
-        SIBService::contactCreateUpdate(config('constants.SIB_HEALTH_EBP_LIST_ID'), $this->entity->first_name, $this->entity->last_name, $this->entity->email, null, $data);
+        return SIBService::contactCreateUpdate(config('constants.SIB_HEALTH_EBP_LIST_ID'), $this->entity->first_name, $this->entity->last_name, $this->entity->email, null, $data);
     }
 }
