@@ -9,6 +9,7 @@ chmod -R 775 bootstrap/cache
 
 # php artisan migrate:fresh --seed
 php artisan cache:clear
+php artisan view:cache
 php artisan route:cache
 
 yes | doppler run -- php artisan db:seed
