@@ -11,7 +11,7 @@ trait TeamHierarchyHelpers
 {
     public function getAllProducts()
     {
-        return Team::where('type', TeamTypeEnum::Product)->get();
+        return Team::where('type', TeamTypeEnum::Product)->orderBy('name', 'asc')->get();
     }
 
     public function getProductByName($productName)
@@ -21,7 +21,7 @@ trait TeamHierarchyHelpers
 
     public function getAllTeams()
     {
-        return Team::where('type', TeamTypeEnum::Team)->get();
+        return Team::where('type', TeamTypeEnum::Team)->orderBy('name', 'asc')->get();
     }
 
     public function getTeamsByProductId($productId)
@@ -31,7 +31,7 @@ trait TeamHierarchyHelpers
 
     public function getTeamsByProductIds($productIds)
     {
-        return Team::where('type', TeamTypeEnum::Team)->whereIn('parent_team_id', $productIds)->get();
+        return Team::where('type', TeamTypeEnum::Team)->whereIn('parent_team_id', $productIds)->orderBy('name', 'asc')->get();
     }
 
     public function getTeamsByProductName($productName)
@@ -43,7 +43,7 @@ trait TeamHierarchyHelpers
 
     public function getAllSubTeams()
     {
-        return Team::where('type', TeamTypeEnum::SubTeam)->get();
+        return Team::where('type', TeamTypeEnum::SubTeam)->orderBy('name', 'asc')->get();
     }
 
     public function getSubTeamsByTeamId($teamId)
@@ -53,7 +53,7 @@ trait TeamHierarchyHelpers
 
     public function getSubTeamsByTeamIds($teamIds)
     {
-        return Team::where('type', TeamTypeEnum::SubTeam)->whereIn('parent_team_id', $teamIds)->get();
+        return Team::where('type', TeamTypeEnum::SubTeam)->whereIn('parent_team_id', $teamIds)->orderBy('name', 'asc')->get();
     }
 
     public function getUsersByTeamId($teamId)
@@ -65,7 +65,7 @@ trait TeamHierarchyHelpers
 
     public function getUsersByTeamIds($teamIds)
     {
-        $teamUserIds = DB::table('user_team')->whereIn('team_id', $teamIds)->pluck('user_id');
+        $teamUserIds = DB::table('user_team')->whereIn('team_id', $teamIds)->orderBy('name', 'asc')->pluck('user_id');
 
         return User::whereIn('id', $teamUserIds)->get();
     }
