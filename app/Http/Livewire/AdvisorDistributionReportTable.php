@@ -15,9 +15,9 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorDistributionReportTable extends DataTableComponent
 {
-    public $url,
-    $tiers = [],
-    $teams = [];
+    public $url;
+    public $tiers = [];
+    public $teams = [];
 
     public function configure(): void
     {
