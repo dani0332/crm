@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
-use Config;
+use Illuminate\Support\Facades\Log;
 
-class CreateUpdateContactService extends BaseService
+class SIBService extends BaseService
 {
     public static function contactCreateUpdate($listId, $firstName, $lastName, $email, $signupLink, $data = [])
     {
-        info('Contact upload Service '.json_encode($data));
-        $endPointUrl = Config::get('constants.SIB_CONTACTS_API_ENDPOINT_URL');
-        $apiKey = Config::get('constants.SENDINBLUE_KEY');
+        info('Sync Contact SIB - CDBID: '.$data['cdbid'].' - Data: '.json_encode($data));
+        $endPointUrl = config('constants.SIB_CONTACTS_API_ENDPOINT_URL');
+        $apiKey = config('constants.SENDINBLUE_KEY');
 
         $customerData = json_encode([
             'email' => $email,
@@ -23,7 +23,7 @@ class CreateUpdateContactService extends BaseService
                 'CUSTOMERNAME' => isset($data['customerName']) ? $data['customerName'] : null,
                 'ADVISORNAME' => isset($data['advisorName']) ? $data['advisorName'] : null,
                 'LEAD_STATUS' => isset($data['leadStatus']) ? $data['leadStatus'] : null,
-                'CDBID' => isset($data['cbdid']) ? $data['cbdid'] : null,
+                'CDBID' => isset($data['cdbid']) ? $data['cdbid'] : null,
                 'QUOTEPLANLINK' => isset($data['link']) ? $data['link'] : null,
                 'HEALTH_WEBHOOK_URL' => null,
                 'ADVISORLANDLINE' => isset($data['advisorLandline']) ? $data['advisorLandline'] : null,
@@ -32,7 +32,7 @@ class CreateUpdateContactService extends BaseService
             'updateEnabled' => true,
         ]);
         $clientExtendSubscription = new \GuzzleHttp\Client();
-
+        $apiResponse = null;
         try {
             $requestExtendSubscription = $clientExtendSubscription->post(
                 $endPointUrl,
@@ -43,14 +43,14 @@ class CreateUpdateContactService extends BaseService
                         'api-key' => $apiKey,
                     ],
                     'body' => $customerData,
+                    'timeout' => 10000,
                 ]
             );
 
             $apiResponse = $requestExtendSubscription->getStatusCode();
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $apiResponse = $e->getResponse()->getStatusCode();
+        } catch (\GuzzleHttp\Exception\BadResponseException $exception) {
+            Log::error('Sync Contact SIB - Error: '.$exception->getMessage());
         }
-        info('Contact upload Service end');
 
         return $apiResponse;
     }
