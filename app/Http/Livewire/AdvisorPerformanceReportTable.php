@@ -2,11 +2,9 @@
 
 namespace App\Http\Livewire;
 
-use App\Enums\RedisKeyEnum;
 use App\Models\CarQuote;
 use App\Models\Team;
 use App\Models\Tier;
-use App\Services\CacheManager;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -134,7 +132,6 @@ class AdvisorPerformanceReportTable extends DataTableComponent
 
     public function filters(): array
     {
-        
         return [
             TextFilter::make('Created Date', 'created_at')
                 ->config([

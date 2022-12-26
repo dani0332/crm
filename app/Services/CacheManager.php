@@ -48,6 +48,5 @@ class CacheManager
         $value = Cache::remember($key, 3600, function () {
             return 'Hello, World!';
         });
-
     }
 }
