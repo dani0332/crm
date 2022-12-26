@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+
 class SIBService extends BaseService
 {
     public static function contactCreateUpdate($listId, $firstName, $lastName, $email, $signupLink, $data = [])
     {
-        info('Sync Contact SIB: '.$data['cdbid'].' - Data: '.json_encode($data));
+        info('Sync Contact SIB - CDBID: '.$data['cdbid'].' - Data: '.json_encode($data));
         $endPointUrl = config('constants.SIB_CONTACTS_API_ENDPOINT_URL');
         $apiKey = config('constants.SENDINBLUE_KEY');
 
@@ -30,7 +32,7 @@ class SIBService extends BaseService
             'updateEnabled' => true,
         ]);
         $clientExtendSubscription = new \GuzzleHttp\Client();
-
+        $apiResponse = null;
         try {
             $requestExtendSubscription = $clientExtendSubscription->post(
                 $endPointUrl,
@@ -46,10 +48,9 @@ class SIBService extends BaseService
             );
 
             $apiResponse = $requestExtendSubscription->getStatusCode();
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $apiResponse = $e->getResponse()->getStatusCode();
+        } catch (\GuzzleHttp\Exception\BadResponseException $exception) {
+            Log::error('Sync Contact SIB - Error: '.$exception->getMessage());
         }
-        info('Contact upload Service end');
 
         return $apiResponse;
     }
