@@ -15,7 +15,7 @@ class TeamService extends BaseService
     {
         $this->query = DB::table('teams as t')
             ->leftJoin('teams as pt', 'pt.id', '=', 't.parent_team_id')
-            ->select('t.id', 't.uuid', 't.name AS name', 't.parent_team_id', 'pt.name AS parent_team_id_text', 't.type' );
+            ->select('t.id', 't.uuid', 't.name AS name', 't.parent_team_id', 'pt.name AS parent_team_id_text', 't.type');
     }
 
     public function getEntity($id)
@@ -76,7 +76,7 @@ class TeamService extends BaseService
             'id' => 'readonly|none',
             'name' => 'input|text|required|title',
             'parent_team_id' => 'select|title',
-            'type' => '|static|title|'.TeamTypeEnum::Product.','.TeamTypeEnum::Team.','.TeamTypeEnum::SubTeam.''
+            'type' => '|static|title|'.TeamTypeEnum::Product.','.TeamTypeEnum::Team.','.TeamTypeEnum::SubTeam.'',
         ];
     }
 
