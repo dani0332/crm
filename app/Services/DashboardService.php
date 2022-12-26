@@ -104,7 +104,7 @@ class DashboardService extends BaseService
         $query = CarQuote::select(
             DB::raw('distinct(source) as sourceName'),
             DB::raw('count(*) as sourceCount'),
-        );
+        )->groupBy('source');
         if ($startDate == null && $endDate == null) {
             $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
         } else {
