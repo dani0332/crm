@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Events\AdvisorAssigned;
+use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
@@ -18,17 +19,15 @@ use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
-use App\Traits\CreateUpdateSIbContact;
 use App\Traits\GetUserTree;
 use App\Traits\SendSIBEmail;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationService extends BaseService
 {
     use GetUserTree;
-    use CreateUpdateSIbContact;
     use SendSIBEmail;
 
     protected $emailDataService;
@@ -148,8 +147,7 @@ class LeadAllocationService extends BaseService
                 $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
                 $leadCreated = Carbon::parse($lead->created_at)->timestamp;
                 if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-                    info('Contact upload Request '.$lead->uuid);
-                    $this->sendSibRequest($lead);
+                    SyncSIBContactJob::dispatch($lead);
                 }
                 DB::commit();
 

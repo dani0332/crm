@@ -7,10 +7,10 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Jobs\SyncSIBContactJob;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
-use App\Traits\CreateUpdateSIbContact;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
 use Carbon\Carbon;
@@ -20,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 class CRUDService extends BaseService
 {
     use GenericQueriesAllLobs;
-    use CreateUpdateSIbContact;
 
     protected $healthQuoteService;
     protected $carQuoteService;
@@ -249,7 +248,7 @@ class CRUDService extends BaseService
         $entity->save();
         //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP) {
-            $this->sendSibRequest($entity);
+            SyncSIBContactJob::dispatch($entity);
         }
 
         QuoteStatusLog::create([
