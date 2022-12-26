@@ -101,7 +101,7 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::pluck('name', 'name')->all(); // get all roles
-        $products = $this->getAllProducts()->get(); // get all products
+        $products = $this->getAllProducts(); // get all products
         $teams = [];
         $subTeams = [];
 
@@ -169,10 +169,10 @@ class UserController extends Controller
     {
         $roles = Role::pluck('name', 'name')->all();
         $userRole = $user->roles->pluck('name', 'name')->all();
-        $teams = $this->getAllTeams()->get();
-        $subTeams = $this->getSubTeamsByTeamIds($teams->pluck('id'))->get();
+        $teams = $this->getAllTeams();
+        $subTeams = $this->getSubTeamsByTeamIds($teams->pluck('id'));
         $selectedAdditionalTeams = $user->additional_team_ids;
-        $products = $this->getAllProducts()->get();
+        $products = $this->getAllProducts();
         $userProductIds = $this->getUserProducts($user->id)->pluck('id')->toArray();
         $userTeamIds = $this->getUserTeams($user->id)->pluck('id')->toArray();
         $managers = $this->getManagersBasedOnTeamId($userProductIds, $user->id);
@@ -285,7 +285,7 @@ class UserController extends Controller
 
     public function getProductTeams(Request $request)
     {
-        return $this->getTeamsByProductIds($request->productIds)->get();
+        return $this->getTeamsByProductIds($request->productIds);
     }
 
     public function me(Request $request)
@@ -299,7 +299,7 @@ class UserController extends Controller
             return [];
         }
 
-        return  $this->getSubTeamsByTeamIds($request->teamId)->select('id', 'name')->get();
+        return  $this->getSubTeamsByTeamIds($request->teamId);
     }
 
     public function getTeamManagers(Request $request)

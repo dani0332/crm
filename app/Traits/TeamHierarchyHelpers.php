@@ -53,7 +53,7 @@ trait TeamHierarchyHelpers
 
     public function getSubTeamsByTeamIds($teamIds)
     {
-        return Team::where('type', TeamTypeEnum::SubTeam)->whereIn('parent_team_id', $teamIds)->orderBy('name', 'asc')->get();
+        return Team::where('type', TeamTypeEnum::SubTeam)->whereIn('parent_team_id', $teamIds)->select('id', 'name')->orderBy('name', 'asc')->get();
     }
 
     public function getUsersByTeamId($teamId)
