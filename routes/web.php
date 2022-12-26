@@ -130,7 +130,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('get-product-teams', [UserController::class, 'getProductTeams'])->name('getProductTeams');
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
-    Route::post('/customer-process', [CustomerController::class, 'processCustomerCSV']);
+    Route::post('/customer-process', [CustomerController::class, 'processCustomerUpload']);
     Route::post('/customer-additional-contact/{id}/delete', [CustomerController::class, 'deleteAdditionalContact']);
     Route::post('/customer-additional-contact/{id}/make-primary', [CustomerController::class, 'makeAdditionalContactPrimary']);
     Route::post('/customer-additional-contact/add', [CustomerController::class, 'addAdditionalContact']);
