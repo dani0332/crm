@@ -15,10 +15,10 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorPerformanceReportTable extends DataTableComponent
 {
-    public $url,
-    $tiers = [],
-    $teams = [],
-    $leadSources = [];
+    public $url;
+    public $tiers = [];
+    public $teams = [];
+    public $leadSources = [];
 
     public function configure(): void
     {

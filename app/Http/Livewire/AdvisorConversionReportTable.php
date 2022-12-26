@@ -19,10 +19,10 @@ class AdvisorConversionReportTable extends DataTableComponent
 {
     use GetUserTree;
 
-    public $url,
-    $tiers = [],
-    $batches = [],
-    $leadSources = [];
+    public $url;
+    public $tiers = [];
+    public $batches = [];
+    public $leadSources = [];
 
     public function configure(): void
     {
