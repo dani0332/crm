@@ -154,7 +154,7 @@ class CRUDController extends Controller
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
         // Checking if the loggedIn user has Manager or Deputy Role
         $isManagerORDeputy = Auth::user()->isManagerOrDeputy();
-
+        $isLeadPool = Auth::user()->isLeadPool();
         $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
         $dropdownSource = $customTitles = [];
         foreach ($this->genericModel->properties as $property => $value) {
@@ -174,10 +174,10 @@ class CRUDController extends Controller
                 ->addIndexColumn()
                 ->make(true);
 
-            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser'));
+            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool'));
         }
 
-        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool'));
     }
 
     /**

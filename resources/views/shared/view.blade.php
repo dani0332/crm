@@ -78,6 +78,7 @@ use App\Enums\PermissionsEnum;
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
             var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+            var isLeadPool = $("#isLeadPool").val();
             var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
             // Adding custom search fields for admin role
             if (isAdmin && !isRenewalUser) {
@@ -171,7 +172,7 @@ use App\Enums\PermissionsEnum;
                         // adding properties for all types except leadstatus and teams
                         if (modelPropertiesArray[i].name == 'id') {
                             // Handling id field
-                            if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType
+                            if (isManagerOrDeputy === "1" && isLeadPool == "1" && allowedModelTypes.includes(model.modelType
                                     .toLocaleLowerCase())) {
                                 // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
                                 dataTableColumns.push({
@@ -888,6 +889,8 @@ use App\Enums\PermissionsEnum;
                         <input type="hidden" id="selectTmLeadId" name="selectTmLeadId" value="">
                         <input type="hidden" id="isManagerOrDeputy" name="isManagerOrDeputy"
                             value="{{ $isManagerORDeputy }}">
+                            <input type="hidden" id="isLeadPool" name="isLeadPool"
+                            value="{{ $isLeadPool }}">
                     </form>
                     <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;"
                         width="100%">
