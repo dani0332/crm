@@ -15,11 +15,13 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorDistributionReportTable extends DataTableComponent
 {
-    public $url;
+    public $url,
+    $tiers = [],
+    $teams = [];
 
     public function configure(): void
     {
-        $this->setPrimaryKey('id')
+        $this->setPrimaryKey('advisor.name')
             ->setColumnSelectDisabled()
             ->setFilterLayoutSlideDown()
             ->setPaginationDisabled()
@@ -35,8 +37,23 @@ class AdvisorDistributionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $this->tiers = Tier::query()
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($tier) => $tier->name)
+            ->toArray();
+
+        $this->teams = Team::query()
+            ->orderBy('name')
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($team) => $team->name)
+            ->toArray();
+
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'-'.now()->format('Y-m-d'));
+            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'~'.now()->format('Y-m-d'));
         }
     }
 
@@ -98,19 +115,20 @@ class AdvisorDistributionReportTable extends DataTableComponent
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->when($this->getAppliedFilterWithValue('created_at'), fn ($query, $name) => $query->whereBetween('car_quote_request.created_at', explode('~', $name)))
             ->groupBy('users.email')
             ->orderBy('users.name');
     }
 
     public function filters(): array
     {
-        $teams = Team::query()
-            ->orderBy('name')
-            ->get()
-            ->keyBy('id')
-            ->map(fn ($team) => $team->name)
-            ->toArray();
-        array_unshift($teams, ['' => 'All']);
+        // $teams = Team::query()
+        //     ->orderBy('name')
+        //     ->get()
+        //     ->keyBy('id')
+        //     ->map(fn ($team) => $team->name)
+        //     ->toArray();
+        // array_unshift($teams, ['' => 'All']);
 
         $filters = [
             TextFilter::make('Created Date', 'created_at')
@@ -120,7 +138,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                     'max_days' => 365,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    if (preg_match('/^(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
+                    if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
                         $builder->whereBetween('car_quote_request.created_at', [$matches[1], $matches[2]]);
                     }
                 }),
@@ -129,24 +147,13 @@ class AdvisorDistributionReportTable extends DataTableComponent
             array_push(
                 $filters,
                 SelectFilter::make('Teams')
-                    ->options(Team::query()
-                        ->orderBy('name')
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($team) => $team->name)
-                        ->toArray())->filter(function (Builder $builder, $value) {
-                            $builder->where('users.team_id', $value);
-                        }),
+                    ->options($this->teams)
+                    ->filter(function (Builder $builder, $value) {
+                        $builder->where('users.team_id', $value);
+                    }),
                 SelectFilter::make('Tiers')
-                    ->options(
-                        Tier::query()
-                            ->orderBy('name')
-                            ->where('is_active', 1)
-                            ->get()
-                            ->keyBy('id')
-                            ->map(fn ($tier) => $tier->name)
-                            ->toArray(),
-                    )->filter(function (Builder $builder, $value) {
+                    ->options($this->tiers)
+                    ->filter(function (Builder $builder, $value) {
                         $builder->where('car_quote_request.tier_id', $value);
                     })
             );

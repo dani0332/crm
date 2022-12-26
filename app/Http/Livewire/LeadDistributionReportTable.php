@@ -14,10 +14,11 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 class LeadDistributionReportTable extends DataTableComponent
 {
     public $url;
+    public $tiers = [];
 
     public function configure(): void
     {
-        $this->setPrimaryKey('id')
+        $this->setPrimaryKey('tier.name')
             ->setColumnSelectDisabled()
             ->setPaginationDisabled()
             ->setFilterLayoutSlideDown()
@@ -33,8 +34,16 @@ class LeadDistributionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $this->tiers = Tier::query()
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'-'.now()->format('Y-m-d'));
+            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'~'.now()->format('Y-m-d'));
         }
     }
 
@@ -89,20 +98,13 @@ class LeadDistributionReportTable extends DataTableComponent
                     'max_days' => 365,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    if (preg_match('/^(\d{4}-\d{2}-\d{2}) - (\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
+                    if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
                         $builder->whereBetween('car_quote_request.created_at', [$matches[1], $matches[2]]);
                     }
                 }),
             MultiSelectFilter::make('Tiers')
-                ->options(
-                    Tier::query()
-                        ->orderBy('name')
-                        ->where('is_active', 1)
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($users) => $users->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
+                ->options($this->tiers)
+                ->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.tier_id', $value);
                 }),
 

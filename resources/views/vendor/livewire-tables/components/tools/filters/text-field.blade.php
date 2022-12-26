@@ -22,7 +22,7 @@
       setup(picker) {
         picker.on('select', (evt) => {
           const { start, end } = evt.detail;
-          const range = `${start.format('YYYY-MM-DD')} - ${end.format('YYYY-MM-DD')}`;
+          const range = `${start.format('YYYY-MM-DD')}~${end.format('YYYY-MM-DD')}`;
           @this.set('{{ $component->getTableName() }}.filters.{{ $filter->getKey() }}', range, true);
         });
       },
