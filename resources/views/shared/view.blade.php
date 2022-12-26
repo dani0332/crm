@@ -172,7 +172,7 @@ use App\Enums\PermissionsEnum;
                         // adding properties for all types except leadstatus and teams
                         if (modelPropertiesArray[i].name == 'id') {
                             // Handling id field
-                            if (isManagerOrDeputy === "1" && isLeadPool == "1" && allowedModelTypes.includes(model.modelType
+                            if ( (isManagerOrDeputy === "1" || isLeadPool == "1") && allowedModelTypes.includes(model.modelType
                                     .toLocaleLowerCase())) {
                                 // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
                                 dataTableColumns.push({
