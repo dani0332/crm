@@ -170,7 +170,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard']);
     Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard']);
     Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
-    Route::get('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
+    Route::post('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
     Route::post('/get-advisor-conversion-stats', [DashboardController::class, 'getAdvisorConversionStats']);
     Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);

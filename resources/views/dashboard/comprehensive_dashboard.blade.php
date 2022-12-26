@@ -3,6 +3,7 @@
 @section('content')
 
 @push('scripts')
+<meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
@@ -70,24 +71,35 @@
             var tierFilterValue = $('#tier-filter').val();
             var userFilterValue = $('#userFilter option:selected').val();
             var teamFilterValue = $('#team-filter').val();
-            $.get('/get-comp-filter-stats?tier_filter=' + tierFilterValue + '&team_filter=' + teamFilterValue + '&userFilter=' + userFilterValue, function(result) {
-                if (result) {
-                    var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
-                    var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
-                    var numbers = [];
-                    for (let index = 0; index < data.length; index++) {
-                        numbers.push(parseFloat(data[index]));
+            $.ajax({
+                url: "/get-comp-filter-stats",
+                type: "post",
+                data: { 'tier_filter' : tierFilterValue, 'team_filter' : teamFilterValue , 'userFilter' : userFilterValue } ,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (result) {
+                    if (result) {
+                        var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
+                        var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
+                        var numbers = [];
+                        for (let index = 0; index < data.length; index++) {
+                            numbers.push(parseFloat(data[index]));
+                        }
+                        if (labels.length > 0) {
+                            comprehensiveDashboardStatChart.destroy();
+                            createComprehensiveConversionChart([labels, numbers]);
+                        } else {
+                            comprehensiveDashboardStatChart.destroy();
+                            createComprehensiveConversionChart([
+                                [''],
+                                [0]
+                            ]);
+                        }
                     }
-                    if (labels.length > 0) {
-                        comprehensiveDashboardStatChart.destroy();
-                        createComprehensiveConversionChart([labels, numbers]);
-                    } else {
-                        comprehensiveDashboardStatChart.destroy();
-                        createComprehensiveConversionChart([
-                            [''],
-                            [0]
-                        ]);
-                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log(textStatus, errorThrown);
                 }
             });
         });
