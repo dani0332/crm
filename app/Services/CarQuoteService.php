@@ -10,7 +10,6 @@ use App\Enums\RolesEnum;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
-use App\Models\Team;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyHelpers;
@@ -662,7 +661,6 @@ class CarQuoteService extends BaseService
             $teamMates = DB::table('user_team')->where('team_id', $carTeam->id)->pluck('user_id');
             array_push($this->childUserIds, $teamMates);
         } else {
-
             $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
             $teamMates = DB::table('user_manager')->where('manager_id', $userId)->whereIn('user_id', $carUserIds)->pluck('user_id');
             foreach ($teamMates as $teamMateId) {
