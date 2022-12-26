@@ -15,7 +15,10 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorPerformanceReportTable extends DataTableComponent
 {
-    public $url;
+    public $url,
+    $tiers = [],
+    $teams = [],
+    $leadSources = [];
 
     public function configure(): void
     {
@@ -35,6 +38,32 @@ class AdvisorPerformanceReportTable extends DataTableComponent
 
     public function mount()
     {
+        $this->tiers = Tier::query()
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        $this->teams = Team::query()
+            ->orderBy('name')
+            ->where('parent_team_id', 2)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($Teams) => $Teams->name)
+            ->toArray();
+
+        $this->leadSources = CarQuote::query()
+            ->select('source as name')
+            ->distinct()
+            ->whereNotNull('source')
+            ->orderBy('name')
+            ->get()
+            ->keyBy('name')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
         if (! $this->getAppliedFilterWithValue('created_at')) {
             $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'~'.now()->format('Y-m-d'));
         }
@@ -116,42 +145,15 @@ class AdvisorPerformanceReportTable extends DataTableComponent
                     }
                 }),
             SelectFilter::make('Teams')
-                ->options(
-                    Team::query()
-                        ->orderBy('name')
-                        ->where('parent_team_id', 2)
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($Teams) => $Teams->name)
-
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
+                ->options($this->teams)->filter(function (Builder $builder, $value) {
                     $builder->where('teams.id', $value);
                 }),
             SelectFilter::make('Tiers')
-                ->options(
-                    Tier::query()
-                        ->orderBy('name')
-                        ->where('is_active', 1)
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($users) => $users->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
+                ->options($this->tiers)->filter(function (Builder $builder, $value) {
                     $builder->where('car_quote_request.tier_id', $value);
                 }),
             MultiSelectFilter::make('Lead Source')
-                ->options(
-                    CarQuote::query()
-                        ->select('source as name')
-                        ->distinct()
-                        ->whereNotNull('source')
-                        ->orderBy('name')
-                        ->get()
-                        ->keyBy('name')
-                        ->map(fn ($users) => $users->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
+                ->options($this->leadSources)->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.source', $value);
                 }),
 

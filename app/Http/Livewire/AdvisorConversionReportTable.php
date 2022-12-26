@@ -19,7 +19,10 @@ class AdvisorConversionReportTable extends DataTableComponent
 {
     use GetUserTree;
 
-    public $url;
+    public $url,
+    $tiers = [],
+    $batches = [],
+    $leadSources = [];
 
     public function configure(): void
     {
@@ -39,6 +42,31 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $this->tiers = Tier::query()
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        $this->batches = QuoteBatches::query()
+            ->orderBy('id')
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($batch) => $batch->name.'-('.$batch->start_date.' to '.$batch->end_date.')')
+            ->toArray();
+
+        $this->leadSources = CarQuote::query()
+            ->select('source as name')
+            ->distinct()
+            ->whereNotNull('source')
+            ->orderBy('name')
+            ->get()
+            ->keyBy('name')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
         if (! $this->getAppliedFilterWithValue('created_at')) {
             $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'~'.now()->format('Y-m-d'));
         }
@@ -154,8 +182,9 @@ class AdvisorConversionReportTable extends DataTableComponent
                     'max_days' => 31,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $value = explode('-', $value);
-                    $builder->whereBetween('quote_batches.created_at', [$value[0], $value[1]]);
+                    if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
+                        $builder->whereBetween('quote_batches.created_at', [$matches[1], $matches[2]]);
+                    }
                 }),
             SelectFilter::make('Ecommerce')
                 ->options([
@@ -166,42 +195,17 @@ class AdvisorConversionReportTable extends DataTableComponent
                     $builder->where('car_quote_request.is_ecommerce', $value == 'no' ? false : true);
                 }),
             MultiSelectFilter::make('Batch Number')
-                ->options(
-                    QuoteBatches::query()
-                        ->orderBy('id')
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($batch) => $batch->name.'-('.$batch->start_date.' to '.$batch->end_date.')')
-                        ->toArray(),
-                )->config([
+                ->options($this->batches)->config([
                     'max' => 12,
                 ])->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.quote_batch_id', $value);
                 }),
             MultiSelectFilter::make('Tiers')
-                ->options(
-                    Tier::query()
-                        ->orderBy('name')
-                        ->where('is_active', 1)
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($users) => $users->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
+                ->options($this->tiers)->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.tier_id', $value);
                 }),
             MultiSelectFilter::make('Lead Source')
-                ->options(
-                    CarQuote::query()
-                    ->select('source as name')
-                    ->distinct()
-                    ->whereNotNull('source')
-                    ->orderBy('name')
-                    ->get()
-                    ->keyBy('name')
-                    ->map(fn ($users) => $users->name)
-                    ->toArray(),
-                )->filter(function (Builder $builder, $value) {
+                ->options($this->leadSources)->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.source', $value);
                 }),
 

@@ -50,6 +50,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->get()
             ->keyBy('id')
             ->map(fn ($team) => $team->name)
+            ->prepend('All', '')
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
@@ -115,21 +116,12 @@ class AdvisorDistributionReportTable extends DataTableComponent
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-            ->when($this->getAppliedFilterWithValue('created_at'), fn ($query, $name) => $query->whereBetween('car_quote_request.created_at', explode('~', $name)))
             ->groupBy('users.email')
             ->orderBy('users.name');
     }
 
     public function filters(): array
     {
-        // $teams = Team::query()
-        //     ->orderBy('name')
-        //     ->get()
-        //     ->keyBy('id')
-        //     ->map(fn ($team) => $team->name)
-        //     ->toArray();
-        // array_unshift($teams, ['' => 'All']);
-
         $filters = [
             TextFilter::make('Created Date', 'created_at')
                 ->config([
