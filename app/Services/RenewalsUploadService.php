@@ -501,7 +501,7 @@ class RenewalsUploadService
             info($logPrefix.' validation and quote update is completed');
 
             return true;
-        } catch (Exception $exception) {
+        } catch (\Exception $exception) {
             Log::error($logPrefix.'Process Failed. Error: '.$exception->getMessage());
             $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
 
