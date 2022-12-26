@@ -658,7 +658,11 @@ class CarQuoteService extends BaseService
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
         array_push($this->childUserIds, $userId);
         if (auth()->user()->hasRole(RolesEnum::CarManager)) {
-            $teamMates = DB::table('user_team')->where('team_id', $carTeam->id)->pluck('user_id');
+            $userAllTeams = DB::table('teams')
+                ->join('user_team', 'user_team.team_id', 'teams.id')
+                ->where('user_id', $userId)
+                ->where('teams.parent_team_id', $carTeam->id)->select('teams.id');
+            $teamMates = DB::table('user_team')->whereIn('team_id', $userAllTeams)->pluck('user_id');
             array_push($this->childUserIds, $teamMates);
         } else {
             $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
