@@ -110,6 +110,7 @@ trait TeamHierarchyHelpers
     public function getAllUserIdsByProductName($productName)
     {
         $teamId = $this->getTeamsByProductName($productName)->first()->id;
+
         return DB::table('user_team')->where('team_id', $teamId)->get()->pluck('user_id');
     }
 }
