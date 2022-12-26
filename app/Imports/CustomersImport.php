@@ -51,9 +51,8 @@ class CustomersImport implements OnEachRow, WithStartRow
                 $lastName = '';
             }
 
-            $findCustomerByEmail = CustomerService::getCustomerByEmail($email);
-            if (! $findCustomerByEmail->isEmpty()) {
-                $updateCustomer = $findCustomerByEmail->first();
+            $updateCustomer = CustomerService::getCustomerByEmail($email);
+            if ($updateCustomer) {
                 $updateCustomer->first_name = $firstName;
                 $updateCustomer->last_name = $lastName;
                 $updateCustomer->has_alfred_access = true;
