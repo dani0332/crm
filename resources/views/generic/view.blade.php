@@ -181,11 +181,23 @@
                     for (let i = 0; i < columns.length; i++) {
                         if (checkboxIndexes.includes(i)) {
                             const element = columns[i];
-                            if ($(element).text() == '1') {
-                                $(element).text('Yes');
-                            } else if ($(element).text() == '0') {
-                                $(element).text('No');
+                            if( $(rows[0]).find("th").last().text().indexOf('RECORD TYPE') > -1 ) {
+                                if ($(element).text() == '1') {
+                                    $(element).text('Product');
+                                } else if ($(element).text() == '2') {
+                                    $(element).text('Team');
+                                }
+                                else if ($(element).text() == '3') {
+                                    $(element).text('SubTeam');
+                                }
+                            }else{
+                                if ($(element).text() == '1') {
+                                    $(element).text('Yes');
+                                } else if ($(element).text() == '0') {
+                                    $(element).text('No');
+                                }
                             }
+
                         }
                     }
 
