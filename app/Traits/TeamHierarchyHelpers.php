@@ -85,6 +85,14 @@ trait TeamHierarchyHelpers
         return User::whereIn('id', $managerIds)->get();
     }
 
+    public function getUserManagersByTeamId($userId, $teamId)
+    {
+        $teamUserIds = DB::table('user_team')->where('team_id', $teamId)->get()->pluck('user_id');
+        $managerIds = DB::table('user_manager')->whereIn('user_id', $teamUserIds)->get()->pluck('manager_id');
+
+        return User::whereIn('id', $managerIds)->get();
+    }
+
     public function getUserTeams($userId)
     {
         $teamIds = DB::table('user_team')->where('user_id', $userId)->get()->pluck('team_id');
@@ -97,5 +105,11 @@ trait TeamHierarchyHelpers
         $productIds = DB::table('user_products')->where('user_id', $userId)->get()->pluck('product_id');
 
         return Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::Product)->get();
+    }
+
+    public function getAllUserIdsByProductName($productName)
+    {
+        $teamId = $this->getTeamsByProductName($productName)->first()->id;
+        return DB::table('user_team')->where('team_id', $teamId)->get()->pluck('user_id');
     }
 }

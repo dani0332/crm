@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\CarMake;
@@ -12,6 +13,7 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
+use App\Traits\TeamHierarchyHelpers;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
@@ -27,6 +29,7 @@ class CarQuoteService extends BaseService
     protected $leadAllocationService;
 
     use GenericQueriesAllLobs;
+    use TeamHierarchyHelpers;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
@@ -658,13 +661,17 @@ class CarQuoteService extends BaseService
             $teamMates = User::where('team_id', Team::where('name', auth()->user()->team_id))->get()->pluck('id');
             array_push($this->childUserIds, $teamMates);
         } else {
-            $teamMates = DB::table('user_manager')->where('user_id', $userId)->pluck('manager_id');
-            foreach ($teamMates as $teamMate) {
-                $nextChild = DB::table('user_manager')->where('user_id', $teamMate)->pluck('manager_id');
+            $carTeam = $this->getProductByName(quoteTypeCode::Car);
+            $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
+            $teamMates = DB::table('user_manager')->where('manager_id', $userId)->whereIn('user_id', $carUserIds)->pluck('user_id');
+            foreach ($teamMates as $teamMateId) {
+                $carTeam = $this->getProductByName(quoteTypeCode::Car);
+                $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
+                $nextChild = DB::table('user_manager')->where('manager_id', $teamMateId)->whereIn('user_id', $carUserIds)->pluck('user_id');
                 if (count($nextChild) > 0) {
-                    $this->walkTree($teamMate);
+                    $this->walkTree($teamMateId);
                 }
-                array_push($this->childUserIds, $teamMate);
+                array_push($this->childUserIds, $teamMateId);
             }
         }
     }
