@@ -201,7 +201,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 
 		// Show total on load
 		totalPremium('.car-quote-plan-total-premium', JSON.parse(
-				'<?php echo json_encode($discountPremium) ?>'), JSON
+				'<?php echo json_encode(isset($discountPremium) ? $discountPremium : 0) ?>'), JSON
 			.parse('<?php echo json_encode($vat) ?>'), JSON.parse(
 				'<?php echo json_encode($totalSelectedAddonsPriceWithVat) ?>'
 			));
