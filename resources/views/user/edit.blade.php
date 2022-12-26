@@ -257,8 +257,8 @@
                                     </option>
                                 @endforeach
                             </select>
-                            @if ($errors->has('product'))
-                                <span class="text-danger">{{ $errors->first('product') }}</span>
+                            @if ($errors->has('products'))
+                                <span class="text-danger">{{ $errors->first('products') }}</span>
                             @endif
                         </div>
                     </div>
@@ -284,7 +284,7 @@
                             <select class="form-control" id='sub-team' name='sub_team_id'>
                                 <option @if ($user->sub_team_id == null) selected="selected" @endif value="0">None</option>
                                 @foreach($subTeams as $team)
-                                    <option value="{{$team->id}}" 
+                                    <option value="{{$team->id}}"
                                         {{ $team->id == old('sub_team_id', $user->sub_team_id) ? 'selected' : ''}}>
                                         {{ $team->name }}
                                     </option>

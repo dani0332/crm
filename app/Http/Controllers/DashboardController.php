@@ -81,8 +81,8 @@ class DashboardController extends Controller
         $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
         $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
         $totalUnAssignedRevivalLeads = count($allCarQuotesToday->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
-        $leadsCountByTier = $this->getLeadsCountByTier($startDate, $endDate);
-        $revivalLeadsCount = $this->getLeadsCountRevival($startDate, $endDate);
+        $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($startDate, $endDate);
+        $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($startDate, $endDate);
 
         return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
