@@ -11,7 +11,7 @@ class CustomerService extends BaseService
 {
     public static function getCustomerByEmail($email)
     {
-        return Customer::where('email', $email)->get();
+        return Customer::where('email', $email)->first();
     }
 
     public static function getUniqueCustomerByEmail($email)
