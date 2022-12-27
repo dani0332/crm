@@ -48,9 +48,9 @@ class InslyCustomerCreationJob implements ShouldQueue
 
                     Log::info('Initiating process for customer with email: '.$customer_email);
 
-                    $customer = CustomerService::getCustomerByEmail($customer_email)->first();
+                    $customer = CustomerService::getCustomerByEmail($customer_email);
                     $customerId = 0;
-                    if ($customer != '') { // If customer already exists in our database
+                    if ($customer) { // If customer already exists in our database
                         Log::info('Customer with email: '.$customer_email.' found in database');
 
                         $customer->has_reward_access = true;
