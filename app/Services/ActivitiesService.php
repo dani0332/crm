@@ -110,7 +110,7 @@ class ActivitiesService extends BaseService
         }
         $request->assignee_id = isset($request->assigned_to_user_id) ? $request->assigned_to_user_id : $request->assignee_id;
         $activity->due_date = isset($request->due_date) ? $request->due_date : $request->next_followup_date;
-        $activity->assignee_id = isset($request->assignee_id) ? $request->assignee_id : auth()->id();
+        $activity->assignee_id = isset($request->assignee_id) ? $request->assignee_id : auth()->user()->id;
         $activity->description = isset($request->description) ? $request->description : $request->notes;
         $activity->title = $request->title;
         $activity->created_at = Carbon::now();
