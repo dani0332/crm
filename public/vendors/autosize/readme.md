@@ -6,6 +6,7 @@ Autosize is a small, stand-alone script to automatically adjust textarea height 
 
 Full documentation and a demo can be found at [jacklmoore.com/autosize](http://jacklmoore.com/autosize)
 
+
 #### Install via NPM
 ```bash
 npm install autosize
