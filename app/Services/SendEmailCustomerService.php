@@ -135,14 +135,10 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            $body = json_encode([
+            $body = [
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerName,
-                ]],
-                'cc' => [[
-                    'email' => isset($emailData->advisorEmailAddress) ? $emailData->advisorEmailAddress : null,
-                    'name' => isset($emailData->advisorName) ? $emailData->advisorName : null,
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
@@ -171,14 +167,25 @@ class SendEmailCustomerService extends BaseService
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
-            ], JSON_UNESCAPED_SLASHES);
+            ];
+
+            if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
+                $body['cc'] = [[
+                    'email' => $emailData->advisorEmailAddress,
+                    'name' => $emailData->advisorName,
+                ]];
+                $body['replyTo'] = [
+                    'email' => $emailData->advisorEmailAddress,
+                    'name' => $emailData->advisorName,
+                ];
+            }
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $url,
                 [
                     'headers' => $headers,
-                    'body' => $body,
+                    'body' => json_encode($body),
                     'timeout' => 10000,
                 ]
             );
