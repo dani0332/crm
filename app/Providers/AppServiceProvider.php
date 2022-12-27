@@ -6,6 +6,7 @@ use App\Enums\EnvEnum;
 use App\Jobs\LeadAllocationJob;
 use App\Services\LeadAllocationService;
 use Barryvdh\Debugbar\Facade as Debugbar;
+use Filament\Facades\Filament;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        Filament::serving(function () {
+            Filament::registerTheme(
+                mix('css/filament.css'),
+            );
+        });
         $allowedEnvs = [EnvEnum::LOCAL, EnvEnum::DEVELOPMENT, EnvEnum::STAGING];
         if (in_array(config('APP_ENV', 'production'), $allowedEnvs)) {
             Debugbar::enable();

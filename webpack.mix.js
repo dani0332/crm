@@ -15,6 +15,10 @@ mix.options({
  |
  */
 
+mix.postCss('resources/css/filament.css', 'public/css', [
+  require('tailwindcss'),
+]);
+
 mix
   .js('resources/js/alpine/alpine.js', 'public/js')
   .postCss('resources/css/livewire.css', 'public/css', []);
