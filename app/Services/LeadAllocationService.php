@@ -386,9 +386,9 @@ class LeadAllocationService extends BaseService
                             )->get();
         info('going to update the max cap for users : '.json_encode($users->pluck('id')));
         foreach ($users as $user) {
-            info('lead allocation record is about to update for user : '. $user->userEmail. '  with max_cap to ' . str_contains($user->quads, '1') ? 4 : 5);
+            info('lead allocation record is about to update for user : '.$user->userEmail.'  with max_cap to '.str_contains($user->quads, '1') ? 4 : 5);
             $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
-            if($leadAllocationRecord){
+            if ($leadAllocationRecord) {
                 $leadAllocationRecord->max_capcity = str_contains($user->quads, '1') ? 4 : 5;
                 $leadAllocationRecord->allocation_count = 0;
                 $leadAllocationRecord->updated_at = now();
@@ -399,7 +399,7 @@ class LeadAllocationService extends BaseService
 
     public function carLeadAllocationSwitchStatus()
     {
-        return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') ?  $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') : 0;
+        return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') ? $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') : 0;
     }
 
     public function leadAllocationSwitchStatus()
