@@ -374,6 +374,7 @@ class LeadAllocationService extends BaseService
                             ->select(
                                 'users.id as userId',
                                 'users.name as userName',
+                                'user.email as userEmail',
                                 DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
                                 DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
                                 'la.allocation_count as allocationCount',
@@ -385,21 +386,20 @@ class LeadAllocationService extends BaseService
                             )->get();
         info('going to update the max cap for users : '.json_encode($users->pluck('id')));
         foreach ($users as $user) {
-            LeadAllocation::where('user_id', $user->userId)->update([
-                'max_capacity' => str_contains($user->quads, '1') ? 4 : 5,
-                'allocation_count' => 0,
-                'updated_at' => now(),
-            ]);
+            info('lead allocation record is about to update for user : '. $user->userEmail. '  with max_cap to ' . str_contains($user->quads, '1') ? 4 : 5);
+            $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
+            if($leadAllocationRecord){
+                $leadAllocationRecord->max_capcity = str_contains($user->quads, '1') ? 4 : 5;
+                $leadAllocationRecord->allocation_count = 0;
+                $leadAllocationRecord->updated_at = now();
+                $leadAllocationRecord->save();
+            }
         }
     }
 
     public function carLeadAllocationSwitchStatus()
     {
-        if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
-            return 0;
-        }
-
-        return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') == '1';
+        return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') ?  $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') : 0;
     }
 
     public function leadAllocationSwitchStatus()
