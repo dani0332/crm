@@ -3,9 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Filament\Resources\HealthQuoteResource\Pages;
 use App\Models\HealthQuote;
 use App\Models\QuoteStatus;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Resources\Form;
 use Filament\Resources\Resource;
@@ -16,6 +18,7 @@ use Filament\Tables\Filters\Layout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class HealthQuoteResource extends Resource
@@ -178,15 +181,11 @@ class HealthQuoteResource extends Resource
                                 );
                         }),
                     SelectFilter::make('lead_status')
-                        ->placeholder('All')
+                        ->placeholder('Select Lead Status')
                         ->multiple()
                         ->options(
                             function () {
-                                // could be more discerning here, and select a distinct list of aircraft id's
-                                // that actually appear in the Daily Logs, so we aren't presenting filter options
-                                // which don't exist in the table, but in my case we know they are all used
-                                return QuoteStatus::
-                                whereNotIn('id', [
+                                return QuoteStatus::whereNotIn('id', [
                                     QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
                                     QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyInvoiced, QuoteStatusEnum::Issued, QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::AfiaRenewal, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec,
                                 ])
@@ -196,8 +195,31 @@ class HealthQuoteResource extends Resource
                             }
                         )
                         ->query(function (Builder $query, array $data) {
-                            if (! empty($data['value'])) {
-                                $query->whereIn('quote_status_id', $data['value']);
+                            if (! empty($data['values'])) {
+                                $query->whereIn('quote_status_id', $data['values']);
+                            }
+                        }),
+
+                    SelectFilter::make('advisor')
+                        ->placeholder('Select Advisor')
+                        ->multiple()
+                        ->options(
+                            function () {
+                                return User::query()
+                                ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
+                                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                                ->whereIn('roles.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthWCUAdvisor])
+                                ->select('users.id', DB::raw("CONCAT(users.name,' - ',roles.name) as name"))
+                                ->orderBy('roles.name')
+                                ->get()
+                                ->keyBy('id')
+                                ->map(fn ($users) => $users->name)
+                                ->toArray();
+                            }
+                        )
+                        ->query(function (Builder $query, array $data) {
+                            if (! empty($data['values'])) {
+                                $query->whereIn('advisor_id', $data['values']);
                             }
                         }),
                     TernaryFilter::make('is_ecommerce')->label('Is Ecommerce')
