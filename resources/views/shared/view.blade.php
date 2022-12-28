@@ -80,6 +80,7 @@ use App\Enums\PermissionsEnum;
             var isManagerOrDeputy = $("#isManagerOrDeputy").val();
             var isLeadPool = $("#isLeadPool").val();
             var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
+            var isManualAllocationAllowed = JSON.parse('<?php echo json_encode($isManualAllocationAllowed); ?>');
             // Adding custom search fields for admin role
             if (isAdmin && !isRenewalUser) {
                 model.searchProperties.push('is_ecommerce');
@@ -172,8 +173,7 @@ use App\Enums\PermissionsEnum;
                         // adding properties for all types except leadstatus and teams
                         if (modelPropertiesArray[i].name == 'id') {
                             // Handling id field
-                            if ( isLeadPool && allowedModelTypes.includes(model.modelType
-                                    .toLocaleLowerCase())) {
+                            if ( isManualAllocationAllowed && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
                                 // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
                                 dataTableColumns.push({
                                     data: "id",
@@ -217,83 +217,6 @@ use App\Enums\PermissionsEnum;
                         }
                     }
                 }
-            }
-            // Handling Sorting on Grid Column, need switch case because Manager,Deputy and Admin have different set of columns then normal user
-            var disableSortColumns = [];
-            switch (model.modelType.toLowerCase()) {
-                case 'car':
-                    if (isRenewalUser) {
-                        if (isManagerOrDeputy) {
-                            disableSortColumns = [-1, 2, 2, 3, 4, 5, 6, 7, 8];
-                        } else {
-                            disableSortColumns = [-1, 2, 2, 3, 4, 5, 6, 7, 8];
-                        }
-                    } else if (isManagerOrDeputy) {
-                        disableSortColumns = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15];
-                    } else if (isAdmin) {
-                        disableSortColumns = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15];
-                    } else {
-                        disableSortColumns = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15];
-                    }
-                    break;
-                case 'home':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
-                    else
-                        disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
-                    break;
-                    break;
-                case 'health':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
-                    else
-                        disableSortColumns = [-1,0,1,2,3,4,7,9,10];
-                    break;
-                case 'life':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
-                    else
-                        disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
-                    break;
-                case 'business':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,6,7,8,9,12,13];
-                    else
-                        disableSortColumns = [-1, 0, 1, 2, 3, 5, 6, 7, 8, 11, 12, 13];
-                    break;
-                case 'travel':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
-                    else
-                        disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
-                    break;
-                case 'pet':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
-                    else
-                        disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
-                    break;
-                default:
-                    disableSortColumns = [];
-                    break;
             }
             // Initializing the datatable
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
@@ -340,10 +263,6 @@ use App\Enums\PermissionsEnum;
                                         <i class='fa fa-spinner fa-spin fa-stack-2x fa-fw'></i>\n\
                                 </span>&emsp;Processing ...",
                 },
-                columnDefs: [{
-                    orderable: false,
-                    targets: disableSortColumns
-                }],
                 columns: dataTableColumns,
                 buttons: [{
                     extend: 'excel',
@@ -891,12 +810,14 @@ use App\Enums\PermissionsEnum;
                             value="{{ $isManagerORDeputy }}">
                             <input type="hidden" id="isLeadPool" name="isLeadPool"
                             value="{{ $isLeadPool }}">
+                            <input type="hidden" id="isManualAllocationAllowed" name="isManualAllocationAllowed"
+                            value="{{ $isManualAllocationAllowed }}">
                     </form>
                     <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;"
                         width="100%">
                         <thead>
                             <tr>
-                                @if ($isLeadPool == '1' &&
+                                @if ($isManualAllocationAllowed &&
                                 str_contains('home,health,life,business,travel,car,pet',
                                 strtolower($model->modelType)))
                                 <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"

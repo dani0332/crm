@@ -166,7 +166,7 @@ class ApplicationStorageService extends BaseService
         }
 
         return $query->is_active;
-    }
+}
 
     public function getValueByKey($keyName)
     {

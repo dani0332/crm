@@ -692,10 +692,8 @@ class CarQuoteService extends BaseService
 
         if ($request->ajax()) {
             if (Auth::user()->isManagerOrDeputy() || Auth::user()->isLeadPool()) {
-                if (! Auth::user()->hasRole('CAR_RENEWAL_MANAGER')) {
-                    $this->walkTree(Auth::user()->id); // get all childs of the user
-                    $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
-                }
+                $this->walkTree(Auth::user()->id); // get all childs of the user
+                $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
             }
 
             if (Auth::user()->isSpecificTeamAdvisor('Car')) {
@@ -730,12 +728,6 @@ class CarQuoteService extends BaseService
             if (Auth::user()->hasRole('ADMIN')) {
                 array_push($searchProperties, 'is_ecommerce');
                 array_push($searchProperties, 'payment_status_id');
-            }
-            if (Auth::user()->isRenewalAdvisor()) {
-                $this->query->where('cqr.advisor_id', Auth::user()->id);
-            }
-            if (Auth::user()->isRenewalUser()) {
-                $this->query->orderBy('cqr.previous_policy_expiry_date', 'ASC');
             }
 
             foreach ($searchProperties as $item) {
