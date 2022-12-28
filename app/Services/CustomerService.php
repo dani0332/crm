@@ -143,7 +143,7 @@ class CustomerService extends BaseService
         }
     }
 
-    public function getAdditionalContact($customerId, $key)
+    public function getAdditionalContactByKey($customerId, $key)
     {
         return CustomerAdditionalContact::where(['customer_id' => $customerId, 'key' => $key])->get();
     }
