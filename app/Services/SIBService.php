@@ -8,12 +8,7 @@ class SIBService extends BaseService
 {
     public static function contactCreateUpdate($listId, $firstName, $lastName, $email, $signupLink, $data = [])
     {
-        if (isset($data['cdbid'])) {
-            $cdbid = $data['cdbid'];
-        } else {
-            $cdbid = 'None';
-        }
-        info('Sync Contact SIB - CDBID: '.$cdbid.' - Data: '.json_encode($data));
+        info('Sync Contact SIB - CDBID: '.isset($data['cdbid']) ? $data['cdbid'] : 'None'.' - Data: '.json_encode($data));
         $endPointUrl = config('constants.SIB_CONTACTS_API_ENDPOINT_URL');
         $apiKey = config('constants.SENDINBLUE_KEY');
 
