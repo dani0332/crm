@@ -495,7 +495,6 @@ class LeadAllocationService extends BaseService
                         $ruleUserIds = explode(',', $matchedRuleRecords[0]->leadSourceUsers);
                         info('Rule found and users against rule are '.implode(',', $ruleUserIds));
 
-
                         $names1_str = $matchedRuleRecords[0]->leadSourceUsers;
                         $names2_str = $loginUsersIds->implode(',');
 
@@ -503,7 +502,7 @@ class LeadAllocationService extends BaseService
                         $names2 = explode(',', $names2_str);
                         $common_names = array_intersect($names1, $names2);
 
-                        info('Rule common names : '. $common_names);
+                        info('Rule common names : '.$common_names);
 
                         $commonUserIds = array_intersect(explode(',', $loginUsersIds), $ruleUserIds);
 
