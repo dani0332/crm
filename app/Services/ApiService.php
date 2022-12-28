@@ -25,7 +25,7 @@ class ApiService
 
     private function checkmyAlredLink($email, $request)
     {
-        $customer = CustomerService::getUniqueCustomerByEmail($email);
+        $customer = CustomerService::getCustomerByEmail($email);
         if ($customer) {
             $data = MyAlFredUser::select('signup_url')->whereCustomerId($customer->id)->latest()->first();
             if ($data) {

@@ -598,7 +598,7 @@ class RenewalsUploadService
      */
     public function getCustomer($customerData)
     {
-        $customer = CustomerService::getUniqueCustomerByEmail($customerData['email']);
+        $customer = CustomerService::getCustomerByEmail($customerData['email']);
 
         //create new customer if not exists
         if (! isset($customer->id)) {
