@@ -74,7 +74,6 @@ use App\Enums\PermissionsEnum;
         }
         $(document).ready(function() {
             // Getting the required objects from laravel into javascript for checks and handling of data based on roles
-            var isRenewalUser = JSON.parse('<?php echo json_encode($isRenewalUser); ?>');
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
             var isManagerOrDeputy = $("#isManagerOrDeputy").val();
@@ -82,7 +81,7 @@ use App\Enums\PermissionsEnum;
             var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
             var isManualAllocationAllowed = JSON.parse('<?php echo json_encode($isManualAllocationAllowed); ?>');
             // Adding custom search fields for admin role
-            if (isAdmin && !isRenewalUser) {
+            if (isAdmin) {
                 model.searchProperties.push('is_ecommerce');
                 model.searchProperties.push('payment_status_id');
             }
@@ -135,15 +134,7 @@ use App\Enums\PermissionsEnum;
             var allowedModelTypes = ['home', 'health', 'life', 'business', 'travel', 'car','pet'];
             var skipPropertiesArray = [];
             // Getting the skip properties based on loggedin user role
-            if (isRenewalUser && model.modelType.toLowerCase() == 'car') {
-                skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
-            }else if(isRenewalUser && model.modelType.toLowerCase() != 'car'){
-                skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
-            }else if(isNewBusinessUser && model.modelType.toLowerCase() != 'car'){
-                skipPropertiesArray = model.newBusinessSkipProperties['list'].split(',');
-            } else {
-                skipPropertiesArray = model.skipProperties['list'].split(',');
-            }
+            skipPropertiesArray = model.skipProperties['list'].split(',')
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
@@ -233,8 +224,7 @@ use App\Enums\PermissionsEnum;
                 ajax: {
                     url: '/quotes/' + model.modelType.toLowerCase(),
                     data: function(d) {
-                        var carProps = isRenewalUser ? model.renewalSearchProperties : model
-                            .searchProperties;
+                        var carProps = model.searchProperties;
                         carProps = [...new Set(carProps)];
                         carProps.forEach(element => {
                             d[element] = $('#' + element).val();
@@ -523,20 +513,8 @@ use App\Enums\PermissionsEnum;
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                     @endif
                     @php
-                    $searchProperties = [];
-                    $skipProperties = [];
-                    if($isRenewalUser){
-                    $searchProperties = $model->renewalSearchProperties;
-                    $skipProperties = $model->renewalSkipProperties;
-                    }
-                    else if($isNewBusinessUser && strtolower($model->modelType) != 'car'){
-                    $searchProperties = $model->newBusinessSearchProperties;
-                    $skipProperties = $model->newBusinessSkipProperties;
-                    }
-                    else{
                     $searchProperties = $model->searchProperties;
                     $skipProperties = $model->skipProperties;
-                    }
                     @endphp
                     @if (count($searchProperties) > 0)
                     <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
@@ -753,7 +731,7 @@ use App\Enums\PermissionsEnum;
                                                     Health Team Type</label>
                                                 <span class='required' style="margin-left:10px;">*</span>
                                                 @php
-                                                $updatedAdvisors = $isRenewalUser ? $renewalAdvisors : $advisors;
+                                                $updatedAdvisors = $advisors;
                                                 @endphp
                                                 <select class="form-control" id="assign_team" name="assign_team"
                                                     readonly="readonly" style="margin-bottom: 10px;">

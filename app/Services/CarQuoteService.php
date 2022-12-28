@@ -682,25 +682,10 @@ class CarQuoteService extends BaseService
 
     public function getGridData($model, $request)
     {
-        $searchProperties = [];
-        $isRenewalUser = Auth::user()->isRenewalUser();
-        if ($isRenewalUser) {
-            $searchProperties = $model->renewalSearchProperties;
-        } else {
-            $searchProperties = $model->searchProperties;
-        }
+        $searchProperties = $model->searchProperties;
 
         if ($request->ajax()) {
-            if (Auth::user()->isManagerOrDeputy() || Auth::user()->isLeadPool()) {
-                $this->walkTree(Auth::user()->id); // get all childs of the user
-                $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
-            }
-
-            if (Auth::user()->isSpecificTeamAdvisor('Car')) {
-                // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('cqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
-            }
-
+            $this->addLeadViewEligibilityCheck();
             if (! isset($request->email) && $request->email == '') {
                 $this->query->where('qs.id', '!=', 9);
             }
@@ -758,14 +743,28 @@ class CarQuoteService extends BaseService
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
             $columnName = $request->get('columns')[$column]['name'];
-
             return $this->query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
         } else {
-            if (Auth::user()->isRenewalUser()) {
-                return $this->query->whereNotNull('cqr.previous_quote_policy_number');
-            }
-
             return $this->query->orderBy('cqr.created_at', 'DESC');
+        }
+    }
+
+    private function addLeadViewEligibilityCheck()
+    {
+
+        if (Auth::user()->hasRole(RolesEnum::CarManager))
+        {
+            $this->walkTree(Auth::user()->id); // get all childs of the user
+            $this->query->whereIn('cqr.advisor_id', $this->childUserIds)->whereNotNull('cqr.advisor_id');
+        }
+        else if (Auth::user()->hasRole(RolesEnum::CarDeputyManager))
+        {
+            $this->walkTree(Auth::user()->id); // get all childs of the user
+            $this->query->whereIn('cqr.advisor_id', $this->childUserIds)->whereNotNull('cqr.advisor_id');
+        }
+        else if (Auth::user()->hasRole(RolesEnum::CarAdvisor))
+        {
+            $this->query->where('cqr.advisor_id', Auth::user()->id)->whereNotNull('cqr.advisor_id');
         }
     }
 
