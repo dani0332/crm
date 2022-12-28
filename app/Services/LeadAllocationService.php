@@ -375,7 +375,7 @@ class LeadAllocationService extends BaseService
                             ->select(
                                 'users.id as userId',
                                 'users.name as userName',
-                                'user.email as userEmail',
+                                'users.email as userEmail',
                                 DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
                                 DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
                                 'la.allocation_count as allocationCount',
