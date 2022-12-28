@@ -494,7 +494,7 @@ class LeadAllocationService extends BaseService
                         info('Rule found and login users are '.implode(',', $loginUsersIds->toArray()));
                         $ruleUserIds = explode(',', $matchedRuleRecords[0]->leadSourceUsers);
                         info('Rule found and users against rule are '.implode(',', $ruleUserIds));
-                        $commonUserIds = array_intersect($loginUsersIds->toArray(), $ruleUserIds);
+                        $commonUserIds = array_intersect(explode(',', $loginUsersIds), $ruleUserIds);
 
                         info('rules user intersection with login users is '.$commonUserIds);
                     }
