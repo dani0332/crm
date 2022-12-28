@@ -490,6 +490,7 @@ class LeadAllocationService extends BaseService
 
                     if (! empty($matchedRuleRecords)) {
                         info('Rule found against lead source and users against rule are '.$matchedRuleRecords[0]->leadSourceUsers);
+                        info('type of login user Ids is : '. gettype($loginUsersIds) );
                         info('Rule found and login users are '.implode(',', $loginUsersIds));
                         $ruleUserIds = explode(',', $matchedRuleRecords[0]->leadSourceUsers);
                         info('Rule found and users against rule are '.implode(',', $ruleUserIds));
