@@ -489,7 +489,7 @@ class LeadAllocationService extends BaseService
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
                     if (! empty($matchedRuleRecords)) {
-                        info('Rule found against lead source and users against rule are '. $matchedRuleRecords['leadSourceUsers']);
+                        info('Rule found against lead source and users against rule are '.$matchedRuleRecords['leadSourceUsers']);
 
                         $commonUserIds = array_intersect($loginUsersIds, explode(',', $matchedRuleRecords['leadSourceUsers']));
                         info('rules user intersection with login users is '.$commonUserIds);
