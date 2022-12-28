@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use App\Enums\IMCRMSearchTypesEnum;
-use DB;
 
 trait QuotesFilterAndOrderClause
 {
@@ -12,9 +11,10 @@ trait QuotesFilterAndOrderClause
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $searchProperties = $model->searchProperties;
         foreach ($searchProperties as $searchProperty) {
-            if(ucwords($model->modelType) == 'Car' && in_array($searchProperty, ['created_at', 'renewal_expiry_date', 'advisor_assigned_date'])){}
+            if (ucwords($model->modelType) == 'Car' && in_array($searchProperty, ['created_at', 'renewal_expiry_date', 'advisor_assigned_date'])) {
+            }
             if (isset($request->$searchProperty)) {
-                $prefix = $this->{ 'get' . ucwords($model->modelType) .'QuoteQueryPrefix'}($searchProperty);
+                $prefix = $this->{ 'get'.ucwords($model->modelType).'QuoteQueryPrefix'}($searchProperty);
                 $propertyMetaData = $model->properties[$searchProperty];
                 switch ($propertyMetaData) {
                     case str_contains($propertyMetaData, IMCRMSearchTypesEnum::LIKE_SEARCH):
@@ -29,13 +29,14 @@ trait QuotesFilterAndOrderClause
                         $query = $query->whereBetween($prefix.$searchProperty, [$dateFrom, $dateTo]);
                         break;
                     case str_contains($propertyMetaData, IMCRMSearchTypesEnum::MULTI_SEARCH):
-                        $query = $query->whereIn( $prefix.$searchProperty, $request->$searchProperty);
+                        $query = $query->whereIn($prefix.$searchProperty, $request->$searchProperty);
                         break;
                     default:
                         break;
                 }
             }
         }
+
         return $query;
     }
 

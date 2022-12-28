@@ -743,6 +743,7 @@ class CarQuoteService extends BaseService
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
             $columnName = $request->get('columns')[$column]['name'];
+
             return $this->query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
         } else {
             return $this->query->orderBy('cqr.created_at', 'DESC');
@@ -751,19 +752,13 @@ class CarQuoteService extends BaseService
 
     private function addLeadViewEligibilityCheck()
     {
-
-        if (Auth::user()->hasRole(RolesEnum::CarManager))
-        {
+        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
             $this->walkTree(Auth::user()->id); // get all childs of the user
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds)->whereNotNull('cqr.advisor_id');
-        }
-        else if (Auth::user()->hasRole(RolesEnum::CarDeputyManager))
-        {
+        } elseif (Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
             $this->walkTree(Auth::user()->id); // get all childs of the user
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds)->whereNotNull('cqr.advisor_id');
-        }
-        else if (Auth::user()->hasRole(RolesEnum::CarAdvisor))
-        {
+        } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
             $this->query->where('cqr.advisor_id', Auth::user()->id)->whereNotNull('cqr.advisor_id');
         }
     }
