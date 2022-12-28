@@ -179,12 +179,10 @@ class CRUDController extends Controller
                 ->addIndexColumn()
                 ->make(true);
 
-            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn'
-                        ,'tiers', 'isManualAllocationAllowed'));
+            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed'));
         }
 
-        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn'
-                    ,'tiers', 'isManualAllocationAllowed'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed'));
     }
 
     /**
