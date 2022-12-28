@@ -11,13 +11,16 @@ class SendEmailCustomerService extends BaseService
 {
     protected $emailActivityService;
     protected $emailStatusService;
+    protected $customerService;
 
     public function __construct(
         EmailActivityService $emailActivityService,
-        EmailStatusService $emailStatusService
+        EmailStatusService $emailStatusService,
+        CustomerService $customerService
     ) {
         $this->emailActivityService = $emailActivityService;
         $this->emailStatusService = $emailStatusService;
+        $this->customerService = $customerService;
     }
 
     public function sendEmail($emailTemplateId, $emailData, $tag)
@@ -140,10 +143,6 @@ class SendEmailCustomerService extends BaseService
                     'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
                     'name' => $emailData->advisorName,
                 ],
-                'to' => [[
-                    'email' => $emailData->customerEmail,
-                    'name' => $emailData->customerName,
-                ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
                     'customerName' => $emailData->customerName,
@@ -183,6 +182,25 @@ class SendEmailCustomerService extends BaseService
                     'name' => $emailData->advisorName,
                 ];
             }
+
+            $toPrimary = [[
+                'email' => $emailData->customerEmail,
+                'name' => $emailData->customerName,
+            ]];
+
+            $customer = $this->customerService->getUniqueCustomerByEmail($emailData->customerEmail);
+            $toAdditional = [];
+            if ($customer) {
+                $additionalContacts = $this->customerService->getAdditionalContact($customer->id, 'email');
+                foreach ($additionalContacts as $additionalContact) {
+                    $toAdditional[] = [
+                        'email' => $additionalContact->value,
+                        'name' => $emailData->customerName,
+                    ];
+                }
+            }
+
+            $body['to'] = array_merge($toPrimary, $toAdditional);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(

@@ -106,7 +106,7 @@ class CustomerService extends BaseService
         return $customer_email;
     }
 
-    public function getAddtionalContacts($customerId)
+    public function getAdditionalContacts($customerId)
     {
         return CustomerAdditionalContact::where('customer_id', $customerId)
         ->orderBy('created_at', 'desc')->get();
@@ -141,5 +141,10 @@ class CustomerService extends BaseService
         } else {
             return false;
         }
+    }
+
+    public function getAdditionalContact($customerId, $key)
+    {
+        return CustomerAdditionalContact::where(['customer_id' => $customerId, 'key' => $key])->get();
     }
 }
