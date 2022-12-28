@@ -490,7 +490,6 @@ class LeadAllocationService extends BaseService
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
                     if (count($matchedRuleRecords) > 0) {
-                        info('inof'.json_encode($matchedRuleRecords));
                         $ruleUserIds = [];
                         if (str_contains($matchedRuleRecords?->first()?->leadSourceUsers, ',')) {
                             $ruleUserIds = array_map('intval', explode(',', $matchedRuleRecords->first()->leadSourceUsers));
