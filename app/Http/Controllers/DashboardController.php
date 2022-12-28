@@ -96,9 +96,10 @@ class DashboardController extends Controller
         $teams = $this->getTeamsByProductId($car->id);
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
         $commonTeam = 0;
-        if(count($commonTeams) > 0){
+        if (count($commonTeams) > 0) {
             $commonTeam = $commonTeams[0];
         }
+
         return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'commonTeam'));
     }
 
@@ -128,9 +129,9 @@ class DashboardController extends Controller
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
             $records = $this->applyFilter($records, 'teams.id', $request->team_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
-        }else{
+        } else {
             $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-            if(count($commonTeams) > 0){
+            if (count($commonTeams) > 0) {
                 $records = $this->applyFilter($records, 'teams.id', $commonTeams[0], IMCRMSearchTypesEnum::EQUAL_SEARCH);
             }
         }
@@ -207,9 +208,9 @@ class DashboardController extends Controller
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
             $records = $this->applyFilter($records, 'teams.id', $request->team_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
-        }else{
+        } else {
             $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-            if(count($commonTeams) > 0){
+            if (count($commonTeams) > 0) {
                 $records = $this->applyFilter($records, 'teams.id', $commonTeams[0], IMCRMSearchTypesEnum::EQUAL_SEARCH);
             }
         }
@@ -235,7 +236,7 @@ class DashboardController extends Controller
         $userTeams = $this->getUserTeams($userId)->pluck('id')->toArray();
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car)->pluck('id')->toArray();
         //dd($teams, $userTeams);
-        return (count($userTeams) > 0 && count($teams) > 0 ) ? array_intersect($userTeams, $teams) : [];
+        return (count($userTeams) > 0 && count($teams) > 0) ? array_intersect($userTeams, $teams) : [];
     }
 
     public function renderComprehensiveDashboard(Request $request)
@@ -246,9 +247,10 @@ class DashboardController extends Controller
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
         $commonTeam = 0;
-        if(count($commonTeams) > 0){
+        if (count($commonTeams) > 0) {
             $commonTeam = $commonTeams[0];
         }
+
         return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers', 'comprehensiveDashboardStats', 'teams', 'commonTeam'));
     }
 
