@@ -141,7 +141,7 @@
             <select multiple name="teams[]" id="team-filter">
                 <option value="">Select Team</option>
                 @foreach ($teams as $team)
-                <option value="{{$team->id}}">{{$team->name}}</option>
+                <option @if($commonTeam == $team->id) selected="selected" @endif  value="{{$team->id}}">{{$team->name}}</option>
                 @endforeach
             </select>
         </div>

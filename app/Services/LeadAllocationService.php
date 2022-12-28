@@ -12,6 +12,7 @@ use App\Events\AdvisorAssigned;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
@@ -508,10 +509,16 @@ class LeadAllocationService extends BaseService
                     $userId = count($commonUserIds) > 0 ? $commonUserIds[0] : null;
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
+
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->save();
+
+                        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carLead->id)->first();
+                        $carQuoteDetail->advisor_assigned_date = now();
+                        $carQuoteDetail->save();
+
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
                         $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
                         $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;

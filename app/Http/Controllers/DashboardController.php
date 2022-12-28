@@ -94,8 +94,12 @@ class DashboardController extends Controller
         $tplDashboardStats = $this->getTPLDashboardStats($request);
         $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getTeamsByProductId($car->id);
-
-        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams'));
+        $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
+        $commonTeam = 0;
+        if(count($commonTeams) > 0){
+            $commonTeam = $commonTeams[0];
+        }
+        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'commonTeam'));
     }
 
     public function getTPLDashboardStats(Request $request): array
@@ -124,6 +128,11 @@ class DashboardController extends Controller
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
             $records = $this->applyFilter($records, 'teams.id', $request->team_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
+        }else{
+            $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
+            if(count($commonTeams) > 0){
+                $records = $this->applyFilter($records, 'teams.id', $commonTeams[0], IMCRMSearchTypesEnum::EQUAL_SEARCH);
+            }
         }
         if (isset($request->source)) {
             if ($request->source == 'no') {
@@ -198,6 +207,11 @@ class DashboardController extends Controller
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
             $records = $this->applyFilter($records, 'teams.id', $request->team_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
+        }else{
+            $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
+            if(count($commonTeams) > 0){
+                $records = $this->applyFilter($records, 'teams.id', $commonTeams[0], IMCRMSearchTypesEnum::EQUAL_SEARCH);
+            }
         }
 
         if (isset($request->userFilter) && $request->userFilter != 'null') {
@@ -215,14 +229,27 @@ class DashboardController extends Controller
         return isset($request->tier_filter) || isset($request->userFilter) ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
     }
 
+    public function getCommonTeamsForCurrentUserWithCar()
+    {
+        $userId = auth()->user()->id;
+        $userTeams = $this->getUserTeams($userId)->pluck('id')->toArray();
+        $teams = $this->getTeamsByProductName(quoteTypeCode::Car)->pluck('id')->toArray();
+        //dd($teams, $userTeams);
+        return (count($userTeams) > 0 && count($teams) > 0 ) ? array_intersect($userTeams, $teams) : [];
+    }
+
     public function renderComprehensiveDashboard(Request $request)
     {
         $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
         $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->orderBy('name', 'asc')->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request);
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
-
-        return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers', 'comprehensiveDashboardStats', 'teams'));
+        $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
+        $commonTeam = 0;
+        if(count($commonTeams) > 0){
+            $commonTeam = $commonTeams[0];
+        }
+        return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers', 'comprehensiveDashboardStats', 'teams', 'commonTeam'));
     }
 
     public function conversionStats($quoteType)
