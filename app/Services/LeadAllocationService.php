@@ -505,11 +505,10 @@ class LeadAllocationService extends BaseService
                     }
 
                     info('common users at this point are '.json_encode($commonUserIds));
-                    $userId = count($commonUserIds) ? $commonUserIds[0] : null;
+                    $userId = count($commonUserIds) > 0 ? $commonUserIds[0] : null;
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
-                        info('car quote found : '.json_encode($carQuote));
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->save();
