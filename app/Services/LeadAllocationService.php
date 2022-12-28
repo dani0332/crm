@@ -390,7 +390,7 @@ class LeadAllocationService extends BaseService
             info('lead allocation record is about to update for user : '.$user->userEmail.'  with max_cap to '.str_contains($user->quads, '1') ? 4 : 5);
             $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
             if ($leadAllocationRecord) {
-                $leadAllocationRecord->max_capcity = str_contains($user->quads, '1') ? 4 : 5;
+                $leadAllocationRecord->max_capacity = str_contains($user->quads, '1') ? 4 : 5;
                 $leadAllocationRecord->allocation_count = 0;
                 $leadAllocationRecord->updated_at = now();
                 $leadAllocationRecord->save();
