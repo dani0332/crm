@@ -143,6 +143,10 @@ class SendEmailCustomerService extends BaseService
                     'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
                     'name' => $emailData->advisorName,
                 ],
+                'to' => [[
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->customerName,
+                ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
                     'customerName' => $emailData->customerName,
@@ -172,8 +176,9 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ];
 
+            $ccAdvisor = [];
             if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
-                $body['cc'] = [[
+                $ccAdvisor = [[
                     'email' => $emailData->advisorEmailAddress,
                     'name' => $emailData->advisorName,
                 ]];
@@ -183,24 +188,19 @@ class SendEmailCustomerService extends BaseService
                 ];
             }
 
-            $toPrimary = [[
-                'email' => $emailData->customerEmail,
-                'name' => $emailData->customerName,
-            ]];
-
             $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
-            $toAdditional = [];
+            $ccAdditional = [];
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    $toAdditional[] = [
+                    $ccAdditional[] = [
                         'email' => $additionalContact->value,
                         'name' => $emailData->customerName,
                     ];
                 }
             }
 
-            $body['to'] = array_merge($toPrimary, $toAdditional);
+            $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
