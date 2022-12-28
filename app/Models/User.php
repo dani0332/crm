@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\RolesEnum;
 use Auth;
+use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -14,7 +15,7 @@ use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements AuditableContract
+class User extends Authenticatable implements AuditableContract, FilamentUser
 {
     use HasApiTokens;
     use HasFactory;
@@ -109,7 +110,7 @@ class User extends Authenticatable implements AuditableContract
             }
         }
         if ($isManager) {
-            $userIds = User::where('manager_id', $this->id)->get()->pluck('id');
+            $userIds = self::where('manager_id', $this->id)->get()->pluck('id');
 
             return $userIds->implode(',');
         } else {
@@ -228,7 +229,7 @@ class User extends Authenticatable implements AuditableContract
 
     public function getUserRoles()
     {
-        return User::select(['id', 'name'])->whereHas(
+        return self::select(['id', 'name'])->whereHas(
             'roles',
             function ($q) {
                 $q->where('name', 'pa');
@@ -248,5 +249,10 @@ class User extends Authenticatable implements AuditableContract
         }
 
         return $isAdvisor;
+    }
+
+    public function canAccessFilament(): bool
+    {
+        return true;
     }
 }

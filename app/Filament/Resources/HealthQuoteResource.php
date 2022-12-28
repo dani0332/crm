@@ -9,6 +9,7 @@ use App\Models\HealthQuote;
 use App\Models\QuoteStatus;
 use App\Models\User;
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
 use Filament\Resources\Form;
 use Filament\Resources\Resource;
 use Filament\Resources\Table;
@@ -31,13 +32,16 @@ class HealthQuoteResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('marital_status_id'),
-                Forms\Components\TextInput::make('cover_for_id'),
-                Forms\Components\TextInput::make('emirate_of_your_visa_id'),
-                Forms\Components\TextInput::make('customer_id'),
-                Forms\Components\TextInput::make('nationality_id'),
-                Forms\Components\TextInput::make('payment_status_id'),
-                Forms\Components\TextInput::make('quote_status_id'),
+                Fieldset::make('Lead Details')
+                    ->schema([
+                        Forms\Components\TextInput::make('marital_status_id'),
+                        Forms\Components\TextInput::make('cover_for_id'),
+                        Forms\Components\TextInput::make('emirate_of_your_visa_id'),
+                        Forms\Components\TextInput::make('customer_id'),
+                        Forms\Components\TextInput::make('nationality_id'),
+                        Forms\Components\TextInput::make('payment_status_id'),
+                        Forms\Components\TextInput::make('quote_status_id'),
+                    ]),
                 Forms\Components\TextInput::make('advisor_id'),
                 Forms\Components\TextInput::make('pa_id'),
                 Forms\Components\TextInput::make('wcu_id'),
@@ -149,7 +153,7 @@ class HealthQuoteResource extends Resource
                 [
                     Filter::make('cdb_id')->label('CDB ID')
                         ->form([
-                            Forms\Components\TextInput::make('code')->label('CDB ID'),
+                            Forms\Components\TextInput::make('code')->label('CDB ID')->lazy(),
                         ])
                         ->query(function (Builder $query, array $data): Builder {
                             return $query
@@ -158,9 +162,20 @@ class HealthQuoteResource extends Resource
                                     fn (Builder $query, $value): Builder => $query->where('code', $value),
                                 );
                         }),
+                    Filter::make('first_name')->label('First Name')
+                        ->form([
+                            Forms\Components\TextInput::make('first_name')->label('First Name')->lazy(),
+                        ])
+                        ->query(function (Builder $query, array $data): Builder {
+                            return $query
+                                ->when(
+                                    $data['first_name'],
+                                    fn (Builder $query, $value): Builder => $query->where('first_name', $value),
+                                );
+                        }),
                     Filter::make('created_start')
                         ->form([
-                            Forms\Components\DatePicker::make('created_start'),
+                            Forms\Components\DatePicker::make('created_start')->lazy(),
                         ])
                         ->query(function (Builder $query, array $data): Builder {
                             return $query
@@ -171,7 +186,7 @@ class HealthQuoteResource extends Resource
                         }),
                     Filter::make('created_end')
                         ->form([
-                            Forms\Components\DatePicker::make('created_end'),
+                            Forms\Components\DatePicker::make('created_end')->lazy(),
                         ])
                         ->query(function (Builder $query, array $data): Builder {
                             return $query
@@ -189,9 +204,9 @@ class HealthQuoteResource extends Resource
                                     QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
                                     QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyInvoiced, QuoteStatusEnum::Issued, QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::AfiaRenewal, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec,
                                 ])
-                                ->where('is_active', true)
-                                ->orderBy('sort_order', 'asc')
-                                ->pluck('text', 'id')->toArray();
+                                    ->where('is_active', true)
+                                    ->orderBy('sort_order', 'asc')
+                                    ->pluck('text', 'id')->toArray();
                             }
                         )
                         ->query(function (Builder $query, array $data) {
@@ -206,15 +221,15 @@ class HealthQuoteResource extends Resource
                         ->options(
                             function () {
                                 return User::query()
-                                ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
-                                ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-                                ->whereIn('roles.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthWCUAdvisor])
-                                ->select('users.id', DB::raw("CONCAT(users.name,' - ',roles.name) as name"))
-                                ->orderBy('roles.name')
-                                ->get()
-                                ->keyBy('id')
-                                ->map(fn ($users) => $users->name)
-                                ->toArray();
+                                    ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
+                                    ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+                                    ->whereIn('roles.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthWCUAdvisor])
+                                    ->select('users.id', DB::raw("CONCAT(users.name,' - ',roles.name) as name"))
+                                    ->orderBy('roles.name')
+                                    ->get()
+                                    ->keyBy('id')
+                                    ->map(fn ($users) => $users->name)
+                                    ->toArray();
                             }
                         )
                         ->query(function (Builder $query, array $data) {
