@@ -490,20 +490,19 @@ class LeadAllocationService extends BaseService
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
                     if (count($matchedRuleRecords) > 0) {
-                        info('inof'. json_encode($matchedRuleRecords));
+                        info('inof'.json_encode($matchedRuleRecords));
                         $ruleUserIds = [];
-                        if(str_contains($matchedRuleRecords?->first()?->leadSourceUsers, ',')){
+                        if (str_contains($matchedRuleRecords?->first()?->leadSourceUsers, ',')) {
                             $ruleUserIds = array_map('intval', explode(',', $matchedRuleRecords->first()->leadSourceUsers));
+                        } else {
+                            $ruleUserIds[] = (int) $matchedRuleRecords->first()->leadSourceUsers;
                         }
-                        else{
-                            $ruleUserIds[] = (int)$matchedRuleRecords->first()->leadSourceUsers;
-                        }
-                        info('Rule found and login users are '. json_encode($loginUsersIds));
+                        info('Rule found and login users are '.json_encode($loginUsersIds));
                         info('Rule found and users against rule are '.json_encode($ruleUserIds));
 
                         $commonUserIds = array_intersect($loginUsersIds->toArray(), $ruleUserIds);
 
-                        info('rules user intersection with login users is '. json_encode($commonUserIds));
+                        info('rules user intersection with login users is '.json_encode($commonUserIds));
                     }
 
                     info('common users at this point are '.json_encode($commonUserIds));
@@ -511,7 +510,7 @@ class LeadAllocationService extends BaseService
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
-                        info('car quote found : '. json_encode($carQuote));
+                        info('car quote found : '.json_encode($carQuote));
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->save();
@@ -536,11 +535,11 @@ class LeadAllocationService extends BaseService
     {
         if (strpos($string, $separator) !== false) {
             $parts = explode($separator, $string);
-          } else {
+        } else {
             $parts = [$string];
-          }
+        }
 
-          return $parts;
+        return $parts;
     }
 
     public function getCarUnallocatedLeads($from)
@@ -564,6 +563,7 @@ class LeadAllocationService extends BaseService
         ->where('lead_sources.name', $source)
         ->groupBy('rule_lead_sources.lead_source_id')
         ->select('lead_sources.name AS leadSourceName', 'lead_sources.id AS leadSourceId', DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers'));
+
         return $records->get();
     }
 
@@ -668,6 +668,7 @@ class LeadAllocationService extends BaseService
             'lead_allocation.last_allocated'
         )
         ->orderBy('lead_allocation.last_allocated', 'asc');
+
         return $query->get();
     }
 
