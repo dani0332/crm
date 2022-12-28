@@ -657,7 +657,7 @@ class CarQuoteService extends BaseService
     {
         $carTeam = $this->getProductByName(quoteTypeCode::Car);
         array_push($this->childUserIds, $userId);
-        if (auth()->user()->hasRole(RolesEnum::CarManager)) {
+        if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::LeadPool])) {
             $userAllTeams = DB::table('teams')
                 ->join('user_team', 'user_team.team_id', 'teams.id')
                 ->where('user_id', $userId)
@@ -755,7 +755,12 @@ class CarQuoteService extends BaseService
         if (Auth::user()->hasRole(RolesEnum::CarManager)) {
             $this->walkTree(Auth::user()->id); // get all childs of the user
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds)->whereNotNull('cqr.advisor_id');
-        } elseif (Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
+        }
+        elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
+            $this->walkTree(Auth::user()->id); // get all childs of the user
+            $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
+        }
+        elseif (Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
             $this->walkTree(Auth::user()->id); // get all childs of the user
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds)->whereNotNull('cqr.advisor_id');
         } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
