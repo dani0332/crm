@@ -135,14 +135,14 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            $body = json_encode([
+            $body = [
+                'sender' => [
+                    'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
+                    'name' => $emailData->advisorName,
+                ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerName,
-                ]],
-                'cc' => [[
-                    'email' => isset($emailData->advisorEmailAddress) ? $emailData->advisorEmailAddress : null,
-                    'name' => isset($emailData->advisorName) ? $emailData->advisorName : null,
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
@@ -171,14 +171,25 @@ class SendEmailCustomerService extends BaseService
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
-            ], JSON_UNESCAPED_SLASHES);
+            ];
+
+            if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
+                $body['cc'] = [[
+                    'email' => $emailData->advisorEmailAddress,
+                    'name' => $emailData->advisorName,
+                ]];
+                $body['replyTo'] = [
+                    'email' => $emailData->advisorEmailAddress,
+                    'name' => $emailData->advisorName,
+                ];
+            }
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $url,
                 [
                     'headers' => $headers,
-                    'body' => $body,
+                    'body' => json_encode($body),
                     'timeout' => 10000,
                 ]
             );
@@ -193,7 +204,7 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null;
-            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->quoteCdbId.' Class: '.get_class();
+            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
             info($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;
