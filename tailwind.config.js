@@ -11,6 +11,9 @@ module.exports = {
         success: colors.green,
         warning: colors.yellow,
       },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
     },
   },
   plugins: [require('@tailwindcss/forms'), require('@tailwindcss/typography')],

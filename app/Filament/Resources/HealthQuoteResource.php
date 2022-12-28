@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Filament\Resources\HealthQuoteResource\Pages;
@@ -27,6 +28,8 @@ class HealthQuoteResource extends Resource
     protected static ?string $model = HealthQuote::class;
     protected static ?string $navigationIcon = 'heroicon-o-star';
     protected static ?string $navigationGroup = 'Personal Quotes';
+    protected static ?string $recordRouteKeyName = 'uuid';
+    protected static ?string $recordTitleAttribute = 'code';
 
     public static function form(Form $form): Form
     {
@@ -34,101 +37,124 @@ class HealthQuoteResource extends Resource
             ->schema([
                 Fieldset::make('Lead Details')
                     ->schema([
-                        Forms\Components\TextInput::make('marital_status_id'),
-                        Forms\Components\TextInput::make('cover_for_id'),
-                        Forms\Components\TextInput::make('emirate_of_your_visa_id'),
-                        Forms\Components\TextInput::make('customer_id'),
-                        Forms\Components\TextInput::make('nationality_id'),
-                        Forms\Components\TextInput::make('payment_status_id'),
-                        Forms\Components\TextInput::make('quote_status_id'),
+                        Forms\Components\TextInput::make('code')->label('CDB ID'),
+                        Forms\Components\DateTimePicker::make('created_at')->label('Created Date'),
+                        Forms\Components\Select::make('health_team_type')
+                            ->label('Sub Team')
+                            ->options([
+                                'All',
+                                'RM-NB',
+                                'RM-Speed',
+                                'EBP',
+                                'Wow-Call',
+                                'No-Type',
+                            ]),
+                        Forms\Components\Select::make('advisor_id')
+                            ->label('Advisor')
+                            ->options(function () {
+                                return  DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
+                                    ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                                    ->join('roles as r', 'mhr.role_id', '=', 'r.id')
+                                    ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR'])->get()->pluck('name', 'id');
+                            }),
+                        Forms\Components\TextInput::make('source'),
+                        Forms\Components\DateTimePicker::make('updated_at')->label('Last Modified Date'),
+                        Forms\Components\TextInput::make('parent_duplicate_quote_id')->label('Parent CDB ID'),
+                        Forms\Components\TextInput::make('renewal_batch')->label('Renewal Batch'),
+                        Forms\Components\Toggle::make('is_ecommerce')
+                            ->label('Is Ecommerce'),
+                        Forms\Components\Toggle::make('is_ebp_renewal')
+                            ->label('Is EBP Renewal'),
+                        Forms\Components\TextInput::make('device'),
+                    ])
+                    ->hiddenOn('create'),
+                Fieldset::make('Customer Profile')
+                    ->schema([
+                        Forms\Components\TextInput::make('first_name')
+                            ->maxLength(255)
+                            ->required(),
+                        Forms\Components\TextInput::make('last_name')
+                            ->maxLength(255)
+                            ->required(),
+                        Forms\Components\TextInput::make('email')
+                            ->email()
+                            ->maxLength(150)
+                            ->required(),
+                        Forms\Components\TextInput::make('mobile_no')
+                            ->maxLength(20)
+                            ->required(),
+                        Forms\Components\Select::make('gender')
+                            ->options([
+                                GenericRequestEnum::MALE_SINGLE,
+                                GenericRequestEnum::FEMALE_SINGLE,
+                                GenericRequestEnum::FEMALE_MARRIED,
+                            ]),
+                        Forms\Components\Select::make('marital_status_id')
+                            ->label('Marital Status')
+                            ->options(function () {
+                                return DB::table('marital_status')->where('is_active', true)->pluck('text', 'id');
+                            })
+                            ->required(),
+                        Forms\Components\Select::make('nationality_id')
+                            ->label('Nationality')
+                            ->options(function () {
+                                return DB::table('nationality')->where('is_active', true)->pluck('text', 'id');
+                            })
+                            ->searchable()
+                            ->required(),
+                        Forms\Components\DatePicker::make('dob')->label('Date of Birth')->required(),
+                        Forms\Components\Select::make('emirate_of_your_visa_id')
+                            ->label('Emirate of Visa')
+                            ->options(function () {
+                                return DB::table('emirates')->where('is_active', true)->pluck('text', 'id');
+                            })
+                            ->required(),
+                        Forms\Components\Select::make('member_category_id')
+                            ->label('Member Category')
+                            ->options(function () {
+                                return DB::table('member_category')->where('is_active', true)->pluck('text', 'id');
+                            }),
+                        Forms\Components\Select::make('salary_band_id')
+                            ->label('Salary Band')
+                            ->options(function () {
+                                return DB::table('salary_band')->where('is_active', true)->pluck('text', 'id');
+                            }),
                     ]),
-                Forms\Components\TextInput::make('advisor_id'),
-                Forms\Components\TextInput::make('pa_id'),
-                Forms\Components\TextInput::make('wcu_id'),
-                Forms\Components\TextInput::make('lead_type_id'),
-                Forms\Components\TextInput::make('salary_band_id'),
-                Forms\Components\TextInput::make('member_category_id'),
-                Forms\Components\TextInput::make('plan_id'),
-                Forms\Components\TextInput::make('primary_member_id'),
-                Forms\Components\TextInput::make('currently_insured_with_id'),
-                Forms\Components\TextInput::make('previous_advisor_id'),
-                Forms\Components\TextInput::make('sponsor_category_id'),
-                Forms\Components\TextInput::make('health_plan_type_id'),
-                Forms\Components\TextInput::make('preference')
-                    ->maxLength(1000),
-                Forms\Components\TextInput::make('details')
-                    ->maxLength(1000),
-                Forms\Components\Toggle::make('has_dental'),
-                Forms\Components\Toggle::make('has_worldwide_cover'),
-                Forms\Components\Toggle::make('has_home'),
-                Forms\Components\TextInput::make('first_name')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('last_name')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('email')
-                    ->email()
-                    ->maxLength(150),
-                Forms\Components\TextInput::make('mobile_no')
-                    ->maxLength(20),
-                Forms\Components\TextInput::make('gender')
-                    ->maxLength(8),
-                Forms\Components\TextInput::make('lang')
-                    ->maxLength(2),
-                Forms\Components\TextInput::make('source')
-                    ->maxLength(2000),
-                Forms\Components\DateTimePicker::make('dob'),
-                Forms\Components\Toggle::make('is_synced'),
-                Forms\Components\TextInput::make('device')
-                    ->maxLength(500),
-                Forms\Components\TextInput::make('reference_url')
-                    ->maxLength(2000),
-                Forms\Components\TextInput::make('additional_notes')
-                    ->maxLength(1000),
-                Forms\Components\TextInput::make('reviver_name')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('promo_code')
-                    ->maxLength(20),
-                Forms\Components\TextInput::make('code')
-                    ->maxLength(30),
-                Forms\Components\TextInput::make('uuid')
-                    ->required()
-                    ->maxLength(100),
-                Forms\Components\TextInput::make('policy_number')
-                    ->maxLength(100),
-                Forms\Components\TextInput::make('previous_quote_id'),
-                Forms\Components\TextInput::make('health_team_type')
-                    ->maxLength(200),
-                Forms\Components\TextInput::make('premium'),
-                Forms\Components\Toggle::make('is_ebp_renewal')
-                    ->required(),
-                Forms\Components\TextInput::make('parent_duplicate_quote_id')
-                    ->maxLength(30),
-                Forms\Components\TextInput::make('renewal_batch')
-                    ->maxLength(50),
-                Forms\Components\DateTimePicker::make('renewal_expiry_date'),
-                Forms\Components\TextInput::make('previous_quote_policy_number')
-                    ->maxLength(100),
-                Forms\Components\TextInput::make('other_email_addresses')
-                    ->email()
-                    ->maxLength(355),
-                Forms\Components\TextInput::make('renewal_import_code')
-                    ->maxLength(20),
-                Forms\Components\DatePicker::make('previous_policy_expiry_date'),
-                Forms\Components\TextInput::make('previous_quote_policy_premium'),
-                Forms\Components\Toggle::make('is_ecommerce'),
-                Forms\Components\DateTimePicker::make('quote_updated_at'),
-                Forms\Components\TextInput::make('order_reference')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('payment_reference')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('payment_hash_code')
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('payment_gateway')
-                    ->maxLength(15),
-                Forms\Components\DateTimePicker::make('payment_status_date'),
-                Forms\Components\DateTimePicker::make('quote_status_date'),
-                Forms\Components\DateTimePicker::make('policy_start_date'),
-                Forms\Components\DateTimePicker::make('policy_issuance_date'),
+                Fieldset::make('Quote Details')
+                    ->schema([
+                        Forms\Components\Select::make('cover_for_id')->label('Who are you looking to cover')
+                            ->options(function () {
+                                return DB::table('health_cover_for')->where('is_active', true)->pluck('text', 'id');
+                            }),
+                        Forms\Components\TextInput::make('currently_insured_with_id')->label('Currently Insured With'),
+                        Forms\Components\Select::make('health_plan_type')
+                            ->label('Type of Plan')
+                            ->options(function () {
+                                return DB::table('health_plan_type')->where('is_active', true)->pluck('text', 'id');
+                            }),
+                        Forms\Components\DatePicker::make('next_followup_date')->label('Next Followup Date'),
+                        Forms\Components\Textarea::make('details')
+                            ->maxLength(1000)
+                            ->rows(2),
+                    ])
+                    ->hiddenOn('create'),
+                Fieldset::make("Last Year's Policy Details")
+                    ->schema([
+                        Forms\Components\TextInput::make('previous_quote_policy_number')
+                            ->maxLength(100),
+                        Forms\Components\DatePicker::make('previous_policy_expiry_date'),
+                        Forms\Components\TextInput::make('previous_quote_policy_premium'),
+                    ])
+                    ->hiddenOn('create'),
+                Fieldset::make('Policy Details')
+                    ->schema([
+                        Forms\Components\TextInput::make('policy_number')
+                            ->maxLength(100),
+                        Forms\Components\DatePicker::make('policy_start_date'),
+                        Forms\Components\DatePicker::make('policy_end_date'),
+                        Forms\Components\Placeholder::make('transapp_code'),
+                    ])
+                    ->hiddenOn('create'),
             ]);
     }
 
@@ -263,9 +289,7 @@ class HealthQuoteResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -273,8 +297,8 @@ class HealthQuoteResource extends Resource
         return [
             'index' => Pages\ListHealthQuotes::route('/'),
             'create' => Pages\CreateHealthQuote::route('/create'),
-            'view' => Pages\ViewHealthQuote::route('/{record}'),
-            'edit' => Pages\EditHealthQuote::route('/{record}/edit'),
+            'view' => Pages\ViewHealthQuote::route('/{record:uuid}'),
+            'edit' => Pages\EditHealthQuote::route('/{record:uuid}/edit'),
         ];
     }
 }

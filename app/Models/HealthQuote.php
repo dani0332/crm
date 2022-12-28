@@ -24,6 +24,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasOne(Customer::class, 'id', 'customer_id');
     }
 
+    public function currentlyInsured()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'id', 'currently_insured_id');
+    }
+
     public function nationality()
     {
         return $this->hasOne(Nationality::class, 'id', 'nationality_id');
