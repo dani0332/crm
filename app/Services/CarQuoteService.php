@@ -754,15 +754,16 @@ class CarQuoteService extends BaseService
     {
         if (Auth::user()->hasRole(RolesEnum::CarManager)) {
             $this->walkTree(Auth::user()->id); // get all childs of the user
-            $this->query->whereIn('cqr.advisor_id', $this->childUserIds)->whereNotNull('cqr.advisor_id');
-        } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
-            $this->walkTree(Auth::user()->id); // get all childs of the user
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
+        }
+        elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
+            $this->walkTree(Auth::user()->id); // get all childs of the user
+            $this->query->whereIn('cqr.advisor_id', $this->childUserIds)->OrWhereNull('cqr.advisor_id');
         } elseif (Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
             $this->walkTree(Auth::user()->id); // get all childs of the user
-            $this->query->whereIn('cqr.advisor_id', $this->childUserIds)->whereNotNull('cqr.advisor_id');
+            $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
         } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
-            $this->query->where('cqr.advisor_id', Auth::user()->id)->whereNotNull('cqr.advisor_id');
+            $this->query->where('cqr.advisor_id', Auth::user()->id);
         }
     }
 
