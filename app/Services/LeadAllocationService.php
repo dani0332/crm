@@ -15,6 +15,7 @@ use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
+use App\Models\LeadSource;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
@@ -488,32 +489,29 @@ class LeadAllocationService extends BaseService
                     $commonUserIds = $loginUsersIds;
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
-                    if (! empty($matchedRuleRecords)) {
-                        info('Rule found against lead source and users against rule are '.$matchedRuleRecords[0]->leadSourceUsers);
-                        info('type of login user Ids is : '.gettype($loginUsersIds));
-                        info('Rule found and login users are '.implode(',', $loginUsersIds->toArray()));
-                        $ruleUserIds = explode(',', $matchedRuleRecords[0]->leadSourceUsers);
-                        info('Rule found and users against rule are '.implode(',', $ruleUserIds));
+                    if (count($matchedRuleRecords) > 0) {
+                        info('inof'. json_encode($matchedRuleRecords));
+                        $ruleUserIds = [];
+                        if(str_contains($matchedRuleRecords?->first()?->leadSourceUsers, ',')){
+                            $ruleUserIds = array_map('intval', explode(',', $matchedRuleRecords->first()->leadSourceUsers));
+                        }
+                        else{
+                            $ruleUserIds[] = (int)$matchedRuleRecords->first()->leadSourceUsers;
+                        }
+                        info('Rule found and login users are '. json_encode($loginUsersIds));
+                        info('Rule found and users against rule are '.json_encode($ruleUserIds));
 
-                        $names1_str = $matchedRuleRecords[0]->leadSourceUsers;
-                        $names2_str = $loginUsersIds->implode(',');
+                        $commonUserIds = array_intersect($loginUsersIds->toArray(), $ruleUserIds);
 
-                        $names1 = explode(',', $names1_str);
-                        $names2 = explode(',', $names2_str);
-                        $common_names = array_intersect($names1, $names2);
-
-                        info('Rule common names : '.$common_names);
-
-                        $commonUserIds = array_intersect(explode(',', $loginUsersIds), $ruleUserIds);
-
-                        info('rules user intersection with login users is '.$commonUserIds);
+                        info('rules user intersection with login users is '. json_encode($commonUserIds));
                     }
 
-                    info('common users at this point are '.$commonUserIds);
-                    $userId = $commonUserIds->first();
+                    info('common users at this point are '.json_encode($commonUserIds));
+                    $userId = count($commonUserIds) ? $commonUserIds[0] : null;
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
+                        info('car quote found : '. json_encode($carQuote));
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->save();
@@ -534,6 +532,17 @@ class LeadAllocationService extends BaseService
         }
     }
 
+    public function splitString($separator, $string)
+    {
+        if (strpos($string, $separator) !== false) {
+            $parts = explode($separator, $string);
+          } else {
+            $parts = [$string];
+          }
+
+          return $parts;
+    }
+
     public function getCarUnallocatedLeads($from)
     {
         info('Car leads fetch start date is :'.$from);
@@ -550,14 +559,12 @@ class LeadAllocationService extends BaseService
 
     public function getRulesByLeadSource($source)
     {
-        return DB::select('
-                        SELECT ls.name AS leadSourceName
-                        ,ls.id AS leadSourceId
-                        ,group_concat(rls.user_id) AS leadSourceUsers
-                    FROM lead_sources ls
-                    INNER JOIN rule_lead_sources rls ON rls.lead_source_id = ls.id
-                    INNER JOIN users u ON u.id = rls.user_id
-                    WHERE ls.name = ? GROUP BY rls.lead_source_id', [$source]);
+        $records = LeadSource::join('rule_lead_sources', 'rule_lead_sources.lead_source_id', 'lead_sources.id')
+        ->join('users', 'users.id', 'rule_lead_sources.user_id')
+        ->where('lead_sources.name', $source)
+        ->groupBy('rule_lead_sources.lead_source_id')
+        ->select('lead_sources.name AS leadSourceName', 'lead_sources.id AS leadSourceId', DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers'));
+        return $records->get();
     }
 
     public function checkIfLeadIsRenewal($lead)
@@ -644,24 +651,24 @@ class LeadAllocationService extends BaseService
     {
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
-
-        return LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                    ->where('lead_allocation.is_available', 1)
-                    ->where(function ($query) {
-                        $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
-                            ->orWhere('lead_allocation.max_capacity', '=', -1);
-                    })
-                    ->where('u.last_login', '>', Carbon::now()->addDays(-1)->endOfDay())
-                    ->whereIn('u.id', $tierUsers)
-                    ->select(
-                        'u.id',
-                        'u.name',
-                        'u.email',
-                        'lead_allocation.allocation_count',
-                        'lead_allocation.max_capacity',
-                        'lead_allocation.last_allocated'
-                    )
-                    ->orderBy('lead_allocation.last_allocated', 'asc')->get();
+        $query = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
+        ->where('lead_allocation.is_available', 1)
+        ->where(function ($query) {
+            $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
+                ->orWhere('lead_allocation.max_capacity', '=', -1);
+        })
+        ->where('u.last_login', '>', Carbon::now()->addDays(-1)->endOfDay())
+        ->whereIn('u.id', $tierUsers)
+        ->select(
+            'u.id',
+            'u.name',
+            'u.email',
+            'lead_allocation.allocation_count',
+            'lead_allocation.max_capacity',
+            'lead_allocation.last_allocated'
+        )
+        ->orderBy('lead_allocation.last_allocated', 'asc');
+        return $query->get();
     }
 
     public function getAppStorageValueByKey($keyName)
