@@ -55,6 +55,7 @@
             }
         },
         {
+            class: 'td-max-cap',
             data: 'maxCapacity',
             name: 'maxCapacity',
             orderable: true,
@@ -134,7 +135,7 @@
             });
 
             @if(auth()->user()->hasRole(RolesEnum::LeadPool))
-                $('body').on('dblclick', 'table:first td:nth-last-child(3)', function() {
+                $('body').on('dblclick', 'table:first td.td-max-cap', function() {
                     var maxCapValue = parseInt($(this).text());
                     if(maxCapValue !== NaN){
                         $(this).html(`<input type="text" class="form-control" value="${maxCapValue}" />`);
