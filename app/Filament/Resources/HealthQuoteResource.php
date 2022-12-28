@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Filament\Resources\HealthQuoteResource\Pages;
+use App\Filament\Resources\HealthQuoteResource\RelationManagers\MemberDetailsRelationManager;
 use App\Models\HealthQuote;
 use App\Models\QuoteStatus;
 use App\Models\User;
@@ -51,11 +52,11 @@ class HealthQuoteResource extends Resource
                             ]),
                         Forms\Components\Select::make('advisor_id')
                             ->label('Advisor')
+                            ->searchable()
                             ->options(function () {
-                                return  DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
+                                return  DB::table('users as u')->select('u.id', 'u.name')
                                     ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
-                                    ->join('roles as r', 'mhr.role_id', '=', 'r.id')
-                                    ->whereIn('r.name', ['RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_WCU_ADVISOR'])->get()->pluck('name', 'id');
+                                    ->join('roles as r', 'mhr.role_id', '=', 'r.id')->get()->pluck('name', 'id');
                             }),
                         Forms\Components\TextInput::make('source'),
                         Forms\Components\DateTimePicker::make('updated_at')->label('Last Modified Date'),
@@ -126,7 +127,13 @@ class HealthQuoteResource extends Resource
                             ->options(function () {
                                 return DB::table('health_cover_for')->where('is_active', true)->pluck('text', 'id');
                             }),
-                        Forms\Components\TextInput::make('currently_insured_with_id')->label('Currently Insured With'),
+                        Forms\Components\Select::make('currently_insured_with_id')
+                            ->label('Currently Insured With')
+                            ->searchable()
+                            ->options(function () {
+                                return DB::table('insurance_provider')->where('is_active', true)->pluck('text', 'id');
+                            }),
+
                         Forms\Components\Select::make('health_plan_type')
                             ->label('Type of Plan')
                             ->options(function () {
@@ -289,7 +296,9 @@ class HealthQuoteResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            MemberDetailsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

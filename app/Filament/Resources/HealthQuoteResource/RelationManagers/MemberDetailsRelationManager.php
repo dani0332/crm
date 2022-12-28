@@ -1,0 +1,69 @@
+<?php
+
+namespace App\Filament\Resources\HealthQuoteResource\RelationManagers;
+
+use App\Enums\GenericRequestEnum;
+use Filament\Forms;
+use Filament\Resources\Form;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Resources\Table;
+use Filament\Tables;
+use Filament\Tables\Actions\CreateAction;
+
+class MemberDetailsRelationManager extends RelationManager
+{
+    protected static string $relationship = 'memberDetails';
+    // protected static ?string $recordTitleAttribute = 'name';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Select::make('gender')
+                    ->options([
+                        GenericRequestEnum::MALE_SINGLE,
+                        GenericRequestEnum::FEMALE_SINGLE,
+                        GenericRequestEnum::FEMALE_MARRIED,
+                    ]),
+            ]);
+        CreateAction::make()
+            ->mutateFormDataUsing(function (array $data): array {
+                $data['health_quote_request_id'] = auth()->id();
+
+                return $data;
+            });
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('name')->getStateUsing(static function ($rowLoop): string {
+                    return (string) 'Member '.$rowLoop->iteration;
+                }),
+                Tables\Columns\TextColumn::make('gender')
+                    ->enum([
+                        GenericRequestEnum::MALE_SINGLE,
+                        GenericRequestEnum::FEMALE_SINGLE,
+                        GenericRequestEnum::FEMALE_MARRIED,
+                    ]),
+                Tables\Columns\TextColumn::make('dob')->date(),
+                Tables\Columns\TextColumn::make('memberCategory.text')->label('Relationship'),
+                Tables\Columns\TextColumn::make('nationality.text')->label('Nationality'),
+                Tables\Columns\TextColumn::make('emirate.text')->label('Emirate of Visa'),
+            ])
+            ->filters([
+                //
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make(),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
+            ]);
+    }
+}
