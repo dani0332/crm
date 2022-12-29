@@ -17,6 +17,14 @@ class ListHealthQuotes extends ListRecords
         return $query->simplePaginate($this->getTableRecordsPerPage() == -1 ? $query->count() : $this->getTableRecordsPerPage());
     }
 
+    protected function getTableQuery(): Builder
+    {
+        $query = parent::getTableQuery();
+        $query->where('quote_status_id', '!=', 9);
+
+        return $query;
+    }
+
     protected function getTableRecordsPerPageSelectOptions(): array
     {
         return [false];

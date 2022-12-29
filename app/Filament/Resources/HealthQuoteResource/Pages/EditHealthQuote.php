@@ -13,8 +13,7 @@ class EditHealthQuote extends EditRecord
     protected function getActions(): array
     {
         return [
-            Actions\ViewAction::make(),
-            // Actions\DeleteAction::make(),
+            Actions\ViewAction::make()->label('View')->icon('heroicon-o-eye'),
         ];
     }
 }
