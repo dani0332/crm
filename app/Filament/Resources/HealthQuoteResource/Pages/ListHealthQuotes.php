@@ -17,6 +17,11 @@ class ListHealthQuotes extends ListRecords
         return $query->simplePaginate($this->getTableRecordsPerPage() == -1 ? $query->count() : $this->getTableRecordsPerPage());
     }
 
+    protected function getTableRecordsPerPageSelectOptions(): array
+    {
+        return [false];
+    }
+
     protected function getActions(): array
     {
         return [

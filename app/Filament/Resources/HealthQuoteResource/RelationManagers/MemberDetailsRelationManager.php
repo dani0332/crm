@@ -21,10 +21,16 @@ class MemberDetailsRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Select::make('gender')
                     ->options([
-                        GenericRequestEnum::MALE_SINGLE,
-                        GenericRequestEnum::FEMALE_SINGLE,
-                        GenericRequestEnum::FEMALE_MARRIED,
+                        'M' => GenericRequestEnum::MALE_SINGLE,
+                        'FS' => GenericRequestEnum::FEMALE_SINGLE,
+                        'FM' => GenericRequestEnum::FEMALE_MARRIED,
                     ]),
+                Forms\Components\DatePicker::make('dob'),
+                Forms\Components\Select::make('memberCategory.id')
+                    ->label('Relationship')
+                    ->options(function () {
+                        return \App\Models\MemberCategory::all()->pluck('text', 'id');
+                    }),
             ]);
         CreateAction::make()
             ->mutateFormDataUsing(function (array $data): array {
@@ -43,9 +49,9 @@ class MemberDetailsRelationManager extends RelationManager
                 }),
                 Tables\Columns\TextColumn::make('gender')
                     ->enum([
-                        GenericRequestEnum::MALE_SINGLE,
-                        GenericRequestEnum::FEMALE_SINGLE,
-                        GenericRequestEnum::FEMALE_MARRIED,
+                        'M' => GenericRequestEnum::MALE_SINGLE,
+                        'FS' => GenericRequestEnum::FEMALE_SINGLE,
+                        'FM' => GenericRequestEnum::FEMALE_MARRIED,
                     ]),
                 Tables\Columns\TextColumn::make('dob')->date(),
                 Tables\Columns\TextColumn::make('memberCategory.text')->label('Relationship'),
@@ -65,5 +71,10 @@ class MemberDetailsRelationManager extends RelationManager
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
+    }
+
+    protected function getTableRecordsPerPageSelectOptions(): array
+    {
+        return [false];
     }
 }

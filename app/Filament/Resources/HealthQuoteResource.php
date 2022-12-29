@@ -169,16 +169,20 @@ class HealthQuoteResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('code')->label('CDB ID'),
+                Tables\Columns\TextColumn::make('code')->label('CDB ID')->color('primary'),
                 Tables\Columns\TextColumn::make('first_name')->label('First Name'),
                 Tables\Columns\TextColumn::make('last_name')->label('Last Name'),
                 Tables\Columns\TextColumn::make('quoteStatus.text')->label('Lead Status'),
                 Tables\Columns\TextColumn::make('advisor.name')->label('Advisor'),
                 Tables\Columns\TextColumn::make('created_at')->label('Created Date')->dateTime(),
                 Tables\Columns\TextColumn::make('updated_at')->label('Last Modified Date')->dateTime(),
-                Tables\Columns\TextColumn::make('health_plan_type_id'),
+                Tables\Columns\TextColumn::make('health_team_type')->label('Sub Team'),
                 Tables\Columns\TextColumn::make('premium'),
                 Tables\Columns\TextColumn::make('policy_number'),
+                Tables\Columns\TextColumn::make('source'),
+                Tables\Columns\TextColumn::make('salaryBand.text')->label('Salary Band'),
+                Tables\Columns\TextColumn::make('memberCategory.text')->label('Member Category'),
+                Tables\Columns\TextColumn::make('currentProvider.text')->label('Currently Insured With'),
                 Tables\Columns\IconColumn::make('is_ecommerce')->boolean(),
             ])
             ->defaultSort('created_at', 'desc')
