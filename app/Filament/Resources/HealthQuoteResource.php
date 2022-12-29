@@ -66,7 +66,6 @@ class HealthQuoteResource extends Resource
                             ->label('Is Ecommerce'),
                         Forms\Components\Toggle::make('is_ebp_renewal')
                             ->label('Is EBP Renewal'),
-                        Forms\Components\TextInput::make('device'),
                     ])
                     ->visibleOn('view'),
                 Fieldset::make('Customer Profile')
@@ -134,15 +133,14 @@ class HealthQuoteResource extends Resource
                                 return DB::table('insurance_provider')->where('is_active', true)->pluck('text', 'id');
                             }),
 
-                        Forms\Components\Select::make('health_plan_type')
+                        Forms\Components\Select::make('health_plan_type_id')
                             ->label('Type of Plan')
                             ->options(function () {
                                 return DB::table('health_plan_type')->where('is_active', true)->pluck('text', 'id');
                             }),
-                        Forms\Components\DatePicker::make('next_followup_date')->label('Next Followup Date'),
-                        Forms\Components\Textarea::make('details')
-                            ->maxLength(1000)
-                            ->rows(2),
+
+                        Forms\Components\TextInput::make('details')
+                            ->maxLength(1000),
                     ]),
                 Fieldset::make("Last Year's Policy Details")
                     ->schema([
@@ -158,9 +156,15 @@ class HealthQuoteResource extends Resource
                             ->maxLength(100),
                         Forms\Components\DatePicker::make('policy_start_date'),
                         Forms\Components\DatePicker::make('policy_end_date'),
-                        Forms\Components\Placeholder::make('transapp_code'),
+                    ]),
+                Fieldset::make('Request Details')
+                    ->relationship('healthQuoteRequestDetail', 'id', 'health_quote_request_id')
+                    ->schema([
+                        Forms\Components\TextInput::make('transapp_code'),
+                        Forms\Components\DatePicker::make('next_followup_date')->label('Next Followup Date'),
                     ])
                     ->visibleOn('view'),
+
             ]);
     }
 
