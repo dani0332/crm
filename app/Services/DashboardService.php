@@ -135,7 +135,8 @@ class DashboardService extends BaseService
         if (isset($advisorId)) {
             $query->where('car_quote_request.advisor_id', $advisorId);
         }
-        info('advisor conversion query : '. $query->toSql());
+        info('advisor conversion query : '.$query->toSql());
+
         return $query->get();
     }
 
@@ -152,7 +153,8 @@ class DashboardService extends BaseService
         if (isset($teamIds)) {
             $query->whereIn('user_team.team_id', $teamIds);
         }
-        info('lead assigned query : '. $query->toSql());
+        info('lead assigned query : '.$query->toSql());
+
         return $query->get();
     }
 
