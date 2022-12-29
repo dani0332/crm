@@ -508,7 +508,7 @@ class LeadAllocationService extends BaseService
                     if (! empty($commonUserIds) && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
-                    }else if(gettype($commonUserIds) == 'object' && ! empty($commonUserIds)){
+                    } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
                         info('inside common object');
                         $userId = $commonUserIds->first();
                     }
@@ -621,26 +621,26 @@ class LeadAllocationService extends BaseService
 
     public function getTierForValue($carLead)
     {
-        info('Started searching tier for car lead : '. json_encode($carLead));
+        info('Started searching tier for car lead : '.json_encode($carLead));
         $tiers = Tier::where('is_active', 1);
-        if($carLead->car_type_insurance_id == 2) {
+        if ($carLead->car_type_insurance_id == 2) {
             info('adding tpl check');
             $tiers->where('can_handle_tpl', 1);
             info($tiers->toSql());
         }
-        if($carLead->is_ecommerce) {
+        if ($carLead->is_ecommerce) {
             info('adding is ecommerce check');
             $tiers->where('can_handle_ecommerce', 1);
             info($tiers->toSql());
         }
-        if($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') {
+        if ($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') {
             info('adding null value check');
             $tiers->where('can_handle_null_value', 1);
             info($tiers->toSql());
         }
-        if($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2)  {
+        if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
             info('adding min and max value check');
-            $tiers->where('min_price', '<=' ,$carLead->car_value)->where('max_price' ,'>=', $carLead->car_value);
+            $tiers->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
             info($tiers->toSql());
         }
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
