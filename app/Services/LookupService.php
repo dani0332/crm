@@ -101,7 +101,7 @@ class LookupService extends BaseService
         return CarModel::find($id);
     }
 
-    public function getTier()
+    public function getTierR()
     {
         return Tier::select('id', 'name')
         ->where(['is_active' => true, 'name' => TiersEnum::TierR])

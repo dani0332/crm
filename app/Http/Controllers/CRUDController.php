@@ -373,7 +373,7 @@ class CRUDController extends Controller
         $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($model->modelType, $record->id);
         $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id);
-        $tiers = $this->lookupService->getTier();
+        $tiers = $this->lookupService->getTierR();
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
