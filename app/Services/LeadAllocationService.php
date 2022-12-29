@@ -491,6 +491,7 @@ class LeadAllocationService extends BaseService
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
                     if (count($matchedRuleRecords) > 0) {
+                        $commonUserIds = [];
                         $ruleUserIds = [];
                         if (str_contains($matchedRuleRecords?->first()?->leadSourceUsers, ',')) {
                             $ruleUserIds = array_map('intval', explode(',', $matchedRuleRecords->first()->leadSourceUsers));
@@ -499,21 +500,20 @@ class LeadAllocationService extends BaseService
                         }
                         info('Rule found and login users are '.json_encode($loginUsersIds));
                         info('Rule found and users against rule are '.json_encode($ruleUserIds));
-
-                        $commonUserIds = array_intersect($loginUsersIds->toArray(), $ruleUserIds);
-
+                        $commonUserIds = array_intersect_assoc($loginUsersIds->toArray(), $ruleUserIds)->toArray();
                         info('rules user intersection with login users is '.json_encode($commonUserIds));
                     }
-
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
-
-                    if (! empty($commonUserIds)) {
+                    if (! empty($commonUserIds) && is_array($commonUserIds)) {
+                        info('inside common array');
                         $userId = reset($commonUserIds);
+                    }else if(gettype($commonUserIds) == 'object' && ! empty($commonUserIds)){
+                        info('inside common object');
+                        $userId = $commonUserIds->first();
                     }
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
-
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
@@ -562,7 +562,7 @@ class LeadAllocationService extends BaseService
             ->whereNull('tier_id')
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
-            ->skip(0)->take(20)->get();
+            ->skip(0)->take(1)->get();
     }
 
     public function getRulesByLeadSource($source)
@@ -621,33 +621,60 @@ class LeadAllocationService extends BaseService
 
     public function getTierForValue($carLead)
     {
-        $tiers = Tier::where('is_active', 1)->get();
-        if ($carLead->car_type_insurance_id == 2) {
-            info('get Tier inside the can handle tpl filter');
-            $tiers = $tiers->filter(function ($value) {
-                return $value->can_handle_tpl == 1;
-            });
-            info('get Tier applying the ecommerce filter');
-            $tiers = $tiers->filter(function ($value) use ($carLead) {
-                return $value->can_handle_ecommerce == $carLead->is_ecommerce;
-            });
+        info('Started searching tier for car lead : '. json_encode($carLead));
+        $tiers = Tier::where('is_active', 1);
+        if($carLead->car_type_insurance_id == 2) {
+            info('adding tpl check');
+            $tiers->where('can_handle_tpl', 1);
+            info($tiers->toSql());
         }
-        if ($carLead->car_value == null) {
-            info('get Tier inside the null value filter');
-            $tiers = $tiers->filter(function ($value) {
-                return $value->can_handle_null_value == 1;
-            });
+        if($carLead->is_ecommerce) {
+            info('adding is ecommerce check');
+            $tiers->where('can_handle_ecommerce', 1);
+            info($tiers->toSql());
         }
-        if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
-            info('get Tier inside the car value filter');
-            $tiers = $tiers->filter(function ($value) use ($carLead) {
-                return $value->min_price <= $carLead->car_value && $value->max_price >= $carLead->car_value;
-            });
+        if($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') {
+            info('adding null value check');
+            $tiers->where('can_handle_null_value', 1);
+            info($tiers->toSql());
+        }
+        if($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2)  {
+            info('adding min and max value check');
+            $tiers->where('min_price', '<=' ,$carLead->car_value)->where('max_price' ,'>=', $carLead->car_value);
+            info($tiers->toSql());
         }
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
-            info('get Tier inside the car value filter');
-            $tiers = $tiers->where('name', 'like', '%TR');
+            info('adding tpl renewal check');
+            $tiers->where('is_tpl_renewals', 1);
+            info($tiers->toSql());
         }
+        $tiers = $tiers->get();
+        // if ($carLead->car_type_insurance_id == 2) {
+        //     info('get Tier inside the can handle tpl filter');
+        //     $tiers = $tiers->filter(function ($value) {
+        //         return $value->can_handle_tpl == 1;
+        //     });
+        //     info('get Tier applying the ecommerce filter');
+        //     $tiers = $tiers->filter(function ($value) use ($carLead) {
+        //         return $value->can_handle_ecommerce == $carLead->is_ecommerce;
+        //     });
+        // }
+        // if ($carLead->car_value == null) {
+        //     info('get Tier inside the null value filter');
+        //     $tiers = $tiers->filter(function ($value) {
+        //         return $value->can_handle_null_value == 1;
+        //     });
+        // }
+        // if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
+        //     info('get Tier inside the car value filter');
+        //     $tiers = $tiers->filter(function ($value) use ($carLead) {
+        //         return $value->min_price <= $carLead->car_value && $value->max_price >= $carLead->car_value;
+        //     });
+        // }
+        // if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
+        //     info('get Tier inside the car value filter');
+        //     $tiers = $tiers->where('name', 'like', '%TR');
+        // }
         info('First tier after filtration is : '.json_encode($tiers->first()));
         if ($tiers != null) {
             return $tiers->first();
