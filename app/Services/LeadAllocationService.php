@@ -508,7 +508,7 @@ class LeadAllocationService extends BaseService
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
 
-                    if (!empty($commonUserIds)) {
+                    if (! empty($commonUserIds)) {
                         $userId = reset($commonUserIds);
                     }
                     if ($userId) {
