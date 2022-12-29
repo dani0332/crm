@@ -191,7 +191,7 @@ return [
                 'connection' => 'redis',
                 'queue' => 'default,renewals',
                 'balance' => 'auto',
-                'processes' => 3,
+                'processes' => 1,
                 'tries' => 3,
             ],
         ],
