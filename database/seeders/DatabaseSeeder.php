@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             addPermissionsForDashboard::class,
             //CarQuoteRequestSeeder::class,
             QuoteStatusTableSeeder::class,
+            QuoteStatusMapCarTransactionApproved::class,
         ]);
     }
 }
