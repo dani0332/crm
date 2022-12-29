@@ -506,7 +506,11 @@ class LeadAllocationService extends BaseService
                     }
 
                     info('common users at this point are '.json_encode($commonUserIds));
-                    $userId = count($commonUserIds) > 0 ? $commonUserIds[0] : null;
+                    $userId = null;
+
+                    if (!empty($commonUserIds)) {
+                        $userId = reset($commonUserIds);
+                    }
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
 
