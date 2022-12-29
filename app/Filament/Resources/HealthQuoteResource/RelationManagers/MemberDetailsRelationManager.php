@@ -8,7 +8,6 @@ use Filament\Resources\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\Table;
 use Filament\Tables;
-use Filament\Tables\Actions\CreateAction;
 
 class MemberDetailsRelationManager extends RelationManager
 {
@@ -41,14 +40,7 @@ class MemberDetailsRelationManager extends RelationManager
                     ->options(function () {
                         return \App\Models\MemberCategory::all()->pluck('text', 'id');
                     }),
-
             ]);
-        CreateAction::make()
-            ->mutateFormDataUsing(function (array $data): array {
-                $data['health_quote_request_id'] = $this->record->id;
-
-                return $data;
-            });
     }
 
     public static function table(Table $table): Table
