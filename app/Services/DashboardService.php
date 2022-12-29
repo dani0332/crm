@@ -135,7 +135,7 @@ class DashboardService extends BaseService
         if (isset($advisorId)) {
             $query->where('car_quote_request.advisor_id', $advisorId);
         }
-
+        info('advisor conversion query : '. $query->toSql());
         return $query->get();
     }
 
@@ -146,13 +146,13 @@ class DashboardService extends BaseService
             DB::raw('COUNT(car_quote_request.id) AS total_leads'),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
+        ->join('user_team', 'user_team.user_id', 'users.id')
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
         if (isset($teamIds)) {
-            $userIds = $this->getUsersByTeamIds($teamIds)->pluck('user_id');
-            $query->whereIn('users.id', $userIds);
+            $query->whereIn('user_team.team_id', $teamIds);
         }
-
+        info('lead assigned query : '. $query->toSql());
         return $query->get();
     }
 
