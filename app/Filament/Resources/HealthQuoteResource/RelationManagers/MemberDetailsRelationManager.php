@@ -12,13 +12,14 @@ use Filament\Tables\Actions\CreateAction;
 
 class MemberDetailsRelationManager extends RelationManager
 {
-    protected static string $relationship = 'memberDetails';
-    // protected static ?string $recordTitleAttribute = 'name';
+    protected static string $relationship = 'members';
+    protected static ?string $title = 'Member Details';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
+                Forms\Components\Hidden::make('health_quote_request_id'),
                 Forms\Components\Select::make('gender')
                     ->options([
                         'M' => GenericRequestEnum::MALE_SINGLE,
@@ -26,15 +27,25 @@ class MemberDetailsRelationManager extends RelationManager
                         'FM' => GenericRequestEnum::FEMALE_MARRIED,
                     ]),
                 Forms\Components\DatePicker::make('dob'),
-                Forms\Components\Select::make('memberCategory.id')
+                Forms\Components\Select::make('nationality_id')
+                    ->searchable()
+                    ->options(function () {
+                        return \App\Models\Nationality::all()->pluck('text', 'id');
+                    }),
+                Forms\Components\Select::make('emirate_of_your_visa_id')
+                    ->options(function () {
+                        return \App\Models\Emirate::all()->pluck('text', 'id');
+                    }),
+                Forms\Components\Select::make('member_category_id')
                     ->label('Relationship')
                     ->options(function () {
                         return \App\Models\MemberCategory::all()->pluck('text', 'id');
                     }),
+
             ]);
         CreateAction::make()
             ->mutateFormDataUsing(function (array $data): array {
-                $data['health_quote_request_id'] = auth()->id();
+                $data['health_quote_request_id'] = $this->record->id;
 
                 return $data;
             });
@@ -54,9 +65,9 @@ class MemberDetailsRelationManager extends RelationManager
                         'FM' => GenericRequestEnum::FEMALE_MARRIED,
                     ]),
                 Tables\Columns\TextColumn::make('dob')->date(),
-                Tables\Columns\TextColumn::make('memberCategory.text')->label('Relationship'),
                 Tables\Columns\TextColumn::make('nationality.text')->label('Nationality'),
                 Tables\Columns\TextColumn::make('emirate.text')->label('Emirate of Visa'),
+                Tables\Columns\TextColumn::make('memberCategory.text')->label('Relationship'),
             ])
             ->filters([
                 //
