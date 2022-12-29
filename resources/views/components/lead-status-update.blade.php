@@ -61,9 +61,10 @@ use App\Enums\QuoteTypeId;
             next_followup_date_visibility(lead_status_code);
         });
 
-        var quoteTypeId = <?php echo $quoteTypeId; ?>;
-        var quoteTypeCar = <?php echo QuoteTypeId::Car; ?>;
-        var hasRoles = <?php echo auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin]); ?>;
+        var quoteTypeId = '{{ $quoteTypeId }}';
+        var quoteTypeCar = '{{ QuoteTypeId::Car }}';
+        var isLeadPoolRole = '{{ auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin]) }}';
+        var isPaRole = '{{ auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::Admin]) }}';
         if (quoteTypeId == quoteTypeCar) {
             // Car Quote: display calendar on next_followup_date
             $('#next_followup_date').daterangepicker({
@@ -74,10 +75,13 @@ use App\Enums\QuoteTypeId;
                     format: 'YYYY-MM-DD HH:mm:ss',
                 },
             });
-            // Car Quote: lock lead status options (Fake, Duplicate) conditionally
-            if (!hasRoles) {
-                $("#leadStatus option[value='9']").hide();
-                $("#leadStatus option[value='35']").hide();
+            // Car Quote: conditionally hide lead_status options
+            if (!isLeadPoolRole) {
+                $("#leadStatus option[value='9']").hide(); // Fake
+                $("#leadStatus option[value='35']").hide(); // Duplicate
+            }
+            if (!isPaRole) {
+                $("#leadStatus option[value='15']").hide(); // Transaction Approved
             }
             // Car Quote: on page load hideshow next_followup_date conditionally
             var lead_status_code = $('#leadStatus option:selected').val();
