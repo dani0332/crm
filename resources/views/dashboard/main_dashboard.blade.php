@@ -388,7 +388,7 @@
         });
         $('#advisor-filter').on('change', function (e) {
             var advisorFitlerValue = $('#advisor-filter').val();
-
+            advisorConversionChart.showLoading();
             $.ajax({
                 url: "/get-advisor-conversion-stats",
                 type: "post",
@@ -414,14 +414,17 @@
                             createAdvisorConversionChart([{name: '', y: 0}]);
                         }
                     }
+                    advisorConversionChart.hideLoading();
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
+                    advisorConversionChart.hideLoading();
                     console.log(textStatus, errorThrown);
                 }
             });
         });
         $('#team-filter').on('change', function (e) {
             var teamFilteValue = $('#team-filter').val();
+            leadAssignCountByAdvisorChart.showLoading();
             $.ajax({
                 url: "/get-team-conversion-stats",
                 type: "post",
@@ -444,8 +447,10 @@
                             createLeadAssignCountSummaryByAdvisorChart([{name: '', y: 0}]);
                         }
                     }
+                    leadAssignCountByAdvisorChart.hideLoading();
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
+                    leadAssignCountByAdvisorChart.hideLoading();
                     console.log(textStatus, errorThrown);
                 }
             });

@@ -71,6 +71,7 @@
             var tierFilterValue = $('#tier-filter').val();
             var userFilterValue = $('#userFilter option:selected').val();
             var teamFilterValue = $('#team-filter').val();
+            comprehensiveDashboardStatChart.showLoading();
             $.ajax({
                 url: "/get-comp-filter-stats",
                 type: "post",
@@ -97,8 +98,10 @@
                             ]);
                         }
                     }
+                    comprehensiveDashboardStatChart.hideLoading();
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
+                    comprehensiveDashboardStatChart.hideLoading();
                     console.log(textStatus, errorThrown);
                 }
             });

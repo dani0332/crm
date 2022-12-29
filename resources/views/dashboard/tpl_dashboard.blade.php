@@ -70,6 +70,7 @@
             var tierFilterValue = $('#tier-filter').val();
             var sourceFilterValue = $('#source-filter option:selected').val();
             var teamFilterValue = $('#team-filter').val();
+            tplDashboardStatsBarChart.showLoading();
             $.ajax({
                 url: "/get-tpl-filter-stats",
                 type: "post",
@@ -96,8 +97,10 @@
                             ]);
                         }
                     }
+                    tplDashboardStatsBarChart.hideLoading();
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
+                    tplDashboardStatsBarChart.hideLoading();
                     console.log(textStatus, errorThrown);
                 }
             });
