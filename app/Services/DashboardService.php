@@ -135,6 +135,7 @@ class DashboardService extends BaseService
         if (isset($advisorId)) {
             $query->where('car_quote_request.advisor_id', $advisorId);
         }
+
         return $query->get();
     }
 
