@@ -68,7 +68,7 @@ class HealthQuoteResource extends Resource
                             ->label('Is EBP Renewal'),
                         Forms\Components\TextInput::make('device'),
                     ])
-                    ->hiddenOn('create'),
+                    ->visibleOn('view'),
                 Fieldset::make('Customer Profile')
                     ->schema([
                         Forms\Components\TextInput::make('first_name')
@@ -143,8 +143,7 @@ class HealthQuoteResource extends Resource
                         Forms\Components\Textarea::make('details')
                             ->maxLength(1000)
                             ->rows(2),
-                    ])
-                    ->hiddenOn('create'),
+                    ]),
                 Fieldset::make("Last Year's Policy Details")
                     ->schema([
                         Forms\Components\TextInput::make('previous_quote_policy_number')
@@ -152,7 +151,7 @@ class HealthQuoteResource extends Resource
                         Forms\Components\DatePicker::make('previous_policy_expiry_date'),
                         Forms\Components\TextInput::make('previous_quote_policy_premium'),
                     ])
-                    ->hiddenOn('create'),
+                    ->visibleOn('view'),
                 Fieldset::make('Policy Details')
                     ->schema([
                         Forms\Components\TextInput::make('policy_number')
@@ -161,7 +160,7 @@ class HealthQuoteResource extends Resource
                         Forms\Components\DatePicker::make('policy_end_date'),
                         Forms\Components\Placeholder::make('transapp_code'),
                     ])
-                    ->hiddenOn('create'),
+                    ->visibleOn('view'),
             ]);
     }
 
