@@ -32,6 +32,7 @@ class HealthQuoteResource extends Resource
     protected static ?string $navigationGroup = 'Personal Quotes';
     protected static ?string $recordRouteKeyName = 'uuid';
     protected static ?string $recordTitleAttribute = 'code';
+    protected static bool $isGloballySearchable = false;
 
     public static function form(Form $form): Form
     {
@@ -190,7 +191,7 @@ class HealthQuoteResource extends Resource
                             ])->hiddenOn('create'),
                         Tabs\Tab::make('E-COM Details')
                             ->schema([
-                                // ...
+                               Forms\Components\TextInput::make('healthPlan.id'),
                             ])->hiddenOn(['create', 'edit']),
                         Tabs\Tab::make('Available Plans')
                             ->schema([
