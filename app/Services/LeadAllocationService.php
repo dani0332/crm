@@ -484,7 +484,7 @@ class LeadAllocationService extends BaseService
                     info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
                     $loginUsersRecords = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
-                    $loginUsersIds = $loginUsersRecords->pluck('id')->toArray();
+                    $loginUsersIds = $loginUsersRecords->pluck('id');
 
                     info('login and available users right now are '.$loginUsersIds);
                     $commonUserIds = $loginUsersIds;
@@ -500,7 +500,7 @@ class LeadAllocationService extends BaseService
                         }
                         info('Rule found and login users are '.json_encode($loginUsersIds));
                         info('Rule found and users against rule are '.json_encode($ruleUserIds));
-                        $commonUserIds = array_intersect($loginUsersIds, $ruleUserIds);
+                        $commonUserIds = array_intersect($loginUsersIds->toArray(), $ruleUserIds);
                         info('rules user intersection with login users is '.json_encode($commonUserIds));
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
