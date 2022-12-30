@@ -649,32 +649,7 @@ class LeadAllocationService extends BaseService
             info($tiers->toSql());
         }
         $tiers = $tiers->get();
-        // if ($carLead->car_type_insurance_id == 2) {
-        //     info('get Tier inside the can handle tpl filter');
-        //     $tiers = $tiers->filter(function ($value) {
-        //         return $value->can_handle_tpl == 1;
-        //     });
-        //     info('get Tier applying the ecommerce filter');
-        //     $tiers = $tiers->filter(function ($value) use ($carLead) {
-        //         return $value->can_handle_ecommerce == $carLead->is_ecommerce;
-        //     });
-        // }
-        // if ($carLead->car_value == null) {
-        //     info('get Tier inside the null value filter');
-        //     $tiers = $tiers->filter(function ($value) {
-        //         return $value->can_handle_null_value == 1;
-        //     });
-        // }
-        // if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
-        //     info('get Tier inside the car value filter');
-        //     $tiers = $tiers->filter(function ($value) use ($carLead) {
-        //         return $value->min_price <= $carLead->car_value && $value->max_price >= $carLead->car_value;
-        //     });
-        // }
-        // if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
-        //     info('get Tier inside the car value filter');
-        //     $tiers = $tiers->where('name', 'like', '%TR');
-        // }
+
         info('First tier after filtration is : '.json_encode($tiers->first()));
         if ($tiers != null) {
             return $tiers->first();
