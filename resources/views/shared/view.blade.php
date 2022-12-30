@@ -134,7 +134,12 @@ use App\Enums\PermissionsEnum;
             var allowedModelTypes = ['home', 'health', 'life', 'business', 'travel', 'car','pet'];
             var skipPropertiesArray = [];
             // Getting the skip properties based on loggedin user role
-            skipPropertiesArray = model.skipProperties['list'].split(',')
+            skipPropertiesArray = model.skipProperties['list'].split(',');
+
+            // MS: Hide source for car_advisor - part1
+            if(model.modelType == '{{ quoteTypeCode::Car }}' && '{{ Auth::user()->hasRole(RolesEnum::CarAdvisor) }}') {
+                skipPropertiesArray.push('source');
+            }
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
@@ -515,6 +520,11 @@ use App\Enums\PermissionsEnum;
                     @php
                     $searchProperties = $model->searchProperties;
                     $skipProperties = $model->skipProperties;
+
+                        // MS: Hide source for car_advisor - part2
+                        if($model->modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
+                            $skipProperties[] = 'source';
+                        }
                     @endphp
                     @if (count($searchProperties) > 0)
                     <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
@@ -801,7 +811,12 @@ use App\Enums\PermissionsEnum;
                                 <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
                                         name="checkAllTmLeads" value=""></th>
                                 @endif
-
+                                @if($model->modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarAdvisor))
+                                    @php
+                                        // MS: Hide source for car_advisor - part3
+                                        $skipProperties['list'] = $skipProperties['list'].',source'; 
+                                    @endphp
+                                @endif
                                 @foreach ($model->properties as $property => $value)
                                 @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
                                 @if ($property != 'id')
