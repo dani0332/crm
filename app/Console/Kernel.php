@@ -27,7 +27,6 @@ class Kernel extends ConsoleKernel
     {
         $schedule
             ->command('LeadAllocation:cron')
-            ->timezone('Asia/Dubai')
             ->everyMinute()
             ->onOneServer();
 
