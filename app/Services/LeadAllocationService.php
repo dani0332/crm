@@ -500,12 +500,12 @@ class LeadAllocationService extends BaseService
                         }
                         info('Rule found and login users are '.json_encode($loginUsersIds));
                         info('Rule found and users against rule are '.json_encode($ruleUserIds));
-                        $commonUserIds = array_intersect_assoc($loginUsersIds->toArray(), $ruleUserIds)->toArray();
+                        $commonUserIds = array_intersect_assoc($loginUsersIds->toArray(), $ruleUserIds);
                         info('rules user intersection with login users is '.json_encode($commonUserIds));
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
-                    if (! empty($commonUserIds) && is_array($commonUserIds)) {
+                    if (!empty($commonUserIds) && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
                     } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
@@ -571,7 +571,8 @@ class LeadAllocationService extends BaseService
         ->join('users', 'users.id', 'rule_lead_sources.user_id')
         ->where('lead_sources.name', $source)
         ->groupBy('rule_lead_sources.lead_source_id')
-        ->select('lead_sources.name AS leadSourceName', 'lead_sources.id AS leadSourceId', DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers'));
+        ->select('lead_sources.name AS leadSourceName', 'lead_sources.id AS leadSourceId',
+        DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers'));
 
         return $records->get();
     }
