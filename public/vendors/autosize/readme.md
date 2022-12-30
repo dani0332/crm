@@ -1,5 +1,6 @@
 ## Summary
 
+
 Autosize is a small, stand-alone script to automatically adjust textarea height to fit text.
 
 #### Demo
