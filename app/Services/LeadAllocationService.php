@@ -388,7 +388,7 @@ class LeadAllocationService extends BaseService
                             )->get();
         info('going to update the max cap for users : '.json_encode($users->pluck('id')));
         foreach ($users as $user) {
-            info('lead allocation record is about to update for user : '.$user->userEmail.'  with max_cap to '.str_contains($user->quads, '1') ? 4 : 5);
+            info('lead allocation record is about to update for user : '.$user->userEmail);
             $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
             if ($leadAllocationRecord) {
                 $leadAllocationRecord->max_capacity = str_contains($user->quads, '1') ? 4 : 5;
@@ -484,7 +484,7 @@ class LeadAllocationService extends BaseService
                     info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
                     $loginUsersRecords = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
-                    $loginUsersIds = $loginUsersRecords->pluck('id');
+                    $loginUsersIds = $loginUsersRecords->pluck('id')->toArray();
 
                     info('login and available users right now are '.$loginUsersIds);
                     $commonUserIds = $loginUsersIds;
@@ -500,7 +500,7 @@ class LeadAllocationService extends BaseService
                         }
                         info('Rule found and login users are '.json_encode($loginUsersIds));
                         info('Rule found and users against rule are '.json_encode($ruleUserIds));
-                        $commonUserIds = array_intersect_assoc($loginUsersIds->toArray(), $ruleUserIds);
+                        $commonUserIds = array_intersect($loginUsersIds, $ruleUserIds);
                         info('rules user intersection with login users is '.json_encode($commonUserIds));
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
@@ -562,7 +562,7 @@ class LeadAllocationService extends BaseService
             ->whereNull('tier_id')
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
-            ->skip(0)->take(1)->get();
+            ->skip(0)->take(20)->get();
     }
 
     public function getRulesByLeadSource($source)
@@ -651,7 +651,7 @@ class LeadAllocationService extends BaseService
         }
         $tiers = $tiers->get();
 
-        info('First tier after filtration is : '.json_encode($tiers->first()));
+        info('First tier after filtration is : '.json_encode($tiers->first()->name));
         if ($tiers != null) {
             return $tiers->first();
         }
