@@ -58,7 +58,6 @@ class LeadAllocationJob implements ShouldQueue
 
                 return;
             } else {
-
                 $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();
                 if (count($unAllocatedLeads) > 0) {
                     $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];

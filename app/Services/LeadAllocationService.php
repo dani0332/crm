@@ -50,19 +50,19 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.is_available',
                 'lead_allocation.last_allocated',
                 'st.name as teamName',
-                'u.name as userName'
-              ])
+                'u.name as userName',
+            ])
               ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
               ->leftJoin('teams as t', 'u.team_id', '=', 't.id')
               ->leftJoin('teams as st', 'st.id', '=', 'u.sub_team_id')
               ->whereNotNull('u.sub_team_id')
               ->where('t.name', '=', quoteTypeCode::Health);
 
-              if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $query = $query->where('u.manager_id', auth()->user()->id);
-              }
+            }
 
-              return $query->get();
+            return $query->get();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -526,12 +526,12 @@ class LeadAllocationService extends BaseService
                     if (! $commonUserIds && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
-                    } else if (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
+                    } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
                         info('inside common object');
                         $userId = $commonUserIds->first();
-                    }else {
+                    } else {
                         info('inside common else');
-                        info('inside common else'. gettype($commonUserIds));
+                        info('inside common else'.gettype($commonUserIds));
                     }
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
