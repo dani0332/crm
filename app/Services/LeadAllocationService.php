@@ -505,10 +505,10 @@ class LeadAllocationService extends BaseService
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
-                    if (!$commonUserIds && is_array($commonUserIds)) {
+                    if (! $commonUserIds && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
-                    } else if (gettype($commonUserIds) == 'object' && !empty($commonUserIds)) {
+                    } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
                         info('inside common object');
                         $userId = $commonUserIds->first();
                     }
