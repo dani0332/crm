@@ -478,10 +478,10 @@ class LeadAllocationService extends BaseService
 
                     continue;
                 }
-                info('trying to check tier against the current lead : '.$carLead->uuid);
+                info('trying to check tier against the current lead : '.$carLead->code);
                 $selectedTier = $this->getTierForValue($carLead);
                 if ($selectedTier) {
-                    info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->uuid);
+                    info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
                     $loginUsersRecords = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
                     $loginUsersIds = $loginUsersRecords->pluck('id');
@@ -505,10 +505,10 @@ class LeadAllocationService extends BaseService
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
-                    if (! empty($commonUserIds) && is_array($commonUserIds)) {
+                    if (!$commonUserIds && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
-                    } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
+                    } else if (gettype($commonUserIds) == 'object' && !empty($commonUserIds)) {
                         info('inside common object');
                         $userId = $commonUserIds->first();
                     }
@@ -529,7 +529,7 @@ class LeadAllocationService extends BaseService
                         $leadAllocation->last_allocated = Carbon::now()->timestamp;
                         $leadAllocation->updated_at = now();
                         $leadAllocation->save();
-                        info('completed assignment of lead and lead count update is done for quote uuid : '.$carQuote->uuid.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
+                        info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
                     }
                 }
             }
@@ -622,7 +622,7 @@ class LeadAllocationService extends BaseService
 
     public function getTierForValue($carLead)
     {
-        info('Started searching tier for car lead : '.json_encode($carLead));
+        info('Started searching tier for car lead : '.json_encode($carLead->code));
         $tiers = Tier::where('is_active', 1);
         if ($carLead->car_type_insurance_id == 2) {
             info('adding tpl check');
