@@ -10,8 +10,10 @@ use App\Filament\Resources\HealthQuoteResource\RelationManagers\MemberDetailsRel
 use App\Models\HealthQuote;
 use App\Models\QuoteStatus;
 use App\Models\User;
+use App\Services\HealthQuoteService;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Tabs;
 use Filament\Resources\Form;
 use Filament\Resources\Resource;
@@ -22,6 +24,7 @@ use Filament\Tables\Filters\Layout;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
@@ -190,13 +193,11 @@ class HealthQuoteResource extends Resource
                                 Forms\Components\Textarea::make('notes'),
                             ])->hiddenOn('create'),
                         Tabs\Tab::make('E-COM Details')
-                            ->schema([
-                               Forms\Components\TextInput::make('healthPlan.id'),
-                            ])->hiddenOn(['create', 'edit']),
+                            ->schema([])->hiddenOn(['create', 'edit']),
                         Tabs\Tab::make('Available Plans')
-                            ->schema([
-                                // ...
-                            ])->hiddenOn(['create', 'edit']),
+                            ->schema(function (?Model $record) {
+                                return static::getPlansSchema($record->uuid ?? null);
+                            })->hiddenOn(['create', 'edit']),
                         Tabs\Tab::make('Lead History')
                             ->schema([
                                 // ...
@@ -332,7 +333,7 @@ class HealthQuoteResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\EditAction::make()->openUrlInNewTab(),
                 ]),
             ])
             ->bulkActions([
@@ -355,5 +356,40 @@ class HealthQuoteResource extends Resource
             'view' => Pages\ViewHealthQuote::route('/{record:uuid}'),
             'edit' => Pages\EditHealthQuote::route('/{record:uuid}/edit'),
         ];
+    }
+
+    public static function getPlansSchema($uuid): array
+    {
+        $listQuotePlans = '';
+        $quotePlans = app(HealthQuoteService::class)->getQuotePlansNew($uuid);
+        if (isset($quotePlans->message) && $quotePlans->message != '') {
+            $listQuotePlans = $quotePlans->message;
+        } else {
+            if (gettype($quotePlans) != 'string') {
+                $listQuotePlans = $quotePlans->quote->plans;
+            } else {
+                $listQuotePlans = $quotePlans;
+            }
+        }
+
+        $fieldsArray = [];
+
+        if (gettype($listQuotePlans) != 'string') {
+            foreach ($listQuotePlans as $key => $quotePlan) {
+                $fieldsArray = array_merge([
+                    Section::make(ucwords($quotePlan->providerName))
+                        ->schema([
+                            Forms\Components\Placeholder::make('Plan Name')->content(ucwords($quotePlan->name)),
+                            Forms\Components\Placeholder::make('Actual Premium With Basmah')->content($quotePlan->actualPremium + $quotePlan->basmah),
+                            Forms\Components\Placeholder::make('Premium With Vat And Basmah')->content($quotePlan->actualPremium + $quotePlan->vat + $quotePlan->basmah),
+                        ])
+                        ->columns(4)
+                        ->compact(),
+
+                ], $fieldsArray);
+            }
+        }
+
+        return $fieldsArray;
     }
 }
