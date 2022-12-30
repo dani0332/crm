@@ -41,6 +41,12 @@ class LeadAllocationJob implements ShouldQueue
             Log::info('Lead Allocation Job Started');
             $leadAllocationService->setAdvisorsToUnavailable();
             $leadAllocationService->setMaxCapAndAllocationStatus();
+            $availableUsers = $leadAllocationService->getAvailableAdvisors();
+            $availableUsersString = '';
+            $availableUsers->each(function ($user) use (&$availableUsersString) {
+                $availableUsersString .= $user->name.'|'.$user->last_allocated.',';
+            });
+            info('availableUsers: '.$availableUsersString);
             if (! $leadAllocationService->carLeadAllocationSwitchStatus()) {
                 info('CAR Lead Allocation Job Switch is OFF');
             } else {
@@ -52,15 +58,10 @@ class LeadAllocationJob implements ShouldQueue
 
                 return;
             } else {
+
                 $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();
                 if (count($unAllocatedLeads) > 0) {
-                    $availableUsers = $leadAllocationService->getAvailableAdvisors();
                     $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];
-                    $availableUsersString = '';
-                    $availableUsers->each(function ($user) use (&$availableUsersString) {
-                        $availableUsersString .= $user->name.'|'.$user->last_allocated.',';
-                    });
-                    info('availableUsers: '.$availableUsersString);
                     foreach ($healthTeams as $healthTeam) {
                         info('Health Lead Allocation Started for health team: '.$healthTeam);
                         $filteredLeadsByHealthTeam = $unAllocatedLeads->filter(function ($lead) use ($healthTeam) {

@@ -42,17 +42,27 @@ class LeadAllocationService extends BaseService
     public function getGridData()
     {
         try {
-            $userAgainstManagerWithDetail = LeadAllocation::select('lead_allocation.id as id', 'lead_allocation.user_id as userId', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.is_available', 'lead_allocation.last_allocated', 'st.name as teamName', 'u.name as userName')
-                ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                ->leftjoin('teams as t', 'u.team_id', '=', 't.id')
-                ->leftjoin('teams as st', 'st.id', '=', 'u.sub_team_id')
-                ->whereNotNull('u.sub_team_id')
-                ->where(strtolower('t.name'), '=', strtolower(quoteTypeCode::Health));
-            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $userAgainstManagerWithDetail = $userAgainstManagerWithDetail->where('u.manager_id', auth()->user()->id);
-            }
+            $query = LeadAllocation::select([
+                'lead_allocation.id as id',
+                'lead_allocation.user_id as userId',
+                'lead_allocation.allocation_count',
+                'lead_allocation.max_capacity',
+                'lead_allocation.is_available',
+                'lead_allocation.last_allocated',
+                'st.name as teamName',
+                'u.name as userName'
+              ])
+              ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
+              ->leftJoin('teams as t', 'u.team_id', '=', 't.id')
+              ->leftJoin('teams as st', 'st.id', '=', 'u.sub_team_id')
+              ->whereNotNull('u.sub_team_id')
+              ->where('t.name', '=', quoteTypeCode::Health);
 
-            return $userAgainstManagerWithDetail->get();
+              if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+                $query = $query->where('u.manager_id', auth()->user()->id);
+              }
+
+              return $query->get();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -442,15 +452,23 @@ class LeadAllocationService extends BaseService
     public function getAvailableAdvisors()
     {
         try {
-            $availableAdvisors = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                                            ->join('teams as t', 't.id', '=', 'u.sub_team_id')
-                                            ->where('lead_allocation.is_available', 1)
-                                            ->where(function ($query) {
-                                                $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
-                                                    ->orWhere('lead_allocation.max_capacity', '=', -1);
-                                            })
-                                            ->orderBy('lead_allocation.last_allocated', 'asc')
-                                            ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.last_allocated');
+            $availableAdvisors = DB::table('lead_allocation as la')
+                                ->join('users as u', 'u.id', '=', 'la.user_id')
+                                ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
+                                ->join('teams as t', function ($join) {
+                                    $join->on('t.id', '=', 'ut.team_id')
+                                        ->whereIn('ut.team_id', function ($query) {
+                                            $query->select('id')->from('teams');
+                                        });
+                                })
+                                ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'la.allocation_count', 'la.max_capacity', 'la.last_allocated', 'u.logout_at')
+                                ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+                                ->where('la.is_available', 1)
+                                ->where(function ($query) {
+                                    $query->where('la.allocation_count', '<', 'la.max_capacity')
+                                        ->orWhere('la.max_capacity', -1);
+                                })
+                                ->orderBy('la.last_allocated', 'desc');
 
             return $availableAdvisors->get();
         } catch (\Exception $e) {
@@ -508,9 +526,12 @@ class LeadAllocationService extends BaseService
                     if (! $commonUserIds && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
-                    } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
+                    } else if (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
                         info('inside common object');
                         $userId = $commonUserIds->first();
+                    }else {
+                        info('inside common else');
+                        info('inside common else'. gettype($commonUserIds));
                     }
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
