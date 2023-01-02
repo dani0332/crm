@@ -503,7 +503,7 @@ class LeadAllocationService extends BaseService
 
                     $loginUsersIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
 
-                    info('login and available users right now are '. json_encode($loginUsersIds));
+                    info('login and available users right now are '.json_encode($loginUsersIds));
                     $commonUserIds = $loginUsersIds;
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
@@ -684,7 +684,7 @@ class LeadAllocationService extends BaseService
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
         info('Going to search users which are logged in after '.Carbon::now()->addDays(-1)->endOfDay());
-        $users = DB::raw("
+        $users = DB::raw('
         select
                 u.id, u.name, u.email, u.sub_team_id, t.name as sub_team_name, la.allocation_count,
                 la.max_capacity, la.last_allocated
@@ -697,7 +697,7 @@ class LeadAllocationService extends BaseService
                 u.last_login > DATE_ADD(CURDATE(), INTERVAL 1 SECOND)
                 and la.is_available = 1
                 and (la.allocation_count < la.max_capacity or la.max_capacity = -1)
-                order by la.last_allocated desc");
+                order by la.last_allocated desc');
 
         return $users;
     }
