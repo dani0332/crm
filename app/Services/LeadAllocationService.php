@@ -522,9 +522,6 @@ class LeadAllocationService extends BaseService
                     } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
                         info('inside common object');
                         $userId = $commonUserIds->first();
-                    } else {
-                        info('inside common else');
-                        info('inside common else'.gettype($commonUserIds));
                     }
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
