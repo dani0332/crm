@@ -523,7 +523,7 @@ class LeadAllocationService extends BaseService
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
-                    if (!$commonUserIds && is_array($commonUserIds)) {
+                    if (! $commonUserIds && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
                     } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
@@ -684,17 +684,17 @@ class LeadAllocationService extends BaseService
     {
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
-        info('Going to search users which are logged in after '. Carbon::now()->addDays(-1)->endOfDay());
+        info('Going to search users which are logged in after '.Carbon::now()->addDays(-1)->endOfDay());
         $query = DB::table('lead_allocation as la')
                 ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'la.allocation_count', 'la.max_capacity', 'la.last_allocated', 'u.logout_at')
                 ->join('users as u', 'u.id', '=', 'la.user_id')
                 ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
-                ->join('teams as t', function($join) {
+                ->join('teams as t', function ($join) {
                     $join->on('t.id', 'in', DB::raw('(ut.team_id)'));
                 })
                 ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
                 ->where('la.is_available', 1)
-                ->where(function($query) {
+                ->where(function ($query) {
                     $query->where('la.allocation_count', '<', 'la.max_capacity')
                         ->orWhere('la.max_capacity', -1);
                 })
