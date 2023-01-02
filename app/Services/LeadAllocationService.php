@@ -539,7 +539,16 @@ class LeadAllocationService extends BaseService
                         $leadAllocation->save();
                         info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
                     } else {
-                        info('userId : '.$userId);
+                        info('login users not found for selected lead so will try to assign only tier');
+                        $carQuote = CarQuote::where('id', $carLead->id)->first();
+                        if($carQuote->tier_id != '' && $carQuote->tier_id != null)
+                        {
+                            $carQuote->tier_id = $selectedTier->id;
+                            $carQuote->save();
+                            info('Tier with name : '. $selectedTier->name . ' and id : '. $selectedTier->id . ' is assigned to car lead with uuid : '. $carQuote->uuid);
+                        }else{
+                            info('Tier ('. $carQuote->tier_id .')is already assigned against car lead with uuid : '. $carQuote->uuid);
+                        }
                     }
                 }
             }
@@ -569,7 +578,6 @@ class LeadAllocationService extends BaseService
 
         return CarQuote::whereNull('advisor_id')
             ->whereBetween('created_at', [$from, $to])
-            ->whereNull('tier_id')
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
             ->skip(0)->take(20)->get();
