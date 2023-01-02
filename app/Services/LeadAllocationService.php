@@ -452,23 +452,15 @@ class LeadAllocationService extends BaseService
     public function getAvailableAdvisors()
     {
         try {
-            $availableAdvisors = DB::table('lead_allocation as la')
-                                ->join('users as u', 'u.id', '=', 'la.user_id')
-                                ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
-                                ->join('teams as t', function ($join) {
-                                    $join->on('t.id', '=', 'ut.team_id')
-                                        ->whereIn('ut.team_id', function ($query) {
-                                            $query->select('id')->from('teams');
-                                        });
-                                })
-                                ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'la.allocation_count', 'la.max_capacity', 'la.last_allocated', 'u.logout_at')
-                                ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                                ->where('la.is_available', 1)
-                                ->where(function ($query) {
-                                    $query->where('la.allocation_count', '<', 'la.max_capacity')
-                                        ->orWhere('la.max_capacity', -1);
-                                })
-                                ->orderBy('la.last_allocated', 'desc');
+            $availableAdvisors = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
+            ->join('teams as t', 't.id', '=', 'u.sub_team_id')
+            ->where('lead_allocation.is_available', 1)
+            ->where(function ($query) {
+                $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
+                    ->orWhere('lead_allocation.max_capacity', '=', -1);
+            })
+            ->orderBy('lead_allocation.last_allocated', 'asc')
+            ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.last_allocated');
 
             return $availableAdvisors->get();
         } catch (\Exception $e) {
@@ -523,10 +515,10 @@ class LeadAllocationService extends BaseService
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
-                    if (! $commonUserIds && is_array($commonUserIds)) {
+                    if (!$commonUserIds && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
-                    } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
+                    } elseif (gettype($commonUserIds) == 'object' && !empty($commonUserIds)) {
                         info('inside common object');
                         $userId = $commonUserIds->first();
                     } else {
@@ -685,24 +677,23 @@ class LeadAllocationService extends BaseService
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
         info('Going to search users which are loggedin after '.Carbon::now()->addDays(-1)->endOfDay());
-        $query = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-        ->join('teams as t ', 't.id', 'u.team_id')
-        ->where('lead_allocation.is_available', 1)
-        ->where(function ($query) {
-            $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
-                ->orWhere('lead_allocation.max_capacity', '=', -1);
+        $query =  DB::table('lead_allocation as la')
+        ->join('users as u', 'u.id', '=', 'la.user_id')
+        ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
+        ->join('teams as t', function ($join) {
+            $join->on('t.id', '=', 'ut.team_id')
+                ->whereIn('ut.team_id', function ($query) {
+                    $query->select('id')->from('teams');
+                });
         })
-        ->where('u.last_login', '>', Carbon::now()->startOfDay())
-        ->whereIn('u.id', $tierUsers)
-        ->select(
-            'u.id',
-            'u.name',
-            'u.email',
-            'lead_allocation.allocation_count',
-            'lead_allocation.max_capacity',
-            'lead_allocation.last_allocated'
-        )
-        ->orderBy('lead_allocation.last_allocated', 'asc');
+        ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'la.allocation_count', 'la.max_capacity', 'la.last_allocated', 'u.logout_at')
+        ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+        ->where('la.is_available', 1)
+        ->where(function ($query) {
+            $query->where('la.allocation_count', '<', 'la.max_capacity')
+                ->orWhere('la.max_capacity', -1);
+        })
+        ->orderBy('la.last_allocated', 'desc');
 
         return $query->get();
     }
