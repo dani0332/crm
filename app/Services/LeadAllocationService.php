@@ -501,10 +501,9 @@ class LeadAllocationService extends BaseService
                 if ($selectedTier) {
                     info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
-                    $loginUsersRecords = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
-                    $loginUsersIds = $loginUsersRecords->pluck('id');
+                    $loginUsersIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
 
-                    info('login and available users right now are '.$loginUsersIds);
+                    info('login and available users right now are '. json_encode($loginUsersIds));
                     $commonUserIds = $loginUsersIds;
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
@@ -685,22 +684,22 @@ class LeadAllocationService extends BaseService
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
         info('Going to search users which are logged in after '.Carbon::now()->addDays(-1)->endOfDay());
-        $query = DB::table('lead_allocation as la')
-                ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'la.allocation_count', 'la.max_capacity', 'la.last_allocated', 'u.logout_at')
-                ->join('users as u', 'u.id', '=', 'la.user_id')
-                ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
-                ->join('teams as t', function ($join) {
-                    $join->on('t.id', 'in', DB::raw('(ut.team_id)'));
-                })
-                ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                ->where('la.is_available', 1)
-                ->where(function ($query) {
-                    $query->where('la.allocation_count', '<', 'la.max_capacity')
-                        ->orWhere('la.max_capacity', -1);
-                })
-                ->orderBy('la.last_allocated', 'desc');
+        $users = DB::raw("
+        select
+                u.id, u.name, u.email, u.sub_team_id, t.name as sub_team_name, la.allocation_count,
+                la.max_capacity, la.last_allocated
+                ,u.logout_at
+                from lead_allocation la
+                inner join users u on u.id = la.user_id
+                inner join user_team ut on ut.user_id = u.id
+                inner join teams t on t.id in (ut.team_id)
+                where
+                u.last_login > DATE_ADD(CURDATE(), INTERVAL 1 SECOND)
+                and la.is_available = 1
+                and (la.allocation_count < la.max_capacity or la.max_capacity = -1)
+                order by la.last_allocated desc");
 
-        return $query->get();
+        return $users;
     }
 
     public function getAppStorageValueByKey($keyName)
