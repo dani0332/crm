@@ -94,6 +94,6 @@ class HealthQuote extends Model implements AuditableContract
 
     public function avaialblePlans()
     {
-        return $this->hasOne(HealthQuotePlan::class, 'health_quote_request_id');
+        return $this->hasMany(HealthAvailablePlan::class, 'health_quote_request_id');
     }
 }
