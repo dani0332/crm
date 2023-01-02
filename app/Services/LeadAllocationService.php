@@ -523,7 +523,7 @@ class LeadAllocationService extends BaseService
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
-                    if (!$commonUserIds && is_array($commonUserIds)) {
+                    if (! $commonUserIds && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
                     } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
@@ -684,7 +684,7 @@ class LeadAllocationService extends BaseService
     {
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
-        info('Going to search users which are loggedin after '. Carbon::now()->addDays(-1)->endOfDay());
+        info('Going to search users which are loggedin after '.Carbon::now()->addDays(-1)->endOfDay());
         $query = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
         ->where('lead_allocation.is_available', 1)
         ->where(function ($query) {
