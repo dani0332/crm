@@ -687,6 +687,7 @@ class LeadAllocationService extends BaseService
         })
         ->whereIn('u.id', $tierUsers)
         ->orderBy('lead_allocation.last_allocated', 'desc');
+
         return $query->get();
     }
 
