@@ -479,7 +479,7 @@ class LeadAllocationService extends BaseService
                     info('car lead allocation sending renewal email for uuid : '.$carLead->uuid);
                     if (! $carLead->is_renewal_tier_email_sent) {
                         $this->sendRenewalLeadEmail($carLead);
-                        $tierTR = Tier::where('name', 'TR')->first();
+                        $tierTR = Tier::where('name', 'Tier R')->first();
                         if (isset($tierTR)) {
                             $carLead->tier_id = $tierTR->id;
                             $carLead->save();
@@ -516,15 +516,10 @@ class LeadAllocationService extends BaseService
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
                     if (count($commonUserIds) != 0) {
-                        info('0.0');
                         $userId = reset($commonUserIds);
-                        info('0.01');
                         info('inside common array , userId is : '.json_encode($userId));
-                    } else {
-                        info('1');
                     }
                     if ($userId) {
-                        info('2');
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
                         $carQuote->advisor_id = $userId;
@@ -543,7 +538,6 @@ class LeadAllocationService extends BaseService
                         $leadAllocation->save();
                         info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
                     } else {
-                        info('3');
                         info('login users not found for selected lead so will try to assign only tier');
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
                         if ($carQuote->tier_id == null) {
@@ -554,7 +548,6 @@ class LeadAllocationService extends BaseService
                             info('Tier ('.$selectedTier->tier_id.')is already assigned against car lead with uuid : '.$carQuote->uuid);
                         }
                     }
-                    info('4');
                 }
             }
         } catch (\Exception $e) {
@@ -580,10 +573,11 @@ class LeadAllocationService extends BaseService
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
 
         return CarQuote::whereNull('advisor_id')
+            ->where('is_renewal_tier_email_sent', 0)
             ->whereBetween('created_at', [$from, $to])
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
-            ->skip(0)->take(20)->get();
+            ->skip(0)->take(30)->get();
     }
 
     public function getRulesByLeadSource($source)
@@ -635,7 +629,7 @@ class LeadAllocationService extends BaseService
         $templateId = (int) $this->getAppStorageValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
         $tag = config('constants.APP_ENV').' - motor allocation renewal';
         $this->sendEmailUsingSIB($templateId, $emailData, $tag, $renewalEmailRecipients);
-        info('Sending email done, going to work on car quote update for lead id : '.$lead->id);
+        info('Sending email done, going to work on car quote update for lead id : '. $lead->id);
         CarQuote::where('id', $lead->id)->update([
             'is_renewal_tier_email_sent' => 1,
         ]);
