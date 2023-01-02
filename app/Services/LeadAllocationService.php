@@ -541,13 +541,12 @@ class LeadAllocationService extends BaseService
                     } else {
                         info('login users not found for selected lead so will try to assign only tier');
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
-                        if($carQuote->tier_id != '' && $carQuote->tier_id != null)
-                        {
+                        if ($carQuote->tier_id != '' && $carQuote->tier_id != null) {
                             $carQuote->tier_id = $selectedTier->id;
                             $carQuote->save();
-                            info('Tier with name : '. $selectedTier->name . ' and id : '. $selectedTier->id . ' is assigned to car lead with uuid : '. $carQuote->uuid);
-                        }else{
-                            info('Tier ('. $carQuote->tier_id .')is already assigned against car lead with uuid : '. $carQuote->uuid);
+                            info('Tier with name : '.$selectedTier->name.' and id : '.$selectedTier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
+                        } else {
+                            info('Tier ('.$carQuote->tier_id.')is already assigned against car lead with uuid : '.$carQuote->uuid);
                         }
                     }
                 }
