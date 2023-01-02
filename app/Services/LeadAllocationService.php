@@ -629,7 +629,7 @@ class LeadAllocationService extends BaseService
         $templateId = (int) $this->getAppStorageValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
         $tag = config('constants.APP_ENV').' - motor allocation renewal';
         $this->sendEmailUsingSIB($templateId, $emailData, $tag, $renewalEmailRecipients);
-        info('Sending email done, going to work on car quote update for lead id : '. $lead->id);
+        info('Sending email done, going to work on car quote update for lead id : '.$lead->id);
         CarQuote::where('id', $lead->id)->update([
             'is_renewal_tier_email_sent' => 1,
         ]);
