@@ -501,9 +501,10 @@ class LeadAllocationService extends BaseService
                 if ($selectedTier) {
                     info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
-                    $loginUsersIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
+                    $loginUsersRecords = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
+                    $loginUsersIds = $loginUsersRecords->pluck('id');
 
-                    info('login and available users right now are '.json_encode($loginUsersIds));
+                    info('login and available users right now are '.$loginUsersIds);
                     $commonUserIds = $loginUsersIds;
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
@@ -522,7 +523,7 @@ class LeadAllocationService extends BaseService
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
-                    if (! $commonUserIds && is_array($commonUserIds)) {
+                    if (!$commonUserIds && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
                     } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
@@ -683,23 +684,26 @@ class LeadAllocationService extends BaseService
     {
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
-        info('Going to search users which are logged in after '.Carbon::now()->addDays(-1)->endOfDay());
-        $users = DB::raw('
-        select
-                u.id, u.name, u.email, u.sub_team_id, t.name as sub_team_name, la.allocation_count,
-                la.max_capacity, la.last_allocated
-                ,u.logout_at
-                from lead_allocation la
-                inner join users u on u.id = la.user_id
-                inner join user_team ut on ut.user_id = u.id
-                inner join teams t on t.id in (ut.team_id)
-                where
-                u.last_login > DATE_ADD(CURDATE(), INTERVAL 1 SECOND)
-                and la.is_available = 1
-                and (la.allocation_count < la.max_capacity or la.max_capacity = -1)
-                order by la.last_allocated desc');
+        info('Going to search users which are loggedin after '. Carbon::now()->addDays(-1)->endOfDay());
+        $query = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
+        ->where('lead_allocation.is_available', 1)
+        ->where(function ($query) {
+            $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
+                ->orWhere('lead_allocation.max_capacity', '=', -1);
+        })
+        ->where('u.last_login', '>', Carbon::now()->addDays(-1)->endOfDay())
+        ->whereIn('u.id', $tierUsers)
+        ->select(
+            'u.id',
+            'u.name',
+            'u.email',
+            'lead_allocation.allocation_count',
+            'lead_allocation.max_capacity',
+            'lead_allocation.last_allocated'
+        )
+        ->orderBy('lead_allocation.last_allocated', 'asc');
 
-        return $users;
+        return $query->get();
     }
 
     public function getAppStorageValueByKey($keyName)
