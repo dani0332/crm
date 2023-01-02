@@ -484,7 +484,7 @@ class LeadAllocationService extends BaseService
                             $carLead->tier_id = $tierTR->id;
                             $carLead->save();
                         }
-                        info('Renewal Email sent for quote : '. $carLead->uuid. ' and tier is update with id : '. $tierTR->id);
+                        info('Renewal Email sent for quote : '.$carLead->uuid.' and tier is update with id : '.$tierTR->id);
                     }
 
                     continue;
@@ -496,7 +496,7 @@ class LeadAllocationService extends BaseService
 
                     $commonUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
 
-                    info('login and available users right now are '. json_encode($commonUserIds));
+                    info('login and available users right now are '.json_encode($commonUserIds));
 
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
@@ -520,7 +520,7 @@ class LeadAllocationService extends BaseService
                         $userId = reset($commonUserIds);
                         info('0.01');
                         info('inside common array , userId is : '.json_encode($userId));
-                    }else{
+                    } else {
                         info('1');
                     }
                     if ($userId) {
@@ -611,10 +611,12 @@ class LeadAllocationService extends BaseService
         })
         ->get();
         if (count($renewalQuote) > 0) {
-            info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid. ' for car quote with uuid : '. $lead->uuid);
+            info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid.' for car quote with uuid : '.$lead->uuid);
+
             return true;
         } else {
-            info('car lead allocation did-not found a renewal for uuid : '. $lead->uuid);
+            info('car lead allocation did-not found a renewal for uuid : '.$lead->uuid);
+
             return false;
         }
     }
@@ -660,11 +662,11 @@ class LeadAllocationService extends BaseService
             info($tiers->toSql());
         }
         if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
-            if($carLead->car_value > $highestValueTier->car_value)
-            {
-                info('lead '. $carLead->uuid .' have value higher then all the tiers so selecting tier '. $highestValueTier->name);
+            if ($carLead->car_value > $highestValueTier->car_value) {
+                info('lead '.$carLead->uuid.' have value higher then all the tiers so selecting tier '.$highestValueTier->name);
+
                 return $highestValueTier;
-            }else{
+            } else {
                 info('adding min and max value check');
                 $tiers->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
                 info($tiers->toSql());
