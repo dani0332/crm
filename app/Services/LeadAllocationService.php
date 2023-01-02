@@ -690,10 +690,10 @@ class LeadAllocationService extends BaseService
         ->whereIn('u.id', $tierUsers)
         ->orderBy('lead_allocation.last_allocated', 'desc');
 
-
         $records = $query->get();
         info('tier login user query is : '.$query->toSql());
-        info('tier login records are '. json_encode($records) );
+        info('tier login records are '.json_encode($records));
+
         return $records;
     }
 
