@@ -256,16 +256,26 @@ class GenericCrudController extends Controller
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $validateArray = [];
         foreach ($modelPropertiesList as $property => $value) {
+
+            if (str_contains($value, 'min')) {
+                $min = explode(':', $value)[1];
+                $validateArray[$property] = 'required|numeric|min:'.$min;
+            }
+            if (str_contains($value, 'max')) {
+                $max = explode(':', $value)[1];
+                $validateArray[$property] = 'required|numeric|max:'.$max;
+            }
             if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && ! strpos($modelSkipPropertiesList, $property)) {
-                if (strpos($value, 'min')) {
-                    $min = explode(':', $value)[1];
-                    $validateArray[$property] = 'required|numeric|min:'.$min;
-                } else {
+                if (!str_contains($value, 'max') && !str_contains($value, 'min')){
+                    info('inside else when value is : '. $value);
                     $validateArray[$property] = 'required';
                 }
             }
         }
-        $this->validate($request, $validateArray);
+        $isValidRequest = $this->validate($request, $validateArray);
+        if ($isValidRequest != 'true') {
+            return redirect()->back()->with('message', $isValidRequest);
+        }
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
         if ($request->has('is_active')) {
             return redirect('/generic/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');

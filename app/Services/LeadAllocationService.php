@@ -471,7 +471,6 @@ class LeadAllocationService extends BaseService
     public function processCarLeads()
     {
         try {
-            DB::beginTransaction();
             $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             $carUnAllocatedLead = $this->getCarUnallocatedLeads($from);
             info(count($carUnAllocatedLead).' unassigned car leads found.');
@@ -485,6 +484,7 @@ class LeadAllocationService extends BaseService
                             $carLead->tier_id = $tierTR->id;
                             $carLead->save();
                         }
+                        info('Renewal Email sent for quote : '. $carLead->uuid. ' and tier is update with id : '. $tierTR->id);
                     }
 
                     continue;
@@ -494,12 +494,10 @@ class LeadAllocationService extends BaseService
                 if ($selectedTier) {
                     info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
-                    $loginUsersRecords = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
-                    info('login records are '.json_encode($loginUsersRecords));
-                    $loginUsersIds = $loginUsersRecords->pluck('id');
+                    $commonUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
 
-                    info('login and available users right now are '.$loginUsersIds);
-                    $commonUserIds = $loginUsersIds;
+                    info('login and available users right now are '. json_encode($commonUserIds));
+
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
                     if (count($matchedRuleRecords) > 0) {
@@ -516,11 +514,17 @@ class LeadAllocationService extends BaseService
                         info('rules user intersection with login users is '.json_encode($commonUserIds));
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
+                    $userId = null;
                     if (count($commonUserIds) != 0) {
+                        info('0.0');
                         $userId = reset($commonUserIds);
-                        info('inside common array , userId is : '.$userId);
+                        info('0.01');
+                        info('inside common array , userId is : '.json_encode($userId));
+                    }else{
+                        info('1');
                     }
                     if ($userId) {
+                        info('2');
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
                         $carQuote->advisor_id = $userId;
@@ -539,22 +543,22 @@ class LeadAllocationService extends BaseService
                         $leadAllocation->save();
                         info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
                     } else {
+                        info('3');
                         info('login users not found for selected lead so will try to assign only tier');
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
-                        if ($carQuote->tier_id != '' && $carQuote->tier_id != null) {
+                        if ($carQuote->tier_id == null) {
                             $carQuote->tier_id = $selectedTier->id;
                             $carQuote->save();
                             info('Tier with name : '.$selectedTier->name.' and id : '.$selectedTier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
                         } else {
-                            info('Tier ('.$carQuote->tier_id.')is already assigned against car lead with uuid : '.$carQuote->uuid);
+                            info('Tier ('.$selectedTier->tier_id.')is already assigned against car lead with uuid : '.$carQuote->uuid);
                         }
                     }
+                    info('4');
                 }
             }
-            DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
         }
     }
 
@@ -607,12 +611,10 @@ class LeadAllocationService extends BaseService
         })
         ->get();
         if (count($renewalQuote) > 0) {
-            info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid);
-
+            info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid. ' for car quote with uuid : '. $lead->uuid);
             return true;
         } else {
-            info('car lead allocation did-not found a renewal');
-
+            info('car lead allocation did-not found a renewal for uuid : '. $lead->uuid);
             return false;
         }
     }
@@ -640,6 +642,7 @@ class LeadAllocationService extends BaseService
     public function getTierForValue($carLead)
     {
         info('Started searching tier for car lead : '.json_encode($carLead->code));
+        $highestValueTier = Tier::where('is_active', 1)->orderBy('max_price', 'desc')->first();
         $tiers = Tier::where('is_active', 1);
         if ($carLead->car_type_insurance_id == 2) {
             info('adding tpl check');
@@ -657,9 +660,15 @@ class LeadAllocationService extends BaseService
             info($tiers->toSql());
         }
         if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
-            info('adding min and max value check');
-            $tiers->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
-            info($tiers->toSql());
+            if($carLead->car_value > $highestValueTier->car_value)
+            {
+                info('lead '. $carLead->uuid .' have value higher then all the tiers so selecting tier '. $highestValueTier->name);
+                return $highestValueTier;
+            }else{
+                info('adding min and max value check');
+                $tiers->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
+                info($tiers->toSql());
+            }
         }
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
             info('adding tpl renewal check');
@@ -681,8 +690,7 @@ class LeadAllocationService extends BaseService
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
         $query = LeadAllocation::join('users as u', 'u.id', 'lead_allocation.user_id')
-        ->select('u.id', 'u.name')
-        ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+        ->select('u.id', 'u.email')
         ->where('lead_allocation.is_available', 1)
         ->where(function ($query) {
             $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
@@ -691,7 +699,7 @@ class LeadAllocationService extends BaseService
         ->whereIn('u.id', $tierUsers)
         ->orderBy('lead_allocation.last_allocated', 'desc');
 
-        return $query->get();
+        return $query->get()->pluck('id')->toArray();
     }
 
     public function getAppStorageValueByKey($keyName)
