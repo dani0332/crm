@@ -494,7 +494,7 @@ class LeadAllocationService extends BaseService
                     info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
                     $loginUsersRecords = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
-                    info('login records are '. json_encode($loginUsersRecords));
+                    info('login records are '.json_encode($loginUsersRecords));
                     $loginUsersIds = $loginUsersRecords->pluck('id');
 
                     info('login and available users right now are '.$loginUsersIds);
@@ -678,8 +678,6 @@ class LeadAllocationService extends BaseService
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
         info('Going to search users which are loggedin after '.Carbon::now()->addDays(-1)->endOfDay());
-
-
 
         $query = LeadAllocation::join('users as u', 'u.id', 'lead_allocation.user_id')
         ->select('u.id', 'u.name')

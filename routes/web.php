@@ -77,7 +77,7 @@ Route::get('/', function () {
     return redirect('login');
 });
 
-Route::get('/get-tier-users/{tierId}' , [LeadAllocationController::class, 'getTierUsers']);
+Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
