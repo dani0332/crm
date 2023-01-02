@@ -685,8 +685,7 @@ class LeadAllocationService extends BaseService
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
         info('Going to search users which are loggedin after '.Carbon::now()->addDays(-1)->endOfDay());
-        $query = LeadAllocation
-        ::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
+        $query = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
         ->join('teams as t ', 't.id', 'u.team_id')
         ->where('lead_allocation.is_available', 1)
         ->where(function ($query) {
