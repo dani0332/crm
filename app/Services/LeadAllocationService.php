@@ -515,10 +515,10 @@ class LeadAllocationService extends BaseService
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
                     $userId = null;
-                    if (!$commonUserIds && is_array($commonUserIds)) {
+                    if (! $commonUserIds && is_array($commonUserIds)) {
                         info('inside common array');
                         $userId = reset($commonUserIds);
-                    } elseif (gettype($commonUserIds) == 'object' && !empty($commonUserIds)) {
+                    } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
                         info('inside common object');
                         $userId = $commonUserIds->first();
                     } else {
@@ -677,7 +677,7 @@ class LeadAllocationService extends BaseService
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
         info('Going to search users which are loggedin after '.Carbon::now()->addDays(-1)->endOfDay());
-        $query =  DB::table('lead_allocation as la')
+        $query = DB::table('lead_allocation as la')
         ->join('users as u', 'u.id', '=', 'la.user_id')
         ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
         ->join('teams as t', function ($join) {
