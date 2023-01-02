@@ -13,6 +13,7 @@
         "barryvdh/laravel-debugbar": "^3.7",
         "barryvdh/laravel-dompdf": "^2.0",
         "bensampo/laravel-enum": "^v4.2.0",
+        "calebporzio/sushi": "^2.4",
         "doctrine/dbal": "^3.3",
         "fideloper/proxy": "^4.4",
         "filament/filament": "^2.16",
@@ -39,6 +40,7 @@
         "sentry/sentry-laravel": "^2.7",
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-permission": "^4.0",
+        "webbingbrasil/filament-copyactions": "^1.0",
         "yajra/laravel-datatables-oracle": "^9.18"
     },
     "require-dev": {

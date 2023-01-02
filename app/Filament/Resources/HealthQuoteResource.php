@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Filament\Resources\HealthQuoteResource\Pages;
+use App\Filament\Resources\HealthQuoteResource\RelationManagers\AvaialblePlansRelationManager;
 use App\Filament\Resources\HealthQuoteResource\RelationManagers\MemberDetailsRelationManager;
 use App\Models\HealthQuote;
 use App\Models\QuoteStatus;
@@ -52,12 +53,12 @@ class HealthQuoteResource extends Resource
                                         Forms\Components\Select::make('health_team_type')
                                             ->label('Sub Team')
                                             ->options([
-                                                'All',
-                                                'RM-NB',
-                                                'RM-Speed',
-                                                'EBP',
-                                                'Wow-Call',
-                                                'No-Type',
+                                                'All' => 'All',
+                                                'RM-NB' => 'RM-NB',
+                                                'RM-Speed' => 'RM-Speed',
+                                                'EBP' => 'EBP',
+                                                'Wow-Call' => 'Wow-Call',
+                                                'No-Type' => 'No-Type',
                                             ]),
                                         Forms\Components\Select::make('advisor_id')
                                             ->label('Advisor')
@@ -193,11 +194,19 @@ class HealthQuoteResource extends Resource
                                 Forms\Components\Textarea::make('notes'),
                             ])->hiddenOn('create'),
                         Tabs\Tab::make('E-COM Details')
-                            ->schema([])->hiddenOn(['create', 'edit']),
-                        Tabs\Tab::make('Available Plans')
-                            ->schema(function (?Model $record) {
-                                return static::getPlansSchema($record->uuid ?? null);
-                            })->hiddenOn(['create', 'edit']),
+                            ->schema(
+                                []
+                                // function (?Model $record) {
+                                //     return static::getEcomDetailsSchema($record);
+                                // }
+                            )->hiddenOn(['create', 'edit']),
+                        // Tabs\Tab::make('Available Plans')
+                        //     ->schema(
+                        //         []
+                        //         // function (?Model $record) {
+                        //         //     return static::getPlansSchema($record->uuid ?? null);
+                        //         // }
+                        //     )->hiddenOn(['create', 'edit']),
                         Tabs\Tab::make('Lead History')
                             ->schema([
                                 // ...
@@ -345,6 +354,7 @@ class HealthQuoteResource extends Resource
     {
         return [
             MemberDetailsRelationManager::class,
+            AvaialblePlansRelationManager::class,
         ];
     }
 
@@ -356,6 +366,24 @@ class HealthQuoteResource extends Resource
             'view' => Pages\ViewHealthQuote::route('/{record:uuid}'),
             'edit' => Pages\EditHealthQuote::route('/{record:uuid}/edit'),
         ];
+    }
+
+    public static function getEcomDetailsSchema($record): array
+    {
+        $fieldsArray = [];
+        $ecom = app(HealthQuoteService::class)->getEcomDetails($record);
+
+        // dd($ecom);
+
+        $fieldsArray = [
+            Forms\Components\Placeholder::make('Provider Name')->content($ecom['providerName']),
+            Forms\Components\Placeholder::make('Network', 'network'),
+            Forms\Components\Placeholder::make('Payment Status', 'paymentStatus'),
+            Forms\Components\Placeholder::make('Paid At', 'paidAt'),
+            Forms\Components\Placeholder::make('Plan Name', 'planName'),
+        ];
+
+        return $fieldsArray;
     }
 
     public static function getPlansSchema($uuid): array
