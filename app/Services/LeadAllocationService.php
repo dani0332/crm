@@ -680,12 +680,12 @@ class LeadAllocationService extends BaseService
         $query = LeadAllocation::join('users as u', 'u.id', 'lead_allocation.user_id')
         ->select('u.id', 'u.name')
         ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-        ->where('la.is_available', 1)
+        ->where('lead_allocation.is_available', 1)
         ->where(function ($query) {
-            $query->where('la.allocation_count', '<', 'la.max_capacity')
-                ->orWhere('la.max_capacity', -1);
+            $query->where('lead_allocation.allocation_count', '<', 'lead_allocation.max_capacity')
+                ->orWhere('lead_allocation.max_capacity', -1);
         })
-        ->orderBy('la.last_allocated', 'desc');
+        ->orderBy('lead_allocation.last_allocated', 'desc');
 
         return $query->get();
     }
