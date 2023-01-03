@@ -16,14 +16,7 @@ use Webbingbrasil\FilamentCopyActions\Tables\Actions\CopyAction;
 class AvailablePlansRelationManager extends RelationManager
 {
     protected static string $relationship = 'availablePlans';
-    // protected static ?string $recordTitleAttribute = 'providerName';
-
-    protected function getTableQuery(): Builder
-    {
-        $query = HealthAvailablePlan::query();
-
-        return $query;
-    }
+    protected static ?string $recordTitleAttribute = 'providerName';
 
     public static function form(Form $form): Form
     {
@@ -93,11 +86,11 @@ class AvailablePlansRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('name')->label('Plan Name'),
                 Tables\Columns\TextColumn::make('actualPremium')->label('Actual Premium with BASMAH')
                     ->getStateUsing(function (Model $record): float {
-                        return floatval($record->actualPremium) + floatval($record->basmah);
+                        return $record->actualPremium + $record->basmah;
                     }),
                 Tables\Columns\TextColumn::make('PremiumPlusVat')->label('Premium with VAT and BASMAH')
                     ->getStateUsing(function (Model $record): float {
-                        return floatval($record->actualPremium) + floatval($record->vat) + floatval($record->basmah);
+                        return $record->actualPremium + $record->vat + $record->basmah;
                     }),
             ])
             ->filters([
@@ -113,5 +106,14 @@ class AvailablePlansRelationManager extends RelationManager
             ->bulkActions([
                 // Tables\Actions\DeleteBulkAction::make(),
             ]);
+    }
+
+    protected function getTableQuery(): Builder
+    {
+        $query = HealthAvailablePlan::query();
+
+        $query->whereNotNull('id');
+
+        return $query;
     }
 }

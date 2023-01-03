@@ -10,30 +10,19 @@ class HealthAvailablePlan extends Model
 {
     use Sushi;
 
-    protected function sushiShouldCache()
-    {
-        return true;
-    }
-
-    protected $keyType = 'string';
-    public $uuid;
-    protected $cast = [
-        'id' => 'string',
-        'planCode' => 'string',
-        'name' => 'string',
+    protected $schema = [
+        'id' => 'integer',
         'actualPremium' => 'float',
         'basmah' => 'float',
         'vat' => 'float',
         'discountPremium' => 'float',
-        'memberPremiumBreakdown' => 'array',
-        'providerId' => 'string',
-        'providerCode' => 'string',
-        'providerName' => 'string',
-        'addons' => 'array',
-        'benefits' => 'array',
-        'policyWordings' => 'array',
-        'excess' => 'array',
+        'benefits' => 'json',
+        'excess' => 'json',
+        'addons' => 'json',
+        'memberPremiumBreakdown' => 'json',
+        'policyWordings' => 'json',
     ];
+    public $uuid;
 
     /**
      * Model Rows.
@@ -62,24 +51,30 @@ class HealthAvailablePlan extends Model
 
         $data = collect($listQuotePlans)->map(function ($plan) {
             return [
-                'id' => $plan->id ?? '',
+                'id' => $plan->id ?? null,
                 'planCode' => $plan->planCode ?? '',
                 'name' => $plan->name ?? '',
-                'actualPremium' => $plan->actualPremium ?? '',
-                'basmah' => $plan->basmah ?? '',
-                'vat' => $plan->vat ?? '',
-                'discountPremium' => $plan->discountPremium ?? '',
-                'memberPremiumBreakdown' => json_encode($plan->memberPremiumBreakdown ?? '') ?? '',
-                'providerId' => $plan->providerId ?? '',
+                'actualPremium' => $plan->actualPremium ?? null,
+                'basmah' => $plan->basmah ?? null,
+                'vat' => $plan->vat ?? null,
+                'discountPremium' => $plan->discountPremium ?? null,
+                'memberPremiumBreakdown' => json_encode($plan->memberPremiumBreakdown ?? ''),
+                'providerId' => $plan->providerId ?? null,
                 'providerCode' => $plan->providerCode ?? '',
                 'providerName' => $plan->providerName ?? '',
-                'addons' => json_encode($plan->addons ?? '') ?? '',
-                'benefits' => json_encode($plan->benefits ?? '') ?? '',
-                'policyWordings' => json_encode($plan->policyWordings ?? '') ?? '',
-                'excess' => json_encode($plan->excess ?? '') ?? '',
+                'addons' => json_encode($plan->addons ?? ''),
+                'benefits' => json_encode($plan->benefits ?? ''),
+                'policyWordings' => json_encode($plan->policyWordings ?? ''),
+                'excess' => json_encode($plan->excess ?? ''),
             ];
         })->all();
+        // dd($data);
 
         return $data;
+    }
+
+    protected function sushiShouldCache()
+    {
+        return true;
     }
 }

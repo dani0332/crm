@@ -227,6 +227,8 @@ class HealthQuoteResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')->label('Created Date')->dateTime(),
                 Tables\Columns\TextColumn::make('updated_at')->label('Last Modified Date')->dateTime(),
                 Tables\Columns\TextColumn::make('health_team_type')->label('Sub Team'),
+                Tables\Columns\TextColumn::make('healthQuoteRequestDetail.transapp_code')->label('Transapp Code'),
+                Tables\Columns\TextColumn::make('healthQuoteRequestDetail.lostReason.text')->label('Lost Reason'),
                 Tables\Columns\TextColumn::make('premium'),
                 Tables\Columns\TextColumn::make('policy_number'),
                 Tables\Columns\TextColumn::make('source'),
@@ -235,7 +237,6 @@ class HealthQuoteResource extends Resource
                 Tables\Columns\TextColumn::make('currentProvider.text')->label('Currently Insured With'),
                 Tables\Columns\IconColumn::make('is_ecommerce')->boolean(),
             ])
-            ->defaultSort('created_at', 'desc')
             ->filters(
                 [
                     Filter::make('cdb_id')->label('CDB ID')
