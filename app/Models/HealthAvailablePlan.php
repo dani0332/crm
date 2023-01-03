@@ -58,14 +58,14 @@ class HealthAvailablePlan extends Model
                 'basmah' => $plan->basmah ?? null,
                 'vat' => $plan->vat ?? null,
                 'discountPremium' => $plan->discountPremium ?? null,
-                'memberPremiumBreakdown' => json_encode($plan->memberPremiumBreakdown ?? ''),
+                'memberPremiumBreakdown' => json_encode($plan->memberPremiumBreakdown ?? '') ?? '',
                 'providerId' => $plan->providerId ?? null,
                 'providerCode' => $plan->providerCode ?? '',
                 'providerName' => $plan->providerName ?? '',
-                'addons' => json_encode($plan->addons ?? ''),
-                'benefits' => json_encode($plan->benefits ?? ''),
-                'policyWordings' => json_encode($plan->policyWordings ?? ''),
-                'excess' => json_encode($plan->excess ?? ''),
+                'addons' => json_encode($plan->addons ?? '') ?? '',
+                'benefits' => json_encode($plan->benefits ?? '') ?? '',
+                'policyWordings' => json_encode($plan->policyWordings ?? '') ?? '',
+                'excess' => json_encode($plan->excess ?? '') ?? '',
             ];
         })->all();
         // dd($data);

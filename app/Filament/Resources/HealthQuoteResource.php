@@ -261,6 +261,57 @@ class HealthQuoteResource extends Resource
                                     fn (Builder $query, $value): Builder => $query->where('first_name', $value),
                                 );
                         }),
+                    Filter::make('last_name')->label('Last Name')
+                        ->form([
+                            Forms\Components\TextInput::make('last_name')->label('Last Name')->lazy(),
+                        ])
+                        ->query(function (Builder $query, array $data): Builder {
+                            return $query
+                                ->when(
+                                    $data['last_name'],
+                                    fn (Builder $query, $value): Builder => $query->where('last_name', $value),
+                                );
+                        }),
+                    Filter::make('email')->label('Email')
+                        ->form([
+                            Forms\Components\TextInput::make('email')->label('Email')->lazy(),
+                        ])
+                        ->query(function (Builder $query, array $data): Builder {
+                            return $query
+                                ->when(
+                                    $data['email'],
+                                    fn (Builder $query, $value): Builder => $query->where('email', $value),
+                                );
+                        }),
+                    Filter::make('mobile')->label('Mobile Number')
+                        ->form([
+                            Forms\Components\TextInput::make('number')->label('Mobile Number')->lazy(),
+                        ])
+                        ->query(function (Builder $query, array $data): Builder {
+                            return $query
+                                ->when(
+                                    $data['number'],
+                                    fn (Builder $query, $value): Builder => $query->where('mobile_no', $value),
+                                );
+                        }),
+                    Filter::make('subteam')->label('SubTeam')
+                        ->form([
+                            Forms\Components\Select::make('type')->label('Type')->options([
+                                '' => 'All',
+                                'RM-NB' => 'RM-NB',
+                                'RM-Speed' => 'RM-Speed',
+                                'EBP' => 'EBP',
+                                'Wow-Call' => 'Wow-Call',
+                                'No-Type' => 'No-Type',
+                            ]),
+                        ])
+                        ->query(function (Builder $query, array $data): Builder {
+                            return $query
+                                ->when(
+                                    $data['type'],
+                                    fn (Builder $query, $value): Builder => $query->where('health_team_type', $value),
+                                );
+                        }),
                     Filter::make('created_start')
                         ->form([
                             Forms\Components\DatePicker::make('created_start')->lazy(),
