@@ -2,7 +2,7 @@
 use App\Enums\PermissionsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
-$docUploadUrl = Config::get('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid . '/thankyou';
+$docUploadUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid . '/thankyou';
 @endphp
 <div class="row">
     <div class="col-md-12 col-sm-12">
