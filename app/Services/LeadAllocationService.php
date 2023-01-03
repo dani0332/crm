@@ -666,9 +666,10 @@ class LeadAllocationService extends BaseService
             info('adding tpl renewal check');
             $tiers->where('is_tpl_renewals', 1);
         }
-        $tiers = $tiers->get();
+
         info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
         info('First tier after filtration is : '.json_encode($tiers->first()->name));
+        $tiers = $tiers->get();
         if ($tiers != null) {
             return $tiers->first();
         }
