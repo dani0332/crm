@@ -28,14 +28,20 @@ class HealthAvailablePlan extends Model
         'policyWordings' => 'array',
         'excess' => 'array',
     ];
+    public $recordId;
+
+    public function setRecordID($recordId)
+    {
+        $this->recordId = $recordId;
+
+        return $this->query();
+    }
 
     /**
      * Model Rows.
      *
      * @return void
      */
-    public $recordId = 3161;
-
     public function getRows()
     {
         $listQuotePlans = '';
@@ -45,15 +51,13 @@ class HealthAvailablePlan extends Model
             $listQuotePlans = json_decode($quotePlans->plan_payload, true)['plans'];
         }
 
-        // dd($listQuotePlans);
-
         return collect($listQuotePlans)->map(function ($plan) {
             return [
                     'id' => $plan['id'],
                     'planCode' => $plan['planCode'],
                     'name' => $plan['name'],
-                    'isRatingAvailable' => $plan['isRatingAvailable'],
-                    'isNorthern' => $plan['isNorthern'],
+                    // 'isRatingAvailable' => $plan['isRatingAvailable'],
+                    // 'isNorthern' => $plan['isNorthern'],
                     'actualPremium' => $plan['actualPremium'],
                     'basmah' => $plan['basmah'],
                     'vat' => $plan['vat'],

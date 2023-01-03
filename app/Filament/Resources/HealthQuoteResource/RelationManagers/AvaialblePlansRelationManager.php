@@ -73,11 +73,9 @@ class AvaialblePlansRelationManager extends RelationManager
 
     protected function getTableQuery(): Builder
     {
-        $query = HealthAvailablePlan::query();
+        $query = new HealthAvailablePlan();
 
-        // dd($query->get());
-
-        return $query;
+        return $query->setRecordID($this->ownerRecord->id);
     }
 
     public static function table(Table $table): Table
