@@ -13,8 +13,6 @@ class HealthAvailablePlan extends Model
         'id' => 'string',
         'planCode' => 'string',
         'name' => 'string',
-        'isRatingAvailable' => 'boolean',
-        'isNorthern' => 'boolean',
         'actualPremium' => 'float',
         'basmah' => 'float',
         'vat' => 'float',
@@ -56,8 +54,6 @@ class HealthAvailablePlan extends Model
                     'id' => $plan['id'],
                     'planCode' => $plan['planCode'],
                     'name' => $plan['name'],
-                    // 'isRatingAvailable' => $plan['isRatingAvailable'],
-                    // 'isNorthern' => $plan['isNorthern'],
                     'actualPremium' => $plan['actualPremium'],
                     'basmah' => $plan['basmah'],
                     'vat' => $plan['vat'],
@@ -66,10 +62,10 @@ class HealthAvailablePlan extends Model
                     'providerId' => $plan['providerId'],
                     'providerCode' => $plan['providerCode'],
                     'providerName' => $plan['providerName'],
-                    // 'addons' => $plan['addons'],
-                    // 'benefits' => $plan['benefits'],
-                    // 'policyWordings' => $plan['policyWordings'],
-                    // 'excess' => $plan['excess'],
+                    'addons' => json_encode($plan['addons']),
+                    'benefits' => json_encode($plan['benefits']),
+                    'policyWordings' => json_encode($plan['policyWordings']),
+                    'excess' => json_encode($plan['excess']),
             ];
         })->all();
     }

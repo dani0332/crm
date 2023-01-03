@@ -28,42 +28,50 @@ class AvaialblePlansRelationManager extends RelationManager
                         [
                             Tabs\Tab::make('General Information')
                                 ->schema([
-                                    Forms\Components\TextInput::make('providerCode')->label('Provider Code'),
-                                    Forms\Components\TextInput::make('providerName')->label('Provider Name'),
-                                    Forms\Components\TextInput::make('actualPremium')->label('Actual Premium'),
-                                    Forms\Components\TextInput::make('discountPremium')->label('Discount Premium'),
+                                    Forms\Components\Placeholder::make('Provider Code')->content(function (?Model $record) {
+                                        return $record->providerCode;
+                                    }),
+                                    Forms\Components\Placeholder::make('Provider Name')->content(function (?Model $record) {
+                                        return $record->providerName;
+                                    }),
+                                    Forms\Components\Placeholder::make('Actual Premium')->content(function (?Model $record) {
+                                        return $record->actualPremium;
+                                    }),
+                                    Forms\Components\Placeholder::make('Discount Premium')->content(function (?Model $record) {
+                                        return $record->discountPremium;
+                                    }),
                                 ])->columns(2),
                             Tabs\Tab::make('Members')
                                 ->schema([
-                                    Forms\Components\TextInput::make('memberPremiumBreakdown'),
+                                    Forms\Components\ViewField::make('memberPremiumBreakdown')->view('filament.plan_detail'),
                                 ]),
                             Tabs\Tab::make('In Patient')
                                 ->schema([
-                                    // ...
+                                    Forms\Components\ViewField::make('benefitsInpatient')->view('filament.plan_detail'),
                                 ]),
                             Tabs\Tab::make('Out Patient')
                                 ->schema([
-                                    // ...
+                                    Forms\Components\ViewField::make('benefitsOutpatient')->view('filament.plan_detail'),
                                 ]),
                             Tabs\Tab::make('Co-pay/Co-insurance')
                                 ->schema([
-                                    // ...
+                                    Forms\Components\ViewField::make('coInsurance')->view('filament.plan_detail'),
                                 ]),
                             Tabs\Tab::make('Region coverage & Network list')
                                 ->schema([
-                                    // ...
+                                    Forms\Components\ViewField::make('regionCover')->view('filament.plan_detail'),
                                 ]),
                             Tabs\Tab::make('Maternity Cover')
                                 ->schema([
-                                    // ...
+                                    Forms\Components\ViewField::make('maternityCover')->view('filament.plan_detail'),
                                 ]),
                             Tabs\Tab::make('Exclusions')
                                 ->schema([
-                                    // ...
+                                    Forms\Components\ViewField::make('benefitsExclusions')->view('filament.plan_detail'),
                                 ]),
                             Tabs\Tab::make('Policy Detail')
                                 ->schema([
-                                    // ...
+                                    Forms\Components\ViewField::make('policyDetail')->view('filament.plan_detail'),
                                 ]),
                         ]
                     ),
@@ -74,8 +82,10 @@ class AvaialblePlansRelationManager extends RelationManager
     protected function getTableQuery(): Builder
     {
         $query = new HealthAvailablePlan();
+        $query = $query->setRecordID($this->ownerRecord->id);
+        // dd($query->get());
 
-        return $query->setRecordID($this->ownerRecord->id);
+        return $query;
     }
 
     public static function table(Table $table): Table
