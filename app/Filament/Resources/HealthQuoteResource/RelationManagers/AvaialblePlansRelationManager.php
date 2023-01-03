@@ -16,7 +16,7 @@ use Webbingbrasil\FilamentCopyActions\Tables\Actions\CopyAction;
 class AvaialblePlansRelationManager extends RelationManager
 {
     protected static string $relationship = 'avaialblePlans';
-    protected static ?string $recordTitleAttribute = 'health_quote_request_id';
+    protected static ?string $recordTitleAttribute = 'providerName';
 
     public static function form(Form $form): Form
     {
@@ -35,7 +35,7 @@ class AvaialblePlansRelationManager extends RelationManager
                                 ])->columns(2),
                             Tabs\Tab::make('Members')
                                 ->schema([
-                                    Forms\Components\TextInput::make('member_id')->label('Member id')->lazy(),
+                                    Forms\Components\TextInput::make('memberPremiumBreakdown'),
                                 ]),
                             Tabs\Tab::make('In Patient')
                                 ->schema([
