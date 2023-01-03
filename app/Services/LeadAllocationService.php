@@ -474,6 +474,7 @@ class LeadAllocationService extends BaseService
             DB::beginTransaction();
             $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             $carUnAllocatedLead = $this->getCarUnallocatedLeads($from);
+            info(count($carUnAllocatedLead).' unassigned car leads found.');
             foreach ($carUnAllocatedLead as $carLead) {
                 if ($this->checkIfLeadIsRenewal($carLead)) {
                     info('car lead allocation sending renewal email for uuid : '.$carLead->uuid);
@@ -515,16 +516,9 @@ class LeadAllocationService extends BaseService
                         info('rules user intersection with login users is '.json_encode($commonUserIds));
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
-                    $userId = null;
-                    if (! $commonUserIds && is_array($commonUserIds)) {
-                        info('inside common array');
+                    if (count($commonUserIds) != 0) {
                         $userId = reset($commonUserIds);
-                    } elseif (gettype($commonUserIds) == 'object' && ! empty($commonUserIds)) {
-                        info('inside common object');
-                        $userId = $commonUserIds->first();
-                    } else {
-                        info('inside common else');
-                        info('inside common else'.gettype($commonUserIds));
+                        info('inside common array , userId is : '.$userId);
                     }
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
@@ -544,6 +538,8 @@ class LeadAllocationService extends BaseService
                         $leadAllocation->updated_at = now();
                         $leadAllocation->save();
                         info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
+                    } else {
+                        info('userId : '.$userId);
                     }
                 }
             }
