@@ -141,7 +141,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
                     $onFailure('Invalid value provided for '.$attribute);
                 }
             }], 'type' => 'date'],
-            'batch' => ['index' => 9, 'title' => 'Batch', 'rules' => 'required|max:25'],
+            'batch' => ['index' => 9, 'title' => 'Batch', 'rules' => 'required|max:50'],
             'make' => ['index' => 10, 'title' => 'Car Make', 'rules' => 'required|max:50'],
             'model' => ['index' => 11, 'title' => 'Car Model', 'rules' => 'required|max:50'],
             'year' => ['index' => 12, 'title' => 'Model Year', 'rules' => 'required|max:4'],
@@ -176,7 +176,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
             'trim' => ['index' => 37, 'title' => 'Trim', 'rules' => 'max:20'],
             'registration_location' => ['index' => 38, 'title' => 'Registration Location', 'rules' => 'required|max:100'],
             'previous_advisor' => ['index' => 39, 'title' => 'Previous Advisor Email', 'rules' => 'max:100'],
-            'notes' => ['index' => 40, 'title' => 'Notes', 'rules' => 'max:200'],
+            'notes' => ['index' => 40, 'title' => 'Notes', 'rules' => 'max:500'],
         ];
     }
 

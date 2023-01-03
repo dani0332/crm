@@ -118,7 +118,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
                     $onFailure('Invalid value provided for '.$attribute);
                 }
             }], 'type' => 'date'],
-            'batch' => ['index' => 11, 'title' => 'Batch', 'rules' => 'required|max:25'],
+            'batch' => ['index' => 11, 'title' => 'Batch', 'rules' => 'max:50'],
             'make' => ['index' => 12, 'title' => 'Car Make', 'rules' => 'max:50'],
             'model' => ['index' => 13, 'title' => 'Car Model', 'rules' => 'max:50'],
             'year' => ['index' => 14, 'title' => 'Model Year', 'rules' => 'max:4'],
@@ -126,7 +126,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
             'object' => ['index' => 16, 'title' => 'Object', 'rules' => 'max:200'],
             'premium' => ['index' => 17, 'title' => 'Gross Premium', 'rules' => 'nullable|numeric'],
             'source' => ['index' => 18, 'title' => 'Sales Channel', 'rules' => 'max:100'],
-            'notes' => ['index' => 19, 'title' => 'Notes', 'rules' => 'max:200'],
+            'notes' => ['index' => 19, 'title' => 'Notes', 'rules' => 'max:500'],
         ];
     }
 

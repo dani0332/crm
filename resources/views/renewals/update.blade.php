@@ -121,7 +121,7 @@
                                         <tr><td>7</td><td>Advisor Email</td><td>Advisor Email</td><td>No</td><td>100</td></tr>
                                         <tr><td>8</td><td>Policy Number</td><td>Previous Quote Policy Number</td><td>Yes</td><td>100</td></tr>
                                         <tr><td>9</td><td>Policy End Date</td><td>End Date of the insurance Policy - Format should be DD/MM/YYYY</td><td>Yes</td><td>10</td></tr>
-                                        <tr><td>10</td><td>Batch</td><td>Batch number assigned</td><td>No</td><td>25</td></tr>
+                                        <tr><td>10</td><td>Batch</td><td>Batch number assigned</td><td>Yes</td><td>25</td></tr>
                                         <tr><td>11</td><td>Car Make</td><td>Car Make Information</td><td>No</td><td>50</td></tr>
                                         <tr><td>12</td><td>Car Model</td><td>Car Model Information</td><td>No</td><td>50</td></tr>
                                         <tr><td>13</td><td>Model Year</td><td>Vehicle Year of manufacture</td><td>No</td><td>4</td></tr>
