@@ -100,7 +100,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        return CarQuote::query()
+        $query = CarQuote::query()
             ->select(
                 DB::raw('count(car_quote_request.id) as total_leads'),
                 DB::raw("SUM(CASE WHEN tiers.name = 'T0' THEN 1 ELSE 0 END) as tier_0_lead_count"),
@@ -118,6 +118,10 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->groupBy('users.email')
             ->orderBy('users.name');
+        if(auth()->user()->hasRole(RolesEnum::CarAdvisor)){
+            $query->where('user.id', auth()->user()->id);
+        }
+        return $query;
     }
 
     public function filters(): array

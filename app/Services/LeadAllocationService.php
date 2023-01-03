@@ -508,9 +508,9 @@ class LeadAllocationService extends BaseService
                         } else {
                             $ruleUserIds[] = (int) $matchedRuleRecords->first()->leadSourceUsers;
                         }
-                        info('Rule found and login users are '.json_encode($loginUsersIds));
+                        info('Rule found and login users are '.json_encode($commonUserIds));
                         info('Rule found and users against rule are '.json_encode($ruleUserIds));
-                        $commonUserIds = array_intersect($loginUsersIds->toArray(), $ruleUserIds);
+                        $commonUserIds = array_intersect($commonUserIds, $ruleUserIds);
                         info('rules user intersection with login users is '.json_encode($commonUserIds));
                     }
                     info('common users at this point are '.json_encode($commonUserIds));
