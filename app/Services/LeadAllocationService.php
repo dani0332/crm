@@ -643,36 +643,31 @@ class LeadAllocationService extends BaseService
         if ($carLead->car_type_insurance_id == 2) {
             info('adding tpl check');
             $tiers->where('can_handle_tpl', 1);
-            info($tiers->toSql());
         }
         if ($carLead->is_ecommerce) {
             info('adding is ecommerce check');
             $tiers->where('can_handle_ecommerce', 1);
-            info($tiers->toSql());
         }
         if ($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') {
             info('adding null value check');
             $tiers->where('can_handle_null_value', 1);
-            info($tiers->toSql());
         }
         if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
             if ($carLead->car_value > $highestValueTier->max_price) {
                 info('lead '.$carLead->uuid.' have value higher then all the tiers so selecting tier '.$highestValueTier->name);
-
                 return $highestValueTier;
             } else {
                 info('adding min and max value check');
                 $tiers->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
-                info($tiers->toSql());
             }
         }
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
             info('adding tpl renewal check');
             $tiers->where('is_tpl_renewals', 1);
-            info($tiers->toSql());
+
         }
         $tiers = $tiers->get();
-
+        info('tiers query is : ' . $tiers->toSql() . ' with binding of : '. json_encode($tiers->getBindings()));
         info('First tier after filtration is : '.json_encode($tiers->first()->name));
         if ($tiers != null) {
             return $tiers->first();
