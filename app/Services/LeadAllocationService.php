@@ -494,29 +494,27 @@ class LeadAllocationService extends BaseService
                 if ($selectedTier) {
                     info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
-                    $commonUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
+                    $loginAndAvailableUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
 
-                    info('login and available users right now are '.json_encode($commonUserIds));
+                    info('login and available users right now are '.json_encode($loginAndAvailableUserIds));
 
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
                     if (count($matchedRuleRecords) > 0) {
-                        $commonUserIds = [];
                         $ruleUserIds = [];
                         if (str_contains($matchedRuleRecords?->first()?->leadSourceUsers, ',')) {
                             $ruleUserIds = array_map('intval', explode(',', $matchedRuleRecords->first()->leadSourceUsers));
                         } else {
                             $ruleUserIds[] = (int) $matchedRuleRecords->first()->leadSourceUsers;
                         }
-                        info('Rule found and login users are '.json_encode($commonUserIds));
                         info('Rule found and users against rule are '.json_encode($ruleUserIds));
-                        $commonUserIds = array_intersect($commonUserIds, $ruleUserIds);
-                        info('rules user intersection with login users is '.json_encode($commonUserIds));
+                        $finalAvailableAndLoginAdvisorIds = array_intersect($loginAndAvailableUserIds, $ruleUserIds);
+                        info('after intersection users available are : '.json_encode($finalAvailableAndLoginAdvisorIds));
                     }
-                    info('common users at this point are '.json_encode($commonUserIds));
+                    info('common users at this point are '.json_encode($finalAvailableAndLoginAdvisorIds));
                     $userId = null;
-                    if (count($commonUserIds) != 0) {
-                        $userId = reset($commonUserIds);
+                    if (count($finalAvailableAndLoginAdvisorIds) != 0) {
+                        $userId = reset($finalAvailableAndLoginAdvisorIds);
                         info('inside common array , userId is : '.json_encode($userId));
                     }
                     if ($userId) {
