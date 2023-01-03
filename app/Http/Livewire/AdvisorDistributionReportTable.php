@@ -118,9 +118,10 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->groupBy('users.email')
             ->orderBy('users.name');
-        if(auth()->user()->hasRole(RolesEnum::CarAdvisor)){
+        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $query->where('user.id', auth()->user()->id);
         }
+
         return $query;
     }
 
