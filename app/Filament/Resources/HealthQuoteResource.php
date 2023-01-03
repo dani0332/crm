@@ -49,34 +49,62 @@ class HealthQuoteResource extends Resource
                                     ->schema([
                                         Fieldset::make('Lead Details')
                                             ->schema([
-                                                Forms\Components\TextInput::make('code')->label('CDB ID'),
-                                                Forms\Components\DateTimePicker::make('created_at')->label('Created Date'),
-                                                Forms\Components\Select::make('health_team_type')
-                                                    ->label('Sub Team')
-                                                    ->options([
-                                                        'All' => 'All',
-                                                        'RM-NB' => 'RM-NB',
-                                                        'RM-Speed' => 'RM-Speed',
-                                                        'EBP' => 'EBP',
-                                                        'Wow-Call' => 'Wow-Call',
-                                                        'No-Type' => 'No-Type',
-                                                    ]),
-                                                Forms\Components\Select::make('advisor_id')
-                                                    ->label('Advisor')
-                                                    ->searchable()
-                                                    ->options(function () {
-                                                        return  DB::table('users as u')->select('u.id', 'u.name')
-                                                            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
-                                                            ->join('roles as r', 'mhr.role_id', '=', 'r.id')->get()->pluck('name', 'id');
-                                                    }),
-                                                Forms\Components\TextInput::make('source'),
-                                                Forms\Components\DateTimePicker::make('updated_at')->label('Last Modified Date'),
-                                                Forms\Components\TextInput::make('parent_duplicate_quote_id')->label('Parent CDB ID'),
-                                                Forms\Components\TextInput::make('renewal_batch')->label('Renewal Batch'),
-                                                Forms\Components\Toggle::make('is_ecommerce')
-                                                    ->label('Is Ecommerce'),
-                                                Forms\Components\Toggle::make('is_ebp_renewal')
-                                                    ->label('Is EBP Renewal'),
+                                                Forms\Components\Placeholder::make('code')->label('CDB ID')->content(function (Model $record) {
+                                                    return $record?->code;
+                                                }),
+                                                Forms\Components\Placeholder::make('created_at')->label('Created At')->content(function (Model $record) {
+                                                    return $record?->created_at->format('M d, Y H:i:s');
+                                                }),
+                                                Forms\Components\Placeholder::make('health_team_type')->label('Sub Team')->content(function (Model $record) {
+                                                    return $record?->health_team_type;
+                                                }),
+                                                Forms\Components\Placeholder::make('advisor_id')->label('Advisor')->content(function (Model $record) {
+                                                    return $record?->advisor?->name;
+                                                }),
+                                                Forms\Components\Placeholder::make('source')->content(function (Model $record) {
+                                                    return $record?->source;
+                                                }),
+                                                Forms\Components\Placeholder::make('updated_at')->label('Last Modified Date')->content(function (Model $record) {
+                                                    return $record?->updated_at->format('M d, Y H:i:s');
+                                                }),
+                                                Forms\Components\Placeholder::make('parent_duplicate_quote_id')->label('Parent CDB ID')->content(function (Model $record) {
+                                                    return $record?->parent_duplicate_quote_id;
+                                                }),
+                                                Forms\Components\Placeholder::make('renewal_batch')->label('Renewal Batch')->content(function (Model $record) {
+                                                    return $record?->renewal_batch;
+                                                }),
+                                                Forms\Components\Placeholder::make('is_ecommerce')->label('Is Ecommerce')->content(function (Model $record) {
+                                                    return $record?->is_ecommerce ? 'Yes' : 'No';
+                                                }),
+                                                Forms\Components\Placeholder::make('is_renewal')->label('Is Renewal')->content(function (Model $record) {
+                                                    return $record?->is_renewal ? 'Yes' : 'No';
+                                                }),
+                                                // Forms\Components\Select::make('health_team_type')
+                                                //     ->label('Sub Team')
+                                                //     ->options([
+                                                //         'All' => 'All',
+                                                //         'RM-NB' => 'RM-NB',
+                                                //         'RM-Speed' => 'RM-Speed',
+                                                //         'EBP' => 'EBP',
+                                                //         'Wow-Call' => 'Wow-Call',
+                                                //         'No-Type' => 'No-Type',
+                                                //     ]),
+                                                // Forms\Components\Select::make('advisor_id')
+                                                //     ->label('Advisor')
+                                                //     ->searchable()
+                                                //     ->options(function () {
+                                                //         return  DB::table('users as u')->select('u.id', 'u.name')
+                                                //             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                                                //             ->join('roles as r', 'mhr.role_id', '=', 'r.id')->get()->pluck('name', 'id');
+                                                //     }),
+                                                // Forms\Components\TextInput::make('source'),
+                                                // Forms\Components\DateTimePicker::make('updated_at')->label('Last Modified Date'),
+                                                // Forms\Components\TextInput::make('parent_duplicate_quote_id')->label('Parent CDB ID'),
+                                                // Forms\Components\TextInput::make('renewal_batch')->label('Renewal Batch'),
+                                                // Forms\Components\Toggle::make('is_ecommerce')
+                                                //     ->label('Is Ecommerce'),
+                                                // Forms\Components\Toggle::make('is_ebp_renewal')
+                                                //     ->label('Is EBP Renewal'),
                                             ])
                                             ->visibleOn('view'),
                                         Fieldset::make('Customer Profile')
@@ -169,10 +197,13 @@ class HealthQuoteResource extends Resource
                                                 Forms\Components\DatePicker::make('policy_end_date'),
                                             ]),
                                         Fieldset::make('Request Details')
-                                            ->relationship('healthQuoteRequestDetail')
                                             ->schema([
-                                                Forms\Components\TextInput::make('transapp_code'),
-                                                Forms\Components\DatePicker::make('next_followup_date')->label('Next Followup Date'),
+                                                Forms\Components\Placeholder::make('healthQuoteRequestDetail.transapp_code')->label('Transapp Code')->content(function (Model $record) {
+                                                    return $record?->healthQuoteRequestDetail?->transapp_code;
+                                                }),
+                                                Forms\Components\Placeholder::make('next_followup_date')->label('Next Followup Date')->content(function (Model $record) {
+                                                    return $record?->healthQuoteRequestDetail?->next_followup_date?->format('M d, Y H:i:s');
+                                                }),
                                             ])
                                             ->visibleOn('view'),
 
@@ -285,7 +316,7 @@ class HealthQuoteResource extends Resource
                         }),
                     Filter::make('mobile')->label('Mobile Number')
                         ->form([
-                            Forms\Components\TextInput::make('number')->label('Mobile Number')->lazy(),
+                            Forms\Components\TextInput::make('number')->tel()->label('Mobile Number')->lazy(),
                         ])
                         ->query(function (Builder $query, array $data): Builder {
                             return $query
@@ -294,21 +325,22 @@ class HealthQuoteResource extends Resource
                                     fn (Builder $query, $value): Builder => $query->where('mobile_no', $value),
                                 );
                         }),
-                    Filter::make('subteam')->label('SubTeam')
+                    Filter::make('type')->label('Type')
                         ->form([
-                            Forms\Components\Select::make('type')->label('Type')->options([
-                                '' => 'All',
-                                'RM-NB' => 'RM-NB',
-                                'RM-Speed' => 'RM-Speed',
-                                'EBP' => 'EBP',
-                                'Wow-Call' => 'Wow-Call',
-                                'No-Type' => 'No-Type',
-                            ]),
+                            Forms\Components\Select::make('subTeam')->label('SubTeam')
+                                ->options([
+                                    '' => 'All',
+                                    'RM-NB' => 'RM-NB',
+                                    'RM-Speed' => 'RM-Speed',
+                                    'EBP' => 'EBP',
+                                    'Wow-Call' => 'Wow-Call',
+                                    'No-Type' => 'No-Type',
+                                ]),
                         ])
                         ->query(function (Builder $query, array $data): Builder {
                             return $query
                                 ->when(
-                                    $data['type'],
+                                    $data['subTeam'],
                                     fn (Builder $query, $value): Builder => $query->where('health_team_type', $value),
                                 );
                         }),
