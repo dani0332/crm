@@ -655,6 +655,7 @@ class LeadAllocationService extends BaseService
         if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
             if ($carLead->car_value > $highestValueTier->max_price) {
                 info('lead '.$carLead->uuid.' have value higher then all the tiers so selecting tier '.$highestValueTier->name);
+
                 return $highestValueTier;
             } else {
                 info('adding min and max value check');
@@ -664,10 +665,9 @@ class LeadAllocationService extends BaseService
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
             info('adding tpl renewal check');
             $tiers->where('is_tpl_renewals', 1);
-
         }
         $tiers = $tiers->get();
-        info('tiers query is : ' . $tiers->toSql() . ' with binding of : '. json_encode($tiers->getBindings()));
+        info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
         info('First tier after filtration is : '.json_encode($tiers->first()->name));
         if ($tiers != null) {
             return $tiers->first();
