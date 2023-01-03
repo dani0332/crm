@@ -656,7 +656,7 @@ class LeadAllocationService extends BaseService
             info($tiers->toSql());
         }
         if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
-            if ($carLead->car_value > $highestValueTier->car_value) {
+            if ($carLead->car_value > $highestValueTier->max_price) {
                 info('lead '.$carLead->uuid.' have value higher then all the tiers so selecting tier '.$highestValueTier->name);
 
                 return $highestValueTier;
