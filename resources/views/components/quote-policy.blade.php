@@ -1,8 +1,8 @@
 @php
     $dateFormat = config('constants.DATE_FORMAT');
     use App\Enums\QuoteStatusEnum;
+    use App\Enums\RolesEnum;
 @endphp
-
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ asset('build/js/quote_policy.js') }}"></script>
@@ -68,7 +68,7 @@
                     </div>
                 </div>
                 <!-- Transaction Approved -->
-                @if($record->quote_status_id == QuoteStatusEnum::TransactionApproved) 
+                @if($record->quote_status_id == QuoteStatusEnum::TransactionApproved && ! auth()->user()->hasRole(RolesEnum::PA)) 
                     <div align="right">
                         <span style="color:red;" id="error-quote-policy-form"></span>
                         <button type="button" class="btn btn-primary btn-sm" id="cancel-quote-policy-btn">Cancel</button>
