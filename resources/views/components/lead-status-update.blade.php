@@ -69,9 +69,7 @@ use App\Enums\LeadSourceEnum;
         var renewal_batch = '{{ $lead->renewal_batch }}';
         var source = '{{ $lead->source }}';
         var previous_quote_policy_number = '{{ $lead->previous_quote_policy_number }}';
-        console.log('renewal_batch: '+renewal_batch);
-        console.log('source: '+source);
-        console.log('previous_quote_policy_number: '+previous_quote_policy_number);
+
         if (quoteTypeId == quoteTypeCar) {
             // Car Quote: display calendar on next_followup_date
             $('#next_followup_date').daterangepicker({
