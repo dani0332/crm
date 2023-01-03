@@ -5,6 +5,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\LeadSourceEnum;
 @endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
@@ -65,6 +66,12 @@ use App\Enums\QuoteTypeId;
         var quoteTypeCar = '{{ QuoteTypeId::Car }}';
         var isLeadPoolRole = '{{ auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin]) }}';
         var isPaRole = '{{ auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::Admin]) }}';
+        var renewal_batch = '{{ $lead->renewal_batch }}';
+        var source = '{{ $lead->source }}';
+        var previous_quote_policy_number = '{{ $lead->previous_quote_policy_number }}';
+        console.log('renewal_batch: '+renewal_batch);
+        console.log('source: '+source);
+        console.log('previous_quote_policy_number: '+previous_quote_policy_number);
         if (quoteTypeId == quoteTypeCar) {
             // Car Quote: display calendar on next_followup_date
             $('#next_followup_date').daterangepicker({
@@ -82,6 +89,14 @@ use App\Enums\QuoteTypeId;
             }
             if (!isPaRole) {
                 $("#leadStatus option[value='15']").hide(); // Transaction Approved
+            }
+            // Car Quote: Lead_Status 'Lost' viewable only for renewal lead
+            if($.trim(renewal_batch) != '' || $.trim(previous_quote_policy_number) != '' || source == '{{ LeadSourceEnum::RENEWAL_UPLOAD }}'){
+                $("#leadStatus option[value='17']").show(); // Lost
+                $("#lostReason").show(); // Lost Reason
+            } else {
+                $("#leadStatus option[value='17']").hide(); // Lost
+                $("#lostReason").hide(); // Lost Reason
             }
             // Car Quote: on page load hideshow next_followup_date conditionally
             var lead_status_code = $('#leadStatus option:selected').val();
