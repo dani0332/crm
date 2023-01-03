@@ -687,6 +687,7 @@ class LeadAllocationService extends BaseService
         info('Tier users are :'.json_encode($tierUsers));
         $query = LeadAllocation::join('users as u', 'u.id', 'lead_allocation.user_id')
         ->select('u.id', 'u.email')
+        ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
         ->where('lead_allocation.is_available', 1)
         ->where(function ($query) {
             $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
