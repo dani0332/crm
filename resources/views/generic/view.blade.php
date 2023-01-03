@@ -341,7 +341,7 @@
                                                         {{ str_replace('_', ' ', strtoupper($property)) }}
                                                     @endif
                                                 </span>
-                                                <input @if(str_contains($value, 'number')) min={{ explode('min:', $value)[1] }} @endif type={{ explode('|', $value)[1] }} id={{ $property }}
+                                                <input @if(str_contains($value, 'number') && str_contains($value, 'min')) min={{ explode('min:', $value)[1] }} @endif @if(str_contains($value, 'number') && str_contains($value, 'max')) max={{ explode('max:', $value)[1] }} @endif type={{ explode('|', $value)[1] }} id={{ $property }}
                                                     name={{ $property }} class="form-control">
                                                 @if ($errors->has($property))
                                                     <span class="text-danger">{{ $errors->first($property) }}</span>
