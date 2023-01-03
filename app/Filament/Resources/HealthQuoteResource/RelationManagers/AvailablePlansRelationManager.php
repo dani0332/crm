@@ -13,16 +13,22 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Webbingbrasil\FilamentCopyActions\Tables\Actions\CopyAction;
 
-class AvaialblePlansRelationManager extends RelationManager
+class AvailablePlansRelationManager extends RelationManager
 {
-    protected static string $relationship = 'avaialblePlans';
-    protected static ?string $recordTitleAttribute = 'providerName';
+    protected static string $relationship = 'availablePlans';
+    // protected static ?string $recordTitleAttribute = 'providerName';
+
+    protected function getTableQuery(): Builder
+    {
+        $query = HealthAvailablePlan::query();
+
+        return $query;
+    }
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Hidden::make('health_quote_request_id'),
                 Tabs::make('Lead')
                     ->tabs(
                         [
@@ -79,15 +85,6 @@ class AvaialblePlansRelationManager extends RelationManager
             ])->columns(1);
     }
 
-    protected function getTableQuery(): Builder
-    {
-        $query = new HealthAvailablePlan();
-        $query = $query->setRecordID($this->ownerRecord->id);
-        // dd($query->get());
-
-        return $query;
-    }
-
     public static function table(Table $table): Table
     {
         return $table
@@ -96,11 +93,11 @@ class AvaialblePlansRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('name')->label('Plan Name'),
                 Tables\Columns\TextColumn::make('actualPremium')->label('Actual Premium with BASMAH')
                     ->getStateUsing(function (Model $record): float {
-                        return $record->actualPremium + $record->basmah;
+                        return floatval($record->actualPremium) + floatval($record->basmah);
                     }),
                 Tables\Columns\TextColumn::make('PremiumPlusVat')->label('Premium with VAT and BASMAH')
                     ->getStateUsing(function (Model $record): float {
-                        return $record->actualPremium + $record->vat + $record->basmah;
+                        return floatval($record->actualPremium) + floatval($record->vat) + floatval($record->basmah);
                     }),
             ])
             ->filters([

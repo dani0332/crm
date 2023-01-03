@@ -6,7 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Filament\Resources\HealthQuoteResource\Pages;
-use App\Filament\Resources\HealthQuoteResource\RelationManagers\AvaialblePlansRelationManager;
+use App\Filament\Resources\HealthQuoteResource\RelationManagers\AvailablePlansRelationManager;
 use App\Filament\Resources\HealthQuoteResource\RelationManagers\MemberDetailsRelationManager;
 use App\Models\HealthQuote;
 use App\Models\QuoteStatus;
@@ -223,6 +223,7 @@ class HealthQuoteResource extends Resource
                 Tables\Columns\TextColumn::make('last_name')->label('Last Name'),
                 Tables\Columns\TextColumn::make('quoteStatus.text')->label('Lead Status'),
                 Tables\Columns\TextColumn::make('advisor.name')->label('Advisor'),
+                Tables\Columns\TextColumn::make('wcAdvisor.name')->label('WC Advisor'),
                 Tables\Columns\TextColumn::make('created_at')->label('Created Date')->dateTime(),
                 Tables\Columns\TextColumn::make('updated_at')->label('Last Modified Date')->dateTime(),
                 Tables\Columns\TextColumn::make('health_team_type')->label('Sub Team'),
@@ -353,7 +354,7 @@ class HealthQuoteResource extends Resource
     {
         return [
             MemberDetailsRelationManager::class,
-            AvaialblePlansRelationManager::class,
+            AvailablePlansRelationManager::class,
         ];
     }
 
@@ -372,13 +373,31 @@ class HealthQuoteResource extends Resource
         $fieldsArray = [];
         $ecom = app(HealthQuoteService::class)->getEcomDetails($record);
 
-        $fieldsArray = [
-            Forms\Components\Placeholder::make('Plan Name')->content($ecom['planName']),
-            Forms\Components\Placeholder::make('Provider Name')->content($ecom['providerName']),
-            Forms\Components\Placeholder::make('Payment Status')->content($ecom['paymentStatus']),
-            Forms\Components\Placeholder::make('Paid At')->content($ecom['paidAt']),
-            Forms\Components\Placeholder::make('Network')->content($ecom['network']),
+        $data = [
+            'planName' => $ecom['planName'],
+            'providerName' => $ecom['providerName'],
+            'paymentStatus' => $ecom['paymentStatus'],
+            'paidAt' => $ecom['paidAt'],
+            'network' => $ecom['network'],
         ];
+
+        try {
+            $fieldsArray = [
+                Forms\Components\Placeholder::make('Plan Name')->content($data['planName']),
+                Forms\Components\Placeholder::make('Provider Name')->content($data['providerName']),
+                Forms\Components\Placeholder::make('Payment Status')->content($data['paymentStatus']),
+                Forms\Components\Placeholder::make('Paid At')->content($data['paidAt']),
+                Forms\Components\Placeholder::make('Network')->content($data['network']),
+            ];
+        } catch (\Exception $e) {
+            $fieldsArray = [
+                Forms\Components\Placeholder::make('Plan Name')->content(''),
+                Forms\Components\Placeholder::make('Provider Name')->content(''),
+                Forms\Components\Placeholder::make('Payment Status')->content(''),
+                Forms\Components\Placeholder::make('Paid At')->content(''),
+                Forms\Components\Placeholder::make('Network')->content(''),
+            ];
+        }
 
         return $fieldsArray;
     }

@@ -74,6 +74,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasOne(User::class, 'id', 'advisor_id');
     }
 
+    public function wcAdvisor()
+    {
+        return $this->hasOne(User::class, 'id', 'wcu_id');
+    }
+
     public function getFullNameAttribute()
     {
         return $this->first_name.' '.$this->last_name;
@@ -92,8 +97,8 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasMany(HealthMemberDetail::class, 'health_quote_request_id');
     }
 
-    public function avaialblePlans()
+    public function availablePlans()
     {
-        return $this->hasMany(HealthAvailablePlan::class, 'health_quote_request_id');
+        return $this->belongsTo(HealthAvailablePlan::class);
     }
 }

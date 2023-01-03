@@ -65,7 +65,7 @@ class MemberDetailsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()->label('Add Member'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

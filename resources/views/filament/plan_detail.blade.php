@@ -34,11 +34,11 @@ $members = json_decode($data->memberPremiumBreakdown, true) ?? [];
 
 @if ($state == 'mountedTableActionData.benefitsInpatient')
 @php
-$benefitsInclusion = json_decode($data->benefits, true)['inclusion'] ?? [];
+$inpatient = json_decode($data->benefits, true)['inpatient'] ?? [];
 @endphp
 <div>
   <div class="flex flex-col gap-4 text-sm">
-    @foreach ($benefitsInclusion as $key => $value)
+    @foreach ($inpatient as $key => $value)
     <div class="p-3 border rounded-lg">
       <h4 class="font-semibold mb-1">{{ ucwords($value['text']) }}</h4>
       <p>{{ $value['value'] }}</p>
@@ -51,7 +51,7 @@ $benefitsInclusion = json_decode($data->benefits, true)['inclusion'] ?? [];
 @if ($state == 'mountedTableActionData.benefitsOutpatient')
 @php
 $benefitsFeature = json_decode($data->benefits, true)['feature'] ?? [];
-$benefitsInclusion = json_decode($data->benefits, true)['inclusion'] ?? [];
+$outpatient = json_decode($data->benefits, true)['outpatient'] ?? [];
 @endphp
 <div>
   <div class="flex flex-col gap-4 text-sm">
@@ -61,7 +61,7 @@ $benefitsInclusion = json_decode($data->benefits, true)['inclusion'] ?? [];
       <p>{{ $value['value'] }}</p>
     </div>
     @endforeach
-    @foreach ($benefitsInclusion as $key => $value)
+    @foreach ($outpatient as $key => $value)
     <div class="p-3 border rounded-lg">
       <h4 class="font-semibold mb-1">{{ ucwords($value['text']) }}</h4>
       <p>{{ $value['value'] }}</p>
