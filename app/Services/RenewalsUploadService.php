@@ -1180,11 +1180,11 @@ class RenewalsUploadService
 
                 $quoteTypeObject = $this->createQuoteObject(ucfirst($lead->quote_type));
                 $leadData = (object) $lead->data;
-
+                info('CQF - Checking Quote Existence - '.$lead->policy_number);
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
                     $leadValidationErrors->push('Policy Number is mandatory for update process');
                 } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS && $lead->policy_number && $quoteTypeObject) {
-                    info('Checking Quote Existence - '.$lead->policy_number);
+                    info('CQF - Checking Quote Existence 1 - '.$lead->policy_number);
                     if (! $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
                         $leadValidationErrors->push('Quote does not exist for this policy number, use upload and create');
                     } else {
