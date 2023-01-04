@@ -17,6 +17,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
+use App\Models\RuleLeadSource;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
@@ -510,10 +511,15 @@ class LeadAllocationService extends BaseService
                         info('Rule found and users against rule are '.json_encode($ruleUserIds));
                         $finalAvailableAndLoginAdvisorIds = array_intersect($loginAndAvailableUserIds, $ruleUserIds);
                         info('after intersection users available are : '.json_encode($finalAvailableAndLoginAdvisorIds));
+                    } else {
+                        $ruleUsers = RuleLeadSource::distinct()->pluck('user_id')->toArray();
+                        info('No rule found against this lead : '. $carLead->uuid. ' so filtering rule users : '. json_encode($ruleUsers));
+                        $finalAvailableAndLoginAdvisorIds = array_diff($loginAndAvailableUserIds, $ruleUsers);
+                        info('final login and available users after rule exclusion are : '. json_encode($finalAvailableAndLoginAdvisorIds));
                     }
                     info('common users at this point are '.json_encode($finalAvailableAndLoginAdvisorIds));
                     $userId = null;
-                    if (count($finalAvailableAndLoginAdvisorIds) != 0) {
+                    if (count($finalAvailableAndLoginAdvisorIds) > 0) {
                         $userId = reset($finalAvailableAndLoginAdvisorIds);
                         info('inside common array , userId is : '.json_encode($userId));
                     }
