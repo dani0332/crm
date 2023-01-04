@@ -62,8 +62,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
     {
         return [
             Column::make('Advisor Name', 'advisor.name')->searchable(),
-            Column::make('Total Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
-                return $rows->sum('total_leads');
+            Column::make('Total Leads')->label(fn ($row) => ($row->total_leads))->footer(function ($rows) { return $rows->sum('total_leads');
             }),
             Column::make('Tier 0 Lead Count')->label(fn ($row) => $row->tier_0_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_0_lead_count');
@@ -83,14 +82,20 @@ class AdvisorDistributionReportTable extends DataTableComponent
             Column::make('Tier 5 Lead Count')->label(fn ($row) => $row->tier_5_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_5_lead_count');
             }),
-            Column::make('Tier 6 Lead Count')->label(fn ($row) => $row->tier_6_lead_count)->footer(function ($rows) {
+            Column::make('Tier 6 NON-ECOM COUNT')->label(fn ($row) => $row->tier_6_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_6_lead_count');
+            }),
+            Column::make('Tier 6 ECOM COUNT')->label(fn ($row) => $row->tier_6_lead_count_e)->footer(function ($rows) {
+                return $rows->sum('tier_6_lead_count_e');
             }),
             Column::make('Tier H Lead Count')->label(fn ($row) => $row->tier_h_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_h_lead_count');
             }),
             Column::make('Tier L Lead Count')->label(fn ($row) => $row->tier_l_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_l_lead_count');
+            }),
+            Column::make('Tier R Lead Count')->label(fn ($row) => $row->tier_r_lead_count)->footer(function ($rows) {
+                return $rows->sum('tier_r_lead_count');
             }),
             Column::make('Total Lead Cost')->label(fn ($row) => $row->total_lead_cost)->footer(function ($rows) {
                 return $rows->sum('total_lead_cost');
@@ -103,23 +108,25 @@ class AdvisorDistributionReportTable extends DataTableComponent
         $query = CarQuote::query()
             ->select(
                 DB::raw('count(car_quote_request.id) as total_leads'),
-                DB::raw("SUM(CASE WHEN tiers.name = 'T0' THEN 1 ELSE 0 END) as tier_0_lead_count"),
-                DB::raw("SUM(CASE WHEN tiers.name = 'T1' THEN 1 ELSE 0 END) as tier_1_lead_count"),
-                DB::raw("SUM(CASE WHEN tiers.name = 'T2' THEN 1 ELSE 0 END) as tier_2_lead_count"),
-                DB::raw("SUM(CASE WHEN tiers.name = 'T3' THEN 1 ELSE 0 END) as tier_3_lead_count"),
-                DB::raw("SUM(CASE WHEN tiers.name = 'T4' THEN 1 ELSE 0 END) as tier_4_lead_count"),
-                DB::raw("SUM(CASE WHEN tiers.name = 'T5' THEN 1 ELSE 0 END) as tier_5_lead_count"),
-                DB::raw("SUM(CASE WHEN tiers.name = 'T6' THEN 1 ELSE 0 END) as tier_6_lead_count"),
-                DB::raw("SUM(CASE WHEN tiers.name = 'TL' THEN 1 ELSE 0 END) as tier_l_lead_count"),
-                DB::raw("SUM(CASE WHEN tiers.name = 'TH' THEN 1 ELSE 0 END) as tier_h_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier 0' THEN 1 ELSE 0 END) as tier_0_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier 1' THEN 1 ELSE 0 END) as tier_1_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier 2' THEN 1 ELSE 0 END) as tier_2_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier 3' THEN 1 ELSE 0 END) as tier_3_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier 4' THEN 1 ELSE 0 END) as tier_4_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier 5' THEN 1 ELSE 0 END) as tier_5_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier 6 (non ecom)' THEN 1 ELSE 0 END) as tier_6_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier 6 (Ecom)' THEN 1 ELSE 0 END) as tier_6_lead_count_e"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier L' THEN 1 ELSE 0 END) as tier_l_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier H' THEN 1 ELSE 0 END) as tier_h_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_r_lead_count"),
                 DB::raw('SUM(tiers.cost_per_lead) as total_lead_cost'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->groupBy('users.email')
             ->orderBy('users.name');
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-            $query->where('user.id', auth()->user()->id);
+            $query->where('users.id', auth()->user()->id);
         }
 
         return $query;

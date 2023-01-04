@@ -646,7 +646,7 @@ class LeadAllocationService extends BaseService
             info('adding is ecommerce check');
             $tiers->where('can_handle_ecommerce', 1);
         }
-        if ($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') {
+        if (($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') && $carLead->car_type_insurance_id == 1) {
             info('adding null value check');
             $tiers->where('can_handle_null_value', 1);
         }

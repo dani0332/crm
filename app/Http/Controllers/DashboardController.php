@@ -216,7 +216,7 @@ class DashboardController extends Controller
         }
 
         if (isset($request->userFilter) && $request->userFilter != 'null') {
-            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, IMCRMSearchTypesEnum::MULTI_SEARCH);
+            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
 
         $labels = [];
