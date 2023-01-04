@@ -516,7 +516,7 @@ class LeadAllocationService extends BaseService
                         info('No rule found against this lead : '.$carLead->uuid.' so filtering rule users : '.json_encode($ruleUsers));
                         $finalAvailableAndLoginAdvisorIds = [];
                         foreach ($loginAndAvailableUserIds as $loginId) {
-                            if(!in_array($loginId, $ruleUsers)) {
+                            if (! in_array($loginId, $ruleUsers)) {
                                 array_push($finalAvailableAndLoginAdvisorIds, $loginId);
                             }
                         }
