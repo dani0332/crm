@@ -10,7 +10,6 @@ use App\Enums\RolesEnum;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
-use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyHelpers;
 use Carbon\Carbon;
@@ -42,7 +41,7 @@ class CarQuoteService extends BaseService
                 'cqr.last_name',
                 'cqr.email',
                 'cqr.mobile_no',
-                'cqr.dob',
+                DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
                 'cqr.car_value',
                 'cqr.additional_notes',
                 'cqr.nationality_id',
@@ -53,8 +52,8 @@ class CarQuoteService extends BaseService
                 'cqr.paid_at',
                 'cqr.payment_gateway',
                 'cqr.source',
-                'cqr.created_at',
-                'cqr.updated_at',
+                DB::raw('DATE_FORMAT(cqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
+                DB::raw('DATE_FORMAT(cqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
                 'cqr.seat_capacity',
                 'cqr.cylinder',
                 'cqr.vehicle_type_id',
@@ -64,7 +63,7 @@ class CarQuoteService extends BaseService
                 'cqr.policy_number',
                 'cqr.previous_quote_id',
                 'cqr.renewal_batch',
-                'cqr.renewal_expiry_date',
+                DB::raw('DATE_FORMAT(cqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
                 'cqr.order_reference',
                 'cqr.payment_reference',
                 'cqr.calculated_value',
@@ -93,7 +92,7 @@ class CarQuoteService extends BaseService
                 'cqr.quote_status_id',
                 'qs.text AS quote_status_id_text',
                 'cqr.year_of_manufacture AS year_of_manufacture_text',
-                'cqrd.next_followup_date',
+                DB::raw('DATE_FORMAT(cqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
                 'cqrd.transapp_code',
                 'cqrd.notes',
                 'cqrd.lost_approval_status',
@@ -121,12 +120,12 @@ class CarQuoteService extends BaseService
                 'cqr.parent_duplicate_quote_id',
                 'cqr.renewal_import_code',
                 'cqr.quote_link',
-                'cqrd.advisor_assigned_date',
+                DB::raw('DATE_FORMAT(cqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
                 DB::raw("DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(),dob)), '%Y') + 0 AS customer_age"),
                 'cqr.tier_id',
                 't.name as tier_id_text',
                 'qvc.visit_count as visit_count',
-                't.cost_per_lead as cost_per_lead',
+                't.cost_per_lead as cost_per_lead', // expi
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
