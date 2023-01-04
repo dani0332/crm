@@ -38,22 +38,22 @@ class AppServiceProvider extends ServiceProvider
             );
 
             Filament::registerNavigationGroups([
-                NavigationGroup::make()->label('Dashboard')->collapsed(),
-                NavigationGroup::make()->label('Reports')->collapsed(),
-                NavigationGroup::make()->label('My Leads')->collapsed(),
-                NavigationGroup::make()->label('Rewards')->collapsed(),
-                NavigationGroup::make()->label('Activities')->collapsed(),
-                NavigationGroup::make()->label('Personal Quotes')->collapsed(),
-                NavigationGroup::make()->label('Business Quotes')->collapsed(),
-                NavigationGroup::make()->label('Car')->collapsed(),
-                NavigationGroup::make()->label('Discount Management')->collapsed(),
-                NavigationGroup::make()->label('Trans App')->collapsed(),
-                NavigationGroup::make()->label('Customers')->collapsed(),
-                NavigationGroup::make()->label('Renewals')->collapsed(),
-                NavigationGroup::make()->label('Claims')->collapsed(),
-                NavigationGroup::make()->label('AML')->collapsed(),
-                NavigationGroup::make()->label('Telemarketing')->collapsed(),
-                NavigationGroup::make()->label('Admin')->collapsed(),
+                NavigationGroup::make()->label('Dashboard'),
+                NavigationGroup::make()->label('Reports'),
+                NavigationGroup::make()->label('My Leads'),
+                NavigationGroup::make()->label('Rewards'),
+                NavigationGroup::make()->label('Activities'),
+                NavigationGroup::make()->label('Personal Quotes'),
+                NavigationGroup::make()->label('Business Quotes'),
+                NavigationGroup::make()->label('Car'),
+                NavigationGroup::make()->label('Discount Management'),
+                NavigationGroup::make()->label('Trans App'),
+                NavigationGroup::make()->label('Customers'),
+                NavigationGroup::make()->label('Renewals'),
+                NavigationGroup::make()->label('Claims'),
+                NavigationGroup::make()->label('AML'),
+                NavigationGroup::make()->label('Telemarketing'),
+                NavigationGroup::make()->label('Admin'),
             ]);
         });
 
