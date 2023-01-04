@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
@@ -105,7 +104,7 @@ class DashboardController extends Controller
 
     public function getTPLDashboardStats(Request $request): array
     {
-        $tiers = Tier::whereIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->get()->pluck('id');
+        $tiers = Tier::where('can_handle_tpl', 1)->get()->pluck('id');
         $records = QuoteBatches::query()
         ->select(
             'quote_batches.id',
@@ -183,9 +182,8 @@ class DashboardController extends Controller
         return $query;
     }
 
-    public function getComprehensiveDashboardStats(Request $request): array
+    public function getComprehensiveDashboardStats(Request $request, $tiers): array
     {
-        $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->get();
         $compTiers = $tiers->pluck('id');
         $records = QuoteBatches::query()
         ->select(
@@ -216,7 +214,7 @@ class DashboardController extends Controller
         }
 
         if (isset($request->userFilter) && $request->userFilter != 'null') {
-            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, IMCRMSearchTypesEnum::MULTI_SEARCH);
+            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
 
         $labels = [];
@@ -234,18 +232,22 @@ class DashboardController extends Controller
     {
         $userId = auth()->user()->id;
         $userTeams = $this->getUserTeams($userId)->pluck('id')->toArray();
-        $teams = $this->getTeamsByProductName(quoteTypeCode::Car)->pluck('id')->toArray();
-        //dd($teams, $userTeams);
-        return (count($userTeams) > 0 && count($teams) > 0) ? array_intersect($userTeams, $teams) : [];
+        info('Inside getCommonTeamsForCurrentUserWithCar user teams are : '.json_encode($userTeams));
+        $teamsByProduct = $this->getTeamsByProductName(quoteTypeCode::Car)->pluck('id')->toArray();
+        info('Inside getCommonTeamsForCurrentUserWithCar teams by product are : '.json_encode($teamsByProduct));
+
+        return (count($userTeams) > 0 && count($teamsByProduct) > 0) ? array_intersect($userTeams, $teamsByProduct) : [];
     }
 
     public function renderComprehensiveDashboard(Request $request)
     {
         $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
-        $tiers = Tier::whereNotIn('name', [TiersEnum::TierTR, TiersEnum::Tier6])->orderBy('name', 'asc')->get();
-        $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request);
+        $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->get();
+        $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
+        info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
+        info('inside renderComprehensiveDashboard common teams are : '.json_encode($commonTeams));
         $commonTeam = 0;
         if (count($commonTeams) > 0) {
             $commonTeam = $commonTeams[0];

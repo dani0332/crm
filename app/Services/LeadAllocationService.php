@@ -17,6 +17,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
+use App\Models\RuleLeadSource;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
@@ -494,29 +495,32 @@ class LeadAllocationService extends BaseService
                 if ($selectedTier) {
                     info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
-                    $commonUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
+                    $loginAndAvailableUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
 
-                    info('login and available users right now are '.json_encode($commonUserIds));
+                    info('login and available users right now are '.json_encode($loginAndAvailableUserIds));
 
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
                     if (count($matchedRuleRecords) > 0) {
-                        $commonUserIds = [];
                         $ruleUserIds = [];
                         if (str_contains($matchedRuleRecords?->first()?->leadSourceUsers, ',')) {
                             $ruleUserIds = array_map('intval', explode(',', $matchedRuleRecords->first()->leadSourceUsers));
                         } else {
                             $ruleUserIds[] = (int) $matchedRuleRecords->first()->leadSourceUsers;
                         }
-                        info('Rule found and login users are '.json_encode($loginUsersIds));
                         info('Rule found and users against rule are '.json_encode($ruleUserIds));
-                        $commonUserIds = array_intersect($loginUsersIds->toArray(), $ruleUserIds);
-                        info('rules user intersection with login users is '.json_encode($commonUserIds));
+                        $finalAvailableAndLoginAdvisorIds = array_intersect($loginAndAvailableUserIds, $ruleUserIds);
+                        info('after intersection users available are : '.json_encode($finalAvailableAndLoginAdvisorIds));
+                    } else {
+                        $ruleUsers = RuleLeadSource::distinct()->pluck('user_id')->toArray();
+                        info('No rule found against this lead : '.$carLead->uuid.' so filtering rule users : '.json_encode($ruleUsers));
+                        $finalAvailableAndLoginAdvisorIds = array_diff($loginAndAvailableUserIds, $ruleUsers);
+                        info('final login and available users after rule exclusion are : '.json_encode($finalAvailableAndLoginAdvisorIds));
                     }
-                    info('common users at this point are '.json_encode($commonUserIds));
+                    info('common users at this point are '.json_encode($finalAvailableAndLoginAdvisorIds));
                     $userId = null;
-                    if (count($commonUserIds) != 0) {
-                        $userId = reset($commonUserIds);
+                    if (count($finalAvailableAndLoginAdvisorIds) > 0) {
+                        $userId = reset($finalAvailableAndLoginAdvisorIds);
                         info('inside common array , userId is : '.json_encode($userId));
                     }
                     if ($userId) {
@@ -643,17 +647,14 @@ class LeadAllocationService extends BaseService
         if ($carLead->car_type_insurance_id == 2) {
             info('adding tpl check');
             $tiers->where('can_handle_tpl', 1);
-            info($tiers->toSql());
         }
         if ($carLead->is_ecommerce) {
             info('adding is ecommerce check');
             $tiers->where('can_handle_ecommerce', 1);
-            info($tiers->toSql());
         }
-        if ($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') {
+        if (($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') && $carLead->car_type_insurance_id == 1) {
             info('adding null value check');
             $tiers->where('can_handle_null_value', 1);
-            info($tiers->toSql());
         }
         if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
             if ($carLead->car_value > $highestValueTier->max_price) {
@@ -663,17 +664,16 @@ class LeadAllocationService extends BaseService
             } else {
                 info('adding min and max value check');
                 $tiers->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
-                info($tiers->toSql());
             }
         }
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
             info('adding tpl renewal check');
             $tiers->where('is_tpl_renewals', 1);
-            info($tiers->toSql());
         }
-        $tiers = $tiers->get();
 
+        info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
         info('First tier after filtration is : '.json_encode($tiers->first()->name));
+        $tiers = $tiers->get();
         if ($tiers != null) {
             return $tiers->first();
         }

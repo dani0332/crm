@@ -38,7 +38,7 @@ class AddBatchNumberJob implements ShouldQueue
             info('last batch : '.json_encode($lastBatch));
             if ($lastBatch == null) {
                 info('inside creating batches from scratch');
-                $batches = $this->generateBatchNumbers(Carbon::parse('2018-08-05'));
+                $batches = $this->generateBatchNumbers(Carbon::parse('2018-08-06'));
                 if (count($batches)) {
                     foreach ($batches as $batch) {
                         $this->insertQuoteBatch($batch);
