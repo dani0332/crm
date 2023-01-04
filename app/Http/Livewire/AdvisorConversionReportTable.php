@@ -131,7 +131,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
                     return number_format((float) $total, 2, '.', '').' %';
                 }),
-            Column::make('Net Conversion')->label(fn ($row) =>  ($row->sale_leads - $row->created_sale_leads) > 0 ? (($row->total_leads - $row->bad_leads - $row->manual_created) / (($row->sale_leads - $row->created_sale_leads))) .' %' : 'NaN')->footer(function ($rows) {
+            Column::make('Net Conversion')->label(fn ($row) => ($row->sale_leads - $row->created_sale_leads) > 0 ? (($row->total_leads - $row->bad_leads - $row->manual_created) / (($row->sale_leads - $row->created_sale_leads))).' %' : 'NaN')->footer(function ($rows) {
                 $total = 0;
                 foreach ($rows as $row) {
                     if (($row->sale_leads - $row->created_sale_leads) > 0) {

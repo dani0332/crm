@@ -62,7 +62,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
     {
         return [
             Column::make('Advisor Name', 'advisor.name')->searchable(),
-            Column::make('Total Leads')->label(fn ($row) => ($row->total_leads))->footer(function ($rows) { return $rows->sum('total_leads');
+            Column::make('Total Leads')->label(fn ($row) => ($row->total_leads))->footer(function ($rows) {
+                return $rows->sum('total_leads');
             }),
             Column::make('Tier 0 Lead Count')->label(fn ($row) => $row->tier_0_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_0_lead_count');
