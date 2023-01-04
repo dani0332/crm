@@ -102,7 +102,7 @@ class CarQuoteService extends BaseService
                 'cqr.currently_insured_with as currently_insured_with_text',
                 'ls.text as lost_reason',
                 'cqr.previous_quote_policy_number',
-                'cqr.previous_policy_expiry_date',
+                DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
                 'cqr.previous_quote_policy_premium',
                 'cqr.car_model_detail_id',
                 'cmd.text as car_model_detail_id_text',
@@ -114,8 +114,8 @@ class CarQuoteService extends BaseService
                 'cqr.has_ncd_supporting_documents',
                 'cqr.back_home_license_held_for_id',
                 'ulhfs.TEXT as back_home_license_held_for_id_text',
-                'cqr.policy_start_date',
-                'cqr.policy_issuance_date',
+                DB::raw('DATE_FORMAT(cqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
+                DB::raw('DATE_FORMAT(cqr.policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
                 'cqr.customer_id',
                 'cqr.parent_duplicate_quote_id',
                 'cqr.renewal_import_code',
@@ -125,7 +125,7 @@ class CarQuoteService extends BaseService
                 'cqr.tier_id',
                 't.name as tier_id_text',
                 'qvc.visit_count as visit_count',
-                't.cost_per_lead as cost_per_lead', // expi
+                't.cost_per_lead as cost_per_lead', // prev
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')

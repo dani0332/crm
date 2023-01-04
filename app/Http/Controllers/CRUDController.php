@@ -365,10 +365,7 @@ class CRUDController extends Controller
         $audits = [];
         $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $record->id);
         $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);
-        $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
         $advisor = isset($record->advisor_id) ? $this->userService->getUserById((int) $record->advisor_id) : null;
-
-        $record->policy_start_date = isset($record->policy_start_date) ? date('d/m/Y', strtotime($record->policy_start_date)) : null;
         $isQuoteDocumentEnabled = $this->quoteDocumentService->isEnabled($model->modelType);
         $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($model->modelType, $record->id);
         $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
