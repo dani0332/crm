@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
@@ -233,9 +232,10 @@ class DashboardController extends Controller
     {
         $userId = auth()->user()->id;
         $userTeams = $this->getUserTeams($userId)->pluck('id')->toArray();
-        info('Inside getCommonTeamsForCurrentUserWithCar user teams are : '. json_encode($userTeams));
+        info('Inside getCommonTeamsForCurrentUserWithCar user teams are : '.json_encode($userTeams));
         $teamsByProduct = $this->getTeamsByProductName(quoteTypeCode::Car)->pluck('id')->toArray();
-        info('Inside getCommonTeamsForCurrentUserWithCar teams by product are : '. json_encode($teamsByProduct));
+        info('Inside getCommonTeamsForCurrentUserWithCar teams by product are : '.json_encode($teamsByProduct));
+
         return (count($userTeams) > 0 && count($teamsByProduct) > 0) ? array_intersect($userTeams, $teamsByProduct) : [];
     }
 
@@ -244,10 +244,10 @@ class DashboardController extends Controller
         $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
         $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
-        info('inside renderComprehensiveDashboard comp stats are : '. json_encode($comprehensiveDashboardStats));
+        info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-        info('inside renderComprehensiveDashboard common teams are : '. json_encode($commonTeams));
+        info('inside renderComprehensiveDashboard common teams are : '.json_encode($commonTeams));
         $commonTeam = 0;
         if (count($commonTeams) > 0) {
             $commonTeam = $commonTeams[0];
