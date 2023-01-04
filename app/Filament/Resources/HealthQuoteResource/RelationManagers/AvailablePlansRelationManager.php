@@ -20,7 +20,7 @@ class AvailablePlansRelationManager extends RelationManager
 
     protected function getTableQuery(): Builder
     {
-        return HealthAvailablePlan::query();
+        return HealthAvailablePlan::query()->whereNotNull('providerName');
     }
 
     public static function form(Form $form): Form

@@ -14,7 +14,7 @@ class ViewHealthQuote extends ViewRecord
     {
         return [
             Actions\ReplicateAction::make()
-                ->label('Duplicate')
+                ->label('Duplicate Lead')
                 ->icon('heroicon-o-duplicate')
                 ->color('warning')
                 ->modalHeading('Duplicate Health Quote')
