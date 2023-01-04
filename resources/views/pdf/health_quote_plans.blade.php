@@ -358,7 +358,7 @@
         ["code" => "spacer"],
         ["code" => "discountPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
-        ["code" => "vat", "title" => "Policy Fee", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "vat", "title" => "Vat Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
         ["code" => "total", "title" => "Total Indicative Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
 //        ["code" => "spacer"],
@@ -457,11 +457,6 @@
                     <p class="text-center">
                         {{ $plans[$planId]->name }}
                     </p>
-                    {{--                        @if(isset($plans[$planId]->isRenewal) && $plans[$planId]->isRenewal)--}}
-                    {{--                            <span class="badge badge-success">Renewal Quote</span>--}}
-                    {{--                        @else--}}
-                    {{--                            <img style="margin-top:3px" src="{{public_path('images/quote_plans_pages/imcrm_plan_renewal_empty_tag.png')}}" />--}}
-                    {{--                        @endif--}}
                 </td>
             @endforeach
         </tr>
@@ -483,21 +478,6 @@
                 </td>
             @endforeach
         </tr>
-
-        {{--            <tr class="bg-light-blue">--}}
-        {{--                <td><p>VEHICLE VALUE</p></td>--}}
-        {{--                @foreach($planIds as $planId)--}}
-        {{--                    <td>--}}
-        {{--                        @php--}}
-        {{--                            $plan = $plans[$planId];--}}
-        {{--                            $carValue = formatAmount($plan->carValue, 0);--}}
-        {{--                            if($plan->repairType == \App\Enums\CarPlanType::TPL) $carValue = 'N/A';--}}
-        {{--                        @endphp--}}
-
-        {{--                        <p class="text-center">{!! $carValue !!}</p>--}}
-        {{--                    </td>--}}
-        {{--                @endforeach--}}
-        {{--            </tr>--}}
 
         @foreach($features as $feature)
 
