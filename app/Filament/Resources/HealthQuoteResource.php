@@ -249,7 +249,11 @@ class HealthQuoteResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('code')->label('CDB ID')->color('primary'),
+                Tables\Columns\TextColumn::make('code')
+                    ->label('CDB ID')
+                    ->color('primary')
+                    ->url(fn (HealthQuote $record): string => './health-quotes/'.$record->uuid)
+                    ->openUrlInNewTab(),
                 Tables\Columns\TextColumn::make('first_name')->label('First Name'),
                 Tables\Columns\TextColumn::make('last_name')->label('Last Name'),
                 Tables\Columns\TextColumn::make('quoteStatus.text')->label('Lead Status'),
@@ -305,7 +309,7 @@ class HealthQuoteResource extends Resource
                         }),
                     Filter::make('email')->label('Email')
                         ->form([
-                            Forms\Components\TextInput::make('email')->label('Email')->lazy(),
+                            Forms\Components\TextInput::make('email')->label('Email Address')->lazy(),
                         ])
                         ->query(function (Builder $query, array $data): Builder {
                             return $query
@@ -425,7 +429,7 @@ class HealthQuoteResource extends Resource
             )
             ->actions([
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\ViewAction::make()->openUrlInNewTab(),
                     Tables\Actions\EditAction::make()->openUrlInNewTab(),
                 ]),
             ])

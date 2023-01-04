@@ -4,6 +4,7 @@ namespace App\Filament\Resources\HealthQuoteResource\Pages;
 
 use App\Enums\QuoteStatusEnum;
 use App\Filament\Resources\HealthQuoteResource;
+use Closure;
 use Filament\Pages\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Contracts\Pagination\Paginator;
@@ -34,6 +35,11 @@ class ListHealthQuotes extends ListRecords
     protected function getTableRecordsPerPageSelectOptions(): array
     {
         return [false];
+    }
+
+    protected function getTableRecordUrlUsing(): ?Closure
+    {
+        return null;
     }
 
     protected function getActions(): array

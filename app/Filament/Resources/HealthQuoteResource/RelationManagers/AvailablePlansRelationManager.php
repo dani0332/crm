@@ -18,6 +18,11 @@ class AvailablePlansRelationManager extends RelationManager
     protected static string $relationship = 'availablePlans';
     protected static ?string $recordTitleAttribute = 'providerName';
 
+    protected function getTableQuery(): Builder
+    {
+        return HealthAvailablePlan::query();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -106,14 +111,5 @@ class AvailablePlansRelationManager extends RelationManager
             ->bulkActions([
                 // Tables\Actions\DeleteBulkAction::make(),
             ]);
-    }
-
-    protected function getTableQuery(): Builder
-    {
-        $query = HealthAvailablePlan::query();
-
-        $query->whereNotNull('id');
-
-        return $query;
     }
 }
