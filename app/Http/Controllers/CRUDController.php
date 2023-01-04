@@ -979,6 +979,28 @@ class CRUDController extends Controller
         return $pdf->download($response['name']);
     }
 
+    /**
+     * export selected plans to PDF.
+     *
+     * @param  Request  $request
+     * @param $quoteType
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function exportHealthPdf($quoteType, ExportPlansPdfRequest $request)
+    {
+        $response = $this->healthQuoteService->exportPlansPdf($quoteType, $request->validated());
+
+        if (isset($response['error'])) {
+            return redirect()->back()->with('message', $response['error']);
+        }
+
+        $pdf = $response['pdf'];
+
+        return $pdf->download($response['name']);
+    }
+
+
+
     public function destroyDocument($quoteType, $quoteUuId, $id)
     {
         $document = QuoteDocument::find($id);
