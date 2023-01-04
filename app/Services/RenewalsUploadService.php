@@ -519,6 +519,7 @@ class RenewalsUploadService
     {
         $nameSpace = '\\App\\Models\\';
         $model = $nameSpace.ucwords($quoteType).'Quote';
+        info('CQF - createQuoteObject - '.$model);
 
         return (class_exists($model)) ? $model::query() : false;
     }
@@ -1181,6 +1182,7 @@ class RenewalsUploadService
                 $quoteTypeObject = $this->createQuoteObject(ucfirst($lead->quote_type));
                 $leadData = (object) $lead->data;
                 info('CQF - Checking Quote Existence - '.$lead->policy_number);
+                info('CQF - Checking Quote Existence - Quote Type - '.json_encode($quoteTypeObject));
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
                     $leadValidationErrors->push('Policy Number is mandatory for update process');
                 } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS && $lead->policy_number && $quoteTypeObject) {
