@@ -194,11 +194,11 @@ class HealthQuoteResource extends Resource
                                                 Forms\Components\TextInput::make('policy_number')
                                                     ->maxLength(100),
                                                 Forms\Components\DatePicker::make('policy_start_date'),
-                                                Forms\Components\DatePicker::make('policy_end_date'),
+                                                Forms\Components\DatePicker::make('renewal_expiry_date')->label('Policy End Date'),
                                             ]),
                                         Fieldset::make('Request Details')
                                             ->schema([
-                                                Forms\Components\Placeholder::make('healthQuoteRequestDetail.transapp_code')->label('Transapp Code')->content(function (Model $record) {
+                                                Forms\Components\Placeholder::make('transapp_code')->label('Transapp Code')->content(function (Model $record) {
                                                     return $record?->healthQuoteRequestDetail?->transapp_code;
                                                 }),
                                                 Forms\Components\Placeholder::make('next_followup_date')->label('Next Followup Date')->content(function (Model $record) {
@@ -239,7 +239,7 @@ class HealthQuoteResource extends Resource
                                         ->pluck('text', 'id')->toArray();
                                 }
                             ),
-                        Forms\Components\Textarea::make('notes'),
+                        Forms\Components\Textarea::make('notes')->label('Notes')->maxLength(1000),
                     ])->hiddenOn('create')->columnSpan(['lg' => 1]),
 
             ])->columns(4);
