@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Carbon\Carbon;
 
 class QuoteDocument extends Model
 {
@@ -16,18 +17,14 @@ class QuoteDocument extends Model
     protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name'];
     protected $hidden = [''];
 
-    public function getCreatedAtAttribute($table)
+    public function getCreatedAtAttribute($date)
     {
-        $date_time_format = config('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return (!empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : "";
     }
 
-    public function getUpdatedAtAttribute($table)
+    public function getUpdatedAtAttribute($date)
     {
-        $date_time_format = config('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return (!empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : "";
     }
 
     public function createdBy()

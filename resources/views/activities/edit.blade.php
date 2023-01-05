@@ -1,6 +1,3 @@
-@php
-use Carbon\Carbon;
-@endphp
 <form method="post" action="{{'/activities/'. $record->uuid .'/update'}}" autocomplete="off">
     {{ csrf_field() }}
     @method('POST')
@@ -45,7 +42,7 @@ use Carbon\Carbon;
             <div class="col">
                 <div class="input-group">
                     <span class="input-group-addon"><i class="glyphicon glyphicon-time"></i></span>
-                    <input id="due_date" type="text" class="form-control" name="due_date" value="{{ isset($record->due_date) ? Carbon::parse($record->due_date)->format('d-m-Y H:i:s') : '' }}" placeholder="Due Date" />
+                    <input id="due_date" type="text" class="form-control" name="due_date" value="{{ $record->due_date }}" placeholder="Due Date" />
                     <span class="text-danger"></span>
                 </div>
             </div>

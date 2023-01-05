@@ -2,7 +2,6 @@
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 $url = '/quotes/' . strtolower($modeltype) . '/' . $lead->uuid;
-use Carbon\Carbon;
 @endphp
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -82,7 +81,7 @@ use Carbon\Carbon;
                                     <td>{{ $activity['title'] }}</td>
                                     <td><a href="{{ $url }}">{{ $quoteCode. ''. strtoupper($activity['quote_uuid']) }}</a></td>
                                     <td>{{ $activity['client_name'] }}</td>
-                                    <td>{{ isset($activity['due_date']) ? Carbon::parse($activity['due_date'])->format('d-m-Y H:i:s') : '' }}</td>
+                                    <td>{{ $activity['due_date'] }}</td>
                                     <td>{{ $activity['assignee'] }}</td>
                                     <td>
                                         @cannot(PermissionsEnum::ApprovePayments)

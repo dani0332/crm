@@ -3,7 +3,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
 $docUploadUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid . '/thankyou';
-use Carbon\Carbon;
 @endphp
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -43,7 +42,7 @@ use Carbon\Carbon;
                             <tr>
                                 <td>{{ $document->document_type_text ? $document->document_type_text : '' }}</td>
                                 <td><a href="/documents/{{ $document->doc_uuid }}" target="_blank">{{ Str::of($document->doc_name)->explode('_')->last() }}</a></td>
-                                <td>{{ isset($document->created_at) ? Carbon::parse($document->created_at)->format('d-m-Y H:i:s') : '' }}</td>
+                                <td>{{ $document->created_at }}</td>
                                 <td>{{ $document->createdBy ? $document->createdBy->name : '' }}</td>
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)

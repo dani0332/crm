@@ -20,7 +20,7 @@
                             <tbody>
                                 @foreach ($audits as $auditLog)
                                     <tr>
-                                        <td>{{ isset($auditLog->ModifiedAt) ? Carbon::parse($auditLog->ModifiedAt)->format('d-m-Y H:i:s') : '' }}</td>
+                                        <td>{{ $auditLog->ModifiedAt }}</td>
                                         <td>{{ $auditLog->ModifiedBy }}</td>
                                         <td>{{ $auditLog->NewStatus }}</td>
                                         <td>{{ $auditLog->NewAdvisor }}</td>

@@ -36,7 +36,7 @@ use Carbon\Carbon;
                               <td style="word-wrap:break-word;">{{ $audit->old_values }}</td>
                               <td style="word-wrap:break-word;">{{ $audit->new_values }}</td>
                               <td style="word-wrap:break-word;">{{ $audit->ip_address }}</td>
-                              <td style="word-wrap:break-word;">{{ isset($audit->created_at) ? Carbon::parse($audit->created_at)->format('d-m-Y H:i:s') : '' }}</td>
+                              <td style="word-wrap:break-word;">{{ isset($audit->created_at) ? Carbon::parse($audit->created_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '' }}</td>
                             </tr>
                             @endforeach
 
