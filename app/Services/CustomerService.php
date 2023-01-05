@@ -14,11 +14,6 @@ class CustomerService extends BaseService
         return Customer::where('email', $email)->first();
     }
 
-    public static function getUniqueCustomerByEmail($email)
-    {
-        return Customer::where('email', $email)->first();
-    }
-
     public static function getUniqueCustomerByMobileNo($mobileNo)
     {
         return Customer::where('mobile_no', $mobileNo)->first();
@@ -106,7 +101,7 @@ class CustomerService extends BaseService
         return $customer_email;
     }
 
-    public function getAddtionalContacts($customerId)
+    public function getAdditionalContacts($customerId)
     {
         return CustomerAdditionalContact::where('customer_id', $customerId)
         ->orderBy('created_at', 'desc')->get();
@@ -115,7 +110,7 @@ class CustomerService extends BaseService
     public function checkAdditionalEmailExist($quoteObject, $newAdditionalEmail)
     {
         $newAdditionalEmail = strtolower($newAdditionalEmail);
-        $customer = $this->getUniqueCustomerByEmail($newAdditionalEmail);
+        $customer = $this->getCustomerByEmail($newAdditionalEmail);
         $additionalEmail = CustomerAdditionalContact::where(['key' => GenericRequestEnum::EMAIL, 'value' => $newAdditionalEmail])
         ->first();
 
@@ -141,5 +136,10 @@ class CustomerService extends BaseService
         } else {
             return false;
         }
+    }
+
+    public function getAdditionalContactByKey($customerId, $key)
+    {
+        return CustomerAdditionalContact::where(['customer_id' => $customerId, 'key' => $key])->get();
     }
 }

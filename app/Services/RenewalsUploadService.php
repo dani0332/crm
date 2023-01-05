@@ -353,6 +353,8 @@ class RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
+                info($logPrefix.count($jobs).' found to schedule for fetch plans');
+
                 Haystack::build()
                     ->onQueue('renewals')
                    ->addJobs($jobs)
@@ -371,12 +373,12 @@ class RenewalsUploadService
                    ->allowFailures()
                    ->withDelay(10)
                    ->dispatch();
+
+                info($logPrefix.' all jobs are scheduled');
             } else {
                 info($logPrefix.' no jobs to create quotes');
                 $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
             }
-
-            info($logPrefix.' all jobs are dispatched');
 
             return true;
         } catch (\Exception $exception) {
@@ -518,7 +520,7 @@ class RenewalsUploadService
     public function createQuoteObject($quoteType)
     {
         $nameSpace = '\\App\\Models\\';
-        $model = $nameSpace.ucwords($quoteType).'Quote';
+        $model = $nameSpace.ucfirst(strtolower($quoteType)).'Quote';
 
         return (class_exists($model)) ? $model::query() : false;
     }
@@ -598,7 +600,7 @@ class RenewalsUploadService
      */
     public function getCustomer($customerData)
     {
-        $customer = CustomerService::getUniqueCustomerByEmail($customerData['email']);
+        $customer = CustomerService::getCustomerByEmail($customerData['email']);
 
         //create new customer if not exists
         if (! isset($customer->id)) {
@@ -1178,14 +1180,19 @@ class RenewalsUploadService
                     }
                 }
 
-                $quoteTypeObject = $this->createQuoteObject(ucfirst($lead->quote_type));
-                $leadData = (object) $lead->data;
+                $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
+                $quoteTypeObject = $this->createQuoteObject($quoteType->code);
 
+                $leadData = (object) $lead->data;
+                info('CQF VALIDATION - Checking Quote Existence PolicyNo - '.$lead->policy_number.' Quote Type - '.json_encode($quoteTypeObject));
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
                     $leadValidationErrors->push('Policy Number is mandatory for update process');
                 } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS && $lead->policy_number && $quoteTypeObject) {
+                    info('CQF VALIDATION - Checking Quote Existence 1 - '.$lead->policy_number);
                     if (! $quoteTypeObject->where('previous_quote_policy_number', $lead->policy_number)->where('previous_policy_expiry_date', $this->formatDate($leadData->end_date))->first()) {
                         $leadValidationErrors->push('Quote does not exist for this policy number, use upload and create');
+                    } else {
+                        info('CQF VALIDATION - Quote Found for Update - '.$lead->policy_number);
                     }
                 }
                 if (! $leadData->insurer) {
