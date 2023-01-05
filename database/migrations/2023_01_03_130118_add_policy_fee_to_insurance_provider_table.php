@@ -15,7 +15,7 @@ class AddPolicyFeeToInsuranceProviderTable extends Migration
     {
         Schema::table('insurance_provider', function (Blueprint $table) {
             if (! Schema::hasColumn('insurance_provider', 'policy_fee')) {
-                $table->decimal('policy_fee', 10,2)->nullable();
+                $table->decimal('policy_fee', 10, 2)->nullable();
             }
         });
     }

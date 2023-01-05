@@ -999,8 +999,6 @@ class CRUDController extends Controller
         return $pdf->download($response['name']);
     }
 
-
-
     public function destroyDocument($quoteType, $quoteUuId, $id)
     {
         $document = QuoteDocument::find($id);
