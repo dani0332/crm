@@ -3018,7 +3018,7 @@ $('#dob_div #dob').datepicker({
   // TM Leads
   changeMonth: true,
   changeYear: true,
-  dateFormat: 'dd/mm/yy',
+  dateFormat: 'dd-mm-yy',
   yearRange: '-80:+00',
 });
 

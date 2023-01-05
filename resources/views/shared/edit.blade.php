@@ -202,7 +202,7 @@
             });
         }
 
-        $('#previous_policy_expiry_date').datepicker({
+        $('#previous_policy_expiry_date, #dob').datepicker({
             changeMonth: true,
             changeYear: true,
             dateFormat: 'yy-mm-dd',
