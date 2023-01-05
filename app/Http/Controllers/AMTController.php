@@ -264,7 +264,7 @@ class AMTController extends Controller
             $selectedLeadStatus = $selectedLeadStatus->text;
         }
 
-        $customerAdditionalContacts = $this->customerService->getAddtionalContacts($record->customer_id);
+        $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id);
 
         return view('amt.show', compact(
             'businessInsuranceType',

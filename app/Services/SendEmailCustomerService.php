@@ -11,13 +11,16 @@ class SendEmailCustomerService extends BaseService
 {
     protected $emailActivityService;
     protected $emailStatusService;
+    protected $customerService;
 
     public function __construct(
         EmailActivityService $emailActivityService,
-        EmailStatusService $emailStatusService
+        EmailStatusService $emailStatusService,
+        CustomerService $customerService
     ) {
         $this->emailActivityService = $emailActivityService;
         $this->emailStatusService = $emailStatusService;
+        $this->customerService = $customerService;
     }
 
     public function sendEmail($emailTemplateId, $emailData, $tag)
@@ -136,6 +139,10 @@ class SendEmailCustomerService extends BaseService
             }
 
             $body = [
+                'sender' => [
+                    'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
+                    'name' => $emailData->advisorName,
+                ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->customerName,
@@ -169,8 +176,9 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ];
 
+            $ccAdvisor = [];
             if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
-                $body['cc'] = [[
+                $ccAdvisor = [[
                     'email' => $emailData->advisorEmailAddress,
                     'name' => $emailData->advisorName,
                 ]];
@@ -179,6 +187,20 @@ class SendEmailCustomerService extends BaseService
                     'name' => $emailData->advisorName,
                 ];
             }
+
+            $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
+            $ccAdditional = [];
+            if ($customer) {
+                $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
+                foreach ($additionalContacts as $additionalContact) {
+                    $ccAdditional[] = [
+                        'email' => $additionalContact->value,
+                        'name' => $emailData->customerName,
+                    ];
+                }
+            }
+
+            $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
