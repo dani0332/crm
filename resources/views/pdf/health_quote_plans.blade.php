@@ -268,7 +268,7 @@
 @php
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
-    //dd($quotePlans->quote->plans);
+
     foreach ($quotePlans->quote->plans as &$quotePlan)
     {
         $addonsPrice = 0;
@@ -307,10 +307,13 @@
             $benefit->price = 0;
             $benefit->vat = 0;
 
-        $quotePlan->discountPremium += $addonsPrice;
-        $quotePlan->vat += $addonsVat;
-        $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat;
-        $plans[$quotePlan->id] = $quotePlan;
+            $policyFee = (isset($providers[$quotePlan->providerId]->policy_fee)) ? $providers[$quotePlan->providerId]->policy_fee : 0;
+            $quotePlan->discountPremium += $addonsPrice;
+            $quotePlan->vat += $addonsVat;
+            $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat + $policyFee;
+            $quotePlan->policyFee = $policyFee;
+            $plans[$quotePlan->id] = $quotePlan;
+        }
     }
 
     $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
@@ -357,6 +360,8 @@
 
         ["code" => "spacer"],
         ["code" => "discountPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "spacer"],
+        ["code" => "policyFee", "title" => "Policy Fee", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
         ["code" => "vat", "title" => "Vat Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
@@ -560,7 +565,7 @@
                 <span class="text-sm"><b>DISCLAIMER</b></span>
                 <p class="text-left text-xs">
                     Whilst we try to ensure the currency and accuracy of the details in the comparison table, there may occasion where there are differences in the covers provided. In such cases, the covers detailed in the insurer's policy wordings and schedules will supersede the details provided by us.<br/><br/>
-                    To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>, please refer to the <a class="text-black" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid )}}"><b>quote</b></a>.
+                    To view the full text of <b>MATERIAL INFORMATION DECLARATION</b> and <b>DISCLAIMER</b>, please refer to the <a class="text-black" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid )}}"><b>quote</b></a>.
                 </p>
             </td>
         </tr>
