@@ -512,7 +512,7 @@ class LeadAllocationService extends BaseService
                         $finalAvailableAndLoginAdvisorIds = array_intersect($loginAndAvailableUserIds, $ruleUserIds);
                         info('after intersection users available are : '.json_encode($finalAvailableAndLoginAdvisorIds));
                     } else {
-                        $ruleUsers = RuleLeadSource::distinct()->pluck('user_id')->toArray();
+                        $ruleUsers = RuleLeadSource::join('rules', 'rule_lead_sources.rule_id', 'rules.id')->where('rules.is_active', 1)->distinct()->pluck('rule_lead_sources.user_id')->toArray();
                         info('No rule found against this lead : '.$carLead->uuid.' so filtering rule users : '.json_encode($ruleUsers));
                         $finalAvailableAndLoginAdvisorIds = [];
                         foreach ($loginAndAvailableUserIds as $loginId) {
@@ -651,14 +651,13 @@ class LeadAllocationService extends BaseService
         info('Started searching tier for car lead : '.json_encode($carLead->code));
         $highestValueTier = Tier::where('is_active', 1)->orderBy('max_price', 'desc')->first();
         $tiers = Tier::where('is_active', 1);
+        info('car ecommerce info is : '.json_encode($carLead->is_ecommerce));
         if ($carLead->car_type_insurance_id == 2) {
             info('adding tpl check');
             $tiers->where('can_handle_tpl', 1);
+            $tiers->where('can_handle_ecommerce', $carLead->is_ecommerce);
         }
-        if ($carLead->is_ecommerce == 1) {
-            info('adding is ecommerce check');
-            $tiers->where('can_handle_ecommerce', 1);
-        }
+
         if (($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') && $carLead->car_type_insurance_id == 1) {
             info('adding null value check');
             $tiers->where('can_handle_null_value', 1);
@@ -676,6 +675,7 @@ class LeadAllocationService extends BaseService
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
             info('adding tpl renewal check');
             $tiers->where('is_tpl_renewals', 1);
+            $tiers->where('can_handle_ecommerce', $carLead->is_ecommerce);
         }
 
         info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
