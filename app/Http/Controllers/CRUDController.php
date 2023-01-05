@@ -371,6 +371,8 @@ class CRUDController extends Controller
         $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id);
         $tiers = $this->lookupService->getTierR();
+        $record->dob = isset($record->dob) ? date('d-m-Y', strtotime($record->dob)) : null;
+        $record->policy_start_date = isset($record->policy_start_date) ? date('d-m-Y', strtotime($record->policy_start_date)) : null;
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
@@ -784,7 +786,7 @@ class CRUDController extends Controller
             $request->leadStatus == QuoteStatusEnum::NoAnswer) {
                 $this->validate($request, [
                     'next_followup_date' => 'required',
-                    'next_followup_date' => 'date_format:Y-m-d H:i:s|after_or_equal:'.date('Y-m-d H:i:s'),
+                    'next_followup_date' => 'date_format:d-m-Y H:i:s|after_or_equal:'.date('d-m-Y H:i:s'),
                     'notes' => 'required',
                 ]);
                 if (isset($request->quote_uuid)) {
