@@ -143,7 +143,7 @@ class TransAppService extends BaseService
         info('sendWelcomeEmail START');
         $customer = CustomerService::getCustomerById($customerId);
         $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //405
-        $redirect_url = config('constants.SIB_MYALFRED_CUSTOMER_REDIRECT_URL');
+        $redirect_url = 'https://myalfred.page.link/?link=https%3A%2F%2Fmyalfred.com%2F%3FinviteCode%3D'.$WEGenerateInviteCodeResponse.'%26installPopup%3D1&apn=com.myalfred.app&isi=6443714956&ibi=com.myalfred.app';
 
         $emailData = (object) [
             'customerName' => $customer->first_name.' '.$customer->last_name,
