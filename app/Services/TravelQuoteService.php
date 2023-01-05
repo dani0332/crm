@@ -439,10 +439,11 @@ class TravelQuoteService extends BaseService
     private function parseDate($date, $isStartOfDay)
     {
         if ($date != '') {
+            $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
             if ($isStartOfDay) {
-                return Carbon::createFromFormat('d-m-Y', $date)->startOfDay()->toDateString();
+                return Carbon::createFromFormat($dateFormat, $date)->startOfDay()->toDateString();
             } else {
-                return Carbon::createFromFormat('d-m-Y', $date)->endOfDay()->toDateString();
+                return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
             }
         }
     }

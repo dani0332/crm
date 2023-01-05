@@ -1,7 +1,6 @@
 @php
-    $dateFormat = config('constants.DATE_FORMAT');
-    use App\Enums\QuoteStatusEnum;
-    use App\Enums\RolesEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 @endphp
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
