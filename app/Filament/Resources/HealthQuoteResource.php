@@ -11,11 +11,11 @@ use App\Filament\Resources\HealthQuoteResource\RelationManagers\MemberDetailsRel
 use App\Models\HealthQuote;
 use App\Models\QuoteStatus;
 use App\Models\User;
-use App\Services\HealthQuoteService;
 use Filament\Forms;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Tabs;
 use Filament\Resources\Form;
+use Filament\Resources\RelationManagers\RelationGroup;
 use Filament\Resources\Resource;
 use Filament\Resources\Table;
 use Filament\Tables;
@@ -209,15 +209,13 @@ class HealthQuoteResource extends Resource
 
                                     ]),
                                 Tabs\Tab::make('E-COM Details')
-                                    ->schema(
-                                        function (?Model $record) {
-                                            if ($record) {
-                                                return static::getEcomDetailsSchema($record);
-                                            } else {
-                                                return [];
-                                            }
-                                        }
-                                    )->hiddenOn(['create', 'edit'])->columns(2),
+                                    ->schema([
+                                        Forms\Components\Placeholder::make('Plan Name'),
+                                        Forms\Components\Placeholder::make('Provider Name'),
+                                        Forms\Components\Placeholder::make('Payment Status'),
+                                        Forms\Components\Placeholder::make('Paid At'),
+                                        Forms\Components\Placeholder::make('Network'),
+                                    ])->hiddenOn(['create', 'edit']),
                                 Tabs\Tab::make('Lead History')
                                     ->schema([
                                         // ...
@@ -441,8 +439,11 @@ class HealthQuoteResource extends Resource
     public static function getRelations(): array
     {
         return [
-            MemberDetailsRelationManager::class,
-            AvailablePlansRelationManager::class,
+            RelationGroup::make('Relations', [
+                MemberDetailsRelationManager::class,
+                AvailablePlansRelationManager::class,
+            ]),
+
         ];
     }
 
@@ -454,39 +455,5 @@ class HealthQuoteResource extends Resource
             'view' => Pages\ViewHealthQuote::route('/{record:uuid}'),
             'edit' => Pages\EditHealthQuote::route('/{record:uuid}/edit'),
         ];
-    }
-
-    public static function getEcomDetailsSchema($record): array
-    {
-        $fieldsArray = [];
-        $ecom = app(HealthQuoteService::class)->getEcomDetails($record);
-
-        $data = [
-            'planName' => $ecom['planName'],
-            'providerName' => $ecom['providerName'],
-            'paymentStatus' => $ecom['paymentStatus'],
-            'paidAt' => $ecom['paidAt'],
-            'network' => $ecom['network'],
-        ];
-
-        try {
-            $fieldsArray = [
-                Forms\Components\Placeholder::make('Plan Name')->content($data['planName']),
-                Forms\Components\Placeholder::make('Provider Name')->content($data['providerName']),
-                Forms\Components\Placeholder::make('Payment Status')->content($data['paymentStatus']),
-                Forms\Components\Placeholder::make('Paid At')->content($data['paidAt']),
-                Forms\Components\Placeholder::make('Network')->content($data['network']),
-            ];
-        } catch (\Exception $e) {
-            $fieldsArray = [
-                Forms\Components\Placeholder::make('Plan Name')->content(''),
-                Forms\Components\Placeholder::make('Provider Name')->content(''),
-                Forms\Components\Placeholder::make('Payment Status')->content(''),
-                Forms\Components\Placeholder::make('Paid At')->content(''),
-                Forms\Components\Placeholder::make('Network')->content(''),
-            ];
-        }
-
-        return $fieldsArray;
     }
 }

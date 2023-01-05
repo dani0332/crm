@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Enums\EnvEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
 use App\Jobs\LeadAllocationJob;
 use App\Services\LeadAllocationService;
 use Barryvdh\Debugbar\Facades\Debugbar;
@@ -33,6 +35,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot()
     {
         Filament::serving(function () {
+            $user = auth()->user();
+
+            $nav_items = [];
+
             Filament::registerTheme(
                 mix('css/filament.css'),
             );
@@ -40,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
             Filament::registerNavigationGroups([
                 NavigationGroup::make()->label('Dashboard'),
                 NavigationGroup::make()->label('Reports'),
+                NavigationGroup::make()->label('Lead Allocation'),
                 NavigationGroup::make()->label('My Leads'),
                 NavigationGroup::make()->label('Rewards'),
                 NavigationGroup::make()->label('Activities'),
@@ -55,49 +62,9 @@ class AppServiceProvider extends ServiceProvider
                 NavigationGroup::make()->label('Telemarketing'),
                 NavigationGroup::make()->label('Admin'),
             ]);
-        });
-
-        Filament::serving(function () {
-            $nav_items = [];
 
             array_push(
                 $nav_items,
-                NavigationItem::make('Car Conversion')
-                    ->url('/dashboard/car-conversion')
-                    ->icon('heroicon-o-chart-pie')
-                    ->group('Dashboard'),
-                NavigationItem::make('Travel Conversion')
-                    ->url('/dashboard/travel-conversion')
-                    ->icon('heroicon-o-chart-pie')
-                    ->group('Dashboard'),
-                NavigationItem::make('TPL Conversion')
-                    ->url('/tpl-conversion-dashboard')
-                    ->icon('heroicon-o-chart-pie')
-                    ->group('Dashboard'),
-                NavigationItem::make('Comprehensive Conversion')
-                    ->url('/comprehensive-conversion-dashboard')
-                    ->icon('heroicon-o-chart-pie')
-                    ->group('Dashboard'),
-                NavigationItem::make('Accumulative Dashboard')
-                    ->url('/accumulative-dashboard')
-                    ->icon('heroicon-o-chart-pie')
-                    ->group('Dashboard'),
-                NavigationItem::make('Advisor Conversion')
-                    ->url('/reports/advisor-conversion')
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->group('Reports'),
-                NavigationItem::make('Advisor Performance')
-                    ->url('/reports/advisor-performance')
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->group('Reports'),
-                NavigationItem::make('Advisor Distribution')
-                    ->url('/reports/advisor-distribution')
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->group('Reports'),
-                NavigationItem::make('Lead Distribution')
-                    ->url('/reports/lead-distribution')
-                    ->icon('heroicon-o-presentation-chart-line')
-                    ->group('Reports'),
                 NavigationItem::make('Partners')
                     ->url('/rewards/partner')
                     ->icon('heroicon-o-gift')
@@ -304,6 +271,68 @@ class AppServiceProvider extends ServiceProvider
                     ->group('Admin')->sort(3),
             );
 
+            if ($user->can(PermissionsEnum::DashboardView)) {
+                array_push(
+                    $nav_items,
+                    NavigationItem::make('Car Conversion')
+                    ->url('/dashboard/car-conversion')
+                    ->icon('heroicon-o-chart-pie')
+                    ->group('Dashboard'),
+                    NavigationItem::make('Travel Conversion')
+                        ->url('/dashboard/travel-conversion')
+                        ->icon('heroicon-o-chart-pie')
+                        ->group('Dashboard'),
+                    NavigationItem::make('TPL Conversion')
+                        ->url('/tpl-conversion-dashboard')
+                        ->icon('heroicon-o-chart-pie')
+                        ->group('Dashboard'),
+                    NavigationItem::make('Comprehensive Conversion')
+                        ->url('/comprehensive-conversion-dashboard')
+                        ->icon('heroicon-o-chart-pie')
+                        ->group('Dashboard'),
+                    NavigationItem::make('Accumulative Dashboard')
+                        ->url('/accumulative-dashboard')
+                        ->icon('heroicon-o-chart-pie')
+                        ->group('Dashboard'),
+                );
+            }
+
+            if ($user->hasRole(RolesEnum::BetaUser)) {
+                array_push(
+                    $nav_items,
+                    NavigationItem::make('Advisor Conversion')
+                    ->url('/reports/advisor-conversion')
+                    ->icon('heroicon-o-presentation-chart-line')
+                    ->group('Reports'),
+                    NavigationItem::make('Advisor Performance')
+                        ->url('/reports/advisor-performance')
+                        ->icon('heroicon-o-presentation-chart-line')
+                        ->group('Reports'),
+                    NavigationItem::make('Advisor Distribution')
+                        ->url('/reports/advisor-distribution')
+                        ->icon('heroicon-o-presentation-chart-line')
+                        ->group('Reports'),
+                    NavigationItem::make('Lead Distribution')
+                        ->url('/reports/lead-distribution')
+                        ->icon('heroicon-o-presentation-chart-line')
+                        ->group('Reports'),
+                );
+            }
+
+            if ($user->can(PermissionsEnum::LeadAllocationView)) {
+                array_push(
+                    $nav_items,
+                    NavigationItem::make('Health')
+                        ->url('/lead-allocation')
+                        ->icon('heroicon-o-cube')
+                        ->group('Lead Allocation'),
+                    NavigationItem::make('Car')
+                        ->url('/car-lead-allocation')
+                        ->icon('heroicon-o-cube')
+                        ->group('Lead Allocation'),
+                );
+            }
+
             if (auth()->check() && auth()->user()->hasMyLeadAccess()) {
                 array_push(
                     $nav_items,
@@ -315,6 +344,7 @@ class AppServiceProvider extends ServiceProvider
             }
             Filament::registerNavigationItems($nav_items);
         });
+
         $allowedEnvs = [EnvEnum::LOCAL, EnvEnum::DEVELOPMENT, EnvEnum::STAGING];
         if (in_array(config('APP_ENV', 'production'), $allowedEnvs)) {
             Debugbar::enable();

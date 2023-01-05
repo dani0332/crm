@@ -17,15 +17,18 @@ class AvailablePlansRelationManager extends RelationManager
 {
     protected static string $relationship = 'availablePlans';
     protected static ?string $recordTitleAttribute = 'providerName';
+    protected static ?string $inverseRelationship = 'healthQuote';
 
     protected function getTableQuery(): Builder
     {
-        return HealthAvailablePlan::query()->whereNotNull('providerName');
+        $query = HealthAvailablePlan::query();
+
+        return $query;
     }
 
     public static function form(Form $form): Form
     {
-        return $form
+        $form
             ->schema([
                 Tabs::make('Lead')
                     ->tabs(
@@ -81,6 +84,8 @@ class AvailablePlansRelationManager extends RelationManager
                     ),
 
             ])->columns(1);
+
+        return $form;
     }
 
     public static function table(Table $table): Table
@@ -111,5 +116,10 @@ class AvailablePlansRelationManager extends RelationManager
             ->bulkActions([
                 // Tables\Actions\DeleteBulkAction::make(),
             ]);
+    }
+
+    protected function getTableRecordsPerPageSelectOptions(): array
+    {
+        return [false];
     }
 }

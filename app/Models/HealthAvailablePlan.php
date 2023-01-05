@@ -34,9 +34,8 @@ class HealthAvailablePlan extends Model
         } else {
             if (gettype($quotePlans) !== GenericRequestEnum::TypeString) {
                 $listQuotePlans = $quotePlans->quote->plans;
-
-                $responseData = collect($listQuotePlans)->map(function ($plan) {
-                    return [
+                foreach ($listQuotePlans as $key => $plan) {
+                    $responseData[] = [
                         'id' => $plan?->id,
                         'planCode' => $plan?->planCode,
                         'name' => $plan?->name,
@@ -53,7 +52,9 @@ class HealthAvailablePlan extends Model
                         'policyWordings' => json_encode($plan?->policyWordings),
                         'excess' => json_encode($plan?->excess),
                     ];
-                })->all();
+                }
+
+                return $responseData;
             } else {
                 $listQuotePlans = $quotePlans;
             }
@@ -65,5 +66,10 @@ class HealthAvailablePlan extends Model
     protected function sushiShouldCache()
     {
         return true;
+    }
+
+    public function healthQuote()
+    {
+        return $this->belongsTo(HealthQuote::class);
     }
 }
