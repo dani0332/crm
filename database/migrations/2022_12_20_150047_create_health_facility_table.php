@@ -21,7 +21,7 @@ class CreateHealthFacilityTable extends Migration
                 $table->unsignedBigInteger('health_facility_category_id');
                 $table->foreign('health_facility_category_id')->references('id')->on('health_facility_category')->onDelete('no action');
 
-                $table->unsignedBigInteger('emirates_id');
+                $table->integer('emirates_id');
                 $table->foreign('emirates_id')->references('id')->on('emirates')->onDelete('no action');
 
                 $table->string('street', 50)->nullable()->default('NULL');
