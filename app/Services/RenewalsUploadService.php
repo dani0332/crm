@@ -1179,7 +1179,9 @@ class RenewalsUploadService
                     }
                 }
 
-                $quoteTypeObject = $this->createQuoteObject(ucfirst($lead->quote_type));
+                $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
+                $quoteTypeObject = $this->createQuoteObject($quoteType->code);
+
                 $leadData = (object) $lead->data;
                 info('CQF - Checking Quote Existence - '.$lead->policy_number);
                 info('CQF - Checking Quote Existence - Quote Type - '.json_encode($quoteTypeObject));
