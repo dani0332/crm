@@ -514,7 +514,12 @@ class LeadAllocationService extends BaseService
                     } else {
                         $ruleUsers = RuleLeadSource::distinct()->pluck('user_id')->toArray();
                         info('No rule found against this lead : '.$carLead->uuid.' so filtering rule users : '.json_encode($ruleUsers));
-                        $finalAvailableAndLoginAdvisorIds = array_diff($loginAndAvailableUserIds, $ruleUsers);
+                        $finalAvailableAndLoginAdvisorIds = [];
+                        foreach ($loginAndAvailableUserIds as $loginId) {
+                            if (! in_array($loginId, $ruleUsers)) {
+                                array_push($finalAvailableAndLoginAdvisorIds, $loginId);
+                            }
+                        }
                         info('final login and available users after rule exclusion are : '.json_encode($finalAvailableAndLoginAdvisorIds));
                     }
                     info('common users at this point are '.json_encode($finalAvailableAndLoginAdvisorIds));
