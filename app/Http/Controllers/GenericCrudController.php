@@ -251,6 +251,7 @@ class GenericCrudController extends Controller
      */
     public function update(Request $request, $id)
     {
+
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $modelType = json_decode($request->all()['modelType'], true);
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
@@ -266,14 +267,9 @@ class GenericCrudController extends Controller
             }
             if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && ! strpos($modelSkipPropertiesList, $property)) {
                 if (! str_contains($value, 'max') && ! str_contains($value, 'min')) {
-                    info('inside else when value is : '.$value);
                     $validateArray[$property] = 'required';
                 }
             }
-        }
-        $isValidRequest = $this->validate($request, $validateArray);
-        if ($isValidRequest != 'true') {
-            return redirect()->back()->with('message', $isValidRequest);
         }
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
         if ($request->has('is_active')) {
