@@ -518,7 +518,7 @@ class RenewalsUploadService
     public function createQuoteObject($quoteType)
     {
         $nameSpace = '\\App\\Models\\';
-        $model = $nameSpace.ucwords($quoteType).'Quote';
+        $model = $nameSpace.ucfirst(strtolower($quoteType)).'Quote';
         info('CQF - createQuoteObject - '.$model);
 
         return (class_exists($model)) ? $model::query() : false;
@@ -1179,7 +1179,9 @@ class RenewalsUploadService
                     }
                 }
 
-                $quoteTypeObject = $this->createQuoteObject(ucfirst($lead->quote_type));
+                $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
+                $quoteTypeObject = $this->createQuoteObject($quoteType->code);
+
                 $leadData = (object) $lead->data;
                 info('CQF - Checking Quote Existence - '.$lead->policy_number);
                 info('CQF - Checking Quote Existence - Quote Type - '.json_encode($quoteTypeObject));
