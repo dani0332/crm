@@ -49,7 +49,7 @@ class CarQuoteService extends BaseService
                 'cqr.code',
                 'cqr.is_ecommerce',
                 'cqr.premium',
-                'cqr.paid_at',
+                DB::raw('DATE_FORMAT(cqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
                 'cqr.payment_gateway',
                 'cqr.source',
                 DB::raw('DATE_FORMAT(cqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),

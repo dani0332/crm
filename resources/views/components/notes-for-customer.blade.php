@@ -1,6 +1,7 @@
 @php
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
+use Carbon\Carbon;
 @endphp
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -29,7 +30,7 @@ use App\Enums\RolesEnum;
                             <tr>
                                 <td>{{ $notesForCustomer->id }}</td>
                                 <td>@php echo nl2br(htmlentities(str_replace("<br />", "", $notesForCustomer->description))) @endphp</td>
-                                <td>{{ $notesForCustomer->created_at }}</td>
+                                <td>{{ isset($notesForCustomer->created_at) ? Carbon::parse($notesForCustomer->created_at)->format('d-m-Y H:i:s') : '' }}</td>
                                 <td>{{ $notesForCustomer->createdby ? $notesForCustomer->createdby->name : '' }}</td>
                             </tr>
                         @endforeach

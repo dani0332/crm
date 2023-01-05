@@ -1,3 +1,6 @@
+@php
+use Carbon\Carbon;
+@endphp
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
@@ -34,8 +37,8 @@
                                 <td>{{ $emailStatus->template_id }}</td>
                                 <td>{{ $emailStatus->customer_id }}</td>
                                 @endif
-                                <td>{{ $emailStatus->created_at }}</td>
-                                <td>{{ $emailStatus->updated_at }}</td>
+                                <td>{{ isset($emailStatus->created_at) ? Carbon::parse($emailStatus->created_at)->format('d-m-Y H:i:s') : '' }}</td>
+                                <td>{{ isset($emailStatus->updated_at) ? Carbon::parse($emailStatus->updated_at)->format('d-m-Y H:i:s') : '' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
