@@ -518,7 +518,7 @@ class RenewalsUploadService
     public function createQuoteObject($quoteType)
     {
         $nameSpace = '\\App\\Models\\';
-        $model = $nameSpace.ucwords($quoteType).'Quote';
+        $model = $nameSpace.ucfirst(strtolower($quoteType)).'Quote';
         info('CQF - createQuoteObject - '.$model);
 
         return (class_exists($model)) ? $model::query() : false;
