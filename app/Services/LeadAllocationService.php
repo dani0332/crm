@@ -655,11 +655,9 @@ class LeadAllocationService extends BaseService
         if ($carLead->car_type_insurance_id == 2) {
             info('adding tpl check');
             $tiers->where('can_handle_tpl', 1);
+            $tiers->where('can_handle_ecommerce', $carLead->is_ecommerce);
         }
-        if ($carLead->is_ecommerce == 1) {
-            info('adding is ecommerce check');
-            $tiers->where('can_handle_ecommerce', 1);
-        }
+
         if (($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') && $carLead->car_type_insurance_id == 1) {
             info('adding null value check');
             $tiers->where('can_handle_null_value', 1);
@@ -677,6 +675,7 @@ class LeadAllocationService extends BaseService
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
             info('adding tpl renewal check');
             $tiers->where('is_tpl_renewals', 1);
+            $tiers->where('can_handle_ecommerce', $carLead->is_ecommerce);
         }
 
         info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
