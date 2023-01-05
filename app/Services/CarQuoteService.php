@@ -282,54 +282,55 @@ class CarQuoteService extends BaseService
     public function fillModelProperties()
     {
         return [
-            'id' => 'readonly|none',
             'code' => 'input|title',
+            'renewal_batch' => 'readonly|none',
             'first_name' => 'input|text|required',
             'last_name' => 'input|text|required',
+            'dob' => 'input|text|title|required',
+            'customer_age' => 'readonly|none',
+            'mobile_no' => 'input|title|number|required',
+            'email' => 'input|email|required',
+            'source' => 'input|title|text',
+            'nationality_id' => 'select|title|required',
+            'uae_license_held_for_id' => 'select|title|required',
+            'back_home_license_held_for_id' => 'select|title',
+            'car_make_id' => 'select|title|required',
+            'car_model_id' => 'select|title|required',
+            'cylinder' => 'input|number|title|required',
+            'car_model_detail_id' => 'select|title',
+            'year_of_manufacture' => 'select|title|required',
+            'year_of_first_registration' => 'input|date|title|range',
+            'car_value' => 'input|number|required',
+            'vehicle_type_id' => 'select|title|required',
+            'seat_capacity' => 'input|number|title|required',
+            'emirate_of_registration_id' => 'select|title|required',
+            'car_type_insurance_id' => 'select|title|required',
+            'currently_insured_with' => 'select|title|required|idAsText',
+            'claim_history_id' => 'select|title|required',
+            'has_ncd_supporting_documents' => '|static|title|,Yes,No',
+            'created_at' => 'input|date|title|range',
+            'advisor_assigned_date' => 'input|date|title|range',
+            'cost_per_lead' => 'readonly|none',
+
             'quote_status_id' => 'select|title|multiple',
             'payment_status_id' => 'select|title',
             'is_ecommerce' => '|static|title|Yes,No',
-            'car_value' => 'input|number|required',
             'tier_id' => 'select|title',
             'visit_count' => 'readonly|none',
-            'cost_per_lead' => 'readonly|none',
-            'car_make_id' => 'select|title|required',
-            'car_model_id' => 'select|title|required',
             'next_followup_date' => 'input|date|title|range',
-            'year_of_first_registration' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
             'updated_by' => 'readonly|none',
             'additional_notes' => 'textarea|',
             'advisor_id' => 'select|title||multiple',
-            'advisor_assigned_date' => 'input|date|title|range',
-            'created_at' => 'input|date|title|range',
-            'renewal_batch' => 'input|number|title',
-            'dob' => 'input|text|title|required',
-            'customer_age' => 'readonly|none',
-            'nationality_id' => 'select|title|required',
-            'uae_license_held_for_id' => 'select|title|required',
-            'claim_history_id' => 'select|title|required',
+            'trim' => 'select|title',
             'policy_number' => 'input|text|title',
             'renewal_expiry_date' => 'input|date|title|range',
-            'currently_insured_with' => 'select|title|required|idAsText',
-            'car_type_insurance_id' => 'select|title|required',
-            'year_of_manufacture' => 'select|title|required',
-            'trim' => 'select|title',
-            'vehicle_type_id' => 'select|title|required',
             'is_gcc_standard' => '|static|title|Yes,No',
             'is_modified' => '|static|title|Yes,No',
             'premium' => 'input|number',
             'previous_quote_policy_premium' => 'input|title|number',
             'lost_reason' => 'input|text',
-            'email' => 'input|email|required',
-            'mobile_no' => 'input|title|number|required',
-            'back_home_license_held_for_id' => 'select|title',
-            'seat_capacity' => 'input|number|title|required',
-            'cylinder' => 'input|number|title|required',
-            'emirate_of_registration_id' => 'select|title|required',
-            'has_ncd_supporting_documents' => '|static|title|,Yes,No',
             'quote_link' => 'readonly|none',
-            'source' => 'input|text',
             'transapp_code' => 'readonly|none',
             'paid_at' => 'input|date',
             'payment_gateway' => 'input|title',
@@ -342,13 +343,12 @@ class CarQuoteService extends BaseService
             'created_by' => 'input',
             'plan_id' => 'select|title',
             'car_plan_provider_id' => 'select|title',
-            'car_model_detail_id' => 'select|title',
             'parent_duplicate_quote_id' => 'input|title',
             'renewal_import_code' => 'input|text',
             'quote_link' => 'readonly|none',
-            'policy_start_date' => 'input|text',
             'previous_quote_policy_number' => 'input|text|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
+            'id' => 'readonly|none',
         ];
     }
 
@@ -493,6 +493,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'tier_id':
                 $title = 'Tier Name';
+                break;
+            case 'source':
+                $title = 'Lead Source';
                 break;
             default:
                 break;
@@ -883,7 +886,7 @@ class CarQuoteService extends BaseService
             'create' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead',
             'list' => 'policy_start_date,transapp_code,seat_capacity,cylinder,has_ncd_supporting_documents,back_home_license_held_for_id,parent_duplicate_quote_id,trim,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,emirate_of_registration_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,cost_per_lead',
             'update' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,source,transapp_code,previous_quote_policy_premium,quote_status_id,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead',
-            'show' => 'is_modified,is_gcc_standard,year_of_first_registration,trim,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,cylinder,seat_capacity,quote_status_id,vehicle_type_id,,renewal_batch,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,renewal_import_code,tier_id,visit_count',
+            'show' => 'is_modified,is_gcc_standard,trim,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,quote_status_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,renewal_import_code,tier_id,visit_count',
         ];
     }
 
