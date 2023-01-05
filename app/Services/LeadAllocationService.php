@@ -593,7 +593,9 @@ class LeadAllocationService extends BaseService
     {
         $records = LeadSource::join('rule_lead_sources', 'rule_lead_sources.lead_source_id', 'lead_sources.id')
         ->join('users', 'users.id', 'rule_lead_sources.user_id')
+        ->join('rules', 'rule_lead_sources.rule_id', 'rules.id')
         ->where('lead_sources.name', $source)
+        ->where('rules.is_active', 1)
         ->groupBy('rule_lead_sources.lead_source_id')
         ->select('lead_sources.name AS leadSourceName', 'lead_sources.id AS leadSourceId',
             DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers'));

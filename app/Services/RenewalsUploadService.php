@@ -353,7 +353,7 @@ class RenewalsUploadService
             });
 
             if ($jobs != null && count($jobs)) {
-                info($logPrefix . count($jobs) . ' found to schedule for fetch plans');
+                info($logPrefix.count($jobs).' found to schedule for fetch plans');
 
                 Haystack::build()
                     ->onQueue('renewals')
@@ -375,7 +375,6 @@ class RenewalsUploadService
                    ->dispatch();
 
                 info($logPrefix.' all jobs are scheduled');
-
             } else {
                 info($logPrefix.' no jobs to create quotes');
                 $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -522,7 +521,7 @@ class RenewalsUploadService
     {
         $nameSpace = '\\App\\Models\\';
         $model = $nameSpace.ucfirst(strtolower($quoteType)).'Quote';
-        
+
         return (class_exists($model)) ? $model::query() : false;
     }
 
@@ -1185,7 +1184,7 @@ class RenewalsUploadService
                 $quoteTypeObject = $this->createQuoteObject($quoteType->code);
 
                 $leadData = (object) $lead->data;
-                info('CQF VALIDATION - Checking Quote Existence PolicyNo - '.$lead->policy_number . ' Quote Type - ' . json_encode($quoteTypeObject));
+                info('CQF VALIDATION - Checking Quote Existence PolicyNo - '.$lead->policy_number.' Quote Type - '.json_encode($quoteTypeObject));
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
                     $leadValidationErrors->push('Policy Number is mandatory for update process');
                 } elseif ($lead->type == RenewalsUploadType::UPDATE_LEADS && $lead->policy_number && $quoteTypeObject) {
