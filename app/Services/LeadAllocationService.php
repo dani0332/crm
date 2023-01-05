@@ -653,7 +653,7 @@ class LeadAllocationService extends BaseService
             info('adding tpl check');
             $tiers->where('can_handle_tpl', 1);
         }
-        if ($carLead->is_ecommerce) {
+        if ($carLead->is_ecommerce == 1) {
             info('adding is ecommerce check');
             $tiers->where('can_handle_ecommerce', 1);
         }
