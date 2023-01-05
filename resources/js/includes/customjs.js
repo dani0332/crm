@@ -2160,7 +2160,7 @@ $(document).ready(function () {
     singleDatePicker: true,
     timePicker24Hour: true,
     locale: {
-      format: 'YYYY-MM-DD HH:mm:ss',
+      format: 'DD-MM-YYYY HH:mm:ss',
     },
   });
 
