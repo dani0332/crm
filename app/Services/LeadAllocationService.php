@@ -512,7 +512,7 @@ class LeadAllocationService extends BaseService
                         $finalAvailableAndLoginAdvisorIds = array_intersect($loginAndAvailableUserIds, $ruleUserIds);
                         info('after intersection users available are : '.json_encode($finalAvailableAndLoginAdvisorIds));
                     } else {
-                        $ruleUsers = RuleLeadSource::join('rules', 'rule_lead_source.rule_id', 'rules.id')->where('rules.is_active', 1)->distinct()->pluck('rule_lead_source.user_id')->toArray();
+                        $ruleUsers = RuleLeadSource::join('rules', 'rule_lead_sources.rule_id', 'rules.id')->where('rules.is_active', 1)->distinct()->pluck('rule_lead_sources.user_id')->toArray();
                         info('No rule found against this lead : '.$carLead->uuid.' so filtering rule users : '.json_encode($ruleUsers));
                         $finalAvailableAndLoginAdvisorIds = [];
                         foreach ($loginAndAvailableUserIds as $loginId) {
