@@ -251,7 +251,6 @@ class GenericCrudController extends Controller
      */
     public function update(Request $request, $id)
     {
-
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $modelType = json_decode($request->all()['modelType'], true);
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
