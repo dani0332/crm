@@ -651,6 +651,7 @@ class LeadAllocationService extends BaseService
         info('Started searching tier for car lead : '.json_encode($carLead->code));
         $highestValueTier = Tier::where('is_active', 1)->orderBy('max_price', 'desc')->first();
         $tiers = Tier::where('is_active', 1);
+        info('car ecommerce info is : '. json_encode($carLead->is_ecommerce));
         if ($carLead->car_type_insurance_id == 2) {
             info('adding tpl check');
             $tiers->where('can_handle_tpl', 1);
