@@ -37,6 +37,10 @@ class AppServiceProvider extends ServiceProvider
         Filament::serving(function () {
             $user = auth()->user();
 
+            if ($user == null) {
+                redirect()->route('login')->send();
+            }
+
             $nav_items = [];
 
             Filament::registerTheme(
