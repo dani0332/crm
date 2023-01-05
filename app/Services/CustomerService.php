@@ -11,11 +11,6 @@ class CustomerService extends BaseService
 {
     public static function getCustomerByEmail($email)
     {
-        return Customer::where('email', $email)->get();
-    }
-
-    public static function getUniqueCustomerByEmail($email)
-    {
         return Customer::where('email', $email)->first();
     }
 
@@ -27,7 +22,7 @@ class CustomerService extends BaseService
     public static function updatePolicyExpiry($email, $expiry_date)
     {
         //Log::info('Inside updatePolicyExpiry');
-        $customer = Customer::where('email', $email)->get()->first();
+        $customer = Customer::where('email', $email)->first();
         //Log::info('Inside updatePolicyExpiry customer found');
         $parsedPolicyExpiry = date('Y-m-d', strtotime(str_replace('.', '-', $expiry_date)));
         $parsedCustomerExpiry = date('Y-m-d', strtotime($customer->myalfred_expiry_date));
@@ -42,14 +37,14 @@ class CustomerService extends BaseService
 
     public static function getCustomerById($customerId)
     {
-        return Customer::where('id', $customerId)->get()->first();
+        return Customer::where('id', $customerId)->first();
     }
 
     public static function getCustomerIdAndCreateIfNotExists($firstName, $lastName, $email)
     {
         $customer = self::getCustomerByEmail($email);
-        if ($customer->first()) {
-            return $customer->first()->id;
+        if ($customer) {
+            return $customer->id;
         } else {
             return self::createCustomerAndGetId($firstName, $lastName, $email);
         }
@@ -58,8 +53,8 @@ class CustomerService extends BaseService
     public static function createCustomerAndGetId($firstName, $lastName, $email)
     {
         //Log::info('creating customer inside customer service');
-        $existingCustomer = Customer::where('email', $email)->get()->first();
-        if ($existingCustomer == '') {
+        $existingCustomer = Customer::where('email', $email)->first();
+        if (! $existingCustomer) {
             $customer = new Customer();
             $customer->first_name = $firstName;
             $customer->last_name = $lastName;
@@ -69,7 +64,7 @@ class CustomerService extends BaseService
 
             return $customer->id;
         } else {
-            //Log::info('Customer found in database inside create customer method');
+            return false;
         }
     }
 
@@ -106,7 +101,7 @@ class CustomerService extends BaseService
         return $customer_email;
     }
 
-    public function getAddtionalContacts($customerId)
+    public function getAdditionalContacts($customerId)
     {
         return CustomerAdditionalContact::where('customer_id', $customerId)
         ->orderBy('created_at', 'desc')->get();
@@ -115,7 +110,7 @@ class CustomerService extends BaseService
     public function checkAdditionalEmailExist($quoteObject, $newAdditionalEmail)
     {
         $newAdditionalEmail = strtolower($newAdditionalEmail);
-        $customer = $this->getUniqueCustomerByEmail($newAdditionalEmail);
+        $customer = $this->getCustomerByEmail($newAdditionalEmail);
         $additionalEmail = CustomerAdditionalContact::where(['key' => GenericRequestEnum::EMAIL, 'value' => $newAdditionalEmail])
         ->first();
 
@@ -141,5 +136,10 @@ class CustomerService extends BaseService
         } else {
             return false;
         }
+    }
+
+    public function getAdditionalContactByKey($customerId, $key)
+    {
+        return CustomerAdditionalContact::where(['customer_id' => $customerId, 'key' => $key])->get();
     }
 }

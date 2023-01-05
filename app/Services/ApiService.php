@@ -3,17 +3,15 @@
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
+use App\Jobs\SyncSIBContactJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
-use App\Traits\CreateUpdateSIbContact;
 use Exception;
-use Log;
+use Illuminate\Support\Facades\Log;
 
 class ApiService
 {
-    use CreateUpdateSIbContact;
-
     public function fetchSignupUrl($request)
     {
         try {
@@ -27,7 +25,7 @@ class ApiService
 
     private function checkmyAlredLink($email, $request)
     {
-        $customer = CustomerService::getUniqueCustomerByEmail($email);
+        $customer = CustomerService::getCustomerByEmail($email);
         if ($customer) {
             $data = MyAlFredUser::select('signup_url')->whereCustomerId($customer->id)->latest()->first();
             if ($data) {
@@ -68,7 +66,7 @@ class ApiService
         try {
             $quoteData = HealthQuote::where('uuid', $request->quoteUID)->where('quote_status_id', $request->QuoteStatus)->first();
             if ($quoteData) {
-                $this->sendSibRequest($quoteData);
+                SyncSIBContactJob::dispatch($quoteData);
             }
         } catch (Exception $e) {
             return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);

@@ -22,7 +22,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 - Make sure you're using PHP 8.0.1 or above, Maria DB server 10.x or above on your local machine.
 - Install and configure Doppler CLI, we use [Doppler](https://doppler.com/) to handle the ```ENV``` variables and do not use .env file. Ask the team mate to setup your doppler profile in your name with credentials.
 - Ask for a dump of stage DB which you will need to import.
-- Run ```composer install``` to install the laravel required files.
+- Run ```composer install``` to install the laravel required files..
 
 **Doppler Configuration**
 
@@ -39,6 +39,15 @@ This repository use Laravel Mix to build assets like CSS and JavaScript, use the
 - Run ```yarn``` so all the necassary packages are installed
 - Run ```yarn run prod``` to generate a production build
 - Run ```yarn watch``` to hot load the changes as you make them while development.
+
+**Redis Allocated DBs**
+- Prod - 15
+- Stage - 2
+- UAT - 3
+- DEV - 4
+- DEV01 - 7 
+- DEV02 - 8
+- Test - 9
 
 ## Contributing
 - ```develop``` branch is the main coding branch where new branches will be generated from, and PRs will be merged into. Same branch is connected with stage for testing and QA.

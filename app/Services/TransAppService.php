@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\GenericRequestEnum;
 use App\Models\CarQuote;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\CarQuotePolicy;
@@ -16,8 +15,9 @@ use App\Models\TypeOfInsurance;
 use App\Models\User;
 use Auth;
 use Carbon\Carbon;
-use DB;
+use Config;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use LookUpModel;
 
@@ -41,18 +41,18 @@ class TransAppService extends BaseService
     {
         $WEGenerateInviteCodeResponse = CustomerWEGenerateInviteCodeService::getCustomerInviteCode();
 
-        if (gettype($WEGenerateInviteCodeResponse) == GenericRequestEnum::TypeString) {
-            $existingCustomer = CustomerService::getCustomerByEmail($request->email)->first();
+        if (gettype($WEGenerateInviteCodeResponse) == 'string') {
+            $existingCustomer = CustomerService::getCustomerByEmail($request->email);
             $sendWelcomeEmail = ($existingCustomer && ! $existingCustomer->is_we_sent) || ! $existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
             $statusId = DB::table('statuses')->where('name', 'Active')->value('id');
 
-            if ($existingCustomer != null) { // Existing customer
+            if ($existingCustomer) { // Existing customer
                 if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
                     $responseExtend = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
-                    $listId = config('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
-                    $responseContact = CreateUpdateContactService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateInviteCodeResponse);
+                    $listId = Config::get('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
+                    $responseContact = SIBService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateInviteCodeResponse);
 
                     if ($responseContact != 201 && $responseContact != 204) {
                         $message = 'myAlfred signup link to issued policy cases (SIB API)<br>
