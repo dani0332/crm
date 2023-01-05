@@ -33,14 +33,14 @@ class LifeQuoteService extends BaseService
                 'lqr.id',
                 'lqr.uuid',
                 'lqr.code',
-                'lqr.updated_at',
-                'lqr.created_at',
+                DB::raw('DATE_FORMAT(lqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
+                DB::raw('DATE_FORMAT(lqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
                 'lqr.first_name',
                 'lqr.last_name',
                 'lqr.email',
                 'lqr.mobile_no',
                 'lqr.gender',
-                'lqr.dob',
+                DB::raw('DATE_FORMAT(lqr.dob, "%d-%m-%Y") as dob'),
                 'lqr.is_smoker',
                 'lqr.others_info',
                 'lqr.sum_insured_value',
@@ -194,19 +194,19 @@ class LifeQuoteService extends BaseService
                 $this->query->where('lqr.quote_status_id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('lqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+                $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
+                $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
+                $this->query->whereBetween(DB::raw('DATE(lqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('lqr.created_at', [$dateFrom, $dateTo]);
+                $dateFrom = $this->parseDate($request['created_at'], true);
+                $dateTo = $this->parseDate($request['created_at_end'], true);
+                $this->query->whereBetween(DB::raw('DATE(lqr.created_at)'), [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['next_followup_date'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['next_followup_date_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
+                $dateFrom = $this->parseDate($request['next_followup_date'], true);
+                $dateTo = $this->parseDate($request['next_followup_date_end'], true);
+                $this->query->whereBetween(DB::raw('DATE(lqrd.next_followup_date)'), [$dateFrom, $dateTo]);
             }
             if (Auth::user()->isSpecificTeamAdvisor('Life')) {
                 // if user has advisor Role then fetch leads assigned to the user only
@@ -308,6 +308,17 @@ class LifeQuoteService extends BaseService
             return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('lqr.created_at', 'DESC');
+        }
+    }
+
+    private function parseDate($date, $isStartOfDay)
+    {
+        if ($date != '') {
+            if ($isStartOfDay) {
+                return Carbon::createFromFormat('d-m-Y', $date)->startOfDay()->toDateString();
+            } else {
+                return Carbon::createFromFormat('d-m-Y', $date)->endOfDay()->toDateString();
+            }
         }
     }
 
