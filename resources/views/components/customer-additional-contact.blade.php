@@ -1,5 +1,6 @@
 @php
 use App\Enums\RolesEnum;
+use Carbon\Carbon;
 @endphp
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -29,7 +30,7 @@ use App\Enums\RolesEnum;
                             <tr>
                                 <td>{{ ucwords(str_replace("_", " ", $customerAdditionalContact->key)) }}</td>
                                 <td>{{ $customerAdditionalContact->value }}</td>
-                                <td>{{ $customerAdditionalContact->created_at }}</td>
+                                <td>{{ isset($customerAdditionalContact->created_at) ? Carbon::parse($customerAdditionalContact->created_at)->format('d-m-Y H:i:s') : '' }}</td>
                                 <td style="float:right;">
                                     @if(! auth()->user()->hasRole(RolesEnum::PA))
                                         @if($customerAdditionalContact->key == 'email')

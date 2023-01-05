@@ -176,7 +176,7 @@ class CRUDService extends BaseService
         $leadType = ucwords($leadType);
         $audits = DB::table('audits as a')
             ->select(
-                'a.created_at as ModifiedAt',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
                 DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
                 DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
                 DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
