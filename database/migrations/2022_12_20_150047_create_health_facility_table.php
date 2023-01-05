@@ -24,16 +24,16 @@ class CreateHealthFacilityTable extends Migration
                 $table->integer('emirates_id');
                 $table->foreign('emirates_id')->references('id')->on('emirates')->onDelete('no action');
 
-                $table->string('street', 50)->nullable()->default('NULL');
-                $table->string('address')->nullable()->default('NULL');
-                $table->decimal('lat', 11, 8)->nullable()->default('NULL');
-                $table->decimal('lng', 12, 8)->nullable()->default('NULL');
-                $table->string('google_plus_code', 100)->nullable()->default('NULL');
-                $table->string('google_maps_link', 500)->nullable()->default('NULL');
-                $table->string('phone', 50)->nullable()->default('NULL');
-                $table->string('website')->nullable()->default('NULL');
-                $table->string('text', 100)->nullable()->default('NULL');
-                $table->string('text_ar', 100)->nullable()->default('NULL');
+                $table->string('street', 50)->nullable();
+                $table->string('address')->nullable();
+                $table->decimal('lat', 11, 8)->nullable();
+                $table->decimal('lng', 12, 8)->nullable();
+                $table->string('google_plus_code', 100)->nullable();
+                $table->string('google_maps_link', 500)->nullable();
+                $table->string('phone', 50)->nullable();
+                $table->string('website')->nullable();
+                $table->string('text', 100)->nullable();
+                $table->string('text_ar', 100)->nullable();
                 $table->boolean('is_active')->default(true);
                 $table->softDeletes('deleted_at');
                 $table->timestamps();
