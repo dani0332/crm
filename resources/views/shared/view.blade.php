@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'View ' . $model->modelType)
 @section('content')
+@inject('crudService', 'App\Services\CRUDService')
 @php
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
@@ -532,6 +533,8 @@ use App\Enums\PermissionsEnum;
                     @endif
                     @php
                     $searchProperties = $model->searchProperties;
+                    if(!auth()->user()->hasRole(RolesEnum::CarAdvisor)) $searchProperties[]= 'advisor_id';
+                    $sourcePropertiesArry = $crudService->sortMetaArray($model->properties, 'ss:');
                     $skipProperties = $model->skipProperties;
 
                         // MS: Hide source for car_advisor - part2
@@ -542,7 +545,7 @@ use App\Enums\PermissionsEnum;
                     @if (count($searchProperties) > 0)
                     <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
                         data-parsley-validate="" novalidate="" autocomplete="off">
-                        @foreach ($model->properties as $property => $value)
+                        @foreach ($sourcePropertiesArry as $property => $value)
                         @foreach ($searchProperties as $searchProperty)
                         @if ($searchProperty == $property)
                         @if (str_contains($value, 'range'))
@@ -827,7 +830,7 @@ use App\Enums\PermissionsEnum;
                                 @if($model->modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarAdvisor))
                                     @php
                                         // MS: Hide source for car_advisor - part3
-                                        $skipProperties['list'] = $skipProperties['list'].',source'; 
+                                        $skipProperties['list'] = $skipProperties['list'].',source';
                                     @endphp
                                 @endif
                                 @foreach ($model->properties as $property => $value)

@@ -286,15 +286,15 @@ class CarQuoteService extends BaseService
     {
         return [
             'id' => 'readonly|none',
-            'code' => 'input|title|ls:0',
+            'code' => 'input|title|ss:0',
             'quote_batch_id' => 'select|readonly|title',
             'renewal_batch' => 'input|number|title',
-            'first_name' => 'input|text|required|ls:1',
-            'last_name' => 'input|text|required|ls:2',
+            'first_name' => 'input|text|required|ss:1',
+            'last_name' => 'input|text|required|ss:2',
             'dob' => 'input|text|title|required',
             'customer_age' => 'readonly|none',
-            'mobile_no' => 'input|title|number|required|ls:4',
-            'email' => 'input|email|required|ls:3',
+            'mobile_no' => 'input|title|number|required|ss:4',
+            'email' => 'input|email|required|ss:3',
             'source' => 'input|title|text',
             'nationality_id' => 'select|title|required',
             'uae_license_held_for_id' => 'select|title|required',
@@ -900,7 +900,8 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date'];
+        return $searchProperties;
     }
 
     public function fillRenewalProperties($model)
