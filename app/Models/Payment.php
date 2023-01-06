@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Payment extends Model
 {
@@ -36,5 +37,20 @@ class Payment extends Model
     public function paymentStatusLogs()
     {
         return $this->hasMany('App\Models\PaymentStatusLog', 'payment_code', 'code');
+    }
+
+    public function getCreatedAtAttribute($date)
+    {
+        return (!empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : "";
+    }
+
+    public function getAuthorizedAtAttribute($date)
+    {
+        return (!empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : "";
+    }
+
+    public function getCapturedAtAttribute($date)
+    {
+        return (!empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : "";
     }
 }

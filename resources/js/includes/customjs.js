@@ -2160,7 +2160,7 @@ $(document).ready(function () {
     singleDatePicker: true,
     timePicker24Hour: true,
     locale: {
-      format: 'YYYY-MM-DD HH:mm:ss',
+      format: 'DD-MM-YYYY HH:mm:ss',
     },
   });
 
@@ -3016,7 +3016,7 @@ $('#dob_div #dob').datepicker({
   // TM Leads
   changeMonth: true,
   changeYear: true,
-  dateFormat: 'dd/mm/yy',
+  dateFormat: 'dd-mm-yy',
   yearRange: '-80:+00',
 });
 

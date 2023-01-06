@@ -138,9 +138,9 @@ use App\Enums\PaymentStatusEnum;
                                 <td>{{ $payment->paymentStatus->text }}</td>
                                 <td>{{ $paymentPlainModel->plan->text }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
-                                <td>{{ $payment->paymentStatusLogs->last() ? $payment->paymentStatusLogs->last()->created_at :  '' }}</td>
-                                <td>{{ $payment->captured_at}}</td>
-                                <td>{{ $payment->authorized_at}}</td>
+                                <td>{{ $payment->paymentStatusLogs->last()->created_at }}</td>
+                                <td>{{ $payment->captured_at }}</td>
+                                <td>{{ $payment->authorized_at }}</td>
                                 <td>{{ $payment->paymentMethod->name }}</td>
                                 <td>{{$payment->reference}}</td>
                                 <td>
