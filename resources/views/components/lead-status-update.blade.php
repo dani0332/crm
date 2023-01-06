@@ -37,7 +37,7 @@ use App\Enums\LeadSourceEnum;
             minDate: followupDate != '' ?
                 new Date(followupDate).toLocaleDateString("en-US") : new Date().toLocaleDateString("en-US"),
             locale: {
-                format: 'YYYY-MM-DD HH:mm:ss'
+                format: 'DD-MM-YYYY HH:mm:ss'
             }
         });
         $('#leadStatus').on('change', function() {
@@ -77,7 +77,7 @@ use App\Enums\LeadSourceEnum;
                 singleDatePicker: true,
                 timePicker24Hour: true,
                 locale: {
-                    format: 'YYYY-MM-DD HH:mm:ss',
+                    format: 'DD-MM-YYYY HH:mm:ss',
                 },
             });
             // Car Quote: conditionally hide lead_status options

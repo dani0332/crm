@@ -240,8 +240,7 @@ class CRUDController extends Controller
                 }
             }
         }
-        $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
-        $request->policy_start_date = isset($request->policy_start_date) ? Carbon::createFromFormat('d/m/Y', $request->policy_start_date)->format(get_dob_date_format()) : null;
+        $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         if ($request->has('email')) {
             $this->validate($request, [
                 'email' => 'required|email:rfc,dns|max:150',
@@ -365,10 +364,7 @@ class CRUDController extends Controller
         $audits = [];
         $emailStatuses = $this->emailStatusService->getEmailStatus($quoteTypeId, $record->id);
         $notesForCustomers = $this->notesForCustomerService->getNotesForCustomer($quoteTypeId, $record->id);
-        $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
         $advisor = isset($record->advisor_id) ? $this->userService->getUserById((int) $record->advisor_id) : null;
-
-        $record->policy_start_date = isset($record->policy_start_date) ? date('d/m/Y', strtotime($record->policy_start_date)) : null;
         $isQuoteDocumentEnabled = $this->quoteDocumentService->isEnabled($model->modelType);
         $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($model->modelType, $record->id);
         $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
@@ -486,9 +482,6 @@ class CRUDController extends Controller
             }
         }
 
-        $record->dob = isset($record->dob) ? date('d/m/Y', strtotime($record->dob)) : null;
-        $record->policy_start_date = isset($record->policy_start_date) ? date('d/m/Y', strtotime($record->policy_start_date)) : null;
-
         return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));
     }
 
@@ -515,8 +508,7 @@ class CRUDController extends Controller
                 }
             }
         }
-        $request->dob = isset($request->dob) ? Carbon::createFromFormat('d/m/Y', $request->dob)->format(get_dob_date_format()) : null;
-        $request->policy_start_date = isset($request->policy_start_date) ? Carbon::createFromFormat('d/m/Y', $request->policy_start_date)->format(get_dob_date_format()) : null;
+        $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
@@ -785,9 +777,10 @@ class CRUDController extends Controller
             if ($request->leadStatus == QuoteStatusEnum::FollowupCall ||
             $request->leadStatus == QuoteStatusEnum::Interested ||
             $request->leadStatus == QuoteStatusEnum::NoAnswer) {
+                $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
                 $this->validate($request, [
                     'next_followup_date' => 'required',
-                    'next_followup_date' => 'date_format:Y-m-d H:i:s|after_or_equal:'.date('Y-m-d H:i:s'),
+                    'next_followup_date' => 'date_format:'.$dateFormat.'|after_or_equal:'.date($dateFormat),
                     'notes' => 'required',
                 ]);
                 if (isset($request->quote_uuid)) {

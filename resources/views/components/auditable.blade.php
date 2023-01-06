@@ -1,3 +1,6 @@
+@php
+use Carbon\Carbon;
+@endphp
 <div class="row">
         <div class="col-md-12 col-sm-12 ">
             <div class="x_panel">
@@ -18,7 +21,7 @@
                               <th>Old Values</th>
                               <th>New Values</th>
                               <th>Ip Address</th>
-                              <th>Created_at</th>
+                              <th>Logged At</th>
                             </tr>
                           </thead>
 
@@ -33,7 +36,7 @@
                               <td style="word-wrap:break-word;">{{ $audit->old_values }}</td>
                               <td style="word-wrap:break-word;">{{ $audit->new_values }}</td>
                               <td style="word-wrap:break-word;">{{ $audit->ip_address }}</td>
-                              <td style="word-wrap:break-word;">{{ $audit->created_at }}</td>
+                              <td style="word-wrap:break-word;">{{ isset($audit->created_at) ? Carbon::parse($audit->created_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '' }}</td>
                             </tr>
                             @endforeach
 

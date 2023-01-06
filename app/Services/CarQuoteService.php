@@ -41,7 +41,7 @@ class CarQuoteService extends BaseService
                 'cqr.last_name',
                 'cqr.email',
                 'cqr.mobile_no',
-                'cqr.dob',
+                DB::raw('DATE_FORMAT(cqr.dob, "%d-%m-%Y") as dob'),
                 'cqr.car_value',
                 'cqr.additional_notes',
                 'cqr.nationality_id',
@@ -49,11 +49,11 @@ class CarQuoteService extends BaseService
                 'cqr.code',
                 'cqr.is_ecommerce',
                 'cqr.premium',
-                'cqr.paid_at',
+                DB::raw('DATE_FORMAT(cqr.paid_at, "%d-%m-%Y %H:%i:%s") as paid_at'),
                 'cqr.payment_gateway',
                 'cqr.source',
-                'cqr.created_at',
-                'cqr.updated_at',
+                DB::raw('DATE_FORMAT(cqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
+                DB::raw('DATE_FORMAT(cqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
                 'cqr.seat_capacity',
                 'cqr.cylinder',
                 'cqr.vehicle_type_id',
@@ -63,7 +63,7 @@ class CarQuoteService extends BaseService
                 'cqr.policy_number',
                 'cqr.previous_quote_id',
                 'cqr.renewal_batch',
-                'cqr.renewal_expiry_date',
+                DB::raw('DATE_FORMAT(cqr.renewal_expiry_date, "%d-%m-%Y") as renewal_expiry_date'),
                 'cqr.order_reference',
                 'cqr.payment_reference',
                 'cqr.calculated_value',
@@ -92,7 +92,7 @@ class CarQuoteService extends BaseService
                 'cqr.quote_status_id',
                 'qs.text AS quote_status_id_text',
                 'cqr.year_of_manufacture AS year_of_manufacture_text',
-                'cqrd.next_followup_date',
+                DB::raw('DATE_FORMAT(cqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
                 'cqrd.transapp_code',
                 'cqrd.notes',
                 'cqrd.lost_approval_status',
@@ -102,7 +102,7 @@ class CarQuoteService extends BaseService
                 'cqr.currently_insured_with as currently_insured_with_text',
                 'ls.text as lost_reason',
                 'cqr.previous_quote_policy_number',
-                'cqr.previous_policy_expiry_date',
+                DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
                 'cqr.previous_quote_policy_premium',
                 'cqr.car_model_detail_id',
                 'cmd.text as car_model_detail_id_text',
@@ -114,18 +114,18 @@ class CarQuoteService extends BaseService
                 'cqr.has_ncd_supporting_documents',
                 'cqr.back_home_license_held_for_id',
                 'ulhfs.TEXT as back_home_license_held_for_id_text',
-                'cqr.policy_start_date',
-                'cqr.policy_issuance_date',
+                DB::raw('DATE_FORMAT(cqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
+                DB::raw('DATE_FORMAT(cqr.policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
                 'cqr.customer_id',
                 'cqr.parent_duplicate_quote_id',
                 'cqr.renewal_import_code',
                 'cqr.quote_link',
-                'cqrd.advisor_assigned_date',
+                DB::raw('DATE_FORMAT(cqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
                 DB::raw("DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(),dob)), '%Y') + 0 AS customer_age"),
                 'cqr.tier_id',
                 't.name as tier_id_text',
                 'qvc.visit_count as visit_count',
-                't.cost_per_lead as cost_per_lead',
+                't.cost_per_lead as cost_per_lead', // prev
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -647,10 +647,11 @@ class CarQuoteService extends BaseService
     private function parseDate($date, $isStartOfDay)
     {
         if ($date != '') {
+            $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
             if ($isStartOfDay) {
-                return Carbon::createFromFormat('Y-m-d', $date)->startOfDay()->toDateTimeString();
+                return Carbon::createFromFormat($dateFormat, $date)->startOfDay()->toDateString();
             } else {
-                return Carbon::createFromFormat('Y-m-d', $date)->endOfDay()->toDateTimeString();
+                return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
             }
         }
     }
@@ -689,28 +690,28 @@ class CarQuoteService extends BaseService
         if ($request->ajax()) {
             $this->addLeadViewEligibilityCheck();
             if (! isset($request->email) && $request->email == '') {
-                $this->query->where('qs.id', '!=', 9);
+                $this->query->where('qs.id', '!=', QuoteStatusEnum::Fake);
             }
 
             if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
                 $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
                 $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
-                $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+                $this->query->whereBetween(DB::raw('DATE(cqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
             }
             if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
                 $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
                 $dateTo = $this->parseDate($request['renewal_expiry_date_end'], true);
-                $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+                $this->query->whereBetween(DB::raw('DATE(cqr.previous_policy_expiry_date)'), [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
                 $dateFrom = $this->parseDate($request['next_followup_date'], true);
                 $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-                $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
+                $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
                 $dateFrom = $this->parseDate($request['created_at'], true);
                 $dateTo = $this->parseDate($request['created_at_end'], true);
-                $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
+                $this->query->whereBetween(DB::raw('DATE(cqr.created_at)'), [$dateFrom, $dateTo]);
             }
             if (Auth::user()->hasRole('ADMIN')) {
                 array_push($searchProperties, 'is_ecommerce');

@@ -5,6 +5,7 @@ namespace App\Models;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class EmailStatus extends Model
 {
@@ -12,17 +13,13 @@ class EmailStatus extends Model
 
     protected $table = 'email_status';
 
-    public function getCreatedAtAttribute($table)
+    public function getCreatedAtAttribute($date)
     {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return (!empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : "";
     }
 
-    public function getUpdatedAtAttribute($table)
+    public function getUpdatedAtAttribute($date)
     {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return (!empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : "";
     }
 }
