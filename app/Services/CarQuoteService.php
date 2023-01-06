@@ -282,8 +282,9 @@ class CarQuoteService extends BaseService
     public function fillModelProperties()
     {
         return [
+            'id' => 'readonly|none',
             'code' => 'input|title',
-            'renewal_batch' => 'readonly|none',
+            'renewal_batch' => 'input|number|title',
             'first_name' => 'input|text|required',
             'last_name' => 'input|text|required',
             'dob' => 'input|text|title|required',
@@ -312,7 +313,6 @@ class CarQuoteService extends BaseService
             'created_at' => 'input|date|title|range',
             'advisor_assigned_date' => 'input|date|title|range',
             'cost_per_lead' => 'readonly|none',
-
             'quote_status_id' => 'select|title|multiple',
             'payment_status_id' => 'select|title',
             'is_ecommerce' => '|static|title|Yes,No',
@@ -348,7 +348,6 @@ class CarQuoteService extends BaseService
             'quote_link' => 'readonly|none',
             'previous_quote_policy_number' => 'input|text|title',
             'previous_policy_expiry_date' => 'input|date|title|range',
-            'id' => 'readonly|none',
         ];
     }
 
