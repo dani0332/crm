@@ -8,6 +8,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\TiersEnum;
 use App\Events\AdvisorAssigned;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
@@ -480,14 +481,16 @@ class LeadAllocationService extends BaseService
                     info('car lead allocation sending renewal email for uuid : '.$carLead->uuid);
                     if (! $carLead->is_renewal_tier_email_sent) {
                         $this->sendRenewalLeadEmail($carLead);
-                        $tierTR = Tier::where('name', 'Tier R')->first();
-                        if (isset($tierTR)) {
-                            $carLead->tier_id = $tierTR->id;
+                        $tier = Tier::where('name', TiersEnum::TierR)->where('is_active', 1)->first();
+                        if ($tier) {
+                            info('setting tier : '. $tier->name. ' against car lead : '. $carLead->uuid);
+                            $carLead->tier_id = $tier->id;
                             $carLead->save();
+                        } else {
+                            info('tier R for sending email is not found');
                         }
-                        info('Renewal Email sent for quote : '.$carLead->uuid.' and tier is update with id : '.$tierTR->id);
+                        info('Renewal Email sent for quote : '.$carLead->uuid.' and tier is update with id : '.$tier->id);
                     }
-
                     continue;
                 }
                 info('trying to check tier against the current lead : '.$carLead->code);
