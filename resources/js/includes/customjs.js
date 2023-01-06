@@ -2600,11 +2600,9 @@ $(document).ready(function () {
               '</td><td>' +
               element.ModifiedBy +
               '</td><td>' +
-              element.NewStatus +
-              '</td><td>' +
-              element.NewAdvisor +
-              '</td><td>' +
               element.NewNotes +
+              '</td><td>' +
+              element.NewStatus +
               '</td></tr>';
           }
         } else {
