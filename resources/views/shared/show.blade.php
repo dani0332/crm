@@ -43,6 +43,9 @@
     @endphp
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
+            @if ($model->modelType == quoteTypeCode::Car)
+            <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
+            @endif
             <div class="x_panel">
                 <br />
                 @if (session()->has('success'))
@@ -391,7 +394,6 @@
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
-        <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
