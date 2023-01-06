@@ -139,7 +139,8 @@ class DropdownSourceService extends BaseService
             case 'quad_tiers':
                 $data = Tier::select('id', 'name')->where('is_active', true)->get();
                 break;
-            case 'tiers' || 'tier_id':
+            case 'tiers':
+            case 'tier_id':
                 $data = Tier::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'quadrants':
