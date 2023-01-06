@@ -47,7 +47,7 @@ class LeadAllocationJob implements ShouldQueue
                 $availableUsersString .= $user->name.'|'.$user->last_allocated.',';
             });
             info('availableUsers: '.$availableUsersString);
-            info('CAR_LEAD_ALLOCATION_MASTER_SWITCH value is : '. config('CAR_LEAD_ALLOCATION_MASTER_SWITCH'));
+            info('CAR_LEAD_ALLOCATION_MASTER_SWITCH value is : '.config('CAR_LEAD_ALLOCATION_MASTER_SWITCH'));
             if (config('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
                 info('CAR Lead Allocation Job Switch is OFF');
             } else {
