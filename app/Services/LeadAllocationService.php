@@ -483,7 +483,7 @@ class LeadAllocationService extends BaseService
                         $this->sendRenewalLeadEmail($carLead);
                         $tier = Tier::where('name', TiersEnum::TierR)->where('is_active', 1)->first();
                         if ($tier) {
-                            info('setting tier : '. $tier->name. ' against car lead : '. $carLead->uuid);
+                            info('setting tier : '.$tier->name.' against car lead : '.$carLead->uuid);
                             $carLead->tier_id = $tier->id;
                             $carLead->save();
                         } else {
@@ -491,6 +491,7 @@ class LeadAllocationService extends BaseService
                         }
                         info('Renewal Email sent for quote : '.$carLead->uuid.' and tier is update with id : '.$tier->id);
                     }
+
                     continue;
                 }
                 info('trying to check tier against the current lead : '.$carLead->code);
