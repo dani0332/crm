@@ -431,7 +431,7 @@ class CRUDService extends BaseService
     {
         $sorted = [];
         foreach ($sourceArray as $key => $value) {
-            if (preg_match('/'. $token .'(\d+)/', $value, $matches)) {
+            if (preg_match('/'.$token.'(\d+)/', $value, $matches)) {
                 $sorted[$key] = $matches[1];
             } else {
                 $sorted[$key] = PHP_INT_MAX;
@@ -442,6 +442,7 @@ class CRUDService extends BaseService
         foreach ($sorted as $key => $value) {
             $result[$key] = $sourceArray[$key];
         }
+
         return $result;
     }
 }
