@@ -180,13 +180,15 @@ use App\Enums\LeadSourceEnum;
                             <div id="lost-reason-div" style="display: none;">
                                 <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Lost Reason</b> <span class='required'>*</span></label>
                                 <div class="col-md-6 col-sm-6">
-                                    <select class="form-control" id="lostReason" name="lostReason">
-                                        <option value="">Select Lost Reason</option>
-                                        @foreach ($lostreasons as $item)
-                                        <option @if($selectedlostreason==$item->id) selected="selected" @endif
-                                            value="{{$item->id}}" >{{$item->text}}</option>
-                                        @endforeach
-                                    </select>
+                                    @if($status == QuoteStatusEnum::Lost && ! auth()->user()->hasRole(RolesEnum::CarAdvisor))
+                                        <select class="form-control" id="lostReason" name="lostReason">
+                                            <option value="">Select Lost Reason</option>
+                                            @foreach ($lostreasons as $item)
+                                            <option @if($selectedlostreason==$item->id) selected="selected" @endif
+                                                value="{{$item->id}}" >{{$item->text}}</option>
+                                            @endforeach
+                                        </select>
+                                    @endif
                                     @if ($errors->has('lostReason'))
                                     <span class="text-danger">{{ $errors->first('lostReason') }}</span>
                                     @endif

@@ -144,9 +144,10 @@ use App\Enums\PermissionsEnum;
             // Getting the skip properties based on loggedin user role
             skipPropertiesArray = model.skipProperties['list'].split(',');
 
-            // MS: Hide source for car_advisor - part1
+            // MS: Hide columns for car_advisor - part1
             if(model.modelType == '{{ quoteTypeCode::Car }}' && '{{ Auth::user()->hasRole(RolesEnum::CarAdvisor) }}') {
                 skipPropertiesArray.push('source');
+                skipPropertiesArray.push('lost_reason');
             }
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
@@ -537,9 +538,10 @@ use App\Enums\PermissionsEnum;
                     $sourcePropertiesArry = $crudService->sortMetaArray($model->properties, 'ss:');
                     $skipProperties = $model->skipProperties;
 
-                        // MS: Hide source for car_advisor - part2
+                        // MS: Hide columns for car_advisor - part2
                         if($model->modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
                             $skipProperties[] = 'source';
+                            $skipProperties[] = 'lost_reason';
                         }
                     @endphp
                     @if (count($searchProperties) > 0)
@@ -829,8 +831,9 @@ use App\Enums\PermissionsEnum;
                                 @endif
                                 @if($model->modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarAdvisor))
                                     @php
-                                        // MS: Hide source for car_advisor - part3
+                                        // MS: Hide columns for car_advisor - part3
                                         $skipProperties['list'] = $skipProperties['list'].',source';
+                                        $skipProperties['list'] = $skipProperties['list'].',lost_reason';
                                     @endphp
                                 @endif
                                 @foreach ($model->properties as $property => $value)
