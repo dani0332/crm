@@ -11,15 +11,21 @@
         }
         html {
             line-height: 1.5;
-            /*margin: 0;*/
             margin:0;
             padding: 0;
         }
         body {
-            /*margin: 0;*/
             line-height: 1;
             font-family: "DejaVu Sans", sans-serif;
-            padding: 80px 0 120px 0;
+
+        }
+        header{
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 200px;
+            width: 100%;
+            display: block;
         }
         div,
         span,
@@ -74,7 +80,6 @@
             width: 100%;
             height: 57px;
             max-height: 57px;
-
         }
         .header .logo {
             float: left;
@@ -218,18 +223,12 @@
             text-align: center;
             position: fixed;
             bottom: 0px;
-            height: 120px;
+            height: 140px;
+            z-index: 1500;
         }
-        header{
-            position: fixed;
-            top: 0px;
-            height: 120px;
-            width: 100%;
-            margin-bottom: 200px;
 
-        }
         table.tbl-footer {
-            padding: 7px 12px;
+            padding: 18px 12px;
             margin: 0;
             width: 100%;
             border: none;
@@ -264,7 +263,7 @@
     </style>
 </head>
 <body>
-<img src="{{public_path('images/quote_plans_pages/rm-p1.png')}}" class="" style="height: 100%;width: 100%;padding-top: 0;margin-top: 0;" />
+<img src="{{public_path('images/quote_plans_pages/rm-p1.jpg')}}" class="" style="width: 100%;z-index: 999;" />
 @php
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
@@ -348,8 +347,8 @@
         ["code" => "damage", "title" => "Inpatient*", "type" => 'coInsurance'],
         ["code" => "physiotherapy", "title" => "Physiotherapy*", "type" => 'coInsurance'],
         ["code" => "medicineCo", "title" => "Medicine*", "type" => 'coInsurance'],
-        ["code" => "dental", "title" => "Dental*", "type" => 'coInsurance'],//todo: find exact later
-        ["code" => "optical", "title" => "Optical*", "type" => 'coInsurance'],//todo: find exact later
+        ["code" => "coDental", "title" => "Dental*", "type" => 'coInsurance'],//todo: find exact later
+        ["code" => "coOptical", "title" => "Optical*", "type" => 'coInsurance'],//todo: find exact later
 
         ["code" => "heading", "title" => "Maternity Cover"],
         ["code" => "outpatient", "title" => "Outpatient", "type" => 'maternityCover'],
@@ -414,11 +413,11 @@
     </table>
 </footer>
 <main>
-    <table class="table-fixed text-center tbl-plans" style="">
+    <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;">
         <thead>
 
         </thead>
-        <tbody style="">
+        <tbody style="margin-bottom: 130px;">
 
         <tr>
 
@@ -573,7 +572,7 @@
     </table>
     </div>
 </main>
-{{-- z-index: 9000;margin-bottom: -100px !important;padding-bottom: -100px !important; --}}
-<img src="{{public_path('images/quote_plans_pages/rm-p3.jpg')}}" class="full-page-image" style="position: relative;top: -80px;height: 100%;"  />
+
+<img src="{{public_path('images/quote_plans_pages/rm-p3.jpg')}}" class="" style="width: 100%;z-index: 999;"  />
 </body>
 </html>
