@@ -493,9 +493,8 @@
                                 <tr>
                                     <th>Modified At</th>
                                     <th>Modified By</th>
-                                    <th>Lead Status</th>
-                                    <th>Advisor</th>
                                     <th>Notes</th>
+                                    <th>Lead Status</th>
                                 </tr>
                             </thead>
                             <tbody>
