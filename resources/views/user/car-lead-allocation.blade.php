@@ -318,19 +318,19 @@
                         <b><span style="color: black;">Car</span></b>
                     </div>
                     <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #4183BD;    margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
+                        style="border-radius: 10px;float: left;border-left: 3px solid #4183BD;    margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
                         <span style="font-size: 21px">Assigned Lead Count </span>
                         <br />
                         <b><span style="color: black;">{{$totalAssignedLeadCount}}</span></b>
                     </div>
                     <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #3015ca;    margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
+                        style="border-radius: 10px;float: left;border-left: 3px solid #3015ca;    margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
                         <span style="font-size: 21px">Total Advisors</span>
                         <br />
                         <b><span style="color: black;">{{ $unAvailableUsers + $availableUsers}}</span></b>
                     </div>
                     <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
+                        style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
                         <span style="font-size: 21px">Availabe / UnAvailable</span>
                         <br />
                         <b><span style="color: black;"><label id="availableUsers">{{$availableUsers}} </label> /
@@ -339,10 +339,16 @@
                 </div>
                 <div class="col-md-12" style="margin-left:8px;">
                     <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #A1C86B;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
+                        style="border-radius: 10px;float: left;border-left: 3px solid #A1C86B;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
                         <span style="font-size: 21px">Total Leads Today </span>
                         <br />
                         <b><span style="color: black;">{{ $todayTotalLeadCount}}</span></b>
+                    </div>
+                    <div class="col-md-3"
+                        style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 350px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
+                        <span style="font-size: 21px">Total UnAssigned Leads Today </span>
+                        <br />
+                        <b><span style="color: black;">{{ $todayTotalUnAssignedLeadCount}}</span></b>
                     </div>
                 </div>
                 <table class="table table-striped jambo_table  car_lead_allocation_table" style="width:100%">

@@ -3,6 +3,7 @@
 namespace App\Http\Livewire;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
@@ -176,7 +177,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function filters(): array
     {
-        return [
+        $filters =  [
             TextFilter::make('Created Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
@@ -206,11 +207,15 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ->options($this->tiers)->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.tier_id', $value);
                 }),
-            MultiSelectFilter::make('Lead Source')
-                ->options($this->leadSources)->filter(function (Builder $builder, $value) {
-                    $builder->whereIn('car_quote_request.source', $value);
-                }),
 
         ];
+        if(!auth()->user()->hasRole(RolesEnum::CarAdvisor))
+        {
+            array_push($filters, MultiSelectFilter::make('Lead Source')
+            ->options($this->leadSources)->filter(function (Builder $builder, $value) {
+                $builder->whereIn('car_quote_request.source', $value);
+            }));
+        }
+        return $filters;
     }
 }
