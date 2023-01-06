@@ -177,7 +177,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function filters(): array
     {
-        $filters =  [
+        $filters = [
             TextFilter::make('Created Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
@@ -209,13 +209,13 @@ class AdvisorConversionReportTable extends DataTableComponent
                 }),
 
         ];
-        if(!auth()->user()->hasRole(RolesEnum::CarAdvisor))
-        {
+        if (! auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             array_push($filters, MultiSelectFilter::make('Lead Source')
             ->options($this->leadSources)->filter(function (Builder $builder, $value) {
                 $builder->whereIn('car_quote_request.source', $value);
             }));
         }
+
         return $filters;
     }
 }
