@@ -286,15 +286,15 @@ class CarQuoteService extends BaseService
     {
         return [
             'id' => 'readonly|none',
-            'code' => 'input|title',
+            'code' => 'input|title|ss:0',
             'quote_batch_id' => 'select|readonly|title',
             'renewal_batch' => 'input|number|title',
-            'first_name' => 'input|text|required',
-            'last_name' => 'input|text|required',
+            'first_name' => 'input|text|required|ss:1',
+            'last_name' => 'input|text|required|ss:2',
             'dob' => 'input|text|title|required',
             'customer_age' => 'readonly|none',
-            'mobile_no' => 'input|title|number|required',
-            'email' => 'input|email|required',
+            'mobile_no' => 'input|title|number|required|ss:4',
+            'email' => 'input|email|required|ss:3',
             'source' => 'input|title|text',
             'nationality_id' => 'select|title|required',
             'uae_license_held_for_id' => 'select|title|required',
@@ -320,7 +320,7 @@ class CarQuoteService extends BaseService
             'quote_status_id' => 'select|title|multiple',
             'payment_status_id' => 'select|title',
             'is_ecommerce' => '|static|title|Yes,No',
-            'tier_id' => 'select|title|multiple',
+            'tier_id' => 'select|title|multiple|ss:5',
             'visit_count' => 'readonly|none',
             'next_followup_date' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
@@ -902,7 +902,9 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id'];
+
+        return $searchProperties;
     }
 
     public function fillRenewalProperties($model)

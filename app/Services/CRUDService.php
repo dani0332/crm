@@ -426,4 +426,23 @@ class CRUDService extends BaseService
 
         return $this->applicationstorageService->getValueByKey($key);
     }
+
+    public function sortMetaArray($sourceArray, $token)
+    {
+        $sorted = [];
+        foreach ($sourceArray as $key => $value) {
+            if (preg_match('/'.$token.'(\d+)/', $value, $matches)) {
+                $sorted[$key] = $matches[1];
+            } else {
+                $sorted[$key] = PHP_INT_MAX;
+            }
+        }
+        asort($sorted);
+        $result = [];
+        foreach ($sorted as $key => $value) {
+            $result[$key] = $sourceArray[$key];
+        }
+
+        return $result;
+    }
 }
