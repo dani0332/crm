@@ -76,7 +76,7 @@ class TeamService extends BaseService
             'id' => 'readonly|none',
             'name' => 'input|text|required|title',
             'parent_team_id' => 'select|title',
-            'type' => '|static|title|'.TeamTypeEnum::Product.','.TeamTypeEnum::Team.','.TeamTypeEnum::SubTeam.'',
+            'type' => '|static|title|'.TeamTypeEnum::PRODUCT.','.TeamTypeEnum::TEAM.','.TeamTypeEnum::SUB_TEAM.'',
         ];
     }
 

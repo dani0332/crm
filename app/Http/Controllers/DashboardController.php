@@ -9,13 +9,13 @@ use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Services\DashboardService;
-use App\Traits\TeamHierarchyHelpers;
+use App\Traits\TeamHierarchyTrait;
 use DB;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    use TeamHierarchyHelpers;
+    use TeamHierarchyTrait;
 
     protected $dashboardService;
 

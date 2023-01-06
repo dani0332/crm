@@ -9,7 +9,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Services\LeadAllocationService;
 use App\Services\UserService;
-use App\Traits\TeamHierarchyHelpers;
+use App\Traits\TeamHierarchyTrait;
 use Auth;
 use DataTables;
 use DB;
@@ -18,7 +18,7 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    use TeamHierarchyHelpers;
+    use TeamHierarchyTrait;
 
     protected $leadAllocationService;
     protected $userService;
@@ -149,7 +149,7 @@ class UserController extends Controller
         $teamName = implode(',', $this->getUserTeams($user->id)->pluck('name')->toArray());
         $productName = implode(',', $this->getUserProducts($user->id)->pluck('name')->toArray());
         if ($user->additional_team_ids != '') {
-            $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::Product)->pluck('name')->toArray();
+            $additionalTeamNamesArray = Team::whereIn('id', explode(',', $user->additional_team_ids))->where('type', TeamTypeEnum::PRODUCT)->pluck('name')->toArray();
             $additionalTeamNames = implode(', ', $additionalTeamNamesArray);
         }
         if ($user->sub_team_id) {
@@ -231,7 +231,7 @@ class UserController extends Controller
 
         $user->save();
 
-        if ($request->manager != '0' && isset($request->manager)) {
+        if (isset($request->manager) && $request->manager != '0') {
             DB::table('user_manager')->where('user_id', $user->id)->delete();
             foreach ($request->manager as $managerId) {
                 DB::table('user_manager')->insert([
@@ -241,7 +241,7 @@ class UserController extends Controller
             }
         }
 
-        if ($request->teams != '0' && isset($request->teams)) {
+        if ($request->teams != '0') {
             DB::table('user_team')->where('user_id', $user->id)->delete();
             foreach ($request->teams as $teamId) {
                 DB::table('user_team')->insert([
@@ -251,7 +251,7 @@ class UserController extends Controller
             }
         }
 
-        if ($request->products != '0' && isset($request->products)) {
+        if (isset($request->products) && $request->products != '0') {
             DB::table('user_products')->where('user_id', $user->id)->delete();
             foreach ($request->products as $productId) {
                 DB::table('user_products')->insert([

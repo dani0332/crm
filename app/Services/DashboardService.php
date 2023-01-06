@@ -4,13 +4,13 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Models\CarQuote;
-use App\Traits\TeamHierarchyHelpers;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DB;
 
 class DashboardService extends BaseService
 {
-    use TeamHierarchyHelpers;
+    use TeamHierarchyTrait;
 
     public function getDashboardStatsByDate($start, $end, $type)
     {

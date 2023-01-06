@@ -11,7 +11,7 @@ use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Traits\GenericQueriesAllLobs;
-use App\Traits\TeamHierarchyHelpers;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
@@ -27,7 +27,7 @@ class CarQuoteService extends BaseService
     protected $leadAllocationService;
 
     use GenericQueriesAllLobs;
-    use TeamHierarchyHelpers;
+    use TeamHierarchyTrait;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {

@@ -6,7 +6,7 @@ use BenSampo\Enum\Enum;
 
 final class TeamTypeEnum extends Enum
 {
-    public const Product = 1;
-    public const Team = 2;
-    public const SubTeam = 3;
+    public const PRODUCT = 1;
+    public const TEAM = 2;
+    public const SUB_TEAM = 3;
 }

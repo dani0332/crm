@@ -6,9 +6,9 @@ use BenSampo\Enum\Enum;
 
 final class TiersEnum extends Enum
 {
-    public const TierR = 'Tier R';
-    public const TierTRECOM = 'Tier TR (Ecom)';
-    public const TierTRNONECOM = 'Tier TR (Non ecom)';
-    public const Tier6ECOM = 'Tier 6 (Ecom)';
-    public const Tier6NONECOM = 'Tier 6 (non ecom)';
+    public const TIER_R = 'Tier R';
+    public const TIER_TR_ECOM = 'Tier TR (Ecom)';
+    public const TIER_TR_NONECOM = 'Tier TR (Non ecom)';
+    public const TIER6_ECOM = 'Tier 6 (Ecom)';
+    public const TIER6_NONECOM = 'Tier 6 (non ecom)';
 }

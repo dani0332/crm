@@ -104,7 +104,7 @@ class LookupService extends BaseService
     public function getTierR()
     {
         return Tier::select('id', 'name')
-        ->where(['is_active' => true, 'name' => TiersEnum::TierR])
+        ->where(['is_active' => true, 'name' => TiersEnum::TIER_R])
         ->orderBy('name', 'asc')->get();
     }
 

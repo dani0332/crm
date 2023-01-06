@@ -4,7 +4,7 @@ namespace App\Traits;
 
 use App\Enums\IMCRMSearchTypesEnum;
 
-trait QuotesFilterAndOrderClause
+trait QuotesFilterAndOrderClauseTrait
 {
     public function addSearchClauses($model, $request, $query)
     {
