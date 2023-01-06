@@ -125,7 +125,9 @@ class CarQuoteService extends BaseService
                 'cqr.tier_id',
                 't.name as tier_id_text',
                 'qvc.visit_count as visit_count',
-                't.cost_per_lead as cost_per_lead', // prev
+                't.cost_per_lead as cost_per_lead',
+                'cqr.quote_batch_id',
+                'qb.name as quote_batch_id_text',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -145,6 +147,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
             ->leftJoin('car_model_detail as cmd', 'cmd.id', '=', 'cqr.car_model_detail_id')
             ->leftJoin('tiers as t', 't.id', '=', 'cqr.tier_id')
+            ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id')
             ->leftJoin('quote_view_count as qvc', function ($join) {
                 $join->on('qvc.quote_id', 'cqr.id');
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
@@ -284,6 +287,7 @@ class CarQuoteService extends BaseService
         return [
             'id' => 'readonly|none',
             'code' => 'input|title',
+            'quote_batch_id' => 'select|readonly|title',
             'renewal_batch' => 'input|number|title',
             'first_name' => 'input|text|required',
             'last_name' => 'input|text|required',
@@ -496,6 +500,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'source':
                 $title = 'Lead Source';
+                break;
+            case 'quote_batch_id':
+                $title = 'Batch';
                 break;
             default:
                 break;
@@ -884,10 +891,10 @@ class CarQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead',
-            'list' => 'policy_start_date,transapp_code,seat_capacity,cylinder,has_ncd_supporting_documents,back_home_license_held_for_id,parent_duplicate_quote_id,trim,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,emirate_of_registration_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,cost_per_lead',
-            'update' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,source,transapp_code,previous_quote_policy_premium,quote_status_id,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead',
-            'show' => 'is_modified,is_gcc_standard,trim,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,quote_status_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,renewal_import_code,tier_id,visit_count,id',
+            'create' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id',
+            'list' => 'policy_start_date,transapp_code,seat_capacity,cylinder,has_ncd_supporting_documents,back_home_license_held_for_id,parent_duplicate_quote_id,trim,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,emirate_of_registration_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,cost_per_lead,quote_batch_id',
+            'update' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,source,transapp_code,previous_quote_policy_premium,quote_status_id,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id',
+            'show' => 'is_modified,is_gcc_standard,trim,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,quote_status_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,renewal_import_code,tier_id,visit_count,id,renewal_batch',
         ];
     }
 
