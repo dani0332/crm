@@ -320,7 +320,7 @@ class CarQuoteService extends BaseService
             'quote_status_id' => 'select|title|multiple',
             'payment_status_id' => 'select|title',
             'is_ecommerce' => '|static|title|Yes,No',
-            'tier_id' => 'select|title',
+            'tier_id' => 'select|title|multiple|ss:5',
             'visit_count' => 'readonly|none',
             'next_followup_date' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
@@ -731,16 +731,18 @@ class CarQuoteService extends BaseService
                         $this->query->whereNull($item);
                     } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
                         if ($request[$item][0] == 'null') {
-                            $this->query->whereNull('advisor_id');
+                            $this->query->whereNull('cqr.advisor_id');
                         } else {
-                            $this->query->whereIn('advisor_id', $request[$item]);
+                            $this->query->whereIn('cqr.advisor_id', $request[$item]);
                         }
                     } elseif ($item == 'quote_status_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                        $this->query->whereIn('quote_status_id', $request[$item]);
+                        $this->query->whereIn('cqr.quote_status_id', $request[$item]);
+                    } elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                        $this->query->whereIn('cqr.tier_id', $request[$item]);
                     } else {
                         $searchedValue = preg_match("/\b".'Yes'."\b/i", $request[$item]) || preg_match("/\b".'No'."\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                         if ($item == 'policy_number') {
-                            $this->query->where('previous_quote_policy_number', $searchedValue);
+                            $this->query->where('cqr.previous_quote_policy_number', $searchedValue);
                         } else {
                             $this->query->where($this->getQuerySuffix($item).'.'.$item, $searchedValue);
                         }
@@ -900,7 +902,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id'];
 
         return $searchProperties;
     }
