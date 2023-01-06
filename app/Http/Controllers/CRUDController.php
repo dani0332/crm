@@ -777,9 +777,10 @@ class CRUDController extends Controller
             if ($request->leadStatus == QuoteStatusEnum::FollowupCall ||
             $request->leadStatus == QuoteStatusEnum::Interested ||
             $request->leadStatus == QuoteStatusEnum::NoAnswer) {
+                $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
                 $this->validate($request, [
                     'next_followup_date' => 'required',
-                    'next_followup_date' => 'date_format:d-m-Y H:i:s|after_or_equal:'.date('d-m-Y H:i:s'),
+                    'next_followup_date' => 'date_format:'.$dateFormat.'|after_or_equal:'.date($dateFormat),
                     'notes' => 'required',
                 ]);
                 if (isset($request->quote_uuid)) {
