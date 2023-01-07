@@ -276,7 +276,7 @@
                                                 @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
                                                 @if(explode("|", $value)[1] != 'date') type={{ explode("|", $value)[1] }} @endif 
                                                 id={{$property}} name={{$property}}
-                                                @if($property == 'email' || $property == 'mobile_no') disabled="disabled" @endif
+                                                @if($property == DatabaseColumnsString::EMAIL || $property == DatabaseColumnsString::MOBILE || $property == DatabaseColumnsString::CAR_VALUE_TIER) disabled="disabled" @endif
                                                 value="{{ old($property, $record->$property) }}" class="form-control" 
                                                 @if(!Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::Admin]))
                                                     @if($property == DatabaseColumnsString::RENEWAL_BATCH || $property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER || $property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE) 
