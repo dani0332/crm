@@ -157,7 +157,6 @@ class CarQuoteService extends BaseService
 
     public function saveCarQuote(Request $request)
     {
-        //dd($request->all());
         $dataArr = [
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
