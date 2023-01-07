@@ -253,7 +253,7 @@
                                                     @else {{ $record->$property }}
                                                     @endif
                                                 @else
-                                                @if($property == DatabaseColumnsString::CAR_VALUE)
+                                                @if($property == DatabaseColumnsString::CAR_VALUE || $property == DatabaseColumnsString::CAR_VALUE_TIER)
                                                     {{ number_format($record->$property, 2) }}
                                                 @else
                                                     @if($property == DatabaseColumnsString::SOURCE || $property == DatabaseColumnsString::LOST_REASON)
