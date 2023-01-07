@@ -29,8 +29,8 @@ class CapiRequestService
             $getdecodeContents = json_decode($getContents);
 
             if (isset($data['carTypeInsuranceId']) && $data['carTypeInsuranceId'] != '') {
-                $carQuoteUpdate = CarQuote::where('uuid', $getdecodeContents->quoteUID)->first()->id;
-                //$carQuoteUpdate = CarQuote::find($carQuoteId);
+                $carQuoteId = CarQuote::where('uuid', $getdecodeContents->quoteUID)->value('id');
+                $carQuoteUpdate = CarQuote::find($carQuoteId);
                 if ($carQuoteUpdate) {
                     $carQuoteUpdate->cylinder = $data['cylinder'];
                     $carQuoteUpdate->seat_capacity = $data['seatCapacity'];
