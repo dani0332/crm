@@ -27,7 +27,7 @@
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="previous_policy_expiry_date"><b>Previous Policy Expiry Date</b></label>
                         <div class="col-md-6 col-sm-6">
-                            <p class="label-align-center">{{ isset($record->previous_policy_expiry_date) ? Carbon\Carbon::parse($record->previous_policy_expiry_date)->format('d/m/Y') : NULL }}</p>
+                            <p class="label-align-center">{{ isset($record->previous_policy_expiry_date) ? $record->previous_policy_expiry_date : NULL }}</p>
                         </div>
                     </div>
                     <div class="col">

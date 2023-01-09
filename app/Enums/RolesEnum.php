@@ -59,7 +59,7 @@ final class RolesEnum extends Enum
     public const PetAdvisor = 'PET_ADVISOR';
     public const PetManager = 'PET_MANAGER';
     public const Advisor = 'advisor';
-    public const PA = 'pa';
+    public const PA = 'PRODUCTION_APPROVAL';
     public const Invoicing = 'invoicing';
     public const Payment = 'payment';
     public const ProductionApprovalManager = 'production_approval_manager';
@@ -81,4 +81,6 @@ final class RolesEnum extends Enum
     public const CarDeputyManager = 'CAR_DEPUTY_MANAGER';
     public const CarManager = 'CAR_MANAGER';
     public const LeadPool = 'LEAD_POOL';
+    public const COMPLIANCE = 'COMPLIANCE';
+    public const AML = 'AML';
 }

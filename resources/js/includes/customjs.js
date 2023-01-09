@@ -21,7 +21,9 @@ $(document).ready(function () {
     width: '100%',
     allowClear: true,
   });
-  $('.select-roles').select2({
+  $(
+    '.select-roles,#user-team-select,#user-product-select,#user-manager-select',
+  ).select2({
     width: '100%',
     allowClear: true,
   });
@@ -2158,7 +2160,7 @@ $(document).ready(function () {
     singleDatePicker: true,
     timePicker24Hour: true,
     locale: {
-      format: 'YYYY-MM-DD HH:mm:ss',
+      format: 'DD-MM-YYYY HH:mm:ss',
     },
   });
 
@@ -2598,11 +2600,9 @@ $(document).ready(function () {
               '</td><td>' +
               element.ModifiedBy +
               '</td><td>' +
-              element.NewStatus +
-              '</td><td>' +
-              element.NewAdvisor +
-              '</td><td>' +
               element.NewNotes +
+              '</td><td>' +
+              element.NewStatus +
               '</td></tr>';
           }
         } else {
@@ -3016,7 +3016,7 @@ $('#dob_div #dob').datepicker({
   // TM Leads
   changeMonth: true,
   changeYear: true,
-  dateFormat: 'dd/mm/yy',
+  dateFormat: 'dd-mm-yy',
   yearRange: '-80:+00',
 });
 
