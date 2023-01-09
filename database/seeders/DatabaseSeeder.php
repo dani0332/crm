@@ -33,6 +33,7 @@ class DatabaseSeeder extends Seeder
             //CarQuoteRequestSeeder::class,
             QuoteStatusTableSeeder::class,
             QuoteStatusMapCarTransactionApproved::class,
+            UpdateApplicationStorage::class,
         ]);
     }
 }
