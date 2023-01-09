@@ -19,9 +19,9 @@ class LeadAllocationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, GetUserTree;
 
-    public $tries = 1;
+    public $tries = 3;
     public $timeout = 40;
-    public $backoff = 10;
+    public $backoff = 300;
     private $leadAllocationJobId = 'lead_allocation';
 
     /**
@@ -41,7 +41,7 @@ class LeadAllocationJob implements ShouldQueue
             Log::info('Lead Allocation Job Started');
             $leadAllocationService->setAdvisorsToUnavailable();
             $leadAllocationService->setMaxCapAndAllocationStatus();
-            if (! $leadAllocationService->carLeadAllocationSwitchStatus()) {
+            if (config('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
                 info('CAR Lead Allocation Job Switch is OFF');
             } else {
                 $leadAllocationService->processCarLeads();
