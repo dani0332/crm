@@ -334,7 +334,7 @@
    $(function(){
         setTimeout(function() {
             window.location.reload(1);
-        }, 120000);
+        }, 80000);
         const picker = new easepick.create({
             element: document.getElementById('reloadDailyStatsDate'),
             css: [
