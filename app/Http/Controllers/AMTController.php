@@ -277,6 +277,7 @@ class AMTController extends Controller
         }
 
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id);
+        $tiers = $this->lookupService->getTierR();
 
         return view('amt.show', compact(
             'businessInsuranceType',
@@ -291,7 +292,8 @@ class AMTController extends Controller
             'quoteType',
             'allowedDuplicateLOB',
             'customerAdditionalContacts',
-            'quoteTypeId'
+            'quoteTypeId',
+            'tiers'
         ));
     }
 
