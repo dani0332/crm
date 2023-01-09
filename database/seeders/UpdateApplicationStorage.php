@@ -20,12 +20,10 @@ class UpdateApplicationStorage extends Seeder
         if ($sundayResetTime) {
             $sundayResetTime->key_name = 'SATURDAY_CAP_RESET_TIME';
             $sundayResetTime->save();
-            
         }
         $carProduct = Team::where('name', quoteTypeCode::Car)->first();
 
-        if($carProduct->type != 1){
-
+        if ($carProduct->type != 1) {
             Team::where('name', quoteTypeCode::Car)->update(['type' => 1]);
             Team::where('name', quoteTypeCode::Home)->update(['type' => 1]);
             Team::where('name', quoteTypeCode::Life)->update(['type' => 1]);
@@ -34,7 +32,6 @@ class UpdateApplicationStorage extends Seeder
             Team::where('name', quoteTypeCode::Health)->update(['type' => 1]);
             Team::where('name', quoteTypeCode::Travel)->update(['type' => 1]);
         }
-
 
         $carLeadPickupLimit = ApplicationStorage::where('key_name', 'CAR_LEAD_PICKUP_LIMIT')->first();
         if ($carLeadPickupLimit == null) {
