@@ -13,9 +13,11 @@ use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
+use App\Models\InsuranceProvider;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTree;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -23,6 +25,7 @@ use Carbon\Carbon;
 use DB;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
+use PDF;
 
 class HealthQuoteService extends BaseService
 {
@@ -33,6 +36,7 @@ class HealthQuoteService extends BaseService
     use GetUserTree;
     use RolePermissionConditions;
     use AddPremiumAllLobs;
+    use GenericQueriesAllLobs;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
@@ -1135,5 +1139,40 @@ class HealthQuoteService extends BaseService
 
             return $response;
         }
+    }
+
+    /**
+     * generate PDF for car quote plan and return.
+     *
+     * @param $quoteType
+     * @param $data
+     * @return array|string[]
+     */
+    public function exportPlansPdf($quoteType, $data)
+    {
+        $planIds = $data['plan_ids'];
+        $addons = (isset($data['addons'])) ? $data['addons'] : null;
+
+        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+
+        if (! isset($quotePlans->quote->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $providerIds = collect($quotePlans->quote->plans)->pluck('providerId')->toArray();
+        $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
+
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote->load(['advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
+        }, 'customer']);
+
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+            ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
+
+        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
+        $pdfName = 'InsuranceMarket.ae™ Health Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
+        return ['pdf' => $pdf, 'name' => $pdfName];
     }
 }

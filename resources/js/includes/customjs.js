@@ -1172,13 +1172,6 @@ $(document).ready(function () {
     }, 2000);
   });
 
-  $('#btn_download_plan_pdf').on('click', function () {
-    if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-      alert('Please select at least three (3) plans.');
-      return false;
-    }
-  });
-
   var customerDataTable = $('.customer-data-table').DataTable({
     ordering: false,
     info: false,
@@ -1807,6 +1800,15 @@ $(document).ready(function () {
         $('.loader').hide();
       }, 1000);
     }
+  });
+
+  $('#healthPlansAll').on('click', function()
+  {
+    if($(this).is(":checked")) {
+      $('.health-plans-checkbox').prop('checked',this.checked);
+    } else {
+      $('.health-plans-checkbox').removeAttr('checked');
+    } 
   });
 
   // TM Leads: Select tm leads id and store in hidden field
@@ -2739,6 +2741,29 @@ $(document).ready(function () {
     $('#form_plans_pdf').submit();
   });
 });
+
+$('#btn_download_plan_pdf_health').on('click', function () {
+  
+  if ($("input[name='health_plans_checkbox']:checked").length < 3) {
+    alert('Please select at least three (3) plans.');
+    return false;
+  }
+
+  if ($("input[name='health_plans_checkbox']:checked").length > 5) {
+    alert('A maximum of five (5) plans are allowed to be selected.');
+    return false;
+  }
+
+  var plan_ids = [];
+
+  $.each($("input[name='health_plans_checkbox']:checked"), function () {
+    plan_ids.push($(this).val());
+  });
+
+  $('#plan_ids').val(plan_ids);
+  $('#form_plans_pdf').submit();
+});
+
 
 $('#renewals-upload-button').click(function () {
   $('#renewals-upload-button').hide();

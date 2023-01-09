@@ -51,7 +51,7 @@ class ExportPlansPdfRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            if (empty(request()->quoteType) || ucwords(request()->quoteType) != quoteTypeCode::Car) {
+            if (empty(request()->quoteType) || ! in_array(ucwords(request()->quoteType), [quoteTypeCode::Car, quoteTypeCode::Health])) {
                 $validator->errors()->add('type', 'Invalid quote type provided');
             }
         });

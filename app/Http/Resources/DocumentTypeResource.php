@@ -27,7 +27,7 @@ class DocumentTypeResource extends JsonResource
             'sort_order' => $this->sort_order,
             'is_active' => $this->is_active,
             'send_to_customer' => $this->send_to_customer,
-            'category'  => $this->category
+            'category' => $this->category,
         ];
     }
 }
