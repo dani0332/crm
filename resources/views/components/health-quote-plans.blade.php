@@ -23,7 +23,6 @@
                                       role="form" id="form_plans_pdf" data-parsley-validate="" novalidate="" autocomplete="off">
                                     {{ csrf_field() }}
                                     <input type="hidden" id="plan_ids" name="plan_ids" value="">
-{{--                                    <input type="hidden" id="plan_ids" name="plan_ids" value="1,3,6,7">--}}
                                     <input type="hidden" id="quote_uuid" name="quote_uuid" value="{{$record->uuid}}">
                                 </form>
                                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
