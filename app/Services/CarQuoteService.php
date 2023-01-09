@@ -311,7 +311,7 @@ class CarQuoteService extends BaseService
             'year_of_manufacture' => 'select|title|required',
             'year_of_first_registration' => 'input|date|title|range',
             'car_value' => 'input|number',
-            'car_value_tier' => 'input|number|required',
+            'car_value_tier' => 'input|number|title|required',
             'vehicle_type_id' => 'select|title|required',
             'seat_capacity' => 'input|number|title|required',
             'emirate_of_registration_id' => 'select|title|required',
@@ -510,7 +510,7 @@ class CarQuoteService extends BaseService
                 $title = 'Batch';
                 break;
             case 'car_value_tier':
-                $title = 'Car Value Tier';
+                $title = 'Car Value (at enquiry)';
                 break;
             default:
                 break;
