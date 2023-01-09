@@ -43,6 +43,7 @@ trait GenericQueriesAllLobs
 
     /**
      * get Quote Request Member Detail by Quote Type e.g health, travel etc
+     *
      * @param $quoteType
      * @param $id
      * @return false|mixed
