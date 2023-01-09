@@ -351,7 +351,7 @@ class LeadAllocationService extends BaseService
             $carLeadAllocationSwitch = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
             $timeForEnd = Carbon::parse($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_END_TIME'))->toTimeString();
             $timeForStart = Carbon::parse($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME'))->toTimeString();
-            $sundayResetTime = Carbon::parse($this->getAppStorageValueByKey('SUNDAY_CAP_RESET_TIME'))->toTimeString();
+            $saturdayResetTime = Carbon::parse($this->getAppStorageValueByKey('SATURDAY_CAP_RESET_TIME'))->toTimeString();
             $normalResetTime = Carbon::parse($this->getAppStorageValueByKey('NORMAL_CAP_RESET_TIME'))->toTimeString();
             info('carLeadSwitch : '.$carLeadAllocationSwitch.' , End Time : '.$timeForEnd.' , Start Time : '.$timeForStart.', SundayResetTime :'.$sundayResetTime.', Normal ResetTime : '.$normalResetTime.' , time right now : '.$dateTimeNow);
             info('Time for advisor start in app storage is '.$timeForStart.' and end is :'.$timeForEnd.' and the switch right now is : '.$carLeadAllocationSwitch);
@@ -362,7 +362,7 @@ class LeadAllocationService extends BaseService
                 info('setMaxCapAndAllocationStatus - going to shutdown the car lead allocation switch');
                 $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
             }
-            if ($currentDay == DaysNameEnum::SUNDAY && $dateTimeNow >= $sundayResetTime) {
+            if ($currentDay == DaysNameEnum::SATURDAY && $dateTimeNow >= $saturdayResetTime) {
                 $this->updateUserMaxCapacity();
             }
             if ($currentDay != DaysNameEnum::SUNDAY && $dateTimeNow >= $normalResetTime) {
