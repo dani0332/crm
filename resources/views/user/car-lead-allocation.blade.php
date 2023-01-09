@@ -111,6 +111,9 @@
 <script>
     var leadAllocationDataTable = null;
     $(document).ready(function() {
+        setTimeout(function() {
+        window.location.reload(1);
+        }, 120000);
         var isAutoAllocationWorking = JSON.parse('<?php echo json_encode($isAutoAllocationWorking); ?>');
         var indexLastColumn = $(".car_lead_allocation_table").find('tr')[0].cells.length-1;
         leadAllocationDataTable = $('.car_lead_allocation_table').DataTable({
