@@ -15,7 +15,6 @@ class ChangeSundayResetTimeName extends Migration
     public function up()
     {
         $sundayResetTime = ApplicationStorage::where('key_name', 'SUNDAY_CAP_RESET_TIME')->first();
-        dd($sundayResetTime);
         if ($sundayResetTime != null) {
             $sundayResetTime->key_name = 'SATURDAY_CAP_RESET_TIME';
             $sundayResetTime->save();

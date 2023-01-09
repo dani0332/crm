@@ -584,13 +584,14 @@ class LeadAllocationService extends BaseService
         info('Car leads fetch start date is :'.$from);
         $to = now();
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
-
+        $carLeadPickupLimit = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_LIMIT');
         return CarQuote::whereNull('advisor_id')
             ->where('is_renewal_tier_email_sent', 0)
+            ->whereNull('policy_number')
             ->whereBetween('created_at', [$from, $to])
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
-            ->skip(0)->take(30)->get();
+            ->skip(0)->take($carLeadPickupLimit)->get();
     }
 
     public function getRulesByLeadSource($source)
