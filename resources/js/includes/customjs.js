@@ -1172,13 +1172,6 @@ $(document).ready(function () {
     }, 2000);
   });
 
-  $('#btn_download_plan_pdf').on('click', function () {
-    if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-      alert('Please select at least three (3) plans.');
-      return false;
-    }
-  });
-
   var customerDataTable = $('.customer-data-table').DataTable({
     ordering: false,
     info: false,
