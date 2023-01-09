@@ -190,14 +190,15 @@ class CarQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-        info('Create triggered from IMCRM for Car Quote request with email : '. $request->email. ' and sending request to CAPI' );
+        info('Create triggered from IMCRM for Car Quote request with email : '.$request->email.' and sending request to CAPI');
+
         return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
 
     public function updateCarQuote(Request $request, $id)
     {
         $carQuote = CarQuote::where('uuid', $id)->first();
-        info('Update triggered from IMCRM for Car Quote request with uuid : '. $carQuote->code );
+        info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
         $carQuote->dob = $request->dob;
