@@ -101,10 +101,14 @@
         tbody > tr > td {
             border: 1px solid #bfbfbf;
         }
-        td > p {
+        thead > tr > th {
+            border: 1px solid #bfbfbf;
+        }
+        td > p, th > p {
             padding: 4px;
             font-size: 14px;
             text-align: center;
+            font-weight: normal;
         }
         .text-left {
             text-align: left;
@@ -142,7 +146,7 @@
         .spacer {
             padding: 3px;
         }
-        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;}
+        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;border-left: none;border-top: none;}
         .quote-info {
             text-align: right;
             vertical-align: bottom;
@@ -200,7 +204,7 @@
             background-color: #1d83bc;
         }
         .heading-desc {
-            font-size: 11px;
+            font-size: 12px;
         }
         .provider-logo {
             width: 100px;
@@ -242,6 +246,7 @@
         .text-right {text-align: right;}
         .full-page-image {
             width: 100%;
+            z-index: 999;
         }
         .text-center {text-align: center;}
         .badge-success {
@@ -263,7 +268,7 @@
     </style>
 </head>
 <body>
-<img src="{{public_path('images/quote_plans_pages/rm-p1.jpg')}}" class="" style="width: 100%;z-index: 999;" />
+<img src="{{public_path('images/quote_plans_pages/rm-p1.jpg')}}" class="full-page-image" style="" />
 @php
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
@@ -293,7 +298,6 @@
 
         $quotePlan->networkList = json_decode(collect($quotePlan->benefits->networkList)->keyBy('code')->toJson());
 
-       // $quotePlan->roadSideAssistance = json_decode(collect($quotePlan->benefits->roadSideAssistance)->keyBy('code')->toJson());
         $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
         foreach ($quotePlan->benefits as &$benefit) {
@@ -347,8 +351,8 @@
         ["code" => "damage", "title" => "Inpatient*", "type" => 'coInsurance'],
         ["code" => "physiotherapy", "title" => "Physiotherapy*", "type" => 'coInsurance'],
         ["code" => "medicineCo", "title" => "Medicine*", "type" => 'coInsurance'],
-        ["code" => "coDental", "title" => "Dental*", "type" => 'coInsurance'],//todo: find exact later
-        ["code" => "coOptical", "title" => "Optical*", "type" => 'coInsurance'],//todo: find exact later
+        ["code" => "coDental", "title" => "Dental*", "type" => 'coInsurance'],
+        ["code" => "coOptical", "title" => "Optical*", "type" => 'coInsurance'],
 
         ["code" => "heading", "title" => "Maternity Cover"],
         ["code" => "outpatient", "title" => "Outpatient", "type" => 'maternityCover'],
@@ -365,10 +369,6 @@
         ["code" => "vat", "title" => "Vat Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
         ["code" => "total", "title" => "Total Indicative Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-//        ["code" => "spacer"],
-//        ["type" => "buy", "heading_class" => "no-border"],
-        //["code" => "spacer"],
-        //["code" => "excess", "title" => "Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing']
     ];
 @endphp
 <header>
@@ -415,18 +415,14 @@
 <main>
     <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;">
         <thead>
+            <tr>
 
-        </thead>
-        <tbody style="margin-bottom: 130px;">
-
-        <tr>
-
-            <th class="alfred" rowspan="3">
-                <img style="" src="{{public_path('images/alfred.png')}}"  />
-            </th>
+                <th class="alfred" rowspan="3">
+                    <img style="" src="{{public_path('images/alfred.png')}}"  />
+                </th>
 
             @foreach($planIds as $planId)
-                <th class="provider">
+                <th class="provider" style="border: solid 1px #bfbfbf;">
                     <div class="rounded-full">
                         <p class="relative top-[40%] m-auto text-xs">
                             @php
@@ -447,41 +443,43 @@
 
         <tr>
             @foreach($planIds as $planId)
-                <td style="padding: 0;margin: 0;">
+                <th style="padding: 0;margin: 0;">
                     <p class="text-center">
                         {{ $plans[$planId]->providerName }}
                     </p>
-                </td>
+                </th>
             @endforeach
         </tr>
 
         <tr>
             @foreach($planIds as $planId)
-                <td style="padding: 0;margin: 0;">
+                <th style="padding: 0;margin: 0;">
                     <p class="text-center">
                         {{ $plans[$planId]->name }}
                     </p>
-                </td>
+                </th>
             @endforeach
         </tr>
 
         {{-- buy now row --}}
         <tr>
-            <td class="bg-light-blue" >
+            <th class="bg-light-blue" >
                 <p class="quote-info">Car insurance comparison for: <b>{{ $quote->first_name  }} {{$quote->last_name}}</b></p>
-            </td>
+            </th>
             @foreach($planIds as $planId)
-                <td>
+                <th>
                     <p class="text-center">
                         @if($plans[$planId]->discountPremium)
-                            <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Apply Now</a>
+                            <a target="_blank" class="btn-buy" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Apply Now</a>
                         @else
                             N/A
                         @endif
                     </p>
-                </td>
+                </th>
             @endforeach
         </tr>
+        </thead>
+        <tbody style="margin-bottom: 130px;">
 
         @foreach($features as $feature)
 
@@ -573,6 +571,6 @@
     </div>
 </main>
 
-<img src="{{public_path('images/quote_plans_pages/rm-p3.jpg')}}" class="" style="width: 100%;z-index: 999;"  />
+<img src="{{public_path('images/quote_plans_pages/rm-p3.jpg')}}" class="full-page-image" style=""  />
 </body>
 </html>
