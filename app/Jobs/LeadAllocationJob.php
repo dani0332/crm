@@ -71,7 +71,6 @@ class LeadAllocationJob implements ShouldQueue
 
                         if ($filteredLeadsByHealthTeam->count() > 0 && $filteredUsersByHealthTeam->count() > 0) {
                             foreach ($filteredLeadsByHealthTeam as $lead) {
-                                sleep(1);
                                 $filteredUsersByHealthTeam = $filteredUsersByHealthTeam->sortBy('last_allocated', SORT_NATURAL)->flatten();
                                 $advisor = $filteredUsersByHealthTeam->first();
                                 $leadAllocationService->assignLead($lead, $advisor->id, false);
@@ -81,6 +80,7 @@ class LeadAllocationJob implements ShouldQueue
                                         $user->last_allocated = microtime(true);
                                     }
                                 });
+                                sleep(1);
                             }
 
                             foreach ($filteredUsersByHealthTeam as $user) {
