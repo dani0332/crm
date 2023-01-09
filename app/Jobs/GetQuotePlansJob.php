@@ -18,7 +18,7 @@ class GetQuotePlansJob implements ShouldQueue
 
     public $tries = 3;
     public $timeout = 15;
-    public $backoff = 120;
+    public $backoff = 300;
     private $lead,
     $healthQuoteService;
 
