@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 trait SendSIBEmail
 {
     public $to;
+
     public function sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailTo)
     {
         info('sendEmailUsingSIB -- start');

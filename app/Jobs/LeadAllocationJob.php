@@ -5,7 +5,7 @@ namespace App\Jobs;
 use App\Mail\LeadAllocationFailedNotification as MailLeadAllocationFailedNotification;
 use App\Models\LeadAllocation;
 use App\Services\LeadAllocationService;
-use App\Traits\GetUserTree;
+use App\Traits\GetUserTreeTrait;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,11 +17,11 @@ use Illuminate\Support\Facades\Mail;
 
 class LeadAllocationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, GetUserTree;
+    use Dispatchable, InteractsWithQueue, Queueable, GetUserTreeTrait;
 
-    public $tries = 3;
-    public $timeout = 40;
-    public $backoff = 300;
+    public $tries = 2;
+    public $timeout = 10;
+    public $backoff = 20;
     private $leadAllocationJobId = 'lead_allocation';
 
     /**

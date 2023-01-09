@@ -4,7 +4,7 @@ namespace App\Traits;
 
 use App\Models\User;
 
-trait GetUserTree
+trait GetUserTreeTrait
 {
     public function walkTree($userId)
     {

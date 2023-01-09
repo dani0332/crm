@@ -9,6 +9,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Events\AdvisorAssigned;
+use App\Jobs\GetQuotePlansJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -22,7 +23,7 @@ use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
-use App\Traits\GetUserTree;
+use App\Traits\GetUserTreeTrait;
 use App\Traits\SendSIBEmail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -30,8 +31,7 @@ use Illuminate\Support\Facades\Log;
 
 class LeadAllocationService extends BaseService
 {
-    use GetUserTree;
-    use SendSIBEmail;
+    use SendSIBEmail, GetUserTreeTrait;
 
     public function getGridData()
     {
@@ -128,7 +128,7 @@ class LeadAllocationService extends BaseService
             info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
             try {
                 DB::beginTransaction();
-                AdvisorAssigned::dispatch($lead);
+                // AdvisorAssigned::dispatch($lead);
                 if ($isManualAssignment && $lead->advisor_id != null && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
                     info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
@@ -145,6 +145,7 @@ class LeadAllocationService extends BaseService
                 if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
                     SyncSIBContactJob::dispatch($lead);
                 }
+                GetQuotePlansJob::dispatch($lead);
                 DB::commit();
 
                 return true;
