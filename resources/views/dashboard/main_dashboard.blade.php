@@ -332,6 +332,9 @@
    var assignedLeadsBySource = <?php echo json_encode($assignedLeadsBySource)?>;
    var leadRcdSummaryByTierPieChart =  revivalLeadsCountChart = assignedLeadsBySourceChart = advisorConversionChart = leadAssignCountByAdvisorChart = {};
    $(function(){
+        setTimeout(function() {
+            window.location.reload(1);
+        }, 120000);
         const picker = new easepick.create({
             element: document.getElementById('reloadDailyStatsDate'),
             css: [
