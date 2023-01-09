@@ -12,6 +12,7 @@ use App\Enums\RolesEnum;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Models\CarQuote;
 use App\Models\GenericModel;
+use App\Models\LeadAllocation;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
@@ -138,6 +139,14 @@ class CRUDController extends Controller
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = Auth::user()->isAdmin() || Auth::user()->hasRole(RolesEnum::LeadPool) ? true : false;
         $isCarLeadAllocationOn = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
+        $totalAllowed = 0;
+        $totalAssigned = 0;
+        if(strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car) && auth()->user()->hasRole(RolesEnum::CarAdvisor)){
+            $advisorAllocationRecord =  LeadAllocation::where('user_id', auth()->user()->id)->first();
+            if($advisorAllocationRecord) $totalAllowed = $advisorAllocationRecord->max_capacity;
+            $from = now()->startOfDay(); $to = now()->endOfDay();
+            $totalAssigned = CarQuote::where('advisor_id', auth()->user()->id)->whereBetween('created_at', [$from, $to])->count();
+        }
         $tiers = Tier::where('is_active', 1)->get();
         //Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->isRenewalUser();
@@ -179,10 +188,10 @@ class CRUDController extends Controller
                 ->addIndexColumn()
                 ->make(true);
 
-            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed'));
+            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'totalAssigned', 'totalAllowed'));
         }
 
-        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'totalAssigned', 'totalAllowed'));
     }
 
     /**

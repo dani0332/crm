@@ -88,6 +88,11 @@ use App\Enums\PermissionsEnum;
             var isLeadPool = $("#isLeadPool").val();
             var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
             var isManualAllocationAllowed = JSON.parse('<?php echo json_encode($isManualAllocationAllowed); ?>');
+            var totalAllowed = JSON.parse('<?php echo json_encode($totalAllowed); ?>');
+            var totalAssigned = JSON.parse('<?php echo json_encode($totalAssigned); ?>');
+            if(totalAssigned && totalAllowed){
+
+            }
             // Adding custom search fields for admin role
             if (isAdmin) {
                 model.searchProperties.push('is_ecommerce');
@@ -125,7 +130,8 @@ use App\Enums\PermissionsEnum;
                     return false;
                 }
                 if ($('#next_followup_date').val() != '' && $('#next_followup_date_end').val() == '') {
-                    $('#next_followup_date_end').next().html('Please select next followup end date');
+                    $('#next_followup_date_end').next().html('Please select next followup end dat
+                    e');
                     return false;
                 }
                 if ($('#next_followup_date').val() == '' && $('#next_followup_date_end').val() != '') {
