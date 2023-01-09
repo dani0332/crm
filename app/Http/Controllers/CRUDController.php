@@ -141,10 +141,13 @@ class CRUDController extends Controller
         $isCarLeadAllocationOn = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
         $totalAllowed = 0;
         $totalAssigned = 0;
-        if(strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car) && auth()->user()->hasRole(RolesEnum::CarAdvisor)){
-            $advisorAllocationRecord =  LeadAllocation::where('user_id', auth()->user()->id)->first();
-            if($advisorAllocationRecord) $totalAllowed = $advisorAllocationRecord->max_capacity;
-            $from = now()->startOfDay(); $to = now()->endOfDay();
+        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car) && auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+            $advisorAllocationRecord = LeadAllocation::where('user_id', auth()->user()->id)->first();
+            if ($advisorAllocationRecord) {
+                $totalAllowed = $advisorAllocationRecord->max_capacity;
+            }
+            $from = now()->startOfDay();
+            $to = now()->endOfDay();
             $totalAssigned = CarQuote::where('advisor_id', auth()->user()->id)->whereBetween('created_at', [$from, $to])->count();
         }
         $tiers = Tier::where('is_active', 1)->get();
