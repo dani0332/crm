@@ -966,7 +966,7 @@ class CRUDController extends Controller
      * @param $quoteType
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
+    public function exportCarPdf($quoteType, ExportPlansPdfRequest $request)
     {
         $response = $this->carQuoteService->exportPlansPdf($quoteType, $request->validated());
 
