@@ -56,7 +56,7 @@
             team_id = [team_id];
         }
         $.ajax({
-                url: '/getSubTeams',
+                url: '/get-sub-teams',
                 type: "post",
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -82,7 +82,7 @@
             team_id = [team_id];
         }
         $.ajax({
-                url: '/getTeamManagers',
+                url: '/get-team-managers',
                 type: "post",
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
