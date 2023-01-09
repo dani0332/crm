@@ -4,6 +4,8 @@ use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanType;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\GenericRequestEnum;
+use App\Enums\RolesEnum;
 $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 @endphp
 <div class="row">
@@ -18,90 +20,89 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 					<div class="col-auto mr-auto"></div>
 					<span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
 					<div class="col-auto">
-						<button class="btn btn-warning btn-sm" id="send-one-click-buy-email-btn"
-						{{ $record->advisor_id != auth()->id() || !$record->previous_quote_policy_number ? 'disabled' : '' }}
-						data-quote-type-id="{{ $quoteTypeId }}"
-						data-quote-type="{{ $quoteType }}"
-						data-quote-id="{{ $record->id }}"
-						data-quote-uuid="{{ $record->uuid }}"
-						data-quote-cdb-id="{{ $record->code }}"
-						data-quote-previous-expiry-date="{{ $record->previous_policy_expiry_date }}"
-						data-quote-currently-insured-with="{{ $record->currently_insured_with }}"
-						data-quote-car-make="{{ $carMakeText }}"
-						data-quote-car-model="{{ $carModelText }}"
-						data-quote-car-year-of-manufacture="{{ $record->year_of_manufacture }}"
-						data-quote-previous-policy-number="{{ $record->previous_quote_policy_number }}"
-						data-quote-customer-name="{{ $record->first_name }} {{ $record->last_name }}"
-						data-quote-customer-email="{{ $record->email }}"
-						data-quote-advisor-name="{{ isset($advisor->name) ? $advisor->name : null }}"
-						data-quote-advisor-email="{{ isset($advisor->email) ? $advisor->email : null }}"
-						data-quote-advisor-landline-no="{{ isset($advisor->landline_no) ? $advisor->landline_no : null }}"
-						data-quote-advisor-mobile-no="{{ isset($advisor->mobile_no) ? $advisor->mobile_no : null }}">
-						Send OCB email to customer</button>
-						<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"
-							value="{{ $ecomUrl }}">
-                            <span id="span_pdf_download">
-                                <button id="btn_download_plan_pdf" type="button" class="btn btn-success btn-sm">Download PDF</button>
-                            </span>
-						@can('car-quotes-plans-create')
-						<a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
-							class="btn btn-primary btn-sm">Create Quote</a>
-						@endcan
-						@if(gettype($listQuotePlans) != 'string')
-						<input type="hidden" id="quoteRequestUuId" name="quoteRequestUuId" value="{{ $record->id }}">
-						<button type="submit" class="btn btn-primary btn-sm" id="update_discounted_premium"
-							style="display:none;">Update Discounted Premium</button>
-						@if(count($listQuotePlans) > 0)
-						<button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton"
-							class="btn btn-warning btn-sm">Copy link</button>
-						@endif
+						@if(! auth()->user()->hasRole(RolesEnum::PA))
+							<button class="btn btn-warning btn-sm" id="send-one-click-buy-email-btn" 
+								{{ $record->advisor_id != auth()->id() || !$record->previous_quote_policy_number ? 'disabled' : '' }}
+								data-quote-type-id="{{ $quoteTypeId }}"
+								data-quote-type="{{ $quoteType }}"
+								data-quote-id="{{ $record->id }}"
+								data-quote-uuid="{{ $record->uuid }}"
+								data-quote-cdb-id="{{ $record->code }}"
+								data-quote-previous-expiry-date="{{ $record->previous_policy_expiry_date }}"
+								data-quote-currently-insured-with="{{ $record->currently_insured_with }}"
+								data-quote-car-make="{{ $carMakeText }}"
+								data-quote-car-model="{{ $carModelText }}"
+								data-quote-car-year-of-manufacture="{{ $record->year_of_manufacture }}"
+								data-quote-previous-policy-number="{{ $record->previous_quote_policy_number }}"
+								data-quote-customer-name="{{ $record->first_name }} {{ $record->last_name }}"
+								data-quote-customer-email="{{ $record->email }}"
+								data-quote-advisor-name="{{ isset($advisor->name) ? $advisor->name : null }}"
+								data-quote-advisor-email="{{ isset($advisor->email) ? $advisor->email : null }}"
+								data-quote-advisor-landline-no="{{ isset($advisor->landline_no) ? $advisor->landline_no : null }}"
+								data-quote-advisor-mobile-no="{{ isset($advisor->mobile_no) ? $advisor->mobile_no : null }}">
+								Send OCB email to customer</button>
+							<input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl"
+								value="{{ $ecomUrl }}">
+								<span id="span_pdf_download">
+									<button id="btn_download_plan_pdf" type="button" class="btn btn-success btn-sm">Download PDF</button>
+								</span>
+							@can('car-quotes-plans-create')
+								<a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
+									class="btn btn-primary btn-sm">Create Quote</a>
+							@endcan
+							@if(gettype($listQuotePlans) != GenericRequestEnum::TypeString)
+								@if(count($listQuotePlans) > 0)
+									<button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton"
+										class="btn btn-warning btn-sm">Copy link</button>
+								@endif
+							@endif
 						@endif
 					</div>
 				</div>
-				@if(gettype($listQuotePlans) != \App\Enums\GenericRequestEnum::TypeString)
-				<form method="post" action="{{route('exportCarPdf', $quoteType)}}" class="form-horizontal form-label-left"
-					role="form" id="form_plans_pdf" data-parsley-validate="" novalidate="" autocomplete="off">
-					{{ csrf_field() }}
-					<input type="hidden" id="plan_ids" name="plan_ids" value="">
-					<input type="hidden" id="quote_uuid" name="quote_uuid" value="{{$record->uuid}}">
-				</form>
-				<form method="post" action="{{route('manualPlanToggle')}}" class="form-horizontal form-label-left"
-					role="form" id="togglePlanForm" data-parsley-validate="" novalidate="" autocomplete="off">
-					{{ csrf_field() }}
-					<div class="row" id="toggle-plans-div">
-						<div class="col-md-12 col-sm-12">
-							<div class="x_panel">
-								<div class="x_title">
-									<h2>Toggle Plans</h2>
-									<div class="clearfix"></div>
-								</div>
-								<div id="">
-									<div class="item form-group">
-										<label class="col-form-label col-md-2 col-sm-2" for="Assign To"></label>
-										<div class="col-md-6 col-sm-6">
-											<select class="form-control" id="toggle" name="toggle">
-												<option value="">Please Select</option>
-												<option value="0">Show</option>
-												<option value="1"> Hide</option>
-											</select>
+				@if(gettype($listQuotePlans) != GenericRequestEnum::TypeString)
+					@if(! auth()->user()->hasRole(RolesEnum::PA))
+						<form method="post" action="{{route('exportPlansPdf', $quoteType)}}" class="form-horizontal form-label-left"
+							role="form" id="form_plans_pdf" data-parsley-validate="" novalidate="" autocomplete="off">
+							{{ csrf_field() }}
+							<input type="hidden" id="plan_ids" name="plan_ids" value="">
+							<input type="hidden" id="quote_uuid" name="quote_uuid" value="{{$record->uuid}}">
+						</form>
+						<form method="post" action="{{route('manualPlanToggle')}}" class="form-horizontal form-label-left"
+							role="form" id="togglePlanForm" data-parsley-validate="" novalidate="" autocomplete="off">
+							{{ csrf_field() }}
+							<div class="row" id="toggle-plans-div">
+								<div class="col-md-12 col-sm-12">
+									<div class="x_panel">
+										<div class="x_title">
+											<h2>Toggle Plans</h2>
+											<div class="clearfix"></div>
 										</div>
-									</div>
-									<div class="item form-group">
-										<label class="col-form-label col-md-2 col-sm-2" for="first-name"> </label>
-										<div class="col-md-6 col-sm-6">
-											<div class="input-group">
-												<button id="togglePlans" type="button"
-													class="btn btn-warning btn-sm">Update</button>
+										<div id="">
+											<div class="item form-group">
+												<label class="col-form-label col-md-2 col-sm-2" for="Assign To"></label>
+												<div class="col-md-6 col-sm-6">
+													<select class="form-control" id="toggle" name="toggle">
+														<option value="">Please Select</option>
+														<option value="0">Show</option>
+														<option value="1"> Hide</option>
+													</select>
+												</div>
+											</div>
+											<div class="item form-group">
+												<div class="col-md-6 col-sm-6">
+													<div class="input-group">
+														<button id="togglePlans" type="button" class="btn btn-warning btn-sm">Update</button>
+													</div>
+												</div>
 											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-						</div>
-					</div>
-					<input type="hidden" id="planIds" name="planIds" value="">
-					<input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{$record->uuid}}">
-				</form>
+							<input type="hidden" id="planIds" name="planIds" value="">
+							<input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{$record->uuid}}">
+						</form>
+					@endif
 				<table id="dataTableCarQuotePlans" class="table table-striped jambo_table datatable-car-quote-plans"
 					style="table-layout: fixed;" style="width:100%">
 					<thead>

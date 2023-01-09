@@ -35,8 +35,8 @@
                                 <div class="input-group">
                                     <span class="input-group-addon"><i class="glyphicon glyphicon-user"></i></span>
                                     <select id="activity-assignee" name="assignee_id" class="form-select form-control"
-                                        aria-label="Select Assignee">
-                                        <option selected>Select Assignee</option>
+                                        aria-label="Select Assignee" required>
+                                        <option value="" selected>Select Assignee</option>
                                         @foreach ($advisors as $advisor)
                                             <option @if(Auth::user()->id == $advisor->id) selected="selected" @endif value="{{ $advisor->id }}">{{ $advisor->name }}</option>
                                         @endforeach

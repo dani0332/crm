@@ -1,7 +1,8 @@
-<?php
-    use App\Enums\PaymentStatusEnum;
-    use App\Enums\PermissionsEnum;
-    ?>
+@php
+use App\Enums\RolesEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\PaymentStatusEnum;
+@endphp
 <script>
     var wasSubmitted = false;
     function createPayment()
@@ -102,7 +103,7 @@
         <div class="x_panel">
             <div class="x_title">
                 <h2>Payments</h2>
-                @if($paymentPlainModel->plan)
+                @if($paymentPlainModel->plan && ! auth()->user()->hasRole(RolesEnum::PA))
                 @cannot(PermissionsEnum::ApprovePayments)
                 @can(PermissionsEnum::PaymentsCreate)
                     <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
@@ -114,8 +115,6 @@
             </div>
             <div class="x_content">
                 <div id="lead-history-div">
-
-
                     <table id="datatabless" class="table table-striped jambo_table"
                         style="width:100%;table-layout : fixed">
                         <thead>
@@ -139,15 +138,16 @@
                                 <td>{{ $payment->paymentStatus->text }}</td>
                                 <td>{{ $paymentPlainModel->plan->text }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
-                                <td>{{ $payment->paymentStatusLogs->last() ? $payment->paymentStatusLogs->last()->created_at :  '' }}</td>
-                                <td>{{ $payment->captured_at}}</td>
-                                <td>{{ $payment->authorized_at}}</td>
+                                <td>{{ $payment->paymentStatusLogs->last()->created_at }}</td>
+                                <td>{{ $payment->captured_at }}</td>
+                                <td>{{ $payment->authorized_at }}</td>
                                 <td>{{ $payment->paymentMethod->name }}</td>
                                 <td>{{$payment->reference}}</td>
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
                                         @if($payment->paymentMethod->code == 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID &&
-                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED)
+                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && 
+                                        ! auth()->user()->hasRole(RolesEnum::PA))
                                             <button
                                             data-modelType="{{$modeltype}}"
                                             data-quoteId="{{$paymentPlainModel->id}}"
@@ -155,7 +155,8 @@
                                             class="btn btn-sm btn-success generateCCLink" style="float: left;">Copy Link</button>
                                         @endif
                                         @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
-                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED)
+                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && 
+                                        ! auth()->user()->hasRole(RolesEnum::PA))
                                          @can(PermissionsEnum::PaymentsEdit)
                                             <button class="btn btn-primary btn-sm edit-payment-btn" data-code="{{$payment->code}}"
                                                 data-reference="{{$payment->reference}}"
@@ -168,7 +169,8 @@
                                         @endif
                                     @endcannot
                                     @can(PermissionsEnum::ApprovePayments)
-                                        @if( $payment->paymentMethod->code != 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED)
+                                        @if( $payment->paymentMethod->code != 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED && 
+                                        ! auth()->user()->hasRole(RolesEnum::PA))
                                             <button class="btn btn-success btn-sm" id="approve-paymnet-btn" data-code="{{$payment->code}}"
                                                 data-reference="{{$payment->reference}}"
                                                 data-amount="{{$payment->captured_amount}}"
@@ -305,7 +307,9 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="justify-content: center;">
-                    <button type="button" id="create-payment-btn" onClick="this.disabled=true;createPayment();" class="btn btn-sm btn-success">Create Payment</button>
+                    @if(! auth()->user()->hasRole(RolesEnum::PA))
+                        <button type="button" id="create-payment-btn" onClick="this.disabled=true;createPayment();" class="btn btn-sm btn-success">Create Payment</button>
+                    @endif
                 </div>
             </form>
         </div>
@@ -423,7 +427,9 @@
                     </div>
                 </div>
                 <div class="modal-footer" style="justify-content: center;">
-                    <button type="button" id="update-payment-btn" class="btn btn-sm btn-success">Update Payment</button>
+                    @if(! auth()->user()->hasRole(RolesEnum::PA))
+                        <button type="button" id="update-payment-btn" class="btn btn-sm btn-success">Update Payment</button>
+                    @endif
                 </div>
             </form>
         </div>

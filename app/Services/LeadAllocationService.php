@@ -8,16 +8,17 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\TiersEnum;
 use App\Events\AdvisorAssigned;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
-use App\Models\CarMake;
-use App\Models\CarModel;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
-use App\Models\Nationality;
+use App\Models\LeadSource;
+use App\Models\RuleLeadSource;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
@@ -33,20 +34,37 @@ class LeadAllocationService extends BaseService
     use GetUserTree;
     use SendSIBEmail;
 
+    protected $emailDataService;
+
+    public function __construct(EmailDataService $emailDataService)
+    {
+        $this->emailDataService = $emailDataService;
+    }
+
     public function getGridData()
     {
         try {
-            $userAgainstManagerWithDetail = LeadAllocation::select('lead_allocation.id as id', 'lead_allocation.user_id as userId', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.is_available', 'lead_allocation.last_allocated', 'st.name as teamName', 'u.name as userName')
-                ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                ->leftjoin('teams as t', 'u.team_id', '=', 't.id')
-                ->leftjoin('teams as st', 'st.id', '=', 'u.sub_team_id')
-                ->whereNotNull('u.sub_team_id')
-                ->where(strtolower('t.name'), '=', strtolower(quoteTypeCode::Health));
+            $query = LeadAllocation::select([
+                'lead_allocation.id as id',
+                'lead_allocation.user_id as userId',
+                'lead_allocation.allocation_count',
+                'lead_allocation.max_capacity',
+                'lead_allocation.is_available',
+                'lead_allocation.last_allocated',
+                'st.name as teamName',
+                'u.name as userName',
+            ])
+              ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
+              ->leftJoin('teams as t', 'u.team_id', '=', 't.id')
+              ->leftJoin('teams as st', 'st.id', '=', 'u.sub_team_id')
+              ->whereNotNull('u.sub_team_id')
+              ->where('t.name', '=', quoteTypeCode::Health);
+
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $userAgainstManagerWithDetail = $userAgainstManagerWithDetail->where('u.manager_id', auth()->user()->id);
+                $query = $query->where('u.manager_id', auth()->user()->id);
             }
 
-            return $userAgainstManagerWithDetail->get();
+            return $query->get();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -333,9 +351,9 @@ class LeadAllocationService extends BaseService
             $carLeadAllocationSwitch = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
             $timeForEnd = Carbon::parse($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_END_TIME'))->toTimeString();
             $timeForStart = Carbon::parse($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME'))->toTimeString();
-            $sundayResetTime = Carbon::parse($this->getAppStorageValueByKey('SUNDAY_CAP_RESET_TIME'))->toTimeString();
+            $saturdayResetTime = Carbon::parse($this->getAppStorageValueByKey('SATURDAY_CAP_RESET_TIME'))->toTimeString();
             $normalResetTime = Carbon::parse($this->getAppStorageValueByKey('NORMAL_CAP_RESET_TIME'))->toTimeString();
-            info('carLeadSwitch : '.$carLeadAllocationSwitch.' , End Time : '.$timeForEnd.' , Start Time : '.$timeForStart.', SundayResetTime :'.$sundayResetTime.', Normal ResetTime : '.$normalResetTime.' , time right now : '.$dateTimeNow);
+            info('carLeadSwitch : '.$carLeadAllocationSwitch.' , End Time : '.$timeForEnd.' , Start Time : '.$timeForStart.', SundayResetTime :'.$saturdayResetTime.', Normal ResetTime : '.$normalResetTime.' , time right now : '.$dateTimeNow);
             info('Time for advisor start in app storage is '.$timeForStart.' and end is :'.$timeForEnd.' and the switch right now is : '.$carLeadAllocationSwitch);
             if ($dateTimeNow >= $timeForStart && $carLeadAllocationSwitch == 0) {
                 $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
@@ -344,7 +362,7 @@ class LeadAllocationService extends BaseService
                 info('setMaxCapAndAllocationStatus - going to shutdown the car lead allocation switch');
                 $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
             }
-            if ($currentDay == DaysNameEnum::SUNDAY && $dateTimeNow >= $sundayResetTime) {
+            if ($currentDay == DaysNameEnum::SATURDAY && $dateTimeNow >= $saturdayResetTime) {
                 $this->updateUserMaxCapacity();
             }
             if ($currentDay != DaysNameEnum::SUNDAY && $dateTimeNow >= $normalResetTime) {
@@ -370,6 +388,7 @@ class LeadAllocationService extends BaseService
                             ->select(
                                 'users.id as userId',
                                 'users.name as userName',
+                                'users.email as userEmail',
                                 DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
                                 DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
                                 'la.allocation_count as allocationCount',
@@ -381,21 +400,20 @@ class LeadAllocationService extends BaseService
                             )->get();
         info('going to update the max cap for users : '.json_encode($users->pluck('id')));
         foreach ($users as $user) {
-            LeadAllocation::where('user_id', $user->userId)->update([
-                'max_capacity' => str_contains($user->quads, '1') ? 4 : 5,
-                'allocation_count' => 0,
-                'updated_at' => now(),
-            ]);
+            info('lead allocation record is about to update for user : '.$user->userEmail);
+            $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
+            if ($leadAllocationRecord) {
+                $leadAllocationRecord->max_capacity = str_contains($user->quads, '1') ? 4 : 5;
+                $leadAllocationRecord->allocation_count = 0;
+                $leadAllocationRecord->updated_at = now();
+                $leadAllocationRecord->save();
+            }
         }
     }
 
     public function carLeadAllocationSwitchStatus()
     {
-        if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
-            return 0;
-        }
-
-        return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') == '1';
+        return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') ? $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') : 0;
     }
 
     public function leadAllocationSwitchStatus()
@@ -437,14 +455,14 @@ class LeadAllocationService extends BaseService
     {
         try {
             $availableAdvisors = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                                            ->join('teams as t', 't.id', '=', 'u.sub_team_id')
-                                            ->where('lead_allocation.is_available', 1)
-                                            ->where(function ($query) {
-                                                $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
-                                                    ->orWhere('lead_allocation.max_capacity', '=', -1);
-                                            })
-                                            ->orderBy('lead_allocation.last_allocated', 'asc')
-                                            ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.last_allocated');
+            ->join('teams as t', 't.id', '=', 'u.sub_team_id')
+            ->where('lead_allocation.is_available', 1)
+            ->where(function ($query) {
+                $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
+                    ->orWhere('lead_allocation.max_capacity', '=', -1);
+            })
+            ->orderBy('lead_allocation.last_allocated', 'asc')
+            ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.last_allocated');
 
             return $availableAdvisors->get();
         } catch (\Exception $e) {
@@ -455,65 +473,110 @@ class LeadAllocationService extends BaseService
     public function processCarLeads()
     {
         try {
-            DB::beginTransaction();
             $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             $carUnAllocatedLead = $this->getCarUnallocatedLeads($from);
+            info(count($carUnAllocatedLead).' unassigned car leads found.');
             foreach ($carUnAllocatedLead as $carLead) {
                 if ($this->checkIfLeadIsRenewal($carLead)) {
                     info('car lead allocation sending renewal email for uuid : '.$carLead->uuid);
                     if (! $carLead->is_renewal_tier_email_sent) {
                         $this->sendRenewalLeadEmail($carLead);
-                        $tierTR = Tier::where('name', 'TR')->first();
-                        if (isset($tierTR)) {
-                            $carLead->tier_id = $tierTR->id;
+                        $tier = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
+                        if ($tier) {
+                            info('setting tier : '.$tier->name.' against car lead : '.$carLead->uuid);
+                            $carLead->tier_id = $tier->id;
                             $carLead->save();
+                        } else {
+                            info('tier R for sending email is not found');
                         }
+                        info('Renewal Email sent for quote : '.$carLead->uuid.' and tier is update with id : '.$tier->id);
                     }
 
                     continue;
                 }
-                info('trying to check tier against the current lead : '.$carLead->uuid);
+                info('trying to check tier against the current lead : '.$carLead->code);
                 $selectedTier = $this->getTierForValue($carLead);
                 if ($selectedTier) {
-                    info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->uuid);
+                    info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
-                    $loginUsersRecords = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
-                    $loginUsersIds = $loginUsersRecords->pluck('id');
+                    $loginAndAvailableUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id);
 
-                    info('login and available users right now are '.$loginUsersIds);
-                    $commonUserIds = $loginUsersIds;
-                    $matchedRuleUsersId = $this->getRulesByLeadSource($carLead->source);
+                    info('login and available users right now are '.json_encode($loginAndAvailableUserIds));
 
-                    if (! empty($matchedRuleUsersId)) {
-                        info('Rule found against lead source and users against rule are '.$matchedRuleUsersId);
+                    $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
 
-                        $commonUserIds = array_intersect($loginUsersIds, explode(',', $matchedRuleUsersId));
-                        info('rules user intersection with login users is '.$commonUserIds);
+                    if (count($matchedRuleRecords) > 0) {
+                        $ruleUserIds = [];
+                        if (str_contains($matchedRuleRecords?->first()?->leadSourceUsers, ',')) {
+                            $ruleUserIds = array_map('intval', explode(',', $matchedRuleRecords->first()->leadSourceUsers));
+                        } else {
+                            $ruleUserIds[] = (int) $matchedRuleRecords->first()->leadSourceUsers;
+                        }
+                        info('Rule found and users against rule are '.json_encode($ruleUserIds));
+                        $finalAvailableAndLoginAdvisorIds = array_intersect($loginAndAvailableUserIds, $ruleUserIds);
+                        info('after intersection users available are : '.json_encode($finalAvailableAndLoginAdvisorIds));
+                    } else {
+                        $ruleUsers = RuleLeadSource::join('rules', 'rule_lead_sources.rule_id', 'rules.id')->where('rules.is_active', 1)->distinct()->pluck('rule_lead_sources.user_id')->toArray();
+                        info('No rule found against this lead : '.$carLead->uuid.' so filtering rule users : '.json_encode($ruleUsers));
+                        $finalAvailableAndLoginAdvisorIds = [];
+                        foreach ($loginAndAvailableUserIds as $loginId) {
+                            if (! in_array($loginId, $ruleUsers)) {
+                                array_push($finalAvailableAndLoginAdvisorIds, $loginId);
+                            }
+                        }
+                        info('final login and available users after rule exclusion are : '.json_encode($finalAvailableAndLoginAdvisorIds));
                     }
-
-                    info('common users at this point are '.$commonUserIds);
-                    $userId = $commonUserIds->first();
+                    info('common users at this point are '.json_encode($finalAvailableAndLoginAdvisorIds));
+                    $userId = null;
+                    if (count($finalAvailableAndLoginAdvisorIds) > 0) {
+                        $userId = reset($finalAvailableAndLoginAdvisorIds);
+                        info('inside common array , userId is : '.json_encode($userId));
+                    }
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->save();
+
+                        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carLead->id)->first();
+                        $carQuoteDetail->advisor_assigned_date = now();
+                        $carQuoteDetail->save();
+
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
                         $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
                         $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
                         $leadAllocation->last_allocated = Carbon::now()->timestamp;
                         $leadAllocation->updated_at = now();
                         $leadAllocation->save();
-                        info('completed assignment of lead and lead count update is done for quote uuid : '.$carQuote->uuid.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
+                        info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
+                    } else {
+                        info('login users not found for selected lead so will try to assign only tier');
+                        $carQuote = CarQuote::where('id', $carLead->id)->first();
+                        if ($carQuote->tier_id == null) {
+                            $carQuote->tier_id = $selectedTier->id;
+                            $carQuote->save();
+                            info('Tier with name : '.$selectedTier->name.' and id : '.$selectedTier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
+                        } else {
+                            info('Tier ('.$selectedTier->tier_id.')is already assigned against car lead with uuid : '.$carQuote->uuid);
+                        }
                     }
                 }
             }
-            DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
         }
+    }
+
+    public function splitString($separator, $string)
+    {
+        if (strpos($string, $separator) !== false) {
+            $parts = explode($separator, $string);
+        } else {
+            $parts = [$string];
+        }
+
+        return $parts;
     }
 
     public function getCarUnallocatedLeads($from)
@@ -521,25 +584,28 @@ class LeadAllocationService extends BaseService
         info('Car leads fetch start date is :'.$from);
         $to = now();
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
+        $carLeadPickupLimit = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_LIMIT');
 
         return CarQuote::whereNull('advisor_id')
+            ->where('is_renewal_tier_email_sent', 0)
             ->whereBetween('created_at', [$from, $to])
-            ->whereNull('tier_id')
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
-            ->skip(0)->take(20)->get();
+            ->skip(0)->take($carLeadPickupLimit)->get();
     }
 
     public function getRulesByLeadSource($source)
     {
-        return DB::select('
-                        SELECT ls.name AS leadSourceName
-                        ,ls.id AS leadSourceId
-                        ,group_concat(rls.user_id) AS leadSourceUsers
-                    FROM lead_sources ls
-                    INNER JOIN rule_lead_sources rls ON rls.lead_source_id = ls.id
-                    INNER JOIN users u ON u.id = rls.user_id
-                    WHERE ls.name = ? GROUP BY rls.lead_source_id', [$source]);
+        $records = LeadSource::join('rule_lead_sources', 'rule_lead_sources.lead_source_id', 'lead_sources.id')
+        ->join('users', 'users.id', 'rule_lead_sources.user_id')
+        ->join('rules', 'rule_lead_sources.rule_id', 'rules.id')
+        ->where('lead_sources.name', $source)
+        ->where('rules.is_active', 1)
+        ->groupBy('rule_lead_sources.lead_source_id')
+        ->select('lead_sources.name AS leadSourceName', 'lead_sources.id AS leadSourceId',
+            DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers'));
+
+        return $records->get();
     }
 
     public function checkIfLeadIsRenewal($lead)
@@ -555,11 +621,11 @@ class LeadAllocationService extends BaseService
         })
         ->get();
         if (count($renewalQuote) > 0) {
-            info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid);
+            info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid.' for car quote with uuid : '.$lead->uuid);
 
             return true;
         } else {
-            info('car lead allocation did-not found a renewal');
+            info('car lead allocation did-not found a renewal for uuid : '.$lead->uuid);
 
             return false;
         }
@@ -573,20 +639,7 @@ class LeadAllocationService extends BaseService
         $subject = ucwords(config('constants.APP_ENV')).' - '.$lead->first_name.' '.$lead->last_name.' has approached Alfred';
 
         info('car lead allocation renewal lead email subject is : '.$subject);
-        $emailData = [
-            'clientFullName' => $lead->first_name.' '.$lead->last_name,
-            'email' => $lead->email,
-            'customerEmail' => $lead->email,
-            'phone' => $lead->mobile_no,
-            'nationality' => $lead->nationality_id != null ? Nationality::where('id', $lead->nationality_id)->first()->text : '',
-            'dob' => $lead->dob,
-            'yearsOfDriving' => $lead->year_of_manufacturing,
-            'yearOfManufacturing' => $lead->year_of_manufacture,
-            'model' => $lead->car_model_id != null ? CarModel::where('id', $lead->car_model_id)->first()->text : '',
-            'make' => $lead->car_make_id != null ? CarMake::where('id', $lead->car_make_id)->first()->text : '',
-            'carValue' => $lead->car_value,
-            'quoteLink' => config('constants.APP_URL').'/quotes/car/'.$lead->uuid,
-        ];
+        $emailData = $this->emailDataService->generateTierREmailData($lead);
 
         info('car lead allocation renewal lead email data is : '.json_encode($emailData));
         $templateId = (int) $this->getAppStorageValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
@@ -600,34 +653,39 @@ class LeadAllocationService extends BaseService
 
     public function getTierForValue($carLead)
     {
-        $tiers = Tier::where('is_active', 1)->get();
+        info('Started searching tier for car lead : '.json_encode($carLead->code));
+        $highestValueTier = Tier::where('is_active', 1)->orderBy('max_price', 'desc')->first();
+        $tiers = Tier::where('is_active', 1);
+        info('car ecommerce info is : '.json_encode($carLead->is_ecommerce));
         if ($carLead->car_type_insurance_id == 2) {
-            info('get Tier inside the can handle tpl filter');
-            $tiers = $tiers->filter(function ($value) {
-                return $value->can_handle_tpl == 1;
-            });
-            info('get Tier applying the ecommerce filter');
-            $tiers = $tiers->filter(function ($value) use ($carLead) {
-                return $value->can_handle_ecommerce == $carLead->is_ecommerce;
-            });
+            info('adding tpl check');
+            $tiers->where('can_handle_tpl', 1);
+            $tiers->where('can_handle_ecommerce', $carLead->is_ecommerce);
         }
-        if ($carLead->car_value == null) {
-            info('get Tier inside the null value filter');
-            $tiers = $tiers->filter(function ($value) {
-                return $value->can_handle_null_value == 1;
-            });
+
+        if (($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '') && $carLead->car_type_insurance_id == 1) {
+            info('adding null value check');
+            $tiers->where('can_handle_null_value', 1);
         }
         if ($carLead->car_value > 0 && $carLead->car_type_insurance_id != 2) {
-            info('get Tier inside the car value filter');
-            $tiers = $tiers->filter(function ($value) use ($carLead) {
-                return $value->min_price <= $carLead->car_value && $value->max_price >= $carLead->car_value;
-            });
+            if ($carLead->car_value > $highestValueTier->max_price) {
+                info('lead '.$carLead->uuid.' have value higher then all the tiers so selecting tier '.$highestValueTier->name);
+
+                return $highestValueTier;
+            } else {
+                info('adding min and max value check');
+                $tiers->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
+            }
         }
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
-            info('get Tier inside the car value filter');
-            $tiers = $tiers->where('name', 'like', '%TR');
+            info('adding tpl renewal check');
+            $tiers->where('is_tpl_renewals', 1);
+            $tiers->where('can_handle_ecommerce', $carLead->is_ecommerce);
         }
-        info('First tier after filtration is : '.json_encode($tiers->first()));
+
+        info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
+        info('First tier after filtration is : '.json_encode($tiers->first()->name));
+        $tiers = $tiers->get();
         if ($tiers != null) {
             return $tiers->first();
         }
@@ -639,24 +697,18 @@ class LeadAllocationService extends BaseService
     {
         $tierUsers = TierUser::where('tier_id', $tierId)->get()->pluck('user_id');
         info('Tier users are :'.json_encode($tierUsers));
+        $query = LeadAllocation::join('users as u', 'u.id', 'lead_allocation.user_id')
+        ->select('u.id', 'u.email')
+        ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+        ->where('lead_allocation.is_available', 1)
+        ->where(function ($query) {
+            $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
+                ->orWhere('lead_allocation.max_capacity', '=', -1);
+        })
+        ->whereIn('u.id', $tierUsers)
+        ->orderBy('lead_allocation.last_allocated', 'desc');
 
-        return LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                    ->where('lead_allocation.is_available', 1)
-                    ->where(function ($query) {
-                        $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
-                            ->orWhere('lead_allocation.max_capacity', '=', -1);
-                    })
-                    ->where('u.last_login', '>', Carbon::now()->addDays(-1)->endOfDay())
-                    ->whereIn('u.id', $tierUsers)
-                    ->select(
-                        'u.id',
-                        'u.name',
-                        'u.email',
-                        'lead_allocation.allocation_count',
-                        'lead_allocation.max_capacity',
-                        'lead_allocation.last_allocated'
-                    )
-                    ->orderBy('lead_allocation.last_allocated', 'asc')->get();
+        return $query->get()->pluck('id')->toArray();
     }
 
     public function getAppStorageValueByKey($keyName)
