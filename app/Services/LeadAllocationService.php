@@ -585,6 +585,7 @@ class LeadAllocationService extends BaseService
         $to = now();
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
         $carLeadPickupLimit = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_LIMIT');
+
         return CarQuote::whereNull('advisor_id')
             ->where('is_renewal_tier_email_sent', 0)
             ->whereNull('policy_number')
