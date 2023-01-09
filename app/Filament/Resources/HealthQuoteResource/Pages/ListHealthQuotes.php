@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\HealthQuoteResource\Pages;
 
-use App\Enums\QuoteStatusEnum;
 use App\Filament\Resources\HealthQuoteResource;
 use Closure;
 use Filament\Pages\Actions;
@@ -19,18 +18,6 @@ class ListHealthQuotes extends ListRecords
     // {
     //     return $query->simplePaginate($this->getTableRecordsPerPage() == -1 ? $query->count() : $this->getTableRecordsPerPage());
     // }
-
-    protected function getTableQuery(): Builder
-    {
-        $query = parent::getTableQuery();
-        $query = $query
-            ->leftJoin('health_quote_request_detail', 'health_quote_request_detail.health_quote_request_id', '=', 'health_quote_request.id')
-            ->whereNotNull('health_quote_request_detail.id')
-            ->where('health_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
-            ->orderBy('health_quote_request.created_at', 'DESC');
-
-        return $query;
-    }
 
     protected function getTableRecordsPerPageSelectOptions(): array
     {

@@ -3,11 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Filament\Resources\HealthQuoteResource\Pages;
-use App\Filament\Resources\HealthQuoteResource\RelationManagers\AvailablePlansRelationManager;
+use App\Filament\Resources\HealthQuoteResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\HealthQuoteResource\RelationManagers\MemberDetailsRelationManager;
+use App\Models\Activities;
 use App\Models\HealthQuote;
 use App\Models\QuoteStatus;
 use App\Models\User;
@@ -27,15 +30,33 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+use Z3d0X\FilamentSimplePermissions\Concerns\HasResourcePermissions;
 
 class HealthQuoteResource extends Resource
 {
+    use HasResourcePermissions;
+
+    protected static array $permissions = [
+        'viewAny' => PermissionsEnum::HealthQuotesList,
+        // 'view' => 'access-users',
+        // 'create' => 'create-users',
+        // 'update' => 'update-users',
+        // 'delete' => ['update-users', 'delete-stuff'],
+        'deleteAny' => false,
+    ];
     protected static ?string $model = HealthQuote::class;
     protected static ?string $navigationIcon = 'heroicon-o-star';
     protected static ?string $navigationGroup = 'Personal Quotes';
     protected static ?string $recordRouteKeyName = 'uuid';
     protected static ?string $recordTitleAttribute = 'code';
     protected static bool $isGloballySearchable = false;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('health_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
+            ->orderBy('health_quote_request.created_at', 'DESC');
+    }
 
     public static function form(Form $form): Form
     {
@@ -79,32 +100,6 @@ class HealthQuoteResource extends Resource
                                                 Forms\Components\Placeholder::make('is_renewal')->label('Is Renewal')->content(function (Model $record) {
                                                     return $record?->is_renewal ? 'Yes' : 'No';
                                                 }),
-                                                // Forms\Components\Select::make('health_team_type')
-                                                //     ->label('Sub Team')
-                                                //     ->options([
-                                                //         'All' => 'All',
-                                                //         'RM-NB' => 'RM-NB',
-                                                //         'RM-Speed' => 'RM-Speed',
-                                                //         'EBP' => 'EBP',
-                                                //         'Wow-Call' => 'Wow-Call',
-                                                //         'No-Type' => 'No-Type',
-                                                //     ]),
-                                                // Forms\Components\Select::make('advisor_id')
-                                                //     ->label('Advisor')
-                                                //     ->searchable()
-                                                //     ->options(function () {
-                                                //         return  DB::table('users as u')->select('u.id', 'u.name')
-                                                //             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
-                                                //             ->join('roles as r', 'mhr.role_id', '=', 'r.id')->get()->pluck('name', 'id');
-                                                //     }),
-                                                // Forms\Components\TextInput::make('source'),
-                                                // Forms\Components\DateTimePicker::make('updated_at')->label('Last Modified Date'),
-                                                // Forms\Components\TextInput::make('parent_duplicate_quote_id')->label('Parent CDB ID'),
-                                                // Forms\Components\TextInput::make('renewal_batch')->label('Renewal Batch'),
-                                                // Forms\Components\Toggle::make('is_ecommerce')
-                                                //     ->label('Is Ecommerce'),
-                                                // Forms\Components\Toggle::make('is_ebp_renewal')
-                                                //     ->label('Is EBP Renewal'),
                                             ])
                                             ->visibleOn('view'),
                                         Fieldset::make('Customer Profile')
@@ -199,10 +194,10 @@ class HealthQuoteResource extends Resource
                                         Fieldset::make('Request Details')
                                             ->schema([
                                                 Forms\Components\Placeholder::make('transapp_code')->label('Transapp Code')->content(function (Model $record) {
-                                                    return $record?->healthQuoteRequestDetail?->transapp_code;
+                                                    return $record->transapp_code;
                                                 }),
                                                 Forms\Components\Placeholder::make('next_followup_date')->label('Next Followup Date')->content(function (Model $record) {
-                                                    return $record?->healthQuoteRequestDetail?->next_followup_date?->format('M d, Y H:i:s');
+                                                    return $record->next_followup_date?->format('M d, Y H:i:s');
                                                 }),
                                             ])
                                             ->visibleOn('view'),
@@ -215,11 +210,11 @@ class HealthQuoteResource extends Resource
                                         Forms\Components\Placeholder::make('Payment Status'),
                                         Forms\Components\Placeholder::make('Paid At'),
                                         Forms\Components\Placeholder::make('Network'),
-                                    ])->hiddenOn(['create', 'edit']),
+                                    ])->columns(2)->hiddenOn(['create', 'edit']),
                                 Tabs\Tab::make('Lead History')
-                                    ->schema([
-                                        // ...
-                                    ])->hiddenOn(['create', 'edit']),
+                                    ->schema(function (?Model $record) {
+                                        return static::getActivitiesSchema($record->health_quote_request_id);
+                                    })->hiddenOn(['create', 'edit']),
                             ]),
                     ])->columnSpan(['lg' => 3]),
                 Forms\Components\Group::make()
@@ -237,10 +232,38 @@ class HealthQuoteResource extends Resource
                                         ->pluck('text', 'id')->toArray();
                                 }
                             ),
-                        Forms\Components\Textarea::make('notes')->label('Notes')->maxLength(1000),
+                        Forms\Components\Textarea::make('additional_notes')->label('Notes')->maxLength(1000),
                     ])->hiddenOn('create')->columnSpan(['lg' => 1]),
 
             ])->columns(4);
+    }
+
+    public static function getActivitiesSchema($id): array
+    {
+        $fieldsArray = [];
+
+        $activities = Activities::where('quote_request_id', $id)->where('quote_type_id', QuoteTypeId::Health)->orderBy('created_at', 'desc')->get();
+
+        if ($activities) {
+            foreach ($activities as $activity) {
+                $fieldsArray = array_merge([
+                    Forms\Components\Grid::make()
+                        ->schema([
+                            Forms\Components\Group::make()
+                                ->schema([
+                                    Forms\Components\Placeholder::make('activity_title')->label('Title')->content($activity->title),
+                                    Forms\Components\Placeholder::make('activity_cdbid')->label('CDBID')->content($activity->quote_uuid),
+                                    Forms\Components\Placeholder::make('activity_client_name')->label('Client Name')->content($activity->client_name),
+                                    Forms\Components\Placeholder::make('activity_followup_date')->label('Followup Date')->content($activity->due_date),
+                                    Forms\Components\Placeholder::make('activity_created_at')->label('Assigned To')->content($activity->assignee->name),
+                                    Forms\Components\Placeholder::make('activity_done')->label('Done')->content($activity->status == 1 ? 'Yes' : 'No'),
+                                ])->columns(6),
+                        ])->columns(1),
+                ], $fieldsArray);
+            }
+        }
+
+        return $fieldsArray;
     }
 
     public static function table(Table $table): Table
@@ -441,7 +464,7 @@ class HealthQuoteResource extends Resource
         return [
             RelationGroup::make('Relations', [
                 MemberDetailsRelationManager::class,
-                AvailablePlansRelationManager::class,
+                DocumentsRelationManager::class,
             ]),
 
         ];

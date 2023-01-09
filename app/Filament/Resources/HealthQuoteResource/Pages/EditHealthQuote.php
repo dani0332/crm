@@ -12,24 +12,24 @@ class EditHealthQuote extends EditRecord
 {
     protected static string $resource = HealthQuoteResource::class;
 
-    protected function mutateFormDataBeforeFill(array $data): array
-    {
-        $hqrd = HealthQuoteRequestDetail::where('health_quote_request_id', $this->record->id)->first();
-        $data['notes'] = $hqrd->notes;
+    // protected function mutateFormDataBeforeFill(array $data): array
+    // {
+    //     $hqrd = HealthQuoteRequestDetail::where('health_quote_request_id', $this->record->id)->first();
+    //     $data['notes'] = $hqrd->notes;
 
-        return $data;
-    }
+    //     return $data;
+    // }
 
-    protected function handleRecordUpdate(Model $record, array $data): Model
-    {
-        $healthQuoteRequestDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $this->record->id)->first();
-        $healthQuoteRequestDetail->update(['notes' => $data['notes']]);
+    // protected function handleRecordUpdate(Model $record, array $data): Model
+    // {
+    //     $healthQuoteRequestDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $this->record->id)->first();
+    //     $healthQuoteRequestDetail->update(['notes' => $data['notes']]);
 
-        unset($data['notes']);
-        $record->update($data);
+    //     unset($data['notes']);
+    //     $record->update($data);
 
-        return $record;
-    }
+    //     return $record;
+    // }
 
     protected function getActions(): array
     {

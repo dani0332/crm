@@ -41,7 +41,8 @@
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-permission": "^4.0",
         "webbingbrasil/filament-copyactions": "^1.0",
-        "yajra/laravel-datatables-oracle": "^9.18"
+        "yajra/laravel-datatables-oracle": "^9.18",
+        "z3d0x/filament-simple-permissions": "^1.0"
     },
     "require-dev": {
         "facade/ignition": "^2.5",

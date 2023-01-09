@@ -11,6 +11,7 @@ class HealthAvailablePlan extends Model
 {
     use Sushi;
 
+    protected $table = 'health_available_plans';
     public $uuid;
 
     /**
@@ -20,10 +21,7 @@ class HealthAvailablePlan extends Model
      */
     public function getRows()
     {
-        // request pathInfo
-        $pathInfo = request()->getPathInfo();
-        $pathInfo = explode('/', $pathInfo);
-        $this->uuid = $pathInfo[3];
+        $this->uuid = 'RZADAFP6';
 
         $listQuotePlans = '';
         $responseData = [];
@@ -65,11 +63,6 @@ class HealthAvailablePlan extends Model
 
     protected function sushiShouldCache()
     {
-        return true;
-    }
-
-    public function healthQuote()
-    {
-        return $this->belongsTo(HealthQuote::class);
+        return false;
     }
 }
