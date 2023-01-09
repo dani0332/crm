@@ -11,13 +11,25 @@
                         <input type="hidden" id="quotePlansGenerateUrl" name="quotePlansGenerateUrl" value="{{ $ecomHealthInsuranceQuoteUrl }}">
                         @if(gettype($listQuotePlans) != 'string')
                         <button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton" class="btn btn-warning btn-sm" style="float: right;">Copy link</button>
+                        <span id="span_pdf_download_health">
+                            <button id="btn_download_plan_pdf_health" type="button" class="btn btn-success btn-sm">Download PDF</button>
+                        </span>
                         @endif
                     </div>
                     <div id="quote-plans">
                         @if(gettype($listQuotePlans) != 'string')
+
+                                <form method="post" action="{{route('exportHealthPdf', 'health')}}" class="form-horizontal form-label-left"
+                                      role="form" id="form_plans_pdf" data-parsley-validate="" novalidate="" autocomplete="off">
+                                    {{ csrf_field() }}
+                                    <input type="hidden" id="plan_ids" name="plan_ids" value="">
+{{--                                    <input type="hidden" id="plan_ids" name="plan_ids" value="1,3,6,7">--}}
+                                    <input type="hidden" id="quote_uuid" name="quote_uuid" value="{{$record->uuid}}">
+                                </form>
                                 <table id="datatable" class="table table-striped jambo_table" style="width:100%">
                                     <thead>
                                         <tr>
+                                            <th> <input type="checkbox" id="healthPlansAll" value="" /></th>
                                             <th>Provider Name</th>
                                             <th>Plan Name</th>
                                             <th>Actual Premium with BASMAH</th>
@@ -28,6 +40,10 @@
                                     <tbody>
                                     @foreach ($listQuotePlans as $key => $quotePlan)
                                             <tr>
+                                                <td>
+                                                    <input type="checkbox" class="health-plans-checkbox" name="health_plans_checkbox"
+                                                           value="{{$quotePlan->id}}" />
+                                                </td>
                                                 <td>{{ ucwords($quotePlan->providerName) }}</td>
                                                 <td>{{ ucwords($quotePlan->name) }}</td>
                                                 <td>{{ $quotePlan->actualPremium + $quotePlan->basmah }}</td>
