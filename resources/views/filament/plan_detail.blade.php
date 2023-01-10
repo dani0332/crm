@@ -5,7 +5,7 @@ $data = $getRecord();
 
 @if ($state == 'mountedTableActionData.memberPremiumBreakdown')
 @php
-$members = json_decode($data->memberPremiumBreakdown, true) ?? [];
+$members = $data->memberPremiumBreakdown ?? [];
 @endphp
 <div>
   <table class="filament-tables-table w-full text-start divide-y table-auto text-sm">
@@ -34,7 +34,7 @@ $members = json_decode($data->memberPremiumBreakdown, true) ?? [];
 
 @if ($state == 'mountedTableActionData.benefitsInpatient')
 @php
-$inpatient = json_decode($data->benefits, true)['inpatient'] ?? [];
+$inpatient = $data->benefits['inpatient'] ?? [];
 @endphp
 <div>
   <div class="flex flex-col gap-4 text-sm">
@@ -50,8 +50,8 @@ $inpatient = json_decode($data->benefits, true)['inpatient'] ?? [];
 
 @if ($state == 'mountedTableActionData.benefitsOutpatient')
 @php
-$benefitsFeature = json_decode($data->benefits, true)['feature'] ?? [];
-$outpatient = json_decode($data->benefits, true)['outpatient'] ?? [];
+$benefitsFeature = $data->benefits['feature'] ?? [];
+$outpatient = $data->benefits['outpatient'] ?? [];
 @endphp
 <div>
   <div class="flex flex-col gap-4 text-sm">
@@ -73,7 +73,7 @@ $outpatient = json_decode($data->benefits, true)['outpatient'] ?? [];
 
 @if ($state == 'mountedTableActionData.coInsurance')
 @php
-$coInsurance = json_decode($data->benefits, true)['coInsurance'] ?? [];
+$coInsurance = $data->benefits['coInsurance'] ?? [];
 @endphp
 <div>
   <div class="flex flex-col gap-4 text-sm">
@@ -89,7 +89,7 @@ $coInsurance = json_decode($data->benefits, true)['coInsurance'] ?? [];
 
 @if ($state == 'mountedTableActionData.regionCover')
 @php
-$regionCover = json_decode($data->benefits, true)['regionCover'] ?? [];
+$regionCover = $data->benefits['regionCover'] ?? [];
 @endphp
 <div>
   <div class="flex flex-col gap-4 text-sm">
@@ -105,7 +105,7 @@ $regionCover = json_decode($data->benefits, true)['regionCover'] ?? [];
 
 @if ($state == 'mountedTableActionData.maternityCover')
 @php
-$maternityCover = json_decode($data->benefits, true)['maternityCover'] ?? [];
+$maternityCover = $data->benefits['maternityCover'] ?? [];
 @endphp
 <div>
   <div class="flex flex-col gap-4 text-sm">
@@ -121,7 +121,7 @@ $maternityCover = json_decode($data->benefits, true)['maternityCover'] ?? [];
 
 @if ($state == 'mountedTableActionData.benefitsExclusions')
 @php
-$exclusions = json_decode($data->benefits, true)['exclusion'] ?? [];
+$exclusions = $data->benefits['exclusion'] ?? [];
 @endphp
 <div>
   <div class="flex flex-col gap-4 text-sm">
@@ -137,7 +137,7 @@ $exclusions = json_decode($data->benefits, true)['exclusion'] ?? [];
 
 @if ($state == 'mountedTableActionData.policyDetail')
 @php
-$networkLink = json_decode($data->benefits, true)['networkLink'] ?? [];
+$networkLink = $data->benefits['networkLink'] ?? [];
 @endphp
 <div>
   <div class="flex flex-col gap-4 text-sm">

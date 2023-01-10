@@ -13,6 +13,7 @@ class HealthAvailablePlan extends Model
 
     protected $table = 'health_available_plans';
     protected $keyType = 'string';
+    public $incrementing = false;
     protected $schema = [
         'id' => 'integer',
         'uuid' => 'string',
@@ -30,6 +31,13 @@ class HealthAvailablePlan extends Model
         'benefits' => 'string',
         'policyWordings' => 'string',
         'excess' => 'string',
+    ];
+    protected $casts = [
+        'memberPremiumBreakdown' => 'array',
+        'addons' => 'array',
+        'benefits' => 'array',
+        'policyWordings' => 'array',
+        'excess' => 'array',
     ];
     public $uuid;
 
@@ -53,8 +61,8 @@ class HealthAvailablePlan extends Model
                 $listQuotePlans = $quotePlans->quote->plans;
                 foreach ($listQuotePlans as $key => $plan) {
                     $responseData[] = [
-                        'id' => $plan?->id,
                         'uuid' => $this->uuid,
+                        'id' => $plan?->id,
                         'planCode' => $plan?->planCode,
                         'name' => $plan?->name,
                         'actualPremium' => $plan?->actualPremium,
