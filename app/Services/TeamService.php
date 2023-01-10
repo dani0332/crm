@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use DB;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class TeamService extends BaseService
     {
         $this->query = DB::table('teams as t')
             ->leftJoin('teams as pt', 'pt.id', '=', 't.parent_team_id')
-            ->select('t.id', 't.uuid', 't.name AS name', 't.parent_team_id', 'pt.name AS parent_team_id_text');
+            ->select('t.id', 't.uuid', 't.name AS name', 't.parent_team_id', 'pt.name AS parent_team_id_text', 't.type');
     }
 
     public function getEntity($id)
@@ -75,6 +76,7 @@ class TeamService extends BaseService
             'id' => 'readonly|none',
             'name' => 'input|text|required|title',
             'parent_team_id' => 'select|title',
+            'type' => '|static|title|'.TeamTypeEnum::PRODUCT.','.TeamTypeEnum::TEAM.','.TeamTypeEnum::SUB_TEAM.'',
         ];
     }
 
@@ -87,6 +89,9 @@ class TeamService extends BaseService
                 break;
             case 'parent_team_id':
                 $title = 'Parent Team';
+                break;
+            case 'type':
+                $title = 'Record Type';
                 break;
             default:
                 break;

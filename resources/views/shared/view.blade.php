@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('title', 'View ' . $model->modelType)
 @section('content')
+@inject('crudService', 'App\Services\CRUDService')
 @php
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
@@ -53,6 +54,13 @@ use App\Enums\PermissionsEnum;
         color: #fff;
         cursor: pointer !important;
     }
+    .date-search-field {
+        background-position: 99% center;
+        background-size: 20px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor' class='w-6 h-6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z' /%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-color: #FFF !important;
+    }
 </style>
 <script>
     function convertObjectToArray(obj) {
@@ -74,13 +82,19 @@ use App\Enums\PermissionsEnum;
         }
         $(document).ready(function() {
             // Getting the required objects from laravel into javascript for checks and handling of data based on roles
-            var isRenewalUser = JSON.parse('<?php echo json_encode($isRenewalUser); ?>');
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
             var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+            var isLeadPool = $("#isLeadPool").val();
             var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
+            var isManualAllocationAllowed = JSON.parse('<?php echo json_encode($isManualAllocationAllowed); ?>');
+            var totalAllowed = JSON.parse('<?php echo json_encode($totalAllowed); ?>');
+            var totalAssigned = JSON.parse('<?php echo json_encode($totalAssigned); ?>');
+            if(totalAssigned && totalAllowed){
+
+            }
             // Adding custom search fields for admin role
-            if (isAdmin && !isRenewalUser) {
+            if (isAdmin) {
                 model.searchProperties.push('is_ecommerce');
                 model.searchProperties.push('payment_status_id');
             }
@@ -133,14 +147,12 @@ use App\Enums\PermissionsEnum;
             var allowedModelTypes = ['home', 'health', 'life', 'business', 'travel', 'car','pet'];
             var skipPropertiesArray = [];
             // Getting the skip properties based on loggedin user role
-            if (isRenewalUser && model.modelType.toLowerCase() == 'car') {
-                skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
-            }else if(isRenewalUser && model.modelType.toLowerCase() != 'car'){
-                skipPropertiesArray = model.renewalSkipProperties['list'].split(',');
-            }else if(isNewBusinessUser && model.modelType.toLowerCase() != 'car'){
-                skipPropertiesArray = model.newBusinessSkipProperties['list'].split(',');
-            } else {
-                skipPropertiesArray = model.skipProperties['list'].split(',');
+            skipPropertiesArray = model.skipProperties['list'].split(',');
+
+            // MS: Hide columns for car_advisor - part1
+            if(model.modelType == '{{ quoteTypeCode::Car }}' && '{{ Auth::user()->hasRole(RolesEnum::CarAdvisor) }}') {
+                skipPropertiesArray.push('source');
+                skipPropertiesArray.push('lost_reason');
             }
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
@@ -171,8 +183,7 @@ use App\Enums\PermissionsEnum;
                         // adding properties for all types except leadstatus and teams
                         if (modelPropertiesArray[i].name == 'id') {
                             // Handling id field
-                            if (isManagerOrDeputy === "1" && allowedModelTypes.includes(model.modelType
-                                    .toLocaleLowerCase())) {
+                            if ( isManualAllocationAllowed && allowedModelTypes.includes(model.modelType.toLocaleLowerCase())) {
                                 // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
                                 dataTableColumns.push({
                                     data: "id",
@@ -217,83 +228,6 @@ use App\Enums\PermissionsEnum;
                     }
                 }
             }
-            // Handling Sorting on Grid Column, need switch case because Manager,Deputy and Admin have different set of columns then normal user
-            var disableSortColumns = [];
-            switch (model.modelType.toLowerCase()) {
-                case 'car':
-                    if (isRenewalUser) {
-                        if (isManagerOrDeputy) {
-                            disableSortColumns = [-1, 2, 2, 3, 4, 5, 6, 7, 8];
-                        } else {
-                            disableSortColumns = [-1, 2, 2, 3, 4, 5, 6, 7, 8];
-                        }
-                    } else if (isManagerOrDeputy) {
-                        disableSortColumns = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15];
-                    } else if (isAdmin) {
-                        disableSortColumns = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15];
-                    } else {
-                        disableSortColumns = [-1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15];
-                    }
-                    break;
-                case 'home':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
-                    else
-                        disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
-                    break;
-                    break;
-                case 'health':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
-                    else
-                        disableSortColumns = [-1,0,1,2,3,4,7,9,10];
-                    break;
-                case 'life':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
-                    else
-                        disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
-                    break;
-                case 'business':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,6,7,8,9,12,13];
-                    else
-                        disableSortColumns = [-1, 0, 1, 2, 3, 5, 6, 7, 8, 11, 12, 13];
-                    break;
-                case 'travel':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
-                    else
-                        disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
-                    break;
-                case 'pet':
-                    if(isRenewalUser || isNewBusinessUser){
-                        disableSortColumns = [-1,0,1,2,3,4,5,6];
-                    }
-                    else if(isManagerOrDeputy == '1' || isAdmin)
-                        disableSortColumns = [-1,1,2,3,4,5,9,10];
-                    else
-                        disableSortColumns = [-1, 0, 1, 2, 3, 4, 8, 9, 10];
-                    break;
-                default:
-                    disableSortColumns = [];
-                    break;
-            }
             // Initializing the datatable
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
@@ -309,8 +243,7 @@ use App\Enums\PermissionsEnum;
                 ajax: {
                     url: '/quotes/' + model.modelType.toLowerCase(),
                     data: function(d) {
-                        var carProps = isRenewalUser ? model.renewalSearchProperties : model
-                            .searchProperties;
+                        var carProps = model.searchProperties;
                         carProps = [...new Set(carProps)];
                         carProps.forEach(element => {
                             d[element] = $('#' + element).val();
@@ -339,10 +272,6 @@ use App\Enums\PermissionsEnum;
                                         <i class='fa fa-spinner fa-spin fa-stack-2x fa-fw'></i>\n\
                                 </span>&emsp;Processing ...",
                 },
-                columnDefs: [{
-                    orderable: false,
-                    targets: disableSortColumns
-                }],
                 columns: dataTableColumns,
                 buttons: [{
                     extend: 'excel',
@@ -463,6 +392,12 @@ use App\Enums\PermissionsEnum;
                 $(this).addClass("active");
                 $(".toggle-btn").removeClass("active");
             });
+
+            $('.date-search-field').datepicker({
+                dateFormat: "dd-mm-yy",
+                changeMonth: true,
+                changeYear: true,
+            });
         });
         var ENDPOINT = "{{ url('/') }}";
         var page;
@@ -549,7 +484,7 @@ use App\Enums\PermissionsEnum;
         <div class="x_panel" style="overflow:hidden">
             <div class="x_title">
                 <h2>{{ str_contains(strtolower($model->modelType), 'teams')? 'Teams':
-                    (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': $model->modelType) }}
+                    (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}
                     List</h2>
                 @cannot(PermissionsEnum::ApprovePayments)
                 <ul class="nav navbar-right panel_toolbox">
@@ -562,22 +497,23 @@ use App\Enums\PermissionsEnum;
                     </li>
                     @endif
                     @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Business))
-                    @can('corpline-quotes-create')
-                    <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
-                            class="btn btn-warning btn-sm">Create
-                            {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
-                            (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
-                    </li>
-                    @endcan
+                        @can('corpline-quotes-create')
+                        <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
+                                class="btn btn-warning btn-sm">Create
+                                {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
+                                (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
+                        </li>
+                        @endcan
                     @endif
-                    @can(strtolower($model->modelType) . '-quotes-create')
-                    <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
-                            class="btn btn-warning btn-sm">Create
-                            {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
-                            (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
-                    </li>
-                    @endcan
-
+                    @if (strtolower($model->modelType) != strtolower(quoteTypeCode::Business))
+                        @can(strtolower($model->modelType) . '-quotes-create')
+                        <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
+                                class="btn btn-warning btn-sm">Create
+                                {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
+                                (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
+                        </li>
+                        @endcan
+                    @endif
                 </ul>
                 @endcannot
                 <div class="clearfix"></div>
@@ -602,25 +538,21 @@ use App\Enums\PermissionsEnum;
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                     @endif
                     @php
-                    $searchProperties = [];
-                    $skipProperties = [];
-                    if($isRenewalUser){
-                    $searchProperties = $model->renewalSearchProperties;
-                    $skipProperties = $model->renewalSkipProperties;
-                    }
-                    else if($isNewBusinessUser && strtolower($model->modelType) != 'car'){
-                    $searchProperties = $model->newBusinessSearchProperties;
-                    $skipProperties = $model->newBusinessSkipProperties;
-                    }
-                    else{
                     $searchProperties = $model->searchProperties;
+                    if(!auth()->user()->hasRole(RolesEnum::CarAdvisor)) $searchProperties[]= 'advisor_id';
+                    $sourcePropertiesArry = $crudService->sortMetaArray($model->properties, 'ss:');
                     $skipProperties = $model->skipProperties;
-                    }
+
+                        // MS: Hide columns for car_advisor - part2
+                        if($model->modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
+                            $skipProperties[] = 'source';
+                            $skipProperties[] = 'lost_reason';
+                        }
                     @endphp
                     @if (count($searchProperties) > 0)
                     <form method="POST" id="searchTable" class="form-horizontal form-label-left" role="form"
                         data-parsley-validate="" novalidate="" autocomplete="off">
-                        @foreach ($model->properties as $property => $value)
+                        @foreach ($sourcePropertiesArry as $property => $value)
                         @foreach ($searchProperties as $searchProperty)
                         @if ($searchProperty == $property)
                         @if (str_contains($value, 'range'))
@@ -628,7 +560,7 @@ use App\Enums\PermissionsEnum;
                             <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
                                 {{ strtoupper($customTitles[$property]) . ' START' }}
                             </span>
-                            <input type="date" id="{{ $property }}" name="{{ $property }}" class="form-control">
+                            <input type="text" id="{{ $property }}" name="{{ $property }}" class="form-control date-search-field" readonly>
                             @if ($errors->has($property))
                             <span class="text-danger">{{ $errors->first($property) }}</span>
                             @endif
@@ -637,8 +569,8 @@ use App\Enums\PermissionsEnum;
                             <span style="font-size: 11px;" class="col-form-label col-md-6 col-sm-6" for="name">
                                 {{ strtoupper($customTitles[$property]) . ' END' }}
                             </span>
-                            <input type="date" id="{{ $property . '_end' }}" name="{{ $property . '_end' }}"
-                                class="form-control">
+                            <input type="text" id="{{ $property . '_end' }}" name="{{ $property . '_end' }}"
+                                class="form-control date-search-field" readonly>
                             @if ($errors->has($property . '_end'))
                             <span class="text-danger">{{ $errors->first($property . '_end') }}</span>
                             @endif
@@ -832,7 +764,7 @@ use App\Enums\PermissionsEnum;
                                                     Health Team Type</label>
                                                 <span class='required' style="margin-left:10px;">*</span>
                                                 @php
-                                                $updatedAdvisors = $isRenewalUser ? $renewalAdvisors : $advisors;
+                                                $updatedAdvisors = $advisors;
                                                 @endphp
                                                 <select class="form-control" id="assign_team" name="assign_team"
                                                     readonly="readonly" style="margin-bottom: 10px;">
@@ -887,18 +819,28 @@ use App\Enums\PermissionsEnum;
                         <input type="hidden" id="selectTmLeadId" name="selectTmLeadId" value="">
                         <input type="hidden" id="isManagerOrDeputy" name="isManagerOrDeputy"
                             value="{{ $isManagerORDeputy }}">
+                            <input type="hidden" id="isLeadPool" name="isLeadPool"
+                            value="{{ $isLeadPool }}">
+                            <input type="hidden" id="isManualAllocationAllowed" name="isManualAllocationAllowed"
+                            value="{{ $isManualAllocationAllowed }}">
                     </form>
                     <table id="dtBasicExample" class="table table-striped jambo_table" style="table-layout: fixed;"
                         width="100%">
                         <thead>
                             <tr>
-                                @if ($isManagerORDeputy == '1' &&
+                                @if ($isManualAllocationAllowed &&
                                 str_contains('home,health,life,business,travel,car,pet',
                                 strtolower($model->modelType)))
                                 <th style="width: 15px;"><input type="checkbox" id="checkAllTmLeads"
                                         name="checkAllTmLeads" value=""></th>
                                 @endif
-
+                                @if($model->modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarAdvisor))
+                                    @php
+                                        // MS: Hide columns for car_advisor - part3
+                                        $skipProperties['list'] = $skipProperties['list'].',source';
+                                        $skipProperties['list'] = $skipProperties['list'].',lost_reason';
+                                    @endphp
+                                @endif
                                 @foreach ($model->properties as $property => $value)
                                 @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
                                 @if ($property != 'id')

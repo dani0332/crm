@@ -11,6 +11,7 @@ chmod -R 775 bootstrap/cache
 php artisan view:clear
 php artisan view:cache
 # php artisan route:cache
+php artisan queue:restart
 
 yes | doppler run -- php artisan db:seed
 

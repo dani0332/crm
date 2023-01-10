@@ -148,4 +148,9 @@ class LeadAllocationController extends Controller
     {
         $this->applicationStorageService->updateCarLeadFetchSequence();
     }
+
+    public function getTierUsers($tierId)
+    {
+        return $this->leadAllocationService->getTierUsersWithLeadAllocationRecord($tierId);
+    }
 }

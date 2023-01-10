@@ -41,9 +41,17 @@ class LeadAllocationJob implements ShouldQueue
             Log::info('Lead Allocation Job Started');
             $leadAllocationService->setAdvisorsToUnavailable();
             $leadAllocationService->setMaxCapAndAllocationStatus();
-            if (config('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
+            $availableUsers = $leadAllocationService->getAvailableAdvisors();
+            $availableUsersString = '';
+            $availableUsers->each(function ($user) use (&$availableUsersString) {
+                $availableUsersString .= $user->name.'|'.$user->last_allocated.',';
+            });
+            info('availableUsers: '.$availableUsersString);
+            info('CAR_LEAD_ALLOCATION_MASTER_SWITCH value is : '.env('CAR_LEAD_ALLOCATION_MASTER_SWITCH'));
+            if (env('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
                 info('CAR Lead Allocation Job Switch is OFF');
             } else {
+                info('CAR Lead Allocation Job Switch is ON and job is about to start');
                 $leadAllocationService->processCarLeads();
             }
             if (! $leadAllocationService->leadAllocationSwitchStatus()) {
@@ -53,13 +61,7 @@ class LeadAllocationJob implements ShouldQueue
             } else {
                 $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();
                 if (count($unAllocatedLeads) > 0) {
-                    $availableUsers = $leadAllocationService->getAvailableAdvisors();
                     $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];
-                    $availableUsersString = '';
-                    $availableUsers->each(function ($user) use (&$availableUsersString) {
-                        $availableUsersString .= $user->name.'|'.$user->last_allocated.',';
-                    });
-                    info('availableUsers: '.$availableUsersString);
                     foreach ($healthTeams as $healthTeam) {
                         info('Health Lead Allocation Started for health team: '.$healthTeam);
                         $filteredLeadsByHealthTeam = $unAllocatedLeads->filter(function ($lead) use ($healthTeam) {
