@@ -24,14 +24,13 @@ use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
 use App\Traits\GetUserTreeTrait;
-use App\Traits\SendSIBEmail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationService extends BaseService
 {
-    use SendSIBEmail, GetUserTreeTrait;
+    use GetUserTreeTrait;
 
     protected $emailDataService;
 
