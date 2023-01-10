@@ -12,6 +12,25 @@ class HealthAvailablePlan extends Model
     use Sushi;
 
     protected $table = 'health_available_plans';
+    protected $keyType = 'string';
+    protected $schema = [
+        'id' => 'integer',
+        'uuid' => 'string',
+        'planCode' => 'string',
+        'name' => 'string',
+        'actualPremium' => 'string',
+        'basmah' => 'string',
+        'vat' => 'string',
+        'discountPremium' => 'string',
+        'memberPremiumBreakdown' => 'string',
+        'providerId' => 'string',
+        'providerCode' => 'string',
+        'providerName' => 'string',
+        'addons' => 'string',
+        'benefits' => 'string',
+        'policyWordings' => 'string',
+        'excess' => 'string',
+    ];
     public $uuid;
 
     /**
