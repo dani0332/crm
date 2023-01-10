@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\HealthQuoteResource\RelationManagers;
 
+use App\Models\DocumentType;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Tabs;
@@ -9,6 +10,7 @@ use Filament\Resources\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\Table;
 use Filament\Tables;
+use Illuminate\Support\HtmlString;
 
 class DocumentsRelationManager extends RelationManager
 {
@@ -21,198 +23,7 @@ class DocumentsRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Group::make()
                     ->schema([
-                        Tabs::make('Members')
-                            ->tabs([
-                                Tabs\Tab::make('Document')
-                                    ->schema([
-                                        Section::make("Sponsor's Documents - Individual")
-                                            ->description('file types info goes here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('sponsor_individual')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make("Sponsor's Documents - Company")
-                                            ->description('file types info goes here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('sponsor_company')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('Other Documents')
-                                            ->description('file types info goes here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('other')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('Confirmation Documents')
-                                            ->description('file types info goes here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('confirmation')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('E-card')
-                                            ->description('file types info goes here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('e_card')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->required()
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('Policy Certificate')
-                                            ->description('file types info goes here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('policy_certificate')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->required()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('Policy Wording/Bond')
-                                            ->description('file types info goes here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('policy_wording_bond')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->required()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('Receipt')
-                                            ->description('file types info goes here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('receipt')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->required()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('Tax Invoice')
-                                            ->description('file types info goes here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('tax_invoice')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->required()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('TIRBB/Credit Note')
-                                            ->description('file types info goes here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('tirbb_credit_note')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->required()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-
-                                    ]),
-                                Tabs\Tab::make('Member 1')
-                                    ->schema([
-                                        Section::make("Member's Passport")
-                                            ->description('Upload your passport here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('passport')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make("Member's Visa")
-                                            ->description('Upload your passport here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('visa')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make("Member's Emirates ID")
-                                            ->description('Upload your passport here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('emirates')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('UAE Birth Certificate (for Newborn)')
-                                            ->description('Upload your passport here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('uae_birth_certificate')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('Discharge Summary (for Newborn)')
-                                            ->description('Upload your passport here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('discharge_summary')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                        Section::make('Medical Report (if applicable)')
-                                            ->description('Upload your passport here')
-                                            ->aside()
-                                            ->compact()
-                                            ->schema([
-                                                Forms\Components\FileUpload::make('medical_report')
-                                                    ->label('')
-                                                    ->multiple()
-                                                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                                                    ->maxFiles(5),
-                                            ])->columns(1),
-                                    ]),
-                            ]),
+                        Tabs::make('documents')->tabs(static::getFieldsSchema()),
                     ]),
             ])->columns(1);
     }
@@ -235,7 +46,8 @@ class DocumentsRelationManager extends RelationManager
                     ->modalHeading(function (RelationManager $livewire) {
                         return 'Upload Document for '.$livewire->ownerRecord->code;
                     })
-                    ->modalWidth('6xl'),
+                    ->modalWidth('6xl')
+                    ->modalButton(null),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -245,5 +57,77 @@ class DocumentsRelationManager extends RelationManager
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),
             ]);
+    }
+
+    public static function getFieldsSchema(): array
+    {
+        $fieldsArray = [];
+
+        $docTypes = DocumentType::where([
+            'is_active' => 1,
+            'quote_type_id' => 3,
+        ])
+            // ->orderBy('sort_order')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $quoteFields = $docTypes->filter(function ($docType) {
+            return $docType['category'] == 'QUOTE';
+        });
+        $quoteSchema = [];
+
+        $memberFields = $docTypes->filter(function ($docType) {
+            return $docType['category'] == 'MEMBER';
+        });
+        $memberSchema = [];
+
+        if ($quoteFields) {
+            foreach ($quoteFields as $docType) {
+                $quoteSchema = array_merge([
+                    Section::make($docType['text'])
+                        ->description(new HtmlString('<p class="text-sm">Accepted file types: '.$docType['accepted_files'].'</p><p class="text-sm">Max files : '.$docType['max_files'].'</p>'))
+                        ->aside()
+                        ->compact()
+                        ->schema([
+                            Forms\Components\FileUpload::make($docType['code'])
+                                ->label('')
+                                ->multiple()
+                                ->acceptedFileTypes(['image/*', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                ->maxSize($docType['max_size'] * 1000)
+                                ->required($docType['is_required'])
+                                ->maxFiles($docType['max_files']),
+                        ])->columns(1),
+
+                ], $quoteSchema);
+            }
+        }
+
+        if ($memberFields) {
+            foreach ($memberFields as $docType) {
+                $memberSchema = array_merge([
+                    Section::make($docType['text'])
+                    ->description(new HtmlString('<p class="text-sm">Accepted file types: '.$docType['accepted_files'].'</p><p class="text-sm">Max files : '.$docType['max_files'].'</p>'))
+                        ->aside()
+                        ->compact()
+                        ->schema([
+                            Forms\Components\FileUpload::make($docType['code'])
+                                ->label('')
+                                ->multiple()
+                                ->acceptedFileTypes(['image/*', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                ->maxSize($docType['max_size'] * 1000)
+                                ->required($docType['is_required'])
+                                ->maxFiles($docType['max_files']),
+                        ])->columns(1),
+
+                ], $memberSchema);
+            }
+        }
+
+        $fieldsArray = array_merge([
+            Tabs\Tab::make('Document')->schema($quoteSchema),
+            Tabs\Tab::make('Member 1')->schema($memberSchema),
+        ], $fieldsArray);
+
+        return $fieldsArray;
     }
 }
