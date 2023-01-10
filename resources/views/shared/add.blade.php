@@ -97,7 +97,6 @@
 		});
 
 		function populateCarValues(carmodelObj) {
-			console.log('carmodelObj: ', carmodelObj);
 			$('#cylinder').val(carmodelObj.cylinder);
 			$('#seat_capacity').val(carmodelObj.seat_capacity);
 			$('#vehicle_type_id').val(carmodelObj.vehicle_type_id);
