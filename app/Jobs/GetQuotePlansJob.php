@@ -17,10 +17,10 @@ class GetQuotePlansJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, GenericQueriesAllLobs;
 
     public $tries = 3;
-    public $timeout = 15;
+    public $timeout = 30;
     public $backoff = 300;
-    private $lead,
-    $healthQuoteService;
+    private $lead;
+    private $healthQuoteService;
 
     /**
      * Create a new job instance.

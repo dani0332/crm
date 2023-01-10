@@ -12,7 +12,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class LeadAllocationJob implements ShouldQueue
@@ -45,17 +44,15 @@ class LeadAllocationJob implements ShouldQueue
             $leadAllocationService->setMaxCapAndAllocationStatus();
 
             if (env('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
-
                 info('CAR Lead Allocation Job Switch is OFF');
-
             } else {
-
                 info('CAR Lead Allocation Job Switch is ON and job is about to start');
 
                 $leadAllocationService->processCarLeads();
             }
             if (! $leadAllocationService->leadAllocationSwitchStatus()) {
                 info('Health Lead Allocation Job Switch is OFF');
+
                 return;
             } else {
                 $availableUsers = $leadAllocationService->getAvailableAdvisors();
@@ -71,10 +68,9 @@ class LeadAllocationJob implements ShouldQueue
                 $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();
 
                 if (count($unAllocatedLeads) > 0) {
-
                     $currentIteration = now();
 
-                    info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR  '. $currentIteration . ' -----------------------');
+                    info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR  '.$currentIteration.' -----------------------');
 
                     $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];
 
@@ -91,8 +87,7 @@ class LeadAllocationJob implements ShouldQueue
 
                         if ($filteredLeadsByHealthTeam->count() > 0 && $filteredUsersByHealthTeam->count() > 0) {
                             foreach ($filteredLeadsByHealthTeam as $lead) {
-
-                                info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR LEAD '. $lead->uuid . ' -----------------------');
+                                info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR LEAD '.$lead->uuid.' -----------------------');
 
                                 $filteredUsersByHealthTeam = $filteredUsersByHealthTeam->sortBy('last_allocated', SORT_NATURAL)->flatten();
 
@@ -108,7 +103,7 @@ class LeadAllocationJob implements ShouldQueue
                                     }
                                 });
                                 sleep(1);
-                                info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR LEAD '. $lead->uuid . ' -----------------------');
+                                info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR LEAD '.$lead->uuid.' -----------------------');
                             }
 
                             foreach ($filteredUsersByHealthTeam as $user) {
@@ -118,7 +113,7 @@ class LeadAllocationJob implements ShouldQueue
                             info($healthTeam.' Leads count is '.$filteredLeadsByHealthTeam->count().' and available users count is '.$filteredUsersByHealthTeam->count());
                         }
                     }
-                    info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR  '. $currentIteration . ' -----------------------');
+                    info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR  '.$currentIteration.' -----------------------');
                 } else {
                     info('No Unallocated Leads');
                 }

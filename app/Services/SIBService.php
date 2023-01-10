@@ -59,7 +59,6 @@ class SIBService extends BaseService
         return $apiResponse;
     }
 
-
     public static function sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailTo)
     {
         info('sendEmailUsingSIB -- start');
@@ -145,13 +144,14 @@ class SIBService extends BaseService
 
     public static function addEmailActivity($response, $isEmailSent, $customerEmail)
     {
-        info('addEmailActivity -- adding email activity for '. $customerEmail);
+        info('addEmailActivity -- adding email activity for '.$customerEmail);
         $newEmailActivity = new EmailActivity();
         $newEmailActivity->api_response = $response;
         $newEmailActivity->successful = $isEmailSent;
         $newEmailActivity->email = $customerEmail;
         $newEmailActivity->save();
-        info('addEmailActivity -- done adding email activity for '. $customerEmail);
+        info('addEmailActivity -- done adding email activity for '.$customerEmail);
+
         return $newEmailActivity->id;
     }
 }
