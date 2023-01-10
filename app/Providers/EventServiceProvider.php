@@ -22,12 +22,6 @@ class EventServiceProvider extends ServiceProvider
         // AdvisorAssigned::class => [
         //     AdvisorAssignedListener::class,
         // ],
-        // 'Illuminate\Queue\Events\JobProcessing' => [
-        //     'App\Listeners\JobListener@handleJobProcessing',
-        // ],
-        // 'Illuminate\Queue\Events\JobProcessed' => [
-        //     'App\Listeners\JobListener@handleJobProcessed',
-        // ],
     ];
 
     /**
