@@ -9,14 +9,11 @@ class UpdateColumnTypeForHighValue extends Migration
     public function up()
     {
         Schema::table('tiers', function (Blueprint $table) {
-            $table->decimal('max_price', 20, 2)->change();
+            $table->decimal('max_price', 20, 2)->default(0.00)->change();
         });
     }
 
     public function down()
     {
-        Schema::table('tiers', function (Blueprint $table) {
-            $table->decimal('max_price', 8, 2)->change();
-        });
     }
 }
