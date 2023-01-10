@@ -8,7 +8,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
-use App\Enums\TiersEnum;
+use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
@@ -480,18 +480,8 @@ class LeadAllocationService extends BaseService
                 if ($this->checkIfLeadIsRenewal($carLead)) {
                     info('car lead allocation sending renewal email for uuid : '.$carLead->uuid);
                     if (! $carLead->is_renewal_tier_email_sent) {
-                        $this->sendRenewalLeadEmail($carLead);
-                        $tier = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-                        if ($tier) {
-                            info('setting tier : '.$tier->name.' against car lead : '.$carLead->uuid);
-                            $carLead->tier_id = $tier->id;
-                            $carLead->save();
-                        } else {
-                            info('tier R for sending email is not found');
-                        }
-                        info('Renewal Email sent for quote : '.$carLead->uuid.' and tier is update with id : '.$tier->id);
+                        CarRenewalEmailJob::dispatch($carLead);
                     }
-
                     continue;
                 }
                 info('trying to check tier against the current lead : '.$carLead->code);
@@ -604,8 +594,11 @@ class LeadAllocationService extends BaseService
         ->where('lead_sources.name', $source)
         ->where('rules.is_active', 1)
         ->groupBy('rule_lead_sources.lead_source_id')
-        ->select('lead_sources.name AS leadSourceName', 'lead_sources.id AS leadSourceId',
-            DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers'));
+        ->select(
+            'lead_sources.name AS leadSourceName',
+            'lead_sources.id AS leadSourceId',
+            DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers')
+        );
 
         return $records->get();
     }
@@ -631,30 +624,6 @@ class LeadAllocationService extends BaseService
 
             return false;
         }
-    }
-
-    public function sendRenewalLeadEmail($lead)
-    {
-        info('sendRenewalLeadEmail -- start');
-
-        $renewalEmailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
-
-        $emailData = $this->emailDataService->generateTierREmailData($lead);
-
-        $templateId = (int) $this->getAppStorageValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
-
-        $tag = config('constants.APP_ENV').' - motor allocation renewal';
-
-        info('sendRenewalLeadEmail -- start sending email for lead : '.$lead->uuid);
-
-        SIBService::sendEmailUsingSIB($templateId, $emailData, $tag, $renewalEmailRecipients);
-
-        info('sendRenewalLeadEmail -- email sending done for lead : '.$lead->uuid);
-
-        CarQuote::where('id', $lead->id)->update([
-            'is_renewal_tier_email_sent' => 1,
-        ]);
-        info('sendRenewalLeadEmail -- end');
     }
 
     public function getTierForValue($carLead)
