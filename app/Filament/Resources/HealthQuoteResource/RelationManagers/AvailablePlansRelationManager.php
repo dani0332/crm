@@ -95,7 +95,11 @@ class AvailablePlansRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                CopyAction::make()->copyable(config('constants.AFIA_WEBSITE_DOMAIN'))->label('Copy Link')->icon('heroicon-o-link'),
+                CopyAction::make()
+                    ->copyable(config('constants.AFIA_WEBSITE_DOMAIN'))
+                    ->label('Copy Link')
+                    ->icon('heroicon-o-link')
+                    ->visible(true),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -107,5 +111,10 @@ class AvailablePlansRelationManager extends RelationManager
     protected function isTablePaginationEnabled(): bool
     {
         return false;
+    }
+
+    protected function getTableEmptyStateHeading(): ?string
+    {
+        return 'Ratings not available';
     }
 }
