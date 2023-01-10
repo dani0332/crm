@@ -130,8 +130,7 @@ use App\Enums\PermissionsEnum;
                     return false;
                 }
                 if ($('#next_followup_date').val() != '' && $('#next_followup_date_end').val() == '') {
-                    $('#next_followup_date_end').next().html('Please select next followup end dat
-                    e');
+                    $('#next_followup_date_end').next().html('Please select next followup end date');
                     return false;
                 }
                 if ($('#next_followup_date').val() == '' && $('#next_followup_date_end').val() != '') {

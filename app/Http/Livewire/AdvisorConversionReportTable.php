@@ -7,7 +7,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
-use App\Traits\GetUserTree;
+use App\Traits\GetUserTreeTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -18,7 +18,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorConversionReportTable extends DataTableComponent
 {
-    use GetUserTree;
+    use GetUserTreeTrait;
 
     public $url;
     public $tiers = [];

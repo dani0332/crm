@@ -37,11 +37,11 @@ use App\Services\NotesForCustomerService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SIBService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
-use App\Traits\SendSIBEmail;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
@@ -75,7 +75,6 @@ class CRUDController extends Controller
     protected $emailDataService;
 
     use GenericQueriesAllLobs;
-    use SendSIBEmail;
 
     public function __construct(
         HealthQuoteService $healthService,
@@ -99,7 +98,7 @@ class CRUDController extends Controller
         CustomerService $customerService,
         SendEmailCustomerService $sendEmailCustomerService,
         QuoteDocumentService $quoteDocumentService,
-        EmailDataService $emailDataService
+        EmailDataService $emailDataService,
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -123,7 +122,6 @@ class CRUDController extends Controller
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->quoteDocumentService = $quoteDocumentService;
         $this->emailDataService = $emailDataService;
-
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -818,7 +816,7 @@ class CRUDController extends Controller
 
                         // Send Email
                         if ($emailData) {
-                            $this->sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailRecipients);
+                            SIBService::sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailRecipients);
                         }
                     }
                 }
