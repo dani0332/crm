@@ -7,7 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\ReportsLeadTypeEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
-use App\Traits\GetUserTree;
+use App\Traits\GetUserTreeTrait;
 use DB;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -15,7 +15,7 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 
 class AdvisorAssignedCarQuotesTable extends DataTableComponent
 {
-    use GetUserTree;
+    use GetUserTreeTrait;
 
     public $advisorId;
     public $leadType;
