@@ -559,7 +559,7 @@ class LeadAllocationService extends BaseService
                             $carQuote->save();
                             info('Tier with name : '.$selectedTier->name.' and id : '.$selectedTier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
                         } else {
-                            info('Tier (' . $selectedTier->id . ')is already assigned against car lead with uuid : '.$carQuote->uuid);
+                            info('Tier ('.$selectedTier->id.')is already assigned against car lead with uuid : '.$carQuote->uuid);
                         }
                     }
                 }
