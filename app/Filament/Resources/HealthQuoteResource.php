@@ -73,7 +73,7 @@ class HealthQuoteResource extends Resource
                                             return $record?->code;
                                         }),
                                         Forms\Components\Placeholder::make('created_at')->label('Created At')->content(function (Model $record) {
-                                            return $record?->created_at->format('M d, Y H:i:s');
+                                            return $record?->created_at->format('d/m/Y - H:i:s');
                                         }),
                                         Forms\Components\Placeholder::make('health_team_type')->label('Sub Team')->content(function (Model $record) {
                                             return $record?->health_team_type;
@@ -85,7 +85,7 @@ class HealthQuoteResource extends Resource
                                             return $record?->source;
                                         }),
                                         Forms\Components\Placeholder::make('updated_at')->label('Last Modified Date')->content(function (Model $record) {
-                                            return $record?->updated_at->format('M d, Y H:i:s');
+                                            return $record?->updated_at->format('d/m/Y - H:i:s');
                                         }),
                                         Forms\Components\Placeholder::make('parent_duplicate_quote_id')->label('Parent CDB ID')->content(function (Model $record) {
                                             return $record?->parent_duplicate_quote_id;
@@ -196,7 +196,7 @@ class HealthQuoteResource extends Resource
                                             return $record->transapp_code;
                                         }),
                                         Forms\Components\Placeholder::make('next_followup_date')->label('Next Followup Date')->content(function (Model $record) {
-                                            return $record->next_followup_date?->format('M d, Y H:i:s');
+                                            return $record->next_followup_date?->format('d/m/Y - H:i:s');
                                         }),
                                     ])
                                     ->visibleOn('view'),
@@ -233,6 +233,7 @@ class HealthQuoteResource extends Resource
                             ),
                         Forms\Components\Textarea::make('additional_notes')->label('Notes')->maxLength(1000),
                     ])->hiddenOn('create'),
+
             ])->columns(1);
     }
 
@@ -278,8 +279,8 @@ class HealthQuoteResource extends Resource
                 Tables\Columns\TextColumn::make('quoteStatus.text')->label('Lead Status'),
                 Tables\Columns\TextColumn::make('advisor.name')->label('Advisor'),
                 Tables\Columns\TextColumn::make('wcAdvisor.name')->label('WC Advisor'),
-                Tables\Columns\TextColumn::make('created_at')->label('Created Date')->dateTime('d-m-Y H:i:s'),
-                Tables\Columns\TextColumn::make('updated_at')->label('Last Modified Date')->dateTime('d-m-Y H:i:s'),
+                Tables\Columns\TextColumn::make('created_at')->label('Created Date')->dateTime('d/m/Y - H:i:s'),
+                Tables\Columns\TextColumn::make('updated_at')->label('Last Modified Date')->dateTime('d/m/Y - H:i:s'),
                 Tables\Columns\TextColumn::make('health_team_type')->label('Sub Team'),
                 Tables\Columns\TextColumn::make('healthQuoteRequestDetail.transapp_code')->label('Transapp Code'),
                 Tables\Columns\TextColumn::make('healthQuoteRequestDetail.lostReason.text')->label('Lost Reason'),
