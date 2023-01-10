@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Filament\Resources\HealthQuoteResource\Pages;
+use App\Filament\Resources\HealthQuoteResource\RelationManagers\AvailablePlansRelationManager;
 use App\Filament\Resources\HealthQuoteResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\HealthQuoteResource\RelationManagers\MemberDetailsRelationManager;
 use App\Models\Activities;
@@ -463,6 +464,7 @@ class HealthQuoteResource extends Resource
         return [
             RelationGroup::make('Relations', [
                 MemberDetailsRelationManager::class,
+                AvailablePlansRelationManager::class,
                 DocumentsRelationManager::class,
             ]),
 

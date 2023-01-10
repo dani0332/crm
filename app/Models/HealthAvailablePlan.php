@@ -21,7 +21,7 @@ class HealthAvailablePlan extends Model
      */
     public function getRows()
     {
-        $this->uuid = 'RZADAFP6';
+        $this->uuid = request()->route('record');
 
         $listQuotePlans = '';
         $responseData = [];
@@ -35,6 +35,7 @@ class HealthAvailablePlan extends Model
                 foreach ($listQuotePlans as $key => $plan) {
                     $responseData[] = [
                         'id' => $plan?->id,
+                        'uuid' => $this->uuid,
                         'planCode' => $plan?->planCode,
                         'name' => $plan?->name,
                         'actualPremium' => $plan?->actualPremium,
@@ -63,6 +64,6 @@ class HealthAvailablePlan extends Model
 
     protected function sushiShouldCache()
     {
-        return false;
+        return true;
     }
 }

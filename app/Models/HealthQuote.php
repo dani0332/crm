@@ -99,6 +99,6 @@ class HealthQuote extends Model implements AuditableContract
 
     public function availablePlans()
     {
-        return $this->hasMany(HealthAvailablePlan::class);
+        return $this->hasMany(HealthAvailablePlan::class, 'uuid', 'uuid');
     }
 }
