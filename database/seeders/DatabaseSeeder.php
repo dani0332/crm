@@ -34,6 +34,8 @@ class DatabaseSeeder extends Seeder
             //QuoteStatusTableSeeder::class,
             HealthFacilityCategorySeeder::class,
             HealthPlanTypeSeeder::class,
+            QuoteStatusMapCarTransactionApproved::class,
+            UpdateApplicationStorage::class,
         ]);
     }
 }

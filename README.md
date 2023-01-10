@@ -26,7 +26,6 @@ Please make sure to go through the last two lines to familiarize yourself with t
 
 **Doppler Configuration**
 
-
 Once you have doppler CLI installed on your local machine, run the following command to initiate the login setup.
 - ```doppler setup``` This will initiate the login process, use Google login. Once logged in you will be prompted to select the profile you want to use the environment variables. You can run the command again to switch profile.
 - ```doppler secrets``` This will show you the current environment variables.
@@ -39,6 +38,15 @@ This repository use Laravel Mix to build assets like CSS and JavaScript, use the
 - Run ```yarn``` so all the necassary packages are installed
 - Run ```yarn run prod``` to generate a production build
 - Run ```yarn watch``` to hot load the changes as you make them while development.
+
+**Redis Allocated DBs**
+- Prod - 15
+- Stage - 2
+- UAT - 3
+- DEV - 4
+- DEV01 - 7 
+- DEV02 - 8
+- Test - 9
 
 ## Contributing
 - ```develop``` branch is the main coding branch where new branches will be generated from, and PRs will be merged into. Same branch is connected with stage for testing and QA.

@@ -77,6 +77,8 @@ Route::get('/', function () {
     return redirect('login');
 });
 
+Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
+
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
@@ -115,9 +117,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'update' => 'leadassignment.update',
         'destroy' => 'leadassignment.destroy',
     ]);
-    Route::resource('activities', ActivitesController::class)->names([
-        'index' => 'activities.index',
-    ]);
+    Route::get('activities', [ActivitesController::class, 'index'])->name('activities.index');
     Route::post('/activities/create-activity', [ActivitesController::class, 'store']);
     Route::post('activities/{id}/update', [ActivitesController::class, 'update']);
     Route::post('activities/{id}/delete', [ActivitesController::class, 'destroy'])->name('activities.destroy');
@@ -125,8 +125,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('activities/getEditView', [ActivitesController::class, 'getEditView'])->name('activities.getEditView');
     Route::post('updateActivity', [CRUDController::class, 'updateActivity'])->name('updateActivity');
     Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
-    Route::get('getTeamManagers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
-    Route::get('getSubTeams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
+    Route::post('get-team-managers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
+    Route::post('get-sub-teams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
+    Route::post('get-product-teams', [UserController::class, 'getProductTeams'])->name('getProductTeams');
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerUpload']);
@@ -168,10 +169,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard']);
     Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard']);
-    Route::get('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
-    Route::get('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
-    Route::get('/get-advisor-conversion-stats', [DashboardController::class, 'getAdvisorConversionStats']);
-    Route::get('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
+    Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
+    Route::post('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
+    Route::post('/get-advisor-conversion-stats', [DashboardController::class, 'getAdvisorConversionStats']);
+    Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
     Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard']);
     Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport']);
@@ -236,7 +237,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
         Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
         Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
-        Route::post('{quoteType}/export-plans-pdf', [CRUDController::class, 'exportPlansPdf'])->name('exportPlansPdf');
+        Route::post('{quoteType}/export-car-pdf', [CRUDController::class, 'exportCarPdf'])->name('exportCarPdf');
+        Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
     });
 

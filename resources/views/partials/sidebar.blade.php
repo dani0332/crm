@@ -60,7 +60,6 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endif
-                @can(PermissionsEnum::LeadAllocationView)
                 @canany([PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD, PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-paper-plane"></i>Lead Allocation<span class="fa fa-chevron-down" style="color: white;"></span></a>
@@ -75,7 +74,6 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @endcan
                 @if (auth()->check() && auth()->user()->hasMyLeadAccess())
                 <ul class="nav side-menu">
                     <li>

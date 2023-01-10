@@ -21,7 +21,9 @@ $(document).ready(function () {
     width: '100%',
     allowClear: true,
   });
-  $('.select-roles').select2({
+  $(
+    '.select-roles,#user-team-select,#user-product-select,#user-manager-select',
+  ).select2({
     width: '100%',
     allowClear: true,
   });
@@ -1172,13 +1174,6 @@ $(document).ready(function () {
     }, 2000);
   });
 
-  $('#btn_download_plan_pdf').on('click', function () {
-    if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-      alert('Please select at least three (3) plans.');
-      return false;
-    }
-  });
-
   var customerDataTable = $('.customer-data-table').DataTable({
     ordering: false,
     info: false,
@@ -1809,6 +1804,15 @@ $(document).ready(function () {
     }
   });
 
+  $('#healthPlansAll').on('click', function()
+  {
+    if($(this).is(":checked")) {
+      $('.health-plans-checkbox').prop('checked',this.checked);
+    } else {
+      $('.health-plans-checkbox').removeAttr('checked');
+    } 
+  });
+
   // TM Leads: Select tm leads id and store in hidden field
   $('#checkAllTmLeads').click(function () {
     $('input:checkbox').not(this).prop('checked', this.checked);
@@ -2158,7 +2162,7 @@ $(document).ready(function () {
     singleDatePicker: true,
     timePicker24Hour: true,
     locale: {
-      format: 'YYYY-MM-DD HH:mm:ss',
+      format: 'DD-MM-YYYY HH:mm:ss',
     },
   });
 
@@ -2598,11 +2602,9 @@ $(document).ready(function () {
               '</td><td>' +
               element.ModifiedBy +
               '</td><td>' +
-              element.NewStatus +
-              '</td><td>' +
-              element.NewAdvisor +
-              '</td><td>' +
               element.NewNotes +
+              '</td><td>' +
+              element.NewStatus +
               '</td></tr>';
           }
         } else {
@@ -2739,6 +2741,29 @@ $(document).ready(function () {
     $('#form_plans_pdf').submit();
   });
 });
+
+$('#btn_download_plan_pdf_health').on('click', function () {
+  
+  if ($("input[name='health_plans_checkbox']:checked").length < 3) {
+    alert('Please select at least three (3) plans.');
+    return false;
+  }
+
+  if ($("input[name='health_plans_checkbox']:checked").length > 5) {
+    alert('A maximum of five (5) plans are allowed to be selected.');
+    return false;
+  }
+
+  var plan_ids = [];
+
+  $.each($("input[name='health_plans_checkbox']:checked"), function () {
+    plan_ids.push($(this).val());
+  });
+
+  $('#plan_ids').val(plan_ids);
+  $('#form_plans_pdf').submit();
+});
+
 
 $('#renewals-upload-button').click(function () {
   $('#renewals-upload-button').hide();
@@ -3016,7 +3041,7 @@ $('#dob_div #dob').datepicker({
   // TM Leads
   changeMonth: true,
   changeYear: true,
-  dateFormat: 'dd/mm/yy',
+  dateFormat: 'dd-mm-yy',
   yearRange: '-80:+00',
 });
 

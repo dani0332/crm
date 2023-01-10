@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\ReportsLeadTypeEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Traits\GetUserTree;
@@ -63,11 +64,11 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             info('batch : '.json_encode($batch->id));
             $query->where('quote_batch_id', $batch->id);
         }
-        if ($this->leadType == 'new_leads') {
+        if ($this->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
             info('inside lead type new');
             $query->whereNotNull('car_quote_request.advisor_id')->where('car_quote_request.quote_status_id', QuoteStatusEnum::NewLead);
         }
-        if ($this->leadType == 'not_interested') {
+        if ($this->leadType == ReportsLeadTypeEnum::NOT_INTERESTED) {
             info('inside lead type not interested');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::NewLead);
         }
@@ -79,15 +80,19 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             info('inside lead type in progress');
             $query->where('source', LeadSourceEnum::IMCRM);
         }
-        if ($this->leadType == 'bad_leads') {
+        if ($this->leadType == ReportsLeadTypeEnum::BAD_LEAD) {
             info('inside lead type in progress');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
-        if ($this->leadType == 'sale_leads') {
+        if ($this->leadType == ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT) {
+            info('inside lead type in progress');
+            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::AfiaRenewal);
+        }
+        if ($this->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
             info('inside lead type in progress');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::PolicyIssued);
         }
-        if ($this->leadType == 'created_sale_leads') {
+        if ($this->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
             info('inside lead type in progress');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::TransactionApproved)->where('source', LeadSourceEnum::IMCRM);
         }

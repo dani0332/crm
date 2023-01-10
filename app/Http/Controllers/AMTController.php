@@ -115,9 +115,9 @@ class AMTController extends Controller
                 $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
             }
             if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request->created_at_start)->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request->created_at_end)->endOfDay()->toDateTimeString();
-                $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
+                $dateFrom = $this->parseDate($request['created_at_start'], true);
+                $dateTo = $this->parseDate($request['created_at_end'], false);
+                $data->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
             }
             if (isset($request->last_name) && $request->last_name != '') {
                 $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
@@ -177,6 +177,18 @@ class AMTController extends Controller
         }
 
         return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
+    }
+
+    private function parseDate($date, $isStartOfDay)
+    {
+        if ($date != '') {
+            $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+            if ($isStartOfDay) {
+                return Carbon::createFromFormat($dateFormat, $date)->startOfDay()->toDateString();
+            } else {
+                return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
+            }
+        }
     }
 
     /**
@@ -264,7 +276,8 @@ class AMTController extends Controller
             $selectedLeadStatus = $selectedLeadStatus->text;
         }
 
-        $customerAdditionalContacts = $this->customerService->getAddtionalContacts($record->customer_id);
+        $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id);
+        $tiers = $this->lookupService->getTierR();
 
         return view('amt.show', compact(
             'businessInsuranceType',
@@ -279,7 +292,8 @@ class AMTController extends Controller
             'quoteType',
             'allowedDuplicateLOB',
             'customerAdditionalContacts',
-            'quoteTypeId'
+            'quoteTypeId',
+            'tiers'
         ));
     }
 

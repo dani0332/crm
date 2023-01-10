@@ -28,6 +28,5 @@ class AddMemberIdToQuoteDocumentsTable extends Migration
      */
     public function down()
     {
-
     }
 }

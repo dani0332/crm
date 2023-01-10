@@ -30,13 +30,6 @@ class UserService extends BaseService
         if ($request->sub_team_id != '0') {
             $user->sub_team_id = $request->sub_team_id;
         }
-
-        if ($request->manager != '0') {
-            $user->manager_id = $request->manager;
-        } else {
-            $user->manager_id = null;
-        }
-
         if (isset($request->additionalTeams)) {
             if (count((array) $request->additionalTeams) > 0) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);
@@ -44,8 +37,34 @@ class UserService extends BaseService
                 $user->additional_team_ids = $request->additionalTeams[0];
             }
         }
-        $user->team_id = $request->team;
         $user->save();
+        if ($request->manager != '0' && isset($request->manager)) {
+            DB::table('user_manager')->where('user_id', $user->id)->delete();
+            foreach ($request->manager as $managerId) {
+                DB::table('user_manager')->insert([
+                    'user_id' => $user->id,
+                    'manager_id' => $managerId,
+                ]);
+            }
+        }
+        if ($request->teams != '0') {
+            DB::table('user_team')->where('user_id', $user->id)->delete();
+            foreach ($request->teams as $teamId) {
+                DB::table('user_team')->insert([
+                    'user_id' => $user->id,
+                    'team_id' => $teamId,
+                ]);
+            }
+        }
+        if ($request->products != '0') {
+            DB::table('user_products')->where('user_id', $user->id)->delete();
+            foreach ($request->products as $productId) {
+                DB::table('user_products')->insert([
+                    'user_id' => $user->id,
+                    'product_id' => $productId,
+                ]);
+            }
+        }
 
         return $user;
     }

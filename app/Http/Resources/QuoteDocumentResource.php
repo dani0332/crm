@@ -20,7 +20,7 @@ class QuoteDocumentResource extends JsonResource
             'original_name' => $this->original_name,
             'document_type_code' => $this->document_type_code,
             'document_type_text' => $this->document_type_text,
-            'member_detail_id'  => $this->member_detail_id,
+            'member_detail_id' => $this->member_detail_id,
         ];
     }
 }

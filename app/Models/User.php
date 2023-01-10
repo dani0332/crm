@@ -118,6 +118,11 @@ class User extends Authenticatable implements AuditableContract, FilamentUser
         }
     }
 
+    public function isLeadPool()
+    {
+        return Auth::user()->hasRole(RolesEnum::LeadPool);
+    }
+
     public function isManagerOrDeputy()
     {
         $userRoles = Auth::user()->usersroles()->get();
