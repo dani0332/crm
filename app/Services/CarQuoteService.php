@@ -190,6 +190,7 @@ class CarQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
+        info('Create triggered from IMCRM for Car Quote request with email : '.$request->email.' and sending request to CAPI');
 
         return CapiRequestService::sendCAPIRequest('/api/v1-save-car-quote', $dataArr);
     }
@@ -197,6 +198,7 @@ class CarQuoteService extends BaseService
     public function updateCarQuote(Request $request, $id)
     {
         $carQuote = CarQuote::where('uuid', $id)->first();
+        info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
         $carQuote->first_name = $request->first_name;
         $carQuote->last_name = $request->last_name;
         $carQuote->dob = $request->dob;
@@ -309,7 +311,7 @@ class CarQuoteService extends BaseService
             'year_of_manufacture' => 'select|title|required',
             'year_of_first_registration' => 'input|date|title|range',
             'car_value' => 'input|number',
-            'car_value_tier' => 'input|number|required',
+            'car_value_tier' => 'input|number|title|required',
             'vehicle_type_id' => 'select|title|required',
             'seat_capacity' => 'input|number|title|required',
             'emirate_of_registration_id' => 'select|title|required',
@@ -508,7 +510,7 @@ class CarQuoteService extends BaseService
                 $title = 'Batch';
                 break;
             case 'car_value_tier':
-                $title = 'Car Value Tier';
+                $title = 'Car Value (at enquiry)';
                 break;
             default:
                 break;

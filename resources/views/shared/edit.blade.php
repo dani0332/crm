@@ -280,14 +280,14 @@
                                                 value="{{ old($property, $record->$property) }}" class="form-control" 
                                                 @if(!Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::Admin]))
                                                     @if($property == DatabaseColumnsString::RENEWAL_BATCH || $property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER || $property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE) 
-                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;pointer-events: none;"
+                                                        readonly="readonly" style="background-color: #e9ecef !important;pointer-events: none;"
                                                     @endif
                                                 @else 
                                                     @if($property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER && $record->$property)
-                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;"
+                                                        readonly="readonly" style="background-color: #e9ecef !important;"
                                                     @endif
                                                     @if($property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE && $record->$property)
-                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;pointer-events: none;"
+                                                        readonly="readonly" style="background-color: #e9ecef !important;pointer-events: none;"
                                                     @endif
                                                 @endif >
                                             @if ($errors->has($property))
