@@ -104,8 +104,8 @@ class AvailablePlansRelationManager extends RelationManager
             ->bulkActions([]);
     }
 
-    protected function getTableRecordsPerPageSelectOptions(): array
+    protected function isTablePaginationEnabled(): bool
     {
-        return [false];
+        return false;
     }
 }

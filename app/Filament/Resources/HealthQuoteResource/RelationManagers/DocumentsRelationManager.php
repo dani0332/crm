@@ -131,4 +131,9 @@ class DocumentsRelationManager extends RelationManager
 
         return $fieldsArray;
     }
+
+    protected function isTablePaginationEnabled(): bool
+    {
+        return false;
+    }
 }

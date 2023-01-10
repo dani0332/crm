@@ -27,11 +27,13 @@ class MemberDetailsRelationManager extends RelationManager
                     ]),
                 Forms\Components\DatePicker::make('dob'),
                 Forms\Components\Select::make('nationality_id')
+                    ->label('Nationality')
                     ->searchable()
                     ->options(function () {
                         return \App\Models\Nationality::all()->pluck('text', 'id');
                     }),
                 Forms\Components\Select::make('emirate_of_your_visa_id')
+                    ->label('Emirate of Visa')
                     ->options(function () {
                         return \App\Models\Emirate::all()->pluck('text', 'id');
                     }),
@@ -76,8 +78,8 @@ class MemberDetailsRelationManager extends RelationManager
             ]);
     }
 
-    protected function getTableRecordsPerPageSelectOptions(): array
+    protected function isTablePaginationEnabled(): bool
     {
-        return [false];
+        return false;
     }
 }
