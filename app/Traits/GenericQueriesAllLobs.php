@@ -81,4 +81,14 @@ trait GenericQueriesAllLobs
             }
         }
     }
+
+    public function getQuoteCodeType($lead)
+    {
+        $leadCodeArray = explode('-', $lead->code);
+        if (count($leadCodeArray) == 0) {
+            return false;
+        }
+
+        return $leadCodeArray[0];
+    }
 }

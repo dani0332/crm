@@ -9,6 +9,7 @@ use Carbon\Carbon;
 class AdvisorAssignedListener
 {
     protected $healthQuoteService;
+
     /**
      * Create the event listener.
      *

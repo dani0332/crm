@@ -8,8 +8,8 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
-use App\Enums\TiersEnum;
-use App\Events\AdvisorAssigned;
+use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\GetQuotePlansJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -23,16 +23,14 @@ use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
-use App\Traits\GetUserTree;
-use App\Traits\SendSIBEmail;
+use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class LeadAllocationService extends BaseService
 {
-    use GetUserTree;
-    use SendSIBEmail;
+    use GetUserTreeTrait;
 
     protected $emailDataService;
 
@@ -142,11 +140,9 @@ class LeadAllocationService extends BaseService
             if ($lead->advisor_id != null) {
                 $this->removeLeadAllocationForOldAdvisor($lead);
             }
-
             info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
             try {
                 DB::beginTransaction();
-                AdvisorAssigned::dispatch($lead);
                 if ($isManualAssignment && $lead->advisor_id != null && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
                     info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
@@ -163,6 +159,7 @@ class LeadAllocationService extends BaseService
                 if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
                     SyncSIBContactJob::dispatch($lead);
                 }
+                GetQuotePlansJob::dispatch($lead);
                 DB::commit();
 
                 return true;
@@ -473,25 +470,18 @@ class LeadAllocationService extends BaseService
     public function processCarLeads()
     {
         try {
+            $currentIterationTime = now();
+            info('----------------------- CAR LEAD ALLOCATION STARTED FOR '.$currentIterationTime.' -----------------------');
             $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             $carUnAllocatedLead = $this->getCarUnallocatedLeads($from);
             info(count($carUnAllocatedLead).' unassigned car leads found.');
             foreach ($carUnAllocatedLead as $carLead) {
+                info('----------------------- CAR LEAD ALLOCATION STARTED FOR LEAD '.$carLead->uuid.' -----------------------');
                 if ($this->checkIfLeadIsRenewal($carLead)) {
                     info('car lead allocation sending renewal email for uuid : '.$carLead->uuid);
                     if (! $carLead->is_renewal_tier_email_sent) {
-                        $this->sendRenewalLeadEmail($carLead);
-                        $tier = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-                        if ($tier) {
-                            info('setting tier : '.$tier->name.' against car lead : '.$carLead->uuid);
-                            $carLead->tier_id = $tier->id;
-                            $carLead->save();
-                        } else {
-                            info('tier R for sending email is not found');
-                        }
-                        info('Renewal Email sent for quote : '.$carLead->uuid.' and tier is update with id : '.$tier->id);
+                        CarRenewalEmailJob::dispatch($carLead);
                     }
-
                     continue;
                 }
                 info('trying to check tier against the current lead : '.$carLead->code);
@@ -558,11 +548,13 @@ class LeadAllocationService extends BaseService
                             $carQuote->save();
                             info('Tier with name : '.$selectedTier->name.' and id : '.$selectedTier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
                         } else {
-                            info('Tier ('.$selectedTier->tier_id.')is already assigned against car lead with uuid : '.$carQuote->uuid);
+                            info('Tier ('.$selectedTier->id.')is already assigned against car lead with uuid : '.$carQuote->uuid);
                         }
                     }
                 }
+                info('----------------------- CAR LEAD ALLOCATION ENDED FOR LEAD '.$carLead->uuid.' -----------------------');
             }
+            info('----------------------- CAR LEAD ALLOCATION ENDED FOR '.$currentIterationTime.' -----------------------');
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -602,8 +594,11 @@ class LeadAllocationService extends BaseService
         ->where('lead_sources.name', $source)
         ->where('rules.is_active', 1)
         ->groupBy('rule_lead_sources.lead_source_id')
-        ->select('lead_sources.name AS leadSourceName', 'lead_sources.id AS leadSourceId',
-            DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers'));
+        ->select(
+            'lead_sources.name AS leadSourceName',
+            'lead_sources.id AS leadSourceId',
+            DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers')
+        );
 
         return $records->get();
     }
@@ -629,26 +624,6 @@ class LeadAllocationService extends BaseService
 
             return false;
         }
-    }
-
-    public function sendRenewalLeadEmail($lead)
-    {
-        info('Inside send car lead allocation renewal lead email');
-
-        $renewalEmailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
-        $subject = ucwords(config('constants.APP_ENV')).' - '.$lead->first_name.' '.$lead->last_name.' has approached Alfred';
-
-        info('car lead allocation renewal lead email subject is : '.$subject);
-        $emailData = $this->emailDataService->generateTierREmailData($lead);
-
-        info('car lead allocation renewal lead email data is : '.json_encode($emailData));
-        $templateId = (int) $this->getAppStorageValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
-        $tag = config('constants.APP_ENV').' - motor allocation renewal';
-        $this->sendEmailUsingSIB($templateId, $emailData, $tag, $renewalEmailRecipients);
-        info('Sending email done, going to work on car quote update for lead id : '.$lead->id);
-        CarQuote::where('id', $lead->id)->update([
-            'is_renewal_tier_email_sent' => 1,
-        ]);
     }
 
     public function getTierForValue($carLead)

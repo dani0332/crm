@@ -82,7 +82,7 @@ Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTie
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
-Route::middleware(['auth'])->get('/home', function () {
+Route::middleware(['auth', 'last_login_check'])->get('/home', function () {
     return view('home');
 });
 
