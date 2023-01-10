@@ -50,7 +50,6 @@
         var model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
         var modelPropertiesArray = convertObjectToArray(model.properties);
         var modelSkipProperties = convertObjectToArray(model.skipProperties);
-        debugger;
         if(model.modelType.toLowerCase() == '<?php echo strtolower(quoteTypeCode::Car); ?>'){
             var oldCarModelId = JSON.parse('<?php echo json_encode(isset($record->car_model_id) ? $record->car_model_id : 0) ?>');
             var oldCarMakeId = JSON.parse('<?php echo json_encode(isset($record->car_make_id) ? $record->car_make_id : 0) ?>');
@@ -142,16 +141,15 @@
                 data: {
                     car_model_id: car_model_id
                 },
-                success: function(data){
-                    if(data.length > 0){
+                success: function(data) {
+                    if(data.length > 0) {
                         var trim = $('#trim').empty();
                         $.each(data, function (create, carmodelObj) {
                             if(carmodelObj.is_default != undefined) {
-                                if(carmodelObj.is_default == 1 && carModelDetailId == 0){
-                                populateCarValues(carmodelObj)
-                                trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
-                                }else{
-
+                                if(carmodelObj.is_default == 1 && carModelDetailId == 0) {
+                                    populateCarValues(carmodelObj)
+                                    trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
+                                } else {
                                     if(carModelDetailId != 0 && carmodelObj.id == carModelDetailId) {
                                         trim.append('<option selected value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
                                     } else if(create == 0) {
@@ -159,20 +157,24 @@
                                     }
                                     trim.append('<option value="' + carmodelObj.id + '">' + carmodelObj.text + '</option>');
                                 }
-                            }else {
+                            } else {
                                 populateCarValues(carmodelObj)
                                 trim.append('<option value="">I dont know</option>');
                             }
-
                         });
-
-                    } else{
-                        $('#trim').empty();
+                        if(car_model_id != oldCarModelId) {
+                            $("#vehicle_assumptions_error_msg").hide(300);
+						    $("#vehicle_assumptions_success_msg").show(300);
+                        }
+                    } else {
+                        $("#vehicle_assumptions_error_msg").show(300);
+						$("#vehicle_assumptions_success_msg").hide(300);
+						$('#cylinder').val('');
+						$('#seat_capacity').val('');
+						$('#vehicle_type_id').val('');
+						$('#trim').empty();
                     }
                 },
-                error: function(data){
-
-                }
             });
         }
 
@@ -185,20 +187,9 @@
             if(carmodelObj.vehicle_type_id)
                 $('#vehicle_type_id').val(carmodelObj.vehicle_type_id);
         }
-        function loadTrimValues(trimId)
-        {
+        function loadTrimValues(trimId) {
             $.get('/getCarModelTrimValues?id=' + trimId, function (data) {
-                if(data.length > 0) {
-                    $("#vehicle_assumptions_error_msg").hide(300);
-                    $("#vehicle_assumptions_success_msg").show(300);
-                    populateCarValues(data);
-                }else {
-                    $("#vehicle_assumptions_error_msg").show(300);
-                    $("#vehicle_assumptions_success_msg").hide(300);
-                    $('#cylinder').val('');
-                    $('#seat_capacity').val('');
-                    $('#vehicle_type_id').val('');
-                }
+                populateCarValues(data);
             });
         }
 
