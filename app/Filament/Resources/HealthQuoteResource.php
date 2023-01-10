@@ -15,6 +15,7 @@ use App\Models\HealthQuote;
 use App\Models\QuoteStatus;
 use App\Models\User;
 use Filament\Forms;
+use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Fieldset;
 use Filament\Forms\Components\Tabs;
 use Filament\Resources\Form;
@@ -62,162 +63,160 @@ class HealthQuoteResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Group::make()
-                    ->schema([
-                        Tabs::make('Lead')
-                            ->tabs([
-                                Tabs\Tab::make('Lead Details')
+                Tabs::make('Lead')
+                    ->tabs([
+                        Tabs\Tab::make('Lead Details')
+                            ->schema([
+                                Fieldset::make('Lead Details')
                                     ->schema([
-                                        Fieldset::make('Lead Details')
-                                            ->schema([
-                                                Forms\Components\Placeholder::make('code')->label('CDB ID')->content(function (Model $record) {
-                                                    return $record?->code;
-                                                }),
-                                                Forms\Components\Placeholder::make('created_at')->label('Created At')->content(function (Model $record) {
-                                                    return $record?->created_at->format('M d, Y H:i:s');
-                                                }),
-                                                Forms\Components\Placeholder::make('health_team_type')->label('Sub Team')->content(function (Model $record) {
-                                                    return $record?->health_team_type;
-                                                }),
-                                                Forms\Components\Placeholder::make('advisor_id')->label('Advisor')->content(function (Model $record) {
-                                                    return $record?->advisor?->name;
-                                                }),
-                                                Forms\Components\Placeholder::make('source')->content(function (Model $record) {
-                                                    return $record?->source;
-                                                }),
-                                                Forms\Components\Placeholder::make('updated_at')->label('Last Modified Date')->content(function (Model $record) {
-                                                    return $record?->updated_at->format('M d, Y H:i:s');
-                                                }),
-                                                Forms\Components\Placeholder::make('parent_duplicate_quote_id')->label('Parent CDB ID')->content(function (Model $record) {
-                                                    return $record?->parent_duplicate_quote_id;
-                                                }),
-                                                Forms\Components\Placeholder::make('renewal_batch')->label('Renewal Batch')->content(function (Model $record) {
-                                                    return $record?->renewal_batch;
-                                                }),
-                                                Forms\Components\Placeholder::make('is_ecommerce')->label('Is Ecommerce')->content(function (Model $record) {
-                                                    return $record?->is_ecommerce ? 'Yes' : 'No';
-                                                }),
-                                                Forms\Components\Placeholder::make('is_renewal')->label('Is Renewal')->content(function (Model $record) {
-                                                    return $record?->is_renewal ? 'Yes' : 'No';
-                                                }),
-                                            ])
-                                            ->visibleOn('view'),
-                                        Fieldset::make('Customer Profile')
-                                            ->schema([
-                                                Forms\Components\TextInput::make('first_name')
-                                                    ->maxLength(255)
-                                                    ->required(),
-                                                Forms\Components\TextInput::make('last_name')
-                                                    ->maxLength(255)
-                                                    ->required(),
-                                                Forms\Components\TextInput::make('email')
-                                                    ->email()
-                                                    ->maxLength(150)
-                                                    ->required(),
-                                                Forms\Components\TextInput::make('mobile_no')
-                                                    ->maxLength(20)
-                                                    ->required(),
-                                                Forms\Components\Select::make('gender')
-                                                    ->options([
-                                                        GenericRequestEnum::MALE_SINGLE,
-                                                        GenericRequestEnum::FEMALE_SINGLE,
-                                                        GenericRequestEnum::FEMALE_MARRIED,
-                                                    ]),
-                                                Forms\Components\Select::make('marital_status_id')
-                                                    ->label('Marital Status')
-                                                    ->options(function () {
-                                                        return DB::table('marital_status')->where('is_active', true)->pluck('text', 'id');
-                                                    })
-                                                    ->required(),
-                                                Forms\Components\Select::make('nationality_id')
-                                                    ->label('Nationality')
-                                                    ->options(function () {
-                                                        return DB::table('nationality')->where('is_active', true)->pluck('text', 'id');
-                                                    })
-                                                    ->searchable()
-                                                    ->required(),
-                                                Forms\Components\DatePicker::make('dob')->label('Date of Birth')->required(),
-                                                Forms\Components\Select::make('emirate_of_your_visa_id')
-                                                    ->label('Emirate of Visa')
-                                                    ->options(function () {
-                                                        return DB::table('emirates')->where('is_active', true)->pluck('text', 'id');
-                                                    })
-                                                    ->required(),
-                                                Forms\Components\Select::make('member_category_id')
-                                                    ->label('Member Category')
-                                                    ->options(function () {
-                                                        return DB::table('member_category')->where('is_active', true)->pluck('text', 'id');
-                                                    }),
-                                                Forms\Components\Select::make('salary_band_id')
-                                                    ->label('Salary Band')
-                                                    ->options(function () {
-                                                        return DB::table('salary_band')->where('is_active', true)->pluck('text', 'id');
-                                                    }),
+                                        Forms\Components\Placeholder::make('code')->label('CDB ID')->content(function (Model $record) {
+                                            return $record?->code;
+                                        }),
+                                        Forms\Components\Placeholder::make('created_at')->label('Created At')->content(function (Model $record) {
+                                            return $record?->created_at->format('M d, Y H:i:s');
+                                        }),
+                                        Forms\Components\Placeholder::make('health_team_type')->label('Sub Team')->content(function (Model $record) {
+                                            return $record?->health_team_type;
+                                        }),
+                                        Forms\Components\Placeholder::make('advisor_id')->label('Advisor')->content(function (Model $record) {
+                                            return $record?->advisor?->name;
+                                        }),
+                                        Forms\Components\Placeholder::make('source')->content(function (Model $record) {
+                                            return $record?->source;
+                                        }),
+                                        Forms\Components\Placeholder::make('updated_at')->label('Last Modified Date')->content(function (Model $record) {
+                                            return $record?->updated_at->format('M d, Y H:i:s');
+                                        }),
+                                        Forms\Components\Placeholder::make('parent_duplicate_quote_id')->label('Parent CDB ID')->content(function (Model $record) {
+                                            return $record?->parent_duplicate_quote_id;
+                                        }),
+                                        Forms\Components\Placeholder::make('renewal_batch')->label('Renewal Batch')->content(function (Model $record) {
+                                            return $record?->renewal_batch;
+                                        }),
+                                        Forms\Components\Placeholder::make('is_ecommerce')->label('Is Ecommerce')->content(function (Model $record) {
+                                            return $record?->is_ecommerce ? 'Yes' : 'No';
+                                        }),
+                                        Forms\Components\Placeholder::make('is_renewal')->label('Is Renewal')->content(function (Model $record) {
+                                            return $record?->is_renewal ? 'Yes' : 'No';
+                                        }),
+                                    ])
+                                    ->visibleOn('view'),
+                                Fieldset::make('Customer Profile')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('first_name')
+                                            ->maxLength(255)
+                                            ->required(),
+                                        Forms\Components\TextInput::make('last_name')
+                                            ->maxLength(255)
+                                            ->required(),
+                                        Forms\Components\TextInput::make('email')
+                                            ->email()
+                                            ->maxLength(150)
+                                            ->required(),
+                                        Forms\Components\TextInput::make('mobile_no')
+                                            ->maxLength(20)
+                                            ->required(),
+                                        Forms\Components\Select::make('gender')
+                                            ->options([
+                                                GenericRequestEnum::MALE_SINGLE,
+                                                GenericRequestEnum::FEMALE_SINGLE,
+                                                GenericRequestEnum::FEMALE_MARRIED,
                                             ]),
-                                        Fieldset::make('Quote Details')
-                                            ->schema([
-                                                Forms\Components\Select::make('cover_for_id')->label('Who are you looking to cover')
-                                                    ->options(function () {
-                                                        return DB::table('health_cover_for')->where('is_active', true)->pluck('text', 'id');
-                                                    }),
-                                                Forms\Components\Select::make('currently_insured_with_id')
-                                                    ->label('Currently Insured With')
-                                                    ->searchable()
-                                                    ->options(function () {
-                                                        return DB::table('insurance_provider')->where('is_active', true)->pluck('text', 'id');
-                                                    }),
-
-                                                Forms\Components\Select::make('health_plan_type_id')
-                                                    ->label('Type of Plan')
-                                                    ->options(function () {
-                                                        return DB::table('health_plan_type')->where('is_active', true)->pluck('text', 'id');
-                                                    }),
-
-                                                Forms\Components\TextInput::make('details')
-                                                    ->maxLength(1000),
-                                            ]),
-                                        Fieldset::make("Last Year's Policy Details")
-                                            ->schema([
-                                                Forms\Components\TextInput::make('previous_quote_policy_number')
-                                                    ->maxLength(100),
-                                                Forms\Components\DatePicker::make('previous_policy_expiry_date'),
-                                                Forms\Components\TextInput::make('previous_quote_policy_premium'),
-                                            ])
-                                            ->visibleOn('view'),
-                                        Fieldset::make('Policy Details')
-                                            ->schema([
-                                                Forms\Components\TextInput::make('policy_number')
-                                                    ->maxLength(100),
-                                                Forms\Components\DatePicker::make('policy_start_date'),
-                                                Forms\Components\DatePicker::make('renewal_expiry_date')->label('Policy End Date'),
-                                            ]),
-                                        Fieldset::make('Request Details')
-                                            ->schema([
-                                                Forms\Components\Placeholder::make('transapp_code')->label('Transapp Code')->content(function (Model $record) {
-                                                    return $record->transapp_code;
-                                                }),
-                                                Forms\Components\Placeholder::make('next_followup_date')->label('Next Followup Date')->content(function (Model $record) {
-                                                    return $record->next_followup_date?->format('M d, Y H:i:s');
-                                                }),
-                                            ])
-                                            ->visibleOn('view'),
-
+                                        Forms\Components\Select::make('marital_status_id')
+                                            ->label('Marital Status')
+                                            ->options(function () {
+                                                return DB::table('marital_status')->where('is_active', true)->pluck('text', 'id');
+                                            })
+                                            ->required(),
+                                        Forms\Components\Select::make('nationality_id')
+                                            ->label('Nationality')
+                                            ->options(function () {
+                                                return DB::table('nationality')->where('is_active', true)->pluck('text', 'id');
+                                            })
+                                            ->searchable()
+                                            ->required(),
+                                        Forms\Components\DatePicker::make('dob')->label('Date of Birth')->required(),
+                                        Forms\Components\Select::make('emirate_of_your_visa_id')
+                                            ->label('Emirate of Visa')
+                                            ->options(function () {
+                                                return DB::table('emirates')->where('is_active', true)->pluck('text', 'id');
+                                            })
+                                            ->required(),
+                                        Forms\Components\Select::make('member_category_id')
+                                            ->label('Member Category')
+                                            ->options(function () {
+                                                return DB::table('member_category')->where('is_active', true)->pluck('text', 'id');
+                                            }),
+                                        Forms\Components\Select::make('salary_band_id')
+                                            ->label('Salary Band')
+                                            ->options(function () {
+                                                return DB::table('salary_band')->where('is_active', true)->pluck('text', 'id');
+                                            }),
                                     ]),
-                                Tabs\Tab::make('E-COM Details')
+                                Fieldset::make('Quote Details')
                                     ->schema([
-                                        Forms\Components\Placeholder::make('Plan Name'),
-                                        Forms\Components\Placeholder::make('Provider Name'),
-                                        Forms\Components\Placeholder::make('Payment Status'),
-                                        Forms\Components\Placeholder::make('Paid At'),
-                                        Forms\Components\Placeholder::make('Network'),
-                                    ])->columns(2)->hiddenOn(['create', 'edit']),
-                                Tabs\Tab::make('Lead History')
-                                    ->schema(function (?Model $record) {
-                                        return static::getActivitiesSchema($record->health_quote_request_id);
-                                    })->hiddenOn(['create', 'edit']),
+                                        Forms\Components\Select::make('cover_for_id')->label('Who are you looking to cover')
+                                            ->options(function () {
+                                                return DB::table('health_cover_for')->where('is_active', true)->pluck('text', 'id');
+                                            }),
+                                        Forms\Components\Select::make('currently_insured_with_id')
+                                            ->label('Currently Insured With')
+                                            ->searchable()
+                                            ->options(function () {
+                                                return DB::table('insurance_provider')->where('is_active', true)->pluck('text', 'id');
+                                            }),
+
+                                        Forms\Components\Select::make('health_plan_type_id')
+                                            ->label('Type of Plan')
+                                            ->options(function () {
+                                                return DB::table('health_plan_type')->where('is_active', true)->pluck('text', 'id');
+                                            }),
+
+                                        Forms\Components\TextInput::make('details')
+                                            ->maxLength(1000),
+                                    ]),
+                                Fieldset::make("Last Year's Policy Details")
+                                    ->schema([
+                                        Forms\Components\TextInput::make('previous_quote_policy_number')
+                                            ->maxLength(100),
+                                        Forms\Components\DatePicker::make('previous_policy_expiry_date'),
+                                        Forms\Components\TextInput::make('previous_quote_policy_premium'),
+                                    ])
+                                    ->visibleOn('view'),
+                                Fieldset::make('Policy Details')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('policy_number')
+                                            ->maxLength(100),
+                                        Forms\Components\DatePicker::make('policy_start_date'),
+                                        Forms\Components\DatePicker::make('renewal_expiry_date')->label('Policy End Date'),
+                                    ]),
+                                Fieldset::make('Request Details')
+                                    ->schema([
+                                        Forms\Components\Placeholder::make('transapp_code')->label('Transapp Code')->content(function (Model $record) {
+                                            return $record->transapp_code;
+                                        }),
+                                        Forms\Components\Placeholder::make('next_followup_date')->label('Next Followup Date')->content(function (Model $record) {
+                                            return $record->next_followup_date?->format('M d, Y H:i:s');
+                                        }),
+                                    ])
+                                    ->visibleOn('view'),
+
                             ]),
-                    ])->columnSpan(['lg' => 3]),
-                Forms\Components\Group::make()
+                        Tabs\Tab::make('E-COM Details')
+                            ->schema([
+                                Forms\Components\Placeholder::make('Plan Name'),
+                                Forms\Components\Placeholder::make('Provider Name'),
+                                Forms\Components\Placeholder::make('Payment Status'),
+                                Forms\Components\Placeholder::make('Paid At'),
+                                Forms\Components\Placeholder::make('Network'),
+                            ])->columns(2)->hiddenOn(['create', 'edit']),
+                        Tabs\Tab::make('Lead History')
+                            ->schema(function (?Model $record) {
+                                return static::getActivitiesSchema($record->health_quote_request_id);
+                            })->hiddenOn(['create', 'edit']),
+                    ]),
+
+                Card::make()
                     ->schema([
                         Forms\Components\Select::make('quote_status_id')
                             ->label('Lead Status')
@@ -233,9 +232,8 @@ class HealthQuoteResource extends Resource
                                 }
                             ),
                         Forms\Components\Textarea::make('additional_notes')->label('Notes')->maxLength(1000),
-                    ])->hiddenOn('create')->columnSpan(['lg' => 1]),
-
-            ])->columns(4);
+                    ])->hiddenOn('create'),
+            ])->columns(1);
     }
 
     public static function getActivitiesSchema($id): array

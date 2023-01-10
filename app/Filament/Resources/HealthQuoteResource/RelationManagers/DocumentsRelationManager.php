@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\HealthQuoteResource\RelationManagers;
 
+use App\Enums\QuoteTypeId;
 use App\Models\DocumentType;
 use Filament\Forms;
 use Filament\Forms\Components\Section;
@@ -47,7 +48,7 @@ class DocumentsRelationManager extends RelationManager
                         return 'Upload Document for '.$livewire->ownerRecord->code;
                     })
                     ->modalWidth('6xl')
-                    ->modalButton(null),
+                    ->modalButton('Save'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -65,7 +66,7 @@ class DocumentsRelationManager extends RelationManager
 
         $docTypes = DocumentType::where([
             'is_active' => 1,
-            'quote_type_id' => 3,
+            'quote_type_id' => QuoteTypeId::Health,
         ])
             // ->orderBy('sort_order')
             ->orderBy('id', 'desc')
