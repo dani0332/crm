@@ -20,7 +20,7 @@ class LeadAllocationJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, GetUserTreeTrait;
 
     public $tries = 2;
-    public $timeout = 10;
+    public $timeout = 30;
     public $backoff = 20;
     private $leadAllocationJobId = 'lead_allocation';
 
