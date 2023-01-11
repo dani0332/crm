@@ -56,8 +56,9 @@ class HealthAvailablePlan extends Model
         } else {
             if (gettype($quotePlans) !== GenericRequestEnum::TypeString) {
                 $listQuotePlans = $quotePlans->quote->plans;
-                foreach ($listQuotePlans as $key => $plan) {
-                    $responseData[] = [
+
+                $responseData = collect($listQuotePlans)->map(function ($plan) {
+                    return [
                         'uuid' => last(request()->segments()),
                         'id' => $plan?->id,
                         'planCode' => $plan?->planCode,
@@ -75,9 +76,7 @@ class HealthAvailablePlan extends Model
                         'policyWordings' => json_encode($plan?->policyWordings),
                         'excess' => json_encode($plan?->excess),
                     ];
-                }
-
-                return $responseData;
+                })->toArray();
             } else {
                 $listQuotePlans = $quotePlans;
             }
