@@ -5,6 +5,7 @@ namespace App\Filament\Resources\HealthQuoteResource\RelationManagers;
 use App\Services\HealthQuoteService;
 use Filament\Forms;
 use Filament\Forms\Components\Tabs;
+use Filament\Notifications\Notification;
 use Filament\Resources\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Resources\Table;
@@ -108,12 +109,22 @@ class AvailablePlansRelationManager extends RelationManager
             ])
             ->bulkActions([
                 Tables\Actions\BulkAction::make('exportHealthPdf')
-                    ->action(function ($records,  HealthQuoteService $healthQuoteService) {
+                    ->action(function ($records, HealthQuoteService $healthQuoteService, $action) {
+                        if ($records->count() < 3) {
+                            Notification::make()
+                                ->warning()
+                                ->title('Please select at least 3 plans to export')
+                                ->send();
+
+                            return $action->halt();
+                        }
                         $planIds = collect($records)->pluck('id')->toArray();
                         $response = $healthQuoteService->exportPlansPdf('health', ['plan_ids' => $planIds, 'quote_uuid' => 'UKD7ABWX']);
                         $pdf = $response['pdf'];
+
                         return response()->streamDownload(fn () => print($pdf->output()), $response['name']);
                     })
+                    ->deselectRecordsAfterCompletion(),
             ]);
     }
 
