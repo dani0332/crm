@@ -39,7 +39,6 @@ class HealthAvailablePlan extends Model
         'policyWordings' => 'array',
         'excess' => 'array',
     ];
-    public $uuid;
 
     /**
      * Model Rows.
@@ -48,11 +47,9 @@ class HealthAvailablePlan extends Model
      */
     public function getRows()
     {
-        $this->uuid = request()->route('record');
-
         $listQuotePlans = '';
         $responseData = [];
-        $quotePlans = app(HealthQuoteService::class)->getQuotePlansNew($this->uuid);
+        $quotePlans = app(HealthQuoteService::class)->getQuotePlansNew(last(request()->segments()));
 
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;
@@ -61,7 +58,7 @@ class HealthAvailablePlan extends Model
                 $listQuotePlans = $quotePlans->quote->plans;
                 foreach ($listQuotePlans as $key => $plan) {
                     $responseData[] = [
-                        'uuid' => $this->uuid,
+                        'uuid' => last(request()->segments()),
                         'id' => $plan?->id,
                         'planCode' => $plan?->planCode,
                         'name' => $plan?->name,
