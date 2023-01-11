@@ -23,21 +23,12 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        // AdvisorAssigned::class => [
-        //     AdvisorAssignedListener::class,
-        // ],
         Login::class => [
             LoginListener::class,
         ],
         Logout::class => [
             LogoutListener::class,
         ],
-        // 'Illuminate\Queue\Events\JobProcessing' => [
-        //     'App\Listeners\JobListener@handleJobProcessing',
-        // ],
-        // 'Illuminate\Queue\Events\JobProcessed' => [
-        //     'App\Listeners\JobListener@handleJobProcessed',
-        // ],
     ];
 
     /**
