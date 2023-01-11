@@ -23,9 +23,9 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        AdvisorAssigned::class => [
-            AdvisorAssignedListener::class,
-        ],
+        // AdvisorAssigned::class => [
+        //     AdvisorAssignedListener::class,
+        // ],
         Login::class => [
             LoginListener::class,
         ],
