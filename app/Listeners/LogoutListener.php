@@ -3,9 +3,6 @@
 namespace App\Listeners;
 
 use Illuminate\Auth\Events\Logout;
-use IlluminateAuthEventsLogout;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 
 class LogoutListener
 {
