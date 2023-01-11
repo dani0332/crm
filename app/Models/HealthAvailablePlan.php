@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\GenericRequestEnum;
 use App\Services\HealthQuoteService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Sushi\Sushi;
 
 class HealthAvailablePlan extends Model
@@ -47,6 +48,13 @@ class HealthAvailablePlan extends Model
      */
     public function getRows()
     {
+        return Cache::remember('HealthAvailablePlan::rows', now()->addMinutes(5), function () {
+            return $this->getAPI();
+        });
+    }
+
+    protected function getAPI()
+    {
         $listQuotePlans = '';
         $responseData = [];
         $quotePlans = app(HealthQuoteService::class)->getQuotePlansNew(last(request()->segments()));
@@ -85,8 +93,8 @@ class HealthAvailablePlan extends Model
         return $responseData;
     }
 
-    protected function sushiShouldCache()
-    {
-        return true;
-    }
+    // protected function sushiShouldCache()
+    // {
+    //     return true;
+    // }
 }
