@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Events\AdvisorAssigned;
-use App\Listeners\AdvisorAssignedListener;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
 use Illuminate\Auth\Events\Login;
