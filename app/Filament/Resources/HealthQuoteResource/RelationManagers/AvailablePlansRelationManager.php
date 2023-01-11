@@ -109,7 +109,8 @@ class AvailablePlansRelationManager extends RelationManager
             ->bulkActions([
                 Tables\Actions\BulkAction::make('exportHealthPdf')
                     ->action(function ($records,  HealthQuoteService $healthQuoteService) {
-                        $response = $healthQuoteService->exportPlansPdf('health', ['plan_ids' => [1,3,6], 'quote_uuid' => 'UKD7ABWX']);
+                        $planIds = collect($records)->pluck('id')->toArray();
+                        $response = $healthQuoteService->exportPlansPdf('health', ['plan_ids' => $planIds, 'quote_uuid' => 'UKD7ABWX']);
                         $pdf = $response['pdf'];
                         return response()->streamDownload(fn () => print($pdf->output()), $response['name']);
                     })
