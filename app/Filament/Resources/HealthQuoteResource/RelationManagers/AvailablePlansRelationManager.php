@@ -108,16 +108,18 @@ class AvailablePlansRelationManager extends RelationManager
                 CopyAction::make()->copyable(config('constants.AFIA_WEBSITE_DOMAIN')),
             ])
             ->bulkActions([
-                Tables\Actions\BulkAction::make('exportHealthPdf')
+                Tables\Actions\BulkAction::make('downloadPdf')
                     ->action(function ($records, HealthQuoteService $healthQuoteService, $action) {
-                        if ($records->count() < 3) {
+                        if ($records->count() < 3 || $records->count() > 5) {
                             Notification::make()
-                                ->warning()
-                                ->title('Please select at least 3 plans to export')
+                                ->danger()
+                                ->title('Error')
+                                ->body('Please select 3 to 5 plans to download PDF.')
                                 ->send();
 
                             return $action->halt();
                         }
+
                         $planIds = collect($records)->pluck('id')->toArray();
                         $response = $healthQuoteService->exportPlansPdf('health', ['plan_ids' => $planIds, 'quote_uuid' => 'UKD7ABWX']);
                         $pdf = $response['pdf'];
