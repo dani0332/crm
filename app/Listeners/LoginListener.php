@@ -24,6 +24,6 @@ class LoginListener
      */
     public function handle(Login $event)
     {
-        info("User with ID: {$event->user->id} and name : {$event->user->name} logged in.");
+        info("User with ID: {$event->user->id} and email : {$event->user->email} logged in.");
     }
 }
