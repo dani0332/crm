@@ -1,0 +1,1 @@
+<img src="{{ asset('/images/logo.png') }}" alt="IMCRM" class="h-10">

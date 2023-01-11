@@ -14,10 +14,10 @@ class ListHealthQuotes extends ListRecords
     protected static string $resource = HealthQuoteResource::class;
 
     // simple pagination
-    // protected function paginateTableQuery(Builder $query): Paginator
-    // {
-    //     return $query->simplePaginate($this->getTableRecordsPerPage() == -1 ? $query->count() : $this->getTableRecordsPerPage());
-    // }
+    protected function paginateTableQuery(Builder $query): Paginator
+    {
+        return $query->simplePaginate($this->getTableRecordsPerPage() == -1 ? $query->count() : $this->getTableRecordsPerPage());
+    }
 
     protected function getTableRecordsPerPageSelectOptions(): array
     {
