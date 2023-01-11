@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\HealthQuoteResource\RelationManagers;
 
+use App\Services\HealthQuoteService;
 use Filament\Forms;
 use Filament\Forms\Components\Tabs;
 use Filament\Resources\Form;
@@ -105,7 +106,14 @@ class AvailablePlansRelationManager extends RelationManager
                 Tables\Actions\ViewAction::make(),
                 CopyAction::make()->copyable(config('constants.AFIA_WEBSITE_DOMAIN')),
             ])
-            ->bulkActions([]);
+            ->bulkActions([
+                Tables\Actions\BulkAction::make('exportHealthPdf')
+                    ->action(function ($records,  HealthQuoteService $healthQuoteService) {
+                        $response = $healthQuoteService->exportPlansPdf('health', ['plan_ids' => [1,3,6], 'quote_uuid' => 'UKD7ABWX']);
+                        $pdf = $response['pdf'];
+                        return response()->streamDownload(fn () => print($pdf->output()), $response['name']);
+                    })
+            ]);
     }
 
     protected function isTablePaginationEnabled(): bool
