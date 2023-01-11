@@ -13,18 +13,18 @@ class Activities extends Model implements AuditableContract
 
     protected $table = 'activitìes';
 
-    public function getCreatedAtAttribute($table)
+    public function getCreatedAtAttribute($date)
     {
-        return $this->asDateTime($table)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
-    public function getUpdatedAtAttribute($table)
+    public function getUpdatedAtAttribute($date)
     {
-        return $this->asDateTime($table)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
-    public function getDueDateAttribute($table)
+    public function getDueDateAttribute($date)
     {
-        return $this->asDateTime($table)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 }
