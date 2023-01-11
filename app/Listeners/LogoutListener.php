@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Listeners;
+
+use Illuminate\Auth\Events\Logout;
+use IlluminateAuthEventsLogout;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
+
+class LogoutListener
+{
+    /**
+     * Create the event listener.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        //
+    }
+
+    /**
+     * Handle the event.
+     *
+     * @param  \IlluminateAuthEventsLogout  $event
+     * @return void
+     */
+    public function handle(Logout $event)
+    {
+        info("User with ID: {$event->user->id} and name : {$event->user->name} logged out.");
+    }
+}

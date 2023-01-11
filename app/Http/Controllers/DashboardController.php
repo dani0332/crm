@@ -9,6 +9,7 @@ use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Services\DashboardService;
+use App\Services\TierService;
 use App\Traits\TeamHierarchyTrait;
 use DB;
 use Illuminate\Http\Request;
@@ -18,10 +19,12 @@ class DashboardController extends Controller
     use TeamHierarchyTrait;
 
     protected $dashboardService;
+    protected $tierService;
 
-    public function __construct(DashboardService $dashboardService)
+    public function __construct(DashboardService $dashboardService, TierService $tierService)
     {
         $this->dashboardService = $dashboardService;
+        $this->tierService = $tierService;
     }
 
     /**
@@ -94,12 +97,13 @@ class DashboardController extends Controller
         $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getTeamsByProductId($car->id);
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
+        $tiers = $this->tierService->getTPLTiers();
         $commonTeam = 0;
         if (count($commonTeams) > 0) {
             $commonTeam = $commonTeams[0];
         }
 
-        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'commonTeam'));
+        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'commonTeam', 'tiers'));
     }
 
     public function getTPLDashboardStats(Request $request): array

@@ -136,7 +136,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                 $total = 0;
                 foreach ($rows as $row) {
                     if (($row->sale_leads - $row->created_sale_leads) > 0) {
-                        $total = $total + (($row->total_leads - $row->bad_leads - $row->manual_created) / ($row->sale_leads - $row->created_sale_leads));
+                        $total = $total + (($row->sale_leads - $row->created_sale_leads)/ ($row->total_leads - $row->bad_leads - $row->manual_created) );
                     }
                 }
 
