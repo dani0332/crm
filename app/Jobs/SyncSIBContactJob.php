@@ -15,7 +15,7 @@ class SyncSIBContactJob implements ShouldQueue
 
     public $tries = 3;
     public $timeout = 15;
-    public $backoff = 20;
+    public $backoff = 300;
     protected $entity = null;
 
     /**

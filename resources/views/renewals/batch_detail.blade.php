@@ -8,9 +8,7 @@
         </h2>
         <div class="flex gap-2">
             <a href="{{ url('renewals/batches') }}" class="btn-2">Batches List</a>
-            @if($hideSendEmailButton == 0)
             <a class="btn" onclick="return confirm('Do you want to send emails?');" href="{{ $batch }}/batch-process">Send Emails</a>
-            @endif
         </div>
     </div>
 

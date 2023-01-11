@@ -16,7 +16,7 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
-use App\Traits\GetUserTree;
+use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -30,9 +30,7 @@ class HealthQuoteService extends BaseService
     protected $leadAllocationService;
     protected $httpService;
 
-    use GetUserTree;
-    use RolePermissionConditions;
-    use AddPremiumAllLobs;
+    use AddPremiumAllLobs,RolePermissionConditions, GetUserTreeTrait;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
