@@ -9,7 +9,7 @@ use App\Enums\quoteTypeCode;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
-use App\Traits\GetUserTree;
+use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -22,9 +22,7 @@ class BusinessQuoteService extends BaseService
 {
     protected $query;
 
-    use GetUserTree;
-    use RolePermissionConditions;
-    use AddPremiumAllLobs;
+    use GetUserTreeTrait, RolePermissionConditions, AddPremiumAllLobs;
 
     protected $leadAllocationService;
 
