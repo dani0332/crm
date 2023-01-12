@@ -1,3 +1,15 @@
+<script>
+$(document).ready(function() {
+    $('#due_date').daterangepicker({
+        timePicker: true,
+        singleDatePicker: true,
+        timePicker24Hour: true,
+        locale: {
+            format: 'DD-MM-YYYY HH:mm:ss',
+        },
+    });
+});
+</script>
 <form method="post" action="{{'/activities/'. $record->uuid .'/update'}}" autocomplete="off">
     {{ csrf_field() }}
     @method('POST')
