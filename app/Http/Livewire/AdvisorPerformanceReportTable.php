@@ -2,9 +2,7 @@
 
 namespace App\Http\Livewire;
 
-use App\Enums\quoteTypeCode;
 use App\Models\CarQuote;
-use App\Models\Team;
 use App\Models\Tier;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
