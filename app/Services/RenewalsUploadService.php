@@ -29,7 +29,6 @@ use App\Models\ClaimHistory;
 use App\Models\Customer;
 use App\Models\Emirate;
 use App\Models\HealthPlan;
-use App\Models\HealthQuotePlan;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\QuoteStatus;
@@ -704,7 +703,6 @@ class RenewalsUploadService
         info($logPrefix.' Quote creation started');
 
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix) {
-
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
             $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
@@ -793,14 +791,13 @@ class RenewalsUploadService
         /**
          * create manual plan for health
          */
-        if($quote && $renewalQuoteProcess->quote_type == QuoteTypeShortCode::HEA && !empty($data['plan_name'])) {
-
+        if ($quote && $renewalQuoteProcess->quote_type == QuoteTypeShortCode::HEA && ! empty($data['plan_name'])) {
             $planResponse = $this->createHealthPlan($data, $quote);
 
             if (is_int($planResponse) && $planResponse == 200) {
-                info($logPrefix . ' manual plan for health created successfully for UUID: '.$quote->uuid);
+                info($logPrefix.' manual plan for health created successfully for UUID: '.$quote->uuid);
             } else {
-                info($logPrefix . ' manual plan for health failed for UUID: '.$quote->uuid);
+                info($logPrefix.' manual plan for health failed for UUID: '.$quote->uuid);
             }
         }
 
@@ -967,7 +964,7 @@ class RenewalsUploadService
 
         $healthPlan = HealthPlan::where([
             'provider_id' => $provider->id,
-            'text' => $data['plan_name']
+            'text' => $data['plan_name'],
         ])->first();
 
         $planData = [
@@ -976,10 +973,10 @@ class RenewalsUploadService
             'plans' => [
                 'planId' => $healthPlan->id,
                 'actualPremium' => $data['premium'],
-                "discountPremium" => 0,
-                "isManualUpdate" => false,
-                "isManualPremium" => true
-            ]
+                'discountPremium' => 0,
+                'isManualUpdate' => false,
+                'isManualPremium' => true,
+            ],
         ];
 
         info($logPrefix.' setup create plan data is completed.');
@@ -988,12 +985,11 @@ class RenewalsUploadService
         info($logPrefix.' PlanData: '.json_encode($planData));
 
         return $this->healthQuoteService->renewalCreatePlan($planData);
-
     }
-
 
     /**
      * create manual plan for Car
+     *
      * @param $data
      * @param $quote
      * @return void
@@ -1240,8 +1236,6 @@ class RenewalsUploadService
                 $quoteType = $this->getQuoteTypeByShortCode($lead->quote_type);
                 $quoteTypeObject = $this->createQuoteObject($quoteType->code);
 
-
-
                 $leadData = (object) $lead->data;
                 info('CQF VALIDATION - Checking Quote Existence PolicyNo - '.$lead->policy_number.' Quote Type - '.json_encode($quoteTypeObject));
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $lead->policy_number) {
@@ -1256,14 +1250,14 @@ class RenewalsUploadService
                 }
                 if (! $leadData->insurer) {
                     $leadValidationErrors->push('Insurance Provider is required');
-                } elseif (! ($insurer = InsuranceProvider::where('code', $leadData->insurer)->first()) ) {
+                } elseif (! ($insurer = InsuranceProvider::where('code', $leadData->insurer)->first())) {
                     $leadValidationErrors->push('Invalid Insurance Code Provided');
                 }
 
-                if($lead->quote_type == QuoteTypeShortCode::HEA && $lead->type == RenewalsUploadType::CREATE_LEADS && isset($insurer->id) && !empty($leadData->plan_name)) {
-                     if(!HealthPlan::where(['provider_id' => $insurer->id,'text' => $leadData->plan_name])->first()) {
-                         $leadValidationErrors->push('Invalid Plan Name Provided');
-                     }
+                if ($lead->quote_type == QuoteTypeShortCode::HEA && $lead->type == RenewalsUploadType::CREATE_LEADS && isset($insurer->id) && ! empty($leadData->plan_name)) {
+                    if (! HealthPlan::where(['provider_id' => $insurer->id, 'text' => $leadData->plan_name])->first()) {
+                        $leadValidationErrors->push('Invalid Plan Name Provided');
+                    }
                 }
 
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->product_type) {
@@ -1440,8 +1434,6 @@ class RenewalsUploadService
                         }
                         break;
                 }
-
-
 
                 if ($leadValidationErrors->count() == 0) {
                     $lead->status = RenewalProcessStatuses::VALIDATED;

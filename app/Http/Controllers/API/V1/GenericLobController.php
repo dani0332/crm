@@ -12,7 +12,8 @@ class GenericLobController extends Controller
     protected $carQuoteService;
     protected $healthQuoteService;
 
-    public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService){
+    public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService)
+    {
         $this->carQuoteService = $carQuoteService;
         $this->healthQuoteService = $healthQuoteService;
     }
@@ -27,7 +28,7 @@ class GenericLobController extends Controller
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
-        $serviceName = strtolower($quoteType) . 'QuoteService';
+        $serviceName = strtolower($quoteType).'QuoteService';
         $response = $this->{$serviceName}->exportPlansPdf($quoteType, $request->validated());
 
         //return error if any
