@@ -12,5 +12,4 @@ final class TeamTypeEnum extends Enum
     public const PRODUCT_STR = 'Product';
     public const TEAM_STR = 'Team';
     public const SUBTEAM_STR = 'Subteam';
-
 }

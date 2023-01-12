@@ -38,7 +38,7 @@ trait TeamHierarchyTrait
     {
         $product = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $productName)->where('is_active', 1)->first();
 
-        return !$product ? null : Team::where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $product->id)->where('is_active', 1)->get();
+        return ! $product ? null : Team::where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $product->id)->where('is_active', 1)->get();
     }
 
     public function getAllSubTeams()

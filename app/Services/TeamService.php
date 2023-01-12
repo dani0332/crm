@@ -75,7 +75,7 @@ class TeamService extends BaseService
         return [
             'id' => 'readonly|none',
             'name' => 'input|text|required|title',
-            'type' => '|static|title|'. TeamTypeEnum::PRODUCT_STR .','. TeamTypeEnum::TEAM_STR .','. TeamTypeEnum::SUBTEAM_STR .'',
+            'type' => '|static|title|'.TeamTypeEnum::PRODUCT_STR.','.TeamTypeEnum::TEAM_STR.','.TeamTypeEnum::SUBTEAM_STR.'',
             'parent_team_id' => 'select|title',
 
         ];

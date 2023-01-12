@@ -5,15 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Team;
 use App\Services\TeamService;
 use App\Traits\TeamHierarchyTrait;
-use Auth;
-use Config;
-use Yajra\DataTables\Facades\DataTables;
-use DB;
 use Illuminate\Http\Request;
+use Yajra\DataTables\Facades\DataTables;
 
 class TeamsController extends Controller
 {
     use TeamHierarchyTrait;
+
     protected $teamService;
     public function __construct(TeamService $teamService)
     {
@@ -26,16 +24,16 @@ class TeamsController extends Controller
      */
     public function index(Request $request)
     {
-
         $gridData = Team::with('parent')->whereNotNull('type');
 
         if ($request->ajax()) {
             if (isset($request->name) && ! empty($request->name)) {
                 $name = $request->name;
                 $gridData = $gridData->where(function ($query) use ($name) {
-                    $query->whereRaw("LOWER(name) LIKE ?", [strtolower("%{$name}%")]);
+                    $query->whereRaw('LOWER(name) LIKE ?', [strtolower("%{$name}%")]);
                 });
             }
+
             return DataTables::of($gridData->get()->sortBy('parent.name'))
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
@@ -44,6 +42,7 @@ class TeamsController extends Controller
                 ->rawColumns(['action'])
                 ->make(true);
         }
+
         return view('teams.view');
     }
 
@@ -67,17 +66,17 @@ class TeamsController extends Controller
      */
     public function store(Request $request)
     {
-        $validateArray =[
+        $validateArray = [
             'name' => 'required',
             'type' => 'required',
         ];
-        if(isset($request->type) && $request->type == '2' || $request->type == '3'){
+        if (isset($request->type) && $request->type == '2' || $request->type == '3') {
             $validateArray['parent_team_id'] = 'required';
         }
         $this->validate($request, $validateArray);
 
         $team = new Team();
-        if(isset($request->type) && $request->type == '2' || $request->type == '3'){
+        if (isset($request->type) && $request->type == '2' || $request->type == '3') {
             $team->parent_team_id = $request->parent_team_id;
         }
         $team->name = $request->name;

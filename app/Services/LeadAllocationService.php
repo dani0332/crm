@@ -575,7 +575,7 @@ class LeadAllocationService extends BaseService
     public function getCarUnallocatedLeads($from)
     {
         $to = now()->subMinutes(2)->toDateTimeString();
-        info('Car leads fetch start date is :'.$from . '  and end datetime is : '. $to);
+        info('Car leads fetch start date is :'.$from.'  and end datetime is : '.$to);
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
         $carLeadPickupLimit = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_LIMIT');
 
