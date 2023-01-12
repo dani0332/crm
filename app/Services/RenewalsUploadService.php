@@ -764,6 +764,10 @@ class RenewalsUploadService
                 $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
             }
 
+            if ($quoteType->code == quoteTypeCode::Health) {
+                $quoteData['currently_insured_with_id'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->id;
+            }
+
             //set business type insurance id
             if (! empty($data['product_type'] && $quoteType->code == quoteTypeCode::Business)) {
                 if (($businessSubline = $this->renewalsAddonService->getBusinessSublineInsurance($data['product_type']))) {
