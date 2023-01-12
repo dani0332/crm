@@ -488,7 +488,7 @@
         var cData = [];
         for (let index = 0; index < advisorConversionData.length; index++) {
             var node = advisorConversionData[index];
-            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( (node.total_leads - node.bad_leads - node.manual_created ) / ( node.sale_leads - node.created_sale_leads ) )});
+            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat(  ( node.sale_leads - node.created_sale_leads ) / (node.total_leads - node.bad_leads - node.manual_created ) )});
         }
         createAdvisorConversionChart(cData);
 
