@@ -16,13 +16,16 @@ class UpdateApplicationStorage extends Seeder
      */
     public function run()
     {
-        $sundayResetTime = ApplicationStorage::where('key_name', 'SUNDAY_CAP_RESET_TIME')->first();
-        if ($sundayResetTime) {
-            $sundayResetTime->key_name = 'SATURDAY_CAP_RESET_TIME';
-            $sundayResetTime->save();
+        $saturday = ApplicationStorage::where('key_name', 'SATURDAY_CAP_RESET_TIME')->first();
+        $sunday = ApplicationStorage::where('key_name', 'SUNDAY_CAP_RESET_TIME')->first();
+        if (! $saturday && $sunday) {
+            $sundayResetTime = ApplicationStorage::where('key_name', 'SUNDAY_CAP_RESET_TIME')->first();
+            if ($sundayResetTime) {
+                $sundayResetTime->key_name = 'SATURDAY_CAP_RESET_TIME';
+                $sundayResetTime->save();
+            }
         }
         $carProduct = Team::where('name', quoteTypeCode::Car)->first();
-
         if ($carProduct->type != 1) {
             Team::where('name', quoteTypeCode::Car)->update(['type' => 1]);
             Team::where('name', quoteTypeCode::Home)->update(['type' => 1]);
