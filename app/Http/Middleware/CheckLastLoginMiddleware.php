@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CheckLastLoginMiddleware
 {
@@ -24,6 +25,8 @@ class CheckLastLoginMiddleware
 
                 return route('login');
             }
+        } else {
+            Auth::logout();
         }
 
         return $next($request);
