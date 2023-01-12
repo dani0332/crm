@@ -24,6 +24,6 @@ class LogoutListener
      */
     public function handle(Logout $event)
     {
-        info("User with ID: {$event->user->id} and email : $ {$event->user->email } logged out.");
+        info("User with ID: {$event->user->id} and email : {$event->user->email } logged out.");
     }
 }

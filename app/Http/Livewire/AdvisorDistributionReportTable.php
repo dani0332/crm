@@ -45,7 +45,14 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->map(fn ($tier) => $tier->name)
             ->toArray();
 
-        $this->teams = Team::query()
+        $this->teams = collect(DB::select("
+            WITH RECURSIVE teams_cte (id, name, parent_team_id, type, depth) AS (
+                SELECT id, concat(name,' - (Team)') as name, parent_team_id, type, 0 as depth FROM teams WHERE parent_team_id = (SELECT id FROM teams WHERE name = 'Car')
+                UNION ALL
+                SELECT t.id, concat(t.name,' - (Subteam)') as name, t.parent_team_id, t.type, cte.depth + 1 as depth FROM teams_cte cte
+                JOIN teams t ON t.parent_team_id = cte.id
+            )
+            SELECT * FROM teams_cte ORDER BY depth;"))
             ->orderBy('name')
             ->get()
             ->keyBy('id')
