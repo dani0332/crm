@@ -133,8 +133,9 @@
         <div>
             <select multiple name="tiers[]" id="tier-filter">
                 <option value="">Select Tier</option>
-                <option value="tr">Tier R</option>
-                <option value="t6">Tier 6</option>
+                @foreach ($tiers as $tier)
+                    <option value={{$tier->id}}>{{$tier->name}}</option>
+                @endforeach
             </select>
         </div>
         <div>

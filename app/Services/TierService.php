@@ -228,4 +228,14 @@ class TierService extends BaseService
     {
         return ['id', 'name', 'min_price', 'max_price'];
     }
+
+    public function getTPLTiers()
+    {
+        return Tier::where('can_handle_tpl', 1)->where('is_active', 1)->orderBy('name')->get();
+    }
+
+    public function getCompTiers()
+    {
+        return Tier::where('can_handle_tpl', 1)->where('is_active', 1)->orderBy('name')->get();
+    }
 }

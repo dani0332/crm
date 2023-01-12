@@ -367,7 +367,7 @@
                                     data-placement="top" title="For Unlimited Capactiy Add ( -1 )"></i>
                             </th>
                             <th>Status</th>
-                            @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager]))
+                            @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager, RolesEnum::LeadPool]))
                                 <th>Last Login</th>
                             @endif
                         </tr>
