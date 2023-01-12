@@ -5,9 +5,19 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Services\CarQuoteService;
+use App\Services\HealthQuoteService;
 
-class CarQuoteRequestController extends Controller
+class GenericLobController extends Controller
 {
+    protected $carQuoteService;
+    protected $healthQuoteService;
+
+    public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService)
+    {
+        $this->carQuoteService = $carQuoteService;
+        $this->healthQuoteService = $healthQuoteService;
+    }
+
     /**
      * @param $quoteType
      * @param  ExportPlansPdfRequest  $request
@@ -16,9 +26,10 @@ class CarQuoteRequestController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request, CarQuoteService $carQuoteService)
+    public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
-        $response = $carQuoteService->exportPlansPdf($quoteType, $request->validated());
+        $serviceName = strtolower($quoteType).'QuoteService';
+        $response = $this->{$serviceName}->exportPlansPdf($quoteType, $request->validated());
 
         //return error if any
         if (isset($response['error'])) {
