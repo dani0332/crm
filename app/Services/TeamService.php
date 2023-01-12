@@ -75,8 +75,9 @@ class TeamService extends BaseService
         return [
             'id' => 'readonly|none',
             'name' => 'input|text|required|title',
+            'type' => '|static|title|'. TeamTypeEnum::PRODUCT_STR .','. TeamTypeEnum::TEAM_STR .','. TeamTypeEnum::SUBTEAM_STR .'',
             'parent_team_id' => 'select|title',
-            'type' => '|static|title|'.TeamTypeEnum::PRODUCT.','.TeamTypeEnum::TEAM.','.TeamTypeEnum::SUB_TEAM.'',
+
         ];
     }
 
@@ -88,7 +89,7 @@ class TeamService extends BaseService
                 $title = 'Team Name';
                 break;
             case 'parent_team_id':
-                $title = 'Parent Team';
+                $title = 'Parent Record';
                 break;
             case 'type':
                 $title = 'Record Type';
@@ -113,5 +114,10 @@ class TeamService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['name'];
+    }
+
+    public function getTeams()
+    {
+        return Team::where('is_active', 1)->whereNotNull('type')->get();
     }
 }

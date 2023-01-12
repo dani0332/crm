@@ -24,7 +24,7 @@ class LeadReceivedSummaryBySourceDataTable extends DataTableComponent
         return [
             Column::make('Lead Source', 'source'),
             Column::make('Count By LeadSource')->label(fn ($row) => $row->leadSourceCount),
-            Column::make('Percentage')->label(fn ($row) => number_format((float) $row->percent, 2, '.', '')),
+            Column::make('Percentage')->label(fn ($row) => number_format((float) $row->percent, 2, '.', ''). '%'),
         ];
     }
 

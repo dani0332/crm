@@ -208,6 +208,7 @@
                 renewal_base_url: "{{ url('renewals') }}",
                 car_lead_allocation_index_route: "{{ route('car-lead-allocation.index') }}",
                 advisor_conversion_report_route : "{{ url('reports/advisor-conversion')  }}",
+                teams_datatable_route: "{{ route('teams.index') }}",
             },
             _token: "{{ csrf_token() }}",
             image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}",
