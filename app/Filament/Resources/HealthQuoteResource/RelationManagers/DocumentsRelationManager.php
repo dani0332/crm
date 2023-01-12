@@ -90,13 +90,15 @@ class DocumentsRelationManager extends RelationManager
                         ->aside()
                         ->compact()
                         ->schema([
-                            Forms\Components\FileUpload::make($docType['code'])
+                            Forms\Components\FileUpload::make('quote_field_'.$docType['code'])
                                 ->label('')
                                 ->multiple()
-                                ->acceptedFileTypes(['image/*', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                ->acceptedFileTypes(['image/*', 'application/*'])
                                 ->maxSize($docType['max_size'] * 1000)
                                 ->required($docType['is_required'])
-                                ->maxFiles($docType['max_files']),
+                                ->maxFiles($docType['max_files'])
+                                ->visibility('private')
+                                ->preserveFilenames(),
                         ])->columns(1),
 
                 ], $quoteSchema);
@@ -111,10 +113,10 @@ class DocumentsRelationManager extends RelationManager
                         ->aside()
                         ->compact()
                         ->schema([
-                            Forms\Components\FileUpload::make($docType['code'])
+                            Forms\Components\FileUpload::make('member_field_'.$docType['code'])
                                 ->label('')
                                 ->multiple()
-                                ->acceptedFileTypes(['image/*', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'])
+                                ->acceptedFileTypes(['image/*', 'application/*'])
                                 ->maxSize($docType['max_size'] * 1000)
                                 ->required($docType['is_required'])
                                 ->maxFiles($docType['max_files']),
