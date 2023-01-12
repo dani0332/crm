@@ -97,7 +97,7 @@
                                     <tbody>
                                     <tr><td>1</td><td>Customer Name</td><td style="width:450px;">Customer Name should only be in letters - no numbers allowed</td><td>Yes</td><td>100</td></tr>
                                     <tr><td>2</td><td>Customer Email</td><td>Customer Email Id</td><td>Yes</td><td>255</td></tr>
-                                    <tr><td>3</td><td>Customer mobile</td><td>Customer Mobile Number - only numeric data</td><td>Yes</td><td>100</td></tr>
+                                    <tr><td>3</td><td>Customer Mobile No.</td><td>Customer Mobile Number - only numeric data</td><td>Yes</td><td>100</td></tr>
                                     <tr><td>4</td><td>Insurance Type</td><td>Insurance Type</td><td>Yes</td><td>4</td></tr>
                                     <tr><td>5</td><td>Insurer Provider</td><td>Insurance Provider - should match the CDB data</td><td>Yes</td><td>100</td></tr>
                                     <tr><td>6</td><td>Product</td><td>Quotation asked against the insurance line</td><td>Yes</td><td>100</td></tr>
