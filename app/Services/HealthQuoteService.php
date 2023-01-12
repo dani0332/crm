@@ -1142,6 +1142,25 @@ class HealthQuoteService extends BaseService
     }
 
     /**
+     * create health plan for upload & create process
+     *
+     * @param $data
+     * @return false
+     */
+    public function renewalCreatePlan($planData)
+    {
+        $apiCreds = [
+            'apiEndPoint' => config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plan',
+            'apiToken' => config('constants.KEN_API_TOKEN'),
+            'apiTimeout' => config('constants.KEN_API_TIMEOUT'),
+            'apiUserName' => config('constants.KEN_API_USER'),
+            'apiPassword' => config('constants.KEN_API_PWD'),
+        ];
+
+        return $this->httpService->processRequest($planData, $apiCreds);
+    }
+
+    /**
      * generate PDF for car quote plan and return.
      *
      * @param $quoteType
