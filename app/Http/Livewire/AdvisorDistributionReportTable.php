@@ -4,7 +4,6 @@ namespace App\Http\Livewire;
 
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
-use App\Models\Team;
 use App\Models\Tier;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -45,9 +44,16 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->map(fn ($tier) => $tier->name)
             ->toArray();
 
-        $this->teams = Team::query()
-            ->orderBy('name')
-            ->get()
+        $this->teams = collect(DB::select("
+            WITH RECURSIVE teams_cte (id, name, parent_team_id, type, depth) AS (
+                SELECT id, concat(name,' - (Team)') as name, parent_team_id, type, 0 as depth FROM teams WHERE parent_team_id = (SELECT id FROM teams WHERE name = 'Car')
+                AND is_active = true
+                UNION ALL
+                SELECT t.id, concat(t.name,' - (Subteam)') as name, t.parent_team_id, t.type, cte.depth + 1 as depth FROM teams_cte cte
+                JOIN teams t ON t.parent_team_id = cte.id
+                AND t.is_active = true
+            )
+            SELECT * FROM teams_cte ORDER BY depth;"))
             ->keyBy('id')
             ->map(fn ($team) => $team->name)
             ->prepend('All', '')
@@ -123,6 +129,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw('SUM(tiers.cost_per_lead) as total_lead_cost'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->groupBy('users.email')
             ->orderBy('users.name');
@@ -154,7 +162,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 SelectFilter::make('Teams')
                     ->options($this->teams)
                     ->filter(function (Builder $builder, $value) {
-                        $builder->where('users.team_id', $value);
+                        $builder->where('teams.id', $value);
                     }),
                 SelectFilter::make('Tiers')
                     ->options($this->tiers)
