@@ -482,6 +482,7 @@ class LeadAllocationService extends BaseService
                     if (! $carLead->is_renewal_tier_email_sent) {
                         CarRenewalEmailJob::dispatch($carLead);
                     }
+
                     continue;
                 }
                 info('trying to check tier against the current lead : '.$carLead->code);

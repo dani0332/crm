@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -16,17 +15,17 @@ class Activities extends Model implements AuditableContract
 
     public function getCreatedAtAttribute($date)
     {
-        return (! empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
     public function getUpdatedAtAttribute($date)
     {
-        return (! empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
     public function getDueDateAttribute($date)
     {
-        return (! empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
     public function assignee()
