@@ -7,17 +7,16 @@
 		background-color: white !important;
 	}
     .select2-results__option--selected {
-            display: none;
-        }
-        .select2-results__option[aria-selected=true] {
-            display: none;
-        }
+		display: none;
+	}
+	.select2-results__option[aria-selected=true] {
+		display: none;
+	}
 </style>
-<?php
+@php
     use App\Enums\quoteTypeCode;
 	use App\Enums\GenericRequestEnum;
-
-?>
+@endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
 	$(document).ready(function() {
@@ -90,9 +89,6 @@
 						$('#trim').empty();
 					}
 				},
-				error: function(data) {
-
-				}
 			});
 		}
 
@@ -108,9 +104,7 @@
 
 		function loadTrimValues(trimId) {
 			$.get('/getCarModelTrimValues?id=' + trimId, function(data) {
-				if (data.length > 0) {
-					populateCarValues(data);
-				}
+				populateCarValues(data);
 			});
 		}
 

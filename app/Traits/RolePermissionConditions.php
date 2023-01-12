@@ -6,7 +6,7 @@ use Auth;
 
 trait RolePermissionConditions
 {
-    use GetUserTree;
+    use GetUserTreeTrait;
 
     public function whereBasedOnRole($query, $prefix)
     {

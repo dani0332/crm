@@ -154,8 +154,7 @@
     }
 
 </style>
-
-
+<meta name="csrf-token" content="{{ csrf_token() }}" />
 <div class="container">
     <div class="row" style="background-color: #f9fafb;min-height: 300px;padding:35px;box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);float: left;">
         <div class="col-md-6" style="float: left;width:55%;padding: 10px;">
@@ -275,7 +274,7 @@
         <div class="col-md-3" style="float: right;">
             <select
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                id="advisor-filter" style="margin-left: 10px;">
+                id="advisor-filter" style="margin-left: 10px;width:350px;" multiple="multiple">
                 <option value="">Select Advisor</option>
                 @foreach ($carAdvisors as $team)
                 <option value="{{$team->id}}">{{$team->name}}</option>
@@ -296,7 +295,7 @@
         <div class="col-md-3" style="float: right;">
             <select
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                id="team-filter" style="margin-left: 10px;">
+                id="team-filter" multiple="multiple" style="margin-left: 10px;width:350px;">
                 <option value="">Select Team</option>
                 @foreach ($teams as $team)
                 <option value="{{$team->id}}">{{$team->name}}</option>
@@ -315,9 +314,15 @@
     </div>
 </div>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.umd.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+
 <script type="text/javascript" defer>
    var leadsCountByTier = <?php echo json_encode($leadsCountByTier)?>;
    var unAssignedLeadsByTier = <?php echo json_encode($unAssignedLeadsByTier)?>;
@@ -327,6 +332,9 @@
    var assignedLeadsBySource = <?php echo json_encode($assignedLeadsBySource)?>;
    var leadRcdSummaryByTierPieChart =  revivalLeadsCountChart = assignedLeadsBySourceChart = advisorConversionChart = leadAssignCountByAdvisorChart = {};
    $(function(){
+        setTimeout(function() {
+            window.location.reload(1);
+        }, 80000);
         const picker = new easepick.create({
             element: document.getElementById('reloadDailyStatsDate'),
             css: [
@@ -382,55 +390,79 @@
             });
         });
         $('#advisor-filter').on('change', function (e) {
-            var advisorFitlerValue = $('#advisor-filter option:selected').val();
-            $.get('/get-advisor-conversion-stats?advisorFilter=' + advisorFitlerValue, function (result) {
-               if(result){
-                var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
-                var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
-                var numbers = [];
-                var cData = [];
-                for (let index = 0; index < result.length; index++) {
-                    var node = result[index];
-                    cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( ( node.sale_leads - node.created_sale_leads ) / (node.total_leads - node.bad_leads - node.manual_created )  )});
+            var advisorFitlerValue = $('#advisor-filter').val();
+            advisorConversionChart.showLoading();
+            $.ajax({
+                url: "/get-advisor-conversion-stats",
+                type: "post",
+                data: { 'advisorFilter' : advisorFitlerValue} ,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (result) {
+                    if(result) {
+                        var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
+                        var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
+                        var numbers = [];
+                        var cData = [];
+                        for (let index = 0; index < result.length; index++) {
+                            var node = result[index];
+                            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( ( node.sale_leads - node.created_sale_leads ) / (node.total_leads - node.bad_leads - node.manual_created )  )});
+                        }
+                        if(cData.length > 0 ){
+                            advisorConversionChart.destroy();
+                            createAdvisorConversionChart(cData);
+                        }else{
+                            advisorConversionChart.destroy();
+                            createAdvisorConversionChart([{name: '', y: 0}]);
+                        }
+                    }
+                    advisorConversionChart.hideLoading();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    advisorConversionChart.hideLoading();
+                    console.log(textStatus, errorThrown);
                 }
-                if(cData.length > 0 ){
-                    advisorConversionChart.destroy();
-                    createAdvisorConversionChart(cData);
-                }else{
-                    advisorConversionChart.destroy();
-                    createAdvisorConversionChart([{name: '', y: 0}]);
-                }
-               }
             });
         });
-
         $('#team-filter').on('change', function (e) {
-            var teamFilteValue = $('#team-filter option:selected').val();
-            $.get('/get-team-conversion-stats?teamFilter=' + teamFilteValue, function (result) {
-               if(result){
-                var cData = [];
-                for (let index = 0; index < result.length; index++) {
-                    var node = result[index];
-                    cData.push({name: node.name, y: parseFloat( node.total_leads )});
+            var teamFilteValue = $('#team-filter').val();
+            leadAssignCountByAdvisorChart.showLoading();
+            $.ajax({
+                url: "/get-team-conversion-stats",
+                type: "post",
+                data: { 'teamFilter' : teamFilteValue} ,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (result) {
+                    if(result) {
+                        var cData = [];
+                        for (let index = 0; index < result.length; index++) {
+                            var node = result[index];
+                            cData.push({name: node.name, y: parseFloat( node.total_leads )});
+                        }
+                        if(cData.length > 0 ){
+                            leadAssignCountByAdvisorChart.destroy();
+                            createLeadAssignCountSummaryByAdvisorChart(cData);
+                        }else{
+                            leadAssignCountByAdvisorChart.destroy();
+                            createLeadAssignCountSummaryByAdvisorChart([{name: '', y: 0}]);
+                        }
+                    }
+                    leadAssignCountByAdvisorChart.hideLoading();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    leadAssignCountByAdvisorChart.hideLoading();
+                    console.log(textStatus, errorThrown);
                 }
-                if(cData.length > 0 ){
-                    leadAssignCountByAdvisorChart.destroy();
-                    createLeadAssignCountSummaryByAdvisorChart(cData);
-                }else{
-                    leadAssignCountByAdvisorChart.destroy();
-                    createLeadAssignCountSummaryByAdvisorChart([{name: '', y: 0}]);
-                }
-               }
             });
         });
-
-
         var cData = [];
         for (let index = 0; index < leadsCountByTier.length; index++) {
             cData.push({name: leadsCountByTier[index]['tierNames'], y: parseFloat(leadsCountByTier[index]['leadCount'])});
         }
         createLeadRcdSummaryByTierPieChart(cData);
-
 
 
         var cData = [];
@@ -704,7 +736,7 @@
                     borderWidth: 0,
                     dataLabels: {
                         enabled: true,
-                        format: '{point.y:.1f}%'
+                        format: '{point.y:.1f}'
                     }
                 }
             },
@@ -725,5 +757,17 @@
     {
 
     }
+
+    const selectSettings = {
+        plugins: ['remove_button', 'checkbox_options'],
+        create: true,
+        onItemAdd: function() {
+            this.setTextboxValue('');
+            this.refreshOptions();
+        },
+    }
+
+    new TomSelect(["#team-filter"], selectSettings);
+    new TomSelect(["#advisor-filter"], selectSettings);
 </script>
 @endsection

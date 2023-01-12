@@ -43,6 +43,9 @@
     @endphp
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
+            @if ($model->modelType == quoteTypeCode::Car)
+                <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
+            @endif
             <div class="x_panel">
                 <br />
                 @if (session()->has('success'))
@@ -211,13 +214,8 @@
                                     <label class="col-form-label col-md-6 col-sm-6"
                                         for="Status Description"><b>{{ strtoupper($customTitles[$property]) }}</b></label>
                                 @else
-                                @if($property == DatabaseColumnsString::SOURCE && auth()->user()->hasRole(RolesEnum::CarAdvisor))
-                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description">&nbsp;</label>
-                                @else
-                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description">
-                                        <b>{{ str_replace('_', ' ', strtoupper($property)) }}</b>
-                                    </label>
-                                @endif
+                                    <label class="col-form-label col-md-6 col-sm-6"
+                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper($property)) }}</b></label>
                                 @endif
                                 @if (str_contains($value, 'select'))
                                     @if (str_contains($value, 'customTable'))
@@ -255,10 +253,10 @@
                                                     @else {{ $record->$property }}
                                                     @endif
                                                 @else
-                                                @if($property == DatabaseColumnsString::CAR_VALUE)
+                                                @if($property == DatabaseColumnsString::CAR_VALUE || $property == DatabaseColumnsString::CAR_VALUE_TIER)
                                                     {{ number_format($record->$property, 2) }}
                                                 @else
-                                                    @if($property == DatabaseColumnsString::SOURCE)
+                                                    @if($property == DatabaseColumnsString::SOURCE || $property == DatabaseColumnsString::LOST_REASON)
                                                         @if(!auth()->user()->hasRole(RolesEnum::CarAdvisor))
                                                             {{$record->$property }}
                                                         @endif
@@ -316,7 +314,7 @@
         @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled" 
-            :quoteTypeId="$quoteTypeId" />
+            :quoteTypeId="$quoteTypeId" :tiers="$tiers" />
     @endif
     @if (count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
@@ -391,7 +389,6 @@
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
-        <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
@@ -493,9 +490,8 @@
                                 <tr>
                                     <th>Modified At</th>
                                     <th>Modified By</th>
-                                    <th>Lead Status</th>
-                                    <th>Advisor</th>
                                     <th>Notes</th>
+                                    <th>Lead Status</th>
                                 </tr>
                             </thead>
                             <tbody>

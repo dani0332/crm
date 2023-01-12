@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -14,17 +15,13 @@ class CustomerAdditionalContact extends Model implements AuditableContract
     protected $table = 'customer_additional_contact';
     protected $fillable = ['key', 'value', 'customer_id'];
 
-    public function getCreatedAtAttribute($table)
+    public function getCreatedAtAttribute($date)
     {
-        $dateTimeFormat = config('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($dateTimeFormat);
+        return (! empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 
-    public function getUpdatedAtAttribute($table)
+    public function getUpdatedAtAttribute($date)
     {
-        $dateTimeFormat = config('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($dateTimeFormat);
+        return (! empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 }

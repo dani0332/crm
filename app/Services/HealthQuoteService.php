@@ -17,8 +17,7 @@ use App\Models\InsuranceProvider;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
-use App\Traits\GenericQueriesAllLobs;
-use App\Traits\GetUserTree;
+use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -33,10 +32,7 @@ class HealthQuoteService extends BaseService
     protected $leadAllocationService;
     protected $httpService;
 
-    use GetUserTree;
-    use RolePermissionConditions;
-    use AddPremiumAllLobs;
-    use GenericQueriesAllLobs;
+    use AddPremiumAllLobs,RolePermissionConditions, GetUserTreeTrait;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
@@ -47,15 +43,15 @@ class HealthQuoteService extends BaseService
             'hqr.uuid',
             'hqr.code',
             'hqr.first_name',
-            'hqr.updated_at',
-            'hqr.created_at',
+            DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
+            DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
             'hqr.last_name',
             'hqr.email',
             'hqr.mobile_no',
             'hqr.preference',
             'hqr.details',
             'hqr.source',
-            'hqr.dob',
+            DB::raw('DATE_FORMAT(hqr.dob, "%d-%m-%Y") as dob'),
             'hqr.gender',
             'hqr.has_dental',
             'hqr.health_team_type',
@@ -231,19 +227,19 @@ class HealthQuoteService extends BaseService
                 $this->query->where('hqr.quote_status_id', '!=', 9);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-                $dateFrom = Carbon::createFromTimestamp(strtotime($request['assigned_to_date_start']))->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromTimestamp(strtotime($request['assigned_to_date_end']))->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+                $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
+                $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
+                $this->query->whereBetween(DB::raw('DATE(hqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-                $dateFrom = Carbon::createFromTimestamp(strtotime($request['next_followup_date']))->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromTimestamp(strtotime($request['next_followup_date_end']))->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
+                $dateFrom = $this->parseDate($request['next_followup_date'], true);
+                $dateTo = $this->parseDate($request['next_followup_date_end'], true);
+                $this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
+                $dateFrom = $this->parseDate($request['created_at'], true);
+                $dateTo = $this->parseDate($request['created_at_end'], true);
+                $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
             }
             if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
                 // if user has advisor Role then fetch leads assigned to the user only
@@ -347,6 +343,18 @@ class HealthQuoteService extends BaseService
             return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('hqr.created_at', 'DESC');
+        }
+    }
+
+    private function parseDate($date, $isStartOfDay)
+    {
+        if ($date != '') {
+            $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+            if ($isStartOfDay) {
+                return Carbon::createFromFormat($dateFormat, $date)->startOfDay()->toDateString();
+            } else {
+                return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
+            }
         }
     }
 
