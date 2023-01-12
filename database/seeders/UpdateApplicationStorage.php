@@ -18,7 +18,7 @@ class UpdateApplicationStorage extends Seeder
     {
         $saturday = ApplicationStorage::where('key_name', 'SATURDAY_CAP_RESET_TIME')->first();
         $sunday = ApplicationStorage::where('key_name', 'SUNDAY_CAP_RESET_TIME')->first();
-        if(!$saturday && $sunday){
+        if (! $saturday && $sunday) {
             $sundayResetTime = ApplicationStorage::where('key_name', 'SUNDAY_CAP_RESET_TIME')->first();
             if ($sundayResetTime) {
                 $sundayResetTime->key_name = 'SATURDAY_CAP_RESET_TIME';
