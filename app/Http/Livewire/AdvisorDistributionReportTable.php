@@ -52,8 +52,6 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 JOIN teams t ON t.parent_team_id = cte.id
             )
             SELECT * FROM teams_cte ORDER BY depth;"))
-            ->orderBy('name')
-            ->get()
             ->keyBy('id')
             ->map(fn ($team) => $team->name)
             ->prepend('All', '')
