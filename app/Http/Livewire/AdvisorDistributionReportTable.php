@@ -127,6 +127,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw('SUM(tiers.cost_per_lead) as total_lead_cost'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->groupBy('users.email')
             ->orderBy('users.name');
@@ -158,7 +160,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 SelectFilter::make('Teams')
                     ->options($this->teams)
                     ->filter(function (Builder $builder, $value) {
-                        $builder->where('users.team_id', $value);
+                        $builder->where('teams.id', $value);
                     }),
                 SelectFilter::make('Tiers')
                     ->options($this->tiers)
