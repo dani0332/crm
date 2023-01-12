@@ -796,13 +796,14 @@ class RenewalsUploadService
          * create manual plan for health
          */
         if ($quote && $renewalQuoteProcess->quote_type == QuoteTypeShortCode::HEA && ! empty($data['plan_name'])) {
-            $planResponse = $this->createHealthPlan($data, $quote);
+
+            /*$planResponse = $this->createHealthPlan($data, $quote);
 
             if (is_int($planResponse) && $planResponse == 200) {
                 info($logPrefix.' manual plan for health created successfully for UUID: '.$quote->uuid);
             } else {
                 info($logPrefix.' manual plan for health failed for UUID: '.$quote->uuid);
-            }
+            }*/
         }
 
         return $quote;
