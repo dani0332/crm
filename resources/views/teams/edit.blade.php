@@ -2,6 +2,10 @@
 @section('title','Edit Team')
 @section('content')
 @inject('teamService', 'App\Services\TeamService')
+@php
+use App\Enums\TeamTypeEnum;
+use App\Enums\GenericRequestEnum;
+@endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     function renderParentOptions(products)
@@ -15,10 +19,10 @@
             $('#parent_team_id').prop('disabled', false);
             for (let index = 0; index < products.length; index++) {
             const element = products[index];
-                if(element.type == 'Product' && selectedType == 2) {
+                if(element.type == TeamTypeEnum::PRODUCT_STR && selectedType == TeamTypeEnum::Team) {
                     $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
                 }
-                if(element.type == 'Team' && selectedType == 3) {
+                if(element.type == TeamTypeEnum::Team && selectedType == TeamTypeEnum::SUB_TEAM) {
                     $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
                 }
             }
@@ -91,7 +95,7 @@
                     <div class="col">
                         <span class="col-form-label col-md-6 col-sm-6">Is Active
                         <br>
-                        @if ($team->is_active === 'True')
+                        @if ($team->is_active === GenericRequestEnum::TRUE)
                         <input type="checkbox" name="is_active" checked="">
                         @else
                         <input type="checkbox" name="is_active"  {{ old("is_active") ? "checked" : "" }} >

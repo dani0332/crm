@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             QuoteStatusTableSeeder::class,
             QuoteStatusMapCarTransactionApproved::class,
             UpdateApplicationStorage::class,
+            addReportsMaxDays::class,
         ]);
     }
 }

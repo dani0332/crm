@@ -1,23 +1,27 @@
 @extends('layouts.app')
 @section('title','Add Team')
 @section('content')
+@php
+use App\Enums\TeamTypeEnum;
+@endphp
+
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     function renderParentOptions(products)
     {
         var selectedType = $('#type option:selected').val();
         $('#parent_team_id').empty();
-        debugger;
         if( selectedType == 1) {
             $('#parent_team_id').prop('disabled', true);
         }else{
             $('#parent_team_id').prop('disabled', false);
+            console.log('test');
             for (let index = 0; index < products.length; index++) {
             const element = products[index];
-                if(element.type == 'Product' && selectedType == 2) {
+                if(element.type == TeamTypeEnum::PRODUCT_STR && selectedType == TeamTypeEnum::Team) {
                     $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
                 }
-                if(element.type == 'Team' && selectedType == 3) {
+                if(element.type == TeamTypeEnum::Team && selectedType == TeamTypeEnum::SUB_TEAM) {
                     $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
                 }
             }
