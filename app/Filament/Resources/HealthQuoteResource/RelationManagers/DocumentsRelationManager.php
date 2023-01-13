@@ -149,7 +149,7 @@ class DocumentsRelationManager extends RelationManager
         if ($quoteFields) {
             foreach ($quoteFields as $docType) {
                 $quoteSchema = array_merge([
-                    Section::make('field_'.$docType['text'])
+                    Section::make($docType['text'])
                         ->description(new HtmlString('<p class="text-sm">Accepted file types: '.$docType['accepted_files'].'</p><p class="text-sm">Max files : '.$docType['max_files'].'</p>'))
                         ->aside()
                         ->compact()
@@ -176,7 +176,7 @@ class DocumentsRelationManager extends RelationManager
         if ($memberFields) {
             foreach ($memberFields as $docType) {
                 $memberSchema = array_merge([
-                    Section::make('field_'.$docType['text'])
+                    Section::make($docType['text'])
                         ->description(new HtmlString('<p class="text-sm">Accepted file types: '.$docType['accepted_files'].'</p><p class="text-sm">Max files : '.$docType['max_files'].'</p>'))
                         ->aside()
                         ->compact()
