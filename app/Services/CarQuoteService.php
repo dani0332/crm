@@ -704,7 +704,7 @@ class CarQuoteService extends BaseService
 
         if ($request->ajax()) {
             $this->addLeadViewEligibilityCheck();
-            if (! isset($request->email) && $request->email == '') {
+            if (! isset($request->email) && $request->email == '' && ! isset($request->code) && $request->code == '') {
                 $this->query->where('qs.id', '!=', QuoteStatusEnum::Fake);
             }
 
