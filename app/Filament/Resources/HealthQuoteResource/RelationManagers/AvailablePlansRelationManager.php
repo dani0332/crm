@@ -121,7 +121,7 @@ class AvailablePlansRelationManager extends RelationManager
                         }
 
                         $planIds = collect($records)->pluck('id')->toArray();
-                        $response = $healthQuoteService->exportPlansPdf('health', ['plan_ids' => $planIds, 'quote_uuid' => 'UKD7ABWX']);
+                        $response = $healthQuoteService->exportPlansPdf('health', ['plan_ids' => $planIds, 'quote_uuid' => $records->first()->uuid]);
                         $pdf = $response['pdf'];
 
                         return response()->streamDownload(fn () => print($pdf->output()), $response['name']);
