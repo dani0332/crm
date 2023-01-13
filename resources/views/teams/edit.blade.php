@@ -2,6 +2,38 @@
 @section('title','Edit Team')
 @section('content')
 @inject('teamService', 'App\Services\TeamService')
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script>
+    function renderParentOptions(products)
+    {
+        var selectedType = $('#type option:selected').val();
+        $('#parent_team_id').empty();
+        debugger;
+        if( selectedType == 1) {
+            $('#parent_team_id').prop('disabled', true);
+        }else{
+            $('#parent_team_id').prop('disabled', false);
+            for (let index = 0; index < products.length; index++) {
+            const element = products[index];
+                if(element.type == 'Product' && selectedType == 2) {
+                    $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
+                }
+                if(element.type == 'Team' && selectedType == 3) {
+                    $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
+                }
+            }
+        }
+    }
+
+    $(document).ready(function(){
+        var products  = JSON.parse('<?php echo json_encode($products); ?>');
+        $('#type').on('change', function (item, index){
+            renderParentOptions(products);
+        });
+    });
+
+
+</script>
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
@@ -43,8 +75,12 @@
                         <span class="col-form-label col-md-6 col-sm-6">Parent</span>
                         <select class="form-control" id='parent_team_id' name='parent_team_id'>
                             @foreach ($products as $product)
-                                @if($product->type == '')
-                                <option @if($teamService->getTeamNameById($team->type) == $product->name) selected @endif value="{{$product->id}}"> {{$product->name}} </option>
+                                @if($team->type == 'Team' && $product->type == 'Product')
+                                <option @if($teamService->getTeamNameById($team->parent_team_id) == $product->name) selected="selected" @endif value="{{$product->id}}"> {{$product->name}} </option>
+                                @endif
+
+                                @if($team->type == 'Subteam' && $product->type == 'Team')
+                                <option @if($teamService->getTeamNameById($team->parent_team_id) == $product->name) selected="selected" @endif value="{{$product->id}}"> {{$product->name}} </option>
                                 @endif
                             @endforeach
                         </select>

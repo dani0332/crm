@@ -126,7 +126,32 @@ class TeamsController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $validateArray = [
+            'name' => 'required',
+            'type' => 'required',
+        ];
+        if (isset($request->type) && $request->type == '2' || $request->type == '3') {
+            $validateArray['parent_team_id'] = 'required';
+        }
+        $this->validate($request, $validateArray);
+
+        $team = Team::where('id', $id)->first();
+        if(!$team) return redirect('generic/teams/'.$team->id)->with('message', 'Team has been stored');
+        if (isset($request->type) && $request->type == '2' || $request->type == '3') {
+            $team->parent_team_id = $request->parent_team_id;
+        }
+        $team->name = $request->name;
+        $team->type = $request->type;
+        $team->is_active = $request->is_active == 'on' ? 1 : 0;
+        $team->created_at = now();
+        $team->updated_at = now();
+        $team->save();
+
+        if (isset($request->return_to_view)) {
+            return redirect('generic/teams/'.$team->id)->with('success', 'Team has been stored');
+        }
+
+        return redirect()->back()->with('success', 'Team has been stored');
     }
 
     /**
