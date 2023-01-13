@@ -97,7 +97,7 @@
         });
     @endif
 
-    @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager]))
+    @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager, RolesEnum::LeadPool]))
     columns.push({
         data: 'lastLogin',
         name: 'lastLogin',

@@ -75,7 +75,7 @@ trait TeamHierarchyTrait
         $product = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $productName)->where('is_active', 1)->first();
         $productTeams = Team::where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $product->id)->where('is_active', 1)->get();
 
-        return User::whereIn('id', DB::table('user_team')->whereIn('team_id', $productTeams->pluck('id'))->where('is_active', 1)->pluck('user_id'))->get();
+        return User::whereIn('id', DB::table('user_team')->whereIn('team_id', $productTeams->pluck('id'))->pluck('user_id'))->where('is_active', 1)->get();
     }
 
     public function getUserManagers($userId)
