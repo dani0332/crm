@@ -182,7 +182,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
-                    'max_days' => 92,
+                    'max_days' => config('MAX_DAYS_CAR_REPORTS'),
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {

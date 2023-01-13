@@ -55,8 +55,8 @@ class TeamsController extends Controller
     public function create()
     {
         $products = $this->teamService->getTeams();
-
-        return view('teams.add', compact('products'));
+        $teamTypeEnum = TeamTypeEnum::toSelectArray();
+        return view('teams.add', compact('products', 'teamTypeEnum'));
     }
 
     /**
@@ -138,7 +138,7 @@ class TeamsController extends Controller
 
         $team = Team::where('id', $id)->first();
         if (! $team) {
-            return redirect('generic/teams/'.$team->id)->with('message', 'Team has been stored');
+            return redirect('generic/teams/'.$team->id)->with('message', 'Team not found');
         }
         if (isset($request->type) && $request->type == TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $team->parent_team_id = $request->parent_team_id;
@@ -151,9 +151,9 @@ class TeamsController extends Controller
         $team->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('generic/teams/'.$team->id)->with('success', 'Team has been stored');
+            return redirect('generic/teams/'.$team->id)->with('success', 'Team has been updated');
         }
 
-        return redirect()->back()->with('success', 'Team has been stored');
+        return redirect()->back()->with('success', 'Team has been updated');
     }
 }
