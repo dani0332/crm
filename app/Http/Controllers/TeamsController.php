@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use App\Services\TeamService;
 use App\Traits\TeamHierarchyTrait;
@@ -70,13 +71,13 @@ class TeamsController extends Controller
             'name' => 'required',
             'type' => 'required',
         ];
-        if (isset($request->type) && $request->type == '2' || $request->type == '3') {
+        if (isset($request->type) && TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $validateArray['parent_team_id'] = 'required';
         }
         $this->validate($request, $validateArray);
 
         $team = new Team();
-        if (isset($request->type) && $request->type == '2' || $request->type == '3') {
+        if (isset($request->type) && TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $team->parent_team_id = $request->parent_team_id;
         }
         $team->name = $request->name;
@@ -130,7 +131,7 @@ class TeamsController extends Controller
             'name' => 'required',
             'type' => 'required',
         ];
-        if (isset($request->type) && $request->type == '2' || $request->type == '3') {
+        if (isset($request->type) && $request->type == TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $validateArray['parent_team_id'] = 'required';
         }
         $this->validate($request, $validateArray);
@@ -139,7 +140,7 @@ class TeamsController extends Controller
         if (! $team) {
             return redirect('generic/teams/'.$team->id)->with('message', 'Team has been stored');
         }
-        if (isset($request->type) && $request->type == '2' || $request->type == '3') {
+        if (isset($request->type) && $request->type == TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $team->parent_team_id = $request->parent_team_id;
         }
         $team->name = $request->name;
@@ -154,16 +155,5 @@ class TeamsController extends Controller
         }
 
         return redirect()->back()->with('success', 'Team has been stored');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 }

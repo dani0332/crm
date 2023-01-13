@@ -43,7 +43,7 @@ use App\Enums\PermissionsEnum;
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarDeputyManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::Admin]))
                             <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
                             @endif
                             @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin]))
