@@ -15,13 +15,12 @@ use App\Enums\TeamTypeEnum;
             $('#parent_team_id').prop('disabled', true);
         }else{
             $('#parent_team_id').prop('disabled', false);
-            console.log('test');
             for (let index = 0; index < products.length; index++) {
             const element = products[index];
-                if(element.type == TeamTypeEnum::PRODUCT_STR && selectedType == TeamTypeEnum::Team) {
+                if(element.type == '{{TeamTypeEnum::PRODUCT_STR}}' && selectedType == '{{TeamTypeEnum::TEAM}}') {
                     $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
                 }
-                if(element.type == TeamTypeEnum::Team && selectedType == TeamTypeEnum::SUB_TEAM) {
+                if(element.type == '{{TeamTypeEnum::Team}}' && selectedType == '{{TeamTypeEnum::SUB_TEAM}}') {
                     $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
                 }
             }
