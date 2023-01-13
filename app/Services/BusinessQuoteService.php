@@ -344,7 +344,7 @@ class BusinessQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
         if ($request->ajax()) {
-            if (! isset($request->email) && $request->email == '' && ! isset($request->code) && $request->code == '') {
+            if (empty($request->email) && empty($request->code)) {
                 $this->query->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {

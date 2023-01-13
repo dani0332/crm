@@ -302,7 +302,7 @@ class TravelQuoteService extends BaseService
         }
 
         if ($request->ajax()) {
-            if (! isset($request->email) && $request->email == '' && ! isset($request->code) && $request->code == '') {
+            if (empty($request->email) && empty($request->code)) {
                 $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
