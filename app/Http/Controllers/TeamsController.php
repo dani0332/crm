@@ -27,7 +27,6 @@ class TeamsController extends Controller
         $gridData = Team::with('parent')->whereNotNull('type');
 
         if ($request->ajax()) {
-
             if (isset($request->name) && ! empty($request->name)) {
                 $name = $request->name;
                 $gridData = $gridData->where(function ($query) use ($name) {
@@ -114,6 +113,7 @@ class TeamsController extends Controller
     public function edit(Team $team)
     {
         $products = $this->teamService->getTeams();
+
         return view('teams.edit', compact('team', 'products'));
     }
 

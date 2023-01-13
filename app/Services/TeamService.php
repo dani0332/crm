@@ -124,6 +124,7 @@ class TeamService extends BaseService
     public function getTeamNameById($teamId)
     {
         $team = Team::where('id', $teamId)->first();
+
         return $team ? $team->name : '';
     }
 }
