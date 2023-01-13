@@ -55,8 +55,8 @@ class TeamsController extends Controller
     public function create()
     {
         $products = $this->teamService->getTeams();
-        $teamTypeEnum = TeamTypeEnum::toSelectArray();
-        return view('teams.add', compact('products', 'teamTypeEnum'));
+
+        return view('teams.add', compact('products'));
     }
 
     /**
