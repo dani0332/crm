@@ -136,7 +136,9 @@ class TeamsController extends Controller
         $this->validate($request, $validateArray);
 
         $team = Team::where('id', $id)->first();
-        if(!$team) return redirect('generic/teams/'.$team->id)->with('message', 'Team has been stored');
+        if (! $team) {
+            return redirect('generic/teams/'.$team->id)->with('message', 'Team has been stored');
+        }
         if (isset($request->type) && $request->type == '2' || $request->type == '3') {
             $team->parent_team_id = $request->parent_team_id;
         }
