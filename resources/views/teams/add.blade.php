@@ -26,7 +26,6 @@
 
     $(document).ready(function(){
         var products  = JSON.parse('<?php echo json_encode($products); ?>');
-        debugger;
         $('#type').on('change', function (item, index){
             renderParentOptions(products);
         });

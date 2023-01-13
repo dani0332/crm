@@ -120,4 +120,10 @@ class TeamService extends BaseService
     {
         return Team::where('is_active', 1)->whereNotNull('type')->get();
     }
+
+    public function getTeamNameById($teamId)
+    {
+        $team = Team::where('id', $teamId)->first();
+        return $team ? $team->name : '';
+    }
 }
