@@ -57,7 +57,7 @@ class HealthAvailablePlan extends Model
     {
         $listQuotePlans = '';
         $responseData = [];
-        $quotePlans = app(HealthQuoteService::class)->getQuotePlansNew(last(request()->segments()));
+        $quotePlans = app(HealthQuoteService::class)->getQuotePlans(last(request()->segments()));
 
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             $listQuotePlans = $quotePlans->message;

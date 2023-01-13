@@ -900,64 +900,6 @@ class HealthQuoteService extends BaseService
         }
     }
 
-    public function getQuotePlansNew($id)
-    {
-        $quoteUuId = $id;
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans';
-        $plansApiToken = config('constants.KEN_API_TOKEN');
-        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
-        $plansApiUserName = config('constants.KEN_API_USER');
-        $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
-
-        $plansDataArr = [
-            'quoteUID' => $quoteUuId,
-            'lang' => 'en',
-        ];
-
-        $client = new \GuzzleHttp\Client();
-
-        try {
-            $kenRequest = $client->post(
-                $plansApiEndPoint,
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
-                        'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic '.$authBasic,
-                    ],
-                    'body' => json_encode($plansDataArr),
-                    'timeout' => $plansApiTimeout,
-                ]
-            );
-
-            $getStatusCode = $kenRequest->getStatusCode();
-
-            if ($getStatusCode == 200) {
-                $getContents = $kenRequest->getBody();
-                $getdecodeContents = json_decode($getContents);
-
-                return $getdecodeContents;
-            }
-        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
-            $response = $e->getResponse();
-            $contents = (string) $response->getBody();
-            $response = json_decode($contents);
-
-            if (isset($response->message)) {
-                $responseBodyAsString = $response->message;
-            } elseif (isset($response->error)) {
-                $responseBodyAsString = $response->error;
-            } elseif (isset($response->msg)) {
-                $responseBodyAsString = $response->msg;
-            } else {
-                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
-            }
-
-            return $responseBodyAsString;
-        }
-    }
-
     public function getMembersDetail($id)
     {
         return HealthMemberDetail::where('health_quote_request_id', $id)->get();
@@ -1209,7 +1151,7 @@ class HealthQuoteService extends BaseService
     }
 
     /**
-     * create health plan for upload & create process
+     * create health plan for upload & create process.
      *
      * @param $data
      * @return false
