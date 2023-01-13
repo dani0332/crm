@@ -15,6 +15,7 @@ use App\Models\Activities;
 use App\Models\HealthQuote;
 use App\Models\QuoteStatus;
 use App\Models\User;
+use App\Services\DropdownSourceService;
 use Filament\Forms;
 use Filament\Forms\Components\Card;
 use Filament\Forms\Components\Fieldset;
@@ -216,20 +217,14 @@ class HealthQuoteResource extends Resource
                                 return static::getActivitiesSchema($record->health_quote_request_id);
                             })->hiddenOn(['create', 'edit']),
                     ]),
-
                 Card::make()
                     ->schema([
                         Forms\Components\Select::make('quote_status_id')
                             ->label('Lead Status')
                             ->options(
-                                function () {
-                                    return QuoteStatus::whereNotIn('id', [
-                                        QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
-                                        QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyInvoiced, QuoteStatusEnum::Issued, QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::AfiaRenewal, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec,
-                                    ])
-                                        ->where('is_active', true)
-                                        ->orderBy('sort_order', 'asc')
-                                        ->pluck('text', 'id')->toArray();
+                                function (DropdownSourceService $dropdownSourceService) {
+                                    return $dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Health)
+                                    ->pluck('text', 'id')->toArray();
                                 }
                             ),
                         Forms\Components\Textarea::make('additional_notes')->label('Notes')->maxLength(1000),
