@@ -344,8 +344,8 @@ class BusinessQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
         if ($request->ajax()) {
-            if (! isset($request->email) && $request->email == '') {
-                $this->query->where('bqr.quote_status_id', '!=', 9);
+            if (! isset($request->email) && $request->email == '' && ! isset($request->code) && $request->code == '') {
+                $this->query->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
@@ -374,9 +374,6 @@ class BusinessQuoteService extends BaseService
             }
             if (isset($request->last_name) && $request->last_name != '') {
                 $this->query->where('bqr.last_name', $request->last_name);
-            }
-            if (isset($request->email) && $request->email != '') {
-                $this->query->where('bqr.email', $request->email);
             }
             if (isset($request->mobile_no) && $request->mobile_no != '') {
                 $this->query->where('bqr.mobile_no', $request->mobile_no);
@@ -633,7 +630,7 @@ class BusinessQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'company_name', 'business_type_of_insurance_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'company_name', 'business_type_of_insurance_id'];
     }
 
     public function fillRenewalProperties($model)
