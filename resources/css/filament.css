@@ -1,5 +1,8 @@
 @import '../../vendor/filament/filament/resources/css/app.css';
 
+:root {
+  --sidebar-width: 16rem;
+}
 .filament-forms-tabs-component-header {
   @apply flex-wrap;
 }
