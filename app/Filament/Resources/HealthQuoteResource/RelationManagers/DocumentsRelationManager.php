@@ -116,6 +116,53 @@ class DocumentsRelationManager extends RelationManager
                         }
 
                         return $data;
+                    })
+                    ->mutateFormDataUsing(function (RelationManager $livewire, array $data) {
+                        $data = array_filter($data);
+                        foreach ($data as $key => $value) {
+                            if (str_contains($key, 'doc_code')) {
+                                $array = explode('doc_code_', $key);
+                                $doc_code = array_pop($array);
+                                $value = array_pop($value);
+                                $filePath = $value ? explode('/', $value)[2] : null;
+                                $docUuid = $filePath ? explode('_', $filePath)[0] : null;
+                                $updatedDoc = $livewire
+                                    ->ownerRecord
+                                    ->documents
+                                    ->where('quote_documentable_id', $livewire->ownerRecord->id)
+                                    ->where('document_type_code', $doc_code)
+                                    ->where('doc_uuid', $docUuid)
+                                    ->first();
+                                if ($updatedDoc) {
+                                    if ($value === null) {
+                                        // $updatedDoc->delete();
+                                    } else {
+                                        $updatedDoc->doc_url = $value;
+                                        $updatedDoc->save();
+                                    }
+                                } else {
+                                    if ($value === null) {
+                                        continue;
+                                    } else {
+                                        $newDoc = new QuoteDocument();
+                                        $newDoc->doc_uuid = $docUuid;
+                                        $newDoc->quote_documentable_id = $livewire->ownerRecord->id;
+                                        $newDoc->quote_documentable_type = 'App\Models\HealthQuote';
+                                        $newDoc->document_type_code = $doc_code;
+                                        $newDoc->document_type_text = DocumentType::where('code', $doc_code)->first()->text;
+                                        $newDoc->doc_name = $filePath;
+                                        $newDoc->doc_url = $value;
+                                        $newDoc->doc_mime_type = $value ? explode('.', $value)[1] : null;
+                                        $newDoc->created_by_id = auth()->id();
+                                        $newDoc->member_detail_id = $livewire->ownerRecord->members[0]->id;
+                                        $newDoc->save();
+                                    }
+                                }
+                                unset($data[$key]);
+                            }
+                        }
+
+                        return $data;
                     }),
 
                 Tables\Actions\DeleteAction::make(),
@@ -149,7 +196,7 @@ class DocumentsRelationManager extends RelationManager
         if ($quoteFields) {
             foreach ($quoteFields as $docType) {
                 $quoteSchema = array_merge([
-                    Section::make('field_'.$docType['text'])
+                    Section::make($docType['text'])
                         ->description(new HtmlString('<p class="text-sm">Accepted file types: '.$docType['accepted_files'].'</p><p class="text-sm">Max files : '.$docType['max_files'].'</p>'))
                         ->aside()
                         ->compact()
@@ -176,7 +223,7 @@ class DocumentsRelationManager extends RelationManager
         if ($memberFields) {
             foreach ($memberFields as $docType) {
                 $memberSchema = array_merge([
-                    Section::make('field_'.$docType['text'])
+                    Section::make($docType['text'])
                         ->description(new HtmlString('<p class="text-sm">Accepted file types: '.$docType['accepted_files'].'</p><p class="text-sm">Max files : '.$docType['max_files'].'</p>'))
                         ->aside()
                         ->compact()
