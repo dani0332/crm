@@ -271,7 +271,7 @@
     <div style="clear: both;">
     </div>
     <div class="row">
-        <div class="col-md-3" style="float: right;">
+        <div class="col-md-3 relative flex justify-end">
             <select
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
                 id="advisor-filter" style="margin-left: 10px;width:350px;" multiple="multiple">
@@ -292,7 +292,7 @@
     <div style="clear: both;"  style="margin-bottom: 40px;">
     </div>
     <div class="row" style="margin-top: 40px;">
-        <div class="col-md-3" style="float: right;">
+        <div class="col-md-3 relative flex justify-end">
             <select
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
                 id="team-filter" multiple="multiple" style="margin-left: 10px;width:350px;">
@@ -319,7 +319,7 @@
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.umd.min.js"></script>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.min.css" />
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
 
