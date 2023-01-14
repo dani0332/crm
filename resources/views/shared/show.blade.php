@@ -254,7 +254,7 @@ use App\Enums\GenericRequestEnum;
                                                 @if($property == DatabaseColumnsString::CAR_VALUE || $property == DatabaseColumnsString::CAR_VALUE_TIER)
                                                     {{ number_format($record->$property, 2) }}
                                                 @else
-                                                    @if($property == DatabaseColumnsString::SOURCE || $property == DatabaseColumnsString::LOST_REASON)
+                                                    @if($property == DatabaseColumnsString::SOURCE)
                                                         @if(!auth()->user()->hasRole(RolesEnum::CarAdvisor))
                                                             {{$record->$property }}
                                                         @endif
