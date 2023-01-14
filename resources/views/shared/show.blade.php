@@ -200,7 +200,12 @@ use App\Enums\GenericRequestEnum;
                         }
                     @endphp
                     @php
-                        $skipPropertiesArray = array_filter(explode(",",$skipProperties['show']));
+                        // MS 14-Jan-2023: For car_quote detail_view set visibility of 'Source' column conditional
+                        if($model->modelType == quoteTypeCode::Car && auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+                            $skipPropertiesArray = array_filter(explode(",",$skipProperties['show'].",source,device"));
+                        } else {
+                            $skipPropertiesArray = array_filter(explode(",",$skipProperties['show']));
+                        }
                     @endphp
                     @foreach ($model->properties as $property => $value)
                         @if (!in_array($property, $skipPropertiesArray))
@@ -241,7 +246,6 @@ use App\Enums\GenericRequestEnum;
                                         <div class="col-md-6 col-sm-6"
                                             style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">
-
                                                 @if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), 'yes')))
                                                 {{ $record->$property ? 'Yes' : 'No' }}
                                                 @elseif( (str_contains($value, 'static') && !str_contains(strtolower($value), 'yes')))
@@ -251,17 +255,11 @@ use App\Enums\GenericRequestEnum;
                                                     @else {{ $record->$property }}
                                                     @endif
                                                 @else
-                                                @if($property == DatabaseColumnsString::CAR_VALUE || $property == DatabaseColumnsString::CAR_VALUE_TIER)
-                                                    {{ number_format($record->$property, 2) }}
-                                                @else
-                                                    @if($property == DatabaseColumnsString::SOURCE)
-                                                        @if(!auth()->user()->hasRole(RolesEnum::CarAdvisor))
-                                                            {{$record->$property }}
-                                                        @endif
+                                                    @if($property == DatabaseColumnsString::CAR_VALUE || $property == DatabaseColumnsString::CAR_VALUE_TIER)
+                                                        {{ number_format($record->$property, 2) }}
                                                     @else
                                                         {{$record->$property }}
                                                     @endif
-                                                @endif
                                                 @endif
                                             </p>
                                         </div>
