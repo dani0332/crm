@@ -46,12 +46,17 @@
         "sass": "^1.32.11",
         "sass-loader": "^11.0.1",
         "tailwindcss": "^3.2.1",
-        "tippy.js": "^6.3.7"
+        "tippy.js": "^6.3.7",
+        "unplugin-auto-import": "^0.12.1",
+        "vue-loader": "^16.2.0"
     },
     "dependencies": {
         "@hookform/resolvers": "^2.6.0",
+        "@indielayer/ui": "^1.0.9",
+        "@inertiajs/vue3": "^1.0.0",
         "@smakss/random-string": "^1.2.1",
         "@szhsin/react-menu": "^2.1.0",
+        "@vueuse/core": "^9.10.0",
         "clean-deep": "^3.4.0",
         "immutable": "^4.0.0-rc.14",
         "is-lite": "^0.8.0",
@@ -78,6 +83,7 @@
         "styled-minimal": "^0.9.0",
         "unique-string": "^3.0.0",
         "use-http": "^1.0.21",
+        "vue": "^3.2.45",
         "yup": "^0.32.9"
     }
 }

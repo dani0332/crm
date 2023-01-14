@@ -48,6 +48,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Inertia\Inertia;
 
 class CRUDController extends Controller
 {
@@ -184,6 +185,19 @@ class CRUDController extends Controller
             }
         }
         $model = $this->genericModel;
+
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
+            $gridData = $gridData->simplePaginate(10)->withQueryString();
+
+            return Inertia::render('HealthQuote/Index', [
+                'quotes' => $gridData->items(),
+                'currentPage' => $gridData->currentPage(),
+                'hasMore' => $gridData->hasMorePages(),
+                'nextPageUrl' => $gridData->nextPageUrl(),
+                'prevPageUrl' => $gridData->previousPageUrl(),
+            ]);
+        }
+
         if ($request->ajax()) {
             return DataTables::of($gridData)
                 ->addIndexColumn()
