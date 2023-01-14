@@ -92,6 +92,20 @@
                         </div>
                     </div>
                 </div>
+                <div class="item form-group">
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="ECOMMERCE"><b>ECOMMERCE</b></label>
+                            <div class="col-md-6 col-sm-6">
+                            <p class="label-align-center">{{ $record->is_ecommerce == 1 ? 'Yes' : 'No' }}</p>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="QUOTE LINK"><b>QUOTE LINK</b></label>
+                            <div class="col-md-6 col-sm-6" style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
+                            <p class="label-align-center">{{ $record->quote_link ? $record->quote_link: '' }}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
