@@ -242,6 +242,32 @@ class HealthQuoteService extends BaseService
                 $dateTo = $this->parseDate($request['created_at_end'], true);
                 $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
             }
+            if (isset($request->created_at_start) && $request->created_at_start != '') {
+                $dateFrom = $request['created_at_start'];
+                $dateTo = $request['created_at_end'];
+                $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
+            }
+            // health_team_type filter
+            if (isset($request->sub_team) && $request->sub_team != '') {
+                $this->query->where('hqr.health_team_type', $request->sub_team);
+            }
+            // quote_status filter
+            if (isset($request->quote_status) && $request->quote_status != '') {
+                $this->query->whereIn('quote_status_id', $request->quote_status);
+            }
+            // advisors filter
+            if (isset($request->advisors) && $request->advisors != '') {
+                $this->query->whereIn('advisor_id', $request->advisors);
+            }
+            // is_renewal filter
+            if (isset($request->is_renewal) && $request->is_renewal != '') {
+                if ($request->is_renewal == 'Yes') {
+                    $this->query->whereNotNull('previous_quote_policy_number');
+                } else {
+                    $this->query->whereNull('previous_quote_policy_number');
+                }
+            }
+
             if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user

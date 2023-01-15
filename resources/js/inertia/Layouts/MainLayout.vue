@@ -1,5 +1,8 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import { Link, usePage } from '@inertiajs/vue3';
+
+const user = computed(() => usePage().props.auth.user);
 </script>
 
 <template>
@@ -72,18 +75,31 @@ import { Link } from '@inertiajs/vue3';
         >
           <template #default><div class="p-2">Personal Quotes</div></template>
           <template #content>
-            <Link href="/quotes/car" class="py-2 px-3 list-item">
-              Car Quotes
-            </Link>
+            <a href="/quotes/car" class="py-2 px-3 flex gap-2 items-center">
+              <x-icon icon="car" /> Car Quotes
+            </a>
             <Link
               href="/quotes/health"
-              class="py-2 px-3 list-item"
+              class="py-2 px-3 flex gap-2 items-center"
               :class="{
                 'bg-primary-800': $page.component === 'HealthQuote/Index',
               }"
             >
+              <x-icon icon="health" />
               Health Quotes
             </Link>
+            <a href="/quotes/travel" class="py-2 px-3 flex gap-2 items-center">
+              <x-icon icon="travel" /> Travel Quotes
+            </a>
+            <a href="/quotes/life" class="py-2 px-3 flex gap-2 items-center">
+              <x-icon icon="life" /> Life Quotes
+            </a>
+            <a href="/quotes/home" class="py-2 px-3 flex gap-2 items-center">
+              <x-icon icon="home" /> Home Quotes
+            </a>
+            <a href="/quotes/pet" class="py-2 px-3 flex gap-2 items-center">
+              <x-icon icon="pet" /> Pet Quotes
+            </a>
           </template>
         </x-collapse>
       </nav>
@@ -95,11 +111,41 @@ import { Link } from '@inertiajs/vue3';
         class="sticky top-0 z-10 flex h-16 w-full shrink-0 items-center border-b bg-white"
       >
         <div
-          class="flex items-center justify-end w-full px-2 sm:px-4 md:px-6 lg:px-8"
+          class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
         >
-          <Link href="/logout" method="post" as="button" type="submit">
-            Logout
-          </Link>
+          <div></div>
+          <div>
+            <x-popover align="right" block>
+              <x-button>{{ user.name }}</x-button>
+              <template #content>
+                <x-popover-container class="p-2">
+                  <Link
+                    href="/logout"
+                    method="post"
+                    as="button"
+                    type="submit"
+                    class="flex gap-2 items-center"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-6 h-6 text-error-500"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
+                      />
+                    </svg>
+                    <span class="text-sm font-semibold">Logout</span>
+                  </Link>
+                </x-popover-container>
+              </template>
+            </x-popover>
+          </div>
         </div>
       </header>
       <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">

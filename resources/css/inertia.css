@@ -11,3 +11,7 @@
 label {
   @apply text-sm;
 }
+
+.x-button {
+  @apply font-semibold;
+}

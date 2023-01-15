@@ -9,7 +9,6 @@ import {
   nextTick,
   onMounted,
 } from 'vue';
-import { useUrlSearchParams } from '@vueuse/core';
 
 export default defineComponent({
   emits: [
@@ -78,14 +77,6 @@ export default defineComponent({
       type: Boolean,
       default: true,
     },
-    next: {
-      type: String,
-      default: '',
-    },
-    prev: {
-      type: String,
-      default: '',
-    },
     sortable: {
       type: Object,
       default: () => {
@@ -134,7 +125,6 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     let localTable = ref(null);
-    const params = useUrlSearchParams('history');
 
     let defaultPageSize =
       props.pageOptions.length > 0
@@ -314,7 +304,7 @@ export default defineComponent({
       let limit = setting.pageSize;
       setting.order = order;
       setting.sort = sort;
-      emit('do-search', offset, limit, order, sort);
+      // emit('do-search', offset, limit, order, sort);
 
       if (setting.isCheckAll) {
         setting.isCheckAll = false;
@@ -330,14 +320,10 @@ export default defineComponent({
       if (props.hasCheckbox) {
         isChecked.value = [];
       }
-      let order = setting.order;
-      let sort = setting.sort;
-      let offset = (page - 1) * setting.pageSize;
-      let limit = setting.pageSize;
       if (!props.isReSearch || page > 1 || page == prevPage) {
-        emit('do-search', offset, limit, order, sort);
+        const isNext = page > prevPage;
+        emit('do-search', isNext);
       }
-      params.page = setting.page;
     };
 
     watch(() => setting.page, changePage);
@@ -376,9 +362,6 @@ export default defineComponent({
     );
 
     const prevPage = () => {
-      if (setting.page == 1) {
-        return false;
-      }
       setting.page--;
     };
 
@@ -387,9 +370,6 @@ export default defineComponent({
     };
 
     const nextPage = () => {
-      if (setting.page >= setting.maxPage) {
-        return false;
-      }
       setting.page++;
     };
 
@@ -416,8 +396,6 @@ export default defineComponent({
       emit('get-now-page', setting.page);
     };
 
-    const toggleButtonRefs = ref({});
-
     onMounted(() => {
       nextTick(() => {
         if (props.rows.length > 0) {
@@ -438,7 +416,6 @@ export default defineComponent({
         prevPage,
         movePage,
         nextPage,
-        toggleButtonRefs,
       };
     } else {
       return {
@@ -451,7 +428,6 @@ export default defineComponent({
         prevPage,
         movePage,
         nextPage,
-        toggleButtonRefs,
       };
     }
   },
@@ -470,9 +446,15 @@ export default defineComponent({
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
         >
-          <div v-if="isLoading" class="vtl-loading-mask">
-            <div class="vtl-loading-content">
-              <span style="color: white">Loading...</span>
+          <div
+            v-if="isLoading"
+            class="fixed z-40 top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col transition-opacity duration-300 ease-in-out"
+          >
+            <div
+              class="flex-1 flex gap-4 items-center justify-center text-white"
+            >
+              <x-spinner size="lg" />
+              <span class="font-bold">Loading...</span>
             </div>
           </div>
           <div class="overflow-x-auto">
@@ -666,20 +648,24 @@ export default defineComponent({
             <x-button
               size="sm"
               icon-left="prev"
-              :href="prev"
-              :disabled="prev === ''"
+              @click.prevent="prevPage"
+              :disabled="setting.page === 1"
               :loading="isLoading"
             >
               Previous
             </x-button>
-            <div role="status" aria-live="polite" class="text-sm font-medium">
-              Showing {{ setting.offset }} -
+            <div
+              role="status"
+              aria-live="polite"
+              class="text-xs font-medium lining-nums text-gray-700"
+            >
+              Page {{ setting.page }} | Showing {{ setting.offset }} to
               {{ setting.offset + rows.length - 1 }}
             </div>
             <x-button
               size="sm"
               icon-right="next"
-              :href="next"
+              @click.prevent="nextPage"
               :disabled="!hasMore"
               :loading="isLoading"
             >
@@ -764,25 +750,5 @@ export default defineComponent({
 
 .vtl-desc {
   background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAYAAAByUDbMAAAAZUlEQVQ4y2NgGAWjYBSggaqGu5FA/BOIv2PBIPFEUgxjB+IdQPwfC94HxLykus4GiD+hGfQOiB3J8SojEE9EM2wuSJzcsFMG4ttQgx4DsRalkZENxL+AuJQaMcsGxBOAmGvopk8AVz1sLZgg0bsAAAAASUVORK5CYII=);
-}
-
-.vtl-loading-mask {
-  position: absolute;
-  z-index: 3;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-flow: column;
-  transition: opacity 0.3s ease;
-}
-
-.vtl-loading-content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 </style>

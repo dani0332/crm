@@ -1,4 +1,5 @@
 const mix = require('laravel-mix');
+const path = require('path');
 const cssImport = require('postcss-import');
 const webpackConfig = require('./webpack.config');
 
@@ -17,6 +18,16 @@ mix.options({
  | file for the application as well as bundling up all the JS files.
  |
  */
+
+mix.webpackConfig({
+  output: { chunkFilename: 'js/[name].js?id=[chunkhash]' },
+  resolve: {
+    alias: {
+      '@': path.resolve('./resources/js'),
+    },
+    extensions: ['.js', '.vue', '.json'],
+  },
+});
 
 mix
   .js('resources/js/inertia/inertia.js', 'public/js')

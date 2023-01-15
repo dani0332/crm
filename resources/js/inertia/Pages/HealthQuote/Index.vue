@@ -1,7 +1,6 @@
 <script setup>
-import { reactive, ref } from 'vue';
-import { Head } from '@inertiajs/vue3';
-import MainLayout from '../../Layouts/MainLayout.vue';
+import { reactive, computed } from 'vue';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import TheTable from '../../Components/TheTable.vue';
 
 defineProps({
@@ -10,6 +9,8 @@ defineProps({
   hasMore: Boolean,
   nextPageUrl: String,
   prevPageUrl: String,
+  leadStatuses: Array,
+  advisors: Array,
 });
 
 const table = reactive({
@@ -124,69 +125,201 @@ const filters = reactive({
   first_name: '',
   last_name: '',
   email: '',
+  mobile_no: '',
+  created_at_start: '',
+  created_at_end: '',
+  sub_team: '',
+  quote_status: [],
+  advisors: [],
+  is_ecommerce: '',
+  is_renewal: '',
+  page: 1,
 });
-const selected = ref(''),
-  selectedMultiple = ref([]);
-const dummy = [
-  { value: 'A', label: 'Option A' },
-  { value: 'B', label: 'Option B' },
-  { value: 'C', label: 'Option C' },
-  { value: 'D', label: 'Option D' },
-  { value: 'E', label: 'Option E' },
-  { value: 'F', label: 'Option F' },
+
+const subTeamOptions = [
+  { value: '', label: 'All' },
+  { value: 'RM-NB', label: 'RM-NB' },
+  { value: 'RM-Speed', label: 'RM-Speed' },
+  { value: 'EBP', label: 'EBP' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
 ];
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-};
+
+const user = computed(() => usePage().props.auth.user);
+
+const leadStatusOptions = computed(() => {
+  return usePage().props.leadStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
+});
+
+const advisorOptions = computed(() => {
+  return usePage().props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
 
 function onSubmit(isValid) {
-  if (isValid) console.log('Valid! Sumitted.');
-  else console.log('Invalid! Form has errors');
+  if (isValid) {
+    filters.page = 1;
+    Object.keys(filters).forEach(
+      key =>
+        (filters[key] === '' || filters[key].length === 0) &&
+        delete filters[key],
+    );
+    router.visit('/quotes/health', {
+      method: 'get',
+      data: filters,
+      replace: true,
+      preserveState: true,
+      onBefore: () => (table.isLoading = true),
+      onSuccess: () => (table.isLoading = false),
+    });
+  } else {
+    console.log('Invalid');
+  }
 }
+
+function onReset() {
+  router.visit('/quotes/health', {
+    method: 'get',
+    replace: true,
+    onBefore: () => (table.isLoading = true),
+    onSuccess: () => (table.isLoading = false),
+  });
+}
+
+const onPaginate = isNext => {
+  const pageUrl = isNext
+    ? usePage().props.nextPageUrl
+    : usePage().props.prevPageUrl;
+
+  router.visit(pageUrl, {
+    method: 'get',
+    replace: true,
+    onBefore: () => (table.isLoading = true),
+    onSuccess: () => (table.isLoading = false),
+  });
+};
 </script>
 
 <template>
-  <MainLayout>
+  <div>
     <Head title="Health Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health Quotes List</h2>
-      <x-button color="#ff5e00">Create Lead</x-button>
+      <x-button size="sm" color="#ff5e00">Create Lead</x-button>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="onSubmit">
+    <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid grid-cols-4 gap-4">
         <x-input
           v-model="filters.code"
+          type="search"
           name="code"
           label="CDB ID"
           class="w-full"
           placeholder="Search by CDB ID"
         />
         <x-input
+          v-model="filters.first_name"
+          type="search"
+          name="first_name"
+          label="First Name"
+          class="w-full"
+          placeholder="Search by First Name"
+        />
+        <x-input
+          v-model="filters.last_name"
+          type="search"
+          name="last_name"
+          label="Last Name"
+          class="w-full"
+          placeholder="Search by Last Name"
+        />
+        <x-input
           v-model="filters.email"
-          :rules="[rules.isEmail]"
+          type="search"
           name="email"
           label="Email"
           class="w-full"
           placeholder="Search by Email"
         />
-        <x-select
-          v-model="selected"
-          label="Simple select"
-          :options="dummy"
-          placeholder="Placeholder"
+        <x-input
+          v-model="filters.mobile_no"
+          type="search"
+          name="mobile_no"
+          label="Mobile No"
+          class="w-full"
+          placeholder="Search by Mobile No"
+        />
+        <x-input
+          v-model="filters.created_at_start"
+          type="date"
+          name="created_at_start"
+          label="Created Date"
+          class="w-full"
+        />
+        <x-input
+          v-model="filters.created_at_end"
+          type="date"
+          name="created_at_end"
+          label="Created Date End"
           class="w-full"
         />
         <x-select
-          v-model="selectedMultiple"
-          label="Multi select"
-          placeholder="Placeholder"
-          :options="dummy"
+          v-model="filters.sub_team"
+          label="Sub Team"
+          :options="subTeamOptions"
+          placeholder="Search by Sub Team"
+          class="w-full"
+        />
+        <x-select
+          v-model="filters.quote_status"
+          label="Lead Status"
+          placeholder="Search by Lead Status"
+          :options="leadStatusOptions"
           multiple
           class="w-full"
         />
+        <x-select
+          v-model="filters.advisors"
+          label="Advisor"
+          placeholder="Search by Advisor"
+          :options="advisorOptions"
+          multiple
+          class="w-full"
+        />
+        <x-select
+          v-model="filters.is_ecommerce"
+          label="Is Ecommerce"
+          placeholder="Search by Ecommerce"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
+        />
+        <x-select
+          v-model="filters.is_renewal"
+          label="Is Renewal"
+          placeholder="Search by Renewal"
+          :options="[
+            { value: '', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
+        />
+      </div>
+      <div class="flex justify-end gap-3 mb-4">
+        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+        <x-button size="sm" color="primary" @click.prevent="onReset">
+          Reset
+        </x-button>
       </div>
     </x-form>
     <TheTable
@@ -195,12 +328,21 @@ function onSubmit(isValid) {
       :columns="table.columns"
       :rows="quotes || []"
       :has-more="hasMore"
-      :next="nextPageUrl"
-      :prev="prevPageUrl"
       :total="quotes.length || 0"
       :page="currentPage"
       :noDataText="'No Quotes Found'"
+      @do-search="onPaginate"
       @is-finished="table.isLoading = false"
-    />
-  </MainLayout>
+    >
+      <template v-slot:code="data">
+        <a
+          :href="`/quotes/health/${data.value.uuid}`"
+          target="_blank"
+          class="text-primary-500 hover:underline"
+        >
+          {{ data.value.code }}
+        </a>
+      </template>
+    </TheTable>
+  </div>
 </template>

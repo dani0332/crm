@@ -186,8 +186,11 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
 
+        // inertia rendering for health quote
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
+
+            $quote_status = $dropdownSource['quote_status_id'];
 
             return Inertia::render('HealthQuote/Index', [
                 'quotes' => $gridData->items(),
@@ -195,6 +198,8 @@ class CRUDController extends Controller
                 'hasMore' => $gridData->hasMorePages(),
                 'nextPageUrl' => $gridData->nextPageUrl(),
                 'prevPageUrl' => $gridData->previousPageUrl(),
+                'leadStatuses' => $quote_status,
+                'advisors' => $advisors,
             ]);
         }
 

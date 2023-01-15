@@ -1,6 +1,7 @@
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import UI from '@indielayer/ui';
+import MainLayout from './Layouts/MainLayout.vue';
 import icons from './icons';
 
 const appName =
@@ -8,7 +9,11 @@ const appName =
 
 createInertiaApp({
   title: title => `${title} - ${appName}`,
-  resolve: name => require(`./Pages/${name}`),
+  resolve: name => {
+    const page = require(`./Pages/${name}`);
+    page.default.layout = page.default.layout || MainLayout;
+    return page;
+  },
   setup({ el, App, props, plugin }) {
     createApp({
       name: 'IMCRM',
