@@ -46,7 +46,7 @@ use App\Http\Controllers\RewardTranslationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
-use App\Http\Controllers\TeamsController;
+use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TmCallStatusController;
 use App\Http\Controllers\TmInsuranceTypeController;
 use App\Http\Controllers\TmLeadController;
@@ -248,7 +248,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('carplanaddon', GenericCrudController::class);
         Route::resource('carplanaddonoption', GenericCrudController::class);
         Route::resource('applicationstorage', GenericCrudController::class);
-        Route::resource('teams', TeamsController::class);
+        Route::resource('teams', TeamController::class);
         Route::resource('leadstatus', GenericCrudController::class);
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);

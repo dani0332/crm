@@ -9,7 +9,7 @@ use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
-class TeamsController extends Controller
+class TeamController extends Controller
 {
     use TeamHierarchyTrait;
 
