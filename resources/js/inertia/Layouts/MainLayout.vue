@@ -79,7 +79,7 @@ const user = computed(() => usePage().props.auth.user);
               href="/quotes/health"
               class="py-2 px-3 flex gap-2 items-center"
               :class="{
-                'bg-primary-800': $page.component === 'HealthQuote/Index',
+                'bg-primary-800': $page.url.startsWith('/quotes/health'),
               }"
             >
               <x-icon icon="health" />

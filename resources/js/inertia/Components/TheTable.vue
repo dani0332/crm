@@ -445,7 +445,7 @@ export default defineComponent({
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
         >
-          <div
+          <!-- <div
             v-if="isLoading"
             class="fixed z-40 top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col transition-opacity duration-300 ease-in-out"
           >
@@ -455,10 +455,10 @@ export default defineComponent({
               <x-spinner size="lg" />
               <span class="font-bold">Loading...</span>
             </div>
-          </div>
+          </div> -->
           <div class="overflow-x-auto">
             <table
-              class="table text-sm font-medium"
+              class="table text-sm font-medium w-full"
               ref="localTable"
               :style="'max-height: ' + maxHeight + 'px;'"
             >
@@ -554,6 +554,7 @@ export default defineComponent({
                       v-for="(row, i) in rows"
                       :key="row[setting.keyColumn] ? row[setting.keyColumn] : i"
                       :name="'row-' + i + 1"
+                      class="hover"
                       :class="
                         typeof rowClasses === 'function'
                           ? rowClasses(row)
@@ -674,8 +675,9 @@ export default defineComponent({
         </template>
       </div>
       <div v-else>
-        <div>
-          {{ noDataText }}
+        <div class="flex flex-col items-center gap-6 py-6 px-4">
+          <x-icon icon="empty" size="xl" class="text-primary-300" />
+          <p class="font-semibold text-lg text-opacity-75">{{ noDataText }}</p>
         </div>
       </div>
     </div>
@@ -700,7 +702,7 @@ export default defineComponent({
 .table tr.hover:hover td,
 .table tr.hover:nth-child(even):hover th,
 .table tr.hover:nth-child(even):hover td {
-  @apply bg-primary-200;
+  @apply bg-primary-50;
 }
 
 .table :where(thead, tfoot) :where(th, td) {

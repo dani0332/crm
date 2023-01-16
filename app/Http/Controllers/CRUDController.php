@@ -11,8 +11,10 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Models\CarQuote;
+use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\LeadAllocation;
+use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
@@ -463,8 +465,27 @@ class CRUDController extends Controller
             $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
             $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
 
+            $genderOptions = [
+                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
+                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
+                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
+            ];
+
+            $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+
             return Inertia::render('HealthQuote/Show', [
                 'quote' => $record,
+                'genderOptions' => $genderOptions,
+                'leadStatuses' => $leadStatuses,
+                'ecomDetails' => $ecomDetails,
+                'membersDetail' => $membersDetail,
+                'memberCategories' => $memberCategories,
+                'salaryBands' => $salaryBands,
+                'listQuotePlans' => $listQuotePlans,
+                'ecomHealthInsuranceQuoteUrl' => $ecomHealthInsuranceQuoteUrl,
+                'nationalities' => $nationalities,
+                'emirates' => $emirates,
             ]);
 
         // return view('shared.show', compact([
@@ -807,9 +828,11 @@ class CRUDController extends Controller
         }
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
-            if ($request->leadStatus == QuoteStatusEnum::FollowupCall ||
-            $request->leadStatus == QuoteStatusEnum::Interested ||
-            $request->leadStatus == QuoteStatusEnum::NoAnswer) {
+            if (
+                $request->leadStatus == QuoteStatusEnum::FollowupCall ||
+                $request->leadStatus == QuoteStatusEnum::Interested ||
+                $request->leadStatus == QuoteStatusEnum::NoAnswer
+            ) {
                 $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
                 $this->validate($request, [
                     'next_followup_date' => 'required',

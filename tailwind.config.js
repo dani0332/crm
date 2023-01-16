@@ -37,7 +37,7 @@ module.exports = {
           800: 'rgb(165,61,0)',
           900: 'rgb(140,51,0)',
         },
-        success: colors.green,
+        success: colors.emerald,
         warning: colors.yellow,
         error: colors.red,
       },

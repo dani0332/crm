@@ -140,8 +140,6 @@ const subTeamOptions = [
   { value: 'No-Type', label: 'No-Type' },
 ];
 
-const user = computed(() => usePage().props.auth.user);
-
 const leadStatusOptions = computed(() => {
   return usePage().props.leadStatuses.map(status => ({
     value: status.id,
@@ -209,7 +207,7 @@ const onPaginate = isNext => {
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
-      <div class="grid grid-cols-4 gap-4">
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-input
           v-model="filters.code"
           type="search"
@@ -246,9 +244,9 @@ const onPaginate = isNext => {
           v-model="filters.mobile_no"
           type="search"
           name="mobile_no"
-          label="Mobile No"
+          label="Mobile Number"
           class="w-full"
-          placeholder="Search by Mobile No"
+          placeholder="Search by Mobile Number"
         />
         <x-input
           v-model="filters.created_at_start"
