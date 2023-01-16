@@ -224,8 +224,8 @@ class HealthQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
         if ($request->ajax()) {
-            if (! isset($request->email) && $request->email == '') {
-                $this->query->where('hqr.quote_status_id', '!=', 9);
+            if (empty($request->email) && empty($request->code)) {
+                $this->query->where('hqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
@@ -690,7 +690,7 @@ class HealthQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type', 'is_renewal', 'is_ecommerce'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'health_team_type', 'is_renewal', 'is_ecommerce'];
     }
 
     public function getCustomTitleByProperty($propertyName)
