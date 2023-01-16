@@ -105,7 +105,7 @@ class RuleService extends BaseService
             }
         }
 
-        info('------ Rule update is successfully done by user : '. auth()->user()->id . ' for rule : '. $rule->name. ' ------');
+        info('------ Rule update is successfully done by user : '.auth()->user()->id.' for rule : '.$rule->name.' ------');
 
         return $rule;
     }

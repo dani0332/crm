@@ -145,7 +145,8 @@ class TierService extends BaseService
                 ]);
             }
         }
-        info('------ Tier update is successfully done by user : '. auth()->user()->id . ' for tier : '. $tier->name. ' ------');
+        info('------ Tier update is successfully done by user : '.auth()->user()->id.' for tier : '.$tier->name.' ------');
+
         return $tier;
     }
 

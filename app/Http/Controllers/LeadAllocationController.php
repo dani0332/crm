@@ -125,15 +125,15 @@ class LeadAllocationController extends Controller
         $leadAllocationUser = LeadAllocation::where('user_id', $request->aid)->where('id', $request->id)->first();
 
         if (isset($request->is_available)) {
-            $updateLogString = $updateLogString. ' is_available to : '. $request->is_available;
+            $updateLogString = $updateLogString.' is_available to : '.$request->is_available;
             $leadAllocationUser->is_available = $request->is_available;
         }
         if (isset($request->max_cap)) {
-            $updateLogString = $updateLogString. ' max_cap to : '. $request->max_cap;
+            $updateLogString = $updateLogString.' max_cap to : '.$request->max_cap;
             $leadAllocationUser->max_capacity = $request->max_cap;
         }
         $leadAllocationUser->save();
-        $updateLogString = $updateLogString. ' for user : '. $request->aid. ' and by user : '. auth()->user()->id;
+        $updateLogString = $updateLogString.' for user : '.$request->aid.' and by user : '.auth()->user()->id;
         info($updateLogString);
     }
 
