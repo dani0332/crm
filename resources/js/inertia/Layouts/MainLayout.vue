@@ -69,10 +69,7 @@ const user = computed(() => usePage().props.auth.user);
         class="flex-1 py-6 text-sm font-medium overflow-x-hidden overflow-y-auto flex flex-col bg-gradient-to-b from-primary-500 to-primary-700 text-white"
       >
         <Link href="/"><div class="p-2">Home</div></Link>
-        <x-collapse
-          show-icon
-          :expanded="$page.component === 'HealthQuote/Index'"
-        >
+        <x-collapse show-icon :expanded="$page.url.startsWith('/quotes')">
           <template #default><div class="p-2">Personal Quotes</div></template>
           <template #content>
             <a href="/quotes/car" class="py-2 px-3 flex gap-2 items-center">

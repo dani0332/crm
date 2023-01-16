@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, computed } from 'vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage, Link } from '@inertiajs/vue3';
 import TheTable from '../../Components/TheTable.vue';
 
 defineProps({
@@ -111,11 +111,6 @@ const table = reactive({
       label: 'Is Ecommerce',
       field: 'is_ecommerce',
       width: '10%',
-    },
-    {
-      label: '',
-      field: 'actions',
-      width: '2%',
     },
   ],
 });
@@ -335,13 +330,20 @@ const onPaginate = isNext => {
       @is-finished="table.isLoading = false"
     >
       <template v-slot:code="data">
-        <a
+        <Link
           :href="`/quotes/health/${data.value.uuid}`"
-          target="_blank"
           class="text-primary-500 hover:underline"
         >
           {{ data.value.code }}
-        </a>
+        </Link>
+      </template>
+      <template v-slot:is_ecommerce="data">
+        <div class="font-medium">
+          <x-tag v-if="data.value.is_ecommerce" size="sm" color="success">
+            Yes
+          </x-tag>
+          <x-tag v-else color="error" size="sm">No</x-tag>
+        </div>
       </template>
     </TheTable>
   </div>

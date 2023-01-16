@@ -435,12 +435,11 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="vtl vtl-card">
+  <div>
     <h3 class="text-lg" v-if="title">{{ title }}</h3>
-    <div class="vtl-card-body">
-      <div class="vtl-row">
+    <div>
+      <div>
         <div
-          class="col-sm-12"
           :class="{
             'fixed-first-column': isFixedFirstColumn,
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
@@ -459,7 +458,7 @@ export default defineComponent({
           </div>
           <div class="overflow-x-auto">
             <table
-              class="table"
+              class="table text-sm font-medium"
               ref="localTable"
               :style="'max-height: ' + maxHeight + 'px;'"
             >
