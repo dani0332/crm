@@ -21,6 +21,7 @@ $docUploadUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid
                         <div class="alert alert-danger" id="document-delete-success" style="display:none;">Document deleted. Page will be refresh now.</div>
                     @endif
                 @endcannot
+
                 @if($record->payment_status_id == PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA))
                     <button id="btn_copy_doc_upload_link" data-label="Copy Upload Link" data-doc-upload-url="{{ $docUploadUrl }}" class="btn btn-success btn-sm pull-right">Copy Upload Link</button>
                 @endif

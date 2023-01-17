@@ -21,7 +21,7 @@
 			</div>
 			<div class="x_content">
 				<table width="100%">
-					@foreach($documentUploadTypes as $documentType)
+					@foreach($documentTypes as $documentType)
 					<tr height="150px">
 						<td width="25%" valign="middle">
 							<b>{{ ucwords($documentType->text) }}
@@ -105,7 +105,7 @@
 												alert("File Uploaded Successfully");
 												location.reload();
 											});
-											
+
 											this.on('maxfilesexceeded', function(file) {
 												alert("You can only upload a maximum of {{$documentType->max_files}} files");
 												location.reload();
