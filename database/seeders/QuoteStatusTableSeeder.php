@@ -495,6 +495,33 @@ class QuoteStatusTableSeeder extends Seeder
                 'updated_at' => now(),
             ]);
         }
+        // AML Screening Cleared
+        $amlScreeningCleared = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 6])->first();
+        if (! $amlScreeningCleared) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 6,
+                'sort_order' => 16,
+                'created_by' => 'daniyal.shahid@insurancemarket.ae',
+                'updated_by' => 'daniyal.shahid@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // AML Screening Failed
+        $amlScreeningFailed = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 7])->first();
+        if (! $amlScreeningFailed) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 7,
+                'sort_order' => 17,
+                'created_by' => 'daniyal.shahid@insurancemarket.ae',
+                'updated_by' => 'daniyal.shahid@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
 
         // In Negotiation
         $healthInNegotiationMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 25])->first();
