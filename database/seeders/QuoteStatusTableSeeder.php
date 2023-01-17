@@ -480,7 +480,7 @@ class QuoteStatusTableSeeder extends Seeder
         // Followed Up
         $healthFollowedUp = QuoteStatus::find(24);
         if (! $healthFollowedUp) {
-            DB::raw("INSERT INTO `quote_status` (`id`, `code`, `text`, `text_ar`, `is_active`, `sort_order`, `is_deleted`, `created_at`, `updated_at`, `deleted_at`, `uuid`, `created_by`, `updated_by`)
+            DB::insert("INSERT INTO `quote_status` (`id`, `code`, `text`, `text_ar`, `is_active`, `sort_order`, `is_deleted`, `created_at`, `updated_at`, `deleted_at`, `uuid`, `created_by`, `updated_by`)
             VALUES(24, 'Followed Up', 'Followed Up', NULL, 1, 5, 0, '2021-02-01 08:47:52', '2021-02-01 08:47:52', NULL, '4cf834e6-79e2-11ec-954e-f23017e1271d', '', '');");
         }
         $healthFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 24])->first();
