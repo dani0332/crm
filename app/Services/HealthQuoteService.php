@@ -1204,4 +1204,19 @@ class HealthQuoteService extends BaseService
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
+
+    public function statusesToDisplay($leadStatuses, $lead)
+    {
+        $statusesToRemove = collect();
+        if ($lead->is_ecommerce) {
+            if (QuoteStatusEnum::QualificationPending != $lead->quote_status_id) {
+                $statusesToRemove->push(QuoteStatusEnum::QualificationPending);
+            }
+            if (QuoteStatusEnum::Qualified != $lead->quote_status_id) {
+                $statusesToRemove->push(QuoteStatusEnum::Qualified);
+            }
+        }
+
+        return $leadStatuses->whereNotIn('id', $statusesToRemove);
+    }
 }
