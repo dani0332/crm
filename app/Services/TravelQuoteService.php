@@ -302,8 +302,8 @@ class TravelQuoteService extends BaseService
         }
 
         if ($request->ajax()) {
-            if (! isset($request->email) && $request->email == '') {
-                $this->query->where('tqr.quote_status_id', '!=', 9);
+            if (empty($request->email) && empty($request->code)) {
+                $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
@@ -693,7 +693,7 @@ class TravelQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'is_ecommerce', 'payment_status_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'is_ecommerce', 'payment_status_id'];
     }
 
     public function fillRenewalProperties($model)

@@ -47,6 +47,7 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
             'hqr.last_name',
+            'hqr.payment_status_id',
             'hqr.email',
             'hqr.mobile_no',
             'hqr.preference',
@@ -716,7 +717,7 @@ class HealthQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type', 'is_renewal', 'is_ecommerce'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'health_team_type', 'is_renewal', 'is_ecommerce'];
     }
 
     public function getCustomTitleByProperty($propertyName)
