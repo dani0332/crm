@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
@@ -108,8 +109,8 @@ class AMTController extends Controller
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         $model = 'Business';
         if ($request->ajax()) {
-            if (! isset($request->email) && $request->email == '') {
-                $data->where('qs.id', '!=', 9);
+            if (empty($request->email) && empty($request->code)) {
+                $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->first_name) && $request->first_name != '') {
                 $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
