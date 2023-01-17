@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
 use App\Models\QuoteDocument;
 use App\Services\ActivitiesService;
@@ -67,21 +68,31 @@ class QuoteDocumentController extends Controller
 
     public function list(Request $request, $quoteType, $quoteUuId)
     {
-        $quoteModel = $this->crudService->quoteModel($quoteType, $quoteUuId);
-        $quoteId = $quoteModel->id;
-        $quoteCdbId = $quoteModel->code;
-        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
-        $documentUploadTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId);
-        $documents = $quoteModel->documents;
+        $quote = $this->crudService->quoteModel($quoteType, $quoteUuId);
 
-        return view('components.quote-documents-upload', compact(
+        $quoteId = $quote->id;
+        $quoteCdbId = $quote->code;
+        $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
+        $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId);
+
+        $load = ['documents'];
+        $view = "components.quote-documents-upload";
+
+        if($quoteType == strtolower(quoteTypeCode::Health)) {
+            $load = array_merge($load, ['members.memberCategory', 'members.documents']);
+            $view = "components.health-quote-documents-upload";
+        }
+
+        $quote->load($load);
+        
+        return view($view, compact(
+            'quote',
             'quoteUuId',
             'quoteId',
             'quoteCdbId',
             'quoteType',
             'quoteTypeId',
-            'documentUploadTypes',
-            'documents'
+            'documentTypes'
         ));
     }
 
@@ -203,7 +214,13 @@ class QuoteDocumentController extends Controller
 
     public function getQuoteDocumentsUploaded($quoteType, $quoteId, $documentCode)
     {
-        return QuoteDocument::where(['quote_documentable_id' => $quoteId, 'document_type_code' => $documentCode])->get();
+        $query = QuoteDocument::where(['quote_documentable_id' => $quoteId, 'document_type_code' => $documentCode]);
+
+        if(!empty(request()->member_id)) {
+            $query->where('member_detail_id', request()->member_id);
+        }
+
+        return $query->get();
     }
 
     public function destroy(Request $request)
