@@ -1,8 +1,9 @@
 <script setup>
-import { computed, ref, reactive } from 'vue';
+import { computed, ref, reactive, onMounted } from 'vue';
 import { Head, usePage, router, useForm } from '@inertiajs/vue3';
 import { useDateFormat } from '@vueuse/core';
 import TheTable from '@/inertia/Components/TheTable.vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 
 defineProps({
   quote: Object,
@@ -15,6 +16,8 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
+  quoteDocuments: Object,
+  documentTypes: Array,
 });
 
 const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
@@ -25,7 +28,12 @@ const assignSubteam = ref(''),
 const leadStatus = ref(usePage().props.quote.quote_status_id),
   leadNotes = ref(usePage().props.quote.notes),
   memberDetailModal = ref(false),
-  memberActionEdit = ref(false);
+  memberActionEdit = ref(false),
+  docUploadModal = ref(false),
+  deleteDocModal = ref(false),
+  confirmDeleteData = reactive({
+    docs: null,
+  });
 
 const genderText = gender =>
   computed(() => {
@@ -189,6 +197,71 @@ const onDeleteMember = id => {
   memberForm.delete(`/members/${id}`, {
     preserveScroll: true,
   });
+};
+
+const memberDataDocs = membersDetail => {
+  return membersDetail
+    .map(member => ({
+      id: member.id,
+      name: memberCategoryText(member.member_category_id).value,
+    }))
+    .filter(member => member.name !== undefined);
+};
+
+// quoteDocuments
+const docsData = computed(() => {
+  return Object.values(usePage().props.quoteDocuments);
+});
+const quoteDocumentsTable = reactive({
+  isLoading: false,
+  columns: [
+    {
+      label: 'document_type',
+      field: 'document_type_text',
+    },
+    {
+      label: 'Document Name',
+      field: 'doc_name',
+    },
+    {
+      label: 'Created At',
+      field: 'created_at',
+      isKey: true,
+    },
+    {
+      label: 'Created By',
+      field: 'created_by_name',
+    },
+    {
+      label: 'Action',
+      field: 'action',
+    },
+  ],
+});
+
+const onDocDelete = name => {
+  deleteDocModal.value = true;
+  confirmDeleteData.docs = name;
+};
+
+const confirmDeleteDoc = () => {
+  quoteDocumentsTable.isLoading = true;
+  console.log(confirmDeleteData.docs);
+  router.post(
+    `/documents/delete`,
+    {
+      docName: confirmDeleteData.docs,
+      quoteId: usePage().props.quote.id,
+    },
+    {
+      preserveScroll: true,
+      only: [''],
+      onFinish: () => {
+        deleteDocModal.value = false;
+        quoteDocumentsTable.isLoading = false;
+      },
+    },
+  );
 };
 </script>
 <template>
@@ -642,10 +715,65 @@ const onDeleteMember = id => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
-        <x-divider class="mb-4 mt-1" />
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Documents
+          <x-tag size="sm">{{ docsData.length || 0 }}</x-tag>
+        </h3>
+        <x-button
+          @click.prevent="docUploadModal = true"
+          size="sm"
+          color="primary"
+        >
+          Upload Documents
+        </x-button>
       </div>
+      <x-modal v-model="docUploadModal" size="xl" show-close backdrop>
+        <template #header> Upload Documents </template>
+        <LazyDocumentUploader :members="memberDataDocs(membersDetail)" />
+      </x-modal>
+      <TheTable
+        :is-static-mode="true"
+        :is-slot-mode="true"
+        :is-hide-paging="true"
+        :is-loading="quoteDocumentsTable.isLoading"
+        :columns="quoteDocumentsTable.columns"
+        :rows="docsData || []"
+        :total="docsData.length || 0"
+        @is-finished="quoteDocumentsTable.isLoading = false"
+      >
+        <template v-slot:action="data">
+          <div>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="onDocDelete(data.value.doc_name)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </TheTable>
+      <x-modal v-model="deleteDocModal" show-close backdrop>
+        <template #header> Delete Document </template>
+        <p>Are you sure you want to delete this document?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button size="sm" ghost @click.prevent="deleteDocModal = false">
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              @click.prevent="confirmDeleteDoc"
+              :loading="quoteDocumentsTable.isLoading"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">

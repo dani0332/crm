@@ -235,6 +235,6 @@ class QuoteDocumentController extends Controller
         }
         $document->delete();
 
-        return response()->json(['message' => 'Document has been deleted.']);
+        // return response()->json(['message' => 'Document has been deleted.']);
     }
 }

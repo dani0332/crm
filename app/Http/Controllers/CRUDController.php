@@ -8,6 +8,7 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Models\CarQuote;
@@ -474,6 +475,14 @@ class CRUDController extends Controller
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
+            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
+
+            $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
+                $quoteDocument->created_by_name = $quoteDocument->createdBy->name;
+
+                return $quoteDocument;
+            });
+
             return Inertia::render('HealthQuote/Show', [
                 'quote' => $record,
                 'genderOptions' => $genderOptions,
@@ -487,6 +496,8 @@ class CRUDController extends Controller
                 'nationalities' => $nationalities,
                 'emirates' => $emirates,
                 'advisors' => $advisors,
+                'quoteDocuments' => $quoteDocuments,
+                'documentTypes' => $documentTypes,
             ]);
 
         // return view('shared.show', compact([

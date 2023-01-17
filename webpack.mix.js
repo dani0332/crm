@@ -38,20 +38,7 @@ mix
   .version()
   .sourceMaps();
 
-// mix.postCss('resources/css/filament.css', 'public/css', [
-//   require('tailwindcss'),
-// ]);
-
-mix
-  .js('resources/js/alpine/alpine.js', 'public/js')
-  .postCss('resources/css/livewire.css', 'public/css', []);
-
-// this should be removed, react's resources are not used
-mix
-  .js('resources/js/app.js', 'public/js')
-  .react()
-  .version()
-  .postCss('resources/css/app.css', 'build/css', [require('tailwindcss')]);
+mix.css('resources/css/livewire.css', 'public/css');
 
 mix
   .scripts(
