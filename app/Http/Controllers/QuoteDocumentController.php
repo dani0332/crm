@@ -76,15 +76,15 @@ class QuoteDocumentController extends Controller
         $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload($quoteTypeId);
 
         $load = ['documents'];
-        $view = "components.quote-documents-upload";
+        $view = 'components.quote-documents-upload';
 
-        if($quoteType == strtolower(quoteTypeCode::Health)) {
+        if ($quoteType == strtolower(quoteTypeCode::Health)) {
             $load = array_merge($load, ['members.memberCategory', 'members.documents']);
-            $view = "components.health-quote-documents-upload";
+            $view = 'components.health-quote-documents-upload';
         }
 
         $quote->load($load);
-        
+
         return view($view, compact(
             'quote',
             'quoteUuId',
@@ -216,7 +216,7 @@ class QuoteDocumentController extends Controller
     {
         $query = QuoteDocument::where(['quote_documentable_id' => $quoteId, 'document_type_code' => $documentCode]);
 
-        if(!empty(request()->member_id)) {
+        if (! empty(request()->member_id)) {
             $query->where('member_detail_id', request()->member_id);
         }
 
