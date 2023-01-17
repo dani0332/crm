@@ -486,6 +486,7 @@ class CRUDController extends Controller
                 'ecomHealthInsuranceQuoteUrl' => $ecomHealthInsuranceQuoteUrl,
                 'nationalities' => $nationalities,
                 'emirates' => $emirates,
+                'advisors' => $advisors,
             ]);
 
         // return view('shared.show', compact([

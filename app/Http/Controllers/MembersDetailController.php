@@ -18,13 +18,15 @@ class MembersDetailController extends Controller
      */
     public function store(MemberDetail $request)
     {
-        $dob = isset($request->dob) ? Carbon::createFromFormat('d-m-Y', $request->dob)->format(get_dob_date_format()) : null;
+        // $dob = isset($request->dob) ? Carbon::createFromFormat('d-m-Y', $request->dob)->format(get_dob_date_format()) : null;
         $data = [
             'health_quote_request_id' => $request->health_quote_request_id,
             'gender' => $request->gender,
-            'dob' => $dob,
-            'member_category_id' => $request->member_category,
-            'salary_band_id' => $request->salary_band,
+            'dob' => $request->dob,
+            'nationality_id' => $request->nationality_id,
+            'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
+            'member_category_id' => $request->member_category_id,
+            'salary_band_id' => $request->salary_band_id,
         ];
         HealthMemberDetail::create($data);
         HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
@@ -57,16 +59,19 @@ class MembersDetailController extends Controller
      */
     public function update(MemberDetail $request, $id)
     {
-        $dob = isset($request->dob) ? Carbon::createFromFormat('d-m-Y', $request->dob)->format(get_dob_date_format()) : null;
+        // $dob = isset($request->dob) ? Carbon::createFromFormat('d-m-Y', $request->dob)->format(get_dob_date_format()) : null;
         $data = [
             'health_quote_request_id' => isset($request->health_quote_request_id) ? $request->health_quote_request_id : null,
             'gender' => isset($request->gender) ? $request->gender : null,
-            'dob' => isset($dob) ? $dob : null,
-            'member_category_id' => isset($request->member_category) ? $request->member_category : null,
-            'salary_band_id' => isset($request->salary_band) ? $request->salary_band : null,
+            'dob' => isset($request->dob) ? $request->dob : null,
+            'nationality_id' => isset($request->nationality_id) ? $request->nationality_id : null,
+            'emirate_of_your_visa_id' => isset($request->emirate_of_your_visa_id) ? $request->emirate_of_your_visa_id : null,
+            'member_category_id' => isset($request->member_category_id) ? $request->member_category_id : null,
+            'salary_band_id' => isset($request->salary_band_id) ? $request->salary_band_id : null,
         ];
 
         $memberDetail = HealthMemberDetail::find($id);
+
         if ($memberDetail) {
             $memberDetail->update($data);
             HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);

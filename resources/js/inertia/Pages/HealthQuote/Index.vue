@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, computed } from 'vue';
 import { Head, router, usePage, Link } from '@inertiajs/vue3';
-import TheTable from '../../Components/TheTable.vue';
+import TheTable from '@/inertia/Components/TheTable.vue';
 
 defineProps({
   quotes: Array,
@@ -189,9 +189,13 @@ const onPaginate = isNext => {
     ? usePage().props.nextPageUrl
     : usePage().props.prevPageUrl;
 
+  if (!pageUrl) {
+    return;
+  }
   router.visit(pageUrl, {
     method: 'get',
     replace: true,
+    preserveScroll: true,
     onBefore: () => (table.isLoading = true),
     onSuccess: () => (table.isLoading = false),
   });

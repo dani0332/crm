@@ -1,7 +1,7 @@
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import UI from '@indielayer/ui';
-import MainLayout from './Layouts/MainLayout.vue';
+import MainLayout from '@/inertia/Layouts/MainLayout.vue';
 import icons from './icons';
 
 const appName =

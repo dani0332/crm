@@ -8,6 +8,7 @@ import {
   onBeforeUpdate,
   nextTick,
   onMounted,
+  Transition,
 } from 'vue';
 
 export default defineComponent({
@@ -125,7 +126,6 @@ export default defineComponent({
   },
   setup(props, { emit, slots }) {
     let localTable = ref(null);
-
     let defaultPageSize =
       props.pageOptions.length > 0
         ? ref(props.pageOptions[0].value)
@@ -141,14 +141,10 @@ export default defineComponent({
         }
       });
     }
-
     const setting = reactive({
       isSlotMode: props.isSlotMode,
-
       isCheckAll: false,
-
       isHidePaging: props.isHidePaging,
-
       keyColumn: computed(() => {
         let key = '';
         Object.assign(props.columns).forEach(col => {
@@ -158,11 +154,8 @@ export default defineComponent({
         });
         return key;
       }),
-
       page: props.page,
-
       pageSize: defaultPageSize.value,
-
       maxPage: computed(() => {
         if (props.total <= 0) {
           return 0;
@@ -174,16 +167,13 @@ export default defineComponent({
         }
         return maxPage;
       }),
-
       offset: computed(() => {
         return (setting.page - 1) * setting.pageSize + 1;
       }),
-
       limit: computed(() => {
         let limit = setting.page * setting.pageSize;
         return props.total >= limit ? limit : props.total;
       }),
-
       paging: computed(() => {
         let startPage = setting.page - 2 <= 0 ? 1 : setting.page - 2;
         if (setting.maxPage - setting.page <= 2) {
@@ -198,17 +188,13 @@ export default defineComponent({
         }
         return pages;
       }),
-
       order: props.sortable.order,
       sort: props.sortable.sort,
       pageOptions: props.pageOptions,
     });
-
     const isChecked = ref([]);
-
     const localRows = computed(() => {
       let rows = props.rows;
-
       var collator = new Intl.Collator(undefined, {
         numeric: true,
         sensitivity: 'base',
@@ -217,26 +203,21 @@ export default defineComponent({
       rows.sort(function (a, b) {
         return collator.compare(a[setting.order], b[setting.order]) * sortOrder;
       });
-
       let result = null;
       result = [];
       for (let index = 0; index < setting.limit; index++) {
         result.push(rows[index]);
       }
-
       nextTick(function () {
         callIsFinished();
       });
-
       return result;
     });
-
     const rowCheckbox = ref([]);
     if (props.hasCheckbox) {
       onBeforeUpdate(() => {
         rowCheckbox.value = [];
       });
-
       watch(
         () => setting.isCheckAll,
         state => {
@@ -255,12 +236,10 @@ export default defineComponent({
               val.checked = state;
             }
           });
-
           emit('return-checked-rows', isChecked.value);
         },
       );
     }
-
     const checked = (row, event) => {
       event.stopPropagation();
       if (event.target.checked) {
@@ -281,7 +260,6 @@ export default defineComponent({
         emit('return-checked-rows', isChecked.value);
       }
     };
-
     const clearChecked = () => {
       isChecked.value = [];
       rowCheckbox.value.forEach(val => {
@@ -289,10 +267,8 @@ export default defineComponent({
           val.checked = false;
         }
       });
-
       emit('return-checked-rows', isChecked.value);
     };
-
     const doSort = order => {
       let sort = 'asc';
       if (order == setting.order) {
@@ -305,7 +281,6 @@ export default defineComponent({
       setting.order = order;
       setting.sort = sort;
       // emit('do-search', offset, limit, order, sort);
-
       if (setting.isCheckAll) {
         setting.isCheckAll = false;
       } else {
@@ -314,7 +289,6 @@ export default defineComponent({
         }
       }
     };
-
     const changePage = (page, prevPage) => {
       setting.isCheckAll = false;
       if (props.hasCheckbox) {
@@ -325,9 +299,7 @@ export default defineComponent({
         emit('do-search', isNext);
       }
     };
-
     watch(() => setting.page, changePage);
-
     watch(
       () => props.page,
       val => {
@@ -342,7 +314,6 @@ export default defineComponent({
         }
       },
     );
-
     const changePageSize = () => {
       if (setting.page === 1) {
         changePage(setting.page, setting.page);
@@ -351,28 +322,22 @@ export default defineComponent({
         setting.isCheckAll = false;
       }
     };
-
     watch(() => setting.pageSize, changePageSize);
-
     watch(
       () => props.pageSize,
       newPageSize => {
         setting.pageSize = newPageSize;
       },
     );
-
     const prevPage = () => {
       setting.page--;
     };
-
     const movePage = page => {
       setting.page = page;
     };
-
     const nextPage = () => {
       setting.page++;
     };
-
     watch(
       () => props.rows,
       () => {
@@ -386,7 +351,6 @@ export default defineComponent({
         });
       },
     );
-
     const callIsFinished = () => {
       if (localTable.value) {
         let localElement =
@@ -395,7 +359,6 @@ export default defineComponent({
       }
       emit('get-now-page', setting.page);
     };
-
     onMounted(() => {
       nextTick(() => {
         if (props.rows.length > 0) {
@@ -403,7 +366,6 @@ export default defineComponent({
         }
       });
     });
-
     if (props.hasCheckbox) {
       return {
         slots,
@@ -431,6 +393,7 @@ export default defineComponent({
       };
     }
   },
+  components: { Transition },
 });
 </script>
 
@@ -445,23 +408,24 @@ export default defineComponent({
             'fixed-first-second-column': isFixedFirstColumn && hasCheckbox,
           }"
         >
-          <!-- <div
-            v-if="isLoading"
-            class="fixed z-40 top-0 left-0 w-full h-full bg-black bg-opacity-50 flex flex-col transition-opacity duration-300 ease-in-out"
-          >
-            <div
-              class="flex-1 flex gap-4 items-center justify-center text-white"
-            >
-              <x-spinner size="lg" />
-              <span class="font-bold">Loading...</span>
-            </div>
-          </div> -->
           <div class="overflow-x-auto">
             <table
-              class="table text-sm font-medium w-full"
+              class="table text-sm font-medium w-full relative rounded-lg overflow-hidden"
               ref="localTable"
               :style="'max-height: ' + maxHeight + 'px;'"
             >
+              <Transition name="fade">
+                <div
+                  v-if="isLoading"
+                  class="absolute top-0 left-0 w-full h-full bg-black/30 flex flex-col"
+                >
+                  <div
+                    class="flex-1 flex items-center justify-center text-white"
+                  >
+                    <span class="font-bold">Loading...</span>
+                  </div>
+                </div>
+              </Transition>
               <thead>
                 <tr>
                   <th v-if="hasCheckbox">

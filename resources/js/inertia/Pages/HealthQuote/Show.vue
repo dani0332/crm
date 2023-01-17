@@ -2,8 +2,7 @@
 import { computed, ref, reactive } from 'vue';
 import { Head, usePage, router, useForm } from '@inertiajs/vue3';
 import { useDateFormat } from '@vueuse/core';
-
-import TheTable from '../../Components/TheTable.vue';
+import TheTable from '@/inertia/Components/TheTable.vue';
 
 defineProps({
   quote: Object,
@@ -15,9 +14,13 @@ defineProps({
   salaryBands: Array,
   nationalities: Array,
   emirates: Array,
+  advisors: Array,
 });
 
 const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
+
+const assignSubteam = ref(''),
+  assignLead = ref('');
 
 const leadStatus = ref(usePage().props.quote.quote_status_id),
   leadNotes = ref(usePage().props.quote.notes),
@@ -33,7 +36,7 @@ const memberCategoryText = memberCategoryId =>
   computed(() => {
     return usePage().props.memberCategories.find(
       category => category.id === memberCategoryId,
-    ).text;
+    )?.text;
   });
 
 const goBack = () => {
@@ -41,6 +44,21 @@ const goBack = () => {
     ? window.history.back()
     : router.get('/quotes/health');
 };
+
+const subTeamOptions = [
+  { value: 'RM-NB', label: 'RM-NB' },
+  { value: 'RM-Speed', label: 'RM-Speed' },
+  { value: 'EBP', label: 'EBP' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
+];
+
+const advisorOptions = computed(() => {
+  return usePage().props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
 
 const genderSelect = computed(() => {
   return Object.keys(usePage().props.genderOptions).map(status => ({
@@ -120,6 +138,7 @@ const memberDetailsTable = reactive({
 });
 
 const memberForm = useForm({
+  id: null,
   gender: null,
   dob: null,
   nationality_id: null,
@@ -133,6 +152,7 @@ function onEditMember(data) {
   memberActionEdit.value = true;
   memberDetailModal.value = true;
 
+  memberForm.id = data.id;
   memberForm.gender = data.gender;
   memberForm.dob = data.dob;
   memberForm.nationality_id = data.nationality_id;
@@ -142,22 +162,32 @@ function onEditMember(data) {
 }
 
 const onAddMemberModal = () => {
+  memberForm.reset();
   memberActionEdit.value = false;
   memberDetailModal.value = true;
-  memberForm.reset();
 };
 
 const onAddMember = () => {
-  router.post(`/members`, {
+  memberForm.post(`/members`, {
     preserveScroll: true,
-    onSuccess: () => (memberDetailModal.value = false),
+    onFinish: () => {
+      memberDetailModal.value = false;
+    },
   });
 };
 
 const onUpdateMember = () => {
-  router.put(`/members/update`, {
+  memberForm.put(`/members/${memberForm.id}`, {
     preserveScroll: true,
-    onSuccess: () => (memberDetailModal.value = false),
+    onFinish: () => {
+      memberDetailModal.value = false;
+    },
+  });
+};
+
+const onDeleteMember = id => {
+  memberForm.delete(`/members/${id}`, {
+    preserveScroll: true,
   });
 };
 </script>
@@ -176,6 +206,35 @@ const onUpdateMember = () => {
     </div>
 
     <x-divider class="my-4" />
+
+    <div class="p-4 rounded shadow mb-6 bg-primary-50/50">
+      <div class="flex gap-6 w-full">
+        <div class="w-full md:w-1/2 flex gap-2 items-end">
+          <x-select
+            v-model="assignSubteam"
+            label="Assign Subteam"
+            :options="subTeamOptions"
+            placeholder="Select Subteam"
+            class="w-auto flex-1"
+          />
+          <div>
+            <x-button color="orange" size="sm"> Assign Team </x-button>
+          </div>
+        </div>
+        <div class="w-full md:w-1/2 flex gap-2 items-end">
+          <x-select
+            v-model="assignLead"
+            label="Assign Lead"
+            :options="advisorOptions"
+            placeholder="Select Lead"
+            class="w-auto flex-1"
+          />
+          <div>
+            <x-button color="orange" size="sm">Assign</x-button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
@@ -415,7 +474,14 @@ const onUpdateMember = () => {
               >
                 Edit
               </x-button>
-              <x-button size="xs" color="error" outlined>Delete</x-button>
+              <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="onDeleteMember(data.value.id)"
+              >
+                Delete
+              </x-button>
             </div>
           </template>
         </TheTable>
@@ -427,6 +493,7 @@ const onUpdateMember = () => {
 
         <x-form :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4">
+            <input type="hidden" :value="memberForm.id" />
             <x-select
               v-model="memberForm.nationality_id"
               label="Nationality"
@@ -486,6 +553,7 @@ const onUpdateMember = () => {
               size="sm"
               color="emerald"
               @click.prevent="onUpdateMember"
+              :loading="memberForm.processing"
             >
               Update
             </x-button>
@@ -494,6 +562,7 @@ const onUpdateMember = () => {
               size="sm"
               color="emerald"
               @click.prevent="onAddMember"
+              :loading="memberForm.processing"
             >
               Save
             </x-button>
@@ -568,6 +637,13 @@ const onUpdateMember = () => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+    </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Documents</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
     </div>
