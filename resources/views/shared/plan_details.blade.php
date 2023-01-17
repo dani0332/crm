@@ -200,11 +200,9 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 		});
 
 		// Show total on load
-		totalPremium('.car-quote-plan-total-premium', JSON.parse(
-				'{{ json_encode(isset($discountPremium) ? $discountPremium : 0) }}'), JSON
-			.parse('{{ json_encode($vat) }}'), JSON.parse(
-				'{{ json_encode($totalSelectedAddonsPriceWithVat) }}'
-			));
+		totalPremium('.car-quote-plan-total-premium', 
+				'{{ isset($discountPremium) ? $discountPremium : 0 }}', '{{ isset($vat) ? $vat : 0 }}', 
+				'{{ isset($totalSelectedAddonsPriceWithVat) ? $totalSelectedAddonsPriceWithVat : 0 }}');
 
 		// Conditionally lock fields
 		conditionallyLockFields(shouldReviseQuote);
