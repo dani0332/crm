@@ -47,6 +47,7 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
             'hqr.last_name',
+            'hqr.payment_status_id',
             'hqr.email',
             'hqr.mobile_no',
             'hqr.preference',

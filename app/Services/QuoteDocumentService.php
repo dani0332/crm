@@ -32,7 +32,7 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        $enabledLOBs = [quoteTypeCode::Car];
+        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health];
         if (in_array($quoteModelType, $enabledLOBs)) {
             return true;
         }

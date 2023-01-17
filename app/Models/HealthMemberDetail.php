@@ -42,4 +42,9 @@ class HealthMemberDetail extends Model
     {
         return Carbon::parse($value)->format('Y-m-d');
     }
+
+    public function documents()
+    {
+        return $this->hasMany(QuoteDocument::class, 'member_detail_id');
+    }
 }
