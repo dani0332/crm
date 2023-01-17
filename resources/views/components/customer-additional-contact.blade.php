@@ -33,15 +33,23 @@ use App\Enums\RolesEnum;
                                 <td style="float:right;">
                                     @if(! auth()->user()->hasRole(RolesEnum::PA))
                                         @if($customerAdditionalContact->key == 'email')
-                                        <button class="btn btn-success btn-sm additional-email-make-primary-btn" 
+                                            <button class="btn btn-success btn-sm additional-email-make-primary-btn" 
                                                 data-record-id="{{ $customerAdditionalContact->id }}" 
                                                 data-quote-id="{{ $record->id }}" 
                                                 data-key="{{ $customerAdditionalContact->key }}" 
                                                 data-value="{{ $customerAdditionalContact->value }}" 
-                                                data-quote-type="{{ $quoteType }}" 
-                                                >Make Primary</button>
+                                                data-quote-type="{{ $quoteType }}">Make Primary</button>
+                                        @else
+                                            <button class="btn btn-success btn-sm additional-email-make-primary-btn" 
+                                                data-record-id="{{ $customerAdditionalContact->id }}" 
+                                                data-quote-id="{{ $record->id }}" 
+                                                data-key="{{ $customerAdditionalContact->key }}" 
+                                                data-value="{{ $customerAdditionalContact->value }}" 
+                                                data-quote-type="{{ $quoteType }}">Make Primary</button>
                                         @endif
-                                        <button class="btn btn-danger btn-sm additional-contact-delete-btn" data-customer-additional-contact-id="{{ $customerAdditionalContact->id }}">Delete</button>
+                                        @isset($customerAdditionalContact->id)
+                                            <button class="btn btn-danger btn-sm additional-contact-delete-btn" data-customer-additional-contact-id="{{ $customerAdditionalContact->id }}">Delete</button>
+                                        @endisset    
                                     @endif
                                 </td>
                             </tr>
