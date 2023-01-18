@@ -108,7 +108,7 @@ class CustomerService extends BaseService
 
         if (isset($customer) && $quoteMobileNo != $customer->mobile_no) {
             $customerMobileNo = (object) [
-                'key' => 'Mobile',
+                'key' => 'mobile_no',
                 'value' => isset($customer->mobile_no) ? $customer->mobile_no : '',
                 'created_at' => isset($customer->created_at) ? $customer->created_at : '',
             ];

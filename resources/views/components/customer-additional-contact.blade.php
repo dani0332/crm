@@ -27,7 +27,7 @@ use App\Enums\RolesEnum;
                                 @continue
                             @endif
                             <tr>
-                                <td>{{ ucwords(str_replace("_", " ", $customerAdditionalContact->key)) }}</td>
+                                <td>{{ ucwords(str_replace("_", " ", $customerAdditionalContact->key)).'.' }}</td>
                                 <td>{{ $customerAdditionalContact->value }}</td>
                                 <td>{{ $customerAdditionalContact->created_at }}</td>
                                 <td style="float:right;">
@@ -40,12 +40,13 @@ use App\Enums\RolesEnum;
                                                 data-value="{{ $customerAdditionalContact->value }}" 
                                                 data-quote-type="{{ $quoteType }}">Make Primary</button>
                                         @else
-                                            <button class="btn btn-success btn-sm additional-email-make-primary-btn" 
-                                                data-record-id="{{ $customerAdditionalContact->id }}" 
+                                            <button class="btn btn-success btn-sm additional-mobile-no-make-primary-btn" 
                                                 data-quote-id="{{ $record->id }}" 
                                                 data-key="{{ $customerAdditionalContact->key }}" 
                                                 data-value="{{ $customerAdditionalContact->value }}" 
-                                                data-quote-type="{{ $quoteType }}">Make Primary</button>
+                                                data-quote-type="{{ $quoteType }}" 
+                                                data-quote-primary-mobile-no="{{ $record->mobile_no }}" 
+                                                data-quote-customer-id="{{ $record->customer_id }}">Make Primary</button>
                                         @endif
                                         @isset($customerAdditionalContact->id)
                                             <button class="btn btn-danger btn-sm additional-contact-delete-btn" data-customer-additional-contact-id="{{ $customerAdditionalContact->id }}">Delete</button>
