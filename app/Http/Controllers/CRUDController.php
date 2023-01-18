@@ -17,7 +17,6 @@ use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\QuoteViewCount;
-use App\Models\Team;
 use App\Models\Tier;
 use App\Models\User;
 use App\Services\ActivitiesService;
@@ -45,11 +44,12 @@ use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
+use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use DB;
+
 class CRUDController extends Controller
 {
     protected $genericModel;

@@ -249,7 +249,6 @@ class CarQuoteService extends BaseService
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
-
     }
 
     public function getSelectedLostReason($id)
@@ -1160,17 +1159,17 @@ class CarQuoteService extends BaseService
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
             $lead->save();
-            info('Manual assignment done for lead : '. $lead->uuid);
+            info('Manual assignment done for lead : '.$lead->uuid);
             $this->updateChildRecord($lead->id);
-            info('Assigned Date and id are update in details table for lead : '. $lead->uuid);
+            info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
             $advisorLeadAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($userId);
-            if($advisorLeadAllocationRecord){
+            if ($advisorLeadAllocationRecord) {
                 $previousAssignmentCount = $advisorLeadAllocationRecord->manual_assignment_count;
                 $previousTotalAllocationCount = $advisorLeadAllocationRecord->allocation_count;
                 $advisorLeadAllocationRecord->allocation_count = $previousTotalAllocationCount + 1;
                 $advisorLeadAllocationRecord->manual_assignment_count = $previousAssignmentCount + 1;
                 $advisorLeadAllocationRecord->save();
-                info('manual lead assignment count is increased from : '. $previousAssignmentCount. ' to : '. $previousAssignmentCount + 1 . '  and allocation count from : '. $previousTotalAllocationCount .' to '. $previousTotalAllocationCount + 1  .' for advisor id : '. $userId);
+                info('manual lead assignment count is increased from : '.$previousAssignmentCount.' to : '.$previousAssignmentCount + 1 .'  and allocation count from : '.$previousTotalAllocationCount.' to '.$previousTotalAllocationCount + 1  .' for advisor id : '.$userId);
             }
         }
 
