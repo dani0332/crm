@@ -65,18 +65,14 @@ class Customer extends Model implements AuditableContract
         return $this->hasMany(HealthQuote::class, 'customer_id', 'id');
     }
 
-    public function getCreatedAtAttribute($table)
+    public function getCreatedAtAttribute($date)
     {
-        $dateTimeFormat = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($dateTimeFormat);
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
-    public function getUpdatedAtAttribute($table)
+    public function getUpdatedAtAttribute($date)
     {
-        $dateTimeFormat = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($dateTimeFormat);
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
     public function additionalContactInfo()
