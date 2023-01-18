@@ -7,6 +7,7 @@ defineProps({
   members: Array,
   docTypes: Object,
   docs: Array,
+  cdn: String,
 });
 const memberTabs = ref('quote-documents');
 const isUploading = ref(false);
@@ -72,6 +73,17 @@ const uploadFile = (doc, memberId, files) => {
                 :loading="docForm.processing"
                 @change="uploadFile(docType, null, $event)"
               />
+              <a
+                v-for="doc in docs.filter(
+                  d => d.document_type_code == docType.code,
+                )"
+                :key="doc.id"
+                :href="cdn + doc.doc_url"
+                target="_blank"
+                class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+              >
+                {{ doc.doc_name }}
+              </a>
             </div>
           </div>
         </x-tab>
@@ -96,10 +108,24 @@ const uploadFile = (doc, memberId, files) => {
             </div>
             <div class="pb-4">
               <Dropzone
+                :id="docType.id"
                 :accept="docType.accepted_files"
                 :max-files="docType.max_files"
+                :max-size="docType.max_size"
+                :loading="docForm.processing"
                 @change="uploadFile(docType, member.id, $event)"
               />
+              <a
+                v-for="doc in docs.filter(
+                  d => d.document_type_code == docType.code,
+                )"
+                :key="doc.id"
+                :href="cdn + doc.doc_url"
+                target="_blank"
+                class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+              >
+                {{ doc.doc_name }}
+              </a>
             </div>
           </div>
         </x-tab>

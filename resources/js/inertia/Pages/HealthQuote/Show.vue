@@ -1,9 +1,10 @@
 <script setup>
-import { computed, ref, reactive, onMounted } from 'vue';
+import { computed, ref, reactive } from 'vue';
 import { Head, usePage, router, useForm } from '@inertiajs/vue3';
 import { useDateFormat } from '@vueuse/core';
 import TheTable from '@/inertia/Components/TheTable.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 
 defineProps({
   quote: Object,
@@ -16,8 +17,10 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
+  listQuotePlans: Array,
   quoteDocuments: Object,
   documentTypes: Object,
+  cdnPath: String,
 });
 
 const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
@@ -31,6 +34,8 @@ const leadStatus = ref(usePage().props.quote.quote_status_id),
   memberActionEdit = ref(false),
   docUploadModal = ref(false),
   deleteDocModal = ref(false),
+  planModal = ref(false),
+  selectedPlan = ref(null),
   confirmDeleteData = reactive({
     docs: null,
   });
@@ -208,6 +213,45 @@ const memberDataDocs = membersDetail => {
     .filter(member => member.name !== undefined);
 };
 
+// plans
+const plansTable = reactive({
+  isLoading: false,
+  columns: [
+    {
+      label: 'Provider Name',
+      field: 'providerName',
+      isKey: true,
+    },
+    {
+      label: 'Plan Name',
+      field: 'name',
+    },
+    {
+      label: 'Actual Premium with BASMAH',
+      field: 'actualPremium',
+    },
+    {
+      label: 'Premium with VAT and BASMAH',
+      field: 'premiumVat',
+    },
+    {
+      label: 'Action',
+      field: 'action',
+    },
+  ],
+  pageOptions: [
+    {
+      value: 100,
+      label: '100',
+    },
+  ],
+});
+
+const planClicked = plan => {
+  selectedPlan.value = plan;
+  planModal.value = true;
+};
+
 // quoteDocuments
 const docsData = computed(() => {
   return Object.values(usePage().props.quoteDocuments);
@@ -235,6 +279,12 @@ const quoteDocumentsTable = reactive({
     {
       label: 'Action',
       field: 'action',
+    },
+  ],
+  pageOptions: [
+    {
+      value: 100,
+      label: '100',
     },
   ],
 });
@@ -708,10 +758,50 @@ const confirmDeleteDoc = () => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
-        <x-divider class="mb-4 mt-1" />
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Available Plans
+          <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
+        </h3>
+        <x-button size="sm" color="primary"> Copy Link </x-button>
       </div>
+      <TheTable
+        :is-static-mode="true"
+        :is-slot-mode="true"
+        :is-hide-paging="true"
+        :is-loading="plansTable.isLoading"
+        :columns="plansTable.columns"
+        :rows="listQuotePlans || []"
+        :total="listQuotePlans.length || 0"
+        :pageOptions="plansTable.pageOptions"
+        @is-finished="plansTable.isLoading = false"
+      >
+        <template v-slot:actualPremium="data">
+          {{ data.value.actualPremium + data.value.basmah }}
+        </template>
+        <template v-slot:premiumVat="data">
+          {{ data.value.actualPremium + data.value.vat + data.value.basmah }}
+        </template>
+        <template v-slot:action="data">
+          <div class="space-x-4">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              @click.prevent="planClicked(data.value)"
+            >
+              View
+            </x-button>
+            <x-button size="xs" color="emerald" outlined> Copy </x-button>
+          </div>
+        </template>
+      </TheTable>
+      <x-modal v-model="planModal" size="xl" show-close backdrop>
+        <template #header>
+          {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
+        </template>
+        <LazyAvailablePlan :plan="selectedPlan" />
+      </x-modal>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -734,6 +824,7 @@ const confirmDeleteDoc = () => {
           :members="memberDataDocs(membersDetail)"
           :doc-types="documentTypes"
           :docs="docsData || []"
+          :cdn="cdnPath"
         />
       </x-modal>
       <TheTable
@@ -744,9 +835,14 @@ const confirmDeleteDoc = () => {
         :columns="quoteDocumentsTable.columns"
         :rows="docsData || []"
         :total="docsData.length || 0"
-        :pageSize="100"
+        :pageOptions="quoteDocumentsTable.pageOptions"
         @is-finished="quoteDocumentsTable.isLoading = false"
       >
+        <template v-slot:doc_name="data">
+          <a :href="cdnPath + data.value.doc_url" target="_blank">
+            {{ data.value.doc_name }}
+          </a>
+        </template>
         <template v-slot:action="data">
           <div>
             <x-button

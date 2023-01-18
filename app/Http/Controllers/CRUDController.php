@@ -485,6 +485,9 @@ class CRUDController extends Controller
                 return $quoteDocument;
             });
 
+            $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
+
             return Inertia::render('HealthQuote/Show', [
                 'quote' => $record,
                 'genderOptions' => $genderOptions,
@@ -500,6 +503,8 @@ class CRUDController extends Controller
                 'advisors' => $advisors,
                 'quoteDocuments' => $quoteDocuments,
                 'documentTypes' => $documentTypes,
+                'cdnPath' => $cdnPath,
+                'domainPath' => $domainPath,
             ]);
 
         // return view('shared.show', compact([

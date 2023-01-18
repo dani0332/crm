@@ -16,7 +16,6 @@
         "calebporzio/sushi": "^2.4",
         "doctrine/dbal": "^3.3",
         "fideloper/proxy": "^4.4",
-        "filament/filament": "^2.16",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.4",
         "hidehalo/nanoid-php": "^1.1",
@@ -35,15 +34,12 @@
         "owen-it/laravel-auditing": "^12.0",
         "parsecsv/php-parsecsv": "^1.3",
         "predis/predis": "^1.1",
-        "pxlrbt/filament-excel": "^1.1",
         "rappasoft/laravel-livewire-tables": "^2.8",
         "sammyjo20/laravel-haystack": "^0.10.1",
         "sentry/sentry-laravel": "^2.7",
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-permission": "^4.0",
-        "webbingbrasil/filament-copyactions": "^1.0",
-        "yajra/laravel-datatables-oracle": "^9.18",
-        "z3d0x/filament-simple-permissions": "^1.0"
+        "yajra/laravel-datatables-oracle": "^9.18"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
@@ -80,9 +76,6 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
-        ],
-        "post-update-cmd": [
-            "@php artisan filament:upgrade"
         ],
         "serve": "doppler run -- php artisan serve",
         "pint:fix": "vendor/bin/pint"

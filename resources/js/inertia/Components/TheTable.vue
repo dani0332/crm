@@ -155,7 +155,7 @@ export default defineComponent({
         return key;
       }),
       page: props.page,
-      pageSize: props.pageSize,
+      pageSize: defaultPageSize.value,
       maxPage: computed(() => {
         if (props.total <= 0) {
           return 0;
@@ -410,7 +410,7 @@ export default defineComponent({
         >
           <div class="overflow-x-auto">
             <table
-              class="table text-sm font-medium w-full relative rounded-lg overflow-hidden"
+              class="table text-sm font-medium w-full relative rounded-lg"
               ref="localTable"
               :style="'max-height: ' + maxHeight + 'px;'"
             >
@@ -560,47 +560,6 @@ export default defineComponent({
                     </tr>
                   </template>
                 </tbody>
-                <tfoot>
-                  <tr>
-                    <th v-if="hasCheckbox">
-                      <div>
-                        <x-checkbox
-                          v-model="setting.isCheckAll"
-                          color="primary"
-                        />
-                      </div>
-                    </th>
-                    <th
-                      v-for="(col, index) in columns"
-                      :class="col.headerClasses"
-                      :key="index"
-                      :style="
-                        Object.assign(
-                          {
-                            width: col.width ? col.width : 'auto',
-                          },
-                          col.headerStyles,
-                        )
-                      "
-                    >
-                      <div
-                        :class="{
-                          'vtl-sortable': col.sortable,
-                          'vtl-both': col.sortable,
-                          'vtl-asc':
-                            setting.order === col.field &&
-                            setting.sort === 'asc',
-                          'vtl-desc':
-                            setting.order === col.field &&
-                            setting.sort === 'desc',
-                        }"
-                        @click="col.sortable ? doSort(col.field) : false"
-                      >
-                        {{ col.label }}
-                      </div>
-                    </th>
-                  </tr>
-                </tfoot>
               </template>
             </table>
           </div>
@@ -669,7 +628,7 @@ export default defineComponent({
   @apply bg-primary-50;
 }
 
-.table :where(thead, tfoot) :where(th, td) {
+.table :where(thead) :where(th, td) {
   @apply bg-primary-700 text-white text-xs font-bold uppercase text-left border-r;
 }
 
