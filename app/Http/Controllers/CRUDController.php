@@ -443,6 +443,7 @@ class CRUDController extends Controller
             $salaryBands = $this->lookupService->getSalaryBands();
             $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
             $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
+            $leadStatuses = $this->healthQuoteService->statusesToDisplay($leadStatuses, $record);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
