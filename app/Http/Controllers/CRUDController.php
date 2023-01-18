@@ -403,7 +403,7 @@ class CRUDController extends Controller
         $isQuoteDocumentEnabled = $this->quoteDocumentService->isEnabled($model->modelType);
         $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments($model->modelType, $record->id);
         $displaySendPolicyButton = $this->quoteDocumentService->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
-        $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id);
+        $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $tiers = $this->lookupService->getTierR();
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view

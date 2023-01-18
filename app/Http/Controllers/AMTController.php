@@ -277,7 +277,7 @@ class AMTController extends Controller
             $selectedLeadStatus = $selectedLeadStatus->text;
         }
 
-        $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id);
+        $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $tiers = $this->lookupService->getTierR();
 
         return view('amt.show', compact(
