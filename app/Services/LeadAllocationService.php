@@ -521,7 +521,6 @@ class LeadAllocationService extends BaseService
                     $userId = null;
                     if (count($finalAvailableAndLoginAdvisorIds) > 0) {
                         $userId = reset($finalAvailableAndLoginAdvisorIds);
-                        info('inside common array , userId is : '.json_encode($userId));
                     }
                     if ($userId) {
                         info('about to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);

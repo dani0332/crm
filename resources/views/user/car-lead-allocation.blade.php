@@ -42,6 +42,18 @@
             searchable: false
         },
         {
+            data: 'manualAllocationCount',
+            name: 'manualAllocationCount',
+            orderable: true,
+            searchable: false
+        },
+        {
+            data: 'autoAllocationCount',
+            name: 'autoAllocationCount',
+            orderable: true,
+            searchable: false
+        },
+        {
             data: 'lastAllocation',
             name: 'lastAllocation',
             orderable: true,
@@ -361,7 +373,9 @@
                             <th>Name</th>
                             <th>Tiers</th>
                             <th>Quads</th>
-                            <th>Total Assigned Leads</th>
+                            <th>Total Assigned</th>
+                            <th>Manual Assigned</th>
+                            <th>Auto Assigned</th>
                             <th>Last Allocation</th>
                             <th>Max Cap Limit <i class="fa fa-info-circle" id="tooltip" data-toggle="tooltip"
                                     data-placement="top" title="For Unlimited Capactiy Add ( -1 )"></i>

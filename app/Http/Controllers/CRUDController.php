@@ -17,6 +17,7 @@ use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\QuoteViewCount;
+use App\Models\Team;
 use App\Models\Tier;
 use App\Models\User;
 use App\Services\ActivitiesService;
@@ -48,7 +49,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-
+use DB;
 class CRUDController extends Controller
 {
     protected $genericModel;
@@ -133,6 +134,30 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
+        $parent_id = 2;
+        $teams = DB::select('
+                    SELECT u.id,
+                            u.name,
+                            GROUP_CONCAT(t.name) AS teamNames,
+                            u.last_login
+                        FROM users u
+                        INNER JOIN user_team ut ON ut.user_id = u.id
+                        INNER JOIN teams t ON t.id = ut.team_id
+                        WHERE ut.team_id IN (
+                                SELECT id
+                                FROM teams
+                                WHERE parent_team_id IN (
+                                        SELECT id
+                                        FROM teams
+                                        WHERE parent_team_id = 2
+                                        ) OR id IN (
+                                        SELECT id
+                                        FROM teams
+                                        WHERE parent_team_id = 2
+                                        )
+                                ) AND DATE (u.last_login) > subdate(CURRENT_DATE, 1)
+                        GROUP BY u.id');
+        dd($teams);
         $renewalAdvisors = [];
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = Auth::user()->isAdmin() || Auth::user()->hasRole(RolesEnum::LeadPool) ? true : false;
