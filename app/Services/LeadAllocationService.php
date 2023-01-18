@@ -273,10 +273,10 @@ class LeadAllocationService extends BaseService
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
             info('Max capacity for user '.$userId.' is '.$leadAllocation->max_capacity.' and allocation count is '.$leadAllocation->allocation_count);
             $leadAllocation->allocation_count += 1;
-            if($isManualAssignment){
-                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count  + 1;
-            }else{
-                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count  + 1;
+            if ($isManualAssignment) {
+                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count + 1;
+            } else {
+                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count + 1;
             }
             $leadAllocation->last_allocated = now()->timestamp;
             $leadAllocation->save();
@@ -540,7 +540,7 @@ class LeadAllocationService extends BaseService
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
                         $this->updateLeadAllocationOnCarAutoAssignment($userId);
 
-                        info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code );
+                        info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                     } else {
                         info('login users not found for selected lead so will try to assign only tier');
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
@@ -574,11 +574,11 @@ class LeadAllocationService extends BaseService
     public function updateCarLeadDetailRecord($leadId)
     {
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
-        if($carQuoteDetail != null){
+        if ($carQuoteDetail != null) {
             $carQuoteDetail->advisor_assigned_date = now();
             $carQuoteDetail->advisor_assigned_by_id = auth()->user()->id;
             $carQuoteDetail->save();
-        }else{
+        } else {
             $carQuoteDetail = new CarQuoteRequestDetail();
             $carQuoteDetail->car_quote_request_id = $leadId;
             $carQuoteDetail->advisor_assigned_date = now();

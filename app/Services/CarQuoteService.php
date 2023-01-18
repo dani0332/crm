@@ -13,9 +13,9 @@ use App\Models\CarQuoteRequestDetail;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PDF;
 
@@ -1153,7 +1153,6 @@ class CarQuoteService extends BaseService
         $userId = (int) $request->assigned_to_id_new;
         $result = [];
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
-
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
             $lead->auto_assigned = false;
@@ -1177,6 +1176,7 @@ class CarQuoteService extends BaseService
             $leadIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         Log::info('Leads ids for manual assign: '.json_encode($leadIds));
+
         return $leadIds;
     }
 
@@ -1185,28 +1185,25 @@ class CarQuoteService extends BaseService
         // advAllocation = record of advisor to whom lead is about to get assigned
         $advAllocation = $this->leadAllocationService->getLeadAllocationRecordByUserId($userId);
         if ($advAllocation) {
-
             $advAllocation->allocation_count = $advAllocation->allocation_count + 1;
             $advAllocation->manual_assignment_count = $advAllocation->manual_assignment_count + 1;
             $advAllocation->updated_at = now();
             $advAllocation->save();
 
-            if($lead->created_at > now()->startOfDay() && $lead->advisor_id != null) {
-
+            if ($lead->created_at > now()->startOfDay() && $lead->advisor_id != null) {
                 // preAdvAllocation = Previous assigned advisor allocation count
                 $preAdvAllocation = $this->leadAllocationService->getLeadAllocationRecordByUserId($lead->advisor_id);
                 $preAdvAllocation->allocation_count = $$preAdvAllocation->allocation_count - 1;
                 $advAllocation->updated_at = now();
-                if($lead->auto_assigned){
+                if ($lead->auto_assigned) {
                     $preAdvAllocation->auto_assignment_count = $preAdvAllocation->auto_assignment_count - 1;
-                }else{
+                } else {
                     $preAdvAllocation->manual_assignment_count = $preAdvAllocation->manual_assignment_count - 1;
                 }
                 $preAdvAllocation->save();
             }
 
-            info('assignment count update for userId : '. $userId. ', and leadId :  '.  $lead->uuid);
-
+            info('assignment count update for userId : '.$userId.', and leadId :  '.$lead->uuid);
         }
     }
 
