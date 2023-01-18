@@ -17,7 +17,7 @@ defineProps({
   emirates: Array,
   advisors: Array,
   quoteDocuments: Object,
-  documentTypes: Array,
+  documentTypes: Object,
 });
 
 const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
@@ -730,7 +730,11 @@ const confirmDeleteDoc = () => {
       </div>
       <x-modal v-model="docUploadModal" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
-        <LazyDocumentUploader :members="memberDataDocs(membersDetail)" />
+        <LazyDocumentUploader
+          :members="memberDataDocs(membersDetail)"
+          :doc-types="documentTypes"
+          :docs="docsData || []"
+        />
       </x-modal>
       <TheTable
         :is-static-mode="true"
@@ -740,6 +744,7 @@ const confirmDeleteDoc = () => {
         :columns="quoteDocumentsTable.columns"
         :rows="docsData || []"
         :total="docsData.length || 0"
+        :pageSize="100"
         @is-finished="quoteDocumentsTable.isLoading = false"
       >
         <template v-slot:action="data">

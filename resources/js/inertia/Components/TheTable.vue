@@ -155,7 +155,7 @@ export default defineComponent({
         return key;
       }),
       page: props.page,
-      pageSize: defaultPageSize.value,
+      pageSize: props.pageSize,
       maxPage: computed(() => {
         if (props.total <= 0) {
           return 0;

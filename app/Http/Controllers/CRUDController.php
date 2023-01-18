@@ -477,6 +477,8 @@ class CRUDController extends Controller
 
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
 
+            $documentTypes = collect($documentTypes)->groupBy('category');
+
             $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
                 $quoteDocument->created_by_name = $quoteDocument->createdBy->name;
 

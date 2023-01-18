@@ -33,6 +33,7 @@
         "@inertiajs/vue3": "^1.0.0",
         "@vueuse/core": "^9.10.0",
         "postcss-plugin": "^1.0.0",
-        "vue": "^3.2.45"
+        "vue": "^3.2.45",
+        "vue3-dropzone": "^2.0.1"
     }
 }
