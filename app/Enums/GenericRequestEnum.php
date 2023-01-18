@@ -31,4 +31,7 @@ final class GenericRequestEnum extends Enum
     public const PENDING = 'Pending';
     public const APPROVED = 'Approved';
     public const REJECTED = 'Rejected';
+    public const TRUE = 'True';
+    public const FALSE = 'False';
+    public const DISABLED_ATTRIBUTE = 'disabled';
 }

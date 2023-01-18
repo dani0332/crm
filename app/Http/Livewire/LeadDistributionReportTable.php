@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Models\CarQuote;
 use App\Models\Tier;
+use App\Services\ApplicationStorageService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -15,6 +16,7 @@ class LeadDistributionReportTable extends DataTableComponent
 {
     public $url;
     public $tiers = [];
+    private $applicationStorageService;
 
     public function configure(): void
     {
@@ -90,12 +92,14 @@ class LeadDistributionReportTable extends DataTableComponent
 
     public function filters(): array
     {
+        $this->applicationStorageService = app(ApplicationStorageService::class);
+
         return [
             TextFilter::make('Created Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
-                    'max_days' => 365,
+                    'max_days' => $this->applicationStorageService->getValueByKey('MAX_DAYS_CAR_REPORTS'),
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {

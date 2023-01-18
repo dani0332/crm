@@ -160,7 +160,7 @@ use App\Enums\PermissionsEnum;
             for (var i = 0; i < modelPropertiesArray.length; i++) {
                 if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
                     // checking if the model type is either leadstatus or teams because it needs to be handled differently
-                    if (model.modelType == 'LeadStatus' || model.modelType == 'Teams') {
+                    if (model.modelType == 'LeadStatus' || model.modelType == 'Team') {
                         // checking if the property is id field to add link on id field
                         if (modelPropertiesArray[i].name == 'id') {
                             dataTableColumns.push({
@@ -483,16 +483,16 @@ use App\Enums\PermissionsEnum;
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel" style="overflow:hidden">
             <div class="x_title">
-                <h2>{{ str_contains(strtolower($model->modelType), 'teams')? 'Teams':
+                <h2>{{ str_contains(strtolower($model->modelType), 'team')? 'Team':
                     (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}
                     List</h2>
                 @cannot(PermissionsEnum::ApprovePayments)
                 <ul class="nav navbar-right panel_toolbox">
-                    @if (str_contains(strtolower($model->modelType), 'teams') ||
+                    @if (str_contains(strtolower($model->modelType), 'team') ||
                     str_contains(strtolower($model->modelType), 'leadstatus'))
                     <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
                             class="btn btn-warning btn-sm">Create
-                            {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
+                            {{ str_contains(strtolower($model->modelType), 'team')? 'Team':
                             (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
                     </li>
                     @endif
@@ -500,7 +500,7 @@ use App\Enums\PermissionsEnum;
                         @can('corpline-quotes-create')
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
                                 class="btn btn-warning btn-sm">Create
-                                {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
+                                {{ str_contains(strtolower($model->modelType), 'team')? 'Team':
                                 (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
                         </li>
                         @endcan
@@ -509,7 +509,7 @@ use App\Enums\PermissionsEnum;
                         @can(strtolower($model->modelType) . '-quotes-create')
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
                                 class="btn btn-warning btn-sm">Create
-                                {{ str_contains(strtolower($model->modelType), 'teams')? 'Team':
+                                {{ str_contains(strtolower($model->modelType), 'team')? 'Team':
                                 (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}</a>
                         </li>
                         @endcan
@@ -842,7 +842,7 @@ use App\Enums\PermissionsEnum;
                                     @endphp
                                 @endif
                                 @foreach ($model->properties as $property => $value)
-                                @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Teams')
+                                @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Team')
                                 @if ($property != 'id')
                                 @if (!in_array($property, explode(',', $skipProperties['list'])))
                                 <th data-type="{{ explode('|', $value)[1] }}" style="width: 180px !important">

@@ -304,12 +304,12 @@ use App\Enums\GenericRequestEnum;
         </div>
     @endif
 
-    @if (strtolower($model->modelType) != 'teams' && strtolower($model->modelType) != 'leadstatus')
+    @if (strtolower($model->modelType) != 'team' && strtolower($model->modelType) != 'leadstatus')
         @if ($model->modelType == quoteTypeCode::Car)
             <x-quote-renewal-card :record="$record" />
         @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
-            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled" 
+            :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled"
             :quoteTypeId="$quoteTypeId" :tiers="$tiers" />
     @endif
     @if (count($allowedDuplicateLOB) > 0)
