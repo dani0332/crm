@@ -189,10 +189,16 @@ use App\Enums\PermissionsEnum;
                                     data: "id",
                                     name: "id",
                                     render: function(data, type, row, meta) {
-                                        return (
-                                            '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
-                                            data + '">'
-                                        );
+                                        if(row.quote_status_id != '{{QuoteStatusEnum::TransactionApproved}}'){
+                                            return (
+                                                '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
+                                                data + '">'
+                                            );
+                                        }
+                                        else{
+                                            return '';
+                                        }
+
                                     },
                                 });
                             }

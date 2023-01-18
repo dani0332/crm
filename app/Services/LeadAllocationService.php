@@ -147,11 +147,12 @@ class LeadAllocationService extends BaseService
                     info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
+                $lead->auto_assigned = $isManualAssignment ? false : true;
                 $lead->advisor_id = $advisorId;
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
-                    $this->updateLeadAllocationRecord($advisorId);
+                    $this->updateLeadAllocationRecord($advisorId, $isManualAssignment);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
                 $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
@@ -264,7 +265,7 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function updateLeadAllocationRecord($userId)
+    public function updateLeadAllocationRecord($userId, $isManualAssignment)
     {
         try {
             DB::beginTransaction();
@@ -272,6 +273,11 @@ class LeadAllocationService extends BaseService
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
             info('Max capacity for user '.$userId.' is '.$leadAllocation->max_capacity.' and allocation count is '.$leadAllocation->allocation_count);
             $leadAllocation->allocation_count += 1;
+            if($isManualAssignment){
+                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count  + 1;
+            }else{
+                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count  + 1;
+            }
             $leadAllocation->last_allocated = now()->timestamp;
             $leadAllocation->save();
             DB::commit();
@@ -529,17 +535,12 @@ class LeadAllocationService extends BaseService
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->save();
 
-                        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carLead->id)->first();
-                        $carQuoteDetail->advisor_assigned_date = now();
-                        $carQuoteDetail->save();
+                        $this->updateCarLeadDetailRecord($carLead->id);
 
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
-                        $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-                        $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
-                        $leadAllocation->last_allocated = Carbon::now()->timestamp;
-                        $leadAllocation->updated_at = now();
-                        $leadAllocation->save();
-                        info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
+                        $this->updateLeadAllocationOnCarAutoAssignment($userId);
+
+                        info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code );
                     } else {
                         info('login users not found for selected lead so will try to assign only tier');
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
@@ -557,6 +558,34 @@ class LeadAllocationService extends BaseService
             info('----------------------- CAR LEAD ALLOCATION ENDED FOR '.$currentIterationTime.' -----------------------');
         } catch (\Exception $e) {
             Log::error($e->getMessage());
+        }
+    }
+
+    public function updateLeadAllocationOnCarAutoAssignment($userId)
+    {
+        $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+        $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
+        $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count + 1;
+        $leadAllocation->last_allocated = Carbon::now()->timestamp;
+        $leadAllocation->updated_at = now();
+        $leadAllocation->save();
+    }
+
+    public function updateCarLeadDetailRecord($leadId)
+    {
+        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
+        if($carQuoteDetail != null){
+            $carQuoteDetail->advisor_assigned_date = now();
+            $carQuoteDetail->advisor_assigned_by_id = auth()->user()->id;
+            $carQuoteDetail->save();
+        }else{
+            $carQuoteDetail = new CarQuoteRequestDetail();
+            $carQuoteDetail->car_quote_request_id = $leadId;
+            $carQuoteDetail->advisor_assigned_date = now();
+            $carQuoteDetail->advisor_assigned_by_id = auth()->user()->id;
+            $carQuoteDetail->created_at = now();
+            $carQuoteDetail->updated_at = now();
+            $carQuoteDetail->save();
         }
     }
 
