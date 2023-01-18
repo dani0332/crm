@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthMemberDetail;
@@ -1209,12 +1210,16 @@ class HealthQuoteService extends BaseService
     {
         $statusesToRemove = collect();
         if ($lead->is_ecommerce) {
-            if (QuoteStatusEnum::QualificationPending != $lead->quote_status_id) {
+            if ($lead->quote_status_id != QuoteStatusEnum::QualificationPending) {
                 $statusesToRemove->push(QuoteStatusEnum::QualificationPending);
             }
-            if (QuoteStatusEnum::Qualified != $lead->quote_status_id) {
+            if ($lead->quote_status_id != QuoteStatusEnum::Qualified) {
                 $statusesToRemove->push(QuoteStatusEnum::Qualified);
             }
+        }
+        if (auth()->user()->hasRole(RolesEnum::HealthAdvisor)) {
+            $lead->quote_status_id != QuoteStatusEnum::Fake && $statusesToRemove->push(QuoteStatusEnum::Fake);
+            $lead->quote_status_id != QuoteStatusEnum::Duplicate && $statusesToRemove->push(QuoteStatusEnum::Duplicate);
         }
 
         return $leadStatuses->whereNotIn('id', $statusesToRemove);
