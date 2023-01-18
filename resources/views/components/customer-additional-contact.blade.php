@@ -1,5 +1,6 @@
 @php
 use App\Enums\RolesEnum;
+use App\Enums\DatabaseColumnsString;
 @endphp
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -32,7 +33,7 @@ use App\Enums\RolesEnum;
                                 <td>{{ $customerAdditionalContact->created_at }}</td>
                                 <td style="float:right;">
                                     @if(! auth()->user()->hasRole(RolesEnum::PA))
-                                        @if($customerAdditionalContact->key == 'email')
+                                        @if($customerAdditionalContact->key == DatabaseColumnsString::EMAIL)
                                             <button class="btn btn-success btn-sm additional-email-make-primary-btn" 
                                                 data-record-id="{{ $customerAdditionalContact->id }}" 
                                                 data-quote-id="{{ $record->id }}" 
