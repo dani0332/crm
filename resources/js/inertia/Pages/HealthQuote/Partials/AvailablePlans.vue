@@ -29,14 +29,6 @@ const tab = '1';
     </x-tab>
     <x-tab value="2" label="Members" size="sm">
       <div class="p-4">
-        <x-table :items="plan.memberPremiumBreakdown">
-          <template #item-dob="{ item }">
-            {{ item.dob }}
-          </template>
-          <template #item-status="{ item }">
-            <x-tag size="sm" color="primary" rounded>{{ item.status }}</x-tag>
-          </template>
-        </x-table>
         <div
           v-for="member in plan.memberPremiumBreakdown || []"
           :key="member.memberId"
@@ -49,16 +41,99 @@ const tab = '1';
         </div>
       </div>
     </x-tab>
-    <x-tab value="3" label="In Patient" size="sm"> In Patient </x-tab>
-    <x-tab value="4" label="Out Patient" size="sm"> Out Patient </x-tab>
+    <x-tab value="3" label="In Patient" size="sm">
+      <dl class="grid gap-4 p-4">
+        <div
+          v-for="data in plan.benefits.inpatient || []"
+          :key="data.code"
+          class="grid sm:grid-cols-2"
+        >
+          <dt class="font-medium">{{ data.text }}</dt>
+          <dd>{{ data.value }}</dd>
+        </div>
+      </dl>
+    </x-tab>
+    <x-tab value="4" label="Out Patient" size="sm">
+      <dl class="grid gap-4 p-4">
+        <div
+          v-for="data in plan.benefits.outpatient || []"
+          :key="data.code"
+          class="grid sm:grid-cols-2"
+        >
+          <dt class="font-medium">{{ data.text }}</dt>
+          <dd>{{ data.value }}</dd>
+        </div>
+      </dl>
+    </x-tab>
     <x-tab value="5" label="Co-pay/Co-insurance" size="sm">
-      Co-pay/Co-insurance
+      <dl class="grid gap-4 p-4">
+        <div
+          v-for="data in plan.benefits.coInsurance || []"
+          :key="data.code"
+          class="grid sm:grid-cols-2"
+        >
+          <dt class="font-medium">{{ data.text }}</dt>
+          <dd>{{ data.value }}</dd>
+        </div>
+      </dl>
     </x-tab>
     <x-tab value="6" label="Region coverage & Network list" size="sm">
-      Region coverage & Network list
+      <dl class="grid gap-4 p-4">
+        <div
+          v-for="data in plan.benefits.regionCover || []"
+          :key="data.code"
+          class="grid sm:grid-cols-2"
+        >
+          <dt class="font-medium">{{ data.text }}</dt>
+          <dd>{{ data.value }}</dd>
+        </div>
+        <div
+          v-for="data in plan.benefits.networkList || []"
+          :key="data.code"
+          class="grid sm:grid-cols-2"
+        >
+          <dt class="font-medium">{{ data.text }}</dt>
+          <dd>{{ data.value }}</dd>
+        </div>
+      </dl>
     </x-tab>
-    <x-tab value="7" label="Maternity cover" size="sm"> Maternity cover </x-tab>
-    <x-tab value="8" label="Exclusions" size="sm"> Exclusions </x-tab>
-    <x-tab value="9" label="Policy Detail" size="sm"> Policy Detail </x-tab>
+    <x-tab value="7" label="Maternity cover" size="sm">
+      <dl class="grid gap-4 p-4">
+        <div
+          v-for="data in plan.benefits.maternityCover || []"
+          :key="data.code"
+          class="grid sm:grid-cols-2"
+        >
+          <dt class="font-medium">{{ data.text }}</dt>
+          <dd>{{ data.value }}</dd>
+        </div>
+      </dl>
+    </x-tab>
+    <x-tab value="8" label="Exclusions" size="sm">
+      <dl class="grid gap-4 p-4">
+        <div
+          v-for="data in plan.benefits.exclusion || []"
+          :key="data.code"
+          class="grid sm:grid-cols-2"
+        >
+          <dt class="font-medium">{{ data.text }}</dt>
+          <dd>{{ data.value }}</dd>
+        </div>
+      </dl>
+    </x-tab>
+    <x-tab value="9" label="Policy Detail" size="sm">
+      <dl class="grid gap-4 p-4">
+        <x-link
+          v-for="data in plan.benefits.networkLink || []"
+          :key="data.code"
+          :href="data.value"
+          target="_blank"
+          title="Open File"
+          external
+        >
+          {{ data.text }}
+        </x-link>
+      </dl>
+    </x-tab>
   </x-tab-group>
 </template>
