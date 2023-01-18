@@ -1,48 +1,53 @@
 @extends('layouts.app')
 @section('title', $model->modelType . ' Detail')
 @section('content')
+
+@php
+use App\Enums\quoteTypeCode;
+use App\Models\CarQuote;
+use App\Enums\RolesEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\DatabaseColumnsString;
+use App\Enums\GenericRequestEnum;
+@endphp
+
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
-    <style>
-        #quote-plans table.dataTable thead .sorting_asc:after {
-            content: none !important;
-        }
-        .select2-results__option--selected {
-            display: none;
-        }
-        .select2-results__option[aria-selected=true] {
-            display: none;
-        }
-        .modal-tall .modal-body {
-            position: relative;
-            min-height: 600px;
-            padding: 15px;
-        }
-        .custom-checkbox { cursor: pointer; display:block; font-size: 16px; line-height: 26px; margin: 0 0 20px; padding: 0 0 0 40px; position: relative; }
+<style>
+    #quote-plans table.dataTable thead .sorting_asc:after {
+        content: none !important;
+    }
+    .select2-results__option--selected {
+        display: none;
+    }
+    .select2-results__option[aria-selected=true] {
+        display: none;
+    }
+    .modal-tall .modal-body {
+        position: relative;
+        min-height: 600px;
+        padding: 15px;
+    }
+    .custom-checkbox { cursor: pointer; display:block; font-size: 16px; line-height: 26px; margin: 0 0 20px; padding: 0 0 0 40px; position: relative; }
 .custom-checkbox input[type="checkbox"] { display: none; }
 .custom-checkbox span.checkbox { background-color: #fff; border: solid 2px #cccccc; border-radius:50%; cursor: pointer; display: block; height: 26px; margin: 0px; position: absolute; left: 0; top: 0px; width: 26px; }
 .custom-checkbox input[type='checkbox']:checked + span.checkbox { background: #26B99A; border-color: #169F85; text-align:center; }
 .custom-checkbox input[type='checkbox']:checked + span.checkbox:before { content:"\f00c"; color:#fff; font: normal normal normal 20px/1 FontAwesome;}
-        .col {
-            padding-left: 8px;
-        }
-        .ebp_dob { z-index:99999 !important; }
-    </style>
-        <script>
-            $('#add-activity-btn').on('click', function(){
-               $('#activityModal').modal({ show: true });
-           });
-       </script>
-    @php
-    use App\Enums\quoteTypeCode;
-    use App\Models\CarQuote;
-    use App\Enums\RolesEnum;
-    use App\Enums\QuoteStatusEnum;
-    use App\Enums\PermissionsEnum;
-    use App\Enums\DatabaseColumnsString;
-    use App\Enums\GenericRequestEnum;
-    @endphp
+    .col {
+        padding-left: 8px;
+    }
+    .ebp_dob { z-index:99999 !important; }
+</style>
+<script>
+    $('#add-activity-btn').on('click', function(){
+        $('#activityModal').modal({ show: true });
+    });
+</script>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
+            @if ($model->modelType == quoteTypeCode::Car)
+                <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
+            @endif
             <div class="x_panel">
                 <br />
                 @if (session()->has('success'))
@@ -106,10 +111,7 @@
                             (Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::HealthManager, RolesEnum::HealthDeputyManager])
                             && !Auth::user()->hasRole(RolesEnum::HealthWCUAdvisor)) ||
                             Auth::user()->hasRole(RolesEnum::HealthWCUAdvisor) && $autoAllocationDisabled == '0'
-
-
                          )
-
                         <form method="post" action="manualLeadAssign" class="form-horizontal form-label-left"
                             autocomplete="off">
                             {{ csrf_field() }}
@@ -176,7 +178,6 @@
                 @endif
                 @endcannot
                 <div class="x_content">
-
                     @php
                         $count = 1;
                         $searchProperties = [];
@@ -199,7 +200,12 @@
                         }
                     @endphp
                     @php
-                        $skipPropertiesArray = array_filter(explode(",",$skipProperties['show']));
+                        // MS 14-Jan-2023: For car_quote detail_view set visibility of 'Source' column conditional
+                        if($model->modelType == quoteTypeCode::Car && auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+                            $skipPropertiesArray = array_filter(explode(",",$skipProperties['show'].",source,device"));
+                        } else {
+                            $skipPropertiesArray = array_filter(explode(",",$skipProperties['show']));
+                        }
                     @endphp
                     @foreach ($model->properties as $property => $value)
                         @if (!in_array($property, $skipPropertiesArray))
@@ -211,13 +217,8 @@
                                     <label class="col-form-label col-md-6 col-sm-6"
                                         for="Status Description"><b>{{ strtoupper($customTitles[$property]) }}</b></label>
                                 @else
-                                @if($property == DatabaseColumnsString::SOURCE && auth()->user()->hasRole(RolesEnum::CarAdvisor))
-                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description">&nbsp;</label>
-                                @else
-                                    <label class="col-form-label col-md-6 col-sm-6" for="Status Description">
-                                        <b>{{ str_replace('_', ' ', strtoupper($property)) }}</b>
-                                    </label>
-                                @endif
+                                    <label class="col-form-label col-md-6 col-sm-6"
+                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper($property)) }}</b></label>
                                 @endif
                                 @if (str_contains($value, 'select'))
                                     @if (str_contains($value, 'customTable'))
@@ -245,7 +246,6 @@
                                         <div class="col-md-6 col-sm-6"
                                             style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">
-
                                                 @if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), 'yes')))
                                                 {{ $record->$property ? 'Yes' : 'No' }}
                                                 @elseif( (str_contains($value, 'static') && !str_contains(strtolower($value), 'yes')))
@@ -255,17 +255,11 @@
                                                     @else {{ $record->$property }}
                                                     @endif
                                                 @else
-                                                @if($property == DatabaseColumnsString::CAR_VALUE)
-                                                    {{ number_format($record->$property, 2) }}
-                                                @else
-                                                    @if($property == DatabaseColumnsString::SOURCE)
-                                                        @if(!auth()->user()->hasRole(RolesEnum::CarAdvisor))
-                                                            {{$record->$property }}
-                                                        @endif
+                                                    @if($property == DatabaseColumnsString::CAR_VALUE || $property == DatabaseColumnsString::CAR_VALUE_TIER)
+                                                        {{ number_format($record->$property, 2) }}
                                                     @else
                                                         {{$record->$property }}
                                                     @endif
-                                                @endif
                                                 @endif
                                             </p>
                                         </div>
@@ -316,13 +310,12 @@
         @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled" 
-            :quoteTypeId="$quoteTypeId" />
+            :quoteTypeId="$quoteTypeId" :tiers="$tiers" />
     @endif
     @if (count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
             aria-labelledby="duplicateLeadModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-
                 <div class="modal-content" style="display: grid;">
                     <form method="post" action="/quotes/createDuplicate" autocomplete="off">
                         {{ csrf_field() }}
@@ -391,7 +384,6 @@
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
-        <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
@@ -420,7 +412,6 @@
                     </div>
                     <div class="quote-plan-modal-body"> </div>
                     <div class="modal-footer" style="border: none">
-
                     </div>
                 </div>
             </div>
@@ -493,9 +484,8 @@
                                 <tr>
                                     <th>Modified At</th>
                                     <th>Modified By</th>
-                                    <th>Lead Status</th>
-                                    <th>Advisor</th>
                                     <th>Notes</th>
+                                    <th>Lead Status</th>
                                 </tr>
                             </thead>
                             <tbody>

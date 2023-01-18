@@ -2,13 +2,12 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
-use App\Models\LeadSource;
 use App\Models\QuoteBatches;
-use App\Models\Team;
 use App\Models\Tier;
-use App\Models\User;
-use App\Traits\GetUserTree;
+use App\Traits\GetUserTreeTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -19,9 +18,12 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorConversionReportTable extends DataTableComponent
 {
-    use GetUserTree;
+    use GetUserTreeTrait;
 
     public $url;
+    public $tiers = [];
+    public $batches = [];
+    public $leadSources = [];
 
     public function configure(): void
     {
@@ -41,9 +43,33 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function mount()
     {
-        $latestBatch = QuoteBatches::orderBy('id', 'desc')->first();
-        if (! $this->getAppliedFilterWithValue('batch_number') && $latestBatch != null) {
-            $this->setFilter('batch_number', [$latestBatch->id]);
+        $this->tiers = Tier::query()
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        $this->batches = QuoteBatches::query()
+            ->orderBy('id')
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($batch) => $batch->name.'-('.$batch->start_date.' to '.$batch->end_date.')')
+            ->toArray();
+
+        $this->leadSources = CarQuote::query()
+            ->select('source as name')
+            ->distinct()
+            ->whereNotNull('source')
+            ->orderBy('name')
+            ->get()
+            ->keyBy('name')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        if (! $this->getAppliedFilterWithValue('created_at')) {
+            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'~'.now()->format('Y-m-d'));
         }
     }
 
@@ -92,7 +118,12 @@ class AdvisorConversionReportTable extends DataTableComponent
             )->html()->footer(function ($rows) {
                 return $rows->sum('sale_leads');
             }),
-            Column::make('Gross Conversion')->label(fn ($row) => (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->manual_created) : 1)).' %')
+            Column::make('AFIA Renewals')->label(
+                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `afia_renewals_count`])" class="text-sky-700 cursor-pointer">'.$row->afia_renewals_count.'</a>'
+            )->html()->footer(function ($rows) {
+                return $rows->sum('afia_renewals_count');
+            }),
+            Column::make('Gross Conversion')->label(fn ($row) => number_format((float) (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->manual_created) : 1)), 2, '.', '').' %')
                 ->footer(function ($rows) {
                     $total = 0;
                     foreach ($rows as $row) {
@@ -101,10 +132,12 @@ class AdvisorConversionReportTable extends DataTableComponent
 
                     return number_format((float) $total, 2, '.', '').' %';
                 }),
-            Column::make('Net Conversion')->label(fn ($row) => (($row->total_leads - $row->bad_leads - $row->manual_created) / (($row->sale_leads - $row->created_sale_leads) > 0 ? ($row->sale_leads - $row->created_sale_leads) : 1)).' %')->footer(function ($rows) {
+            Column::make('Net Conversion')->label(fn ($row) => ($row->sale_leads - $row->created_sale_leads) > 0 ? (($row->total_leads - $row->bad_leads - $row->manual_created) / (($row->sale_leads - $row->created_sale_leads))).' %' : 'NaN')->footer(function ($rows) {
                 $total = 0;
                 foreach ($rows as $row) {
-                    $total = $total + (($row->total_leads - $row->bad_leads - $row->manual_created) / (($row->sale_leads - $row->created_sale_leads) > 0 ? ($row->sale_leads - $row->created_sale_leads) : 1));
+                    if (($row->sale_leads - $row->created_sale_leads) > 0) {
+                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / ($row->total_leads - $row->bad_leads - $row->manual_created));
+                    }
                 }
 
                 return number_format((float) $total, 2, '.', '').' %';
@@ -128,6 +161,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" and car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::AfiaRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->leftJoin('teams', function ($join) {
@@ -143,16 +177,17 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function filters(): array
     {
-        return [
-            TextFilter::make('Range Date')
+        $filters = [
+            TextFilter::make('Created Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
                     'max_days' => 31,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    $value = explode('-', $value);
-                    $builder->whereBetween('quote_batches.created_at', [$value[0], $value[1]]);
+                    if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
+                        $builder->whereBetween('quote_batches.created_at', [$matches[1], $matches[2]]);
+                    }
                 }),
             SelectFilter::make('Ecommerce')
                 ->options([
@@ -162,79 +197,25 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ])->filter(function (Builder $builder, string $value) {
                     $builder->where('car_quote_request.is_ecommerce', $value == 'no' ? false : true);
                 }),
-            SelectFilter::make('Exclude Created Leads')
-            ->options([
-                '' => 'All',
-                'yes' => 'Yes',
-                'no' => 'No',
-            ])->filter(function (Builder $builder, string $value) {
-                if ($value == 'yes') {
-                    $builder->where('car_quote_request.source', 'IMCRM');
-                }
-            }),
             MultiSelectFilter::make('Batch Number')
-                ->options(
-                    QuoteBatches::query()
-                        ->orderBy('id')
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($batch) => $batch->name.'-('.$batch->start_date.' to '.$batch->end_date.')')
-                        ->toArray(),
-                )->config([
-                    'max' => 4,
+                ->options($this->batches)->config([
+                    'max' => 12,
                 ])->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.quote_batch_id', $value);
                 }),
-            MultiSelectFilter::make('Teams')
-                ->options(
-                    Team::query()
-                        ->orderBy('name')
-                        ->whereNotNull('parent_team_id')
-                        ->where('parent_team_id', 2)
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($Teams) => $Teams->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
-                    $builder->whereIn('teams.id', $value);
-                }),
-            MultiSelectFilter::make('Advisor Name')
-                ->options(
-                    User::query()
-                        ->orderBy('name')
-                        ->where('is_active', 1)
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($users) => $users->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
-                    $builder->whereIn('car_quote_request.advisor_id', $value);
-                }),
             MultiSelectFilter::make('Tiers')
-                ->options(
-                    Tier::query()
-                        ->orderBy('name')
-                        ->where('is_active', 1)
-                        ->get()
-                        ->keyBy('id')
-                        ->map(fn ($users) => $users->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
+                ->options($this->tiers)->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.tier_id', $value);
-                }),
-            MultiSelectFilter::make('Lead Source')
-                ->options(
-                    LeadSource::query()
-                        ->orderBy('name')
-                        ->where('is_active', 1)
-                        ->get()
-                        ->keyBy('name')
-                        ->map(fn ($users) => $users->name)
-                        ->toArray(),
-                )->filter(function (Builder $builder, $value) {
-                    $builder->whereIn('car_quote_request.source', $value);
                 }),
 
         ];
+        if (! auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+            array_push($filters, MultiSelectFilter::make('Lead Source')
+            ->options($this->leadSources)->filter(function (Builder $builder, $value) {
+                $builder->whereIn('car_quote_request.source', $value);
+            }));
+        }
+
+        return $filters;
     }
 }

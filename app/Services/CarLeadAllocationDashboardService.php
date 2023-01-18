@@ -69,4 +69,14 @@ class CarLeadAllocationDashboardService extends BaseService
             ->where('source', '!=', LeadSourceEnum::IMCRM)
             ->count();
     }
+    public function getTodaysCarTotalUnAssignedLeadsCount()
+    {
+        $from = Carbon::now()->startOfDay();
+        $to = Carbon::now()->endOfDay();
+
+        return CarQuote::whereBetween('created_at', [$from, $to])
+            ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
+            ->whereNull('advisor_id')
+            ->count();
+    }
 }

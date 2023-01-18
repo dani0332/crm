@@ -38,7 +38,7 @@ class AddBatchNumberJob implements ShouldQueue
             info('last batch : '.json_encode($lastBatch));
             if ($lastBatch == null) {
                 info('inside creating batches from scratch');
-                $batches = $this->generateBatchNumbers(Carbon::parse('2018-08-05'));
+                $batches = $this->generateBatchNumbers(Carbon::parse('2018-08-06'));
                 if (count($batches)) {
                     foreach ($batches as $batch) {
                         $this->insertQuoteBatch($batch);
@@ -47,7 +47,7 @@ class AddBatchNumberJob implements ShouldQueue
                 }
             } elseif (! (now() >= Carbon::parse($lastBatch->start_date) && now() <= Carbon::parse($lastBatch->end_date))) {
                 info('inside creating batch of current week');
-                $batches = $this->generateBatchNumbers(Carbon::parse($lastBatch->end_date));
+                $batches = $this->generateBatchNumbers(Carbon::parse($lastBatch->end_date)->addDays(1));
                 if (count($batches)) {
                     foreach ($batches as $batch) {
                         $this->insertQuoteBatch($batch);
@@ -82,7 +82,7 @@ class AddBatchNumberJob implements ShouldQueue
         $count = QuoteBatches::all()->count() + 1;
         while ($startDate < now()) {
             $currentDate = $startDate->toDateString();
-            $nextWeek = $startDate->addDays(7)->toDateString();
+            $nextWeek = $startDate->addDays(6)->toDateString();
             $key = $currentDate.','.$nextWeek;
             $value = 'Batch '.$count;
             array_push($batchArray, $key.'|'.$value);

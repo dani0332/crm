@@ -105,6 +105,12 @@ class TierService extends BaseService
 
     public function updateTier(Request $request, $id)
     {
+        if (isset($request->max_price) && $request->max_price > 999999) {
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Only one tier can have null as minimum price';
+
+            return $errorResponse;
+        }
         if (! isset($request->min_price) && Tier::whereNull('min_price')->where('id', '!=', $id)->get() != null) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as minimum price';
@@ -151,7 +157,7 @@ class TierService extends BaseService
             'created_at' => 'input|title|date|range|dateRange',
             'name' => 'input|title|required|likeSearch',
             'min_price' => 'input|number|title|equalSearch|min:1',
-            'max_price' => 'input|number|title|equalSearch|min:1',
+            'max_price' => 'input|number|title|equalSearch|max:999999',
             'cost_per_lead' => 'input|number|title|equalSearch|min:1',
             'tier_users' => 'select|multiple|multiSearch',
             'can_handle_ecommerce' => 'input|checkbox|title',
@@ -221,5 +227,15 @@ class TierService extends BaseService
     public function fillSortingProperties()
     {
         return ['id', 'name', 'min_price', 'max_price'];
+    }
+
+    public function getTPLTiers()
+    {
+        return Tier::where('can_handle_tpl', 1)->where('is_active', 1)->orderBy('name')->get();
+    }
+
+    public function getCompTiers()
+    {
+        return Tier::where('can_handle_tpl', 1)->where('is_active', 1)->orderBy('name')->get();
     }
 }
