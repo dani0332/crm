@@ -8,7 +8,7 @@
             <div class="x_title">
                 <h2>Team Detail</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('teams.index') }}" class="btn btn-warning btn-sm">Team List</a></li>
+                    <li><a href="{{ route('team.index') }}" class="btn btn-warning btn-sm">Team List</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -20,7 +20,7 @@
                 @if(session()->has('message'))
                     <div class="alert alert-danger">{{ session()->get('message') }}</div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ route('teams.update', ['team' => $team->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
+                <form id="demo-form2" method='post' action="{{ route('team.update', ['team' => $team->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left">
                 {{csrf_field()}}
                 @method('PUT')
                 <div class="item form-group">
@@ -69,7 +69,7 @@
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
-                            <a id="texta" href="{{ route('teams.edit', ['team' => $team->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
+                            <a id="texta" href="{{ route('team.edit', ['team' => $team->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
                         </div>
                     </div>
                 </form>
