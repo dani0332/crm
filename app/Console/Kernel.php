@@ -26,22 +26,21 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule
-        //     ->command('LeadAllocation:cron')
-        //     ->everyMinute()
-        //     ->onOneServer();
+        $schedule
+            ->command('LeadAllocation:cron')
+            ->everyMinute()
+            ->onOneServer();
 
-        // $schedule
-        //     ->command('AddBatchNumber:cron')
-        //     ->timezone('Asia/Dubai')
-        //     ->weeklyOn(1, '0:00')
-        //     ->onOneServer()
-        //     ->withoutOverlapping(1);
+        $schedule
+            ->command('AddBatchNumber:cron')
+            ->timezone('Asia/Dubai')
+            ->weeklyOn(1, '0:00')
+            ->onOneServer()
+            ->withoutOverlapping(1);
 
         $schedule->command(UpdateHealthStatus::class)
         ->timezone('Asia/Dubai')
-        ->everyMinute()
-        // ->dailyAt('23:00')->onOneServer()
+        ->dailyAt('01:00')->onOneServer()
         ->withoutOverlapping(1);
     }
 
