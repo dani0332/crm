@@ -25,12 +25,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     public $tiers = [];
     public $batches = [];
     public $leadSources = [];
-    protected $applicationStorageService;
-
-    public function __construct(ApplicationStorageService $applicationStorageService)
-    {
-        $this->applicationStorageService = $applicationStorageService;
-    }
+    private $applicationStorageService;
 
     public function configure(): void
     {
@@ -184,6 +179,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function filters(): array
     {
+        $this->applicationStorageService = app(ApplicationStorageService::class);
         $filters = [
             TextFilter::make('Created Date', 'created_at')
                 ->config([

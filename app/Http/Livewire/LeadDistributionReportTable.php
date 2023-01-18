@@ -16,12 +16,7 @@ class LeadDistributionReportTable extends DataTableComponent
 {
     public $url;
     public $tiers = [];
-    protected $applicationStorageService;
-
-    public function __construct(ApplicationStorageService $applicationStorageService)
-    {
-        $this->applicationStorageService = $applicationStorageService;
-    }
+    private $applicationStorageService;
 
     public function configure(): void
     {
@@ -97,6 +92,8 @@ class LeadDistributionReportTable extends DataTableComponent
 
     public function filters(): array
     {
+        $this->applicationStorageService = app(ApplicationStorageService::class);
+
         return [
             TextFilter::make('Created Date', 'created_at')
                 ->config([
