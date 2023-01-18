@@ -216,7 +216,7 @@ const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
     {
-      label: 'document_type',
+      label: 'Document Type',
       field: 'document_type_text',
     },
     {
