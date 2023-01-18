@@ -1220,6 +1220,9 @@ class HealthQuoteService extends BaseService
         if (auth()->user()->hasRole(RolesEnum::HealthAdvisor)) {
             $lead->quote_status_id != QuoteStatusEnum::Fake && $statusesToRemove->push(QuoteStatusEnum::Fake);
             $lead->quote_status_id != QuoteStatusEnum::Duplicate && $statusesToRemove->push(QuoteStatusEnum::Duplicate);
+
+            $lead->quote_status_id != QuoteStatusEnum::AMLScreeningCleared && $statusesToRemove->push(QuoteStatusEnum::AMLScreeningCleared);
+            $lead->quote_status_id != QuoteStatusEnum::AMLScreeningFailed && $statusesToRemove->push(QuoteStatusEnum::AMLScreeningFailed);
         }
 
         return $leadStatuses->whereNotIn('id', $statusesToRemove);
