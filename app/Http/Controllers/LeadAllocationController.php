@@ -133,7 +133,7 @@ class LeadAllocationController extends Controller
             $leadAllocationUser->max_capacity = $request->max_cap;
         }
         $leadAllocationUser->save();
-        $updateLogString = $updateLogString.' for user : '.$request->aid.' and by user : '.auth()->user()->id;
+        $updateLogString = $updateLogString.' for user : '.$request->aid.' and by user : '.auth()->user()->id.' ----- ';
         info($updateLogString);
     }
 

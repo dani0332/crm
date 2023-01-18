@@ -248,7 +248,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('carplanaddon', GenericCrudController::class);
         Route::resource('carplanaddonoption', GenericCrudController::class);
         Route::resource('applicationstorage', GenericCrudController::class);
-        Route::resource('teams', TeamController::class);
+        Route::resource('team', TeamController::class);
         Route::resource('leadstatus', GenericCrudController::class);
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);

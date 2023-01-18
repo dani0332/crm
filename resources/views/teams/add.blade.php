@@ -20,7 +20,7 @@ use App\Enums\TeamTypeEnum;
                 if(element.type == '{{TeamTypeEnum::PRODUCT_STR}}' && selectedType == '{{TeamTypeEnum::TEAM}}') {
                     $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
                 }
-                if(element.type == '{{TeamTypeEnum::Team}}' && selectedType == '{{TeamTypeEnum::SUB_TEAM}}') {
+                if(element.type == '{{TeamTypeEnum::TEAM}}' && selectedType == '{{TeamTypeEnum::SUB_TEAM}}') {
                     $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
                 }
             }
@@ -43,7 +43,7 @@ use App\Enums\TeamTypeEnum;
             <div class="x_title">
                 <h2>Create Team</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('teams.index') }}" class="btn btn-warning btn-sm">Teams List</a></li>
+                    <li><a href="{{ route('team.index') }}" class="btn btn-warning btn-sm">Teams List</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -52,7 +52,7 @@ use App\Enums\TeamTypeEnum;
                 @if(session()->has('success'))
                     <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ route('teams.store') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                <form id="demo-form2" method='post' action="{{ route('team.store') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                 {{csrf_field()}}
                     <div class="item form-group">
                         <div class="col">

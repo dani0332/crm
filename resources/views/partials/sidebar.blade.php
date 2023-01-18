@@ -332,7 +332,7 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('admin/roles') }}">Roles</a></li>
                             @endcan
                             @can(PermissionsEnum::TeamsList)
-                            <li><a href="{{ url('generic/teams') }}">Teams</a></li>
+                            <li><a href="{{ url('generic/team') }}">Teams</a></li>
                             @endcan
                             @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST])
                             <li><a>Allocation Config<span class="fa fa-chevron-down" style="color: white;"></span></a>

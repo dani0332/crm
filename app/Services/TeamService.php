@@ -66,7 +66,7 @@ class TeamService extends BaseService
         }
         $team->save();
         if (isset($request->return_to_view)) {
-            return redirect('/quotes/teams/'.$id)->with('success', 'Team has been updated');
+            return redirect('/quotes/team/'.$id)->with('success', 'Team has been updated');
         }
     }
 

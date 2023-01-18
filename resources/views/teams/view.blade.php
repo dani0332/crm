@@ -7,7 +7,7 @@
             <div class="x_title">
                 <h2>Teams</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ url('generic/teams/create') }}" class="btn btn-warning btn-sm">Create Teams</a></li>
+                    <li><a href="{{ url('generic/team/create') }}" class="btn btn-warning btn-sm">Create Team</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
