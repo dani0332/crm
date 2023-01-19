@@ -253,9 +253,7 @@ const planClicked = plan => {
 };
 
 // quoteDocuments
-const docsData = computed(() => {
-  return Object.values(usePage().props.quoteDocuments);
-});
+
 const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
@@ -806,7 +804,7 @@ const confirmDeleteDoc = () => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
-          <x-tag size="sm">{{ docsData.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
         <x-button
           @click.prevent="docUploadModal = true"
@@ -821,7 +819,7 @@ const confirmDeleteDoc = () => {
         <LazyDocumentUploader
           :members="memberDataDocs(membersDetail)"
           :doc-types="documentTypes"
-          :docs="docsData || []"
+          :docs="quoteDocuments || []"
           :cdn="cdnPath"
         />
       </x-modal>
@@ -831,8 +829,8 @@ const confirmDeleteDoc = () => {
         :is-hide-paging="true"
         :is-loading="quoteDocumentsTable.isLoading"
         :columns="quoteDocumentsTable.columns"
-        :rows="docsData || []"
-        :total="docsData.length || 0"
+        :rows="quoteDocuments || []"
+        :total="quoteDocuments.length || 0"
         :pageOptions="quoteDocumentsTable.pageOptions"
         @is-finished="quoteDocumentsTable.isLoading = false"
       >

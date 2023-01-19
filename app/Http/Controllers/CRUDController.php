@@ -466,7 +466,6 @@ class CRUDController extends Controller
             $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
             $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
             $leadStatuses = $this->healthQuoteService->statusesToDisplay($leadStatuses, $record);
-
             $genderOptions = [
                 GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
                 GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
@@ -492,7 +491,7 @@ class CRUDController extends Controller
             return Inertia::render('HealthQuote/Show', [
                 'quote' => $record,
                 'genderOptions' => $genderOptions,
-                'leadStatuses' => $leadStatuses,
+                'leadStatuses' => array_values($leadStatuses->toArray()),
                 'ecomDetails' => $ecomDetails,
                 'membersDetail' => $membersDetail,
                 'memberCategories' => $memberCategories,
@@ -502,7 +501,7 @@ class CRUDController extends Controller
                 'nationalities' => $nationalities,
                 'emirates' => $emirates,
                 'advisors' => $advisors,
-                'quoteDocuments' => $quoteDocuments,
+                'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'documentTypes' => $documentTypes,
                 'cdnPath' => $cdnPath,
                 'domainPath' => $domainPath,
