@@ -15,7 +15,6 @@ use App\Models\TypeOfInsurance;
 use App\Models\User;
 use Auth;
 use Carbon\Carbon;
-use Config;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -51,7 +50,7 @@ class TransAppService extends BaseService
                 if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
                     $responseExtend = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
-                    $listId = Config::get('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
+                    $listId = config('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
                     $responseContact = SIBService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateUrlResponse);
 
                     if ($responseContact != 201 && $responseContact != 204) {
@@ -112,11 +111,11 @@ class TransAppService extends BaseService
             $customer->myalfred_expiry_date = $expiryDate;
             $customer->save();
 
-            $isCustomerExisting = MyAlFredUser::where('customer_id', '=', $customerId)->get();
+            $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
 
             $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
 
-            if ($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && $isCustomerExisting->isEmpty()) {
+            if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $isCustomerExisting) {
                 $this->sendWelcomeEmail($customerId, $WEGenerateUrlResponse, 'transapp-myalfred-we');
 
                 // Send SMS to customer
@@ -141,7 +140,7 @@ class TransAppService extends BaseService
     public function sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $emailTemplateId = (int) Config::get('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //290
+        $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
 
         $emailData = (object) [
             'customerName' => $customer->first_name.' '.$customer->last_name,
