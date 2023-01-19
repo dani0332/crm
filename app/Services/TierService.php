@@ -124,7 +124,6 @@ class TierService extends BaseService
             return $errorResponse;
         }
         $tier = Tier::where('id', $id)->first();
-        $tier->name = $request->name;
         $tier->min_price = $request->min_price;
         $tier->max_price = $request->max_price;
         $tier->cost_per_lead = $request->cost_per_lead;
@@ -146,6 +145,7 @@ class TierService extends BaseService
                 ]);
             }
         }
+        info('------ Tier update is successfully done by user : '.auth()->user()->id.' for tier : '.$tier->name.' ------');
 
         return $tier;
     }
@@ -155,7 +155,7 @@ class TierService extends BaseService
         return [
             'id' => 'readonly|none',
             'created_at' => 'input|title|date|range|dateRange',
-            'name' => 'input|title|required|likeSearch',
+            'name' => 'input|title|required|likeSearch|disabled',
             'min_price' => 'input|number|title|equalSearch|min:1',
             'max_price' => 'input|number|title|equalSearch|max:999999',
             'cost_per_lead' => 'input|number|title|equalSearch|min:1',

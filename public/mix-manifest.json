@@ -1,8 +1,4 @@
 {
-    "/js/alpine.js": "/js/alpine.js?id=7926fb8d9f75db9ad260691c9267db15",
-    "/js/app.js": "/js/app.js?id=8961747d5953055c454573f795931deb",
-    "/build/css/app.css": "/build/css/app.css?id=93f509bf07f334ce3ef69b8a4454052d",
-    "/css/livewire.css": "/css/livewire.css?id=2be65568a8bbeabdca4adbf512dd07a8",
-    "/build/js/customjs.min.js": "/build/js/customjs.min.js?id=3deb635e7f04ec52562dbb54b9a4ece7",
-    "/build/css/style.min.css": "/build/css/style.min.css?id=43dbc3b7dd8e7f56018a65739180828a"
+    "/build/js/customjs.min.js": "/build/js/customjs.min.js?id=8ec9c9616683ee89823cbf678d454f90",
+    "/build/css/style.min.css": "/build/css/style.min.css?id=e849204fea17e86271e72f6bc3f18fd7"
 }

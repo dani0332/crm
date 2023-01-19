@@ -3113,3 +3113,49 @@ $('#send-one-click-buy-email-btn').on('click', function () {
   }
 });
 // Button: Send One click buy email - End
+
+var teamsDataTable = $('.teams-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    ajax: {
+      url: config.routes.teams_datatable_route,
+      data: function (d) {
+        d.name = $('#name').val();
+      },
+    },
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.teams_datatable_route +
+            '/' +
+            row.id +
+            "'>" +
+            row.id +
+            '</a>'
+          );
+        },
+      },
+      { data: 'name', name: 'name' },
+      { data: 'type', name: 'type' },
+      { data: 'parent.name', name: 'parent.name' },
+      { data: 'created_at', name: 'created_at' },
+      { data: 'updated_at', name: 'updated_at' },
+      { data: 'is_active', name: 'is_active' },
+    ],
+  });
+
+  $('#search-teams').submit(function (e) {
+    e.preventDefault();
+    $('.loader').show();
+    teamsDataTable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  });
