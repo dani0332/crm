@@ -61,6 +61,79 @@ use App\Enums\PermissionsEnum;
         background-repeat: no-repeat;
         background-color: #FFF !important;
     }
+
+
+
+
+
+
+
+    /* First we style the container element.  */
+.calendar{
+	margin:.25em 10px 10px 0;
+	padding-top:5px;
+	float:left;
+	width:80px;
+	background:#ededef;
+	background: -webkit-gradient(linear, left top, left bottom, from(#ededef), to(#ccc));
+	background: -moz-linear-gradient(top,  #ededef,  #ccc);
+	font:bold 30px/60px Arial Black, Arial, Helvetica, sans-serif;
+	text-align:center;
+	color:#000;
+	text-shadow:#fff 0 1px 0;
+	border-radius:3px;
+	position:relative;
+	box-shadow:0 2px 2px #888;
+	}
+
+/* Em element is also styled, it contains the month’s name. */
+.calendar em{
+	display:block;
+	font:normal bold 11px/30px Arial, Helvetica, sans-serif;
+	color:#fff;
+	text-shadow:#00365a 0 -1px 0;
+	background:#04599a;
+	background:-webkit-gradient(linear, left top, left bottom, from(#04599a), to(#00365a));
+	background:-moz-linear-gradient(top,  #04599a,  #00365a);
+	border-bottom-right-radius:3px;
+	border-bottom-left-radius:3px;
+	border-top:1px solid #00365a;
+	}
+
+/* Now I am styling the pseudo elements. Container’s pseudo elements (:before and :after) are used to create thos circles, "holes in te paper". */
+.calendar:before, .calendar:after{
+	content:'';
+	float:left;
+	position:absolute;
+	top:5px;
+	width:8px;
+	height:8px;
+	background:#111;
+	z-index:1;
+	border-radius:10px;
+	box-shadow:0 1px 1px #fff;
+	}
+.calendar:before{left:11px;}
+.calendar:after{right:11px;}
+
+/*…and em’s pseudo elements are used to create the rings: */
+.calendar em:before, .calendar em:after{
+	content:'';
+	float:left;
+	position:absolute;
+	top:-5px;
+	width:4px;
+	height:14px;
+	background:#dadada;
+	background:-webkit-gradient(linear, left top, left bottom, from(#f1f1f1), to(#aaa));
+	background:-moz-linear-gradient(top,  #f1f1f1,  #aaa);
+	z-index:2;
+	border-radius:2px;
+	}
+.calendar em:before{left:13px;}
+.calendar em:after{right:13px;}
+
+
 </style>
 <script>
     function convertObjectToArray(obj) {
@@ -88,11 +161,6 @@ use App\Enums\PermissionsEnum;
             var isLeadPool = $("#isLeadPool").val();
             var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
             var isManualAllocationAllowed = JSON.parse('<?php echo json_encode($isManualAllocationAllowed); ?>');
-            var totalAllowed = JSON.parse('<?php echo json_encode($totalAllowed); ?>');
-            var totalAssigned = JSON.parse('<?php echo json_encode($totalAssigned); ?>');
-            if(totalAssigned && totalAllowed){
-
-            }
             // Adding custom search fields for admin role
             if (isAdmin) {
                 model.searchProperties.push('is_ecommerce');
@@ -490,7 +558,10 @@ use App\Enums\PermissionsEnum;
         <div class="x_panel" style="overflow:hidden">
             <div class="x_title">
                 @if(auth()->user()->hasRole(RolesEnum::CarAdvisor))
-                <div class="col-md-12">
+                <div class="col-md-12" style="position: absolute;z-index: 1;margin-top: -18px;">
+                    {{-- <p class="calendar">{{$userMaxCap}} <em>Max Cap</em></p>
+                    <p class="calendar">{{$todayAssignmentCount}} <em>Auto Assignment</em></p>
+                    <p class="calendar">{{$todayAssignmentCount}} <em>Manual Assignment</em></p> --}}
                     <div class="col-md-6" style="text-align:center; width: 20%;border: 4px solid black;padding: 10px;margin: 14px;float: right;font-size: 20px;font-weight: 900;color: black;">
                         <label style="text-decoration: underline;">Max Cap</label>
                         <br />

@@ -534,7 +534,7 @@ class LeadAllocationService extends BaseService
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->save();
-
+                        info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId . ' and tier id : '. $selectedTier->name);
                         $this->updateCarLeadDetailRecord($carLead->id);
 
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
@@ -573,12 +573,15 @@ class LeadAllocationService extends BaseService
 
     public function updateCarLeadDetailRecord($leadId)
     {
+        info('---- Inside updateCarLeadDetailRecord');
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
         if ($carQuoteDetail != null) {
             $carQuoteDetail->advisor_assigned_date = now();
             $carQuoteDetail->advisor_assigned_by_id = auth()->user()->id;
             $carQuoteDetail->save();
+            info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
         } else {
+            info('---- updateCarLeadDetailRecord - record not found creating new entry');
             $carQuoteDetail = new CarQuoteRequestDetail();
             $carQuoteDetail->car_quote_request_id = $leadId;
             $carQuoteDetail->advisor_assigned_date = now();
