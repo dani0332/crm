@@ -23,10 +23,12 @@ class CheckLastLoginMiddleware
             if (now()->diffInDays($lastLoginDate) > 0) {
                 auth()->logout();
 
-                return route('login');
+                return redirect()->route('login');
             }
         } else {
             Auth::logout();
+
+            return redirect()->route('login');
         }
 
         return $next($request);
