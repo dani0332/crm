@@ -106,6 +106,33 @@ $(function()  {
         }
     });
 
+    // Make additional mobile_no primary
+    $('.additional-mobile-no-make-primary-btn').on('click', function(){
+        if (confirm('Are you sure to make this primary mobile no.?')) {
+            $('.loader').show();
+            $.ajax({
+                url: '/customer-additional-contact/' + 0 + '/make-primary',
+                method: 'POST',
+                data: {
+                    quote_id: $(this).attr('data-quote-id'),
+                    key: $(this).attr('data-key'),
+                    value: $(this).attr('data-value'),
+                    quote_type : $(this).attr('data-quote-type'),
+                    quote_primary_mobile_no : $(this).attr('data-quote-primary-mobile-no'),
+                    quote_customer_id : $(this).attr('data-quote-customer-id'),
+                    _token: $('input[name=_token]').val(),
+                },
+                success: function (data) {
+                    $('.loader').hide();
+                    alert('Primary Contact Updated.');
+                    location.reload(); 
+                },
+            });
+        } else {
+            return false;
+        }
+    });
+
     function is_valid_email(email) {
         var email_regex = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
         return email_regex.test(email);

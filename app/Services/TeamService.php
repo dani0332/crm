@@ -66,7 +66,7 @@ class TeamService extends BaseService
         }
         $team->save();
         if (isset($request->return_to_view)) {
-            return redirect('/quotes/teams/'.$id)->with('success', 'Team has been updated');
+            return redirect('/quotes/team/'.$id)->with('success', 'Team has been updated');
         }
     }
 
@@ -75,8 +75,9 @@ class TeamService extends BaseService
         return [
             'id' => 'readonly|none',
             'name' => 'input|text|required|title',
+            'type' => '|static|title|'.TeamTypeEnum::PRODUCT_STR.','.TeamTypeEnum::TEAM_STR.','.TeamTypeEnum::SUBTEAM_STR.'',
             'parent_team_id' => 'select|title',
-            'type' => '|static|title|'.TeamTypeEnum::PRODUCT.','.TeamTypeEnum::TEAM.','.TeamTypeEnum::SUB_TEAM.'',
+
         ];
     }
 
@@ -88,7 +89,7 @@ class TeamService extends BaseService
                 $title = 'Team Name';
                 break;
             case 'parent_team_id':
-                $title = 'Parent Team';
+                $title = 'Parent Record';
                 break;
             case 'type':
                 $title = 'Record Type';
@@ -113,5 +114,17 @@ class TeamService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['name'];
+    }
+
+    public function getTeams()
+    {
+        return Team::where('is_active', 1)->whereNotNull('type')->get();
+    }
+
+    public function getTeamNameById($teamId)
+    {
+        $team = Team::where('id', $teamId)->first();
+
+        return $team ? $team->name : '';
     }
 }

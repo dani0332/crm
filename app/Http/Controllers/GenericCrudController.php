@@ -305,7 +305,7 @@ class GenericCrudController extends Controller
                 $modelType = 'LeadStatus';
                 break;
             case str_contains($url, GenericModelTypeEnum::TEAMS):
-                $modelType = 'Teams';
+                $modelType = 'Team';
                 break;
             case str_contains($url, GenericModelTypeEnum::TIER):
                 $modelType = 'Tier';

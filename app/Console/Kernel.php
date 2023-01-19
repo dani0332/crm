@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\UpdateHealthStatus;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -36,6 +37,11 @@ class Kernel extends ConsoleKernel
             ->weeklyOn(1, '0:00')
             ->onOneServer()
             ->withoutOverlapping(1);
+
+        $schedule->command(UpdateHealthStatus::class)
+        ->timezone('Asia/Dubai')
+        ->dailyAt('01:00')->onOneServer()
+        ->withoutOverlapping(1);
     }
 
     /**
