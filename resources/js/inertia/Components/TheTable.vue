@@ -280,7 +280,7 @@ export default defineComponent({
       let limit = setting.pageSize;
       setting.order = order;
       setting.sort = sort;
-      // emit('do-search', offset, limit, order, sort);
+      emit('do-search', offset, limit, order, sort);
       if (setting.isCheckAll) {
         setting.isCheckAll = false;
       } else {
@@ -491,7 +491,7 @@ export default defineComponent({
                               }
                             "
                             :value="row[setting.keyColumn]"
-                            @click="checked"
+                            @click.prevent="checked(row, $event)"
                           />
                         </label>
                       </th>

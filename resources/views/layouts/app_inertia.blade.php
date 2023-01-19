@@ -10,6 +10,8 @@
   <title inertia>{{ config('constants.APP_NAME', 'IMCRM') }}</title>
   <link rel="stylesheet" href="{{ mix('css/inertia.css') }}">
   
+  <script src="{{ mix('/js/manifest.js') }}" defer></script>
+  <script src="{{ mix('/js/vendor.js') }}" defer></script>
   <script src="{{ mix('/js/inertia.js') }}" defer></script>
   @inertiaHead
 </head>

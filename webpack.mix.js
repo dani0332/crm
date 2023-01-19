@@ -1,6 +1,5 @@
 const mix = require('laravel-mix');
 const path = require('path');
-const cssImport = require('postcss-import');
 
 mix.options({
   terser: {
@@ -22,21 +21,19 @@ mix
   .js('resources/js/inertia/inertia.js', 'public/js')
   .vue({ runtimeOnly: (process.env.NODE_ENV || 'production') === 'production' })
   .webpackConfig({
-    output: { chunkFilename: 'js/[name].js?id=[chunkhash]' },
     resolve: {
       alias: {
         '@': path.resolve('./resources/js'),
       },
       extensions: ['.js', '.vue', '.json'],
     },
+    output: {
+      chunkFilename: 'js/[name].js?id=[chunkhash]',
+    },
   })
-  .postCss('resources/css/inertia.css', 'public/css', [
-    // prettier-ignore
-    cssImport(),
-    require('tailwindcss'),
-  ])
-  .version()
-  .sourceMaps();
+  .postCss('resources/css/inertia.css', 'public/css', [require('tailwindcss')])
+  .extract()
+  .version();
 
 mix.css('resources/css/livewire.css', 'public/css');
 

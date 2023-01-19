@@ -452,7 +452,7 @@ class CRUDController extends Controller
             $listQuotePlans = '';
             $quotePlans = $this->healthQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = $quotePlans->message;
+                $listQuotePlans = [];
             } else {
                 if (gettype($quotePlans) != 'string') {
                     $listQuotePlans = $quotePlans->quote->plans;
