@@ -196,11 +196,8 @@ class CRUDController extends Controller
             $quote_status = $dropdownSource['quote_status_id'];
 
             return Inertia::render('HealthQuote/Index', [
-                'quotes' => $gridData->items(),
-                'currentPage' => $gridData->currentPage(),
+                'quotes' => $gridData,
                 'hasMore' => $gridData->hasMorePages(),
-                'nextPageUrl' => $gridData->nextPageUrl(),
-                'prevPageUrl' => $gridData->previousPageUrl(),
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
             ]);

@@ -1,14 +1,11 @@
 <script setup>
-import { reactive, computed } from 'vue';
+import { reactive, computed, onMounted } from 'vue';
 import { Head, router, usePage, Link } from '@inertiajs/vue3';
 import TheTable from '@/inertia/Components/TheTable.vue';
 
 defineProps({
-  quotes: Array,
-  currentPage: Number,
+  quotes: Object,
   hasMore: Boolean,
-  nextPageUrl: String,
-  prevPageUrl: String,
   leadStatuses: Array,
   advisors: Array,
 });
@@ -165,8 +162,8 @@ function onSubmit(isValid) {
     router.visit('/quotes/health', {
       method: 'get',
       data: filters,
-      replace: true,
       preserveState: true,
+      preserveScroll: true,
       onBefore: () => (table.isLoading = true),
       onSuccess: () => (table.isLoading = false),
     });
@@ -178,7 +175,7 @@ function onSubmit(isValid) {
 function onReset() {
   router.visit('/quotes/health', {
     method: 'get',
-    replace: true,
+    preserveScroll: true,
     onBefore: () => (table.isLoading = true),
     onSuccess: () => (table.isLoading = false),
   });
@@ -186,20 +183,66 @@ function onReset() {
 
 const onPaginate = isNext => {
   const pageUrl = isNext
-    ? usePage().props.nextPageUrl
-    : usePage().props.prevPageUrl;
+    ? usePage().props.quotes.next_page_url
+    : usePage().props.quotes.prev_page_url;
 
   if (!pageUrl) {
     return;
   }
   router.visit(pageUrl, {
     method: 'get',
-    replace: true,
     preserveScroll: true,
+    only: ['quotes'],
     onBefore: () => (table.isLoading = true),
     onSuccess: () => (table.isLoading = false),
   });
 };
+
+function setQueryStringFilters() {
+  let queryString = window.location.search;
+  let urlParams = new URLSearchParams(queryString);
+
+  if (urlParams.has('code')) {
+    filters.code = urlParams.get('code');
+  }
+  if (urlParams.has('first_name')) {
+    filters.first_name = urlParams.get('first_name');
+  }
+  if (urlParams.has('last_name')) {
+    filters.last_name = urlParams.get('last_name');
+  }
+  if (urlParams.has('email')) {
+    filters.email = urlParams.get('email');
+  }
+  if (urlParams.has('mobile_no')) {
+    filters.mobile_no = urlParams.get('mobile_no');
+  }
+  if (urlParams.has('created_at_start')) {
+    filters.created_at_start = urlParams.get('created_at_start');
+  }
+  if (urlParams.has('created_at_end')) {
+    filters.created_at_end = urlParams.get('created_at_end');
+  }
+  if (urlParams.has('sub_team')) {
+    filters.sub_team = urlParams.get('sub_team');
+  }
+  // if (urlParams.has('quote_status')) {
+  //   filters.quote_status = urlParams.get('quote_status').split(',');
+  // }
+  // if (urlParams.has('advisors')) {
+  //   filters.advisors = urlParams.get('advisors').split(',');
+  // }
+  if (urlParams.has('is_renewal')) {
+    filters.is_renewal = urlParams.get('is_renewal');
+  }
+  if (urlParams.has('is_ecommerce')) {
+    filters.is_ecommerce = urlParams.get('is_ecommerce');
+  }
+}
+
+onMounted(() => {
+  setQueryStringFilters();
+});
 </script>
 
 <template>
@@ -207,7 +250,9 @@ const onPaginate = isNext => {
     <Head title="Health Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health Quotes List</h2>
-      <x-button size="sm" color="#ff5e00">Create Lead</x-button>
+      <x-button size="sm" color="#ff5e00" href="/quotes/health/create">
+        Create Lead
+      </x-button>
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
@@ -323,10 +368,10 @@ const onPaginate = isNext => {
       :is-slot-mode="true"
       :is-loading="table.isLoading"
       :columns="table.columns"
-      :rows="quotes || []"
+      :rows="quotes.data || []"
       :has-more="hasMore"
-      :total="quotes.length || 0"
-      :page="currentPage"
+      :total="quotes.data.length || 0"
+      :page="quotes.current_page"
       :noDataText="'No Quotes Found'"
       @do-search="onPaginate"
       @is-finished="table.isLoading = false"
