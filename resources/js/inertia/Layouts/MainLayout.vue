@@ -146,7 +146,9 @@ const user = computed(() => usePage().props.auth.user);
         </div>
       </header>
       <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
-        <slot />
+        <XNotifications inject-key="toast">
+          <slot />
+        </XNotifications>
       </div>
     </article>
   </main>

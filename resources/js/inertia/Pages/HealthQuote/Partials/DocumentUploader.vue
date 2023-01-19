@@ -2,6 +2,8 @@
 import { ref } from 'vue';
 import Dropzone from '@/inertia/Components/Dropzone.vue';
 import { useForm, usePage } from '@inertiajs/vue3';
+import { useNotifications } from '@indielayer/ui';
+
 // const emit = defineEmits(["update:uploadedFiles"]);
 defineProps({
   members: Array,
@@ -11,6 +13,7 @@ defineProps({
 });
 const memberTabs = ref('quote-documents');
 const isUploading = ref(false);
+const notification = useNotifications('toast');
 
 const docForm = useForm({
   quote_id: usePage().props.quote.id || null,
@@ -39,8 +42,8 @@ const uploadFile = (doc, memberId, files) => {
       preserveState: true,
       only: ['quoteDocuments'],
       onFinish: () => {
-        console.log('onFinish');
         isUploading.value = false;
+        notification.success('File Uploaded');
       },
     });
 };
@@ -82,7 +85,7 @@ const uploadFile = (doc, memberId, files) => {
                 target="_blank"
                 class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
               >
-                {{ doc.doc_name }}
+                {{ doc.original_name || doc.doc_name }}
               </a>
             </div>
           </div>
@@ -126,7 +129,7 @@ const uploadFile = (doc, memberId, files) => {
                 target="_blank"
                 class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
               >
-                {{ doc.doc_name }}
+                {{ doc.original_name || doc.doc_name }}
               </a>
             </div>
           </div>

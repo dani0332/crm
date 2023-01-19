@@ -5,6 +5,7 @@ import { useDateFormat } from '@vueuse/core';
 import TheTable from '@/inertia/Components/TheTable.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import { useNotifications } from '@indielayer/ui';
 
 defineProps({
   quote: Object,
@@ -23,12 +24,13 @@ defineProps({
   cdnPath: String,
 });
 
+const notification = useNotifications('toast');
+
 const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
 
-const assignSubteam = ref(''),
-  assignLead = ref('');
-
-const leadStatus = ref(usePage().props.quote.quote_status_id),
+const assignSubteam = ref(usePage().props.quote.health_team_type || null),
+  assignLead = ref(usePage().props.quote.advisor_id || null),
+  leadStatus = ref(usePage().props.quote.quote_status_id || null),
   leadNotes = ref(usePage().props.quote.notes),
   memberDetailModal = ref(false),
   memberActionEdit = ref(false),
@@ -115,6 +117,68 @@ const salaryBandsOptions = computed(() => {
   }));
 });
 
+const onTeamAssign = () => {
+  if (!assignSubteam.value) {
+    notification.error('Please select a subteam');
+    return;
+  }
+  router.post(
+    `/quotes/health/healthTeamAssign`,
+    {
+      modelType: 'Health',
+      entityId: usePage().props.quote.id,
+      assign_team: assignSubteam.value,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success('Team Assigned');
+      },
+    },
+  );
+};
+
+const onAssignLead = () => {
+  if (!assignLead.value) {
+    notification.error('Please select a lead');
+    return;
+  }
+  router.post(
+    `/quotes/health/manualLeadAssign`,
+    {
+      modelType: 'Health',
+      entityId: usePage().props.quote.id,
+      assigned_to_id_new: assignLead.value,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success('Lead Assigned');
+      },
+    },
+  );
+};
+
+const onLeadStatus = () => {
+  router.post(
+    `/quotes/Health/${usePage().props.quote.id}/update-lead-status`,
+    {
+      modelType: 'Health',
+      leadId: usePage().props.quote.id,
+      quote_uuid: usePage().props.quote.uuid,
+      assigned_to_user_id: usePage().props.quote.advisor_id,
+      leadStatus: leadStatus.value,
+      notes: leadNotes.value,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success('Lead Status Updated');
+      },
+    },
+  );
+};
+
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
@@ -185,6 +249,7 @@ const onAddMember = () => {
     preserveScroll: true,
     onFinish: () => {
       memberDetailModal.value = false;
+      notification.success('Member Added');
     },
   });
 };
@@ -194,6 +259,7 @@ const onUpdateMember = () => {
     preserveScroll: true,
     onFinish: () => {
       memberDetailModal.value = false;
+      notification.success('Member Updated');
     },
   });
 };
@@ -201,6 +267,9 @@ const onUpdateMember = () => {
 const onDeleteMember = id => {
   memberForm.delete(`/members/${id}`, {
     preserveScroll: true,
+    onFinish: () => {
+      notification.error('Member Deleted');
+    },
   });
 };
 
@@ -263,7 +332,7 @@ const quoteDocumentsTable = reactive({
     },
     {
       label: 'Document Name',
-      field: 'doc_name',
+      field: 'original_name',
     },
     {
       label: 'Created At',
@@ -305,6 +374,7 @@ const confirmDeleteDoc = () => {
       onFinish: () => {
         deleteDocModal.value = false;
         quoteDocumentsTable.isLoading = false;
+        notification.error('File Deleted');
       },
     },
   );
@@ -337,7 +407,9 @@ const confirmDeleteDoc = () => {
             class="w-auto flex-1"
           />
           <div>
-            <x-button color="orange" size="sm"> Assign Team </x-button>
+            <x-button color="orange" size="sm" @click.prevent="onTeamAssign">
+              Assign Team
+            </x-button>
           </div>
         </div>
         <div class="w-full md:w-1/2 flex gap-2 items-end">
@@ -349,7 +421,9 @@ const confirmDeleteDoc = () => {
             class="w-auto flex-1"
           />
           <div>
-            <x-button color="orange" size="sm">Assign</x-button>
+            <x-button color="orange" size="sm" @click.prevent="onAssignLead">
+              Assign
+            </x-button>
           </div>
         </div>
       </div>
@@ -714,7 +788,12 @@ const confirmDeleteDoc = () => {
             class="w-full"
           />
           <div class="flex justify-end">
-            <x-button class="mt-4" color="emerald" size="sm">
+            <x-button
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              @click.prevent="onLeadStatus"
+            >
               Change Status
             </x-button>
           </div>
@@ -792,7 +871,7 @@ const confirmDeleteDoc = () => {
           </div>
         </template>
       </TheTable>
-      <x-modal v-model="planModal" size="xl" show-close backdrop>
+      <x-modal v-model="planModal" size="full" show-close backdrop>
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>
@@ -834,9 +913,9 @@ const confirmDeleteDoc = () => {
         :pageOptions="quoteDocumentsTable.pageOptions"
         @is-finished="quoteDocumentsTable.isLoading = false"
       >
-        <template v-slot:doc_name="data">
+        <template v-slot:original_name="data">
           <a :href="cdnPath + data.value.doc_url" target="_blank">
-            {{ data.value.doc_name }}
+            {{ data.value.original_name }}
           </a>
         </template>
         <template v-slot:action="data">
