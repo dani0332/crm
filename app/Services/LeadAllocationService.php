@@ -577,7 +577,7 @@ class LeadAllocationService extends BaseService
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
         if ($carQuoteDetail != null) {
             $carQuoteDetail->advisor_assigned_date = now();
-            $carQuoteDetail->advisor_assigned_by_id = auth()->user()->id;
+            $carQuoteDetail->advisor_assigned_by_id = auth()->id();
             $carQuoteDetail->save();
             info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
         } else {
@@ -585,7 +585,7 @@ class LeadAllocationService extends BaseService
             $carQuoteDetail = new CarQuoteRequestDetail();
             $carQuoteDetail->car_quote_request_id = $leadId;
             $carQuoteDetail->advisor_assigned_date = now();
-            $carQuoteDetail->advisor_assigned_by_id = auth()->user()->id;
+            $carQuoteDetail->advisor_assigned_by_id = auth()->id();
             $carQuoteDetail->created_at = now();
             $carQuoteDetail->updated_at = now();
             $carQuoteDetail->save();
