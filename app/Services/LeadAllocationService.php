@@ -534,7 +534,7 @@ class LeadAllocationService extends BaseService
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->save();
-                        info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId . ' and tier id : '. $selectedTier->name);
+                        info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
                         $this->updateCarLeadDetailRecord($carLead->id);
 
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
