@@ -20,13 +20,15 @@ class CheckLastLoginMiddleware
     {
         if (auth()->user()) {
             $lastLoginDate = Carbon::parse(auth()->user()->last_login);
-            if (now()->diffInDays($lastLoginDate) > 0) {
+            if (! now()->isSameDay($lastLoginDate)) {
                 auth()->logout();
 
-                return route('login');
+                return redirect()->route('login');
             }
         } else {
             Auth::logout();
+
+            return redirect()->route('login');
         }
 
         return $next($request);
