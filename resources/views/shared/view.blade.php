@@ -7,6 +7,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\GenericRequestEnum;
 @endphp
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -559,9 +560,6 @@ use App\Enums\PermissionsEnum;
             <div class="x_title">
                 @if(auth()->user()->hasRole(RolesEnum::CarAdvisor))
                 <div class="col-md-12" style="position: absolute;z-index: 1;margin-top: -18px;">
-                    {{-- <p class="calendar">{{$userMaxCap}} <em>Max Cap</em></p>
-                    <p class="calendar">{{$todayAssignmentCount}} <em>Auto Assignment</em></p>
-                    <p class="calendar">{{$todayAssignmentCount}} <em>Manual Assignment</em></p> --}}
                     <div class="col-md-6" style="text-align:center; width: 20%;border: 4px solid black;padding: 10px;margin: 14px;float: right;font-size: 20px;font-weight: 900;color: black;">
                         <label style="text-decoration: underline;">Max Cap</label>
                         <br />
@@ -894,7 +892,16 @@ use App\Enums\PermissionsEnum;
                                                     @endforeach
                                                 </select>
                                             </div>
-                                            <div class="col-md-4 col-sm-4">
+                                            <div class="col-md-2 col-sm-2">
+                                                <label
+                                                    style="margin-left: 8px;font-size: 16px;font-weight: bolder;">Assignment Type</label>
+                                                <span class='required' style="margin-left:10px;">*</span>
+                                                <select class="form-control" id="manual_assignment_email_flag" name="assignment_type">
+                                                    <option value="{{GenericRequestEnum::ASSIGN_WITHOUT_EMAIL}}">Without Email</option>
+                                                    <option value="{{GenericRequestEnum::ASSIGN_WITH_EMAIL}}">With Email</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2 col-sm-2">
                                                 <button type="submit" id="tmLeadsAssignToUser"
                                                     name="tmLeadsAssignToUser" style="margin-top:34px;"
                                                     class="btn btn-warning btn-sm">Assign</button>

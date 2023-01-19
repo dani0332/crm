@@ -408,6 +408,8 @@ class LeadAllocationService extends BaseService
             if ($leadAllocationRecord) {
                 $leadAllocationRecord->max_capacity = str_contains($user->quads, '1') ? 4 : 5;
                 $leadAllocationRecord->allocation_count = 0;
+                $leadAllocationRecord->manual_assignment_count = 0;
+                $leadAllocationRecord->auto_assignment_count = 0;
                 $leadAllocationRecord->updated_at = now();
                 $leadAllocationRecord->save();
             }
