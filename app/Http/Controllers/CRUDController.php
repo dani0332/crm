@@ -149,8 +149,8 @@ class CRUDController extends Controller
             $from = now()->startOfDay();
             $to = now()->endOfDay();
             $totalAssigned = CarQuote::where('advisor_id', auth()->user()->id)->whereBetween('created_at', [$from, $to])->count();
-            $userMaxCap =  $advisorAllocationRecord->max_cap ?? 0;
-            $todayAssignmentCount = $advisorAllocationRecord->auto_assignment_count .  ' / ' . $advisorAllocationRecord->manual_assignment_count;
+            $userMaxCap = $advisorAllocationRecord->max_cap ?? 0;
+            $todayAssignmentCount = $advisorAllocationRecord->auto_assignment_count.' / '.$advisorAllocationRecord->manual_assignment_count;
         }
         $tiers = Tier::where('is_active', 1)->get();
         //Checking if the loggedIn user is Renewal User
