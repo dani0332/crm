@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
@@ -39,7 +40,7 @@ class DashboardController extends Controller
 
     public function renderMainDashboard(Request $request)
     {
-        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->get();
+        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getTeamsByProductId($car->id);
         $carAdvisors = $this->getUsersByTeamId($car->id);
@@ -125,6 +126,7 @@ class DashboardController extends Controller
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
         ->join('teams', 'teams.id', 'user_team.team_id')
+        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
         ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
 
         $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'undefined';
@@ -204,6 +206,7 @@ class DashboardController extends Controller
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
         ->join('teams', 'teams.id', 'user_team.team_id')
+        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
         $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'null';
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);

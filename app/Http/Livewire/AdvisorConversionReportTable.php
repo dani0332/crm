@@ -7,6 +7,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
+use App\Services\ApplicationStorageService;
 use App\Traits\GetUserTreeTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     public $tiers = [];
     public $batches = [];
     public $leadSources = [];
+    private $applicationStorageService;
 
     public function configure(): void
     {
@@ -177,12 +179,13 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function filters(): array
     {
+        $this->applicationStorageService = app(ApplicationStorageService::class);
         $filters = [
             TextFilter::make('Created Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
-                    'max_days' => 31,
+                    'max_days' => $this->applicationStorageService->getValueByKey('MAX_DAYS_CAR_REPORTS'),
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {

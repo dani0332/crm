@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             HealthPlanTypeSeeder::class,
             QuoteStatusMapCarTransactionApproved::class,
             UpdateApplicationStorage::class,
+            addReportsMaxDays::class,
         ]);
     }
 }
