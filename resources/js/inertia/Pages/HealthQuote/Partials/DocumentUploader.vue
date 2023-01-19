@@ -117,7 +117,9 @@ const uploadFile = (doc, memberId, files) => {
               />
               <a
                 v-for="doc in docs.filter(
-                  d => d.document_type_code == docType.code,
+                  d =>
+                    d.document_type_code == docType.code &&
+                    d.member_detail_id == member.id,
                 )"
                 :key="doc.id"
                 :href="cdn + doc.doc_url"

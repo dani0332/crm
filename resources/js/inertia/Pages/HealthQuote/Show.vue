@@ -296,7 +296,6 @@ const onDocDelete = name => {
 
 const confirmDeleteDoc = () => {
   quoteDocumentsTable.isLoading = true;
-  console.log(confirmDeleteData.docs);
   router.post(
     `/documents/delete`,
     {
@@ -305,7 +304,6 @@ const confirmDeleteDoc = () => {
     },
     {
       preserveScroll: true,
-      only: [''],
       onFinish: () => {
         deleteDocModal.value = false;
         quoteDocumentsTable.isLoading = false;
