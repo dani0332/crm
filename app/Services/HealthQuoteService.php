@@ -7,6 +7,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthMemberDetail;
@@ -17,6 +18,7 @@ use App\Models\InsuranceProvider;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
 use Auth;
@@ -32,7 +34,7 @@ class HealthQuoteService extends BaseService
     protected $leadAllocationService;
     protected $httpService;
 
-    use AddPremiumAllLobs,RolePermissionConditions, GetUserTreeTrait;
+    use AddPremiumAllLobs,RolePermissionConditions, GetUserTreeTrait, GenericQueriesAllLobs;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
@@ -46,6 +48,7 @@ class HealthQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
             'hqr.last_name',
+            'hqr.payment_status_id',
             'hqr.email',
             'hqr.mobile_no',
             'hqr.preference',
@@ -223,8 +226,8 @@ class HealthQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
         if ($request->ajax()) {
-            if (! isset($request->email) && $request->email == '') {
-                $this->query->where('hqr.quote_status_id', '!=', 9);
+            if (empty($request->email) && empty($request->code)) {
+                $this->query->where('hqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
                 $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
@@ -689,7 +692,7 @@ class HealthQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'health_team_type', 'is_renewal', 'is_ecommerce'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'health_team_type', 'is_renewal', 'is_ecommerce'];
     }
 
     public function getCustomTitleByProperty($propertyName)
@@ -1150,7 +1153,7 @@ class HealthQuoteService extends BaseService
     }
 
     /**
-     * create health plan for upload & create process
+     * create health plan for upload & create process.
      *
      * @param $data
      * @return false
@@ -1201,5 +1204,27 @@ class HealthQuoteService extends BaseService
         $pdfName = 'InsuranceMarket.ae™ Health Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
+    }
+
+    public function statusesToDisplay($leadStatuses, $lead)
+    {
+        $statusesToRemove = collect();
+        if ($lead->is_ecommerce) {
+            if ($lead->quote_status_id != QuoteStatusEnum::QualificationPending) {
+                $statusesToRemove->push(QuoteStatusEnum::QualificationPending);
+            }
+            if ($lead->quote_status_id != QuoteStatusEnum::Qualified) {
+                $statusesToRemove->push(QuoteStatusEnum::Qualified);
+            }
+        }
+        if (auth()->user()->hasRole(RolesEnum::HealthAdvisor)) {
+            $lead->quote_status_id != QuoteStatusEnum::Fake && $statusesToRemove->push(QuoteStatusEnum::Fake);
+            $lead->quote_status_id != QuoteStatusEnum::Duplicate && $statusesToRemove->push(QuoteStatusEnum::Duplicate);
+
+            $lead->quote_status_id != QuoteStatusEnum::AMLScreeningCleared && $statusesToRemove->push(QuoteStatusEnum::AMLScreeningCleared);
+            $lead->quote_status_id != QuoteStatusEnum::AMLScreeningFailed && $statusesToRemove->push(QuoteStatusEnum::AMLScreeningFailed);
+        }
+
+        return $leadStatuses->whereNotIn('id', $statusesToRemove);
     }
 }

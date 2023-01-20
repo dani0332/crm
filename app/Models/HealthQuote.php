@@ -24,6 +24,11 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasOne(Customer::class, 'id', 'customer_id');
     }
 
+    public function currentlyInsured()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'id', 'currently_insured_id');
+    }
+
     public function nationality()
     {
         return $this->hasOne(Nationality::class, 'id', 'nationality_id');
@@ -44,14 +49,34 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasOne(HealthQuoteRequestDetail::class, 'id', 'health_quote_request_id');
     }
 
+    public function currentProvider()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'id', 'currently_insured_with_id');
+    }
+
     public function memberDetails()
     {
         return $this->hasMany(HealthMemberDetail::class, 'id', 'primary_member_id');
     }
 
+    public function memberCategory()
+    {
+        return $this->belongsTo(MemberCategory::class, 'member_category_id', 'id');
+    }
+
+    public function salaryBand()
+    {
+        return $this->belongsTo(SalaryBand::class, 'salary_band_id', 'id');
+    }
+
     public function advisor()
     {
         return $this->hasOne(User::class, 'id', 'advisor_id');
+    }
+
+    public function wcAdvisor()
+    {
+        return $this->hasOne(User::class, 'id', 'wcu_id');
     }
 
     public function getFullNameAttribute()
@@ -70,5 +95,10 @@ class HealthQuote extends Model implements AuditableContract
     public function members()
     {
         return $this->hasMany(HealthMemberDetail::class, 'health_quote_request_id');
+    }
+
+    public function availablePlans()
+    {
+        return $this->hasMany(HealthAvailablePlan::class, 'uuid', 'uuid');
     }
 }

@@ -321,7 +321,7 @@ class CarQuoteService extends BaseService
             'has_ncd_supporting_documents' => '|static|title|,Yes,No',
             'created_at' => 'input|date|title|range',
             'advisor_assigned_date' => 'input|date|title|range',
-            'cost_per_lead' => 'readonly|none',
+            'cost_per_lead' => 'readonly|title|none',
             'quote_status_id' => 'select|title|multiple',
             'payment_status_id' => 'select|title',
             'is_ecommerce' => '|static|title|Yes,No',
@@ -511,6 +511,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'car_value_tier':
                 $title = 'Car Value (at enquiry)';
+                break;
+            case 'cost_per_lead':
+                $title = 'Lead Cost';
                 break;
             default:
                 break;
@@ -704,8 +707,8 @@ class CarQuoteService extends BaseService
 
         if ($request->ajax()) {
             $this->addLeadViewEligibilityCheck();
-            if (! isset($request->email) && $request->email == '') {
-                $this->query->where('qs.id', '!=', QuoteStatusEnum::Fake);
+            if (empty($request->email) && empty($request->code)) {
+                $this->query->where('cqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
 
             if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
@@ -902,9 +905,9 @@ class CarQuoteService extends BaseService
     {
         return [
             'create' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id,policy_start_date,advisor_assigned_date',
-            'list' => 'policy_start_date,transapp_code,seat_capacity,cylinder,has_ncd_supporting_documents,back_home_license_held_for_id,parent_duplicate_quote_id,trim,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,emirate_of_registration_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,cost_per_lead,quote_batch_id,car_value_tier',
+            'list' => 'policy_start_date,transapp_code,seat_capacity,cylinder,has_ncd_supporting_documents,back_home_license_held_for_id,parent_duplicate_quote_id,trim,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,emirate_of_registration_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,cost_per_lead,car_value_tier,renewal_batch',
             'update' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,source,transapp_code,previous_quote_policy_premium,quote_status_id,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id,policy_start_date,advisor_assigned_date',
-            'show' => 'is_modified,is_gcc_standard,trim,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,quote_status_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,renewal_import_code,tier_id,visit_count,id,renewal_batch,policy_start_date',
+            'show' => 'is_modified,is_gcc_standard,trim,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,quote_status_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,renewal_import_code,tier_id,visit_count,id,renewal_batch,policy_start_date,is_ecommerce,quote_link,transapp_code,order_reference,payment_reference,policy_number,renewal_expiry_date,lost_reason',
         ];
     }
 
@@ -1159,7 +1162,18 @@ class CarQuoteService extends BaseService
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
             $lead->save();
+            info('Manual assignment done for lead : '.$lead->uuid);
             $this->updateChildRecord($lead->id);
+            info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
+            $advisorLeadAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($userId);
+            if ($advisorLeadAllocationRecord) {
+                $previousAssignmentCount = $advisorLeadAllocationRecord->manual_assignment_count;
+                $previousTotalAllocationCount = $advisorLeadAllocationRecord->allocation_count;
+                $advisorLeadAllocationRecord->allocation_count = $previousTotalAllocationCount + 1;
+                $advisorLeadAllocationRecord->manual_assignment_count = $previousAssignmentCount + 1;
+                $advisorLeadAllocationRecord->save();
+                info('manual lead assignment count is increased from : '.$previousAssignmentCount.' to : '.$previousAssignmentCount + 1 .'  and allocation count from : '.$previousTotalAllocationCount.' to '.$previousTotalAllocationCount + 1  .' for advisor id : '.$userId);
+            }
         }
 
         return $result;

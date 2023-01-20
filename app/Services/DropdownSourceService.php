@@ -101,7 +101,7 @@ class DropdownSourceService extends BaseService
         $lookUpService = new LookupService();
         switch ($type) {
             case 'parent_team_id':
-                $data = Team::whereNull('parent_team_id')->get();
+                $data = Team::whereNull('parent_team_id')->where('type', 1)->get();
                 break;
             case 'marital_status_id':
                 $data = MartialStatus::select('id', 'text')->where('is_active', true)->get();
