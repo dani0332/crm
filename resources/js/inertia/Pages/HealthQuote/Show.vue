@@ -29,20 +29,30 @@ const notification = useNotifications('toast');
 
 const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
 
+const modals = reactive({
+  member: false,
+  memberConfirm: false,
+  doc: false,
+  docConfirm: false,
+  plan: false,
+  activity: false,
+  activityConfirm: false,
+});
+
+const confirmDeleteData = reactive({
+  docs: null,
+  member: null,
+  activity: null,
+});
+
 const assignSubteam = ref(usePage().props.quote.health_team_type || ''),
   assignLead = ref(null),
   leadStatus = ref(usePage().props.quote.quote_status_id || null),
   leadNotes = ref(usePage().props.quote.notes),
-  memberDetailModal = ref(false),
   memberActionEdit = ref(false),
-  docUploadModal = ref(false),
-  deleteDocModal = ref(false),
-  planModal = ref(false),
+  activityActionEdit = ref(false),
   selectedPlan = ref(null),
-  isDisabled = ref(false),
-  confirmDeleteData = reactive({
-    docs: null,
-  });
+  isDisabled = ref(false);
 
 const { copy, copied, isSupported } = useClipboard();
 
@@ -251,7 +261,7 @@ const memberForm = useForm({
 
 function onEditMember(data) {
   memberActionEdit.value = true;
-  memberDetailModal.value = true;
+  modals.member = true;
 
   memberForm.id = data.id;
   memberForm.gender = data.gender;
@@ -265,7 +275,7 @@ function onEditMember(data) {
 const onAddMemberModal = () => {
   memberForm.reset();
   memberActionEdit.value = false;
-  memberDetailModal.value = true;
+  modals.member = true;
 };
 
 const onMemberSubmit = isValid => {
@@ -277,7 +287,7 @@ const onMemberSubmit = isValid => {
         notification.success('Member Updated');
       },
       onFinish: () => {
-        memberDetailModal.value = false;
+        modals.member = false;
       },
     });
   } else {
@@ -287,17 +297,25 @@ const onMemberSubmit = isValid => {
         notification.success('Member Added');
       },
       onFinish: () => {
-        memberDetailModal.value = false;
+        modals.member = false;
       },
     });
   }
 };
 
-const onDeleteMember = id => {
-  memberForm.delete(`/members/${id}`, {
+const memberDelete = id => {
+  modals.memberConfirm = true;
+  confirmDeleteData.member = id;
+};
+
+const memberDeleteConfirmed = () => {
+  memberForm.delete(`/members/${confirmDeleteData.member}`, {
     preserveScroll: true,
+    onSuccess: () => {
+      notification.success('Member Deleted');
+    },
     onFinish: () => {
-      notification.error('Member Deleted');
+      modals.memberConfirm = false;
     },
   });
 };
@@ -340,7 +358,7 @@ const plansTable = reactive({
 
 const planClicked = plan => {
   selectedPlan.value = plan;
-  planModal.value = true;
+  modals.plan = true;
 };
 
 // quoteDocuments
@@ -372,7 +390,7 @@ const quoteDocumentsTable = reactive({
 });
 
 const onDocDelete = name => {
-  deleteDocModal.value = true;
+  modals.docConfirm = true;
   confirmDeleteData.docs = name;
 };
 
@@ -387,7 +405,7 @@ const confirmDeleteDoc = () => {
     {
       preserveScroll: true,
       onFinish: () => {
-        deleteDocModal.value = false;
+        modals.docConfirm = false;
         quoteDocumentsTable.isLoading = false;
         notification.error('File Deleted');
       },
@@ -402,8 +420,104 @@ const activityTable = [
   { text: 'Followup Date', value: 'due_date' },
   { text: 'Assigned To', value: 'assignee' },
   { text: 'Done', value: 'status' },
-  { text: 'Action', value: '' },
+  { text: 'Action', value: 'action' },
 ];
+
+const activityForm = useForm({
+  entityUId: usePage().props.quote.uuid,
+  entityId: usePage().props.quote.id,
+  modelType: 'Health',
+  parentType: 'Health',
+  quoteType: 3,
+  title: null,
+  description: null,
+  due_date: null,
+  assignee_id: null,
+  status: null,
+  activity_id: null,
+  uuid: null,
+});
+
+const addActivity = () => {
+  activityForm.reset();
+  activityActionEdit.value = false;
+  modals.activity = true;
+};
+
+const onActivityStatusUpdate = id => {
+  activityForm.activity_id = id;
+  activityForm.post(`/activities/updateStatus`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success('Lead Activity Done');
+    },
+  });
+};
+
+const activityEdit = data => {
+  activityActionEdit.value = true;
+  modals.activity = true;
+  activityForm.activity_id = data.id;
+  activityForm.uuid = data.uuid;
+  activityForm.title = data.title;
+  activityForm.description = data.description;
+  activityForm.due_date = data.due_date
+    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
+      'T' +
+      data.due_date.split(' ')[1]
+    : null;
+  activityForm.assignee_id = data.assignee_id;
+  activityForm.status = data.status;
+};
+
+const onActivitySubmit = isValid => {
+  if (!isValid) return;
+  if (activityActionEdit.value) {
+    activityForm.post(`/activities/${activityForm.uuid}/update`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success('Activity Updated');
+      },
+      onFinish: () => {
+        modals.activity = false;
+      },
+    });
+  } else {
+    activityForm.post(`/activities/create-activity`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success('Activity Added');
+      },
+      onFinish: () => {
+        modals.activity = false;
+      },
+    });
+  }
+};
+
+const activityDelete = id => {
+  modals.activityConfirm = true;
+  confirmDeleteData.activity = id;
+};
+
+const activityDeleteConfirmed = () => {
+  router.post(
+    `/activities/${confirmDeleteData.activity}/delete`,
+    {
+      isInertia: true,
+      quote_uuid: usePage().props.quote.uuid,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.error('Activity Deleted');
+      },
+      onFinish: () => {
+        modals.activityConfirm = false;
+      },
+    },
+  );
+};
 
 onMounted(() => {
   const isHealthAdvisor = usePage().props.advisors.find(
@@ -711,7 +825,7 @@ onMounted(() => {
               size="xs"
               color="error"
               outlined
-              @click.prevent="onDeleteMember(item.id)"
+              @click.prevent="memberDelete(item.id)"
             >
               Delete
             </x-button>
@@ -719,7 +833,7 @@ onMounted(() => {
         </template>
       </x-table>
 
-      <x-modal v-model="memberDetailModal" size="lg" show-close backdrop>
+      <x-modal v-model="modals.member" size="lg" show-close backdrop>
         <template #header>
           {{ memberActionEdit ? 'Edit' : 'Add' }} Member
         </template>
@@ -781,7 +895,7 @@ onMounted(() => {
           </div>
 
           <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="memberDetailModal = false">
+            <x-button size="sm" @click.prevent="modals.member = false">
               Cancel
             </x-button>
 
@@ -795,6 +909,30 @@ onMounted(() => {
             </x-button>
           </div>
         </x-form>
+      </x-modal>
+
+      <x-modal v-model="modals.memberConfirm" show-close backdrop>
+        <template #header> Delete Member Detail </template>
+        <p>Are you sure you want to delete this?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.memberConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              @click.prevent="memberDeleteConfirmed"
+              :loading="memberForm.processing"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
       </x-modal>
     </div>
 
@@ -924,7 +1062,7 @@ onMounted(() => {
         </template>
       </x-table>
 
-      <x-modal v-model="planModal" size="xl" show-close backdrop>
+      <x-modal v-model="modals.plan" size="xl" show-close backdrop>
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>
@@ -938,11 +1076,7 @@ onMounted(() => {
           Documents
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
-        <x-button
-          @click.prevent="docUploadModal = true"
-          size="sm"
-          color="primary"
-        >
+        <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
           Upload Documents
         </x-button>
       </div>
@@ -978,7 +1112,7 @@ onMounted(() => {
         </template>
       </x-table>
 
-      <x-modal v-model="docUploadModal" size="xl" show-close backdrop>
+      <x-modal v-model="modals.doc" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
         <LazyDocumentUploader
           :members="memberDataDocs(membersDetail)"
@@ -987,12 +1121,16 @@ onMounted(() => {
           :cdn="cdnPath"
         />
       </x-modal>
-      <x-modal v-model="deleteDocModal" show-close backdrop>
+      <x-modal v-model="modals.docConfirm" show-close backdrop>
         <template #header> Delete Document </template>
         <p>Are you sure you want to delete this document?</p>
         <template #actions>
           <div class="text-right space-x-4">
-            <x-button size="sm" ghost @click.prevent="deleteDocModal = false">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.docConfirm = false"
+            >
               Cancel
             </x-button>
             <x-button
@@ -1014,7 +1152,9 @@ onMounted(() => {
           Lead Activities
           <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
         </h3>
-        <x-button size="sm" color="orange"> Add Activity </x-button>
+        <x-button size="sm" color="orange" @click.prevent="addActivity">
+          Add Activity
+        </x-button>
       </div>
       <x-divider class="my-4" />
       <x-table
@@ -1030,10 +1170,110 @@ onMounted(() => {
             size="xl"
             :modelValue="item.status === 1"
             :disabled="item.status === 1"
-            :loading="false"
+            @change="onActivityStatusUpdate(item.id)"
           />
         </template>
+        <template #item-action="{ item }">
+          <div class="space-x-4">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              :disabled="item.status === 1"
+              @click.prevent="activityEdit(item)"
+            >
+              Edit
+            </x-button>
+            <x-button
+              size="xs"
+              color="error"
+              :disabled="item.status === 1"
+              outlined
+              @click.prevent="activityDelete(item.id)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
       </x-table>
+      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+        <template #header>
+          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+        </template>
+
+        <x-form @submit="onActivitySubmit" :auto-focus="false">
+          <div class="grid gap-4">
+            <x-input
+              v-model="activityForm.title"
+              label="Title"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+
+            <x-textarea
+              v-model="activityForm.description"
+              label="Description"
+              :adjust-to-text="false"
+              class="w-full"
+            />
+
+            <x-select
+              v-model="activityForm.assignee_id"
+              label="Assignee"
+              :options="advisorOptions"
+              :rules="[rules.isRequired]"
+              placeholder="Select Assignee"
+              class="w-full"
+            />
+
+            <x-input
+              v-model="activityForm.due_date"
+              label="Due Date"
+              type="datetime-local"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+          </div>
+
+          <div class="text-right space-x-4 mt-12">
+            <x-button size="sm" @click.prevent="modals.activity = false">
+              Cancel
+            </x-button>
+
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="activityForm.processing"
+              type="submit"
+            >
+              {{ activityActionEdit ? 'Update' : 'Save' }}
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
+      <x-modal v-model="modals.activityConfirm" show-close backdrop>
+        <template #header> Delete Activity </template>
+        <p>Are you sure you want to delete this activity?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.activityConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              :loading="activityForm.processing"
+              @click.prevent="activityDeleteConfirmed"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">

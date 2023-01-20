@@ -141,6 +141,10 @@ class ActivitesController extends Controller
             return redirect('/quotes/'.$this->getQuoteTypeNameFromId($request->quoteType).'/'.$request->quote_uuid)->with('success', 'Activity updated successfully');
         }
 
+        if (isset($request->quoteType) && $request->quoteType == 3) {
+            return redirect()->back();
+        }
+
         return redirect('/activities')->with('success', 'Activity updated successfully');
     }
 
@@ -155,6 +159,10 @@ class ActivitesController extends Controller
         Activities::where('id', $id)->delete();
         if (isset($request->isLeadView) && $request->isLeadView == 1) {
             return redirect('/quotes/'.$request->quoteType.'/'.$request->quote_uuid)->with('success', 'Activity deleted successfully');
+        }
+
+        if (isset($request->isInertia) && $request->isInertia) {
+            return redirect()->back();
         }
 
         return redirect('/activities')->with('success', 'Activity deleted successfully');
