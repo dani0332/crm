@@ -558,23 +558,14 @@ use App\Enums\GenericRequestEnum;
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel" style="overflow:hidden">
             <div class="x_title">
-                @if(auth()->user()->hasRole(RolesEnum::CarAdvisor))
-                <div class="col-md-12" style="position: absolute;z-index: 1;margin-top: -18px;">
-                    <div class="col-md-6" style="text-align:center; width: 20%;border: 4px solid black;padding: 10px;margin: 14px;float: right;font-size: 20px;font-weight: 900;color: black;">
-                        <label style="text-decoration: underline;">Max Cap</label>
-                        <br />
-                        <label>{{$userMaxCap}}</label>
-                    </div>
-                    <div class="col-md-6" style="text-align:center; width: 20%;border: 4px solid black;padding: 10px;margin: 14px;float: right;font-size: 20px;font-weight: 900;color: black;">
-                        <label style="text-decoration: underline;">Auto / Manual Assigned</label>
-                        <br />
-                        <label> {{$todayAssignmentCount}} </label>
-                    </div>
-                </div>
-                @endif
                 <h2>{{ str_contains(strtolower($model->modelType), 'team')? 'Team':
                     (str_contains(strtolower($model->modelType), 'leadstatus')? 'Lead Status': 'Lead') }}
                     List</h2>
+                @if(auth()->user()->hasRole(RolesEnum::CarAdvisor))
+                <h2 style="margin-left: 28%;font-size: 23px;font-weight: 900;color:black;">
+                    Auto / Manual Assigned Leads ( {{$todayAssignmentCount}} ) , Max Cap ( {{$userMaxCap}} )
+                </h2>
+                @endif
                 @cannot(PermissionsEnum::ApprovePayments)
                 <ul class="nav navbar-right panel_toolbox">
                     @if (str_contains(strtolower($model->modelType), 'team') ||

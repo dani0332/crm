@@ -27,7 +27,7 @@ class CarLeadAllocationDashboardService extends BaseService
                             ->select(
                                 'users.id as userId',
                                 'users.name as userName', DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'), DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
-                                'la.allocation_count as allocationCount', 'la.last_allocated as lastAllocation', 'la.max_capacity as maxCapacity', 'la.is_available as isAvailable',
+                                DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'), 'la.last_allocated as lastAllocation', 'la.max_capacity as maxCapacity', 'la.is_available as isAvailable',
                                 'users.last_login as lastLogin', 'la.id as id', 'la.manual_assignment_count as manualAllocationCount', 'la.auto_assignment_count as autoAllocationCount'
                             );
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
