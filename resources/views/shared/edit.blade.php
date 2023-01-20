@@ -62,7 +62,7 @@
             return obj.name === 'update'
             });
         $('#skip').val(result[0].value);
-        var record = JSON.parse('<?php echo json_encode($record) ?>');
+        var record = JSON.parse(`<?php echo json_encode($record) ?>`);
         String.prototype.replaceAll = function(search, replacement) {
             var target = this;
             return target.replace(new RegExp(search, 'g'), replacement);
