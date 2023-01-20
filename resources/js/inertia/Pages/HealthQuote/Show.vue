@@ -1,8 +1,7 @@
 <script setup>
-import { computed, ref, reactive } from 'vue';
+import { computed, ref, reactive, onMounted } from 'vue';
 import { Head, usePage, router, useForm } from '@inertiajs/vue3';
 import { useDateFormat, useClipboard } from '@vueuse/core';
-import TheTable from '@/inertia/Components/TheTable.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import { useNotifications } from '@indielayer/ui';
@@ -31,7 +30,7 @@ const notification = useNotifications('toast');
 const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
 
 const assignSubteam = ref(usePage().props.quote.health_team_type || ''),
-  assignLead = ref(usePage().props.quote.advisor_id || ''),
+  assignLead = ref(null),
   leadStatus = ref(usePage().props.quote.quote_status_id || null),
   leadNotes = ref(usePage().props.quote.notes),
   memberDetailModal = ref(false),
@@ -405,6 +404,13 @@ const activityTable = [
   { text: 'Done', value: 'status' },
   { text: 'Action', value: '' },
 ];
+
+onMounted(() => {
+  const isHealthAdvisor = usePage().props.advisors.find(
+    a => a.id == usePage().props.quote.advisor_id,
+  );
+  if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
+});
 </script>
 <template>
   <div>
