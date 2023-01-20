@@ -272,7 +272,6 @@ class SendEmailCustomerService extends BaseService
     public function sendLMSIntroEmail($emailTemplateId, $emailData, $tag)
     {
         try {
-
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
             $headers = [
