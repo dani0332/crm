@@ -38,6 +38,7 @@ const assignSubteam = ref(usePage().props.quote.health_team_type || null),
   deleteDocModal = ref(false),
   planModal = ref(false),
   selectedPlan = ref(null),
+  isDisabled = ref(false),
   confirmDeleteData = reactive({
     docs: null,
   });
@@ -131,8 +132,14 @@ const onTeamAssign = () => {
     },
     {
       preserveScroll: true,
+      onBefore: () => {
+        isDisabled.value = true;
+      },
       onSuccess: () => {
         notification.success('Team Assigned');
+      },
+      onFinish: () => {
+        isDisabled.value = false;
       },
     },
   );
@@ -152,8 +159,14 @@ const onAssignLead = () => {
     },
     {
       preserveScroll: true,
+      onBefore: () => {
+        isDisabled.value = true;
+      },
       onSuccess: () => {
         notification.success('Lead Assigned');
+      },
+      onFinish: () => {
+        isDisabled.value = false;
       },
     },
   );
@@ -407,7 +420,12 @@ const confirmDeleteDoc = () => {
             class="w-auto flex-1"
           />
           <div>
-            <x-button color="orange" size="sm" @click.prevent="onTeamAssign">
+            <x-button
+              color="orange"
+              size="sm"
+              @click.prevent="onTeamAssign"
+              :loading="isDisabled"
+            >
               Assign Team
             </x-button>
           </div>
@@ -421,7 +439,12 @@ const confirmDeleteDoc = () => {
             class="w-auto flex-1"
           />
           <div>
-            <x-button color="orange" size="sm" @click.prevent="onAssignLead">
+            <x-button
+              color="orange"
+              size="sm"
+              @click.prevent="onAssignLead"
+              :loading="isDisabled"
+            >
               Assign
             </x-button>
           </div>
