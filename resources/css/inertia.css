@@ -29,3 +29,12 @@ label {
 .fade-leave-to {
   opacity: 0;
 }
+
+@media (min-width: 640px) {
+  .sm\:max-w-xl {
+    max-width: 48rem !important;
+  }
+  .sm\:max-w-3xl {
+    max-width: 64rem !important;
+  }
+}

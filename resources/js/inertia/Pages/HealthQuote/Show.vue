@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, reactive } from 'vue';
 import { Head, usePage, router, useForm } from '@inertiajs/vue3';
-import { useDateFormat } from '@vueuse/core';
+import { useDateFormat, useClipboard } from '@vueuse/core';
 import TheTable from '@/inertia/Components/TheTable.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
@@ -28,8 +28,8 @@ const notification = useNotifications('toast');
 
 const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
 
-const assignSubteam = ref(usePage().props.quote.health_team_type || null),
-  assignLead = ref(usePage().props.quote.advisor_id || null),
+const assignSubteam = ref(usePage().props.quote.health_team_type || ''),
+  assignLead = ref(usePage().props.quote.advisor_id || ''),
   leadStatus = ref(usePage().props.quote.quote_status_id || null),
   leadNotes = ref(usePage().props.quote.notes),
   memberDetailModal = ref(false),
@@ -39,9 +39,12 @@ const assignSubteam = ref(usePage().props.quote.health_team_type || null),
   planModal = ref(false),
   selectedPlan = ref(null),
   isDisabled = ref(false),
+  copyText = ref(''),
   confirmDeleteData = reactive({
     docs: null,
   });
+
+const { text, copy, copied, isSupported } = useClipboard({ copyText });
 
 const genderText = gender =>
   computed(() => {
@@ -702,7 +705,7 @@ const confirmDeleteDoc = () => {
           </template>
         </TheTable>
       </div>
-      <x-modal v-model="memberDetailModal" size="xl" show-close backdrop>
+      <x-modal v-model="memberDetailModal" size="lg" show-close backdrop>
         <template #header>
           {{ memberActionEdit ? 'Edit' : 'Add' }} Member
         </template>
@@ -894,7 +897,7 @@ const confirmDeleteDoc = () => {
           </div>
         </template>
       </TheTable>
-      <x-modal v-model="planModal" size="full" show-close backdrop>
+      <x-modal v-model="planModal" size="xl" show-close backdrop>
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>

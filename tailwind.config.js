@@ -4,8 +4,7 @@ module.exports = {
   presets: [indielayer()],
   content: [
     './resources/**/*.blade.php',
-    './resources/**/*.js',
-    './resources/**/*.vue',
+    './resources/js/inertia/**/*.{vue,js}',
     'node_modules/@indielayer/ui/**/*',
   ],
   darkMode: 'class',
