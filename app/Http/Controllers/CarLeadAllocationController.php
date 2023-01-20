@@ -42,7 +42,7 @@ class CarLeadAllocationController extends Controller
             $isFIFO = $this->applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
             $data = $this->carLeadAllocationService->getGridData();
             foreach ($data as $key => $value) {
-                $totalAssignedLeadCount += $value->allocationCount;
+                $totalAssignedLeadCount += $value->auto_assignment_count + $value->manual_assignment_count;
                 $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
             }
             if ($request->ajax()) {
