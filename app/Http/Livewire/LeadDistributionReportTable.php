@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\GenericRequestEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
@@ -17,7 +18,7 @@ class LeadDistributionReportTable extends DataTableComponent
     public $url;
     public $tiers = [];
     private $applicationStorageService;
-
+    private $maxDays = 92;
     public function configure(): void
     {
         $this->setPrimaryKey('tier.name')
@@ -36,6 +37,7 @@ class LeadDistributionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $this->maxDays = $this->applicationStorageService->getValueByKey(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
@@ -82,10 +84,11 @@ class LeadDistributionReportTable extends DataTableComponent
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as lead_created'),
                 DB::raw('count(car_quote_request.id) as total_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as auto_assigned'),
-                DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is not null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as manually_assigned'),
+                DB::raw('la.auto_assignment_count as auto_assigned'),
+                DB::raw('la.manual_assignment_count as manually_assigned'),
             )
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->join('lead_allocation as la', 'la.user_id', 'car_quote_request.advisor_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->groupBy('tiers.name');
     }
@@ -99,7 +102,7 @@ class LeadDistributionReportTable extends DataTableComponent
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
-                    'max_days' => $this->applicationStorageService->getValueByKey('MAX_DAYS_CAR_REPORTS'),
+                    'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {

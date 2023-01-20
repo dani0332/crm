@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
@@ -25,6 +26,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     public $tiers = [];
     public $batches = [];
     public $leadSources = [];
+    private $maxDays = 92;
     private $applicationStorageService;
 
     public function configure(): void
@@ -45,6 +47,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $this->maxDays = $this->applicationStorageService->getValueByKey(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
@@ -185,7 +188,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
-                    'max_days' => $this->applicationStorageService->getValueByKey('MAX_DAYS_CAR_REPORTS'),
+                    'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {

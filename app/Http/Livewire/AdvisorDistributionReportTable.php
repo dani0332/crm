@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
@@ -17,7 +18,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
     public $url;
     public $tiers = [];
     public $teams = [];
-
+    private $maxDays = 92;
     public function configure(): void
     {
         $this->setPrimaryKey('advisor.name')
@@ -36,6 +37,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $this->maxDays = $this->applicationStorageService->getValueByKey(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
@@ -148,7 +150,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
-                    'max_days' => 365,
+                    'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
