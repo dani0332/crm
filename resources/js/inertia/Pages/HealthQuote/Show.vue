@@ -23,6 +23,7 @@ defineProps({
   cdnPath: String,
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
+  customerAdditionalContacts: Array,
 });
 
 const notification = useNotifications('toast');
@@ -37,12 +38,14 @@ const modals = reactive({
   plan: false,
   activity: false,
   activityConfirm: false,
+  addContact: false,
 });
 
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
   activity: null,
+  contact: null,
 });
 
 const assignSubteam = ref(usePage().props.quote.health_team_type || ''),
@@ -52,9 +55,10 @@ const assignSubteam = ref(usePage().props.quote.health_team_type || ''),
   memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
+  historyLoading = ref(false),
   isDisabled = ref(false);
 
-const { copy, copied, isSupported } = useClipboard();
+const { copy, copied } = useClipboard();
 
 const rules = {
   isRequired: v => !!v || 'Field is required',
@@ -519,6 +523,44 @@ const activityDeleteConfirmed = () => {
   );
 };
 
+// additional contact
+
+const additionalContact = useForm({
+  additional_contact_type: null,
+  additional_contact_val: null,
+  quote_id: usePage().props.quote.id,
+  customer_id: usePage().props.quote.customer_id,
+  quote_type: 3,
+});
+
+const onAdditionalContactSubmit = isValid => {
+  if (!isValid) return;
+  additionalContact.post(`/customer-additional-contact/add`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success('Additional Contact Added');
+    },
+    onFinish: () => {
+      modals.addContact = false;
+    },
+  });
+};
+
+// history data
+const historyData = ref([]);
+
+const onLoadHistoryData = async () => {
+  historyLoading.value = true;
+  const res = await fetch(
+    `/quotes/getLeadHistory?modelType=health&recordId=${
+      usePage().props.quote.id
+    }`,
+  );
+  const finalRes = await res.json();
+  historyData.value = finalRes;
+  historyLoading.value = false;
+};
+
 onMounted(() => {
   const isHealthAdvisor = usePage().props.advisors.find(
     a => a.id == usePage().props.quote.advisor_id,
@@ -780,7 +822,10 @@ onMounted(() => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Member Details</h3>
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Member Details
+          <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
+        </h3>
         <x-button @click.prevent="onAddMemberModal" size="sm" color="#ff5e00">
           Add Member
         </x-button>
@@ -1076,7 +1121,7 @@ onMounted(() => {
           Documents
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
-        <x-button @click.prevent="modals.doc = true" size="sm" color="primary">
+        <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
           Upload Documents
         </x-button>
       </div>
@@ -1277,18 +1322,79 @@ onMounted(() => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
+      <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Customer Additional Contacts
+          <x-tag size="sm">{{ 0 }}</x-tag>
         </h3>
-        <x-divider class="mb-4 mt-1" />
+        <x-button
+          size="sm"
+          color="orange"
+          @click.prevent="modals.addContact = true"
+        >
+          Add Additional Contacts
+        </x-button>
       </div>
+      <x-divider class="my-4" />
+
+      <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
+        <template #header> Add Additional Contacts </template>
+
+        <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+          <div class="grid gap-4">
+            <x-select
+              v-model="additionalContact.additional_contact_type"
+              label="Type"
+              :options="[
+                { value: 'email', label: 'Email' },
+                { value: 'mobile_no', label: 'Mobile Number' },
+              ]"
+              :rules="[rules.isRequired]"
+              placeholder="Select Type"
+              class="w-full"
+            />
+
+            <x-input
+              v-model="additionalContact.additional_contact_val"
+              label="Value"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+          </div>
+
+          <div class="text-right space-x-4 mt-12">
+            <x-button size="sm" @click.prevent="modals.addContact = false">
+              Cancel
+            </x-button>
+
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="additionalContact.processing"
+              type="submit"
+            >
+              Save
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
         <x-divider class="mb-4 mt-1" />
+      </div>
+      <div class="text-center py-3">
+        <x-button
+          size="sm"
+          color="primary"
+          outlined
+          @click.prevent="onLoadHistoryData"
+          :loading="historyLoading"
+        >
+          Load History Data
+        </x-button>
       </div>
     </div>
   </div>
