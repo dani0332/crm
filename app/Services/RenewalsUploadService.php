@@ -293,7 +293,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(1)
+                   ->withDelay(2)
                    ->dispatch();
 
                 info($logPrefix.' jobs dispatched');
