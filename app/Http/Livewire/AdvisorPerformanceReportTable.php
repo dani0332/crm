@@ -127,7 +127,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-            ->leftJoin('lead_allocation as la', 'la.user_id' , 'users.id')
+            ->leftJoin('lead_allocation as la', 'la.user_id', 'users.id')
             ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
             ->leftJoin('teams', function ($join) {
                 $join->on('users.team_id', '=', 'teams.id');
