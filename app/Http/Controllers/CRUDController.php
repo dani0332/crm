@@ -454,7 +454,7 @@ class CRUDController extends Controller
                 if (gettype($quotePlans) != 'string') {
                     $listQuotePlans = $quotePlans->quote->plans;
                 } else {
-                    $listQuotePlans = $quotePlans;
+                    $listQuotePlans = [];
                 }
             }
             $membersDetail = $this->healthQuoteService->getMembersDetail($record->id);
