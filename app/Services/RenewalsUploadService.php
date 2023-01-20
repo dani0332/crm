@@ -247,7 +247,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(1)
+                   ->withDelay(2)
                    ->dispatch();
             } else {
                 info($logPrefix.' No jobs to create quotes');
@@ -693,17 +693,16 @@ class RenewalsUploadService
      */
     public function createQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
-        return DB::transaction(function () use ($renewalQuoteProcess) {
-            $data = $renewalQuoteProcess->data;
+        $data = $renewalQuoteProcess->data;
+        $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
+        $logPrefix = 'UAC FN: createQuote Policy NO: '.$data['policy_number'].' EndDate: '.$data['end_date'];
+        info($logPrefix.' Quote creation started');
 
-            $logPrefix = 'UAC FN: createQuote Policy NO: '.$data['policy_number'].' EndDate: '.$data['end_date'];
-            info($logPrefix.' Quote creation started');
+        $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $quoteType) {
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
             $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
-
-            $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
 
             //advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
@@ -728,7 +727,6 @@ class RenewalsUploadService
                 'renewal_batch' => $data['batch'],
                 'quote_status_id' => $transApprovedId,
                 'renewal_import_code' => $renewalUploadLead->renewal_import_code,
-
                 'previous_quote_policy_number' => $data['policy_number'],
                 'previous_policy_expiry_date' => $this->formatDate($data['end_date']),
                 'previous_quote_policy_premium' => $data['premium'],
@@ -783,6 +781,15 @@ class RenewalsUploadService
 
             return $quote;
         });
+
+        if($quote)
+        {
+            info($logPrefix .' AML check started for UUID: '.$quote->uuid);
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
+        }
+
+        return $quote;
     }
 
     /**
