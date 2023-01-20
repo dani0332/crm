@@ -827,7 +827,6 @@ class RenewalsUploadService
         $isNameChanged = false;
 
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, &$isNameChanged) {
-
             throw_if($data['quote_type'] != QuoteTypeShortCode::CAR, 'Only Insurance Type Car is allowed to update lead');
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
@@ -867,7 +866,7 @@ class RenewalsUploadService
             $customerData = $this->buildCustomerData($data);
 
             //check if name is changed , then run AML again
-            if(($quote->first_name != $customerData['first_name'] || $quote->last_name != $customerData['last_name'])) {
+            if (($quote->first_name != $customerData['first_name'] || $quote->last_name != $customerData['last_name'])) {
                 $isNameChanged = true;
             }
 
