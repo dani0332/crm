@@ -820,9 +820,13 @@ class RenewalsUploadService
      */
     public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
-        return DB::transaction(function () use ($renewalQuoteProcess) {
-            $logPrefix = 'UAU FN: updateQuote';
-            $data = $renewalQuoteProcess->data;
+        $logPrefix = 'UAU FN: updateQuote';
+        $data = $renewalQuoteProcess->data;
+        $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
+
+        $isNameChanged = false;
+
+        $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, &$isNameChanged) {
 
             throw_if($data['quote_type'] != QuoteTypeShortCode::CAR, 'Only Insurance Type Car is allowed to update lead');
 
@@ -861,6 +865,12 @@ class RenewalsUploadService
             info($logPrefix.' quote found to update with UUID: '.$quote->uuid);
 
             $customerData = $this->buildCustomerData($data);
+
+            //check if name is changed , then run AML again
+            if(($quote->first_name != $customerData['first_name'] || $quote->last_name != $customerData['last_name'])) {
+                $isNameChanged = true;
+            }
+
             $this->updateCustomer($customerData, $quote->customer_id);
 
             $quoteData = $this->getNonEmptyValues([
@@ -930,11 +940,18 @@ class RenewalsUploadService
             ]);
 
             RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
-
             info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
 
             return $quote;
         });
+
+        if ($quote && $isNameChanged) {
+            info($logPrefix.' AML check started for UUID: '.$quote->uuid);
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
+        }
+
+        return $quote;
     }
 
     /**
