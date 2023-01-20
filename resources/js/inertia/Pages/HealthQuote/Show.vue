@@ -22,6 +22,8 @@ defineProps({
   quoteDocuments: Object,
   documentTypes: Object,
   cdnPath: String,
+  ecomHealthInsuranceQuoteUrl: String,
+  activities: Array,
 });
 
 const notification = useNotifications('toast');
@@ -39,12 +41,20 @@ const assignSubteam = ref(usePage().props.quote.health_team_type || ''),
   planModal = ref(false),
   selectedPlan = ref(null),
   isDisabled = ref(false),
-  copyText = ref(''),
   confirmDeleteData = reactive({
     docs: null,
   });
 
-const { text, copy, copied, isSupported } = useClipboard({ copyText });
+const { copy, copied, isSupported } = useClipboard();
+
+const rules = {
+  isRequired: v => !!v || 'Field is required',
+};
+
+const onCopyText = text => {
+  copy(text);
+  if (copied) notification.success('Link copied to clipboard');
+};
 
 const genderText = gender =>
   computed(() => {
@@ -199,33 +209,32 @@ const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
     {
-      label: 'Name',
-      field: 'name',
-      isKey: true,
+      text: 'Name',
+      value: 'id',
     },
     {
-      label: 'Gender',
-      field: 'gender',
+      text: 'Gender',
+      value: 'gender',
     },
     {
-      label: 'DOB',
-      field: 'dob',
+      text: 'DOB',
+      value: 'dob',
     },
     {
-      label: 'Nationality',
-      field: 'nationality',
+      text: 'Nationality',
+      value: 'nationality',
     },
     {
-      label: 'Emirate of Visa',
-      field: 'emirate',
+      text: 'Emirate of Visa',
+      value: 'emirate',
     },
     {
-      label: 'Relationship',
-      field: 'member_category_id',
+      text: 'Relationship',
+      value: 'member_category_id',
     },
     {
-      label: 'Action',
-      field: 'action',
+      text: 'Action',
+      value: 'action',
     },
   ],
 });
@@ -260,24 +269,29 @@ const onAddMemberModal = () => {
   memberDetailModal.value = true;
 };
 
-const onAddMember = () => {
-  memberForm.post(`/members`, {
-    preserveScroll: true,
-    onFinish: () => {
-      memberDetailModal.value = false;
-      notification.success('Member Added');
-    },
-  });
-};
-
-const onUpdateMember = () => {
-  memberForm.put(`/members/${memberForm.id}`, {
-    preserveScroll: true,
-    onFinish: () => {
-      memberDetailModal.value = false;
-      notification.success('Member Updated');
-    },
-  });
+const onMemberSubmit = isValid => {
+  if (!isValid) return;
+  if (memberActionEdit.value) {
+    memberForm.put(`/members/${memberForm.id}`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success('Member Updated');
+      },
+      onFinish: () => {
+        memberDetailModal.value = false;
+      },
+    });
+  } else {
+    memberForm.post(`/members`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success('Member Added');
+      },
+      onFinish: () => {
+        memberDetailModal.value = false;
+      },
+    });
+  }
 };
 
 const onDeleteMember = id => {
@@ -303,31 +317,24 @@ const plansTable = reactive({
   isLoading: false,
   columns: [
     {
-      label: 'Provider Name',
-      field: 'providerName',
-      isKey: true,
+      text: 'Provider Name',
+      value: 'providerName',
     },
     {
-      label: 'Plan Name',
-      field: 'name',
+      text: 'Plan Name',
+      value: 'name',
     },
     {
-      label: 'Actual Premium with BASMAH',
-      field: 'actualPremium',
+      text: 'Actual Premium with BASMAH',
+      value: 'actualPremium',
     },
     {
-      label: 'Premium with VAT and BASMAH',
-      field: 'premiumVat',
+      text: 'Premium with VAT and BASMAH',
+      value: 'premiumVat',
     },
     {
-      label: 'Action',
-      field: 'action',
-    },
-  ],
-  pageOptions: [
-    {
-      value: 100,
-      label: '100',
+      text: 'Action',
+      value: 'action',
     },
   ],
 });
@@ -343,31 +350,24 @@ const quoteDocumentsTable = reactive({
   isLoading: false,
   columns: [
     {
-      label: 'Document Type',
-      field: 'document_type_text',
+      text: 'Document Type',
+      value: 'document_type_text',
     },
     {
-      label: 'Document Name',
-      field: 'original_name',
+      text: 'Document Name',
+      value: 'original_name',
     },
     {
-      label: 'Created At',
-      field: 'created_at',
-      isKey: true,
+      text: 'Created At',
+      value: 'created_at',
     },
     {
-      label: 'Created By',
-      field: 'created_by_name',
+      text: 'Created By',
+      value: 'created_by_name',
     },
     {
-      label: 'Action',
-      field: 'action',
-    },
-  ],
-  pageOptions: [
-    {
-      value: 100,
-      label: '100',
+      text: 'Action',
+      value: 'action',
     },
   ],
 });
@@ -395,6 +395,16 @@ const confirmDeleteDoc = () => {
     },
   );
 };
+
+//activities
+const activityTable = [
+  { text: 'Title', value: 'title' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Done', value: 'status' },
+  { text: 'Action', value: '' },
+];
 </script>
 <template>
   <div>
@@ -656,67 +666,66 @@ const confirmDeleteDoc = () => {
         </x-button>
       </div>
 
-      <div>
-        <TheTable
-          :is-static-mode="true"
-          :is-slot-mode="true"
-          :is-hide-paging="true"
-          :is-loading="memberDetailsTable.isLoading"
-          :columns="memberDetailsTable.columns"
-          :rows="membersDetail || []"
-          :total="membersDetail.length || 0"
-          @is-finished="memberDetailsTable.isLoading = false"
-        >
-          <template v-slot:name> Member </template>
-          <template v-slot:gender="data">
-            {{ genderText(data.value.gender).value }}
-          </template>
-          <template v-slot:dob="data">
-            {{ dateFormat(data.value.dob).value }}
-          </template>
-          <template v-slot:nationality="data">
-            {{ data.value.nationality?.text }}
-          </template>
-          <template v-slot:emirate="data">
-            {{ data.value.emirate?.text }}
-          </template>
-          <template v-slot:member_category_id="data">
-            {{ memberCategoryText(data.value.member_category_id).value }}
-          </template>
-          <template v-slot:action="data">
-            <div class="flex gap-2">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="onEditMember(data.value)"
-              >
-                Edit
-              </x-button>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="onDeleteMember(data.value.id)"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </TheTable>
-      </div>
+      <x-divider class="my-4" />
+      <x-table
+        class="text-sm"
+        dense
+        striped
+        :items="membersDetail || []"
+        :headers="memberDetailsTable.columns"
+        :loading="memberDetailsTable.isLoading"
+      >
+        <template #item-id> Member </template>
+        <template #item-gender="{ item }">
+          {{ genderText(item.gender).value }}
+        </template>
+        <template #item-dob="{ item }">
+          {{ dateFormat(item.dob).value }}
+        </template>
+        <template #item-nationality="{ item }">
+          {{ item.nationality?.text }}
+        </template>
+        <template #item-emirate="{ item }">
+          {{ item.emirate?.text }}
+        </template>
+        <template #item-member_category_id="{ item }">
+          {{ memberCategoryText(item.member_category_id).value }}
+        </template>
+        <template #item-action="{ item }">
+          <div class="flex gap-2">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              @click.prevent="onEditMember(item)"
+            >
+              Edit
+            </x-button>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="onDeleteMember(item.id)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-table>
+
       <x-modal v-model="memberDetailModal" size="lg" show-close backdrop>
         <template #header>
           {{ memberActionEdit ? 'Edit' : 'Add' }} Member
         </template>
 
-        <x-form :auto-focus="false">
+        <x-form @submit="onMemberSubmit" :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4">
             <input type="hidden" :value="memberForm.id" />
             <x-select
               v-model="memberForm.nationality_id"
               label="Nationality"
               :options="nationalityOptions"
+              :rules="[rules.isRequired]"
               placeholder="Select Nationality"
               class="w-full"
             />
@@ -725,6 +734,7 @@ const confirmDeleteDoc = () => {
               v-model="memberForm.emirate_of_your_visa_id"
               label="Emirate of Visa"
               :options="emiratesOptions"
+              :rules="[rules.isRequired]"
               placeholder="Select Emirate of Visa"
               class="w-full"
             />
@@ -733,6 +743,7 @@ const confirmDeleteDoc = () => {
               v-model="memberForm.gender"
               label="Gender"
               :options="genderSelect"
+              :rules="[rules.isRequired]"
               placeholder="Select Gender"
               class="w-full"
             />
@@ -741,6 +752,7 @@ const confirmDeleteDoc = () => {
               v-model="memberForm.dob"
               label="DOB"
               type="date"
+              :rules="[rules.isRequired]"
               class="w-full"
             />
 
@@ -748,6 +760,7 @@ const confirmDeleteDoc = () => {
               v-model="memberForm.member_category_id"
               label="Relationship"
               :options="memberCategoriesOptions"
+              :rules="[rules.isRequired]"
               placeholder="Select Relationship"
               class="w-full"
             />
@@ -760,33 +773,22 @@ const confirmDeleteDoc = () => {
               class="w-full"
             />
           </div>
-        </x-form>
 
-        <template #actions>
-          <div class="text-right space-x-4">
+          <div class="text-right space-x-4 mt-12">
             <x-button size="sm" @click.prevent="memberDetailModal = false">
               Cancel
             </x-button>
+
             <x-button
-              v-if="memberActionEdit"
               size="sm"
               color="emerald"
-              @click.prevent="onUpdateMember"
               :loading="memberForm.processing"
+              type="submit"
             >
-              Update
-            </x-button>
-            <x-button
-              v-else
-              size="sm"
-              color="emerald"
-              @click.prevent="onAddMember"
-              :loading="memberForm.processing"
-            >
-              Save
+              {{ memberActionEdit ? 'Update' : 'Save' }}
             </x-button>
           </div>
-        </template>
+        </x-form>
       </x-modal>
     </div>
 
@@ -864,39 +866,58 @@ const confirmDeleteDoc = () => {
           Available Plans
           <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
         </h3>
-        <x-button size="sm" color="primary"> Copy Link </x-button>
+        <x-button
+          v-if="listQuotePlans.length > 0"
+          size="sm"
+          color="primary"
+          @click.prevent="onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)"
+        >
+          Copy Link
+        </x-button>
       </div>
-      <TheTable
-        :is-static-mode="true"
-        :is-slot-mode="true"
-        :is-hide-paging="true"
-        :is-loading="plansTable.isLoading"
-        :columns="plansTable.columns"
-        :rows="listQuotePlans || []"
-        :total="listQuotePlans.length || 0"
-        :pageOptions="plansTable.pageOptions"
-        @is-finished="plansTable.isLoading = false"
+      <x-divider class="my-4" />
+      <x-table
+        class="text-sm"
+        dense
+        striped
+        :headers="plansTable.columns"
+        :items="listQuotePlans || []"
+        :loading="plansTable.isLoading"
       >
-        <template v-slot:actualPremium="data">
-          {{ data.value.actualPremium + data.value.basmah }}
+        <template #item-actualPremium="{ item }">
+          {{ item.actualPremium + item.basmah }}
         </template>
-        <template v-slot:premiumVat="data">
-          {{ data.value.actualPremium + data.value.vat + data.value.basmah }}
+        <template #item-premiumVat="{ item }">
+          {{ item.actualPremium + item.vat + item.basmah }}
         </template>
-        <template v-slot:action="data">
+        <template #item-action="{ item }">
           <div class="space-x-4">
             <x-button
               size="xs"
               color="primary"
               outlined
-              @click.prevent="planClicked(data.value)"
+              @click.prevent="planClicked(item)"
             >
               View
             </x-button>
-            <x-button size="xs" color="emerald" outlined> Copy </x-button>
+            <x-button
+              size="xs"
+              color="emerald"
+              outlined
+              @click.prevent="
+                onCopyText(
+                  ecomHealthInsuranceQuoteUrl +
+                    quote.uuid +
+                    `/payment/?providerCode=${item.providerCode}_${item.planCode}&planId=${item.id}`,
+                )
+              "
+            >
+              Copy
+            </x-button>
           </div>
         </template>
-      </TheTable>
+      </x-table>
+
       <x-modal v-model="planModal" size="xl" show-close backdrop>
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
@@ -919,6 +940,38 @@ const confirmDeleteDoc = () => {
           Upload Documents
         </x-button>
       </div>
+      <x-divider class="my-4" />
+      <x-table
+        class="text-sm"
+        dense
+        striped
+        :headers="quoteDocumentsTable.columns"
+        :items="quoteDocuments || []"
+        :loading="quoteDocumentsTable.isLoading"
+      >
+        <template #item-original_name="{ item }">
+          <a
+            :href="cdnPath + item.doc_url"
+            target="_blank"
+            class="text-primary-600"
+          >
+            {{ item.original_name }}
+          </a>
+        </template>
+        <template #item-action="{ item }">
+          <div>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="onDocDelete(item.doc_name)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-table>
+
       <x-modal v-model="docUploadModal" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
         <LazyDocumentUploader
@@ -928,35 +981,6 @@ const confirmDeleteDoc = () => {
           :cdn="cdnPath"
         />
       </x-modal>
-      <TheTable
-        :is-static-mode="true"
-        :is-slot-mode="true"
-        :is-hide-paging="true"
-        :is-loading="quoteDocumentsTable.isLoading"
-        :columns="quoteDocumentsTable.columns"
-        :rows="quoteDocuments || []"
-        :total="quoteDocuments.length || 0"
-        :pageOptions="quoteDocumentsTable.pageOptions"
-        @is-finished="quoteDocumentsTable.isLoading = false"
-      >
-        <template v-slot:original_name="data">
-          <a :href="cdnPath + data.value.doc_url" target="_blank">
-            {{ data.value.original_name }}
-          </a>
-        </template>
-        <template v-slot:action="data">
-          <div>
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="onDocDelete(data.value.doc_name)"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </TheTable>
       <x-modal v-model="deleteDocModal" show-close backdrop>
         <template #header> Delete Document </template>
         <p>Are you sure you want to delete this document?</p>
@@ -979,10 +1003,31 @@ const confirmDeleteDoc = () => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead Activities</h3>
-        <x-divider class="mb-4 mt-1" />
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Lead Activities
+          <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+        </h3>
+        <x-button size="sm" color="orange"> Add Activity </x-button>
       </div>
+      <x-divider class="my-4" />
+      <x-table
+        class="text-sm"
+        dense
+        striped
+        :headers="activityTable"
+        :items="activities"
+      >
+        <template #item-status="{ item }">
+          <x-checkbox
+            color="emerald"
+            size="xl"
+            :modelValue="item.status === 1"
+            :disabled="item.status === 1"
+            :loading="false"
+          />
+        </template>
+      </x-table>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">

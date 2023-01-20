@@ -42,87 +42,62 @@ const tab = '1';
       </div>
     </x-tab>
     <x-tab value="3" label="In Patient" size="sm">
-      <dl class="grid gap-4 p-4">
-        <div
-          v-for="data in plan.benefits.inpatient || []"
-          :key="data.code"
-          class="grid sm:grid-cols-2"
-        >
-          <dt class="font-medium">{{ data.text }}</dt>
+      <dl class="grid md:grid-cols-2 gap-5 p-4">
+        <div v-for="data in plan.benefits.inpatient || []" :key="data.code">
+          <dt class="font-medium mb-1">{{ data.text }}</dt>
           <dd>{{ data.value }}</dd>
         </div>
       </dl>
     </x-tab>
     <x-tab value="4" label="Out Patient" size="sm">
-      <dl class="grid gap-4 p-4">
-        <div
-          v-for="data in plan.benefits.outpatient || []"
-          :key="data.code"
-          class="grid sm:grid-cols-2"
-        >
-          <dt class="font-medium">{{ data.text }}</dt>
+      <dl class="grid md:grid-cols-2 gap-5 p-4">
+        <div v-for="data in plan.benefits.outpatient || []" :key="data.code">
+          <dt class="font-medium mb-1">{{ data.text }}</dt>
           <dd>{{ data.value }}</dd>
         </div>
       </dl>
     </x-tab>
     <x-tab value="5" label="Co-pay/Co-insurance" size="sm">
-      <dl class="grid gap-4 p-4">
-        <div
-          v-for="data in plan.benefits.coInsurance || []"
-          :key="data.code"
-          class="grid sm:grid-cols-2"
-        >
-          <dt class="font-medium">{{ data.text }}</dt>
+      <dl class="grid md:grid-cols-2 gap-5 p-4">
+        <div v-for="data in plan.benefits.coInsurance || []" :key="data.code">
+          <dt class="font-medium mb-1">{{ data.text }}</dt>
           <dd>{{ data.value }}</dd>
         </div>
       </dl>
     </x-tab>
     <x-tab value="6" label="Region coverage & Network list" size="sm">
-      <dl class="grid gap-4 p-4">
-        <div
-          v-for="data in plan.benefits.regionCover || []"
-          :key="data.code"
-          class="grid sm:grid-cols-2"
-        >
-          <dt class="font-medium">{{ data.text }}</dt>
+      <dl class="grid md:grid-cols-2 gap-5 p-4">
+        <div v-for="data in plan.benefits.regionCover || []" :key="data.code">
+          <dt class="font-medium mb-1">{{ data.text }}</dt>
           <dd>{{ data.value }}</dd>
         </div>
-        <div
-          v-for="data in plan.benefits.networkList || []"
-          :key="data.code"
-          class="grid sm:grid-cols-2"
-        >
-          <dt class="font-medium">{{ data.text }}</dt>
+        <div v-for="data in plan.benefits.networkList || []" :key="data.code">
+          <dt class="font-medium mb-1">{{ data.text }}</dt>
           <dd>{{ data.value }}</dd>
         </div>
       </dl>
     </x-tab>
     <x-tab value="7" label="Maternity cover" size="sm">
-      <dl class="grid gap-4 p-4">
+      <dl class="grid md:grid-cols-2 gap-5 p-4">
         <div
           v-for="data in plan.benefits.maternityCover || []"
           :key="data.code"
-          class="grid sm:grid-cols-2"
         >
-          <dt class="font-medium">{{ data.text }}</dt>
+          <dt class="font-medium mb-1">{{ data.text }}</dt>
           <dd>{{ data.value }}</dd>
         </div>
       </dl>
     </x-tab>
     <x-tab value="8" label="Exclusions" size="sm">
-      <dl class="grid gap-4 p-4">
-        <div
-          v-for="data in plan.benefits.exclusion || []"
-          :key="data.code"
-          class="grid sm:grid-cols-2"
-        >
-          <dt class="font-medium">{{ data.text }}</dt>
+      <dl class="grid md:grid-cols-2 gap-5 p-4">
+        <div v-for="data in plan.benefits.exclusion || []" :key="data.code">
+          <dt class="font-medium mb-1">{{ data.text }}</dt>
           <dd>{{ data.value }}</dd>
         </div>
       </dl>
     </x-tab>
     <x-tab value="9" label="Policy Detail" size="sm">
-      <dl class="grid gap-4 p-4">
+      <dl class="grid md:grid-cols-2 gap-5 p-4">
         <x-link
           v-for="data in plan.benefits.networkLink || []"
           :key="data.code"

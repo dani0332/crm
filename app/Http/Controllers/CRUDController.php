@@ -446,7 +446,7 @@ class CRUDController extends Controller
                 'quoteTypeId', 'tiers',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
-            $listQuotePlans = '';
+            $listQuotePlans = [];
             $quotePlans = $this->healthQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
                 $listQuotePlans = [];
@@ -502,6 +502,7 @@ class CRUDController extends Controller
                 'documentTypes' => $documentTypes,
                 'cdnPath' => $cdnPath,
                 'domainPath' => $domainPath,
+                'activities' => $activities,
             ]);
 
         // return view('shared.show', compact([
