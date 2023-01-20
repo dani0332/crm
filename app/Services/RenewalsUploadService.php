@@ -699,7 +699,6 @@ class RenewalsUploadService
         info($logPrefix.' Quote creation started');
 
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $quoteType) {
-
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
             $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
@@ -782,9 +781,8 @@ class RenewalsUploadService
             return $quote;
         });
 
-        if($quote)
-        {
-            info($logPrefix .' AML check started for UUID: '.$quote->uuid);
+        if ($quote) {
+            info($logPrefix.' AML check started for UUID: '.$quote->uuid);
             $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
         }
