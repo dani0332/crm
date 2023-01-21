@@ -1,116 +1,39 @@
 <script setup>
-import { reactive, computed, onMounted } from 'vue';
+import { reactive, computed, onMounted, ref } from 'vue';
 import { Head, router, usePage, Link } from '@inertiajs/vue3';
-import TheTable from '@/inertia/Components/TheTable.vue';
+import Pagination from '../../Components/Pagination.vue';
 
 defineProps({
   quotes: Object,
-  hasMore: Boolean,
   leadStatuses: Array,
   advisors: Array,
 });
 
-const table = reactive({
-  isLoading: false,
-  columns: [
-    {
-      label: 'CDB ID',
-      field: 'code',
-      sortable: false,
-      isKey: true,
-    },
-    {
-      label: 'First Name',
-      field: 'first_name',
-      width: '10%',
-    },
-    {
-      label: 'Last Name',
-      field: 'last_name',
-      width: '10%',
-    },
-    {
-      label: 'Lead Status',
-      field: 'quote_status_id_text',
-      width: '10%',
-    },
-    {
-      label: 'Advisor',
-      field: 'advisor_id_text',
-      width: '10%',
-    },
-    {
-      label: 'WC Advisor',
-      field: 'wcu_id_text',
-      width: '10%',
-    },
-    {
-      label: 'Created Date',
-      field: 'created_at',
-      width: '10%',
-    },
-    {
-      label: 'Last Modified Date',
-      field: 'updated_at',
-      sortable: false,
-    },
-    {
-      label: 'Health Team Type',
-      field: 'health_team_type',
-      width: '10%',
-    },
-    {
-      label: 'Transapp Code',
-      field: 'transapp_code',
-      width: '10%',
-    },
-    {
-      label: 'Lost Reason',
-      field: 'lost_reason',
-      width: '10%',
-    },
-    {
-      label: 'Premium',
-      field: 'premium',
-      width: '10%',
-    },
-    {
-      label: 'Policy Number',
-      field: 'policy_number',
-      width: '10%',
-    },
-    {
-      label: 'Source',
-      field: 'source',
-      width: '10%',
-    },
-    {
-      label: 'Lead Type',
-      field: 'lead_type_id_text',
-      width: '10%',
-    },
-    {
-      label: 'Salary Band',
-      field: 'salary_band_id_text',
-      width: '10%',
-    },
-    {
-      label: 'Member Category',
-      field: 'member_category_id_text',
-      width: '10%',
-    },
-    {
-      label: 'Currently Insured With',
-      field: 'currently_insured_with_id_text',
-      width: '10%',
-    },
-    {
-      label: 'Is Ecommerce',
-      field: 'is_ecommerce',
-      width: '10%',
-    },
-  ],
-});
+const page = usePage();
+const isLoading = ref(false);
+const quotesSelected = ref([]);
+
+const tableHeader = [
+  { text: 'CDB ID', value: 'code' },
+  { text: 'FIRST NAME', value: 'first_name' },
+  { text: 'LAST NAME', value: 'last_name' },
+  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'WC ADVISOR', value: 'wcu_id_text' },
+  { text: 'CREATED DATE', value: 'created_at' },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  { text: 'HEALTH TEAM TYPE', value: 'health_team_type' },
+  { text: 'TRANSAPP CODE', value: 'transapp_code' },
+  { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'PREMIUM', value: 'premium' },
+  { text: 'POLICY NUMBER', value: 'policy_number' },
+  { text: 'SOURCE', value: 'source' },
+  { text: 'LEAD TYPE', value: 'lead_type_id_text' },
+  { text: 'SALARY BAND', value: 'salary_band_id_text' },
+  { text: 'MEMBER CATEGORY', value: 'member_category_id_text' },
+  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_id_text' },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+];
 
 const filters = reactive({
   code: '',
@@ -138,14 +61,14 @@ const subTeamOptions = [
 ];
 
 const leadStatusOptions = computed(() => {
-  return usePage().props.leadStatuses.map(status => ({
+  return page.props.leadStatuses.map(status => ({
     value: status.id,
     label: status.text,
   }));
 });
 
 const advisorOptions = computed(() => {
-  return usePage().props.advisors.map(advisor => ({
+  return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
   }));
@@ -164,8 +87,8 @@ function onSubmit(isValid) {
       data: filters,
       preserveState: true,
       preserveScroll: true,
-      onBefore: () => (table.isLoading = true),
-      onSuccess: () => (table.isLoading = false),
+      onBefore: () => (isLoading.value = true),
+      onSuccess: () => (isLoading.value = false),
     });
   } else {
     console.log('Invalid');
@@ -175,28 +98,12 @@ function onSubmit(isValid) {
 function onReset() {
   router.visit('/quotes/health', {
     method: 'get',
+    data: { page: 1 },
     preserveScroll: true,
-    onBefore: () => (table.isLoading = true),
-    onSuccess: () => (table.isLoading = false),
+    onBefore: () => (isLoading.value = true),
+    onSuccess: () => (isLoading.value = false),
   });
 }
-
-const onPaginate = isNext => {
-  const pageUrl = isNext
-    ? usePage().props.quotes.next_page_url
-    : usePage().props.quotes.prev_page_url;
-
-  if (!pageUrl) {
-    return;
-  }
-  router.visit(pageUrl, {
-    method: 'get',
-    preserveScroll: true,
-    only: ['quotes'],
-    onBefore: () => (table.isLoading = true),
-    onSuccess: () => (table.isLoading = false),
-  });
-};
 
 function setQueryStringFilters() {
   let queryString = window.location.search;
@@ -226,12 +133,16 @@ function setQueryStringFilters() {
   if (urlParams.has('sub_team')) {
     filters.sub_team = urlParams.get('sub_team');
   }
-  // if (urlParams.has('quote_status')) {
-  //   filters.quote_status = urlParams.get('quote_status').split(',');
-  // }
-  // if (urlParams.has('advisors')) {
-  //   filters.advisors = urlParams.get('advisors').split(',');
-  // }
+  if (urlParams.has('quote_status[]')) {
+    filters.quote_status = urlParams
+      .getAll('quote_status[]')
+      .map(status => parseInt(status));
+  }
+  if (urlParams.has('advisors[]')) {
+    filters.advisors = urlParams
+      .getAll('advisors[]')
+      .map(status => parseInt(status));
+  }
   if (urlParams.has('is_renewal')) {
     filters.is_renewal = urlParams.get('is_renewal');
   }
@@ -321,6 +232,7 @@ onMounted(() => {
         <x-select
           v-model="filters.quote_status"
           label="Lead Status"
+          id="quote_status[]"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
           multiple
@@ -364,34 +276,42 @@ onMounted(() => {
         </x-button>
       </div>
     </x-form>
-    <TheTable
-      :is-slot-mode="true"
-      :is-loading="table.isLoading"
-      :columns="table.columns"
-      :rows="quotes.data || []"
-      :has-more="hasMore"
-      :total="quotes.data.length || 0"
-      :page="quotes.current_page"
-      :noDataText="'No Quotes Found'"
-      @do-search="onPaginate"
-      @is-finished="table.isLoading = false"
+    <DataTable
+      v-model:items-selected="quotesSelected"
+      table-class-name="tablefixed"
+      :loading="isLoading"
+      :headers="tableHeader"
+      :items="quotes.data || []"
+      border-cell
+      hide-rows-per-page
+      hide-footer
+      fixed-checkbox
     >
-      <template v-slot:code="data">
+      <template #item-code="{ code, uuid }">
         <Link
-          :href="`/quotes/health/${data.value.uuid}`"
+          :href="`/quotes/health/${uuid}`"
           class="text-primary-500 hover:underline"
         >
-          {{ data.value.code }}
+          {{ code }}
         </Link>
       </template>
-      <template v-slot:is_ecommerce="data">
-        <div class="font-medium">
-          <x-tag v-if="data.value.is_ecommerce" size="sm" color="success">
-            Yes
+      <template #item-is_ecommerce="{ is_ecommerce }">
+        <div class="text-center">
+          <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
+            {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
-          <x-tag v-else color="error" size="sm">No</x-tag>
         </div>
       </template>
-    </TheTable>
+    </DataTable>
+
+    <Pagination
+      :links="{
+        next: quotes.next_page_url,
+        prev: quotes.prev_page_url,
+        current: quotes.current_page,
+        from: quotes.from,
+        to: quotes.to,
+      }"
+    />
   </div>
 </template>

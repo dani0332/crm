@@ -5813,6 +5813,13 @@ vue3-dropzone@^2.0.1:
     attr-accept "^2.2.2"
     file-selector "^0.2.4"
 
+vue3-easy-data-table@^1.5.27:
+  version "1.5.27"
+  resolved "https://registry.yarnpkg.com/vue3-easy-data-table/-/vue3-easy-data-table-1.5.27.tgz#e0dc59935a257e988465b566740dd3a1d903cfeb"
+  integrity sha512-12T5YNA2Qn5InJlyV8L7u6SGOauqgJwNCgFembNiASzFrNV02wbgLoD69aM3yELDVoG8VOckV8XLulwB2PcJ/w==
+  dependencies:
+    vue "^3.2.45"
+
 vue@^3.2.45:
   version "3.2.45"
   resolved "https://registry.yarnpkg.com/vue/-/vue-3.2.45.tgz#94a116784447eb7dbd892167784619fef379b3c8"

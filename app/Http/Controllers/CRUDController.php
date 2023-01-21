@@ -196,7 +196,6 @@ class CRUDController extends Controller
 
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
-                'hasMore' => $gridData->hasMorePages(),
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
             ]);
