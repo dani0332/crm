@@ -51,7 +51,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use Inertia\Inertia;
 
 class CRUDController extends Controller
 {
@@ -195,7 +194,7 @@ class CRUDController extends Controller
 
             $quote_status = $dropdownSource['quote_status_id'];
 
-            return Inertia::render('HealthQuote/Index', [
+            return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
                 'hasMore' => $gridData->hasMorePages(),
                 'leadStatuses' => $quote_status,
@@ -488,7 +487,7 @@ class CRUDController extends Controller
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
 
-            return Inertia::render('HealthQuote/Show', [
+            return inertia('HealthQuote/Show', [
                 'quote' => $record,
                 'genderOptions' => $genderOptions,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
@@ -555,6 +554,22 @@ class CRUDController extends Controller
                 $data = $this->dropdownSourceService->getCustomDropdownList($property, $record[0]->id);
                 $customLists[$property] = $data;
             }
+        }
+
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
+            $genderOptions = [
+                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
+                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
+                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
+            ];
+
+            return inertia('HealthQuote/Edit', [
+                'quote' => $record,
+                'dropdownSource' => $dropdownSource,
+                'genderOptions' => $genderOptions,
+                'isRenewalUser' => $isRenewalUser,
+                'model' => json_encode($model->properties),
+            ]);
         }
 
         return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));

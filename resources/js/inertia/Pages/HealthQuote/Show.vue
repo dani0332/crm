@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, reactive, onMounted } from 'vue';
-import { Head, usePage, router, useForm } from '@inertiajs/vue3';
+import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 import { useDateFormat, useClipboard } from '@vueuse/core';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
@@ -80,12 +80,6 @@ const memberCategoryText = memberCategoryId =>
       category => category.id === memberCategoryId,
     )?.text;
   });
-
-const goBack = () => {
-  window.history.length > 2
-    ? window.history.back()
-    : router.get('/quotes/health');
-};
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
@@ -547,7 +541,7 @@ const onAdditionalContactSubmit = isValid => {
 };
 
 // history data
-const historyData = ref([]);
+const historyData = ref(null);
 
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
@@ -560,6 +554,13 @@ const onLoadHistoryData = async () => {
   historyData.value = finalRes;
   historyLoading.value = false;
 };
+
+const historyDataTable = [
+  { text: 'Modified At', value: 'ModifiedAt' },
+  { text: 'Modified By', value: 'ModifiedBy' },
+  { text: 'Notes', value: 'NewNotes' },
+  { text: 'Lead Status', value: 'NewStatus' },
+];
 
 onMounted(() => {
   const isHealthAdvisor = usePage().props.advisors.find(
@@ -575,10 +576,14 @@ onMounted(() => {
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
         <x-button size="sm" color="#ff5e00">Duplicate Lead</x-button>
-        <x-button @click.prevent="goBack" size="sm" color="primary">
-          Health List
-        </x-button>
-        <x-button size="sm">Edit</x-button>
+
+        <Link href="/quotes/health" preserve-scroll>
+          <x-button size="sm" color="primary"> Health List </x-button>
+        </Link>
+
+        <Link :href="`${quote.uuid}/edit`">
+          <x-button size="sm">Edit</x-button>
+        </Link>
       </div>
     </div>
 
@@ -1385,7 +1390,7 @@ onMounted(() => {
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-      <div class="text-center py-3">
+      <div v-if="historyData === null" class="text-center py-3">
         <x-button
           size="sm"
           color="primary"
@@ -1395,6 +1400,17 @@ onMounted(() => {
         >
           Load History Data
         </x-button>
+      </div>
+      <x-table
+        v-else
+        class="text-sm"
+        dense
+        striped
+        :headers="historyDataTable"
+        :items="historyData || []"
+      />
+      <div v-if="historyData?.length === 0" class="text-center py-3">
+        <p class="text-gray-500">No data available.</p>
       </div>
     </div>
   </div>
