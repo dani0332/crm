@@ -21,7 +21,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 					<span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
 					<div class="col-auto">
 						@if(! auth()->user()->hasRole(RolesEnum::PA))
-							<button class="btn btn-warning btn-sm" id="send-one-click-buy-email-btn" 
+							<button class="btn btn-warning btn-sm" id="send-one-click-buy-email-btn"
 								{{ $record->advisor_id != auth()->id() || !$record->previous_quote_policy_number ? 'disabled' : '' }}
 								data-quote-type-id="{{ $quoteTypeId }}"
 								data-quote-type="{{ $quoteType }}"
@@ -61,7 +61,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 				</div>
 				@if(gettype($listQuotePlans) != GenericRequestEnum::TypeString)
 					@if(! auth()->user()->hasRole(RolesEnum::PA))
-						<form method="post" action="{{route('exportPlansPdf', $quoteType)}}" class="form-horizontal form-label-left"
+						<form method="post" action="{{route('exportCarPdf', $quoteType)}}" class="form-horizontal form-label-left"
 							role="form" id="form_plans_pdf" data-parsley-validate="" novalidate="" autocomplete="off">
 							{{ csrf_field() }}
 							<input type="hidden" id="plan_ids" name="plan_ids" value="">
