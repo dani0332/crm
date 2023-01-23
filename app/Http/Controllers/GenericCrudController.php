@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\InsuranceProvderConstants;
 use App\Models\GenericModel;
+use App\Models\Tier;
 use App\Services\ApplicationStorageService;
 use App\Services\CarPlanAddOnOptionService;
 use App\Services\CarPlanAddOnService;
@@ -271,6 +272,7 @@ class GenericCrudController extends Controller
             }
         }
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+        dd('adsadsa : '. json_encode(Tier::where('id', 10)->first()));
         if ($request->has('is_active')) {
             return redirect('/generic/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
         } else {

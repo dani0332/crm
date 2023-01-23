@@ -616,6 +616,7 @@ class LeadAllocationService extends BaseService
             ->where('is_renewal_tier_email_sent', 0)
             ->whereBetween('created_at', [$from, $to])
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
             ->skip(0)->take($carLeadPickupLimit)->get();
     }
