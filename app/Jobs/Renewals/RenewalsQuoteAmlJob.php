@@ -48,7 +48,7 @@ class RenewalsQuoteAmlJob implements ShouldQueue, StackableJob
      */
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
-        $logPrefix = 'fn: handle. class: RenewalsQuoteAmlJob ';
+        $logPrefix = 'Renewals AML - CL: RenewalsQuoteAmlJob FN: handle. ';
         info($logPrefix.' aml check for non-motor started jobNo: '.$this->jobNo.' quoteId: '.$this->renewalQuoteProcess->quote_id);
         $renewalsUploadService->checkAml($this->renewalQuoteProcess);
         info($logPrefix.' aml check for non-motor completed jobNo: '.$this->jobNo.' quoteId: '.$this->renewalQuoteProcess->quote_id);
@@ -60,6 +60,6 @@ class RenewalsQuoteAmlJob implements ShouldQueue, StackableJob
      */
     public function failed(Throwable $exception)
     {
-        info('CL: RenewalsQuoteAmlJob FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' jobNo: '.$this->jobNo.' Error: '.$exception->getMessage());
+        info('Renewals AML - CL: RenewalsQuoteAmlJob FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' jobNo: '.$this->jobNo.' Error: '.$exception->getMessage());
     }
 }

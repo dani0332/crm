@@ -385,7 +385,7 @@ class RenewalsUploadController extends Controller
      */
     public function scheduleNonMotorAml()
     {
-        $logPrefix = 'fn: scheduleNonMotorAml';
+        $logPrefix = 'Renewals AML - fn: scheduleNonMotorAml';
         $jobs = null;
 
         $jobNo = 1;
