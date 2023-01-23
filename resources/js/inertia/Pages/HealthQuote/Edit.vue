@@ -23,7 +23,7 @@ const quoteForm = useForm({
   last_name: props.quote.last_name,
   email: props.quote.email,
   mobile_no: props.quote.mobile_no,
-  dob: props.quote.dob.split('-').reverse().join('-'),
+  dob: props.quote.dob ? props.quote.dob.split('-').reverse().join('-') : null,
   premium: props.quote.premium,
   policy_number: props.quote.policy_number,
   preference: props.quote.preference,
