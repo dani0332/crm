@@ -2,25 +2,22 @@
 
 namespace App\Jobs\Renewals;
 
-use App\Enums\RenewalProcessStatuses;
-use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\DB;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
 class RenewalsQuoteAmlJob implements ShouldQueue, StackableJob
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
+
     protected $renewalQuoteProcess;
-    protected  $jobNo = null;
+    protected $jobNo = null;
     public $timeout = 30;
     public $backoff = 10;
     public $tries = 3;
@@ -52,9 +49,9 @@ class RenewalsQuoteAmlJob implements ShouldQueue, StackableJob
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
         $logPrefix = 'fn: handle. class: RenewalsQuoteAmlJob ';
-        info($logPrefix . ' aml check for non-motor started jobNo: ' . $this->jobNo. ' quoteId: ' . $this->renewalQuoteProcess->quote_id);
+        info($logPrefix.' aml check for non-motor started jobNo: '.$this->jobNo.' quoteId: '.$this->renewalQuoteProcess->quote_id);
         $renewalsUploadService->checkAml($this->renewalQuoteProcess);
-        info($logPrefix . ' aml check for non-motor completed jobNo: ' . $this->jobNo. ' quoteId: ' . $this->renewalQuoteProcess->quote_id);
+        info($logPrefix.' aml check for non-motor completed jobNo: '.$this->jobNo.' quoteId: '.$this->renewalQuoteProcess->quote_id);
     }
 
     /**
@@ -63,6 +60,6 @@ class RenewalsQuoteAmlJob implements ShouldQueue, StackableJob
      */
     public function failed(Throwable $exception)
     {
-        info('CL: RenewalsQuoteAmlJob FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' jobNo: ' . $this->jobNo.' Error: '.$exception->getMessage());
+        info('CL: RenewalsQuoteAmlJob FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' jobNo: '.$this->jobNo.' Error: '.$exception->getMessage());
     }
 }

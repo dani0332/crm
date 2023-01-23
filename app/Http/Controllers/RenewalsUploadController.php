@@ -13,7 +13,6 @@ use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
-use App\Jobs\Renewals\CreateRenewalQuotesJob;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\RenewalsQuoteAmlJob;
@@ -26,7 +25,6 @@ use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
@@ -380,7 +378,9 @@ class RenewalsUploadController extends Controller
 
     /**
      * schedule AML check for non-motor uploaded through renewals process
+     *
      * @return void
+     *
      * @throws \Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException
      */
     public function scheduleNonMotorAml()
@@ -392,23 +392,22 @@ class RenewalsUploadController extends Controller
 
         RenewalQuoteProcess::where([
             'type' => RenewalsUploadType::CREATE_LEADS,
-            'status' => RenewalProcessStatuses::PROCESSED
+            'status' => RenewalProcessStatuses::PROCESSED,
         ])->whereIn('quote_type', QuoteType::where('short_code', '<>', QuoteTypeShortCode::CAR)->get()->pluck('short_code')->toArray())
             ->whereNotNull('quote_id')
             ->chunkById(50, function ($leads) use (&$jobs, &$jobNo) {
                 foreach ($leads as $lead) {
                     $quoteType = $this->renewalsUploadFileService->getQuoteTypeByShortCode($lead->quote_type);
-                    if(! $aml = AML::where('quote_request_id', $lead->quote_id)->where('quote_type_id', $quoteType->id)->first()) {
+                    if (! $aml = AML::where('quote_request_id', $lead->quote_id)->where('quote_type_id', $quoteType->id)->first()) {
                         $jobs[] = new RenewalsQuoteAmlJob($lead, $jobNo);
                         $jobNo++;
                     }
                 }
-        });
+            });
 
-        info($logPrefix . ' totalJobs: ' . count($jobs));
+        info($logPrefix.' totalJobs: '.count($jobs));
 
         if ($jobs != null && count($jobs)) {
-
             Haystack::build()
                 ->onQueue('renewals')
                 ->addJobs($jobs)
@@ -427,7 +426,5 @@ class RenewalsUploadController extends Controller
         }
 
         return redirect('/');
-
     }
-
 }
