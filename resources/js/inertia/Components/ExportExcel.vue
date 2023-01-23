@@ -1,6 +1,6 @@
 <template>
   <div :id="idName" @click="generate">
-    <slot> Download {{ name }} </slot>
+    <slot></slot>
   </div>
 </template>
 
@@ -22,13 +22,9 @@ const saveData = (function () {
 export default {
   name: 'ExportExcel',
   props: {
-    style: {
-      type: String,
-      default: 'color: #FFFFFF',
-    },
     headerColor: {
       type: String,
-      default: '#205737',
+      default: '#fff',
     },
     disabled: {
       type: Boolean,
@@ -89,6 +85,8 @@ export default {
       const now = new Date().getTime();
       return 'export_' + now;
     },
+
+    // eslint-disable-next-line vue/return-in-computed-property
     downloadFields() {
       if (this.fields !== undefined) return this.fields;
 
@@ -143,6 +141,7 @@ export default {
         '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta name=ProgId content=Excel.Sheet> <meta name=Generator content="Microsoft Excel 11"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>${worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>br {mso-data-placement: same-cell;}</style></head><body><table>${table}</table></body></html>';
       let xlsData = '<thead>';
       const colspan = Object.keys(data[0]).length;
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       const _self = this;
 
       //Header
@@ -233,6 +232,7 @@ export default {
     getProcessedJson(data, header) {
       const keys = this.getKeys(data, header);
       const newData = [];
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       const _self = this;
       data.map(function (item, index) {
         const newItem = {};
@@ -280,6 +280,7 @@ export default {
         value = this.getValueFromNestedItem(item, indexes);
       else value = this.parseValue(item[field]);
 
+      // eslint-disable-next-line no-prototype-builtins
       if (key.hasOwnProperty('callback'))
         value = this.getValueFromCallback(value, key.callback);
 

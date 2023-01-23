@@ -74,7 +74,9 @@ const navLinks = computed(() => page.props.sidebar);
           <template v-if="link.children.length > 0">
             <x-collapse
               show-icon
-              :expanded="link.children.some(child => child.url === $page.url)"
+              :expanded="
+                link.children.some(child => $page.url.startsWith(child.url))
+              "
             >
               <template #default>
                 <div class="pl-3 py-2.5 hover:bg-black/10">
@@ -88,7 +90,7 @@ const navLinks = computed(() => page.props.sidebar);
                     :href="child.url"
                     class="pl-3 py-2 flex gap-2 items-center hover:bg-black/10"
                     :class="{
-                      '!bg-primary-800': child.url === $page.url,
+                      '!bg-primary-800': $page.url.startsWith(child.url),
                     }"
                   >
                     <x-icon
@@ -107,7 +109,7 @@ const navLinks = computed(() => page.props.sidebar);
               :href="link.url"
               class="pl-3 py-2.5 flex gap-2 items-center hover:bg-black/10"
               :class="{
-                '!bg-primary-800': link.url === $page.url,
+                '!bg-primary-800': $page.url.startsWith(link.url),
               }"
             >
               <x-icon
