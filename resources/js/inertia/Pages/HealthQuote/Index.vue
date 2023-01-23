@@ -10,7 +10,10 @@ defineProps({
 });
 
 const page = usePage();
-const isLoading = ref(false);
+const loader = reactive({
+  table: false,
+  export: false,
+});
 const quotesSelected = ref([]);
 
 const tableHeader = [
@@ -87,8 +90,8 @@ function onSubmit(isValid) {
       data: filters,
       preserveState: true,
       preserveScroll: true,
-      onBefore: () => (isLoading.value = true),
-      onSuccess: () => (isLoading.value = false),
+      onBefore: () => (loader.table = true),
+      onSuccess: () => (loader.table = false),
     });
   } else {
     console.log('Invalid');
@@ -100,8 +103,8 @@ function onReset() {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
-    onBefore: () => (isLoading.value = true),
-    onSuccess: () => (isLoading.value = false),
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
   });
 }
 
@@ -150,6 +153,13 @@ function setQueryStringFilters() {
     filters.is_ecommerce = urlParams.get('is_ecommerce');
   }
 }
+
+const onExportQuotes = () => {
+  console.log(quotesSelected.value);
+  loader.export = true;
+  quotesSelected.value = [];
+  loader.export = false;
+};
 
 onMounted(() => {
   setQueryStringFilters();
@@ -276,10 +286,18 @@ onMounted(() => {
         </x-button>
       </div>
     </x-form>
+    <Transition name="fade">
+      <div v-if="quotesSelected.length > 0" class="mb-4">
+        <x-button size="sm" color="emerald" @click="onExportQuotes">
+          Export -
+          <span class="lining-nums">Selected: {{ quotesSelected.length }}</span>
+        </x-button>
+      </div>
+    </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
-      :loading="isLoading"
+      :loading="loader.table"
       :headers="tableHeader"
       :items="quotes.data || []"
       border-cell
