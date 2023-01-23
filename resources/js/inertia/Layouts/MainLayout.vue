@@ -2,7 +2,9 @@
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 
-const user = computed(() => usePage().props.auth.user);
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+const navLinks = computed(() => page.props.sidebar);
 </script>
 
 <template>
@@ -66,39 +68,56 @@ const user = computed(() => usePage().props.auth.user);
       </header>
 
       <nav
-        class="flex-1 py-6 text-sm font-medium overflow-x-hidden overflow-y-auto flex flex-col bg-gradient-to-b from-primary-500 to-primary-700 text-white"
+        class="flex-1 text-[0.8rem] pb-6 font-medium overflow-x-hidden overflow-y-auto flex flex-col bg-gradient-to-b from-primary-500 to-primary-700 text-white"
       >
-        <Link href="/"><div class="p-2">Home</div></Link>
-        <x-collapse show-icon :expanded="$page.url.startsWith('/quotes')">
-          <template #default><div class="p-2">Personal Quotes</div></template>
-          <template #content>
-            <a href="/quotes/car" class="py-2 px-3 flex gap-2 items-center">
-              <x-icon icon="car" /> Car Quotes
-            </a>
-            <Link
-              href="/quotes/health"
-              class="py-2 px-3 flex gap-2 items-center"
+        <template v-for="link in navLinks">
+          <template v-if="link.children.length > 0">
+            <x-collapse
+              show-icon
+              :expanded="link.children.some(child => child.url === $page.url)"
+            >
+              <template #default>
+                <div class="pl-3 py-2.5 hover:bg-black/10">
+                  {{ link.title }}
+                </div>
+              </template>
+
+              <template #content>
+                <template v-for="child in link.children">
+                  <a
+                    :href="child.url"
+                    class="pl-3 py-2 flex gap-2 items-center hover:bg-black/10"
+                    :class="{
+                      '!bg-primary-800': child.url === $page.url,
+                    }"
+                  >
+                    <x-icon
+                      :icon="
+                        child.attributes.icon ? child.attributes.icon : 'box'
+                      "
+                    />
+                    <span class="pt-1">{{ child.title }}</span>
+                  </a>
+                </template>
+              </template>
+            </x-collapse>
+          </template>
+          <template v-else>
+            <a
+              :href="link.url"
+              class="pl-3 py-2.5 flex gap-2 items-center hover:bg-black/10"
               :class="{
-                'bg-primary-800': $page.url.startsWith('/quotes/health'),
+                '!bg-primary-800': link.url === $page.url,
               }"
             >
-              <x-icon icon="health" />
-              Health Quotes
-            </Link>
-            <a href="/quotes/travel" class="py-2 px-3 flex gap-2 items-center">
-              <x-icon icon="travel" /> Travel Quotes
-            </a>
-            <a href="/quotes/life" class="py-2 px-3 flex gap-2 items-center">
-              <x-icon icon="life" /> Life Quotes
-            </a>
-            <a href="/quotes/home" class="py-2 px-3 flex gap-2 items-center">
-              <x-icon icon="home" /> Home Quotes
-            </a>
-            <a href="/quotes/pet" class="py-2 px-3 flex gap-2 items-center">
-              <x-icon icon="pet" /> Pet Quotes
+              <x-icon
+                v-if="link.attributes.icon"
+                :icon="link.attributes.icon"
+              />
+              {{ link.title }}
             </a>
           </template>
-        </x-collapse>
+        </template>
       </nav>
     </aside>
     <article

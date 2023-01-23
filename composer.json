@@ -38,6 +38,7 @@
         "sammyjo20/laravel-haystack": "^0.10.1",
         "sentry/sentry-laravel": "^2.7",
         "spatie/laravel-fractal": "^5.8",
+        "spatie/laravel-navigation": "^1.2",
         "spatie/laravel-permission": "^4.0",
         "yajra/laravel-datatables-oracle": "^9.18"
     },
