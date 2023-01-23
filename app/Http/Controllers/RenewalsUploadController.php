@@ -13,17 +13,23 @@ use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
+use App\Jobs\Renewals\CreateRenewalQuotesJob;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
+use App\Jobs\Renewals\RenewalsQuoteAmlJob;
+use App\Models\AML;
 use App\Models\CarQuote;
+use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Yajra\Datatables\Datatables;
 
 class RenewalsUploadController extends Controller
@@ -371,4 +377,57 @@ class RenewalsUploadController extends Controller
                 break;
         }
     }
+
+    /**
+     * schedule AML check for non-motor uploaded through renewals process
+     * @return void
+     * @throws \Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException
+     */
+    public function scheduleNonMotorAml()
+    {
+        $logPrefix = 'fn: scheduleNonMotorAml';
+        $jobs = null;
+
+        $jobNo = 1;
+
+        RenewalQuoteProcess::where([
+            'type' => RenewalsUploadType::CREATE_LEADS,
+            'status' => RenewalProcessStatuses::PROCESSED
+        ])->whereIn('quote_type', QuoteType::where('short_code', '<>', QuoteTypeShortCode::CAR)->get()->pluck('short_code')->toArray())
+            ->whereNotNull('quote_id')
+            ->chunkById(50, function ($leads) use (&$jobs, &$jobNo) {
+                foreach ($leads as $lead) {
+                    $quoteType = $this->renewalsUploadFileService->getQuoteTypeByShortCode($lead->quote_type);
+                    if(! $aml = AML::where('quote_request_id', $lead->quote_id)->where('quote_type_id', $quoteType->id)->first()) {
+                        $jobs[] = new RenewalsQuoteAmlJob($lead, $jobNo);
+                        $jobNo++;
+                    }
+                }
+        });
+
+        info($logPrefix . ' totalJobs: ' . count($jobs));
+
+        if ($jobs != null && count($jobs)) {
+
+            Haystack::build()
+                ->onQueue('renewals')
+                ->addJobs($jobs)
+                ->then(function () use ($logPrefix) {
+                    info($logPrefix.' all jobs completed successfully');
+                })
+                ->catch(function () use ($logPrefix) {
+                    info($logPrefix.' one of batch is failed. ');
+                })
+                ->finally(function () use ($logPrefix) {
+                    info($logPrefix.' everything done');
+                })
+                ->allowFailures()
+                ->withDelay(2)
+                ->dispatch();
+        }
+
+        return redirect('/');
+
+    }
+
 }

@@ -402,7 +402,7 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
-            
+
             if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
                 info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('.$leadData->provider_name.') for UUID: '.$quote->uuid);
                 $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id);
@@ -785,6 +785,28 @@ class RenewalsUploadService
         }
 
         return $quote;
+    }
+
+    /**
+     * run aml for renewal quote process
+     * @param $renewalQuoteProcess
+     * @return bool
+     */
+    public function checkAml($renewalQuoteProcess)
+    {
+        $logPrefix = 'fn: checkAml. ';
+
+        $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
+        $quoteObject = $this->createQuoteObject($quoteType->code);
+        if($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first()) {
+            info($logPrefix . ' AML process Started for quote uuid: ' . $quote->uuid . ' quote_id: ' . $renewalQuoteProcess->quote_id);
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            info($logPrefix . ' AML process completed for quote uuid: ' . $quote->uuid);
+            return true;
+        }
+
+        info($logPrefix . ' quote not found for renewalQuoteProcess id: ' . $renewalQuoteProcess->id. ' quote_id: '. $renewalQuoteProcess->quote_id);
+        return false;
     }
 
     /**
