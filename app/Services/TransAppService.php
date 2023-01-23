@@ -15,7 +15,6 @@ use App\Models\TypeOfInsurance;
 use App\Models\User;
 use Auth;
 use Carbon\Carbon;
-use Config;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -112,11 +111,11 @@ class TransAppService extends BaseService
             $customer->myalfred_expiry_date = $expiryDate;
             $customer->save();
 
-            $isCustomerExisting = MyAlFredUser::where('customer_id', '=', $customerId)->get();
+            $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
 
             $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
 
-            if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && $isCustomerExisting->isEmpty()) {
+            if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $isCustomerExisting) {
                 $this->sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, 'transapp-myalfred-we');
 
                 // Send SMS to customer
