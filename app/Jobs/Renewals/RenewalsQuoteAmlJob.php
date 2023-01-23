@@ -16,8 +16,8 @@ class RenewalsQuoteAmlJob implements ShouldQueue, StackableJob
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
 
-    protected $renewalQuoteProcess;
-    protected $jobNo = null;
+    private $renewalQuoteProcess;
+    private $jobNo = null;
     public $timeout = 30;
     public $backoff = 10;
     public $tries = 3;
