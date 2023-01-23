@@ -108,17 +108,20 @@ class TierService extends BaseService
         if (isset($request->max_price) && $request->max_price > 999999999.00) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as minimum price';
+
             return $errorResponse;
         }
         if (! isset($request->min_price) && Tier::whereNull('min_price')->where('id', '!=', $id)->get() != null) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as minimum price';
+
             return $errorResponse;
         }
 
         if (! isset($request->min_price) && Tier::whereNull('max_price')->where('id', '!=', $id)->get() != null) {
             $errorResponse = new stdClass();
             $errorResponse->message = 'Error: Only one tier can have null as maximum price';
+
             return $errorResponse;
         }
         $tier = Tier::where('id', $id)->first();
