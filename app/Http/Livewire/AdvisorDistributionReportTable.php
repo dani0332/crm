@@ -138,7 +138,6 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->where('tiers.name', 'not like', '%TR%')
-            ->where('tiers.name', 'not like', '%Tier R%')
             ->groupBy('users.email')
             ->orderBy('users.name');
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {

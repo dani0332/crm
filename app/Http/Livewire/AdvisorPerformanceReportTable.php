@@ -5,6 +5,7 @@ namespace App\Http\Livewire;
 use App\Enums\GenericRequestEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
+use App\Services\ApplicationStorageService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -38,7 +39,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
 
     public function mount()
     {
-        $this->maxDays = $this->applicationStorageService->getValueByKey(GenericRequestEnum::MAX_DAYS);
+        $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
