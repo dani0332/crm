@@ -31,6 +31,14 @@ const notification = useNotifications('toast');
 
 const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
 
+const fixedValue = number => {
+  if (number == Math.floor(number)) {
+    return number;
+  } else {
+    return number.toFixed(2);
+  }
+};
+
 const modals = reactive({
   member: false,
   memberConfirm: false,
@@ -1115,7 +1123,7 @@ onMounted(() => {
           <x-button
             v-if="selectedPlansPdf.length > 0"
             size="sm"
-            color="success"
+            color="emerald"
             @click.prevent="onExportPlans"
             :loading="exportLoader"
           >
@@ -1141,47 +1149,50 @@ onMounted(() => {
         :headers="plansTable.columns"
         :items="listQuotePlans || []"
         :loading="plansTable.isLoading"
+        :stickyHeader="false"
       >
         <template #item-id="{ item }">
           <input
             type="checkbox"
-            class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
+            class="form-checkbox h-5 w-5 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
             :name="`${item.id}`"
             :value="`${item.id}`"
             v-model="selectedPlansPdf"
           />
         </template>
         <template #item-actualPremium="{ item }">
-          {{ item.actualPremium + item.basmah }}
+          {{ fixedValue(item.actualPremium + item.basmah) }}
         </template>
         <template #item-premiumVat="{ item }">
-          {{ item.actualPremium + item.vat + item.basmah }}
+          {{ fixedValue(item.actualPremium + item.vat + item.basmah) }}
         </template>
         <template #item-action="{ item }">
-          <div class="space-x-4">
-            <x-button
-              size="xs"
-              color="primary"
-              outlined
-              @click.prevent="planClicked(item)"
-            >
-              View
-            </x-button>
-            <x-button
-              size="xs"
-              color="emerald"
-              outlined
-              @click.prevent="
-                onCopyText(
-                  ecomHealthInsuranceQuoteUrl +
-                    quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}_${item.planCode}&planId=${item.id}`,
-                )
-              "
-            >
-              Copy
-            </x-button>
-          </div>
+          <x-table-cell fixed dense>
+            <div class="flex gap-2 pr-2">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                @click.prevent="planClicked(item)"
+              >
+                View
+              </x-button>
+              <x-button
+                size="xs"
+                color="emerald"
+                outlined
+                @click.prevent="
+                  onCopyText(
+                    ecomHealthInsuranceQuoteUrl +
+                      quote.uuid +
+                      `/payment/?providerCode=${item.providerCode}_${item.planCode}&planId=${item.id}`,
+                  )
+                "
+              >
+                Copy
+              </x-button>
+            </div>
+          </x-table-cell>
         </template>
       </x-table>
 
