@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\GenericModelTypeEnum;
 use App\Enums\InsuranceProvderConstants;
 use App\Models\GenericModel;
-use App\Models\Tier;
 use App\Services\ApplicationStorageService;
 use App\Services\CarPlanAddOnOptionService;
 use App\Services\CarPlanAddOnService;
