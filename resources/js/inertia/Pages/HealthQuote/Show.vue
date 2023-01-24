@@ -5,6 +5,7 @@ import { useDateFormat, useClipboard } from '@vueuse/core';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import { useNotifications } from '@indielayer/ui';
+import axios from 'axios';
 
 defineProps({
   quote: Object,
@@ -375,25 +376,37 @@ const onExportPlans = () => {
     notification.error('Please select 3 to 5 plans to download PDF.');
     return;
   }
-  router.post(
-    '/quotes/health/export-health-pdf',
-    {
-      plan_ids: selectedPlansPdf.value,
-      quote_uuid: usePage().props.quote.uuid,
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        exportLoader.value = true;
+  exportLoader.value = true;
+  axios
+    .post(
+      '/quotes/health/export-health-pdf',
+      {
+        plan_ids: selectedPlansPdf.value,
+        quote_uuid: usePage().props.quote.uuid,
       },
-      onSuccess: () => {
-        notification.success('Plans Exported');
+      {
+        responseType: 'blob',
       },
-      onFinish: () => {
-        exportLoader.value = false;
-      },
-    },
-  );
+    )
+    .then(response => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      let fileName =
+        'InsuranceMarket.ae™ Health Insurance Comparison for ' +
+        usePage().props.auth.user.name +
+        '.pdf';
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success('Plans Exported');
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
 };
 
 // quoteDocuments
