@@ -119,7 +119,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
     {
         $query = CarQuote::query()
             ->select(
-                DB::raw('count(car_quote_request.id) as total_leads'),
+                DB::raw('count(*) as total_leads'),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier 0' THEN 1 ELSE 0 END) as tier_0_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier 1' THEN 1 ELSE 0 END) as tier_1_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier 2' THEN 1 ELSE 0 END) as tier_2_lead_count"),
@@ -131,7 +131,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier L' THEN 1 ELSE 0 END) as tier_l_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier H' THEN 1 ELSE 0 END) as tier_h_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_r_lead_count"),
-                DB::raw('tiers.cost_per_lead as total_lead_cost'),
+                DB::raw('SUM(car_quote_request.cost_per_lead) as total_lead_cost'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', 'users.id')

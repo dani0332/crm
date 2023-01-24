@@ -40,12 +40,13 @@ class CarLeadAllocationController extends Controller
             $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
             $isRenewalLeadAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_RENEWAL_LEAD_ALLOCATION');
             $isFIFO = $this->applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
-            $data = $this->carLeadAllocationService->getGridData();
-            foreach ($data as $key => $value) {
-                $totalAssignedLeadCount = $totalAssignedLeadCount + ($value->auto_assignment_count + $value->manual_assignment_count);
-                $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
-            }
+
             if ($request->ajax()) {
+                $data = $this->carLeadAllocationService->getGridData();
+                foreach ($data as $key => $value) {
+                    $totalAssignedLeadCount = $totalAssignedLeadCount + ($value->auto_assignment_count + $value->manual_assignment_count);
+                    $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
+                }
                 return Datatables::of($data)
                     ->addIndexColumn()
                     ->make(true);
