@@ -27,7 +27,6 @@ class AdvisorConversionReportTable extends DataTableComponent
     public $batches = [];
     public $leadSources = [];
     private $maxDays = 92;
-    private $applicationStorageService;
 
     public function configure(): void
     {
@@ -47,7 +46,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function mount()
     {
-        $this->maxDays = $this->applicationStorageService->getValueByKey(GenericRequestEnum::MAX_DAYS);
+        $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
@@ -182,7 +181,6 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function filters(): array
     {
-        $this->applicationStorageService = app(ApplicationStorageService::class);
         $filters = [
             TextFilter::make('Created Date', 'created_at')
                 ->config([

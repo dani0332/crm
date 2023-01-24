@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
+use App\Services\ApplicationStorageService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -37,7 +38,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
 
     public function mount()
     {
-        $this->maxDays = $this->applicationStorageService->getValueByKey(GenericRequestEnum::MAX_DAYS);
+        $this->maxDays =  ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
@@ -68,6 +69,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
 
     public function columns(): array
     {
+        $tiers = Tier::where('is_active', 1)->get();
         return [
             Column::make('Advisor Name', 'advisor.name')->searchable(),
             Column::make('Total Leads')->label(fn ($row) => ($row->total_leads))->footer(function ($rows) {
@@ -128,12 +130,14 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier L' THEN 1 ELSE 0 END) as tier_l_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier H' THEN 1 ELSE 0 END) as tier_h_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_r_lead_count"),
-                DB::raw('SUM(tiers.cost_per_lead) as total_lead_cost'),
+                DB::raw('tiers.cost_per_lead as total_lead_cost'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->where('tiers.name' , 'not like', '%TR%')
+            ->where('tiers.name' , 'not like', '%Tier R%')
             ->groupBy('users.email')
             ->orderBy('users.name');
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
