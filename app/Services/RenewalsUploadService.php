@@ -785,6 +785,12 @@ class RenewalsUploadService
             return $quote;
         });
 
+        if ($quote) {
+            info($logPrefix . ' AML check started for UUID: ' . $quote->uuid);
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            info($logPrefix . ' AML check completed for UUID: ' . $quote->uuid);
+        }
+
         /**
          * create manual plan for health
          */
@@ -797,13 +803,6 @@ class RenewalsUploadService
             } else {
                 info($logPrefix.' manual plan for health failed for UUID: '.$quote->uuid);
             }*/
-        }
-
-        return $quote;
-        if ($quote) {
-            info($logPrefix . ' AML check started for UUID: ' . $quote->uuid);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
-            info($logPrefix . ' AML check completed for UUID: ' . $quote->uuid);
         }
 
         return $quote;
