@@ -1,4 +1,6 @@
 const mix = require('laravel-mix');
+const path = require('path');
+
 mix.options({
   terser: {
     extractComments: false,
@@ -15,20 +17,25 @@ mix.options({
  |
  */
 
-mix.postCss('resources/css/filament.css', 'public/css', [
-  require('tailwindcss'),
-]);
-
 mix
-  .js('resources/js/alpine/alpine.js', 'public/js')
-  .postCss('resources/css/livewire.css', 'public/css', []);
+  .js('resources/js/inertia/inertia.js', 'public/js')
+  .vue({ runtimeOnly: (process.env.NODE_ENV || 'production') === 'production' })
+  .webpackConfig({
+    resolve: {
+      alias: {
+        '@': path.resolve('./resources/js'),
+      },
+      extensions: ['.js', '.vue', '.json'],
+    },
+    output: {
+      chunkFilename: 'js/[name].js?id=[chunkhash]',
+    },
+  })
+  .postCss('resources/css/inertia.css', 'public/css', [require('tailwindcss')])
+  .extract()
+  .version();
 
-// this should be removed, react's resources are not used
-mix
-  .js('resources/js/app.js', 'public/js')
-  .react()
-  .version()
-  .postCss('resources/css/app.css', 'build/css', [require('tailwindcss')]);
+mix.css('resources/css/livewire.css', 'public/css');
 
 mix
   .scripts(

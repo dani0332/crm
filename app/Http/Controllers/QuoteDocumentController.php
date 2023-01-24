@@ -104,7 +104,9 @@ class QuoteDocumentController extends Controller
             return false;
         }
 
-        return $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
+        $this->quoteDocumentService->uploadQuoteDocument($request->file('file'), $request->all(), $quote);
+
+        return redirect()->back()->with('success', 'Document Uploaded Successfully');
     }
 
     public function sendPolicyDocument($quoteType, $quoteUuId)
@@ -235,6 +237,6 @@ class QuoteDocumentController extends Controller
         }
         $document->delete();
 
-        return response()->json(['message' => 'Document has been deleted.']);
+        // return response()->json(['message' => 'Document has been deleted.']);
     }
 }

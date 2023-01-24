@@ -38,9 +38,9 @@ class TransAppService extends BaseService
 
     public function createTransaction(Request $request)
     {
-        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
+        $WEGenerateInviteCodeResponse = CustomerWEGenerateInviteCodeService::getCustomerInviteCode();
 
-        if (gettype($WEGenerateUrlResponse) == 'string') {
+        if (gettype($WEGenerateInviteCodeResponse) == 'string') {
             $existingCustomer = CustomerService::getCustomerByEmail($request->email);
             $sendWelcomeEmail = ($existingCustomer && ! $existingCustomer->is_we_sent) || ! $existingCustomer ? true : false;
             $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
@@ -50,8 +50,8 @@ class TransAppService extends BaseService
                 if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
                     $responseExtend = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
-                    $listId = config('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
-                    $responseContact = SIBService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateUrlResponse);
+                    $listId = Config::get('constants.SIB_MYALFRED_CONTACTS_LIST_ID');
+                    $responseContact = SIBService::contactCreateUpdate($listId, $request->first_name, $request->last_name, $request->email, $WEGenerateInviteCodeResponse);
 
                     if ($responseContact != 201 && $responseContact != 204) {
                         $message = 'myAlfred signup link to issued policy cases (SIB API)<br>
@@ -116,16 +116,16 @@ class TransAppService extends BaseService
             $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
 
             if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $isCustomerExisting) {
-                $this->sendWelcomeEmail($customerId, $WEGenerateUrlResponse, 'transapp-myalfred-we');
+                $this->sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, 'transapp-myalfred-we');
 
                 // Send SMS to customer
                 if ($customerMobile != null) {
                     if ($isSmsTestingEnabled == 0) {
-                        $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $transaction->id);
+                        $this->sendWelcomeSms($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $transaction->id);
                     } else {
                         $isAfiaTester = $this->isAfiaEmail($customerEmail);
                         if ($isAfiaTester) {
-                            $this->sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $transaction->id);
+                            $this->sendWelcomeSms($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $transaction->id);
                         }
                     }
                 }
@@ -133,19 +133,21 @@ class TransAppService extends BaseService
 
             return $approvalCode;
         } else {
-            return $WEGenerateUrlResponse;
+            return $WEGenerateInviteCodeResponse;
         }
     }
 
-    public function sendWelcomeEmail($customerId, $WEGenerateUrlResponse, $tag)
+    public function sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
+        $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //405
+        $redirect_url = 'https://myalfred.page.link/?link=https%3A%2F%2Fmyalfred.com%2F%3FinviteCode%3D'.$WEGenerateInviteCodeResponse.'%26installPopup%3D1&apn=com.myalfred.app&isi=6443714956&ibi=com.myalfred.app';
 
         $emailData = (object) [
             'customerName' => $customer->first_name.' '.$customer->last_name,
             'customerEmail' => $customer->email,
-            'signUpButtonUrl' => $WEGenerateUrlResponse,
+            'signUpButtonUrl' => $redirect_url,
+            'inviteCode' => $WEGenerateInviteCodeResponse,
         ];
         info('sendWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
 
@@ -156,11 +158,11 @@ class TransAppService extends BaseService
             $customer->is_we_sent = true;
             $customer->save();
 
-            $code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, 'signup/') + 7);
+            // $code = substr($WEGenerateInviteCodeResponse, strpos($WEGenerateInviteCodeResponse, 'signup/') + 7);
             $newMyAlFredUser = new MyAlFredUser;
-            $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
+            $newMyAlFredUser->signup_url = null;
             $newMyAlFredUser->customer_id = $customerId;
-            $newMyAlFredUser->code = $code;
+            $newMyAlFredUser->code = $WEGenerateInviteCodeResponse;
             $newMyAlFredUser->source = 'TRANSAPP';
             $newMyAlFredUser->save();
         } else {
@@ -168,8 +170,10 @@ class TransAppService extends BaseService
         }
     }
 
-    public function sendWelcomeSms($customerMobile, $WEGenerateUrlResponse, $customerEmail, $recordId)
+    public function sendWelcomeSms($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $recordId)
     {
+        // $redirect_url = config('constants.SIB_MYALFRED_CUSTOMER_REDIRECT_URL');
+
         $customerMobile = str_replace([' ', '-'], '', $customerMobile);
         if (preg_match('/^(?:971|00971|\+971|0)?(?:50|51|52|54|55|56|58)\d{7}$/', $customerMobile)) {
             $mobileNumber = '971'.substr($customerMobile, -9);
@@ -178,8 +182,9 @@ class TransAppService extends BaseService
         }
 
         if ($mobileNumber != null) {
-            $shortUrl = $this->sendSmsCustomerService->getShortUrl($WEGenerateUrlResponse);
-            $smsMessage = 'As a valued customer of InsuranceMarket.ae, you can avail offers from over 100 brands on myAlfred. Click '.$shortUrl.' to enjoy the offers! optoutMA 4741';
+            // $shortUrl = $this->sendSmsCustomerService->getShortUrl($redirect_url);
+
+            $smsMessage = 'Welcome to the InsuranceMarket.ae family! Avail offers from over 100 brands on the myAlfred app. Download the app and use code '.$WEGenerateInviteCodeResponse.' to sign up! optoutMA4741';
             $this->sendSmsCustomerService->sendSms($mobileNumber, $smsMessage, $customerEmail, $recordId);
         } else {
             Log::info('Invalid mobile number: '.$customerMobile.' | email: '.$customerEmail.' | record_id: '.$recordId.' | class: '.get_class());

@@ -8,11 +8,14 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Models\CarQuote;
+use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\LeadAllocation;
+use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
@@ -184,6 +187,20 @@ class CRUDController extends Controller
             }
         }
         $model = $this->genericModel;
+
+        // inertia rendering for health quote
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
+            $gridData = $gridData->simplePaginate(10)->withQueryString();
+
+            $quote_status = $dropdownSource['quote_status_id'];
+
+            return inertia('HealthQuote/Index', [
+                'quotes' => $gridData,
+                'leadStatuses' => $quote_status,
+                'advisors' => $advisors,
+            ]);
+        }
+
         if ($request->ajax()) {
             return DataTables::of($gridData)
                 ->addIndexColumn()
@@ -360,13 +377,16 @@ class CRUDController extends Controller
         foreach ($activitiesData as $activity) {
             $updatedActivity = [
                 'id' => $activity->id,
+                'uuid' => $activity->uuid,
                 'title' => $activity->title,
+                'description' => $activity->description,
                 'quote_request_id' => $activity->quote_request_id,
                 'quote_type_id' => $activity->quote_type_id,
                 'quote_uuid' => $activity->quote_uuid,
                 'client_name' => $activity->client_name,
                 'due_date' => $activity->due_date,
                 'assignee' => User::where('id', $activity->assignee_id)->first()->name,
+                'assignee_id' => $activity->assignee_id,
                 'status' => $activity->status,
             ];
             array_push($activities, $updatedActivity);
@@ -427,15 +447,15 @@ class CRUDController extends Controller
                 'quoteTypeId', 'tiers',
             ]));
         } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
-            $listQuotePlans = '';
+            $listQuotePlans = [];
             $quotePlans = $this->healthQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
-                $listQuotePlans = $quotePlans->message;
+                $listQuotePlans = [];
             } else {
                 if (gettype($quotePlans) != 'string') {
                     $listQuotePlans = $quotePlans->quote->plans;
                 } else {
-                    $listQuotePlans = $quotePlans;
+                    $listQuotePlans = [];
                 }
             }
             $membersDetail = $this->healthQuoteService->getMembersDetail($record->id);
@@ -444,14 +464,48 @@ class CRUDController extends Controller
             $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
             $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
             $leadStatuses = $this->healthQuoteService->statusesToDisplay($leadStatuses, $record);
+            $genderOptions = [
+                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
+                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
+                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
+            ];
 
-            return view('shared.show', compact([
-                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
-                'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'advisors', 'activities', 'isRenewalUser',
-                'isNewBusinessUser', 'membersDetail', 'memberCategories', 'salaryBands', 'autoAllocationDisabled', 'ecomDetails', 'ecomHealthInsuranceQuoteUrl',
-                'quoteType', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers',
-            ]));
+            $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+
+            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
+
+            $documentTypes = collect($documentTypes)->groupBy('category');
+
+            $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
+                $quoteDocument->created_by_name = $quoteDocument->createdBy->name;
+
+                return $quoteDocument;
+            });
+
+            $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
+
+            return inertia('HealthQuote/Show', [
+                'quote' => $record,
+                'genderOptions' => $genderOptions,
+                'leadStatuses' => array_values($leadStatuses->toArray()),
+                'ecomDetails' => $ecomDetails,
+                'membersDetail' => $membersDetail,
+                'memberCategories' => $memberCategories,
+                'salaryBands' => $salaryBands,
+                'listQuotePlans' => $listQuotePlans,
+                'ecomHealthInsuranceQuoteUrl' => $ecomHealthInsuranceQuoteUrl,
+                'nationalities' => $nationalities,
+                'emirates' => $emirates,
+                'advisors' => $advisors,
+                'quoteDocuments' => array_values($quoteDocuments->toArray()),
+                'documentTypes' => $documentTypes,
+                'cdnPath' => $cdnPath,
+                'domainPath' => $domainPath,
+                'activities' => $activities,
+                // 'customerAdditionalContacts' => $customerAdditionalContacts,
+            ]);
         } else {
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
@@ -491,6 +545,22 @@ class CRUDController extends Controller
                 $data = $this->dropdownSourceService->getCustomDropdownList($property, $record[0]->id);
                 $customLists[$property] = $data;
             }
+        }
+
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
+            $genderOptions = [
+                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
+                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
+                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
+            ];
+
+            return inertia('HealthQuote/Edit', [
+                'quote' => $record,
+                'dropdownSource' => $dropdownSource,
+                'genderOptions' => $genderOptions,
+                'isRenewalUser' => $isRenewalUser,
+                'model' => json_encode($model->properties),
+            ]);
         }
 
         return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));
@@ -785,9 +855,11 @@ class CRUDController extends Controller
         }
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
-            if ($request->leadStatus == QuoteStatusEnum::FollowupCall ||
-            $request->leadStatus == QuoteStatusEnum::Interested ||
-            $request->leadStatus == QuoteStatusEnum::NoAnswer) {
+            if (
+                $request->leadStatus == QuoteStatusEnum::FollowupCall ||
+                $request->leadStatus == QuoteStatusEnum::Interested ||
+                $request->leadStatus == QuoteStatusEnum::NoAnswer
+            ) {
                 $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
                 $this->validate($request, [
                     'next_followup_date' => 'required',
