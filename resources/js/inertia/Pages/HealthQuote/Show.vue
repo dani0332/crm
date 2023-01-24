@@ -52,9 +52,12 @@ const assignSubteam = ref(usePage().props.quote.health_team_type || ''),
   assignLead = ref(null),
   leadStatus = ref(usePage().props.quote.quote_status_id || null),
   leadNotes = ref(usePage().props.quote.notes),
+  leadStatusLoader = ref(false),
   memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
+  selectedPlansPdf = ref([]),
+  exportLoader = ref(false),
   historyLoading = ref(false),
   isDisabled = ref(false);
 
@@ -205,7 +208,11 @@ const onLeadStatus = () => {
     },
     {
       preserveScroll: true,
+      onBefore: () => {
+        leadStatusLoader.value = true;
+      },
       onSuccess: () => {
+        leadStatusLoader.value = false;
         notification.success('Lead Status Updated');
       },
     },
@@ -332,6 +339,10 @@ const plansTable = reactive({
   isLoading: false,
   columns: [
     {
+      text: '',
+      value: 'id',
+    },
+    {
       text: 'Provider Name',
       value: 'providerName',
     },
@@ -357,6 +368,32 @@ const plansTable = reactive({
 const planClicked = plan => {
   selectedPlan.value = plan;
   modals.plan = true;
+};
+
+const onExportPlans = () => {
+  if (selectedPlansPdf.value.length < 3 || selectedPlansPdf.value.length > 5) {
+    notification.error('Please select 3 to 5 plans to download PDF.');
+    return;
+  }
+  router.post(
+    '/quotes/health/export-health-pdf',
+    {
+      plan_ids: selectedPlansPdf.value,
+      quote_uuid: usePage().props.quote.uuid,
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        exportLoader.value = true;
+      },
+      onSuccess: () => {
+        notification.success('Plans Exported');
+      },
+      onFinish: () => {
+        exportLoader.value = false;
+      },
+    },
+  );
 };
 
 // quoteDocuments
@@ -1014,6 +1051,7 @@ onMounted(() => {
               class="mt-4"
               color="emerald"
               size="sm"
+              :loading="leadStatusLoader"
               @click.prevent="onLeadStatus"
             >
               Change Status
@@ -1060,14 +1098,27 @@ onMounted(() => {
           Available Plans
           <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
         </h3>
-        <x-button
-          v-if="listQuotePlans.length > 0"
-          size="sm"
-          color="primary"
-          @click.prevent="onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)"
-        >
-          Copy Link
-        </x-button>
+        <div class="space-x-4">
+          <x-button
+            v-if="selectedPlansPdf.length > 0"
+            size="sm"
+            color="success"
+            @click.prevent="onExportPlans"
+            :loading="exportLoader"
+          >
+            Export PDF
+          </x-button>
+          <x-button
+            v-if="listQuotePlans.length > 0"
+            size="sm"
+            color="primary"
+            @click.prevent="
+              onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
+            "
+          >
+            Copy Link
+          </x-button>
+        </div>
       </div>
       <x-divider class="my-4" />
       <x-table
@@ -1078,6 +1129,15 @@ onMounted(() => {
         :items="listQuotePlans || []"
         :loading="plansTable.isLoading"
       >
+        <template #item-id="{ item }">
+          <input
+            type="checkbox"
+            class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
+            :name="`${item.id}`"
+            :value="`${item.id}`"
+            v-model="selectedPlansPdf"
+          />
+        </template>
         <template #item-actualPremium="{ item }">
           {{ item.actualPremium + item.basmah }}
         </template>
