@@ -504,7 +504,7 @@ class CRUDController extends Controller
                 'cdnPath' => $cdnPath,
                 'domainPath' => $domainPath,
                 'activities' => $activities,
-                'customerAdditionalContacts' => $customerAdditionalContacts,
+                // 'customerAdditionalContacts' => $customerAdditionalContacts,
             ]);
         } else {
             return view('shared.show', compact([
