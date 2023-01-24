@@ -38,7 +38,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
 
     public function mount()
     {
-        $this->maxDays =  ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
@@ -70,6 +70,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
     public function columns(): array
     {
         $tiers = Tier::where('is_active', 1)->get();
+
         return [
             Column::make('Advisor Name', 'advisor.name')->searchable(),
             Column::make('Total Leads')->label(fn ($row) => ($row->total_leads))->footer(function ($rows) {
@@ -136,8 +137,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-            ->where('tiers.name' , 'not like', '%TR%')
-            ->where('tiers.name' , 'not like', '%Tier R%')
+            ->where('tiers.name', 'not like', '%TR%')
+            ->where('tiers.name', 'not like', '%Tier R%')
             ->groupBy('users.email')
             ->orderBy('users.name');
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {

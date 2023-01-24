@@ -106,7 +106,6 @@ class TierService extends BaseService
     public function updateTier(Request $request, $id)
     {
         $tier = Tier::where('id', $id)->first();
-        info('before : '.json_encode($tier));
         $tier->min_price = $request->min_price;
         $tier->max_price = $request->max_price;
         $tier->cost_per_lead = floatval($request->cost_per_lead);
@@ -116,7 +115,6 @@ class TierService extends BaseService
         $tier->is_tpl_renewals = $request->has('is_tpl_renewals') && $request->is_tpl_renewals == 'on' ? 1 : 0;
         $tier->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $tier->save();
-        info('after : '.json_encode($tier));
         DB::table('tier_users')->where('tier_id', $tier->id)->delete();
         if (isset($request->tier_users)) {
             $userIds = $request->tier_users;
