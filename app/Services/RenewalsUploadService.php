@@ -816,7 +816,7 @@ class RenewalsUploadService
      */
     public function checkAml($renewalQuoteProcess)
     {
-        $logPrefix = 'fn: checkAml. ';
+        $logPrefix = 'Renewals AML - CL: RenewalsUploadService FN: checkAml. ';
 
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         $quoteObject = $this->createQuoteObject($quoteType->code);
