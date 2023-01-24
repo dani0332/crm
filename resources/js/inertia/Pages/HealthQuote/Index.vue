@@ -39,28 +39,6 @@ const tableHeader = [
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
-const excelFields = {
-  'CDB ID': 'code',
-  'FIRST NAME': 'first_name',
-  'LAST NAME': 'last_name',
-  'LEAD STATUS': 'quote_status_id_text',
-  ADVISOR: 'advisor_id_text',
-  'WC ADVISOR': 'wcu_id_text',
-  'CREATED DATE': 'created_at',
-  'LAST MODIFIED DATE': 'updated_at',
-  'HEALTH TEAM TYPE': 'health_team_type',
-  'TRANSAPP CODE': 'transapp_code',
-  'LOST REASON': 'lost_reason',
-  PREMIUM: 'premium',
-  'POLICY NUMBER': 'policy_number',
-  SOURCE: 'source',
-  'LEAD TYPE': 'lead_type_id_text',
-  'SALARY BAND': 'salary_band_id_text',
-  'MEMBER CATEGORY': 'member_category_id_text',
-  'CURRENTLY INSURED WITH': 'currently_insured_with_id_text',
-  'IS ECOMMERCE': 'is_ecommerce',
-};
-
 const filters = reactive({
   code: '',
   first_name: '',
@@ -313,15 +291,15 @@ onMounted(() => {
       <div v-if="quotesSelected.length > 0" class="mb-4">
         <ExportExcel
           :data="quotesSelected"
-          :fields="excelFields"
-          :title="`Health Quotes`"
-          :name="`health-list.xls`"
+          :columns="tableHeader"
+          :filename="'health-list'"
+          :sheetname="'quotes'"
         >
           <x-button size="sm" color="emerald">
             Export -
-            <span class="lining-nums"
-              >Selected: {{ quotesSelected.length }}</span
-            >
+            <span class="lining-nums">
+              Selected: {{ quotesSelected.length }}
+            </span>
           </x-button>
         </ExportExcel>
       </div>

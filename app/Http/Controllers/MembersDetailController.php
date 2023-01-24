@@ -22,7 +22,7 @@ class MembersDetailController extends Controller
         $data = [
             'health_quote_request_id' => $request->health_quote_request_id,
             'gender' => $request->gender,
-            'dob' => $request->dob,
+            'dob' => isset($request->dob) ? $request->dob : null,
             'nationality_id' => $request->nationality_id,
             'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
             'member_category_id' => $request->member_category_id,
