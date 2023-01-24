@@ -1132,7 +1132,7 @@ onMounted(() => {
         <template #item-id="{ item }">
           <input
             type="checkbox"
-            class="h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
+            class="form-checkbox h-4 w-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
             :name="`${item.id}`"
             :value="`${item.id}`"
             v-model="selectedPlansPdf"
