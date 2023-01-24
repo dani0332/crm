@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
 use Spatie\Navigation\Section;
@@ -45,17 +46,21 @@ class HandleInertiaRequests extends Middleware
             'auth.user' => fn () => $request->user()
                 ? $request->user()->only('id', 'name', 'email')
                 : null,
-            'sidebar' => $this->buildNavigation()->tree(),
+            'sidebar' => fn () => $this->buildNavigation()->tree(),
 
         ]);
     }
 
     protected function buildNavigation()
     {
+        if (! Auth::check()) {
+            return redirect('login');
+        }
+
         $nav = app(Navigation::class)
             ->add('Home', url('/leadsearch'));
 
-        if (auth()->user()->hasAnyPermission([
+        if (Auth::user()->hasAnyPermission([
             PermissionsEnum::DashboardView,
             PermissionsEnum::TPL_DASHBOARD_VIEW,
             PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
