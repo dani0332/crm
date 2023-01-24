@@ -73,7 +73,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'~'.now()->format('Y-m-d'));
+            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
@@ -189,9 +189,8 @@ class AdvisorConversionReportTable extends DataTableComponent
                     'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
-                        $builder->whereBetween('quote_batches.created_at', [$matches[1], $matches[2]]);
-                    }
+                    $dates = explode('~', $value);
+                    $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
             SelectFilter::make('Ecommerce')
                 ->options([
