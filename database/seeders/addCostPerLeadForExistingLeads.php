@@ -15,10 +15,9 @@ class addCostPerLeadForExistingLeads extends Seeder
      */
     public function run()
     {
-
         $costPerLeadCount = CarQuote::whereNotNull('cost_per_lead')->count();
         if ($costPerLeadCount == 0) {
-            DB::statement("UPDATE car_quote_request SET cost_per_lead = (SELECT cost_per_lead FROM tiers WHERE id = car_quote_request.tier_id) WHERE tier_id IS NOT NULL");
+            DB::statement('UPDATE car_quote_request SET cost_per_lead = (SELECT cost_per_lead FROM tiers WHERE id = car_quote_request.tier_id) WHERE tier_id IS NOT NULL');
         }
     }
 }

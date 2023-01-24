@@ -47,6 +47,7 @@ class CarLeadAllocationController extends Controller
                     $totalAssignedLeadCount = $totalAssignedLeadCount + ($value->auto_assignment_count + $value->manual_assignment_count);
                     $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
                 }
+
                 return Datatables::of($data)
                     ->addIndexColumn()
                     ->make(true);
