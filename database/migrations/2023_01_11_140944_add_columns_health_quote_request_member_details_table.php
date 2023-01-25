@@ -15,11 +15,11 @@ class AddColumnsHealthQuoteRequestMemberDetailsTable extends Migration
     {
         Schema::table('health_quote_request_member_details', function (Blueprint $table) {
             if (! Schema::hasColumn('health_quote_request_member_details', 'nationality_id')) {
-                $table->integer('nationality_id', )->nullable();
+                $table->integer('nationality_id')->nullable();
                 $table->foreign('nationality_id')->references('id')->on('nationality');
             }
             if (! Schema::hasColumn('health_quote_request_member_details', 'emirate_of_your_visa_id')) {
-                $table->integer('emirate_of_your_visa_id', )->nullable();
+                $table->integer('emirate_of_your_visa_id')->nullable();
                 $table->foreign('emirate_of_your_visa_id')->references('id')->on('emirates');
             }
         });
