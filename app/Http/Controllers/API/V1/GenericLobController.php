@@ -39,6 +39,6 @@ class GenericLobController extends Controller
         $pdf = $response['pdf'];
 
         //encode PDF as base64 and return
-        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream())]);
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => $response['name']]);
     }
 }
