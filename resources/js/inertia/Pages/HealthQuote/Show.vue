@@ -387,23 +387,19 @@ const onExportPlans = () => {
   exportLoader.value = true;
   axios
     .post(
-      '/quotes/health/export-health-pdf',
+      '/api/v1/quotes/health/export-plans-pdf',
       {
         plan_ids: selectedPlansPdf.value,
         quote_uuid: usePage().props.quote.uuid,
       },
       {
-        responseType: 'blob',
+        responseType: 'json',
       },
     )
     .then(response => {
-      const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
-      let fileName =
-        'InsuranceMarket.ae™ Health Insurance Comparison for ' +
-        usePage().props.auth.user.name +
-        '.pdf';
-      link.href = url;
+      let fileName = response.data.name;
+      link.href = response.data.data;
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
