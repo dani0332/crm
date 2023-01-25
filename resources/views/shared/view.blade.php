@@ -544,7 +544,7 @@
                                     @foreach ($searchProperties as $searchProperty)
                                         @if ($searchProperty == $property)
                                             @if (strpos($value, 'input') !== false && !str_contains($value, 'range'))
-                                            <x-input-filter :customtitles="$customTitles" :property="$property" :errors="$errors" :value="$value" />
+                                                <x-input-filter :customtitles="$customTitles" :property="$property" :errors="$errors" :value="$value" />
                                             @endif
                                             @if (strpos($value, 'select') !== false && str_contains($value, 'multiple'))
                                                 <x-multi-select-filter :customtitles="$customTitles" :property="$property" :errors="$errors" :model="$model" :value="$value" :dropdownSource="$dropdownSource" />

@@ -1193,7 +1193,7 @@ class CarQuoteService extends BaseService
             if ($lead->created_at > now()->startOfDay() && $lead->advisor_id != null) {
                 // preAdvAllocation = Previous assigned advisor allocation count
                 $preAdvAllocation = $this->leadAllocationService->getLeadAllocationRecordByUserId($lead->advisor_id);
-                $preAdvAllocation->allocation_count = $$preAdvAllocation->allocation_count - 1;
+                $preAdvAllocation->allocation_count = $preAdvAllocation->allocation_count - 1;
                 $advAllocation->updated_at = now();
                 if ($lead->auto_assigned) {
                     $preAdvAllocation->auto_assignment_count = $preAdvAllocation->auto_assignment_count - 1;
