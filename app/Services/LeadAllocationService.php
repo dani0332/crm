@@ -33,10 +33,12 @@ class LeadAllocationService extends BaseService
     use GetUserTreeTrait;
 
     protected $emailDataService;
+    protected $sendEmailCustomerService;
 
-    public function __construct(EmailDataService $emailDataService)
+    public function __construct(EmailDataService $emailDataService, SendEmailCustomerService $sendEmailCustomerService)
     {
         $this->emailDataService = $emailDataService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
     public function getGridData()
@@ -542,6 +544,15 @@ class LeadAllocationService extends BaseService
 
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
                         $this->updateLeadAllocationOnCarAutoAssignment($userId);
+
+                        $user = User::where('id', $userId)->first();
+
+                        $this->sendEmailCustomerService->sendLMSIntroEmail(426, [
+                            'clientFullName' => $carQuote->first_name . ' '. $carQuote->last_name,
+                            'advisorName' => $user->name,
+                            'landLine' => $user->landline_no,
+                            'mobilePhone' => $user->mobile_no,
+                        ], 'send-lms-intro-email');
 
                         info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                     } else {

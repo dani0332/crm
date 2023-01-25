@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -25,14 +26,16 @@ class CarQuoteService extends BaseService
     protected $httpService;
     protected $childUserIds = [];
     protected $leadAllocationService;
+    protected $sendEmailCustomerService;
 
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
                 'cqr.uuid',
@@ -1154,6 +1157,7 @@ class CarQuoteService extends BaseService
     {
         $userId = (int) $request->assigned_to_id_new;
         $result = [];
+        $user = User::where('id', $userId)->first();
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             $lead->advisor_id = $userId;
@@ -1165,6 +1169,13 @@ class CarQuoteService extends BaseService
 
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
             $this->addManualAllocationCountAndUpdate($userId, $lead);
+
+            $this->sendEmailCustomerService->sendLMSIntroEmail(426, [
+                'clientFullName' => $lead->first_name . ' '. $lead->last_name,
+                'advisorName' => $user->name,
+                'landLine' => $user->landline_no,
+                'mobilePhone' => $user->mobile_no,
+            ], 'send-lms-reassignment-email');
         }
 
         return $result;
