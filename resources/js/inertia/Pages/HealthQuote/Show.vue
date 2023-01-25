@@ -7,6 +7,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { useNotifications } from '@indielayer/ui';
 import axios from 'axios';
+import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 defineProps({
   quote: Object,
@@ -75,7 +76,7 @@ const assignSubteam = ref(usePage().props.quote.health_team_type || ''),
 const { copy, copied } = useClipboard();
 
 const rules = {
-  isRequired: v => !!v || 'Field is required',
+  isRequired: v => !!v || 'This field is required',
 };
 
 const onCopyText = text => {
@@ -309,7 +310,13 @@ const onAddMemberModal = () => {
   modals.member = true;
 };
 
+const memberFieldReq = ref(false);
 const onMemberSubmit = isValid => {
+  if (memberForm.nationality_id == null) {
+    memberFieldReq.value = true;
+  } else {
+    memberFieldReq.value = false;
+  }
   if (!isValid) return;
   if (memberActionEdit.value) {
     memberForm.put(`/members/${memberForm.id}`, {
@@ -996,13 +1003,14 @@ onMounted(() => {
         <x-form @submit="onMemberSubmit" :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4">
             <input type="hidden" :value="memberForm.id" />
-            <x-select
+
+            <ComboBox
               v-model="memberForm.nationality_id"
               label="Nationality"
               :options="nationalityOptions"
-              :rules="[rules.isRequired]"
               placeholder="Select Nationality"
-              class="w-full"
+              :single="true"
+              :hasError="memberFieldReq"
             />
 
             <x-select

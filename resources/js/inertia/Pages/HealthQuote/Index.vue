@@ -3,6 +3,7 @@ import { reactive, computed, onMounted, ref } from 'vue';
 import { Head, router, usePage, Link } from '@inertiajs/vue3';
 import Pagination from '@/inertia/Components/Pagination.vue';
 import ExportExcel from '@/inertia/Components/ExportExcel.vue';
+import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 defineProps({
   quotes: Object,
@@ -240,22 +241,19 @@ onMounted(() => {
           placeholder="Search by Sub Team"
           class="w-full"
         />
-        <x-select
+
+        <ComboBox
           v-model="filters.quote_status"
           label="Lead Status"
-          id="quote_status[]"
+          name="quote_status"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
-          multiple
-          class="w-full"
         />
-        <x-select
+        <ComboBox
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorOptions"
-          multiple
-          class="w-full"
         />
         <x-select
           v-model="filters.is_ecommerce"

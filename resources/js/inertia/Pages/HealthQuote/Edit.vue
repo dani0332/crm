@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, router, useForm, Link } from '@inertiajs/vue3';
+import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 const props = defineProps({
   quote: Object,
@@ -49,10 +50,17 @@ const rules = {
   isEmail: v =>
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
     'E-mail must be valid',
-  isRequired: v => !!v || 'Field is required',
+  isRequired: v => !!v || 'This field is required',
 };
 
+const isEmptyField = ref(false);
+
 function onSubmit(isValid) {
+  if (quoteForm.nationality_id == null) {
+    isEmptyField.value = true;
+  } else {
+    isEmptyField.value = false;
+  }
   if (isValid) {
     quoteForm.put(`/quotes/health/${props.quote.uuid}`, {
       onSuccess: () => {
@@ -197,17 +205,17 @@ function onSubmit(isValid) {
           class="w-full"
         />
 
-        <x-select
+        <ComboBox
           v-model="quoteForm.nationality_id"
           label="NATIONALITY"
-          :rules="[rules.isRequired]"
+          :single="true"
           :options="
             dropdownSource.nationality_id.map(item => ({
               value: item.id,
               label: item.text,
             }))
           "
-          class="w-full"
+          :hasError="isEmptyField"
         />
 
         <x-select
