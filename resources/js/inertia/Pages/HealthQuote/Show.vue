@@ -4,6 +4,7 @@ import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 import { useDateFormat, useClipboard } from '@vueuse/core';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { useNotifications } from '@indielayer/ui';
 import axios from 'axios';
 
@@ -45,6 +46,7 @@ const modals = reactive({
   doc: false,
   docConfirm: false,
   plan: false,
+  createPlan: false,
   activity: false,
   activityConfirm: false,
   addContact: false,
@@ -78,7 +80,11 @@ const rules = {
 
 const onCopyText = text => {
   copy(text);
-  if (copied) notification.success('Link copied to clipboard');
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
 };
 
 const genderText = gender =>
@@ -152,7 +158,10 @@ const salaryBandsOptions = computed(() => {
 
 const onTeamAssign = () => {
   if (!assignSubteam.value) {
-    notification.error('Please select a subteam');
+    notification.error({
+      title: 'Please select a subteam',
+      position: 'top',
+    });
     return;
   }
   router.post(
@@ -168,7 +177,10 @@ const onTeamAssign = () => {
         isDisabled.value = true;
       },
       onSuccess: () => {
-        notification.success('Team Assigned');
+        notification.success({
+          title: 'Team Assigned',
+          position: 'top',
+        });
       },
       onFinish: () => {
         isDisabled.value = false;
@@ -179,7 +191,10 @@ const onTeamAssign = () => {
 
 const onAssignLead = () => {
   if (!assignLead.value) {
-    notification.error('Please select a lead');
+    notification.error({
+      title: 'Please select a lead',
+      position: 'top',
+    });
     return;
   }
   router.post(
@@ -195,7 +210,10 @@ const onAssignLead = () => {
         isDisabled.value = true;
       },
       onSuccess: () => {
-        notification.success('Lead Assigned');
+        notification.success({
+          title: 'Lead Assigned',
+          position: 'top',
+        });
       },
       onFinish: () => {
         isDisabled.value = false;
@@ -222,7 +240,10 @@ const onLeadStatus = () => {
       },
       onSuccess: () => {
         leadStatusLoader.value = false;
-        notification.success('Lead Status Updated');
+        notification.success({
+          title: 'Lead Status Updated',
+          position: 'top',
+        });
       },
     },
   );
@@ -231,10 +252,6 @@ const onLeadStatus = () => {
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
-    {
-      text: 'Name',
-      value: 'id',
-    },
     {
       text: 'Gender',
       value: 'gender',
@@ -298,7 +315,10 @@ const onMemberSubmit = isValid => {
     memberForm.put(`/members/${memberForm.id}`, {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success('Member Updated');
+        notification.success({
+          title: 'Member Updated',
+          position: 'top',
+        });
       },
       onFinish: () => {
         modals.member = false;
@@ -308,7 +328,10 @@ const onMemberSubmit = isValid => {
     memberForm.post(`/members`, {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success('Member Added');
+        notification.success({
+          title: 'Member Added',
+          position: 'top',
+        });
       },
       onFinish: () => {
         modals.member = false;
@@ -326,7 +349,10 @@ const memberDeleteConfirmed = () => {
   memberForm.delete(`/members/${confirmDeleteData.member}`, {
     preserveScroll: true,
     onSuccess: () => {
-      notification.success('Member Deleted');
+      notification.success({
+        title: 'Member Deleted',
+        position: 'top',
+      });
     },
     onFinish: () => {
       modals.memberConfirm = false;
@@ -347,10 +373,6 @@ const memberDataDocs = membersDetail => {
 const plansTable = reactive({
   isLoading: false,
   columns: [
-    {
-      text: '',
-      value: 'id',
-    },
     {
       text: 'Provider Name',
       value: 'providerName',
@@ -381,15 +403,21 @@ const planClicked = plan => {
 
 const onExportPlans = () => {
   if (selectedPlansPdf.value.length < 3 || selectedPlansPdf.value.length > 5) {
-    notification.error('Please select 3 to 5 plans to download PDF.');
+    notification.error({
+      title: 'Please select 3 to 5 plans to download PDF.',
+      position: 'top',
+    });
     return;
   }
   exportLoader.value = true;
+  const planIds = selectedPlansPdf.value.map(p => {
+    return p.id;
+  });
   axios
     .post(
       '/api/v1/quotes/health/export-plans-pdf',
       {
-        plan_ids: selectedPlansPdf.value,
+        plan_ids: planIds,
         quote_uuid: usePage().props.quote.uuid,
       },
       {
@@ -403,7 +431,10 @@ const onExportPlans = () => {
       link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
-      notification.success('Plans Exported');
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
     })
     .catch(error => {
       console.log(error);
@@ -459,7 +490,10 @@ const confirmDeleteDoc = () => {
       onFinish: () => {
         modals.docConfirm = false;
         quoteDocumentsTable.isLoading = false;
-        notification.error('File Deleted');
+        notification.error({
+          title: 'File Deleted',
+          position: 'top',
+        });
       },
     },
   );
@@ -467,11 +501,11 @@ const confirmDeleteDoc = () => {
 
 //activities
 const activityTable = [
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
   { text: 'Title', value: 'title' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
   { text: 'Assigned To', value: 'assignee' },
-  { text: 'Done', value: 'status' },
   { text: 'Action', value: 'action' },
 ];
 
@@ -501,7 +535,10 @@ const onActivityStatusUpdate = id => {
   activityForm.post(`/activities/updateStatus`, {
     preserveScroll: true,
     onSuccess: () => {
-      notification.success('Lead Activity Done');
+      notification.success({
+        title: 'Lead Activity Done',
+        position: 'top',
+      });
     },
   });
 };
@@ -528,7 +565,10 @@ const onActivitySubmit = isValid => {
     activityForm.post(`/activities/${activityForm.uuid}/update`, {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success('Activity Updated');
+        notification.success({
+          title: 'Activity Updated',
+          position: 'top',
+        });
       },
       onFinish: () => {
         modals.activity = false;
@@ -538,7 +578,10 @@ const onActivitySubmit = isValid => {
     activityForm.post(`/activities/create-activity`, {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success('Activity Added');
+        notification.success({
+          title: 'Activity Added',
+          position: 'top',
+        });
       },
       onFinish: () => {
         modals.activity = false;
@@ -562,7 +605,10 @@ const activityDeleteConfirmed = () => {
     {
       preserveScroll: true,
       onSuccess: () => {
-        notification.error('Activity Deleted');
+        notification.error({
+          title: 'Activity Deleted',
+          position: 'top',
+        });
       },
       onFinish: () => {
         modals.activityConfirm = false;
@@ -586,7 +632,10 @@ const onAdditionalContactSubmit = isValid => {
   additionalContact.post(`/customer-additional-contact/add`, {
     preserveScroll: true,
     onSuccess: () => {
-      notification.success('Additional Contact Added');
+      notification.success({
+        title: 'Additional Contact Added',
+        position: 'top',
+      });
     },
     onFinish: () => {
       modals.addContact = false;
@@ -890,32 +939,34 @@ onMounted(() => {
         </x-button>
       </div>
 
-      <x-divider class="my-4" />
-      <x-table
-        class="text-sm"
-        dense
-        striped
-        :items="membersDetail || []"
+      <DataTable
+        table-class-name="tablefixed compact"
         :headers="memberDetailsTable.columns"
-        :loading="memberDetailsTable.isLoading"
+        :items="membersDetail || []"
+        show-index
+        border-cell
+        hide-rows-per-page
+        hide-footer
       >
-        <template #item-id> Member </template>
-        <template #item-gender="{ item }">
-          {{ genderText(item.gender).value }}
+        <template #item-index="{ index }">
+          <div>Member {{ index }}</div>
         </template>
-        <template #item-dob="{ item }">
-          {{ dateFormat(item.dob).value }}
+        <template #item-gender="{ gender }">
+          {{ genderText(gender).value }}
         </template>
-        <template #item-nationality="{ item }">
-          {{ item.nationality?.text }}
+        <template #item-dob="{ dob }">
+          {{ dateFormat(dob).value }}
         </template>
-        <template #item-emirate="{ item }">
-          {{ item.emirate?.text }}
+        <template #item-nationality="{ nationality }">
+          {{ nationality?.text }}
         </template>
-        <template #item-member_category_id="{ item }">
-          {{ memberCategoryText(item.member_category_id).value }}
+        <template #item-emirate="{ emirate }">
+          {{ emirate?.text }}
         </template>
-        <template #item-action="{ item }">
+        <template #item-member_category_id="{ member_category_id }">
+          {{ memberCategoryText(member_category_id).value }}
+        </template>
+        <template #item-action="item">
           <div class="flex gap-2">
             <x-button
               size="xs"
@@ -935,7 +986,7 @@ onMounted(() => {
             </x-button>
           </div>
         </template>
-      </x-table>
+      </DataTable>
 
       <x-modal v-model="modals.member" size="lg" show-close backdrop>
         <template #header>
@@ -998,7 +1049,7 @@ onMounted(() => {
             />
           </div>
 
-          <div class="text-right space-x-4 mt-12">
+          <div class="text-right space-x-4 mt-8">
             <x-button size="sm" @click.prevent="modals.member = false">
               Cancel
             </x-button>
@@ -1123,12 +1174,19 @@ onMounted(() => {
             @click.prevent="onExportPlans"
             :loading="exportLoader"
           >
-            Export PDF
+            Download PDF
           </x-button>
+          <!-- <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="modals.createPlan = true"
+          >
+            Create Quote
+          </x-button> -->
           <x-button
             v-if="listQuotePlans.length > 0"
             size="sm"
-            color="primary"
+            color="orange"
             @click.prevent="
               onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
             "
@@ -1137,66 +1195,59 @@ onMounted(() => {
           </x-button>
         </div>
       </div>
-      <x-divider class="my-4" />
-      <x-table
-        class="text-sm"
-        dense
-        striped
+      <DataTable
+        v-model:items-selected="selectedPlansPdf"
+        table-class-name="tablefixed compact"
         :headers="plansTable.columns"
         :items="listQuotePlans || []"
-        :loading="plansTable.isLoading"
-        :stickyHeader="false"
+        border-cell
+        hide-rows-per-page
+        hide-footer
       >
-        <template #item-id="{ item }">
-          <input
-            type="checkbox"
-            class="form-checkbox h-5 w-5 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
-            :name="`${item.id}`"
-            :value="`${item.id}`"
-            v-model="selectedPlansPdf"
-          />
+        <template #item-actualPremium="{ actualPremium, basmah }">
+          {{ fixedValue(actualPremium + basmah) }}
         </template>
-        <template #item-actualPremium="{ item }">
-          {{ fixedValue(item.actualPremium + item.basmah) }}
+        <template #item-premiumVat="{ actualPremium, vat, basmah }">
+          {{ fixedValue(actualPremium + vat + basmah) }}
         </template>
-        <template #item-premiumVat="{ item }">
-          {{ fixedValue(item.actualPremium + item.vat + item.basmah) }}
+        <template #item-action="item">
+          <div class="flex gap-2 pr-2">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              @click.prevent="planClicked(item)"
+            >
+              View
+            </x-button>
+            <x-button
+              size="xs"
+              color="emerald"
+              outlined
+              @click.prevent="
+                onCopyText(
+                  ecomHealthInsuranceQuoteUrl +
+                    quote.uuid +
+                    `/payment/?providerCode=${item.providerCode}_${item.planCode}&planId=${item.id}`,
+                )
+              "
+            >
+              Copy
+            </x-button>
+          </div>
         </template>
-        <template #item-action="{ item }">
-          <x-table-cell fixed dense>
-            <div class="flex gap-2 pr-2">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="planClicked(item)"
-              >
-                View
-              </x-button>
-              <x-button
-                size="xs"
-                color="emerald"
-                outlined
-                @click.prevent="
-                  onCopyText(
-                    ecomHealthInsuranceQuoteUrl +
-                      quote.uuid +
-                      `/payment/?providerCode=${item.providerCode}_${item.planCode}&planId=${item.id}`,
-                  )
-                "
-              >
-                Copy
-              </x-button>
-            </div>
-          </x-table-cell>
-        </template>
-      </x-table>
+      </DataTable>
 
       <x-modal v-model="modals.plan" size="xl" show-close backdrop>
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>
         <LazyAvailablePlan :plan="selectedPlan" />
+      </x-modal>
+
+      <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
+        <template #header> Create Heath Quote </template>
+        <LazyCreatePlan />
       </x-modal>
     </div>
 
@@ -1210,16 +1261,15 @@ onMounted(() => {
           Upload Documents
         </x-button>
       </div>
-      <x-divider class="my-4" />
-      <x-table
-        class="text-sm"
-        dense
-        striped
+      <DataTable
+        table-class-name="compact"
         :headers="quoteDocumentsTable.columns"
         :items="quoteDocuments || []"
-        :loading="quoteDocumentsTable.isLoading"
+        border-cell
+        hide-rows-per-page
+        hide-footer
       >
-        <template #item-original_name="{ item }">
+        <template #item-original_name="item">
           <a
             :href="cdnPath + item.doc_url"
             target="_blank"
@@ -1228,19 +1278,19 @@ onMounted(() => {
             {{ item.original_name }}
           </a>
         </template>
-        <template #item-action="{ item }">
+        <template #item-action="{ doc_name }">
           <div>
             <x-button
               size="xs"
               color="error"
               outlined
-              @click.prevent="onDocDelete(item.doc_name)"
+              @click.prevent="onDocDelete(doc_name)"
             >
               Delete
             </x-button>
           </div>
         </template>
-      </x-table>
+      </DataTable>
 
       <x-modal v-model="modals.doc" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
@@ -1287,23 +1337,25 @@ onMounted(() => {
         </x-button>
       </div>
       <x-divider class="my-4" />
-      <x-table
-        class="text-sm"
-        dense
-        striped
+
+      <DataTable
+        table-class-name="compact"
         :headers="activityTable"
         :items="activities"
+        border-cell
+        hide-rows-per-page
+        hide-footer
       >
-        <template #item-status="{ item }">
+        <template #item-status="{ status, id }">
           <x-checkbox
             color="emerald"
             size="xl"
-            :modelValue="item.status === 1"
-            :disabled="item.status === 1"
-            @change="onActivityStatusUpdate(item.id)"
+            :modelValue="status === 1"
+            :disabled="status === 1"
+            @change="onActivityStatusUpdate(id)"
           />
         </template>
-        <template #item-action="{ item }">
+        <template #item-action="item">
           <div class="space-x-4">
             <x-button
               size="xs"
@@ -1325,7 +1377,7 @@ onMounted(() => {
             </x-button>
           </div>
         </template>
-      </x-table>
+      </DataTable>
       <x-modal v-model="modals.activity" size="lg" show-close backdrop>
         <template #header>
           {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
@@ -1481,17 +1533,15 @@ onMounted(() => {
           Load History Data
         </x-button>
       </div>
-      <x-table
+      <DataTable
         v-else
-        class="text-sm"
-        dense
-        striped
+        table-class-name="compact"
         :headers="historyDataTable"
         :items="historyData || []"
+        border-cell
+        hide-rows-per-page
+        hide-footer
       />
-      <div v-if="historyData?.length === 0" class="text-center py-3">
-        <p class="text-gray-500">No data available.</p>
-      </div>
     </div>
   </div>
 </template>

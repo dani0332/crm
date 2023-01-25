@@ -43,7 +43,10 @@ const uploadFile = (doc, memberId, files) => {
       only: ['quoteDocuments'],
       onFinish: () => {
         isUploading.value = false;
-        notification.success('File Uploaded');
+        notification.success({
+          title: 'File Uploaded',
+          position: 'top',
+        });
       },
     });
 };
