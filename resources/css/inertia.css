@@ -40,7 +40,7 @@ label {
 }
 
 .vue3-easy-data-table {
-  @apply w-full overflow-x-auto rounded-lg shadow bg-white ring-1 ring-slate-200;
+  @apply w-full overflow-x-auto rounded-lg bg-white ring-1 ring-primary-100;
 }
 
 /* Table container */
@@ -94,6 +94,10 @@ label {
 /* Table body td tag */
 .vue3-easy-data-table__body tr td {
   @apply border-b p-4 text-sm font-medium align-middle;
+}
+
+.compact .vue3-easy-data-table__body tr td {
+  @apply p-2;
 }
 
 .tablefixed .vue3-easy-data-table__body tr td {

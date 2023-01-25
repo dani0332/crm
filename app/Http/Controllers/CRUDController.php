@@ -243,6 +243,20 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
 
+        if ($this->genericModel->modelType == quoteTypeCode::Health) {
+            $genderOptions = [
+                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
+                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
+                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
+            ];
+
+            return inertia('HealthQuote/Create', [
+                'dropdownSource' => $dropdownSource,
+                'genderOptions' => $genderOptions,
+                'model' => json_encode($model->properties),
+            ]);
+        }
+
         return view('shared.add', compact('model', 'dropdownSource', 'customTitles', 'isRenewalUser'));
     }
 
@@ -261,9 +275,11 @@ class CRUDController extends Controller
         if ($modelType == 'Home') {
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['create']);
         } else {
-            foreach ($modelPropertiesList as $property => $value) {
-                if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
-                    $validateArray[$property] = 'required';
+            if ($modelType !== quoteTypeCode::Health) {
+                foreach ($modelPropertiesList as $property => $value) {
+                    if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
+                        $validateArray[$property] = 'required';
+                    }
                 }
             }
         }
@@ -281,12 +297,17 @@ class CRUDController extends Controller
 
         $this->validate($request, $validateArray);
         $record = $this->crudService->saveModelByType($modelType, $request);
+
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
             if (! isset($record->quoteUID)) {
                 return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
             } else {
+                if ($modelType == quoteTypeCode::Health) {
+                    return redirect('/quotes/health');
+                }
+
                 return redirect('/quotes/'.strtolower($modelType).'/'.$record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : 'Lead'))).' has been created');
             }
         }
