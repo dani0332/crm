@@ -506,6 +506,7 @@ class CRUDController extends Controller
 
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
+            $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
 
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
@@ -526,6 +527,7 @@ class CRUDController extends Controller
                 'domainPath' => $domainPath,
                 'activities' => $activities,
                 // 'customerAdditionalContacts' => $customerAdditionalContacts,
+                'insuranceProviders' => $insuranceProviders,
             ]);
         } else {
             return view('shared.show', compact([

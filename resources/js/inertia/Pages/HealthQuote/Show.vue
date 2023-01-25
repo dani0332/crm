@@ -4,6 +4,7 @@ import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 import { useDateFormat, useClipboard } from '@vueuse/core';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { useNotifications } from '@indielayer/ui';
 import axios from 'axios';
 
@@ -45,6 +46,7 @@ const modals = reactive({
   doc: false,
   docConfirm: false,
   plan: false,
+  createPlan: false,
   activity: false,
   activityConfirm: false,
   addContact: false,
@@ -250,10 +252,6 @@ const onLeadStatus = () => {
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
-    {
-      text: 'Name',
-      value: 'id',
-    },
     {
       text: 'Gender',
       value: 'gender',
@@ -503,7 +501,7 @@ const confirmDeleteDoc = () => {
 
 //activities
 const activityTable = [
-  { text: 'Done', value: 'status', width: 50 },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
   { text: 'Title', value: 'title' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
@@ -945,11 +943,14 @@ onMounted(() => {
         table-class-name="tablefixed compact"
         :headers="memberDetailsTable.columns"
         :items="membersDetail || []"
+        show-index
         border-cell
         hide-rows-per-page
         hide-footer
       >
-        <template #item-id="{ id }"> Member {{ id }} </template>
+        <template #item-index="{ index }">
+          <div>Member {{ index }}</div>
+        </template>
         <template #item-gender="{ gender }">
           {{ genderText(gender).value }}
         </template>
@@ -1048,7 +1049,7 @@ onMounted(() => {
             />
           </div>
 
-          <div class="text-right space-x-4 mt-12">
+          <div class="text-right space-x-4 mt-8">
             <x-button size="sm" @click.prevent="modals.member = false">
               Cancel
             </x-button>
@@ -1175,7 +1176,13 @@ onMounted(() => {
           >
             Download PDF
           </x-button>
-          <x-button size="sm" color="primary"> Create Quote </x-button>
+          <!-- <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="modals.createPlan = true"
+          >
+            Create Quote
+          </x-button> -->
           <x-button
             v-if="listQuotePlans.length > 0"
             size="sm"
@@ -1236,6 +1243,11 @@ onMounted(() => {
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>
         <LazyAvailablePlan :plan="selectedPlan" />
+      </x-modal>
+
+      <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
+        <template #header> Create Heath Quote </template>
+        <LazyCreatePlan />
       </x-modal>
     </div>
 
