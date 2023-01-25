@@ -1014,18 +1014,18 @@ class RenewalsUploadService
         $planData = [
             'quoteUID' => $quote->uuid,
             'update' => false,
-            'plans' => [
-                'planId' => $healthPlan->id,
-                'actualPremium' => $data['premium'],
-                'discountPremium' => 0,
-                'isManualUpdate' => false,
-                'isManualPremium' => true,
-            ],
+        ];
+
+        $planData['plans'][] =  [
+            'planId' => $healthPlan->id,
+            'actualPremium' => $data['premium'],
+            'discountPremium' => 0,
+            'isManualUpdate' => false,
+            'isManualPremium' => true,
         ];
 
         info($logPrefix.' setup create plan data is completed.');
-
-        //todo: temporary logging, remove later
+        
         info($logPrefix.' PlanData: '.json_encode($planData));
 
         return $this->healthQuoteService->renewalCreatePlan($planData);
