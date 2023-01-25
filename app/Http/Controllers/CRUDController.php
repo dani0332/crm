@@ -478,7 +478,7 @@ class CRUDController extends Controller
             $documentTypes = collect($documentTypes)->groupBy('category');
 
             $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
-                $quoteDocument->created_by_name = $quoteDocument->createdBy->name;
+                $quoteDocument->created_by_name = isset($quoteDocument->createdBy->name) ? $quoteDocument->createdBy->name : null;
 
                 return $quoteDocument;
             });
