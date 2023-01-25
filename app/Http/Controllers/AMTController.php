@@ -109,7 +109,8 @@ class AMTController extends Controller
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         $model = 'Business';
         if ($request->ajax()) {
-            if (empty($request->email) && empty($request->code)) {
+            if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
+                    empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
                 $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->first_name) && $request->first_name != '') {
