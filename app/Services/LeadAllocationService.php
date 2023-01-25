@@ -535,6 +535,7 @@ class LeadAllocationService extends BaseService
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
+                        $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
                         $carQuote->save();
                         info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
                         $this->updateCarLeadDetailRecord($carLead->id);
@@ -551,7 +552,7 @@ class LeadAllocationService extends BaseService
                             $carQuote->save();
                             info('Tier with name : '.$selectedTier->name.' and id : '.$selectedTier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
                         } else {
-                            info('Tier ('.$selectedTier->id.')is already assigned against car lead with uuid : '.$carQuote->uuid);
+                            info('Tier ('.$selectedTier->name.')is already assigned against car lead with uuid : '.$carQuote->uuid);
                         }
                     }
                 }

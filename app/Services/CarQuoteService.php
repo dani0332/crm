@@ -292,7 +292,7 @@ class CarQuoteService extends BaseService
             'id' => 'readonly|none',
             'code' => 'input|title|ss:0',
             'quote_batch_id' => 'select|readonly|title',
-            'renewal_batch' => 'input|number|title',
+            'renewal_batch' => 'input|number|title|ss:14',
             'first_name' => 'input|text|required|ss:1',
             'last_name' => 'input|text|required|ss:2',
             'dob' => 'input|text|title|required',
@@ -312,28 +312,28 @@ class CarQuoteService extends BaseService
             'year_of_first_registration' => 'input|date|title|range',
             'car_value' => 'input|number',
             'car_value_tier' => 'input|number|title|required',
-            'vehicle_type_id' => 'select|title|required',
+            'vehicle_type_id' => 'select|title|required|ss:11',
             'seat_capacity' => 'input|number|title|required',
             'emirate_of_registration_id' => 'select|title|required',
-            'car_type_insurance_id' => 'select|title|required',
-            'currently_insured_with' => 'select|title|required|idAsText',
+            'car_type_insurance_id' => 'select|title|required|ss:12',
+            'currently_insured_with' => 'select|title|required|idAsText|ss:13',
             'claim_history_id' => 'select|title|required',
             'has_ncd_supporting_documents' => '|static|title|,Yes,No',
-            'created_at' => 'input|date|title|range',
-            'advisor_assigned_date' => 'input|date|title|range',
+            'created_at' => 'input|date|title|range|ss:5',
+            'advisor_assigned_date' => 'input|date|title|range|ss:6',
             'cost_per_lead' => 'readonly|title|none',
-            'quote_status_id' => 'select|title|multiple',
-            'payment_status_id' => 'select|title',
-            'is_ecommerce' => '|static|title|Yes,No',
-            'tier_id' => 'select|title|multiple|ss:5',
+            'quote_status_id' => 'select|title|multiple|ss:9',
+            'payment_status_id' => 'select|title|ss:7',
+            'is_ecommerce' => '|static|title|ss:8|Yes,No',
+            'tier_id' => 'select|title|multiple|ss:10',
             'visit_count' => 'readonly|none',
             'next_followup_date' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
             'updated_by' => 'readonly|none',
             'additional_notes' => 'textarea|',
-            'advisor_id' => 'select|title||multiple',
+            'advisor_id' => 'select|title||multiple|ss:17',
             'policy_number' => 'input|text|title',
-            'renewal_expiry_date' => 'input|date|title|range',
+            'renewal_expiry_date' => 'input|date|title|range|ss:15',
             'is_gcc_standard' => '|static|title|Yes,No',
             'is_modified' => '|static|title|Yes,No',
             'premium' => 'input|number',
@@ -355,7 +355,7 @@ class CarQuoteService extends BaseService
             'parent_duplicate_quote_id' => 'input|title',
             'renewal_import_code' => 'input|text',
             'quote_link' => 'readonly|none',
-            'previous_quote_policy_number' => 'input|text|title',
+            'previous_quote_policy_number' => 'input|text|title|ss:16',
             'policy_start_date' => 'input|text',
             'previous_policy_expiry_date' => 'input|date|title|range',
         ];
@@ -1193,7 +1193,7 @@ class CarQuoteService extends BaseService
             if ($lead->created_at > now()->startOfDay() && $lead->advisor_id != null) {
                 // preAdvAllocation = Previous assigned advisor allocation count
                 $preAdvAllocation = $this->leadAllocationService->getLeadAllocationRecordByUserId($lead->advisor_id);
-                $preAdvAllocation->allocation_count = $$preAdvAllocation->allocation_count - 1;
+                $preAdvAllocation->allocation_count = $preAdvAllocation->allocation_count - 1;
                 $advAllocation->updated_at = now();
                 if ($lead->auto_assigned) {
                     $preAdvAllocation->auto_assignment_count = $preAdvAllocation->auto_assignment_count - 1;

@@ -63,14 +63,12 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'~'.now()->format('Y-m-d'));
+            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
     public function columns(): array
     {
-        $tiers = Tier::where('is_active', 1)->get();
-
         return [
             Column::make('Advisor Name', 'advisor.name')->searchable(),
             Column::make('Total Leads')->label(fn ($row) => ($row->total_leads))->footer(function ($rows) {
@@ -119,7 +117,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
     {
         $query = CarQuote::query()
             ->select(
-                DB::raw('count(car_quote_request.id) as total_leads'),
+                DB::raw('count(*) as total_leads'),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier 0' THEN 1 ELSE 0 END) as tier_0_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier 1' THEN 1 ELSE 0 END) as tier_1_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier 2' THEN 1 ELSE 0 END) as tier_2_lead_count"),
@@ -131,7 +129,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier L' THEN 1 ELSE 0 END) as tier_l_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier H' THEN 1 ELSE 0 END) as tier_h_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_r_lead_count"),
-                DB::raw('tiers.cost_per_lead as total_lead_cost'),
+                DB::raw('SUM(car_quote_request.cost_per_lead) as total_lead_cost'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', 'users.id')
@@ -157,9 +155,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
                     'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
-                        $builder->whereBetween('car_quote_request.created_at', [$matches[1], $matches[2]]);
-                    }
+                    $dates = explode('~', $value);
+                    $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
         ];
         if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager, RolesEnum::Admin, RolesEnum::Engineering])) {

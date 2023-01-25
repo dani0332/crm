@@ -72,7 +72,7 @@ class CarLeadAllocationDashboardService extends BaseService
     public function getTodaysCarTotalUnAssignedLeadsCount()
     {
         $from = ApplicationStorageService::getValueByKeyName('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
-        $to = Carbon::now()->endOfDay();
+        $to = now()->subMinutes(2)->toDateTimeString();
 
         return CarQuote::whereBetween('created_at', [$from, $to])
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
