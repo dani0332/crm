@@ -280,6 +280,7 @@
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
 
+    $benefits = ['feature', 'inpatient', 'outpatient', 'exclusion', 'coInsurance', 'regionCover', 'maternityCover', 'networkList'];
     foreach ($quotePlans->quote->plans as &$quotePlan)
     {
         $addonsPrice = 0;
@@ -289,21 +290,12 @@
             continue;
         }
 
-        $quotePlan->feature = json_decode(collect($quotePlan->benefits->feature)->keyBy('code')->toJson());
-        //$quotePlan->inclusion = json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson());
-        $quotePlan->inpatient = json_decode(collect($quotePlan->benefits->inpatient)->keyBy('code')->toJson());
-
-        $quotePlan->outpatient = json_decode(collect($quotePlan->benefits->outpatient)->keyBy('code')->toJson());
-
-        $quotePlan->exclusion = json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson());
-
-        $quotePlan->coInsurance = json_decode(collect($quotePlan->benefits->coInsurance)->keyBy('code')->toJson());
-
-        $quotePlan->regionCover = json_decode(collect($quotePlan->benefits->regionCover)->keyBy('code')->toJson());
-
-        $quotePlan->maternityCover = json_decode(collect($quotePlan->benefits->maternityCover)->keyBy('code')->toJson());
-
-        $quotePlan->networkList = json_decode(collect($quotePlan->benefits->networkList)->keyBy('code')->toJson());
+        foreach ($benefits as $benefit) {
+            $quotePlan->{$benefit} = [];
+            if(isset($quotePlan->benefits->{$benefit})) {
+                $quotePlan->{$benefit} = json_decode(collect(@$quotePlan->benefits->{$benefit})->keyBy('code')->toJson());
+            }
+        }
 
         $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
