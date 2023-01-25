@@ -548,7 +548,7 @@ class LeadAllocationService extends BaseService
                         $user = User::where('id', $userId)->first();
 
                         $this->sendEmailCustomerService->sendLMSIntroEmail(426, [
-                            'clientFullName' => $carQuote->first_name . ' '. $carQuote->last_name,
+                            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
                             'advisorName' => $user->name,
                             'landLine' => $user->landline_no,
                             'mobilePhone' => $user->mobile_no,

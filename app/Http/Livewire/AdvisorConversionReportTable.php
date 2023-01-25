@@ -189,7 +189,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                     'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    info('created_at filter is : ' . $value);
+                    info('created_at filter is : '.$value);
                     $dates = explode('~', $value);
                     $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),

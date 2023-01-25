@@ -1171,7 +1171,7 @@ class CarQuoteService extends BaseService
             $this->addManualAllocationCountAndUpdate($userId, $lead);
 
             $this->sendEmailCustomerService->sendLMSIntroEmail(426, [
-                'clientFullName' => $lead->first_name . ' '. $lead->last_name,
+                'clientFullName' => $lead->first_name.' '.$lead->last_name,
                 'advisorName' => $user->name,
                 'landLine' => $user->landline_no,
                 'mobilePhone' => $user->mobile_no,
