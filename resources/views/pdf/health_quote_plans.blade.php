@@ -71,6 +71,9 @@
             margin: 7px 12px auto;
             border-spacing: 0;
         }
+        tbody{
+            margin-bottom: 130px;
+        }
         .header {
             background: #1d83bc;
             color: #ffffff;
@@ -175,7 +178,7 @@
             background-color: #1d83bc;
             color: #ffffff;
             padding: 8px 25px;
-            margin-top: 6px;
+            margin-top: 30px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
@@ -236,6 +239,10 @@
             margin: 0;
             width: 100%;
             border: none;
+        }
+        th.provider-name {
+            padding: 0;
+            margin: 0;
         }
         table.tbl-footer tr td, table.tbl-footer tr td a {
             color: #ffffff;
@@ -368,17 +375,9 @@
         ["code" => "spacer"],
         ["code" => "vat", "title" => "Vat Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
-        ["code" => "total", "title" => "Total Indicative Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "total", "title" => "Total", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
     ];
 @endphp
-<header>
-    <div class="header" style="">
-        <div class="logo">
-            <img class="im-logo" src="{{public_path('images/im_logo.png')}}" />
-        </div>
-        <h3>Your Tailor Made <br />Health Insurance Comparison Table</h3>
-    </div>
-</header>
 
 <footer style="">
     <table class="tbl-footer" style="">
@@ -412,38 +411,47 @@
         </tr>
     </table>
 </footer>
+
+<header>
+    <div class="header">
+        <div class="logo">
+            <img class="im-logo" src="{{public_path('images/im_logo.png')}}" />
+        </div>
+        <h3>Your Tailor Made <br />Health Insurance Comparison Table</h3>
+    </div>
+</header>
+
 <main>
     <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;">
         <thead>
             <tr>
-
                 <th class="alfred" rowspan="3">
                     <img style="" src="{{public_path('images/alfred.png')}}"  />
                 </th>
 
-            @foreach($planIds as $planId)
-                <th class="provider" style="border: solid 1px #bfbfbf;">
-                    <div class="rounded-full">
-                        <p class="relative top-[40%] m-auto text-xs">
-                            @php
-                                $providerLogoImage = public_path('images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png');
+                @foreach($planIds as $planId)
+                    <th class="provider" style="border: solid 1px #bfbfbf;">
+                        <div class="rounded-full">
+                            <p class="relative top-[40%] m-auto text-xs">
+                                @php
+                                    $providerLogoImage = public_path('images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png');
 
-                                if(!file_exists($providerLogoImage)) {
-                                    $providerLogoImage = public_path('images/insurance_providers/default.png');
-                                }
+                                    if(!file_exists($providerLogoImage)) {
+                                        $providerLogoImage = public_path('images/insurance_providers/default.png');
+                                    }
 
-                            @endphp
-                            <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
-                        </p>
-                    </div>
-                </th>
-            @endforeach
+                                @endphp
+                                <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
+                            </p>
+                        </div>
+                    </th>
+                @endforeach
 
         </tr>
 
         <tr>
             @foreach($planIds as $planId)
-                <th style="padding: 0;margin: 0;">
+                <th class="provider-name" style="">
                     <p class="text-center">
                         {{ $plans[$planId]->providerName }}
                     </p>
@@ -464,7 +472,7 @@
         {{-- buy now row --}}
         <tr>
             <th class="bg-light-blue" >
-                <p class="quote-info">Car insurance comparison for: <b>{{ $quote->first_name  }} {{$quote->last_name}}</b></p>
+                <p class="quote-info">Health insurance comparison for: <b>{{ $quote->first_name  }} {{$quote->last_name}}</b></p>
             </th>
             @foreach($planIds as $planId)
                 <th>
@@ -479,7 +487,7 @@
             @endforeach
         </tr>
         </thead>
-        <tbody style="margin-bottom: 130px;">
+        <tbody style="">
 
         @foreach($features as $feature)
 
@@ -546,8 +554,8 @@
 
         @endforeach
         <tr>
-            <td colspan="{{sizeof($planIds) + 1}}" class="no-border text-center">
-                <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid )}}" >Compare Quotes</a>
+            <td colspan="{{sizeof($planIds) + 1}}" class="no-border text-center" style="">
+                <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid )}}" >Compare all your Quotes</a>
             </td>
         </tr>
         </tbody>
@@ -558,7 +566,7 @@
         <tr>
             <td>
                 <span class="text-sm"><b>MATERIAL INFORMATION DECLARATION</b></span>
-                <p class="text-left text-xs">All quotes we provide are indicative and based on the information you have provided to us.</p>
+                <p class="text-left text-xs">All quotes provided are indications only and based on the initial information you have provided: as such, they are subject to change in line with any revisions to that information that you declare to us during the application and/or underwriting process. Note that quotes also include all mandatory fees, taxes or charges as stipulated by the UAE Government and/or relevant authorities.</p>
                 <span class="text-sm"><b>DISCLAIMER</b></span>
                 <p class="text-left text-xs">
                     Whilst we try to ensure the currency and accuracy of the details in the comparison table, there may occasion where there are differences in the covers provided. In such cases, the covers detailed in the insurer's policy wordings and schedules will supersede the details provided by us.<br/><br/>
@@ -568,7 +576,7 @@
         </tr>
         </tbody>
     </table>
-    </div>
+
 </main>
 
 <img src="{{public_path('images/quote_plans_pages/rm-p3.jpg')}}" class="full-page-image" style=""  />
