@@ -275,7 +275,7 @@
     </style>
 </head>
 <body>
-<img src="{{public_path('images/quote_plans_pages/rm-p1.jpg')}}" class="full-page-image" style="" />
+<img src="{{public_path('images/quote_plans_pages/rm-p1.jpg')}}" class="full-page-image" />
 @php
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
@@ -379,8 +379,8 @@
     ];
 @endphp
 
-<footer style="">
-    <table class="tbl-footer" style="">
+<footer >
+    <table class="tbl-footer" >
         <tr>
             <td colspan="2" class="text-center"><h4>InsuranceMarket.ae™by AFIA Insurance Brokerage Services LLC</h4></td>
         </tr>
@@ -426,7 +426,7 @@
         <thead>
             <tr>
                 <th class="alfred" rowspan="3">
-                    <img style="" src="{{public_path('images/alfred.png')}}"  />
+                    <img src="{{public_path('images/alfred.png')}}"  />
                 </th>
 
                 @foreach($planIds as $planId)
@@ -451,7 +451,7 @@
 
         <tr>
             @foreach($planIds as $planId)
-                <th class="provider-name" style="">
+                <th class="provider-name" >
                     <p class="text-center">
                         {{ $plans[$planId]->providerName }}
                     </p>
@@ -487,7 +487,7 @@
             @endforeach
         </tr>
         </thead>
-        <tbody style="">
+        <tbody >
 
         @foreach($features as $feature)
 
@@ -511,7 +511,7 @@
             @endif
 
             {{-- feature rows --}}
-            <tr class="{{ ($feature['row_class'] ?? "")}}" style="">
+            <tr class="{{ ($feature['row_class'] ?? "")}}" >
                 <td class="{{@$feature['heading_class']}}"><p class="text-left">{{@$feature['title']}}</p></td>
                 @foreach($planIds as $planId)
                     <td class="{{@$feature['col_class']}}">
@@ -554,7 +554,7 @@
 
         @endforeach
         <tr>
-            <td colspan="{{sizeof($planIds) + 1}}" class="no-border text-center" style="">
+            <td colspan="{{sizeof($planIds) + 1}}" class="no-border text-center" >
                 <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid )}}" >Compare all your Quotes</a>
             </td>
         </tr>
@@ -579,6 +579,6 @@
 
 </main>
 
-<img src="{{public_path('images/quote_plans_pages/rm-p3.jpg')}}" class="full-page-image" style=""  />
+<img src="{{public_path('images/quote_plans_pages/rm-p3.jpg')}}" class="full-page-image"  />
 </body>
 </html>
