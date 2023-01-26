@@ -528,6 +528,7 @@ class CRUDController extends Controller
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
+                'lostReasons' => $lostReasons,
             ]);
         } else {
             return view('shared.show', compact([

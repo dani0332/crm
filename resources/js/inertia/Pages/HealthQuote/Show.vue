@@ -27,6 +27,7 @@ defineProps({
   ecomHealthInsuranceQuoteUrl: String,
   activities: Array,
   customerAdditionalContacts: Array,
+  lostReasons: Array,
 });
 
 const page = usePage();
@@ -70,9 +71,6 @@ const confirmData = reactive({
 
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
   assignLead = ref(null),
-  leadStatus = ref(page.props.quote.quote_status_id || null),
-  leadNotes = ref(page.props.quote.notes),
-  leadStatusLoader = ref(false),
   memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
@@ -232,24 +230,26 @@ const onAssignLead = () => {
   );
 };
 
+const leadStatusForm = useForm({
+  modelType: 'Health',
+  leadId: page.props.quote.id,
+  quote_uuid: page.props.quote.uuid,
+  assigned_to_user_id: page.props.quote.advisor_id,
+  leadStatus: page.props.quote.quote_status_id || null,
+  notes: page.props.quote.notes || null,
+  trans_code: page.props.quote.transapp_code || null,
+  lostReason: page.props.quote.lost_reason || null,
+});
+
 const onLeadStatus = () => {
-  router.post(
+  leadStatusForm.post(
     `/quotes/Health/${page.props.quote.id}/update-lead-status`,
     {
-      modelType: 'Health',
-      leadId: page.props.quote.id,
-      quote_uuid: page.props.quote.uuid,
-      assigned_to_user_id: page.props.quote.advisor_id,
-      leadStatus: leadStatus.value,
-      notes: leadNotes.value,
-    },
-    {
       preserveScroll: true,
-      onBefore: () => {
-        leadStatusLoader.value = true;
+      onError: errors => {
+        console.log(errors);
       },
       onSuccess: () => {
-        leadStatusLoader.value = false;
         notification.success({
           title: 'Lead Status Updated',
           position: 'top',
@@ -684,8 +684,10 @@ const additionalContactDeleteConfirmed = () => {
       isInertia: true,
     },
     {
-      wantsJson: true,
       preserveScroll: true,
+      onBefore: () => {
+        contactLoader.value = true;
+      },
       onSuccess: () => {
         notification.error({
           title: 'Additional Contact Deleted',
@@ -693,6 +695,7 @@ const additionalContactDeleteConfirmed = () => {
         });
       },
       onFinish: () => {
+        contactLoader.value = false;
         modals.contactDeleteConfirm = false;
       },
     },
@@ -1191,27 +1194,54 @@ onMounted(() => {
       <div class="flex gap-6 w-full">
         <div class="w-full md:w-2/3">
           <x-textarea
-            v-model="leadNotes"
+            v-model="leadStatusForm.notes"
             type="text"
             label="Notes"
             placeholder="Lead Notes"
             class="w-full"
+            :disabled="quote.quote_status_id == 15"
           />
         </div>
         <div class="w-full md:w-1/3">
-          <x-select
-            v-model="leadStatus"
-            label="Status"
-            :options="leadStatusOptions"
-            placeholder="Lead Status"
-            class="w-full"
-          />
+          <div class="flex flex-col gap-4">
+            <x-select
+              v-model="leadStatusForm.leadStatus"
+              label="Status"
+              :options="leadStatusOptions"
+              :disabled="quote.quote_status_id == 15"
+              placeholder="Lead Status"
+              class="w-full"
+            />
+            <x-input
+              v-if="leadStatusForm.leadStatus == 15"
+              v-model="leadStatusForm.trans_code"
+              label="TransApp Code"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+            <x-select
+              v-if="leadStatusForm.leadStatus == 17"
+              v-model="leadStatusForm.lostReason"
+              label="Lost Reason"
+              :options="
+                lostReasons?.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+          </div>
+
           <div class="flex justify-end">
             <x-button
               class="mt-4"
               color="emerald"
               size="sm"
-              :loading="leadStatusLoader"
+              :loading="leadStatusForm.processing"
               @click.prevent="onLeadStatus"
             >
               Change Status
