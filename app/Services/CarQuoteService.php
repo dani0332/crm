@@ -1170,17 +1170,19 @@ class CarQuoteService extends BaseService
 
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
             $this->addManualAllocationCountAndUpdate($userId, $lead);
-
-            $emailData = (object) [
-                'customerEmail' => $lead->email,
-                'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
-                'clientFullName' => $lead->first_name.' '.$lead->last_name,
-                'advisorName' => $user->name,
-                'landLine' => $user->landline_no,
-                'mobilePhone' => $user->mobile_no,
-            ];
-            $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
-            $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-reassignment-email');
+            if(isset($request->manual_assignment_email_flag) && $request->manual_assignment_email_flag == GenericRequestEnum::ASSIGN_WITH_EMAIL){
+                info('Inside sending email for manual assignment');
+                $emailData = (object) [
+                    'customerEmail' => $lead->email,
+                    'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
+                    'clientFullName' => $lead->first_name.' '.$lead->last_name,
+                    'advisorName' => $user->name,
+                    'landLine' => $user->landline_no,
+                    'mobilePhone' => $user->mobile_no,
+                ];
+                $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
+                $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-reassignment-email');
+            }
         }
 
         return $result;
