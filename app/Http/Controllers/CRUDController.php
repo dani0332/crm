@@ -706,10 +706,6 @@ class CRUDController extends Controller
 
     public function manualLeadAssign(Request $request)
     {
-        if ($request->assignment_type == GenericRequestEnum::ASSIGN_WITH_EMAIL) {
-            // add email sending logic on manual assignment.
-        }
-
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('message', $isValidRequest);
