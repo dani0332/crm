@@ -545,16 +545,7 @@ class LeadAllocationService extends BaseService
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
                         $this->updateLeadAllocationOnCarAutoAssignment($userId);
 
-                        $user = User::where('id', $userId)->first();
-
-                        $emailData = (object) [
-                            'customerEmail' => $carQuote->email,
-                            'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
-                            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
-                            'advisorName' => $user->name,
-                            'landLine' => $user->landline_no,
-                            'mobilePhone' => $user->mobile_no,
-                        ];
+                        $emailData = $this->buildEmailDateForLMSIntroEmail($userId, $carQuote);
                         $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
                         $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email');
 
@@ -579,6 +570,20 @@ class LeadAllocationService extends BaseService
         }
     }
 
+    public function buildEmailDateForLMSIntroEmail($userId, $carQuote)
+    {
+        $user = User::where('id', $userId)->first();
+        $emailData = (object) [
+            'customerEmail' => $carQuote->email,
+            'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
+            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
+            'advisorName' => $user->name,
+            'landLine' => $user->landline_no,
+            'mobilePhone' => $user->mobile_no,
+        ];
+        return $emailData;
+    }
+
     public function updateLeadAllocationOnCarAutoAssignment($userId)
     {
         $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
@@ -600,25 +605,14 @@ class LeadAllocationService extends BaseService
             info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
         } else {
             info('---- updateCarLeadDetailRecord - record not found creating new entry');
-            $carQuoteDetail = new CarQuoteRequestDetail();
-            $carQuoteDetail->car_quote_request_id = $leadId;
-            $carQuoteDetail->advisor_assigned_date = now();
-            $carQuoteDetail->advisor_assigned_by_id = auth()->id();
-            $carQuoteDetail->created_at = now();
-            $carQuoteDetail->updated_at = now();
-            $carQuoteDetail->save();
+            CarQuoteRequestDetail::create([
+                'car_quote_request_id' => $leadId,
+                'advisor_assigned_date' => now(),
+                'advisor_assigned_by_id' => auth()->id(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
-    }
-
-    public function splitString($separator, $string)
-    {
-        if (strpos($string, $separator) !== false) {
-            $parts = explode($separator, $string);
-        } else {
-            $parts = [$string];
-        }
-
-        return $parts;
     }
 
     public function getCarUnallocatedLeads($from)
@@ -658,6 +652,7 @@ class LeadAllocationService extends BaseService
     {
         $dateFrom = Carbon::now()->addDays(-30);
         $dateTo = Carbon::now()->addDays(90);
+
         info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
         $renewalQuote = CarQuote::where('source', LeadSourceEnum::RENEWAL_UPLOAD)
         ->whereBetween('renewal_expiry_date', [$dateFrom, $dateTo])

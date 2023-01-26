@@ -1195,7 +1195,7 @@ class CarQuoteService extends BaseService
         } else {
             $leadIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
-        Log::info('Leads ids for manual assign: '.json_encode($leadIds));
+        info('Leads ids for manual assign: '.json_encode($leadIds));
 
         return $leadIds;
     }
