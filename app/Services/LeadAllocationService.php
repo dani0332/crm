@@ -555,7 +555,7 @@ class LeadAllocationService extends BaseService
                             'landLine' => $user->landline_no,
                             'mobilePhone' => $user->mobile_no,
                         ];
-                        $emailTemplateId = $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
+                        $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
                         $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email');
 
                         info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);

@@ -1179,7 +1179,7 @@ class CarQuoteService extends BaseService
                 'landLine' => $user->landline_no,
                 'mobilePhone' => $user->mobile_no,
             ];
-            $emailTemplateId = $this->applicationStorageService->getValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
+            $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
             $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-reassignment-email');
         }
 

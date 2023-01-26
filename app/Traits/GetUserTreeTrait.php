@@ -22,7 +22,7 @@ trait GetUserTreeTrait
                 ->where('teams.parent_team_id', $carTeam->id)->select('teams.id');
             $teamMates = DB::table('user_team')->whereIn('team_id', $userAllTeams)->pluck('user_id');
             foreach ($teamMates as $teamMateId) {
-                array_push($this->childUserIds, $teamMateId);
+                array_push($childUserIds, $teamMateId);
             }
         } else {
             $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
@@ -33,7 +33,7 @@ trait GetUserTreeTrait
                 if (count($nextChild) > 0) {
                     $this->walkTree($teamMateId);
                 }
-                array_push($this->childUserIds, $teamMateId);
+                array_push($childUserIds, $teamMateId);
             }
         }
 
