@@ -29,6 +29,8 @@ defineProps({
   customerAdditionalContacts: Array,
 });
 
+const page = usePage();
+
 const notification = useNotifications('toast');
 
 const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
@@ -51,6 +53,8 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
   addContact: false,
+  contactDeleteConfirm: false,
+  contactPrimaryConfirm: false,
 });
 
 const confirmDeleteData = reactive({
@@ -60,16 +64,21 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-const assignSubteam = ref(usePage().props.quote.health_team_type || ''),
+const confirmData = reactive({
+  contactPrimary: null,
+});
+
+const assignSubteam = ref(page.props.quote.health_team_type || ''),
   assignLead = ref(null),
-  leadStatus = ref(usePage().props.quote.quote_status_id || null),
-  leadNotes = ref(usePage().props.quote.notes),
+  leadStatus = ref(page.props.quote.quote_status_id || null),
+  leadNotes = ref(page.props.quote.notes),
   leadStatusLoader = ref(false),
   memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
+  contactLoader = ref(false),
   historyLoading = ref(false),
   isDisabled = ref(false);
 
@@ -90,12 +99,12 @@ const onCopyText = text => {
 
 const genderText = gender =>
   computed(() => {
-    return usePage().props.genderOptions[gender];
+    return page.props.genderOptions[gender];
   });
 
 const memberCategoryText = memberCategoryId =>
   computed(() => {
-    return usePage().props.memberCategories.find(
+    return page.props.memberCategories.find(
       category => category.id === memberCategoryId,
     )?.text;
   });
@@ -109,49 +118,49 @@ const subTeamOptions = [
 ];
 
 const advisorOptions = computed(() => {
-  return usePage().props.advisors.map(advisor => ({
+  return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
   }));
 });
 
 const genderSelect = computed(() => {
-  return Object.keys(usePage().props.genderOptions).map(status => ({
+  return Object.keys(page.props.genderOptions).map(status => ({
     value: status,
-    label: usePage().props.genderOptions[status],
+    label: page.props.genderOptions[status],
   }));
 });
 
 const leadStatusOptions = computed(() => {
-  return usePage().props.leadStatuses.map(status => ({
+  return page.props.leadStatuses.map(status => ({
     value: status.id,
     label: status.text,
   }));
 });
 
 const nationalityOptions = computed(() => {
-  return usePage().props.nationalities.map(nat => ({
+  return page.props.nationalities.map(nat => ({
     value: nat.id,
     label: nat.text,
   }));
 });
 
 const memberCategoriesOptions = computed(() => {
-  return usePage().props.memberCategories.map(cat => ({
+  return page.props.memberCategories.map(cat => ({
     value: cat.id,
     label: cat.text,
   }));
 });
 
 const emiratesOptions = computed(() => {
-  return usePage().props.emirates.map(em => ({
+  return page.props.emirates.map(em => ({
     value: em.id,
     label: em.text,
   }));
 });
 
 const salaryBandsOptions = computed(() => {
-  return usePage().props.salaryBands.map(sal => ({
+  return page.props.salaryBands.map(sal => ({
     value: sal.id,
     label: sal.text,
   }));
@@ -169,7 +178,7 @@ const onTeamAssign = () => {
     `/quotes/health/healthTeamAssign`,
     {
       modelType: 'Health',
-      entityId: usePage().props.quote.id,
+      entityId: page.props.quote.id,
       assign_team: assignSubteam.value,
     },
     {
@@ -202,7 +211,7 @@ const onAssignLead = () => {
     `/quotes/health/manualLeadAssign`,
     {
       modelType: 'Health',
-      entityId: usePage().props.quote.id,
+      entityId: page.props.quote.id,
       assigned_to_id_new: assignLead.value,
     },
     {
@@ -225,12 +234,12 @@ const onAssignLead = () => {
 
 const onLeadStatus = () => {
   router.post(
-    `/quotes/Health/${usePage().props.quote.id}/update-lead-status`,
+    `/quotes/Health/${page.props.quote.id}/update-lead-status`,
     {
       modelType: 'Health',
-      leadId: usePage().props.quote.id,
-      quote_uuid: usePage().props.quote.uuid,
-      assigned_to_user_id: usePage().props.quote.advisor_id,
+      leadId: page.props.quote.id,
+      quote_uuid: page.props.quote.uuid,
+      assigned_to_user_id: page.props.quote.advisor_id,
       leadStatus: leadStatus.value,
       notes: leadNotes.value,
     },
@@ -288,7 +297,7 @@ const memberForm = useForm({
   salary_band_id: null,
   emirate_of_your_visa_id: null,
   member_category_id: null,
-  health_quote_request_id: usePage().props.quote.id,
+  health_quote_request_id: page.props.quote.id,
 });
 
 function onEditMember(data) {
@@ -425,7 +434,7 @@ const onExportPlans = () => {
       '/api/v1/quotes/health/export-plans-pdf',
       {
         plan_ids: planIds,
-        quote_uuid: usePage().props.quote.uuid,
+        quote_uuid: page.props.quote.uuid,
       },
       {
         responseType: 'json',
@@ -490,7 +499,7 @@ const confirmDeleteDoc = () => {
     `/documents/delete`,
     {
       docName: confirmDeleteData.docs,
-      quoteId: usePage().props.quote.id,
+      quoteId: page.props.quote.id,
     },
     {
       preserveScroll: true,
@@ -517,8 +526,8 @@ const activityTable = [
 ];
 
 const activityForm = useForm({
-  entityUId: usePage().props.quote.uuid,
-  entityId: usePage().props.quote.id,
+  entityUId: page.props.quote.uuid,
+  entityId: page.props.quote.id,
   modelType: 'Health',
   parentType: 'Health',
   quoteType: 3,
@@ -607,7 +616,7 @@ const activityDeleteConfirmed = () => {
     `/activities/${confirmDeleteData.activity}/delete`,
     {
       isInertia: true,
-      quote_uuid: usePage().props.quote.uuid,
+      quote_uuid: page.props.quote.uuid,
     },
     {
       preserveScroll: true,
@@ -626,28 +635,105 @@ const activityDeleteConfirmed = () => {
 
 // additional contact
 
+const additionalContactTable = [
+  { text: 'Type', value: 'key' },
+  { text: 'Value', value: 'value' },
+  { text: 'Created At', value: 'created_at' },
+  { text: 'Action', value: 'action' },
+];
+
 const additionalContact = useForm({
+  id: null,
   additional_contact_type: null,
   additional_contact_val: null,
-  quote_id: usePage().props.quote.id,
-  customer_id: usePage().props.quote.customer_id,
-  quote_type: 3,
+  quote_id: page.props.quote.id,
+  customer_id: page.props.quote.customer_id,
+  quote_type: 'health',
 });
 
 const onAdditionalContactSubmit = isValid => {
   if (!isValid) return;
-  additionalContact.post(`/customer-additional-contact/add`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Additional Contact Added',
-        position: 'top',
-      });
+  additionalContact
+    .transform(data => ({
+      ...data,
+      isInertia: true,
+    }))
+    .post(`/customer-additional-contact/add`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Additional Contact Added',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.addContact = false;
+      },
+    });
+};
+
+const additionalContactDelete = id => {
+  modals.contactDeleteConfirm = true;
+  confirmDeleteData.contact = id;
+};
+
+const additionalContactDeleteConfirmed = () => {
+  router.post(
+    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
+    {
+      isInertia: true,
     },
-    onFinish: () => {
-      modals.addContact = false;
+    {
+      wantsJson: true,
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.error({
+          title: 'Additional Contact Deleted',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.contactDeleteConfirm = false;
+      },
     },
-  });
+  );
+};
+
+const additionalContactPrimary = data => {
+  modals.contactPrimaryConfirm = true;
+  confirmData.contactPrimary = data;
+};
+
+const additionalContactPrimaryConfirmed = () => {
+  const isEmail = confirmData.contactPrimary.key === 'email';
+  router.post(
+    `/customer-additional-contact/${
+      isEmail ? confirmData.contactPrimary.id : 0
+    }/make-primary`,
+    {
+      isInertia: true,
+      quote_id: page.props.quote.id,
+      key: confirmData.contactPrimary.key,
+      value: confirmData.contactPrimary.value,
+      quote_type: 'health',
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        contactLoader.value = true;
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Additional Contact Primary',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        contactLoader.value = false;
+        modals.contactPrimaryConfirm = false;
+      },
+    },
+  );
 };
 
 // history data
@@ -656,9 +742,7 @@ const historyData = ref(null);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=health&recordId=${
-      usePage().props.quote.id
-    }`,
+    `/quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`,
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -673,8 +757,8 @@ const historyDataTable = [
 ];
 
 onMounted(() => {
-  const isHealthAdvisor = usePage().props.advisors.find(
-    a => a.id == usePage().props.quote.advisor_id,
+  const isHealthAdvisor = page.props.advisors.find(
+    a => a.id == page.props.quote.advisor_id,
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
 });
@@ -1470,7 +1554,7 @@ onMounted(() => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Customer Additional Contacts
-          <x-tag size="sm">{{ 0 }}</x-tag>
+          <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
         </h3>
         <x-button
           size="sm"
@@ -1480,7 +1564,40 @@ onMounted(() => {
           Add Additional Contacts
         </x-button>
       </div>
-      <x-divider class="my-4" />
+
+      <DataTable
+        table-class-name="compact"
+        :headers="additionalContactTable"
+        :items="customerAdditionalContacts || []"
+        border-cell
+        hide-rows-per-page
+        hide-footer
+      >
+        <template #item-key="{ key }">
+          <span v-if="key === 'email'"> Email Address </span>
+          <span v-else> Mobile Number </span>
+        </template>
+        <template #item-action="item">
+          <div class="space-x-4">
+            <x-button
+              size="xs"
+              color="emerald"
+              outlined
+              @click.prevent="additionalContactPrimary(item)"
+            >
+              Make Primary
+            </x-button>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="additionalContactDelete(item.id)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
 
       <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
         <template #header> Add Additional Contacts </template>
@@ -1522,6 +1639,54 @@ onMounted(() => {
             </x-button>
           </div>
         </x-form>
+      </x-modal>
+
+      <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
+        <template #header> Delete Additional Contact </template>
+        <p>Are you sure you want to delete this?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.contactDeleteConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              @click.prevent="additionalContactDeleteConfirmed"
+              :loading="contactLoader"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+
+      <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
+        <template #header> Primary Additional Contact </template>
+        <p>Are you sure you want to make this information as Primary?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.contactPrimaryConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="emerald"
+              @click.prevent="additionalContactPrimaryConfirmed"
+              :loading="contactLoader"
+            >
+              Confirm
+            </x-button>
+          </div>
+        </template>
       </x-modal>
     </div>
 

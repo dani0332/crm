@@ -526,7 +526,7 @@ class CRUDController extends Controller
                 'cdnPath' => $cdnPath,
                 'domainPath' => $domainPath,
                 'activities' => $activities,
-                // 'customerAdditionalContacts' => $customerAdditionalContacts,
+                'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
             ]);
         } else {
