@@ -299,7 +299,6 @@ class SendEmailCustomerService extends BaseService
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
-                    'customerName' => $emailData->customerName,
                     'clientFullName' => $emailData->clientFullName,
                     'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
                     'landLine' => isset($emailData->landLine) ? $emailData->landLine : null,

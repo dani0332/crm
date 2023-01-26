@@ -27,14 +27,15 @@ class CarQuoteService extends BaseService
     protected $childUserIds = [];
     protected $leadAllocationService;
     protected $sendEmailCustomerService;
-
+    protected $applicationStorageService;
     use GenericQueriesAllLobs;
     use TeamHierarchyTrait;
 
-    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService)
+    public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService, SendEmailCustomerService $sendEmailCustomerService, ApplicationStorageService $applicationStorageService)
     {
         $this->leadAllocationService = $leadAllocationService;
         $this->httpService = $httpService;
+        $this->applicationStorageService = $applicationStorageService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->query = DB::table('car_quote_request as cqr')
             ->select(
@@ -1170,14 +1171,16 @@ class CarQuoteService extends BaseService
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
             $this->addManualAllocationCountAndUpdate($userId, $lead);
 
-            $this->sendEmailCustomerService->sendLMSIntroEmail(426, [
+            $emailData = (object) [
                 'customerEmail' => $lead->email,
-                'documentUrl' => 'https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf',
+                'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
                 'clientFullName' => $lead->first_name.' '.$lead->last_name,
                 'advisorName' => $user->name,
                 'landLine' => $user->landline_no,
                 'mobilePhone' => $user->mobile_no,
-            ], 'send-lms-reassignment-email');
+            ];
+            $emailTemplateId = $this->applicationStorageService->getValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
+            $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-reassignment-email');
         }
 
         return $result;

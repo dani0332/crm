@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             UpdateApplicationStorage::class,
             addReportsMaxDays::class,
             addCostPerLeadForExistingLeads::class,
+            addLMSIntroEmailTemplateId::class,
         ]);
     }
 }

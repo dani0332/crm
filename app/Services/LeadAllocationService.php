@@ -547,12 +547,16 @@ class LeadAllocationService extends BaseService
 
                         $user = User::where('id', $userId)->first();
 
-                        $this->sendEmailCustomerService->sendLMSIntroEmail(426, [
+                        $emailData = (object) [
+                            'customerEmail' => $carQuote->email,
+                            'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
                             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
                             'advisorName' => $user->name,
                             'landLine' => $user->landline_no,
                             'mobilePhone' => $user->mobile_no,
-                        ], 'send-lms-intro-email');
+                        ];
+                        $emailTemplateId = $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
+                        $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email');
 
                         info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                     } else {
