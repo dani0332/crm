@@ -295,21 +295,15 @@ class SendEmailCustomerService extends BaseService
             $body = json_encode([
                 'to' => [[
                     'email' => $emailData->customerEmail,
-                    'name' => $emailData->customerName,
+                    'name' => $emailData->clientFullName,
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
                     'customerName' => $emailData->customerName,
-                    'customerEmail' => $emailData->customerEmail,
-                    'signUpButtonUrl' => isset($emailData->signUpButtonUrl) ? $emailData->signUpButtonUrl : null,
-                    'buttonUrl' => isset($emailData->buttonUrl) ? $emailData->buttonUrl : null,
-                    'cdbId' => isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null,
+                    'clientFullName' => $emailData->clientFullName,
                     'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
-                    'advisorLandlineNo' => isset($emailData->advisorLandlineNo) ? $emailData->advisorLandlineNo : null,
-                    'advisorMobileNo' => isset($emailData->advisorMobileNo) ? $emailData->advisorMobileNo : null,
-                    'advisorEmailAddress' => isset($emailData->advisorEmailAddress) ? $emailData->advisorEmailAddress : null,
-                    'notesForCustomer' => isset($emailData->notesForCustomer) ? nl2br(htmlentities(str_replace('<br />', '', $emailData->notesForCustomer))) : null,
-                    'providerSupportNumber' => isset($emailData->providerSupportNumber) ? $emailData->providerSupportNumber : null,
+                    'landLine' => isset($emailData->landLine) ? $emailData->landLine : null,
+                    'mobilePhone' => isset($emailData->mobilePhone) ? $emailData->mobilePhone : null,
                 ],
                 'tags' => [
                     $tag,
@@ -340,6 +334,7 @@ class SendEmailCustomerService extends BaseService
             Log::error($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
         }
+
         return $responseCode;
     }
 }

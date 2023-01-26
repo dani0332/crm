@@ -1171,6 +1171,8 @@ class CarQuoteService extends BaseService
             $this->addManualAllocationCountAndUpdate($userId, $lead);
 
             $this->sendEmailCustomerService->sendLMSIntroEmail(426, [
+                'customerEmail' => $lead->email,
+                'documentUrl' => 'https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf',
                 'clientFullName' => $lead->first_name.' '.$lead->last_name,
                 'advisorName' => $user->name,
                 'landLine' => $user->landline_no,
