@@ -3,6 +3,7 @@
 namespace App\Http\Livewire;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
@@ -18,7 +19,6 @@ class LeadDistributionReportTable extends DataTableComponent
 {
     public $url;
     public $tiers = [];
-    private $applicationStorageService;
     private $maxDays = 92;
     public function configure(): void
     {
@@ -81,8 +81,8 @@ class LeadDistributionReportTable extends DataTableComponent
     {
         return CarQuote::query()
             ->select(
-                DB::raw('SUM(CASE WHEN car_quote_request.source not in ("Renewal_upload", "IMCRM", "TPL_RENEWALS") THEN 1 ELSE 0 END) as received_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as lead_created'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source not in ('.LeadSourceEnum::RENEWAL_UPLOAD.','.LeadSourceEnum::IMCRM.','.LeadSourceEnum::TPL_RENEWALS.') THEN 1 ELSE 0 END) as received_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as lead_created'),
                 DB::raw('count(car_quote_request.id) as total_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
                 DB::raw('la.auto_assignment_count as auto_assigned'),

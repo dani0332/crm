@@ -26,6 +26,7 @@
           @this.set('{{ $component->getTableName() }}.filters.{{ $filter->getKey() }}', range, true);
         });
       },
+      format: 'DD-MM-YYYY',
       zIndex: 10,
       readonly: false,
       RangePlugin: {
