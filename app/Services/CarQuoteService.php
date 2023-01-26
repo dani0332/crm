@@ -1170,7 +1170,7 @@ class CarQuoteService extends BaseService
 
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
             $this->addManualAllocationCountAndUpdate($userId, $lead);
-            if(isset($request->manual_assignment_email_flag) && $request->manual_assignment_email_flag == GenericRequestEnum::ASSIGN_WITH_EMAIL){
+            if (isset($request->manual_assignment_email_flag) && $request->manual_assignment_email_flag == GenericRequestEnum::ASSIGN_WITH_EMAIL) {
                 info('Inside sending email for manual assignment');
                 $emailData = (object) [
                     'customerEmail' => $lead->email,
