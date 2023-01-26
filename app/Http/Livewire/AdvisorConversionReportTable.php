@@ -190,7 +190,6 @@ class AdvisorConversionReportTable extends DataTableComponent
                     'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-
                     $dates = explode('~', $value);
                     $dates[0] = Carbon::parse($dates[0])->format('Y-m-d');
                     $dates[1] = Carbon::parse($dates[1])->format('Y-m-d');
