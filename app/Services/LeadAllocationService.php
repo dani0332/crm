@@ -581,6 +581,7 @@ class LeadAllocationService extends BaseService
             'landLine' => $user->landline_no,
             'mobilePhone' => $user->mobile_no,
         ];
+
         return $emailData;
     }
 

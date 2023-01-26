@@ -141,7 +141,7 @@ class CRUDController extends Controller
         $todayAssignmentCount = 0;
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car) && auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $advisorAllocationRecord = LeadAllocation::where('user_id', auth()->user()->id)->first();
-            $userMaxCap =  $advisorAllocationRecord->max_capacity == -1 ? 'No Limit' : ($advisorAllocationRecord->max_capacity ?? 0);
+            $userMaxCap = $advisorAllocationRecord->max_capacity == -1 ? 'No Limit' : ($advisorAllocationRecord->max_capacity ?? 0);
             $todayAssignmentCount = ''.($advisorAllocationRecord->auto_assignment_count ?? 0).' / '.$advisorAllocationRecord->manual_assignment_count ?? 0 .'';
         }
         $tiers = Tier::where('is_active', 1)->get();
