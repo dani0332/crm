@@ -161,13 +161,17 @@ class CustomerController extends Controller
         return view('customers.upload');
     }
 
-    public function deleteAdditionalContact($id)
+    public function deleteAdditionalContact($id, Request $request)
     {
         $deleteCustomerAdditionalContact = CustomerAdditionalContact::find($id);
 
         if ($deleteCustomerAdditionalContact) {
             Log::info('Customer additional contact deleted. ID: '.$id);
             $deleteCustomerAdditionalContact->delete();
+        }
+
+        if (isset($request->isInertia) && $request->isInertia) {
+            return redirect()->back();
         }
 
         return response()->json(['data' => [
@@ -212,6 +216,10 @@ class CustomerController extends Controller
             // Add quote_previous_primary_mobile_no in customer_additional_contact
         }
         $quoteObject->save();
+
+        if (isset($request->isInertia) && $request->isInertia) {
+            return redirect()->back();
+        }
 
         return response()->json(['data' => [
             'message' => 'success',
@@ -261,6 +269,10 @@ class CustomerController extends Controller
             'key' => $key,
             'value' => trim($value),
         ]);
+
+        if (isset($request->isInertia) && $request->isInertia) {
+            return redirect()->back();
+        }
 
         return response()->json(['data' => [
             'message' => 'Contact added successfully.',
