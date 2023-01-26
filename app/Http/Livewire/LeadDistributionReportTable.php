@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -106,6 +107,8 @@ class LeadDistributionReportTable extends DataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $dates = explode('~', $value);
+                    $dates[0] = Carbon::parse($dates[0])->format('Y-m-d');
+                    $dates[1] = Carbon::parse($dates[1])->format('Y-m-d');
                     $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
             MultiSelectFilter::make('Tiers')

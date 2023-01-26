@@ -10,6 +10,7 @@ use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
 use App\Traits\GetUserTreeTrait;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -189,8 +190,10 @@ class AdvisorConversionReportTable extends DataTableComponent
                     'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    info('created_at filter is : '.$value);
+
                     $dates = explode('~', $value);
+                    $dates[0] = Carbon::parse($dates[0])->format('Y-m-d');
+                    $dates[1] = Carbon::parse($dates[1])->format('Y-m-d');
                     $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
             SelectFilter::make('Ecommerce')
