@@ -30,13 +30,13 @@ class ApiService
             $data = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customer->id)->latest()->first();
             if ($data) {
                 return response()->json([
-                    'message' => isset($data->signup_url) ? $data->signup_url : $data->code,
+                    'message1' => isset($data->signup_url) ? $data->signup_url : $data->code,
                 ], 200);
             } else {
                 if (! $customer->is_we_sent) {
                     return $this->generateSignupUrl($customer, $request);
                 } else {
-                    return response()->json(['message' => 'Signup url does not exists against the Customer'], 404);
+                    return response()->json(['message2' => 'Signup url does not exists against the Customer'], 404);
                 }
             }
         }
