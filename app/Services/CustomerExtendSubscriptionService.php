@@ -3,22 +3,24 @@
 namespace App\Services;
 
 use App\Models\MyAlFredUser;
-use Illuminate\Support\Facades\Config;
 
 class CustomerExtendSubscriptionService extends BaseService
 {
     public static function extendCustomerSubscription($customerId)
     {
-        $extendSubscriptionEndPoint = Config::get('constants.BERLIN_API_ENDPOINT').'/auth/extend-subscription';
-        $extendSubscriptionUserName = Config::get('constants.BERLIN_BASIC_AUTH_USER_NAME');
-        $extendSubscriptionPassword = Config::get('constants.BERLIN_BASIC_AUTH_PASSWORD');
+        $extendSubscriptionEndPoint = config('constants.BERLIN_API_ENDPOINT').'/auth/extend-subscription';
+        $extendSubscriptionUserName = config('constants.BERLIN_BASIC_AUTH_USER_NAME');
+        $extendSubscriptionPassword = config('constants.BERLIN_BASIC_AUTH_PASSWORD');
 
-        $customerToken = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->orderBy('created_at', 'asc')->first();
+        $customerToken = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->latest()->first();
 
         $customerDataArr = json_encode([
             'token' => $customerToken->code,
-            'isToken' => isset($customerToken->signup_url) ? false : true,
+            'isToken' => isset($customerToken->signup_url) ? true : false,
         ]);
+        info('customerDataArr: '.$customerDataArr);
+        info('signup_url: '.$customerToken->signup_url);
+        info('code: '.$customerToken->code);
 
         $magicUrlGeneratauthBasic = base64_encode($extendSubscriptionUserName.':'.$extendSubscriptionPassword);
         $clientExtendSubscription = new \GuzzleHttp\Client();

@@ -72,7 +72,8 @@ class TransAppService extends BaseService
                 if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
                     $responseExtend = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
 
-                    if ($responseExtend == 200) {
+                    info('responseExtend: '.$responseExtend);
+                    if ($responseExtend == 200) { // Send email/sms if customer not signup
                         $this->sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, 'transapp-myalfred-we');
                         $this->smsInitiator($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $transaction->id);
                     }
