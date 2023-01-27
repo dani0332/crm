@@ -1,0 +1,116 @@
+<?php
+
+namespace App\Traits;
+
+use App\Enums\TeamTypeEnum;
+use App\Models\Team;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
+
+trait TeamHierarchyTrait
+{
+    public function getAllProducts()
+    {
+        return Team::where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->orderBy('name', 'asc')->get();
+    }
+
+    public function getProductByName($productName)
+    {
+        return Team::where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->where('name', $productName)->first();
+    }
+
+    public function getAllTeams()
+    {
+        return Team::where('type', TeamTypeEnum::TEAM)->where('is_active', 1)->orderBy('name', 'asc')->get();
+    }
+
+    public function getTeamsByProductId($productId)
+    {
+        return Team::where('type', TeamTypeEnum::TEAM)->where('is_active', 1)->where('parent_team_id', $productId)->get();
+    }
+
+    public function getTeamsByProductIds($productIds)
+    {
+        return Team::where('type', TeamTypeEnum::TEAM)->whereIn('parent_team_id', $productIds)->where('is_active', 1)->orderBy('name', 'asc')->get();
+    }
+
+    public function getTeamsByProductName($productName)
+    {
+        $product = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $productName)->where('is_active', 1)->first();
+
+        return ! $product ? null : Team::where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $product->id)->where('is_active', 1)->get();
+    }
+
+    public function getAllSubTeams()
+    {
+        return Team::where('type', TeamTypeEnum::SUB_TEAM)->orderBy('name', 'asc')->where('is_active', 1)->get();
+    }
+
+    public function getSubTeamsByTeamId($teamId)
+    {
+        return Team::where('type', TeamTypeEnum::SUB_TEAM)->where('parent_team_id', $teamId)->where('is_active', 1)->get();
+    }
+
+    public function getSubTeamsByTeamIds($teamIds)
+    {
+        return Team::where('type', TeamTypeEnum::SUB_TEAM)->whereIn('parent_team_id', $teamIds)->where('is_active', 1)->select('id', 'name')->orderBy('name', 'asc')->get();
+    }
+
+    public function getUsersByTeamId($teamId)
+    {
+        $teamUserId = DB::table('user_team')->where('team_id', $teamId)->pluck('user_id');
+
+        return User::whereIn('id', $teamUserId)->where('is_active', 1)->get();
+    }
+
+    public function getUsersByTeamIds($teamIds)
+    {
+        $teamUserIds = DB::table('user_team')->whereIn('team_id', $teamIds)->pluck('user_id');
+
+        return User::whereIn('id', $teamUserIds)->where('is_active', 1)->get();
+    }
+
+    public function getUsersByProductName($productName)
+    {
+        $product = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $productName)->where('is_active', 1)->first();
+        $productTeams = Team::where('type', TeamTypeEnum::TEAM)->where('parent_team_id', $product->id)->where('is_active', 1)->get();
+
+        return User::whereIn('id', DB::table('user_team')->whereIn('team_id', $productTeams->pluck('id'))->pluck('user_id'))->where('is_active', 1)->get();
+    }
+
+    public function getUserManagers($userId)
+    {
+        $managerIds = DB::table('user_manager')->where('user_id', $userId)->get()->pluck('manager_id');
+
+        return User::whereIn('id', $managerIds)->where('is_active', 1)->get();
+    }
+
+    public function getUserManagersByTeamId($userId, $teamId)
+    {
+        $teamUserIds = DB::table('user_team')->where('team_id', $teamId)->get()->pluck('user_id');
+        $managerIds = DB::table('user_manager')->whereIn('user_id', $teamUserIds)->get()->pluck('manager_id');
+
+        return User::whereIn('id', $managerIds)->where('is_active', 1)->get();
+    }
+
+    public function getUserTeams($userId)
+    {
+        $teamIds = DB::table('user_team')->where('user_id', $userId)->get()->pluck('team_id');
+
+        return Team::whereIn('id', $teamIds)->where('type', TeamTypeEnum::TEAM)->where('is_active', 1)->get();
+    }
+
+    public function getUserProducts($userId)
+    {
+        $productIds = DB::table('user_products')->where('user_id', $userId)->get()->pluck('product_id');
+
+        return Team::whereIn('id', $productIds)->where('type', TeamTypeEnum::PRODUCT)->where('is_active', 1)->get();
+    }
+
+    public function getAllUserIdsByProductName($productName)
+    {
+        $teamId = $this->getTeamsByProductName($productName)->first()->id;
+
+        return DB::table('user_team')->where('team_id', $teamId)->get()->pluck('user_id');
+    }
+}

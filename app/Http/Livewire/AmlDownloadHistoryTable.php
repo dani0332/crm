@@ -23,11 +23,7 @@ class AmlDownloadHistoryTable extends DataTableComponent
             ->setPerPageVisibilityDisabled()
             ->setFilterLayoutSlideDown();
 
-        // disabled pagination count & pagination view
-        $this->setPaginationVisibilityDisabled();
-        $this->setConfigurableAreas([
-            'after-pagination' => 'livewire.pagination',
-        ]);
+        $this->setPaginationMethod('simple');
     }
 
     public function columns(): array
@@ -89,13 +85,13 @@ class AmlDownloadHistoryTable extends DataTableComponent
 
     // custom pagination
 
-    public function getCurrentPage()
-    {
-        return $this->page;
-    }
+    // public function getCurrentPage()
+    // {
+    //     return $this->page;
+    // }
 
-    protected function executeQuery()
-    {
-        return $this->getBuilder()->simplePaginate($this->getPerPage(), ['*'], $this->getComputedPageName());
-    }
+    // protected function executeQuery()
+    // {
+    //     return $this->getBuilder()->simplePaginate($this->getPerPage(), ['*'], $this->getComputedPageName());
+    // }
 }

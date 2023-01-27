@@ -200,11 +200,9 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 		});
 
 		// Show total on load
-		totalPremium('.car-quote-plan-total-premium', JSON.parse(
-				'{{ json_encode(isset($discountPremium) ? $discountPremium : 0) }}'), JSON
-			.parse('{{ json_encode($vat) }}'), JSON.parse(
-				'{{ json_encode($totalSelectedAddonsPriceWithVat) }}'
-			));
+		totalPremium('.car-quote-plan-total-premium', 
+				'{{ isset($discountPremium) ? $discountPremium : 0 }}', '{{ isset($vat) ? $vat : 0 }}', 
+				'{{ isset($totalSelectedAddonsPriceWithVat) ? $totalSelectedAddonsPriceWithVat : 0 }}');
 
 		// Conditionally lock fields
 		conditionallyLockFields(shouldReviseQuote);
@@ -640,7 +638,9 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td colspan="7"></td>
 								<td align="right">
-									<button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>
+									@if(! auth()->user()->hasRole(RolesEnum::PA))
+										<button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>@
+									@endif
 								</td>
 							</tr>
 							<tr>
@@ -946,8 +946,9 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								</td>
 								<td valign="top"></td>
 								<td align="right">
-									<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{
-										$carQuoteEditDisable }}>Update</button>
+									@if(! auth()->user()->hasRole(RolesEnum::PA))
+										<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+									@endif
 								</td>
 							</tr>
 							<tr>
@@ -1011,8 +1012,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 											<td align="center"> </td>
 										</tr>
 										<tr>
-											<td colspan="4" align="right"><button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{
-													$carQuoteEditDisable }}>Update</button></td>
+											<td colspan="4" align="right">
+												@if(! auth()->user()->hasRole(RolesEnum::PA))
+													<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+												@endif
+											</td>
 										</tr>
 										<tr>
 											<td colspan="5">

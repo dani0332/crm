@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use DB;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class TeamService extends BaseService
     {
         $this->query = DB::table('teams as t')
             ->leftJoin('teams as pt', 'pt.id', '=', 't.parent_team_id')
-            ->select('t.id', 't.uuid', 't.name AS name', 't.parent_team_id', 'pt.name AS parent_team_id_text');
+            ->select('t.id', 't.uuid', 't.name AS name', 't.parent_team_id', 'pt.name AS parent_team_id_text', 't.type');
     }
 
     public function getEntity($id)
@@ -65,7 +66,7 @@ class TeamService extends BaseService
         }
         $team->save();
         if (isset($request->return_to_view)) {
-            return redirect('/quotes/teams/'.$id)->with('success', 'Team has been updated');
+            return redirect('/quotes/team/'.$id)->with('success', 'Team has been updated');
         }
     }
 
@@ -74,7 +75,9 @@ class TeamService extends BaseService
         return [
             'id' => 'readonly|none',
             'name' => 'input|text|required|title',
+            'type' => '|static|title|'.TeamTypeEnum::PRODUCT_STR.','.TeamTypeEnum::TEAM_STR.','.TeamTypeEnum::SUBTEAM_STR.'',
             'parent_team_id' => 'select|title',
+
         ];
     }
 
@@ -86,7 +89,10 @@ class TeamService extends BaseService
                 $title = 'Team Name';
                 break;
             case 'parent_team_id':
-                $title = 'Parent Team';
+                $title = 'Parent Record';
+                break;
+            case 'type':
+                $title = 'Record Type';
                 break;
             default:
                 break;
@@ -108,5 +114,17 @@ class TeamService extends BaseService
     public function fillModelSearchProperties()
     {
         return ['name'];
+    }
+
+    public function getTeams()
+    {
+        return Team::where('is_active', 1)->whereNotNull('type')->get();
+    }
+
+    public function getTeamNameById($teamId)
+    {
+        $team = Team::where('id', $teamId)->first();
+
+        return $team ? $team->name : '';
     }
 }

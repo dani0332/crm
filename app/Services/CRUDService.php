@@ -176,7 +176,7 @@ class CRUDService extends BaseService
         $leadType = ucwords($leadType);
         $audits = DB::table('audits as a')
             ->select(
-                'a.created_at as ModifiedAt',
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
                 DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
                 DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
                 DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
@@ -217,7 +217,7 @@ class CRUDService extends BaseService
             $quoteDetailEntity->notes = $request->notes;
         }
         if (isset($request->nextFollowUpDate) && $request->nextFollowUpDate != '') {
-            $quoteDetailEntity->next_followup_date = $request->nextFollowUpDate;
+            $quoteDetailEntity->next_followup_date = date('Y-m-d H:i:s', strtotime($request->nextFollowUpDate));
         }
         if (isset($request->lost_approval_status) && $request->lost_approval_status != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
             $quoteDetailEntity->lost_approval_status = $request->lost_approval_status;
@@ -226,7 +226,7 @@ class CRUDService extends BaseService
             $quoteDetailEntity->lost_approval_reason = $request->lost_approval_reason;
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-            $quoteDetailEntity->next_followup_date = $request->next_followup_date;
+            $quoteDetailEntity->next_followup_date = date('Y-m-d H:i:s', strtotime($request->next_followup_date));
         }
 
         $quoteDetailEntity->save();
@@ -241,6 +241,9 @@ class CRUDService extends BaseService
         }
         if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
             $entity->wcu_id = null;
+        }
+        if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
+            $entity->tier_id = $request->tier_id;
         }
         $entity->save();
         //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
@@ -266,7 +269,7 @@ class CRUDService extends BaseService
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->select('users.id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
-            $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::Advisor]);
+            $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::Advisor, RolesEnum::CarDeputyManager]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
             $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthWCUAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
@@ -343,7 +346,6 @@ class CRUDService extends BaseService
     public function updateModelByType($modelType, Request $request, $id)
     {
         $lowerCaseModelType = strtolower($modelType);
-
         $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)}($request, $id);
     }
@@ -422,5 +424,24 @@ class CRUDService extends BaseService
         }
 
         return $this->applicationstorageService->getValueByKey($key);
+    }
+
+    public function sortMetaArray($sourceArray, $token)
+    {
+        $sorted = [];
+        foreach ($sourceArray as $key => $value) {
+            if (preg_match('/'.$token.'(\d+)/', $value, $matches)) {
+                $sorted[$key] = $matches[1];
+            } else {
+                $sorted[$key] = PHP_INT_MAX;
+            }
+        }
+        asort($sorted);
+        $result = [];
+        foreach ($sorted as $key => $value) {
+            $result[$key] = $sourceArray[$key];
+        }
+
+        return $result;
     }
 }

@@ -4,9 +4,10 @@ namespace App\Http\Livewire;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\ReportsLeadTypeEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
-use App\Traits\GetUserTree;
+use App\Traits\GetUserTreeTrait;
 use DB;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -14,7 +15,7 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 
 class AdvisorAssignedCarQuotesTable extends DataTableComponent
 {
-    use GetUserTree;
+    use GetUserTreeTrait;
 
     public $advisorId;
     public $leadType;
@@ -63,31 +64,35 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             info('batch : '.json_encode($batch->id));
             $query->where('quote_batch_id', $batch->id);
         }
-        if ($this->leadType == 'new_leads') {
+        if ($this->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
             info('inside lead type new');
-            $query->whereNotNull('car_quote_request.advisor_id')->where('car_quote_request.quote_status_id', QuoteStatusEnum::NewLead);
-        }
-        if ($this->leadType == 'not_interested') {
-            info('inside lead type not interested');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::NewLead);
+        }
+        if ($this->leadType == ReportsLeadTypeEnum::NOT_INTERESTED) {
+            info('inside lead type not interested');
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec]);
         }
         if ($this->leadType == 'in_progress') {
             info('inside lead type in progress');
-            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Quoted, QuoteStatusEnum::FollowedUp, QuoteStatusEnum::InNegotiation]);
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowedUp, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted]);
         }
         if ($this->leadType == 'manual_created') {
             info('inside lead type in progress');
             $query->where('source', LeadSourceEnum::IMCRM);
         }
-        if ($this->leadType == 'bad_leads') {
+        if ($this->leadType == ReportsLeadTypeEnum::BAD_LEAD) {
             info('inside lead type in progress');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
-        if ($this->leadType == 'sale_leads') {
+        if ($this->leadType == ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT) {
             info('inside lead type in progress');
-            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::PolicyIssued);
+            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::AfiaRenewal);
         }
-        if ($this->leadType == 'created_sale_leads') {
+        if ($this->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
+            info('inside lead type in progress');
+            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::TransactionApproved);
+        }
+        if ($this->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
             info('inside lead type in progress');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::TransactionApproved)->where('source', LeadSourceEnum::IMCRM);
         }

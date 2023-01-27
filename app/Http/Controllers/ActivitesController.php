@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\HelperService;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -134,7 +135,7 @@ class ActivitesController extends Controller
         }
         $record->title = $request->title;
         $record->description = $request->description;
-        $record->due_date = $request->due_date;
+        $record->due_date = Carbon::parse($request->due_date)->format('Y-m-d H:i:s');
         $record->save();
         if (isset($request->fromLeadView) && $request->fromLeadView == 1) {
             return redirect('/quotes/'.$this->getQuoteTypeNameFromId($request->quoteType).'/'.$request->quote_uuid)->with('success', 'Activity updated successfully');

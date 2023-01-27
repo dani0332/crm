@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Edit '.$model->modelType)
 @section('content')
+@php
+    use App\Enums\GenericRequestEnum;
+@endphp
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <style>
     .form-control:disabled, .form-control[readonly]{
@@ -72,6 +75,12 @@
                                                     type={{ explode("|", $value)[1]  }} id={{$property}}
                                                     @if(strpos($value, 'min') !== false)
                                                         min="{{explode(":", $value)[1]}}"
+                                                    @endif
+                                                    @if(strpos($value, 'max') !== false)
+                                                    max="{{explode(":", $value)[1]}}"
+                                                    @endif
+                                                    @if(str_contains($value, GenericRequestEnum::DISABLED_ATTRIBUTE))
+                                                        disabled="disabled"
                                                     @endif
                                                 name={{$property}}
                                                 @if($property == 'email' || $property == 'mobile_no') disabled="disabled" @endif
