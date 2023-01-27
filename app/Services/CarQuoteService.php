@@ -1159,7 +1159,6 @@ class CarQuoteService extends BaseService
         $result = [];
 
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
-
             $lead = $this->getEntityPlain($leadId);
 
             $isReAssignment = $lead->advisor_id != null ? true : false;
@@ -1212,7 +1211,7 @@ class CarQuoteService extends BaseService
     public function addManualAllocationCountAndUpdate($userId, $lead, $isReAssignment, $currentAssignedAdvisorId)
     {
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($userId);
-        if($isReAssignment) {
+        if ($isReAssignment) {
             $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($currentAssignedAdvisorId);
         }
         $newAdvisorAllocationRecord->manual_assignment_count = $newAdvisorAllocationRecord->manual_assignment_count + 1;
@@ -1220,7 +1219,7 @@ class CarQuoteService extends BaseService
         $newAdvisorAllocationRecord->updated_at = now();
         $newAdvisorAllocationRecord->save();
 
-        if($isReAssignment && $lead->created_at > now()->startOfDay()){
+        if ($isReAssignment && $lead->created_at > now()->startOfDay()) {
             $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
             $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
             $previousAdvisorAllocationRecord->updated_at = now();
