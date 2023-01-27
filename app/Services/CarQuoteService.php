@@ -1219,9 +1219,14 @@ class CarQuoteService extends BaseService
         $newAdvisorAllocationRecord->updated_at = now();
         $newAdvisorAllocationRecord->save();
 
-        if ($isReAssignment && $lead->created_at > now()->startOfDay()) {
-            $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
-            $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
+        if ($isReAssignment && $lead->created_at > now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
+
+            if ($previousAdvisorAllocationRecord->manual_assignment_count > 0) { // will reduce count for previous advisor if the count is greater than 0 to avoid going in -1
+                $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
+            }
+            if ($previousAdvisorAllocationRecord->allocation_count > 0) { // will reduce count for previous advisor if the count is greater than 0 to avoid going in -1
+                $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
+            }
             $previousAdvisorAllocationRecord->updated_at = now();
             $previousAdvisorAllocationRecord->save();
         }
