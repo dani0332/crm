@@ -160,6 +160,7 @@ class TransAppService extends BaseService
         info('sendWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
 
         $getStatusCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
+        $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
 
         if ($getStatusCode == 201) {
             info('sendWelcomeEmail MyAlfred welcome email sent to customer '.$customer->email);
@@ -167,12 +168,14 @@ class TransAppService extends BaseService
             $customer->save();
 
             // $code = substr($WEGenerateInviteCodeResponse, strpos($WEGenerateInviteCodeResponse, 'signup/') + 7);
-            $newMyAlFredUser = new MyAlFredUser;
-            $newMyAlFredUser->signup_url = null;
-            $newMyAlFredUser->customer_id = $customerId;
-            $newMyAlFredUser->code = $WEGenerateInviteCodeResponse;
-            $newMyAlFredUser->source = 'TRANSAPP';
-            $newMyAlFredUser->save();
+            if (! $isCustomerExisting) {
+                $newMyAlFredUser = new MyAlFredUser;
+                $newMyAlFredUser->signup_url = null;
+                $newMyAlFredUser->customer_id = $customerId;
+                $newMyAlFredUser->code = $WEGenerateInviteCodeResponse;
+                $newMyAlFredUser->source = 'TRANSAPP';
+                $newMyAlFredUser->save();
+            }
         } else {
             info('MyAlfred welcome email not sent to customer '.$customer->email.' getStatusCode: '.$getStatusCode);
         }
