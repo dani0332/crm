@@ -1223,8 +1223,7 @@ class CarQuoteService extends BaseService
         if ($isReAssignment && $lead->created_at > now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
             if ($lead->auto_assigned) {
                 $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-            }
-            else {
+            } else {
                 $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
             }
             if ($previousAdvisorAllocationRecord->allocation_count > 0) { // will reduce count for previous advisor if the count is greater than 0 to avoid going in -1
@@ -1233,7 +1232,7 @@ class CarQuoteService extends BaseService
             $previousAdvisorAllocationRecord->updated_at = now();
             $previousAdvisorAllocationRecord->save();
         }
-        if($lead->auto_assigned) {
+        if ($lead->auto_assigned) {
             $lead->auto_assigned = false;
         }
         info('assignment count update for userId : '.$userId.', and leadId :  '.$lead->uuid);
