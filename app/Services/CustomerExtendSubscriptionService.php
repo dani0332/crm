@@ -13,7 +13,7 @@ class CustomerExtendSubscriptionService extends BaseService
         $extendSubscriptionUserName = Config::get('constants.BERLIN_BASIC_AUTH_USER_NAME');
         $extendSubscriptionPassword = Config::get('constants.BERLIN_BASIC_AUTH_PASSWORD');
 
-        $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at', 'asc')->first();
+        $customerToken = MyAlFredUser::select('signup_url', 'code')->where('customer_id', '=', $customerId)->orderBy('created_at', 'asc')->first();
 
         $customerDataArr = json_encode([
             'token' => $customerToken->code,
