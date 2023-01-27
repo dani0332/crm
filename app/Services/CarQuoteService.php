@@ -1166,13 +1166,14 @@ class CarQuoteService extends BaseService
 
             $lead->advisor_id = $userId;
             $lead->auto_assigned = false;
-            $lead->save();
 
             info('Manual assignment done for lead : '.$lead->uuid);
             $this->updateChildRecord($lead->id);
 
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
             $this->addManualAllocationCountAndUpdate($userId, $lead, $isReAssignment, $currentAssignedAdvisorId);
+
+            $lead->save();
 
             if (isset($request->assignment_type) && $request->assignment_type == GenericRequestEnum::ASSIGN_WITH_EMAIL) {
                 info('Inside sending email for manual assignment');
@@ -1220,7 +1221,10 @@ class CarQuoteService extends BaseService
         $newAdvisorAllocationRecord->save();
 
         if ($isReAssignment && $lead->created_at > now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
-            if ($previousAdvisorAllocationRecord->manual_assignment_count > 0) { // will reduce count for previous advisor if the count is greater than 0 to avoid going in -1
+            if ($lead->auto_assigned) {
+                $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
+            }
+            else {
                 $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
             }
             if ($previousAdvisorAllocationRecord->allocation_count > 0) { // will reduce count for previous advisor if the count is greater than 0 to avoid going in -1
@@ -1228,6 +1232,9 @@ class CarQuoteService extends BaseService
             }
             $previousAdvisorAllocationRecord->updated_at = now();
             $previousAdvisorAllocationRecord->save();
+        }
+        if($lead->auto_assigned) {
+            $lead->auto_assigned = false;
         }
         info('assignment count update for userId : '.$userId.', and leadId :  '.$lead->uuid);
     }
