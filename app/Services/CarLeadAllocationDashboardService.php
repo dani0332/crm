@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
-use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\User;
 use Carbon\Carbon;
@@ -14,6 +13,12 @@ use Illuminate\Support\Facades\Log;
 
 class CarLeadAllocationDashboardService extends BaseService
 {
+    protected $applicationStorageService;
+    public function __construct(ApplicationStorageService $applicationStorageService)
+    {
+        $this->applicationStorageService = $applicationStorageService;
+    }
+
     public function getGridData()
     {
         try {
@@ -71,7 +76,7 @@ class CarLeadAllocationDashboardService extends BaseService
     }
     public function getTodaysCarTotalUnAssignedLeadsCount()
     {
-        $from = ApplicationStorageService::getValueByKeyName('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+        $from = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
         $to = now()->subMinutes(2)->toDateTimeString();
 
         return CarQuote::whereBetween('created_at', [$from, $to])

@@ -15,7 +15,7 @@ class Addcolumnforcostperlead extends Migration
     {
         Schema::table('car_quote_request', function (Blueprint $table) {
             if (! Schema::hasColumn('car_quote_request', 'cost_per_lead')) {
-                $table->integer('cost_per_lead')->nullable(true);
+                $table->integer('cost_per_lead')->nullable();
             }
         });
     }
