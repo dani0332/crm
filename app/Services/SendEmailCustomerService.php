@@ -12,6 +12,9 @@ class SendEmailCustomerService extends BaseService
     protected $emailActivityService;
     protected $emailStatusService;
     protected $customerService;
+    protected $apiKey = '';
+    protected $url = '';
+    protected $appEnv = '';
 
     public function __construct(
         EmailActivityService $emailActivityService,
@@ -21,6 +24,9 @@ class SendEmailCustomerService extends BaseService
         $this->emailActivityService = $emailActivityService;
         $this->emailStatusService = $emailStatusService;
         $this->customerService = $customerService;
+        $this->apiKey = config('constants.SENDINBLUE_KEY');
+        $this->url = config('constants.SIB_URL');
+        $this->appEnv = config('constants.APP_ENV');
     }
 
     public function sendEmail($emailTemplateId, $emailData, $tag)
@@ -114,15 +120,11 @@ class SendEmailCustomerService extends BaseService
     public function sendOcbEmail($emailTemplateId, $emailData, $tag)
     {
         try {
-            $apiKey = config('constants.SENDINBLUE_KEY');
-            $url = config('constants.SIB_URL');
-            $appEnv = config('constants.APP_ENV');
-
-            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
             $headers = [
                 'Accept' => 'application/json',
-                'api-key' => $apiKey,
+                'api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
             ];
 
@@ -204,7 +206,7 @@ class SendEmailCustomerService extends BaseService
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
-                $url,
+                $this->url,
                 [
                     'headers' => $headers,
                     'body' => json_encode($body),
@@ -240,17 +242,15 @@ class SendEmailCustomerService extends BaseService
 
     public function getEmailSubjectFromSib($messageId)
     {
-        $apiKey = config('constants.SENDINBLUE_KEY');
-        $url = config('constants.SIB_URL');
         try {
             $client = new \GuzzleHttp\Client();
             $response = $client->request(
                 'GET',
-                $url.'s?messageId='.$messageId.'&sort=desc&limit=1&offset=0',
+                $this->url.'s?messageId='.$messageId.'&sort=desc&limit=1&offset=0',
                 [
                     'headers' => [
                         'Accept' => 'application/json',
-                        'api-key' => $apiKey,
+                        'api-key' => $this->apiKey,
                     ],
                 ]
             );
@@ -267,5 +267,73 @@ class SendEmailCustomerService extends BaseService
         }
 
         return $emailSubject;
+    }
+
+    public function sendLMSIntroEmail($emailTemplateId, $emailData, $tag)
+    {
+        try {
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+
+            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
+
+            if ($emailAttachments) {
+                $attachments = [];
+                foreach ($emailAttachments as $emailAttachment) {
+                    $attachments[] = [
+                        'url' => $emailAttachment,
+                        'name' => basename($emailAttachment),
+                    ];
+                }
+            }
+
+            $body = json_encode([
+                'to' => [[
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->clientFullName,
+                ]],
+                'templateId' => $emailTemplateId,
+                'params' => [
+                    'clientFullName' => $emailData->clientFullName,
+                    'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
+                    'landLine' => isset($emailData->landLine) ? $emailData->landLine : null,
+                    'mobilePhone' => isset($emailData->mobilePhone) ? $emailData->mobilePhone : null,
+                ],
+                'tags' => [
+                    $tag,
+                ],
+                'attachment' => isset($attachments) ? $attachments : null,
+            ], JSON_UNESCAPED_SLASHES);
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10000,
+                ]
+            );
+
+            $messageId = json_decode($clientRequest->getBody()->getContents())->messageId;
+            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $responseCode = $clientRequest->getStatusCode();
+
+            if ($responseCode == 201) {
+                $isEmailSent = 1;
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
+            Log::error($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+        }
+
+        return $responseCode;
     }
 }

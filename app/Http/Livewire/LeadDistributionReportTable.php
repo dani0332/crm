@@ -2,9 +2,12 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -16,8 +19,7 @@ class LeadDistributionReportTable extends DataTableComponent
 {
     public $url;
     public $tiers = [];
-    private $applicationStorageService;
-
+    private $maxDays = 92;
     public function configure(): void
     {
         $this->setPrimaryKey('tier.name')
@@ -36,6 +38,7 @@ class LeadDistributionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
@@ -45,7 +48,7 @@ class LeadDistributionReportTable extends DataTableComponent
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'~'.now()->format('Y-m-d'));
+            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
@@ -78,14 +81,15 @@ class LeadDistributionReportTable extends DataTableComponent
     {
         return CarQuote::query()
             ->select(
-                DB::raw('SUM(CASE WHEN car_quote_request.source not in ("Renewal_upload", "IMCRM", "TPL_RENEWALS") THEN 1 ELSE 0 END) as received_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as lead_created'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source not in ('.LeadSourceEnum::RENEWAL_UPLOAD.','.LeadSourceEnum::IMCRM.','.LeadSourceEnum::TPL_RENEWALS.') THEN 1 ELSE 0 END) as received_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as lead_created'),
                 DB::raw('count(car_quote_request.id) as total_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as auto_assigned'),
-                DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is not null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as manually_assigned'),
+                DB::raw('la.auto_assignment_count as auto_assigned'),
+                DB::raw('la.manual_assignment_count as manually_assigned'),
             )
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->join('lead_allocation as la', 'la.user_id', 'car_quote_request.advisor_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->groupBy('tiers.name');
     }
@@ -99,12 +103,13 @@ class LeadDistributionReportTable extends DataTableComponent
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
-                    'max_days' => $this->applicationStorageService->getValueByKey('MAX_DAYS_CAR_REPORTS'),
+                    'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
-                        $builder->whereBetween('car_quote_request.created_at', [$matches[1], $matches[2]]);
-                    }
+                    $dates = explode('~', $value);
+                    $dates[0] = Carbon::parse($dates[0])->format('Y-m-d');
+                    $dates[1] = Carbon::parse($dates[1])->format('Y-m-d');
+                    $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
             MultiSelectFilter::make('Tiers')
                 ->options($this->tiers)
