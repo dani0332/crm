@@ -27,7 +27,7 @@ class ApiService
     {
         $customer = CustomerService::getCustomerByEmail($email);
         if ($customer) {
-            $data = MyAlFredUser::select('signup_url', 'code')->whereCustomerId($customer->id)->latest()->first();
+            $data = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customer->id)->latest()->first();
             if ($data) {
                 return response()->json([
                     'message' => isset($data->signup_url) ? $data->signup_url : $data->code,
