@@ -17,6 +17,7 @@ class CustomerExtendSubscriptionService extends BaseService
 
         $customerDataArr = json_encode([
             'token' => $customerToken->code,
+            'isToken' => isset($customerToken->signup_url) ? false : true,
         ]);
 
         $magicUrlGeneratauthBasic = base64_encode($extendSubscriptionUserName.':'.$extendSubscriptionPassword);

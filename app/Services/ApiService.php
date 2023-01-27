@@ -29,7 +29,9 @@ class ApiService
         if ($customer) {
             $data = MyAlFredUser::select('signup_url')->whereCustomerId($customer->id)->latest()->first();
             if ($data) {
-                return response()->json(['message' => $data->signup_url], 200);
+                return response()->json([
+                    'message' => isset($data->signup_url) ? $data->signup_url : $data->code,
+                ], 200);
             } else {
                 if (! $customer->is_we_sent) {
                     return $this->generateSignupUrl($customer, $request);
