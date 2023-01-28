@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/png" href="{{ asset('image/favicon.ico') }}">
   <title inertia>{{ config('constants.APP_NAME', 'IMCRM') }}</title>
-  <link rel="stylesheet" href="{{ mix('css/inertia.css') }}">
+  <link rel="stylesheet" href="{{ mix('css/app.css') }}">
   
   <script src="{{ mix('/js/manifest.js') }}" defer></script>
   <script src="{{ mix('/js/vendor.js') }}" defer></script>

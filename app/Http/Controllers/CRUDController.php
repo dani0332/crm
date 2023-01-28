@@ -506,6 +506,7 @@ class CRUDController extends Controller
 
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
+                'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'genderOptions' => $genderOptions,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'ecomDetails' => $ecomDetails,

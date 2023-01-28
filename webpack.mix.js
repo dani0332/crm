@@ -31,7 +31,7 @@ mix
       chunkFilename: 'js/[name].js?id=[chunkhash]',
     },
   })
-  .postCss('resources/css/inertia.css', 'public/css', [require('tailwindcss')])
+  .postCss('resources/css/app.css', 'public/css', [require('tailwindcss')])
   .extract()
   .version();
 
