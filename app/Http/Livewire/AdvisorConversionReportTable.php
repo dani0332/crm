@@ -135,22 +135,24 @@ class AdvisorConversionReportTable extends DataTableComponent
             )->html()->footer(function ($rows) {
                 return $rows->sum('others');
             }),
-            Column::make('Gross Conversion')->label(fn ($row) =>  ($row->total_leads - $row->manual_created) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created))), 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
-                    $total = 0;
-                    foreach ($rows as $row) {
-                        if (($row->total_leads - $row->manual_created) > 0) {
-                            $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created)));
-                        }
+            Column::make('Gross Conversion')->label(fn ($row) => ($row->total_leads - $row->manual_created) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created))), 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
+                $total = 0;
+                foreach ($rows as $row) {
+                    if (($row->total_leads - $row->manual_created) > 0) {
+                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created)));
                     }
-                    return number_format($total, 2, '.', '').' %';
-                }),
-            Column::make('Net Conversion')->label(fn ($row) =>  ($row->total_leads - $row->bad_leads - $row->manual_created) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created))), 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
+                }
+
+                return number_format($total, 2, '.', '').' %';
+            }),
+            Column::make('Net Conversion')->label(fn ($row) => ($row->total_leads - $row->bad_leads - $row->manual_created) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created))), 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
                 $total = 0;
                 foreach ($rows as $row) {
                     if (($row->total_leads - $row->bad_leads - $row->manual_created) > 0) {
                         $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created)));
                     }
                 }
+
                 return number_format($total, 2, '.', '').' %';
             }),
         ];
