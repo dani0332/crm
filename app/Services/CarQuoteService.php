@@ -785,7 +785,9 @@ class CarQuoteService extends BaseService
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
         } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
             $this->walkTree(Auth::user()->id);
-            $this->query->whereIn('cqr.advisor_id', $this->childUserIds)->OrWhereNull('cqr.advisor_id');
+            $this->query->where(function($query) {
+                  return $query->whereIn('cqr.advisor_id', $this->childUserIds)->OrWhereNull('cqr.advisor_id');
+                 });
         } elseif (Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
             $this->walkTree(Auth::user()->id);
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds);

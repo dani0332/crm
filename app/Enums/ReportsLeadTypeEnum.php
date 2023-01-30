@@ -14,4 +14,5 @@ final class ReportsLeadTypeEnum extends Enum
     public const AFIA_RENEWALS_COUNT = 'afia_renewals_count';
     public const SALE_LEAD = 'sale_leads';
     public const CREATED_SALE_LEAD = 'created_sale_leads';
+    public const OTHERS = 'others';
 }
