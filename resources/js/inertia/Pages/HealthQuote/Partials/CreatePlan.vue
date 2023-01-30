@@ -1,5 +1,16 @@
 <script setup>
+import { reactive, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import axios from 'axios';
+
+const props = defineProps({
+  uuid: String,
+});
+
+const options = reactive({
+  insurancePlans: [],
+  insuranceNetworks: [],
+});
 
 const createForm = useForm({
   provider_id: null,
@@ -15,6 +26,25 @@ const onSubmit = () => {
   //   only: ['insuranceProviders', 'insurancePlans', 'insuranceNetworks'],
   // });
 };
+
+watch(
+  () => createForm?.provider_id,
+  value => {
+    if (value) {
+      axios
+        .get(
+          `/insurance-provider-plans?insuranceProviderId=${value}&quoteUuId=${props.uuid}`,
+        )
+        .then(res => {
+          if (res.data.length > 0) {
+            options.insurancePlans = res.data;
+          }
+        });
+
+      createForm.plan_id = null;
+    }
+  },
+);
 </script>
 
 <template>
@@ -39,6 +69,13 @@ const onSubmit = () => {
         placeholder="Select Plan"
         :disabled="!createForm.provider_id"
         class="w-full"
+        :helper="!createForm.provider_id ? 'Select a provider first' : ''"
+        :options="
+          options.insurancePlans?.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
       />
       <x-select
         v-model="createForm.network_id"
@@ -46,6 +83,7 @@ const onSubmit = () => {
         placeholder="Select Network"
         :disabled="!createForm.plan_id"
         class="w-full"
+        :helper="!createForm.plan_id ? 'Select a plan first' : ''"
       />
       <x-input
         v-model="createForm.premium"

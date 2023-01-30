@@ -1373,13 +1373,13 @@ onMounted(() => {
           >
             Download PDF
           </x-button>
-          <!-- <x-button
+          <x-button
             size="sm"
             color="primary"
             @click.prevent="modals.createPlan = true"
           >
             Create Quote
-          </x-button> -->
+          </x-button>
           <x-button
             v-if="listQuotePlans.length > 0"
             size="sm"
@@ -1444,7 +1444,7 @@ onMounted(() => {
 
       <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
         <template #header> Create Heath Quote </template>
-        <LazyCreatePlan />
+        <LazyCreatePlan :uuid="quote.uuid" />
       </x-modal>
     </div>
 
