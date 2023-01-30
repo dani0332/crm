@@ -131,10 +131,6 @@
             padding: 8px;
             color: #252525;
         }
-        .section {
-            color: #333393;
-            text-align: left;
-        }
         .text-black{color: #000000;}
         .provider {
             border: 1px solid #bfbfbf;
@@ -161,9 +157,6 @@
             max-width: 100%;
             font-weight: normal;
         }
-        div.quote-info  {
-
-        }
         .info h5 {
             background: #1d83bc;
             color: #ffffff;
@@ -178,7 +171,7 @@
             background-color: #1d83bc;
             color: #ffffff;
             padding: 8px 25px;
-            margin-top: 30px;
+            margin-top: 50px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
@@ -211,11 +204,6 @@
         }
         .provider-logo {
             width: 100px;
-        }
-
-        .container
-        {
-            padding: 0px 50px;
         }
         .no-border {border: none;}
         footer {
@@ -256,31 +244,18 @@
             z-index: 999;
         }
         .text-center {text-align: center;}
-        .badge-success {
-            color: #fff;
-            background-color: #1d83bc;
-        }
-        .badge {
-            display: inline-block;
-            padding: 0.25em 0.4em;
-            font-size: 50%;
-            font-weight: 700;
-            line-height: 1;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: baseline;
-            border-radius: 0.25rem;
-        }
 
     </style>
 </head>
 <body>
 <img src="{{public_path('images/quote_plans_pages/rm-p1.jpg')}}" class="full-page-image" />
+
 @php
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
 
     $benefits = ['feature', 'inpatient', 'outpatient', 'exclusion', 'coInsurance', 'regionCover', 'maternityCover', 'networkList'];
+
     foreach ($quotePlans->quote->plans as &$quotePlan)
     {
         $addonsPrice = 0;
@@ -333,10 +308,10 @@
         ["code" => "diagnostics", "title" => "Diagnostic*", "type" => 'outpatient'],
         ["code" => "alternativeMedicineAndTreatment", "title" => "Alternative Medicine*", "type" => ['outpatient', 'exclusion']],
         ["code" => "consultation", "title" => "Consultation*", "type" => 'outpatient'],
-        ["code" => "Physiotherapy", "title" => "Physiotherapy*", "type" => 'outpatient'],
+        ["code" => "physiotherapy", "title" => "Physiotherapy*", "type" => 'outpatient'],
         ["code" => "dentalCover", "title" => "Dental*", "type" => ['outpatient', 'exclusion'] ],
-        ["code" => "damage", "title" => "Optical*", "type" => ['outpatient', 'inclusion', 'exclusion']],//not found
-        ["code" => "heading", "title" => "Inpatient Benefits", "description" => "*All benefits, limits and sublimits are subject to applicable excess co‐insurance/co‐pays and prior authorization; Specific benefits varies for each insurer, please refer to table of benefits for more details"],
+        ["code" => "opticalOp", "title" => "Optical*", "type" => 'outpatient'],
+        ["code" => "heading", "title" => "Inpatient Benefits", "description" => "*All benefits, limits and sub limits are subject to applicable excess co‐insurance/co‐pays and prior authorization; Specific benefits varies for each insurer, please refer to table of benefits for more details"],
         ["code" => "preExistingOrChronic", "title" => "Pre‐existing & Chronic Conditions*", "type" => 'inpatient'],
         ["code" => "medicine", "title" => "Medicines*", "type" => 'inpatient'],
         ["code" => "surgeryRecovery", "title" => "Surgery and Recovery*", "type" => 'inpatient'],
@@ -371,6 +346,15 @@
     ];
 @endphp
 
+<header>
+    <div class="header">
+        <div class="logo">
+            <img class="im-logo" src="{{public_path('images/im_logo.png')}}" />
+        </div>
+        <h3>Your Tailor Made <br />Health Insurance Comparison Table</h3>
+    </div>
+</header>
+
 <footer >
     <table class="tbl-footer" >
         <tr>
@@ -403,15 +387,6 @@
         </tr>
     </table>
 </footer>
-
-<header>
-    <div class="header">
-        <div class="logo">
-            <img class="im-logo" src="{{public_path('images/im_logo.png')}}" />
-        </div>
-        <h3>Your Tailor Made <br />Health Insurance Comparison Table</h3>
-    </div>
-</header>
 
 <main>
     <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;">
@@ -572,5 +547,6 @@
 </main>
 
 <img src="{{public_path('images/quote_plans_pages/rm-p3.jpg')}}" class="full-page-image"  />
+
 </body>
 </html>
