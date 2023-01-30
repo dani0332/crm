@@ -100,10 +100,10 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         if ($this->leadType == ReportsLeadTypeEnum::OTHERS) {
             info('inside lead type in OTHERS');
             $query->whereNotIn('car_quote_request.quote_status_id', [
-                QuoteStatusEnum::NewLead,QuoteStatusEnum::PriceTooHigh,QuoteStatusEnum::PolicyPurchasedBeforeFirstCall,QuoteStatusEnum::NotInterested,
-                QuoteStatusEnum::NotEligibleForInsurance,QuoteStatusEnum::NotLookingForMotorInsurance,QuoteStatusEnum::NonGccSpec,QuoteStatusEnum::NotContactablePe,
-                QuoteStatusEnum::FollowupCall,QuoteStatusEnum::Interested,QuoteStatusEnum::NoAnswer,QuoteStatusEnum::Quoted,QuoteStatusEnum::Duplicate,
-                QuoteStatusEnum::Fake,QuoteStatusEnum::TransactionApproved,QuoteStatusEnum::AfiaRenewal]);
+                QuoteStatusEnum::NewLead, QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested,
+                QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec, QuoteStatusEnum::NotContactablePe,
+                QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::Duplicate,
+                QuoteStatusEnum::Fake, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::AfiaRenewal]);
         }
 
         return $query;
