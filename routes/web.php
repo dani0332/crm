@@ -340,6 +340,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [AjaxController::class, 'healthPlanUpdateManualProcess']);
+    Route::post('/health-plan-manual-create', [AjaxController::class, 'healthPlanCreateQuote']);
 
     Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
 });

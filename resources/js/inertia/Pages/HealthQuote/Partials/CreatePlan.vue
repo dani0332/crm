@@ -7,24 +7,29 @@ const props = defineProps({
   uuid: String,
 });
 
+const emit = defineEmits(['success']);
+
 const options = reactive({
   insurancePlans: [],
-  insuranceNetworks: [],
 });
 
 const createForm = useForm({
+  quote_uuid: props.uuid,
   provider_id: null,
   plan_id: null,
-  network_id: null,
   premium: null,
 });
 
 const onSubmit = () => {
-  // createForm.post('/health/insurance/create', {
-  //   preserveScroll: true,
-  //   preserveState: true,
-  //   only: ['insuranceProviders', 'insurancePlans', 'insuranceNetworks'],
-  // });
+  createForm.post('/health-plan-manual-create', {
+    preserveScroll: true,
+    onSuccess: () => {
+      emit('success');
+    },
+    onError: errors => {
+      console.log(errors);
+    },
+  });
 };
 
 watch(
@@ -76,14 +81,6 @@ watch(
             label: item.text,
           }))
         "
-      />
-      <x-select
-        v-model="createForm.network_id"
-        label="Network"
-        placeholder="Select Network"
-        :disabled="!createForm.plan_id"
-        class="w-full"
-        :helper="!createForm.plan_id ? 'Select a plan first' : ''"
       />
       <x-input
         v-model="createForm.premium"

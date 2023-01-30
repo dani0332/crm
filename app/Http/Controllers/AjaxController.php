@@ -21,6 +21,7 @@ class AjaxController extends Controller
     use GenericQueriesAllLobs;
 
     protected $healthQuoteService;
+
     public function __construct(HealthQuoteService $healthQuoteService)
     {
         $this->healthQuoteService = $healthQuoteService;
@@ -164,6 +165,26 @@ class AjaxController extends Controller
                 return 'API failed';
             }
         }
+    }
+
+    public function healthPlanCreateQuote(Request $request)
+    {
+        $planData = [
+            'quoteUID' => $request->quote_uuid,
+            'update' => false,
+        ];
+
+        $planData['plans'][] = [
+            'planId' => $request->plan_id,
+            'actualPremium' => $request->premium,
+            'discountPremium' => 0,
+            'isManualUpdate' => false,
+            'isManualPremium' => true,
+        ];
+
+        $this->healthQuoteService->renewalCreatePlan($planData);
+
+        return redirect()->back();
     }
 
     public function healthPlanUpdateManualProcess(Request $request)

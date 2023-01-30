@@ -493,6 +493,14 @@ const onExportPlans = () => {
     });
 };
 
+const onCreatePlan = () => {
+  modals.createPlan = false;
+  notification.success({
+    title: 'Plan Created',
+    position: 'top',
+  });
+};
+
 // quoteDocuments
 
 const quoteDocumentsTable = reactive({
@@ -1444,7 +1452,7 @@ onMounted(() => {
 
       <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
         <template #header> Create Heath Quote </template>
-        <LazyCreatePlan :uuid="quote.uuid" />
+        <LazyCreatePlan :uuid="quote.uuid" @success="onCreatePlan" />
       </x-modal>
     </div>
 
