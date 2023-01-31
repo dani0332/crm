@@ -11,6 +11,7 @@ use App\Enums\RolesEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthMemberDetail;
+use App\Models\HealthPlan;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
@@ -1251,7 +1252,9 @@ class HealthQuoteService extends BaseService
             'apiPassword' => config('constants.KEN_API_PWD'),
         ];
 
-        return $this->httpService->processRequest($planData, $apiCreds);
+        $response = $this->httpService->processRequest($planData, $apiCreds);
+
+        return $response;
     }
 
     /**
@@ -1309,5 +1312,13 @@ class HealthQuoteService extends BaseService
         }
 
         return $leadStatuses->whereNotIn('id', $statusesToRemove);
+    }
+
+    public function getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId)
+    {
+        return HealthPlan::select('id', 'text')
+            ->where('provider_id', $insuranceProviderId)
+            ->whereNotIn('id', $quotePlanId)
+            ->get();
     }
 }
