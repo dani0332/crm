@@ -895,7 +895,6 @@ onMounted(() => {
     a => a.id == page.props.quote.advisor_id,
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
-    console.log(policyDetails)
 });
 </script>
 <template>
