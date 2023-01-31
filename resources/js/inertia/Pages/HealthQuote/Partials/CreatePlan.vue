@@ -11,6 +11,7 @@ const emit = defineEmits(['success']);
 
 const options = reactive({
   insurancePlans: [],
+  loading: false,
 });
 
 const createForm = useForm({
@@ -20,7 +21,14 @@ const createForm = useForm({
   premium: null,
 });
 
-const onSubmit = () => {
+const rules = {
+  isRequired: v => !!v || 'This field is required',
+};
+
+const onSubmit = isValid => {
+  if (!isValid) {
+    return;
+  }
   createForm.post('/health-plan-manual-create', {
     preserveScroll: true,
     onSuccess: () => {
@@ -36,6 +44,7 @@ watch(
   () => createForm?.provider_id,
   value => {
     if (value) {
+      options.loading = true;
       axios
         .get(
           `/insurance-provider-plans-health?insuranceProviderId=${value}&quoteUuId=${props.uuid}`,
@@ -44,9 +53,11 @@ watch(
           if (res.data.length > 0) {
             options.insurancePlans = res.data;
           }
+        })
+        .finally(() => {
+          options.loading = false;
+          createForm.plan_id = null;
         });
-
-      createForm.plan_id = null;
     }
   },
 );
@@ -81,6 +92,8 @@ watch(
             label: item.text,
           }))
         "
+        :loading="options.loading"
+        :rules="[rules.isRequired]"
       />
       <x-input
         v-model="createForm.premium"
@@ -88,6 +101,7 @@ watch(
         label="Premium"
         placeholder="Enter Premium (inclusive of VAT, Basmah and Policy fee)"
         class="w-full"
+        :rules="[rules.isRequired]"
       />
       <x-button
         type="submit"

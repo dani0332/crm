@@ -190,9 +190,9 @@ class HealthQuoteController extends Controller
             'isManualPremium' => true,
         ];
 
-        $this->healthQuoteService->renewalCreatePlan($planData);
+        $response = $this->healthQuoteService->renewalCreatePlan($planData);
 
-        return redirect()->back();
+        return redirect()->back()->with('response', $response);
     }
 
     public function healthPlanUpdateManualProcess(Request $request)
