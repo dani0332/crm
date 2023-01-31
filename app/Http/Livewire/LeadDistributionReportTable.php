@@ -85,8 +85,8 @@ class LeadDistributionReportTable extends DataTableComponent
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as lead_created'),
                 DB::raw('count(car_quote_request.id) as total_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned == 1 THEN 1 ELSE 0 END) as auto_assigned'),
-                DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned == 0 THEN 1 ELSE 0 END) as manually_assigned'),
+                DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 1 THEN 1 ELSE 0 END) as auto_assigned'),
+                DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 0 THEN 1 ELSE 0 END) as manually_assigned'),
             )
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
@@ -95,8 +95,6 @@ class LeadDistributionReportTable extends DataTableComponent
 
     public function filters(): array
     {
-        $this->applicationStorageService = app(ApplicationStorageService::class);
-
         return [
             TextFilter::make('Created Date', 'created_at')
                 ->config([
