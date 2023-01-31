@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\CarMake;
@@ -165,24 +164,5 @@ class AjaxController extends Controller
                 return 'API failed';
             }
         }
-    }
-
-    public function healthPlanUpdateManualProcess(Request $request)
-    {
-        $response = $this->healthQuoteService->healthPlanModify($request);
-
-        $message = '';
-        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
-            $message = 'Plan has been updated';
-        } else {
-            if (isset($response->message)) {
-                $responseMessage = $response->message;
-            } else {
-                $responseMessage = $response;
-            }
-            $message = 'Plan has not been updated '.$responseMessage;
-        }
-
-        return $message;
     }
 }
