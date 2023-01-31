@@ -81,7 +81,7 @@ class LeadDistributionReportTable extends DataTableComponent
     {
         return CarQuote::query()
             ->select(
-                DB::raw('SUM(CASE WHEN car_quote_request.source not in ('.LeadSourceEnum::RENEWAL_UPLOAD.','.LeadSourceEnum::IMCRM.','.LeadSourceEnum::TPL_RENEWALS.') THEN 1 ELSE 0 END) as received_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source not in ("'.LeadSourceEnum::RENEWAL_UPLOAD.'","'.LeadSourceEnum::IMCRM.'","'.LeadSourceEnum::TPL_RENEWALS.'") THEN 1 ELSE 0 END) as received_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as lead_created'),
                 DB::raw('count(car_quote_request.id) as total_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
