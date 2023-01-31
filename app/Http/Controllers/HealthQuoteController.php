@@ -213,4 +213,30 @@ class HealthQuoteController extends Controller
 
         return $message;
     }
+
+    public function plansByInsuranceProvider(Request $request)
+    {
+        $insuranceProviderId = $request->insuranceProviderId;
+        $quoteUuId = $request->quoteUuId;
+
+        $quotePlans = $this->healthQuoteService->getQuotePlans($quoteUuId);
+
+        $quotePlanId = [];
+        $listQuotePlans = [];
+        if (isset($quotePlans->quotes->plans)) {
+            $listQuotePlans = $quotePlans->quotes->plans;
+        }
+
+        foreach ($listQuotePlans as $key => $quotePlan) {
+            if (! isset($quotePlan->id)) {
+                continue;
+            }
+
+            $quotePlanId[] = $quotePlan->id;
+        }
+
+        $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
+
+        return response()->json($healthPlans);
+    }
 }

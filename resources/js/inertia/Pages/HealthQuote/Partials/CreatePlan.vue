@@ -38,7 +38,7 @@ watch(
     if (value) {
       axios
         .get(
-          `/insurance-provider-plans?insuranceProviderId=${value}&quoteUuId=${props.uuid}`,
+          `/insurance-provider-plans-health?insuranceProviderId=${value}&quoteUuId=${props.uuid}`,
         )
         .then(res => {
           if (res.data.length > 0) {
