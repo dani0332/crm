@@ -33,10 +33,12 @@ class LeadAllocationService extends BaseService
     use GetUserTreeTrait;
 
     protected $emailDataService;
+    protected $sendEmailCustomerService;
 
-    public function __construct(EmailDataService $emailDataService)
+    public function __construct(EmailDataService $emailDataService, SendEmailCustomerService $sendEmailCustomerService)
     {
         $this->emailDataService = $emailDataService;
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
     public function getGridData()
@@ -147,11 +149,12 @@ class LeadAllocationService extends BaseService
                     info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
+                $lead->auto_assigned = $isManualAssignment ? false : true;
                 $lead->advisor_id = $advisorId;
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
-                    $this->updateLeadAllocationRecord($advisorId);
+                    $this->updateLeadAllocationRecord($advisorId, $isManualAssignment);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
                 $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
@@ -264,7 +267,7 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function updateLeadAllocationRecord($userId)
+    public function updateLeadAllocationRecord($userId, $isManualAssignment)
     {
         try {
             DB::beginTransaction();
@@ -272,6 +275,11 @@ class LeadAllocationService extends BaseService
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
             info('Max capacity for user '.$userId.' is '.$leadAllocation->max_capacity.' and allocation count is '.$leadAllocation->allocation_count);
             $leadAllocation->allocation_count += 1;
+            if ($isManualAssignment) {
+                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count + 1;
+            } else {
+                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count + 1;
+            }
             $leadAllocation->last_allocated = now()->timestamp;
             $leadAllocation->save();
             DB::commit();
@@ -402,6 +410,8 @@ class LeadAllocationService extends BaseService
             if ($leadAllocationRecord) {
                 $leadAllocationRecord->max_capacity = str_contains($user->quads, '1') ? 4 : 5;
                 $leadAllocationRecord->allocation_count = 0;
+                $leadAllocationRecord->manual_assignment_count = 0;
+                $leadAllocationRecord->auto_assignment_count = 0;
                 $leadAllocationRecord->updated_at = now();
                 $leadAllocationRecord->save();
             }
@@ -527,19 +537,19 @@ class LeadAllocationService extends BaseService
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
+                        $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
                         $carQuote->save();
-
-                        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carLead->id)->first();
-                        $carQuoteDetail->advisor_assigned_date = now();
-                        $carQuoteDetail->save();
+                        info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
+                        $this->updateCarLeadDetailRecord($carLead->id);
 
                         info('updating user record in lead allocation table with count increment userId: '.$userId);
-                        $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-                        $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
-                        $leadAllocation->last_allocated = Carbon::now()->timestamp;
-                        $leadAllocation->updated_at = now();
-                        $leadAllocation->save();
-                        info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code.' and lead allocation count for user : '.$userId.' is now : '.$leadAllocation->allocation_count);
+                        $this->updateLeadAllocationOnCarAutoAssignment($userId);
+
+                        $emailData = $this->buildEmailDateForLMSIntroEmail($userId, $carQuote);
+                        $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
+                        $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email');
+
+                        info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                     } else {
                         info('login users not found for selected lead so will try to assign only tier');
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
@@ -548,7 +558,7 @@ class LeadAllocationService extends BaseService
                             $carQuote->save();
                             info('Tier with name : '.$selectedTier->name.' and id : '.$selectedTier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
                         } else {
-                            info('Tier ('.$selectedTier->id.')is already assigned against car lead with uuid : '.$carQuote->uuid);
+                            info('Tier ('.$selectedTier->name.')is already assigned against car lead with uuid : '.$carQuote->uuid);
                         }
                     }
                 }
@@ -560,15 +570,50 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function splitString($separator, $string)
+    public function buildEmailDateForLMSIntroEmail($userId, $carQuote)
     {
-        if (strpos($string, $separator) !== false) {
-            $parts = explode($separator, $string);
-        } else {
-            $parts = [$string];
-        }
+        $user = User::where('id', $userId)->first();
+        $emailData = (object) [
+            'customerEmail' => $carQuote->email,
+            'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
+            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
+            'advisorName' => $user->name,
+            'landLine' => $user->landline_no,
+            'mobilePhone' => $user->mobile_no,
+        ];
 
-        return $parts;
+        return $emailData;
+    }
+
+    public function updateLeadAllocationOnCarAutoAssignment($userId)
+    {
+        $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+        $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
+        $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count + 1;
+        $leadAllocation->last_allocated = Carbon::now()->timestamp;
+        $leadAllocation->updated_at = now();
+        $leadAllocation->save();
+    }
+
+    public function updateCarLeadDetailRecord($leadId)
+    {
+        info('---- Inside updateCarLeadDetailRecord');
+        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
+        if ($carQuoteDetail != null) {
+            $carQuoteDetail->advisor_assigned_date = now();
+            $carQuoteDetail->advisor_assigned_by_id = auth()->id();
+            $carQuoteDetail->save();
+            info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
+        } else {
+            info('---- updateCarLeadDetailRecord - record not found creating new entry');
+            CarQuoteRequestDetail::create([
+                'car_quote_request_id' => $leadId,
+                'advisor_assigned_date' => now(),
+                'advisor_assigned_by_id' => auth()->id(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     public function getCarUnallocatedLeads($from)
@@ -582,6 +627,7 @@ class LeadAllocationService extends BaseService
             ->where('is_renewal_tier_email_sent', 0)
             ->whereBetween('created_at', [$from, $to])
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
             ->skip(0)->take($carLeadPickupLimit)->get();
     }
@@ -607,6 +653,7 @@ class LeadAllocationService extends BaseService
     {
         $dateFrom = Carbon::now()->addDays(-30);
         $dateTo = Carbon::now()->addDays(90);
+
         info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
         $renewalQuote = CarQuote::where('source', LeadSourceEnum::RENEWAL_UPLOAD)
         ->whereBetween('renewal_expiry_date', [$dateFrom, $dateTo])

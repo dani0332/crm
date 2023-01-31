@@ -2,8 +2,11 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\GenericRequestEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
+use App\Services\ApplicationStorageService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -18,7 +21,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
     public $tiers = [];
     public $teams = [];
     public $leadSources = [];
-
+    private $maxDays = 92;
     public function configure(): void
     {
         $this->setPrimaryKey('id')
@@ -37,6 +40,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
 
     public function mount()
     {
+        $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
@@ -70,7 +74,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'~'.now()->format('Y-m-d'));
+            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
@@ -114,8 +118,8 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             ->select(
                 DB::raw('count(car_quote_request.id) as total_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 40 THEN 1 ELSE 0 END) as new_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as auto_assigned'),
-                DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is not null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as manually_assigned'),
+                DB::raw('la.auto_assignment_count as auto_assigned'),
+                DB::raw('la.manual_assignment_count as manually_assigned'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 8 THEN 1 ELSE 0 END) as not_interested'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (2,24,25) THEN 1 ELSE 0 END) as in_progress'),
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as manual_created'),
@@ -125,6 +129,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->leftJoin('lead_allocation as la', 'la.user_id', 'users.id')
             ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
             ->leftJoin('teams', function ($join) {
                 $join->on('users.team_id', '=', 'teams.id');
@@ -142,12 +147,13 @@ class AdvisorPerformanceReportTable extends DataTableComponent
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
-                    'max_days' => 365,
+                    'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
-                        $builder->whereBetween('car_quote_request.created_at', [$matches[1], $matches[2]]);
-                    }
+                    $dates = explode('~', $value);
+                    $dates[0] = Carbon::parse($dates[0])->format('Y-m-d');
+                    $dates[1] = Carbon::parse($dates[1])->format('Y-m-d');
+                    $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
             SelectFilter::make('Teams')
                 ->options($this->teams)->filter(function (Builder $builder, $value) {

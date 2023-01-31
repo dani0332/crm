@@ -63,7 +63,7 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <input @if(str_contains($value, 'disabled')) disabled="disabled" @endif @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
+                                        <input @if(str_contains($value, GenericRequestEnum::DISABLED_ATTRIBUTE)) disabled="disabled" @endif @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
                                         @if(strpos($value, 'min') !== false)
 
                                             min="{{explode(":", $value)[1]}}"

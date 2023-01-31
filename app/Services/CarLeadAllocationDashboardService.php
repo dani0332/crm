@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
-use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\User;
 use Carbon\Carbon;
@@ -14,6 +13,12 @@ use Illuminate\Support\Facades\Log;
 
 class CarLeadAllocationDashboardService extends BaseService
 {
+    protected $applicationStorageService;
+    public function __construct(ApplicationStorageService $applicationStorageService)
+    {
+        $this->applicationStorageService = $applicationStorageService;
+    }
+
     public function getGridData()
     {
         try {
@@ -27,7 +32,7 @@ class CarLeadAllocationDashboardService extends BaseService
                             ->select(
                                 'users.id as userId',
                                 'users.name as userName', DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'), DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
-                                'la.allocation_count as allocationCount', 'la.last_allocated as lastAllocation', 'la.max_capacity as maxCapacity', 'la.is_available as isAvailable',
+                                DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'), 'la.last_allocated as lastAllocation', 'la.max_capacity as maxCapacity', 'la.is_available as isAvailable',
                                 'users.last_login as lastLogin', 'la.id as id', 'la.manual_assignment_count as manualAllocationCount', 'la.auto_assignment_count as autoAllocationCount'
                             );
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
@@ -71,11 +76,13 @@ class CarLeadAllocationDashboardService extends BaseService
     }
     public function getTodaysCarTotalUnAssignedLeadsCount()
     {
-        $from = Carbon::now()->startOfDay();
-        $to = Carbon::now()->endOfDay();
+        $from = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+        $to = now()->subMinutes(2)->toDateTimeString();
 
         return CarQuote::whereBetween('created_at', [$from, $to])
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
+            ->where('is_renewal_tier_email_sent', 0)
+            ->where('source', '!=', LeadSourceEnum::IMCRM)
             ->whereNull('advisor_id')
             ->count();
     }

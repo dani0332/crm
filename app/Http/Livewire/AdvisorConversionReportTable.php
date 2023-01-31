@@ -2,6 +2,8 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
@@ -9,6 +11,7 @@ use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
 use App\Traits\GetUserTreeTrait;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -25,7 +28,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     public $tiers = [];
     public $batches = [];
     public $leadSources = [];
-    private $applicationStorageService;
+    private $maxDays = 92;
 
     public function configure(): void
     {
@@ -45,6 +48,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
@@ -71,7 +75,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays(90)->format('Y-m-d').'~'.now()->format('Y-m-d'));
+            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
@@ -86,42 +90,42 @@ class AdvisorConversionReportTable extends DataTableComponent
             Column::make('Advisor Name', 'advisor.name')->searchable(),
             Column::make('Total Leads')
                 ->label(
-                    fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `total_leads`])" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
+                    fn ($row, Column $column) => '<a '.($row->total_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `total_leads`])" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
                 )->html()->footer(function ($rows) {
                     return $rows->sum('total_leads');
                 }),
             Column::make('New Leads')->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `new_leads`])" class="text-sky-700 cursor-pointer">'.$row->new_leads.'</a>'
+                fn ($row, Column $column) => '<a '.($row->new_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `new_leads`])" class="text-sky-700 cursor-pointer">'.$row->new_leads.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('new_leads');
             }),
             Column::make('Not Interested')->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `not_interested`])" class="text-sky-700 cursor-pointer">'.$row->not_interested.'</a>'
+                fn ($row, Column $column) => '<a '.($row->not_interested > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `not_interested`])" class="text-sky-700 cursor-pointer">'.$row->not_interested.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('not_interested');
             }),
             Column::make('In Progress')->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `in_progress`])" class="text-sky-700 cursor-pointer">'.$row->in_progress.'</a>'
+                fn ($row, Column $column) => '<a '.($row->in_progress > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `in_progress`])" class="text-sky-700 cursor-pointer">'.$row->in_progress.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('in_progress');
             }),
             Column::make('Manual Created')->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `manual_created`])" class="text-sky-700 cursor-pointer">'.$row->manual_created.'</a>'
+                fn ($row, Column $column) => '<a '.($row->manual_created > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `manual_created`])" class="text-sky-700 cursor-pointer">'.$row->manual_created.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('manual_created');
             }),
             Column::make('Bad Leads')->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `bad_leads`])" class="text-sky-700 cursor-pointer">'.$row->bad_leads.'</a>'
+                fn ($row, Column $column) => '<a '.($row->bad_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `bad_leads`])" class="text-sky-700 cursor-pointer">'.$row->bad_leads.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('bad_leads');
             }),
             Column::make('Sale Leads')->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `sale_leads`])" class="text-sky-700 cursor-pointer">'.$row->sale_leads.'</a>'
+                fn ($row, Column $column) => '<a '.($row->sale_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `sale_leads`])" class="text-sky-700 cursor-pointer">'.$row->sale_leads.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('sale_leads');
             }),
             Column::make('AFIA Renewals')->label(
-                fn ($row, Column $column) => '<a x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `afia_renewals_count`])" class="text-sky-700 cursor-pointer">'.$row->afia_renewals_count.'</a>'
+                fn ($row, Column $column) => '<a '.($row->afia_renewals_count > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `afia_renewals_count`])" class="text-sky-700 cursor-pointer">'.$row->afia_renewals_count.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('afia_renewals_count');
             }),
@@ -129,7 +133,9 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ->footer(function ($rows) {
                     $total = 0;
                     foreach ($rows as $row) {
-                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->manual_created) : 1));
+                        if (($row->total_leads - $row->manual_created) > 0) {
+                            $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->manual_created) : 1));
+                        }
                     }
 
                     return number_format((float) $total, 2, '.', '').' %';
@@ -156,13 +162,13 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->select(
                 'users.id as advisorId',
                 DB::raw('count(car_quote_request.id) as total_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is not null and car_quote_request.quote_status_id = 8 THEN 1 ELSE 0 END) as new_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 8 THEN 1 ELSE 0 END) as not_interested'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (2,24,25) THEN 1 ELSE 0 END) as in_progress'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as manual_created'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" and car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.') THEN 1 ELSE 0 END) as not_interested'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.') THEN 1 ELSE 0 END) as in_progress'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE 0 END) as created_sale_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::AfiaRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
@@ -179,18 +185,18 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function filters(): array
     {
-        $this->applicationStorageService = app(ApplicationStorageService::class);
         $filters = [
             TextFilter::make('Created Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
-                    'max_days' => $this->applicationStorageService->getValueByKey('MAX_DAYS_CAR_REPORTS'),
+                    'max_days' => $this->maxDays,
                 ])
                 ->filter(function (Builder $builder, string $value) {
-                    if (preg_match('/^(\d{4}-\d{2}-\d{2})~(\d{4}-\d{2}-\d{2})$/', $value, $matches)) {
-                        $builder->whereBetween('quote_batches.created_at', [$matches[1], $matches[2]]);
-                    }
+                    $dates = explode('~', $value);
+                    $dates[0] = Carbon::parse($dates[0])->format('Y-m-d');
+                    $dates[1] = Carbon::parse($dates[1])->format('Y-m-d');
+                    $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
             SelectFilter::make('Ecommerce')
                 ->options([

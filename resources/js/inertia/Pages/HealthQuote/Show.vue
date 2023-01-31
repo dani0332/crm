@@ -31,7 +31,7 @@ defineProps({
   quoteStatusEnum: Object,
   modelType: String,
   notProductionApproval: Boolean,
-
+  allowedDuplicateLOB: Array,
 });
 
 const page = usePage();
@@ -49,6 +49,7 @@ const fixedValue = number => {
 };
 
 const modals = reactive({
+  duplicate: false,
   member: false,
   memberConfirm: false,
   doc: false,
@@ -61,6 +62,37 @@ const modals = reactive({
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
 });
+
+const leadDuplicateForm = useForm({
+  modelType: 'health',
+  parentType: 'health',
+  entityId: page.props.quote.id,
+  entityCode: page.props.quote.code,
+  entityUId: page.props.quote.uid,
+  lob_team: [],
+  lob_team_sub_selection: null,
+});
+
+const openDuplicate = () => {
+  modals.duplicate = true;
+  leadDuplicateForm.reset();
+};
+
+const onCreateDuplicate = isValid => {
+  if (!isValid) return;
+  leadDuplicateForm.post('/quotes/createDuplicate', {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Quote duplicated successfully',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      modals.duplicate = false;
+    },
+  });
+};
 
 const confirmDeleteData = reactive({
   docs: null,
@@ -871,7 +903,9 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
-        <x-button size="sm" color="#ff5e00">Duplicate Lead</x-button>
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate"
+          >Duplicate Lead</x-button
+        >
 
         <Link href="/quotes/health" preserve-scroll>
           <x-button size="sm" color="primary"> Health List </x-button>
@@ -882,6 +916,46 @@ onMounted(() => {
         </Link>
       </div>
     </div>
+
+    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
+      <template #header> Duplicate Lead </template>
+      <x-form @submit="onCreateDuplicate" :auto-focus="false">
+        <div class="grid gap-4">
+          <x-select
+            v-model="leadDuplicateForm.lob_team"
+            label="LOBs"
+            :options="
+              allowedDuplicateLOB.map(lob => ({
+                value: lob,
+                label: lob,
+              }))
+            "
+            :rules="[rules.isRequired]"
+            placeholder="Select LOB For Duplication"
+            class="w-full"
+            multiple
+          />
+          <x-select
+            v-model="leadDuplicateForm.lob_team_sub_selection"
+            label="Reason"
+            :rules="[rules.isRequired]"
+            class="w-full"
+            :options="[
+              { value: 'new_enquiry', label: 'New enquiry' },
+              { value: 'record_only', label: 'Record purposes only' },
+            ]"
+          />
+
+          <x-button
+            color="orange"
+            type="submit"
+            :loading="leadDuplicateForm.processing"
+          >
+            Create Duplicate
+          </x-button>
+        </div>
+      </x-form>
+    </x-modal>
 
     <x-divider class="my-4" />
 
