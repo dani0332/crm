@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HealthQuote;
+use App\Services\HealthQuoteService;
 use Config;
 use DataTables;
 use Illuminate\Http\Request;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Log;
 
 class HealthQuoteController extends Controller
 {
+    protected $healthQuoteService;
+
     /**
      * Display a listing of the resource.
 
@@ -17,9 +20,10 @@ class HealthQuoteController extends Controller
 
      * @return \Illuminate\Http\Response
      */
-    public function __construct()
+    public function __construct(HealthQuoteService $healthQuoteService)
     {
         $this->middleware('permission:health-quotes-list|health-quotes-resubmit-api', ['only' => ['index', 'store']]);
+        $this->healthQuoteService = $healthQuoteService;
     }
 
     /**
@@ -168,5 +172,25 @@ class HealthQuoteController extends Controller
         }
         \Log::channel('customlog')->info($curlMesg);
         curl_close($chCenter);
+    }
+
+    public function healthPlanCreateQuote(Request $request)
+    {
+        $planData = [
+            'quoteUID' => $request->quote_uuid,
+            'update' => false,
+        ];
+
+        $planData['plans'][] = [
+            'planId' => $request->plan_id,
+            'actualPremium' => $request->premium,
+            'discountPremium' => 0,
+            'isManualUpdate' => false,
+            'isManualPremium' => true,
+        ];
+
+        $this->healthQuoteService->renewalCreatePlan($planData);
+
+        return redirect()->back();
     }
 }

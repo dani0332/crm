@@ -167,26 +167,6 @@ class AjaxController extends Controller
         }
     }
 
-    public function healthPlanCreateQuote(Request $request)
-    {
-        $planData = [
-            'quoteUID' => $request->quote_uuid,
-            'update' => false,
-        ];
-
-        $planData['plans'][] = [
-            'planId' => $request->plan_id,
-            'actualPremium' => $request->premium,
-            'discountPremium' => 0,
-            'isManualUpdate' => false,
-            'isManualPremium' => true,
-        ];
-
-        $this->healthQuoteService->renewalCreatePlan($planData);
-
-        return redirect()->back();
-    }
-
     public function healthPlanUpdateManualProcess(Request $request)
     {
         $response = $this->healthQuoteService->healthPlanModify($request);
