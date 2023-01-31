@@ -530,6 +530,7 @@ class CRUDController extends Controller
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
                 'notProductionApproval' => $notProductionApproval,
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ]);
         } else {
             return view('shared.show', compact([

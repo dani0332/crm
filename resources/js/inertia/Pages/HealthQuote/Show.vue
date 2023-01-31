@@ -32,6 +32,7 @@ defineProps({
   modelType: String,
   notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
+  isQuoteDocumentEnabled: Boolean,
 });
 
 const page = usePage();
@@ -1455,7 +1456,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
         <div>
             <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
             <x-divider class="mb-4 mt-1" />
@@ -1490,7 +1491,6 @@ onMounted(() => {
                 <x-button color="#007bff" size="sm"  type="submit" v-show="!policyDetails.editMode" @click.prevent="policyDetails.editMode = true" >Edit</x-button>
             </div>
         </x-form>
-
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
