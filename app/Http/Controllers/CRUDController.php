@@ -508,6 +508,7 @@ class CRUDController extends Controller
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
 
+            $notProductionApproval = !auth()->user()->hasRole(RolesEnum::PA);
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
                 'genderOptions' => $genderOptions,
@@ -529,6 +530,9 @@ class CRUDController extends Controller
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
                 'lostReasons' => $lostReasons,
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'modelType' => $quoteType,
+                'notProductionApproval' => $notProductionApproval,
             ]);
         } else {
             return view('shared.show', compact([
