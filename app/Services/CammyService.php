@@ -37,30 +37,24 @@ class CammyService
             if (is_array($quote->quote->plans)) {
                 $quote->quote->plans = array_slice($quote->quote->plans, 0, 6);
                 foreach ($quote->quote->plans as $plan) {
+                    $features = collect();
+                    if (isset($plan->benefits->feature)) {
+                        foreach ($plan->benefits->feature as $feature) {
+                            $features->push(
+                                [
+                                    'code' => $feature->code,
+                                    'text' => $feature->text,
+                                    'description' => $feature->description,
+                                    'value' => $feature->value,
+                                ]
+                            );
+                        }
+                    }
                     $plans->push([
                         'name' => $plan->name,
                         'provider' => $plan->providerName,
                         'premium' => (string) $plan->actualPremium,
-                        'features' => [
-                            [
-                                'code' => optional($plan->benefits->feature[0])->code,
-                                'text' => optional($plan->benefits->feature[0])->text,
-                                'description' => optional($plan->benefits->feature[0])->description,
-                                'value' => optional($plan->benefits->feature[0])->value,
-                            ],
-                            [
-                                'code' => optional($plan->benefits->feature[1])->code,
-                                'text' => optional($plan->benefits->feature[1])->text,
-                                'description' => optional($plan->benefits->feature[1])->description,
-                                'value' => optional($plan->benefits->feature[1])->value,
-                            ],
-                            [
-                                'code' => optional($plan->benefits->feature[2])->code,
-                                'text' => optional($plan->benefits->feature[2])->text,
-                                'description' => optional($plan->benefits->feature[2])->description,
-                                'value' => optional($plan->benefits->feature[2])->value,
-                            ],
-                        ],
+                        'features' => $features->toArray(),
                         'logo' => '',
                         'planLink' => '',
                     ]);
