@@ -245,9 +245,9 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ])->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.quote_batch_id', $value);
                 }),
-            MultiSelectFilter::make('Tiers') ->config([
-                    'placeholder' => "SELECT ALL TIERS",
-                ])
+            MultiSelectFilter::make('Tiers')->config([
+                'placeholder' => 'SELECT ALL TIERS',
+            ])
                 ->options($this->tiers)->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.tier_id', $value);
                 }),
