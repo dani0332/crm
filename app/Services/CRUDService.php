@@ -8,6 +8,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
+use App\Jobs\SyncSIBContactJob;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
@@ -255,6 +256,7 @@ class CRUDService extends BaseService
             if ($previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
             || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending) {
                 CammyJob::dispatch($entity, 'unsub');
+                SyncSIBContactJob::dispatch($entity);
             }
         }
 
