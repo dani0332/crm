@@ -9,9 +9,11 @@ use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
+use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
+use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -29,7 +31,8 @@ class AdvisorConversionReportTable extends DataTableComponent
     public $batches = [];
     public $leadSources = [];
     private $maxDays = 92;
-
+    private $advisors = [];
+    private $teams = [];
     public function configure(): void
     {
         $this->setPrimaryKey('id')
@@ -49,6 +52,22 @@ class AdvisorConversionReportTable extends DataTableComponent
     public function mount()
     {
         $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $this->advisors = User::whereIn('id', $this->walkTree(auth()->user()->id))
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+        $this->teams = collect(DB::select("
+            select
+            CONCAT(teams.`name`,' ', CASE WHEN `type` = 2 THEN '- Team' ELSE '- SubTeam' END) as name,
+            teams.id
+            from teams
+            where id in (select team_id from user_team where user_id = '". auth()->user()->id ."' ) OR id = (select sub_team_id from users where id =  '". auth()->user()->id ."');"))
+            ->keyBy('id')
+            ->map(fn ($Teams) => $Teams->name)
+            ->toArray();
         $this->tiers = Tier::query()
             ->orderBy('name')
             ->where('is_active', 1)
@@ -85,8 +104,12 @@ class AdvisorConversionReportTable extends DataTableComponent
             Column::make('Batch Number', 'batch.name')->footer(function () {
                 return  'Total';
             }),
-            Column::make('Start Date', 'batch.start_date'),
-            Column::make('Stop Date', 'batch.end_date'),
+            Column::make('Start Date', 'batch.start_date')->format(
+                fn ($value) => $value ? Carbon::parse($value)->format('d-m-Y') : null
+            ),
+            Column::make('Stop Date', 'batch.end_date')->format(
+                fn ($value) => $value ? Carbon::parse($value)->format('d-m-Y') : null
+            ),
             Column::make('Advisor Name', 'advisor.name')->searchable(),
             Column::make('Total Leads')
                 ->label(
@@ -182,8 +205,9 @@ class AdvisorConversionReportTable extends DataTableComponent
                     '.QuoteStatusEnum::Fake.','.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::AfiaRenewal.') THEN 1 ELSE 0 END) as others'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('user_team', 'users.id', 'user_team.user_id')
             ->leftJoin('teams', function ($join) {
-                $join->on('users.team_id', '=', 'teams.id');
+                $join->on('user_team.team_id', '=', 'teams.id');
                 $join->on('users.sub_team_id', '=', 'teams.id');
             })
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
@@ -226,6 +250,16 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ->options($this->tiers)->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.tier_id', $value);
                 }),
+
+            MultiSelectFilter::make('Teams')
+            ->options($this->teams)->filter(function (Builder $builder, $value) {
+                $builder->whereIn('teams.id', $value);
+            }),
+
+            MultiSelectFilter::make('Advisors')
+            ->options($this->advisors)->filter(function (Builder $builder, $value) {
+                $builder->whereIn('car_quote_request.advisor_id', $value);
+            }),
 
         ];
         if (! auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
