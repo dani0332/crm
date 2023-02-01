@@ -245,26 +245,28 @@ class AdvisorConversionReportTable extends DataTableComponent
                 ])->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.quote_batch_id', $value);
                 }),
-            MultiSelectFilter::make('Tiers')
+            MultiSelectFilter::make('Tiers') ->config([
+                    'placeholder' => "SELECT ALL TIERS",
+                ])
                 ->options($this->tiers)->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.tier_id', $value);
                 }),
-
-            MultiSelectFilter::make('Teams')
-            ->options($this->teams)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('teams.id', $value);
-            }),
-
-            MultiSelectFilter::make('Advisors')
-            ->options($this->advisors)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.advisor_id', $value);
-            }),
 
         ];
         if (! auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             array_push($filters, MultiSelectFilter::make('Lead Source')
             ->options($this->leadSources)->filter(function (Builder $builder, $value) {
                 $builder->whereIn('car_quote_request.source', $value);
+            }));
+
+            array_push($filters, MultiSelectFilter::make('Teams')
+            ->options($this->teams)->filter(function (Builder $builder, $value) {
+                $builder->whereIn('teams.id', $value);
+            }));
+
+            array_push($filters, MultiSelectFilter::make('Advisors')
+            ->options($this->advisors)->filter(function (Builder $builder, $value) {
+                $builder->whereIn('car_quote_request.advisor_id', $value);
             }));
         }
 
