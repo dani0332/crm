@@ -82,7 +82,7 @@ class CammyService
                     'contact' => ['firstName' => $lead->first_name, 'lastName'=>$lead->last_name],
                     'fromEmail' => isset($lead->advisor) ? $lead->advisor->email : 'no-reply@alert.insurancemarket.email',
                     'toEmail' => $lead->email,
-                    'cc' => 'daniyal36@gmail.com',
+                    'cc' => '',
                     // 'cc' => 'afiaretailmedical@insurancemarket.ae',
                     'bcc' => optional($lead->advisor)->email,
                     // 'bcc' => 'newleadpool@insurancemarket.ae,'.optional($lead->advisor)->email,
