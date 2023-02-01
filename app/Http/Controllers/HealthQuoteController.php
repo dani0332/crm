@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\GenericRequestEnum;
 use App\Models\HealthQuote;
+use App\Services\HealthQuoteService;
 use Config;
 use DataTables;
 use Illuminate\Http\Request;
@@ -10,6 +12,8 @@ use Illuminate\Support\Facades\Log;
 
 class HealthQuoteController extends Controller
 {
+    protected $healthQuoteService;
+
     /**
      * Display a listing of the resource.
 
@@ -17,9 +21,10 @@ class HealthQuoteController extends Controller
 
      * @return \Illuminate\Http\Response
      */
-    public function __construct()
+    public function __construct(HealthQuoteService $healthQuoteService)
     {
         $this->middleware('permission:health-quotes-list|health-quotes-resubmit-api', ['only' => ['index', 'store']]);
+        $this->healthQuoteService = $healthQuoteService;
     }
 
     /**
@@ -168,5 +173,70 @@ class HealthQuoteController extends Controller
         }
         \Log::channel('customlog')->info($curlMesg);
         curl_close($chCenter);
+    }
+
+    public function healthPlanCreateQuote(Request $request)
+    {
+        $planData = [
+            'quoteUID' => $request->quote_uuid,
+            'update' => false,
+        ];
+
+        $planData['plans'][] = [
+            'planId' => $request->plan_id,
+            'actualPremium' => $request->premium,
+            'discountPremium' => 0,
+            'isManualUpdate' => false,
+            'isManualPremium' => true,
+        ];
+
+        $response = $this->healthQuoteService->renewalCreatePlan($planData);
+
+        return redirect()->back()->with('response', $response);
+    }
+
+    public function healthPlanUpdateManualProcess(Request $request)
+    {
+        $response = $this->healthQuoteService->healthPlanModify($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Plan has been updated';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Plan has not been updated '.$responseMessage;
+        }
+
+        return $message;
+    }
+
+    public function plansByInsuranceProvider(Request $request)
+    {
+        $insuranceProviderId = $request->insuranceProviderId;
+        $quoteUuId = $request->quoteUuId;
+
+        $quotePlans = $this->healthQuoteService->getQuotePlans($quoteUuId);
+
+        $quotePlanId = [];
+        $listQuotePlans = [];
+        if (isset($quotePlans->quotes->plans)) {
+            $listQuotePlans = $quotePlans->quotes->plans;
+        }
+
+        foreach ($listQuotePlans as $key => $quotePlan) {
+            if (! isset($quotePlan->id)) {
+                continue;
+            }
+
+            $quotePlanId[] = $quotePlan->id;
+        }
+
+        $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
+
+        return response()->json($healthPlans);
     }
 }

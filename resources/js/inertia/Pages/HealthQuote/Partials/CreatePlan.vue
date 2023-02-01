@@ -1,20 +1,66 @@
 <script setup>
+import { reactive, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
+import axios from 'axios';
+
+const props = defineProps({
+  uuid: String,
+});
+
+const emit = defineEmits(['success']);
+
+const options = reactive({
+  insurancePlans: [],
+  loading: false,
+});
 
 const createForm = useForm({
+  quote_uuid: props.uuid,
   provider_id: null,
   plan_id: null,
-  network_id: null,
   premium: null,
 });
 
-const onSubmit = () => {
-  // createForm.post('/health/insurance/create', {
-  //   preserveScroll: true,
-  //   preserveState: true,
-  //   only: ['insuranceProviders', 'insurancePlans', 'insuranceNetworks'],
-  // });
+const rules = {
+  isRequired: v => !!v || 'This field is required',
 };
+
+const onSubmit = isValid => {
+  if (!isValid) {
+    return;
+  }
+  createForm.post('/health-plan-manual-create', {
+    preserveScroll: true,
+    onSuccess: () => {
+      emit('success');
+    },
+    onError: errors => {
+      console.log(errors);
+    },
+  });
+};
+
+watch(
+  () => createForm?.provider_id,
+  value => {
+    if (value) {
+      options.loading = true;
+      axios
+        .get(
+          `/insurance-provider-plans-health?insuranceProviderId=${value}&quoteUuId=${props.uuid}`,
+        )
+        .then(res => {
+          if (res.data.length > 0) {
+            options.insurancePlans = res.data;
+          }
+        })
+        .finally(() => {
+          options.loading = false;
+          createForm.plan_id = null;
+        });
+    }
+  },
+);
 </script>
 
 <template>
@@ -39,13 +85,15 @@ const onSubmit = () => {
         placeholder="Select Plan"
         :disabled="!createForm.provider_id"
         class="w-full"
-      />
-      <x-select
-        v-model="createForm.network_id"
-        label="Network"
-        placeholder="Select Network"
-        :disabled="!createForm.plan_id"
-        class="w-full"
+        :helper="!createForm.provider_id ? 'Select a provider first' : ''"
+        :options="
+          options.insurancePlans?.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        :loading="options.loading"
+        :rules="[rules.isRequired]"
       />
       <x-input
         v-model="createForm.premium"
@@ -53,6 +101,7 @@ const onSubmit = () => {
         label="Premium"
         placeholder="Enter Premium (inclusive of VAT, Basmah and Policy fee)"
         class="w-full"
+        :rules="[rules.isRequired]"
       />
       <x-button
         type="submit"
