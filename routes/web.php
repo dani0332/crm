@@ -62,6 +62,7 @@ use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Livewire\CarQuoteTable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\V2\PersonalQuoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +78,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('login');
 });
+
+//Route::get('personal-quotes', [\App\Http\Controllers\PersonalQuoteController::class, 'index']);
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
@@ -197,6 +200,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('roles', RoleController::class);
     });
 
+
+
     Route::group(['prefix' => 'quotes'], function () {
         Route::resource('carquotes', CarQuoteController::class);
         Route::get('carquotes/car_resubmit/{id}', [CarQuoteController::class, 'car_resubmit_capi'])->name('car_resubmit_capi');
@@ -240,6 +245,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-car-pdf', [CRUDController::class, 'exportCarPdf'])->name('exportCarPdf');
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
+    });
+
+    Route::group(['prefix' => 'personal-quotes'], function () {
+        Route::resource('{bike}', PersonalQuoteController::class);
     });
 
     Route::group(['prefix' => 'generic'], function () {
