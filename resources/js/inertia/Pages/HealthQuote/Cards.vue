@@ -1,6 +1,6 @@
 <script setup>
 import { reactive } from 'vue';
-import { Head, usePage, Link } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { useDateFormat } from '@vueuse/shared';
 import axios from 'axios';
 
@@ -158,7 +158,7 @@ const onSearch = id => {
             <x-icon icon="box" class="text-secondary-600 mb-2" />
             <p>No Leads Found</p>
           </div>
-          <Link
+          <a
             v-for="{
               id,
               uuid,
@@ -171,6 +171,7 @@ const onSearch = id => {
             } in quote.data.leads_list.data"
             :key="id"
             :href="`/quotes/health/${uuid}`"
+            target="_blank"
             title="View Lead"
             class="block p-3 mt-2 border border-gray-300 bg-white space-y-2 hover:transition hover:border-primary-500 rounded"
           >
@@ -194,7 +195,7 @@ const onSearch = id => {
               <x-icon icon="calendar" size="sm" class="text-primary-400" />
               <p class="text-xs">{{ dateFormat(updated_at) }}</p>
             </div>
-          </Link>
+          </a>
 
           <div
             class="mt-3"
