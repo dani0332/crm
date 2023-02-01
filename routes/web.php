@@ -206,6 +206,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::get('cartest', [CarQuoteTable::class, 'index']);
 
+        Route::get('health-cards', [HealthQuoteController::class, 'cardsView']);
+
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);

@@ -239,4 +239,59 @@ class HealthQuoteController extends Controller
 
         return response()->json($healthPlans);
     }
+
+    // TODO: Code Refactor
+    public function cardsView(Request $request)
+    {
+        $quotes = [];
+        $quotes[] = [
+            'id' => 8,
+            'title' => 'New Lead',
+            'data' => getDataAgainstStatus('health', 8),
+        ];
+        $quotes[] = [
+            'id' => 2,
+            'title' => 'Quoted',
+            'data' => getDataAgainstStatus('health', 2),
+        ];
+        $quotes[] = [
+            'id' => 31,
+            'title' => 'Qualified',
+            'data' => getDataAgainstStatus('health', 31),
+        ];
+        $quotes[] = [
+            'id' => 25,
+            'title' => 'In Negotiation',
+            'data' => getDataAgainstStatus('health', 25),
+        ];
+        $quotes[] = [
+            'id' => 26,
+            'title' => 'Application Pending',
+            'data' => getDataAgainstStatus('health', 26),
+        ];
+        $quotes[] = [
+            'id' => 28,
+            'title' => 'Payment Pending',
+            'data' => getDataAgainstStatus('health', 28),
+        ];
+        $quotes[] = [
+            'id' => 36,
+            'title' => 'Application Submitted',
+            'data' => getDataAgainstStatus('health', 36),
+        ];
+        $quotes[] = [
+            'id' => 15,
+            'title' => 'Transaction Approved',
+            'data' => getDataAgainstStatus('health', 15),
+        ];
+        $quotes[] = [
+            'id' => 29,
+            'title' => 'Policy Documents Pending',
+            'data' => getDataAgainstStatus('health', 29),
+        ];
+
+        return inertia('HealthQuote/Cards', [
+            'quotes' => $quotes,
+        ]);
+    }
 }
