@@ -29,6 +29,22 @@ trait TeamHierarchyTrait
         return Team::where('type', TeamTypeEnum::TEAM)->where('is_active', 1)->where('parent_team_id', $productId)->get();
     }
 
+    public function getTeamsSubTeamsByProductId($productId)
+    {
+        $result = [];
+        $teams = Team::where('type', TeamTypeEnum::TEAM)->where('is_active', 1)->where('parent_team_id', $productId)->get();
+        $subTeams = [];
+        foreach($teams as $team)
+        {
+            array_push($result, $team);
+            $subTeams = Team::where('type', TeamTypeEnum::SUB_TEAM)->where('is_active',1)->where('parent_team_id', $team->id)->get();
+            foreach($subTeams as $subTeam) {
+                array_push($result, $subTeam);
+            }
+        }
+        return $result;
+    }
+
     public function getTeamsByProductIds($productIds)
     {
         return Team::where('type', TeamTypeEnum::TEAM)->whereIn('parent_team_id', $productIds)->where('is_active', 1)->orderBy('name', 'asc')->get();
