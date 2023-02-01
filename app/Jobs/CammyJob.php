@@ -13,9 +13,9 @@ class CammyJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
+    public $tries = 5;
     public $timeout = 10;
-    public $backoff = 300;
+    public $backoff = 600;
     private $lead = null;
     private $trigger = null;
 
