@@ -20,7 +20,7 @@ class CammyService
     public function sync($lead, $trigger)
     {
         if (! $lead || ! $trigger) {
-            info('Cammy Service - '.$lead->code.' - Failed - Lead or Trigger not provided');
+            info('Cammy Service - Failed - Lead or Trigger not provided');
 
             return false;
         }
