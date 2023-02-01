@@ -13,7 +13,6 @@ use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
-use DateTime;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
@@ -64,7 +63,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             CONCAT(teams.`name`,' ', CASE WHEN `type` = 2 THEN '- Team' ELSE '- SubTeam' END) as name,
             teams.id
             from teams
-            where id in (select team_id from user_team where user_id = '". auth()->user()->id ."' ) OR id = (select sub_team_id from users where id =  '". auth()->user()->id ."');"))
+            where id in (select team_id from user_team where user_id = '".auth()->user()->id."' ) OR id = (select sub_team_id from users where id =  '".auth()->user()->id."');"))
             ->keyBy('id')
             ->map(fn ($Teams) => $Teams->name)
             ->toArray();
