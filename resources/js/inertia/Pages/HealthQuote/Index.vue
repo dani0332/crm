@@ -167,12 +167,13 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
       <div class="space-x-3">
-        <x-button size="sm" color="#1d83bc" href="/quotes/health-cards">
-          Cards View
-        </x-button>
-        <x-button size="sm" color="#ff5e00" href="/quotes/health/create">
-          Create Lead
-        </x-button>
+        <Link href="/quotes/health-cards">
+          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+        </Link>
+
+        <Link href="/quotes/health/create">
+          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+        </Link>
       </div>
     </div>
     <x-divider class="my-4" />

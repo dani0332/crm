@@ -78,10 +78,10 @@ function onSubmit(isValid) {
       <h2 class="text-xl font-semibold">Edit Health</h2>
       <div class="space-x-4">
         <Link :href="`/quotes/health/${props.quote.uuid}`">
-          <x-button size="sm"> View </x-button>
+          <x-button size="sm" tag="div"> View </x-button>
         </Link>
         <Link href="/quotes/health">
-          <x-button size="sm" color="#ff5e00"> Health List </x-button>
+          <x-button size="sm" color="#ff5e00" tag="div"> Health List </x-button>
         </Link>
       </div>
     </div>

@@ -1,6 +1,6 @@
 <script setup>
 import { reactive } from 'vue';
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, usePage, Link } from '@inertiajs/vue3';
 import { useDateFormat } from '@vueuse/shared';
 import axios from 'axios';
 
@@ -102,12 +102,13 @@ const onSearch = id => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
       <div class="space-x-3">
-        <x-button size="sm" color="#1d83bc" href="/quotes/health">
-          List View
-        </x-button>
-        <x-button size="sm" color="#ff5e00" href="/quotes/health/create">
-          Create Lead
-        </x-button>
+        <Link href="/quotes/health">
+          <x-button size="sm" color="#1d83bc"> List View </x-button>
+        </Link>
+
+        <Link href="/quotes/health/create">
+          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+        </Link>
       </div>
     </div>
     <x-divider class="my-4" />

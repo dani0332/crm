@@ -830,16 +830,16 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate"
-          >Duplicate Lead</x-button
-        >
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
 
         <Link href="/quotes/health" preserve-scroll>
-          <x-button size="sm" color="primary"> Health List </x-button>
+          <x-button size="sm" color="primary" tag="div"> Health List </x-button>
         </Link>
 
         <Link :href="`${quote.uuid}/edit`">
-          <x-button size="sm">Edit</x-button>
+          <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>
     </div>
@@ -1424,7 +1424,7 @@ onMounted(() => {
         :items="listQuotePlans || []"
         border-cell
         hide-rows-per-page
-        rows-per-page="15"
+        :rows-per-page="15"
         :hide-footer="listQuotePlans.length < 15"
       >
         <template #item-actualPremium="{ actualPremium, basmah }">
@@ -1498,7 +1498,7 @@ onMounted(() => {
         :items="quoteDocuments || []"
         border-cell
         hide-rows-per-page
-        rows-per-page="15"
+        :rows-per-page="15"
         :hide-footer="quoteDocuments.length < 15"
       >
         <template #item-original_name="item">
@@ -1576,7 +1576,7 @@ onMounted(() => {
         :items="activities"
         border-cell
         hide-rows-per-page
-        rows-per-page="15"
+        :rows-per-page="15"
         :hide-footer="activities.length < 15"
       >
         <template #item-status="{ status, id }">
@@ -1854,7 +1854,7 @@ onMounted(() => {
         :items="historyData || []"
         border-cell
         hide-rows-per-page
-        rows-per-page="15"
+        :rows-per-page="15"
         :hide-footer="historyData.length < 15"
       />
     </div>
