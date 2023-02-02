@@ -3,8 +3,11 @@
 namespace App\Repositories;
 
 use App\Enums\PersonalQuoteTypes;
+use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
+use App\Models\UAELicenseHeldFor;
+use App\Models\YearOfManufacture;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -30,6 +33,20 @@ class BikeQuoteRepository extends BaseRepository
     }
 
     /**
+     * get all dropdown options required for form
+     * @return array
+     */
+    public function fetchGetFormOptions()
+    {
+        return [
+            'nationalities' => NationalityRepository::withActive()->get(),
+            'uaeLicenses' => UaeLicenseHeldRepository::withActive()->get(),
+            'yearOfManufacture' => YearOfManufactureRepository::get(),
+            'insuranceProviders' => InsuranceProviderRepository::select('id', 'text')->orderBy('text', 'asc')->get()
+        ];
+    }
+
+    /**
      * @param $column
      * @param $value
      * @return mixed
@@ -38,6 +55,9 @@ class BikeQuoteRepository extends BaseRepository
         return $this->where($column, $value)->with('bikeQuote')->first();
     }
 
+    /**
+     * @return mixed
+     */
     public function fetchGetData()
     {
         $query = $this->query();

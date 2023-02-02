@@ -17,6 +17,9 @@ use Illuminate\Support\Str;
 class BikeQuoteController extends Controller
 {
 
+    /**
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
     public function index()
     {
         $personalQuotes = BikeQuoteRepository::getData();
@@ -26,19 +29,13 @@ class BikeQuoteController extends Controller
         ]);
     }
 
+    /**
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
     public function create()
     {
-        $nationalities = Nationality::withActive()->get();
-        $uaeLicenses = UAELicenseHeldFor::withActive()->get();
-        $yearOfManufacture = YearOfManufacture::get();
-        $insuranceProviders = InsuranceProvider::select('id', 'text')->orderBy('text', 'asc')->get();
-
-        return inertia('BikeQuote/Form', [
-            'nationalities' => $nationalities,
-            'uaeLicenses' => $uaeLicenses,
-            'yearOfManufacture' => $yearOfManufacture,
-            'insuranceProviders' => $insuranceProviders
-        ]);
+        $data = BikeQuoteRepository::getFormOptions();
+        return inertia('BikeQuote/Form', $data);
     }
 
     /**
@@ -52,24 +49,28 @@ class BikeQuoteController extends Controller
         return back()->with('message' , 'Quote created successfully');
     }
 
+    /**
+     * @param $uuid
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
     public function edit($uuid)
     {
-        $nationalities = Nationality::withActive()->get();
-        $uaeLicenses = UAELicenseHeldFor::withActive()->get();
-        $yearOfManufacture = YearOfManufacture::get();
-        $insuranceProviders = InsuranceProvider::select('id', 'text')->orderBy('text', 'asc')->get();
+        $data = BikeQuoteRepository::getFormOptions();
 
         $bikeQuote = BikeQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('BikeQuote/Form', [
-            'nationalities' => $nationalities,
-            'uaeLicenses' => $uaeLicenses,
-            'yearOfManufacture' => $yearOfManufacture,
-            'insuranceProviders' => $insuranceProviders,
+        return inertia('BikeQuote/Form', array_merge($data, [
             'bikeQuote' => $bikeQuote
-        ]);
+            ])
+        );
     }
 
+    /**
+     * @param $quoteTypeCode
+     * @param $quoteId
+     * @param PersonalQuoteRequest $request
+     * @return void
+     */
     public function update($quoteTypeCode, $quoteId, PersonalQuoteRequest $request)
     {
         dd($quoteTypeCode, $quoteId, $request->validated());
