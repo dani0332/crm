@@ -26,17 +26,16 @@ class CammyService
         }
 
         if ($trigger != self::UNSUB) {
-            $quote = $this->healthQuoteService->getQuotePlans($lead->uuid);
-            if (! isset($quote->quote)) {
+            $quote = $this->healthQuoteService->getQuotePlansPriority($lead->uuid);
+            if (! isset($quote) || is_string($quote)) {
                 info('Cammy Service - '.$lead->code.' - Failed - No response from KEN');
 
                 return false;
             }
 
             $plans = collect();
-            if (is_array($quote->quote->plans)) {
-                $quote->quote->plans = array_slice($quote->quote->plans, 0, 6);
-                foreach ($quote->quote->plans as $plan) {
+            if (is_array($quote->plans)) {
+                foreach ($quote->plans as $plan) {
                     $features = collect();
                     if (isset($plan->benefits->feature)) {
                         foreach ($plan->benefits->feature as $feature) {
@@ -55,8 +54,8 @@ class CammyService
                         'provider' => $plan->providerName,
                         'premium' => (string) $plan->actualPremium,
                         'features' => $features->toArray(),
-                        'logo' => '',
-                        'planLink' => '',
+                        'logo' => $plan->logo,
+                        'planLink' => $plan->planLink,
                     ]);
                 }
             }
