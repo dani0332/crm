@@ -494,9 +494,26 @@ const onExportPlans = () => {
 };
 
 const onCreatePlan = () => {
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['listQuotePlans'],
+    onStart: () => {
+      modals.createPlan = false;
+    },
+    onFinish: () => {
+      notification.success({
+        title: 'Plan Created',
+        position: 'top',
+      });
+    },
+  });
+};
+
+const onPlanError = () => {
   modals.createPlan = false;
-  notification.success({
-    title: 'Plan Created',
+  notification.error({
+    title: 'Plan Creation Failed',
     position: 'top',
   });
 };
@@ -1410,10 +1427,14 @@ onMounted(() => {
         hide-footer
       >
         <template #item-actualPremium="{ actualPremium, basmah }">
-          {{ fixedValue(actualPremium + basmah) }}
+          {{ fixedValue(basmah ? basmah + actualPremium : actualPremium) }}
         </template>
         <template #item-premiumVat="{ actualPremium, vat, basmah }">
-          {{ fixedValue(actualPremium + vat + basmah) }}
+          {{
+            fixedValue(
+              basmah ? basmah + actualPremium + vat : actualPremium + vat,
+            )
+          }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
@@ -1452,7 +1473,11 @@ onMounted(() => {
 
       <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
         <template #header> Create Heath Quote </template>
-        <LazyCreatePlan :uuid="quote.uuid" @success="onCreatePlan" />
+        <LazyCreatePlan
+          :uuid="quote.uuid"
+          @success="onCreatePlan"
+          @error="onPlanError"
+        />
       </x-modal>
     </div>
 

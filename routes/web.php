@@ -59,7 +59,6 @@ use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
-use App\Http\Livewire\CarQuoteTable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -203,8 +202,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
-
-        Route::get('cartest', [CarQuoteTable::class, 'index']);
 
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView']);
 

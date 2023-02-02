@@ -1,43 +1,54 @@
 <script setup>
 import { reactive, watch } from 'vue';
-import { useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 
 const props = defineProps({
   uuid: String,
 });
 
-const emit = defineEmits(['success']);
+const emit = defineEmits(['success', 'error']);
 
 const options = reactive({
   insurancePlans: [],
   loading: false,
 });
 
-const createForm = useForm({
-  quote_uuid: props.uuid,
+const createForm = reactive({
   provider_id: null,
   plan_id: null,
   premium: null,
+  loading: false,
 });
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
+  isNumber: v => !isNaN(v) || 'This field must be a number',
 };
 
 const onSubmit = isValid => {
   if (!isValid) {
     return;
   }
-  createForm.post('/health-plan-manual-create', {
-    preserveScroll: true,
-    onSuccess: () => {
-      emit('success');
-    },
-    onError: errors => {
-      console.log(errors);
-    },
-  });
+  createForm.loading = true;
+  axios
+    .post('/health-plan-manual-create', {
+      quoteUID: props.uuid,
+      planId: createForm.plan_id,
+      actualPremium: createForm.premium,
+    })
+    .then(res => {
+      if (res.data == 200) {
+        emit('success');
+      } else {
+        emit('error');
+      }
+    })
+    .catch(err => {
+      emit('error');
+    })
+    .finally(() => {
+      createForm.loading = false;
+    });
 };
 
 watch(
@@ -101,13 +112,13 @@ watch(
         label="Premium"
         placeholder="Enter Premium (inclusive of VAT, Basmah and Policy fee)"
         class="w-full"
-        :rules="[rules.isRequired]"
+        :rules="[rules.isRequired, rules.isNumber]"
       />
       <x-button
         type="submit"
         class="w-full"
         color="primary"
-        :loading="createForm.processing"
+        :loading="createForm.loading"
       >
         Add Quote
       </x-button>
