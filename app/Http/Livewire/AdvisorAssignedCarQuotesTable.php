@@ -52,8 +52,9 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             DB::raw("CONCAT('first_name', ' ', 'last_name') as fullName"),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->leftJoin('teams', function ($join) {
-            $join->on('users.team_id', '=', 'teams.id');
+        ->join('user_team', 'users.id', 'user_team.user_id')
+        ->join('teams', function ($join) {
+            $join->on('user_team.team_id', '=', 'teams.id');
             $join->on('users.sub_team_id', '=', 'teams.id');
         })
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
@@ -99,13 +100,13 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
 
         if ($this->leadType == ReportsLeadTypeEnum::OTHERS) {
             info('inside lead type in OTHERS');
+
             $query->whereNotIn('car_quote_request.quote_status_id', [
                 QuoteStatusEnum::NewLead, QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested,
                 QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec, QuoteStatusEnum::NotContactablePe,
                 QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::Duplicate,
                 QuoteStatusEnum::Fake, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::AfiaRenewal]);
         }
-
         return $query;
     }
 }

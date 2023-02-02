@@ -1214,7 +1214,7 @@ class CarQuoteService extends BaseService
     public function addManualAllocationCountAndUpdate($userId, $lead, $isReAssignment, $currentAssignedAdvisorId)
     {
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($userId);
-        if ($isReAssignment) {
+        if ($lead->advisor_id != null ) {
             $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($currentAssignedAdvisorId);
         }
         info('new advisor ('.$userId.')  manual count before update is : '.$newAdvisorAllocationRecord->manual_assignment_count.' and auto assignment count is : '.$newAdvisorAllocationRecord->auto_assignment_count);
@@ -1223,7 +1223,7 @@ class CarQuoteService extends BaseService
         $newAdvisorAllocationRecord->updated_at = now();
         $newAdvisorAllocationRecord->save();
 
-        if ($isReAssignment && $lead->created_at > now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
+        if ($lead->advisor_id != null && $lead->created_at > now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
             if ($lead->auto_assigned) {
                 info('previous advisor ('.$userId.')  manual count before update is : '.$previousAdvisorAllocationRecord->manual_assignment_count.' and auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
                 $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;

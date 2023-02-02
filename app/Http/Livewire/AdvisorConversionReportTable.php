@@ -20,6 +20,7 @@ use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use Illuminate\Support\Str;
 
 class AdvisorConversionReportTable extends DataTableComponent
 {
@@ -184,36 +185,38 @@ class AdvisorConversionReportTable extends DataTableComponent
     {
         $userIds = $this->walkTree(auth()->user()->id);
         info('user ids for advisor conversion report are : '.json_encode($userIds));
+        $query = CarQuote::query()
+        ->select(
+            'users.id as advisorId',
+            DB::raw('count(car_quote_request.id) as total_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.') THEN 1 ELSE 0 END) as not_interested'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.') THEN 1 ELSE 0 END) as in_progress'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE 0 END) as sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::AfiaRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id not in (
+                '.QuoteStatusEnum::NewLead.','.QuoteStatusEnum::PriceTooHigh.','.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.','.QuoteStatusEnum::NotInterested.',
+                '.QuoteStatusEnum::NotEligibleForInsurance.','.QuoteStatusEnum::NotLookingForMotorInsurance.','.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::NotContactablePe.',
+                '.QuoteStatusEnum::FollowupCall.','.QuoteStatusEnum::Interested.','.QuoteStatusEnum::NoAnswer.','.QuoteStatusEnum::Quoted.','.QuoteStatusEnum::Duplicate.',
+                '.QuoteStatusEnum::Fake.','.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::AfiaRenewal.') THEN 1 ELSE 0 END) as others'),
+        )
+        ->join('users', 'users.id', 'car_quote_request.advisor_id')
+        ->join('user_team', 'users.id', 'user_team.user_id')
+        ->join('teams', function ($join) {
+            $join->on('user_team.team_id', '=', 'teams.id');
+            $join->on('users.sub_team_id', '=', 'teams.id');
+        })
+        ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+        ->whereNull('car_quote_request.renewal_import_code')
+        ->whereIn('car_quote_request.advisor_id', $userIds)
+        ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
+        ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
-        return CarQuote::query()
-            ->select(
-                'users.id as advisorId',
-                DB::raw('count(car_quote_request.id) as total_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.') THEN 1 ELSE 0 END) as not_interested'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.') THEN 1 ELSE 0 END) as in_progress'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE 0 END) as created_sale_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::AfiaRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id not in (
-                    '.QuoteStatusEnum::NewLead.','.QuoteStatusEnum::PriceTooHigh.','.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.','.QuoteStatusEnum::NotInterested.',
-                    '.QuoteStatusEnum::NotEligibleForInsurance.','.QuoteStatusEnum::NotLookingForMotorInsurance.','.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::NotContactablePe.',
-                    '.QuoteStatusEnum::FollowupCall.','.QuoteStatusEnum::Interested.','.QuoteStatusEnum::NoAnswer.','.QuoteStatusEnum::Quoted.','.QuoteStatusEnum::Duplicate.',
-                    '.QuoteStatusEnum::Fake.','.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::AfiaRenewal.') THEN 1 ELSE 0 END) as others'),
-            )
-            ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->join('user_team', 'users.id', 'user_team.user_id')
-            ->leftJoin('teams', function ($join) {
-                $join->on('user_team.team_id', '=', 'teams.id');
-                $join->on('users.sub_team_id', '=', 'teams.id');
-            })
-            ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-            ->whereNull('car_quote_request.renewal_import_code')
-            ->whereIn('car_quote_request.advisor_id', $userIds)
-            ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
-            ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
+        info('other statuses are : '. json_encode(Str::replaceArray('?', $query->getBindings(), $query->toSql())));
+        return $query;
     }
 
     public function filters(): array
