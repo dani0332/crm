@@ -431,11 +431,11 @@ const plansTable = reactive({
       value: 'name',
     },
     {
-      text: 'Actual Premium with BASMAH',
+      text: 'Actual Premium',
       value: 'actualPremium',
     },
     {
-      text: 'Premium with VAT and BASMAH',
+      text: 'Premium with VAT',
       value: 'premiumVat',
     },
     {
@@ -1427,15 +1427,11 @@ onMounted(() => {
         :rows-per-page="15"
         :hide-footer="listQuotePlans.length < 15"
       >
-        <template #item-actualPremium="{ actualPremium, basmah }">
-          {{ fixedValue(basmah ? basmah + actualPremium : actualPremium) }}
+        <template #item-actualPremium="{ actualPremium }">
+          {{ fixedValue(actualPremium) }}
         </template>
-        <template #item-premiumVat="{ actualPremium, vat, basmah }">
-          {{
-            fixedValue(
-              basmah ? basmah + actualPremium + vat : actualPremium + vat,
-            )
-          }}
+        <template #item-premiumVat="{ actualPremium, vat }">
+          {{ fixedValue(actualPremium + vat) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">

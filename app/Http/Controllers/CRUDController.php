@@ -526,6 +526,9 @@ class CRUDController extends Controller
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
                 'lostReasons' => $lostReasons,
+                'can' => [
+                    'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+                ],
             ]);
         } else {
             return view('shared.show', compact([
