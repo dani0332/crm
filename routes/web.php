@@ -62,7 +62,7 @@ use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Livewire\CarQuoteTable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\V2\PersonalQuoteController;
+use App\Http\Controllers\V2\BikeQuoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,8 +78,6 @@ use App\Http\Controllers\V2\PersonalQuoteController;
 Route::get('/', function () {
     return redirect('login');
 });
-
-//Route::get('personal-quotes', [\App\Http\Controllers\PersonalQuoteController::class, 'index']);
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
@@ -248,7 +246,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'personal-quotes'], function () {
-        Route::resource('{bike}', PersonalQuoteController::class);
+        Route::resource('bike', \App\Http\Controllers\V2\BikeQuoteController::class);
     });
 
     Route::group(['prefix' => 'generic'], function () {

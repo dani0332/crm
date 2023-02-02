@@ -15,6 +15,7 @@ class CreatePersonalQuoteTypesTable extends Migration
     {
         Schema::create('personal_quote_types', function (Blueprint $table) {
             $table->id();
+            $table->string('short_code', 20)->unique()->nullable(false);
             $table->string('code', 20)->unique()->nullable(false);
             $table->string('title', 100)->nullable(false);
             $table->tinyInteger('status')->default(0);
