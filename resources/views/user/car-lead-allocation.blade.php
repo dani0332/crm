@@ -293,7 +293,7 @@
         <div class="x_panel">
             <div class="x_title">
 
-                @if(Auth::user()->hasRole(RolesEnum::ADMIN))
+                @if(Auth::user()->hasRole(RolesEnum::Admin))
                     <h2>Car Lead Allocation Management</h2>
                     <span class="status-text"></span>
                     <label class="switch "
