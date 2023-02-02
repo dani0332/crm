@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Config;
 
 class PersonalQuote extends Model
 {
@@ -30,6 +31,24 @@ class PersonalQuote extends Model
     public function bikeQuote()
     {
         return $this->hasOne(BikeQuote::class);
+    }
+
+    /**
+     * @param $table
+     * @return string
+     */
+    public function getCreatedAtAttribute($table)
+    {
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+    }
+
+    /**
+     * @param $table
+     * @return string
+     */
+    public function getUpdatedAtAttribute($table)
+    {
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
     }
 
     /**
