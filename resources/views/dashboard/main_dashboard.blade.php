@@ -338,6 +338,7 @@
             'https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.css',
             ],
             zIndex: 10,
+            format: "DD MM YYYY",
             LockPlugin: {
                 maxDays: 31
             },
