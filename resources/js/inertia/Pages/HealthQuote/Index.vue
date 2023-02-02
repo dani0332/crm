@@ -93,7 +93,7 @@ function onSubmit(isValid) {
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
-      onSuccess: () => (loader.table = false),
+      onFinish: () => (loader.table = false),
     });
   } else {
     console.log('Invalid');
@@ -156,13 +156,6 @@ function setQueryStringFilters() {
   }
 }
 
-const onExportQuotes = () => {
-  console.log(quotesSelected.value);
-  loader.export = true;
-  quotesSelected.value = [];
-  loader.export = false;
-};
-
 onMounted(() => {
   setQueryStringFilters();
 });
@@ -170,12 +163,17 @@ onMounted(() => {
 
 <template>
   <div>
-    <Head title="Health Quotes" />
+    <Head title="Health List" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Health Quotes List</h2>
-      <x-button size="sm" color="#ff5e00" href="/quotes/health/create">
-        Create Lead
-      </x-button>
+      <h2 class="text-xl font-semibold">Health List</h2>
+      <div class="space-x-3">
+        <x-button size="sm" color="#1d83bc" href="/quotes/health-cards">
+          Cards View
+        </x-button>
+        <x-button size="sm" color="#ff5e00" href="/quotes/health/create">
+          Create Lead
+        </x-button>
+      </div>
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
@@ -290,8 +288,8 @@ onMounted(() => {
         <ExportExcel
           :data="quotesSelected"
           :columns="tableHeader"
-          :filename="'health-list'"
-          :sheetname="'quotes'"
+          :filename="'Health-List'"
+          :sheetname="'Leads'"
         >
           <x-button size="sm" color="emerald">
             Export -
