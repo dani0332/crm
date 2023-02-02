@@ -107,6 +107,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
                 QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::Duplicate,
                 QuoteStatusEnum::Fake, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::AfiaRenewal]);
         }
+
         return $query;
     }
 }

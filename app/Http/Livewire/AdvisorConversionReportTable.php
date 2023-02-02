@@ -15,12 +15,12 @@ use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
-use Illuminate\Support\Str;
 
 class AdvisorConversionReportTable extends DataTableComponent
 {
@@ -215,7 +215,8 @@ class AdvisorConversionReportTable extends DataTableComponent
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
         ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
-        info('other statuses are : '. json_encode(Str::replaceArray('?', $query->getBindings(), $query->toSql())));
+        info('other statuses are : '.json_encode(Str::replaceArray('?', $query->getBindings(), $query->toSql())));
+
         return $query;
     }
 
