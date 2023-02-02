@@ -1424,7 +1424,8 @@ onMounted(() => {
         :items="listQuotePlans || []"
         border-cell
         hide-rows-per-page
-        hide-footer
+        rows-per-page="15"
+        :hide-footer="listQuotePlans.length < 15"
       >
         <template #item-actualPremium="{ actualPremium, basmah }">
           {{ fixedValue(basmah ? basmah + actualPremium : actualPremium) }}
@@ -1497,7 +1498,8 @@ onMounted(() => {
         :items="quoteDocuments || []"
         border-cell
         hide-rows-per-page
-        hide-footer
+        rows-per-page="15"
+        :hide-footer="quoteDocuments.length < 15"
       >
         <template #item-original_name="item">
           <a
@@ -1574,7 +1576,8 @@ onMounted(() => {
         :items="activities"
         border-cell
         hide-rows-per-page
-        hide-footer
+        rows-per-page="15"
+        :hide-footer="activities.length < 15"
       >
         <template #item-status="{ status, id }">
           <x-checkbox
@@ -1851,7 +1854,8 @@ onMounted(() => {
         :items="historyData || []"
         border-cell
         hide-rows-per-page
-        hide-footer
+        rows-per-page="15"
+        :hide-footer="historyData.length < 15"
       />
     </div>
   </div>
