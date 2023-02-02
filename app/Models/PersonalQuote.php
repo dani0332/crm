@@ -12,14 +12,24 @@ class PersonalQuote extends Model
         'value', 'year_of_manufacture_id' , 'insurance_provider_id'];
 
     public  $filterable = [
-        'first_name' => 'op'
+        'first_name',
     ];
+
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function personalQuoteType() {
         return $this->belongsTo(PersonalQuoteType::class);
+    }
+
+    /**
+     * bike quote request relation
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function bikeQuote()
+    {
+        return $this->hasOne(BikeQuote::class);
     }
 
     /**

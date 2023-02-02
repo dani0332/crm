@@ -26,14 +26,14 @@ class BikeQuoteController extends Controller
         ]);
     }
 
-    public function create($quoteTypeCode)
+    public function create()
     {
         $nationalities = Nationality::withActive()->get();
         $uaeLicenses = UAELicenseHeldFor::withActive()->get();
         $yearOfManufacture = YearOfManufacture::get();
         $insuranceProviders = InsuranceProvider::select('id', 'text')->orderBy('text', 'asc')->get();
 
-        return inertia('BikeQuote/Create', [
+        return inertia('BikeQuote/Form', [
             'nationalities' => $nationalities,
             'uaeLicenses' => $uaeLicenses,
             'yearOfManufacture' => $yearOfManufacture,
@@ -46,15 +46,28 @@ class BikeQuoteController extends Controller
      * @param PersonalQuoteRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store($quoteTypeCode, PersonalQuoteRequest $request)
+    public function store(PersonalQuoteRequest $request)
     {
-        $quote = PersonalQuoteRepository::create($quoteTypeCode, $request->validated());
+        BikeQuoteRepository::create($request->validated());
         return back()->with('message' , 'Quote created successfully');
     }
 
-    public function edit($quoteId)
+    public function edit($uuid)
     {
+        $nationalities = Nationality::withActive()->get();
+        $uaeLicenses = UAELicenseHeldFor::withActive()->get();
+        $yearOfManufacture = YearOfManufacture::get();
+        $insuranceProviders = InsuranceProvider::select('id', 'text')->orderBy('text', 'asc')->get();
 
+        $bikeQuote = BikeQuoteRepository::getBy('uuid', $uuid);
+
+        return inertia('BikeQuote/Form', [
+            'nationalities' => $nationalities,
+            'uaeLicenses' => $uaeLicenses,
+            'yearOfManufacture' => $yearOfManufacture,
+            'insuranceProviders' => $insuranceProviders,
+            'bikeQuote' => $bikeQuote
+        ]);
     }
 
     public function update($quoteTypeCode, $quoteId, PersonalQuoteRequest $request)

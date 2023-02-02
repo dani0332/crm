@@ -413,10 +413,10 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=script&setup=true&lang=js":
-/*!************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=script&setup=true&lang=js ***!
-  \************************************************************************************************************************************************************************************************************************/
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=script&setup=true&lang=js":
+/*!**********************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=script&setup=true&lang=js ***!
+  \**********************************************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -433,7 +433,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
-  __name: 'Create',
+  __name: 'Form',
   props: {
     genderOptions: Object,
     nationalities: Object,
@@ -441,9 +441,15 @@ __webpack_require__.r(__webpack_exports__);
     insuranceProviders: Object,
     yearOfManufacture: Object,
     dropdownSource: Object,
-    model: String
+    model: String,
+    bikeQuote: {
+      type: Object,
+      "default": null
+    }
   },
   setup: function setup(__props, _ref) {
+    var _props$bikeQuote, _props$bikeQuote2, _props$bikeQuote3, _props$bikeQuote4, _props$bikeQuote5;
+
     var expose = _ref.expose;
     expose();
     var props = __props;
@@ -451,12 +457,12 @@ __webpack_require__.r(__webpack_exports__);
     var quoteForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
       modelType: '"Health"',
       model: props.model,
-      first_name: '',
-      last_name: '',
-      email: '',
-      mobile_no: '',
-      dob: '',
-      nationality_id: null,
+      first_name: ((_props$bikeQuote = props.bikeQuote) === null || _props$bikeQuote === void 0 ? void 0 : _props$bikeQuote.first_name) || '',
+      last_name: ((_props$bikeQuote2 = props.bikeQuote) === null || _props$bikeQuote2 === void 0 ? void 0 : _props$bikeQuote2.last_name) || '',
+      email: ((_props$bikeQuote3 = props.bikeQuote) === null || _props$bikeQuote3 === void 0 ? void 0 : _props$bikeQuote3.email) || '',
+      mobile_no: ((_props$bikeQuote4 = props.bikeQuote) === null || _props$bikeQuote4 === void 0 ? void 0 : _props$bikeQuote4.mobile_no) || '',
+      dob: ((_props$bikeQuote5 = props.bikeQuote) === null || _props$bikeQuote5 === void 0 ? void 0 : _props$bikeQuote5.dob) || '',
+      nationality_id: '',
       uae_license_held_for_id: null,
       no_of_items: null,
       value: null,
@@ -482,9 +488,10 @@ __webpack_require__.r(__webpack_exports__);
       }
 
       if (isValid) {
-        quoteForm.post("/personal-quotes/bike/", {
+        var method = props.bikeQuote ? 'put' : 'post';
+        quoteForm.submit(method, "/personal-quotes/bike/", {
           onError: function onError(errors) {
-            console.log(errors);
+            console.log(quoteForm.setError(errors));
           },
           onSuccess: function onSuccess() {
             notification.success({
@@ -3052,10 +3059,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
 /***/ }),
 
-/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=template&id=0b9966ae":
-/*!*****************************************************************************************************************************************************************************************************************************************************************************************!*\
-  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=template&id=0b9966ae ***!
-  \*****************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=template&id=1953a614":
+/*!***************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=template&id=1953a614 ***!
+  \***************************************************************************************************************************************************************************************************************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -3095,7 +3102,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Head"], {
     title: "Create Health"
   }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Link"], {
-    href: "/quotes/health"
+    href: "/personal-quotes/bike"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
@@ -3103,7 +3110,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         color: "#ff5e00"
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Health List ")];
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Bike Quotes List ")];
         }),
         _: 1
         /* STABLE */
@@ -3128,10 +3135,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         type: "text",
         label: "FIRST NAME",
         rules: [$setup.rules.isRequired],
-        "class": "w-full"
+        "class": "w-full",
+        error: $setup.quoteForm.errors.first_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.last_name,
         "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
           return $setup.quoteForm.last_name = $event;
@@ -3139,10 +3147,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         type: "text",
         label: "LAST NAME",
         rules: [$setup.rules.isRequired],
-        "class": "w-full"
+        "class": "w-full",
+        error: $setup.quoteForm.errors.last_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.email,
         "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
           return $setup.quoteForm.email = $event;
@@ -3150,10 +3159,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         type: "email",
         label: "EMAIL",
         rules: [$setup.rules.isRequired],
-        "class": "w-full"
+        "class": "w-full",
+        error: $setup.quoteForm.errors.email
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.mobile_no,
         "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
           return $setup.quoteForm.mobile_no = $event;
@@ -3173,10 +3183,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         type: "date",
         label: "DATE OF BIRTH",
         rules: [$setup.rules.isRequired],
-        "class": "w-full"
+        "class": "w-full",
+        error: $setup.quoteForm.errors.dob
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["ComboBox"], {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["ComboBox"], {
         modelValue: $setup.quoteForm.nationality_id,
         "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
           return $setup.quoteForm.nationality_id = $event;
@@ -3214,7 +3225,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.quoteForm.no_of_items = $event;
         }),
         type: "number",
-        label: "No Of Biles",
+        label: "No Of Bikes",
         rules: [$setup.rules.isRequired],
         "class": "w-full"
       }, null, 8
@@ -3271,7 +3282,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         loading: $setup.quoteForm.processing
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Create ")];
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Save ")];
         }),
         _: 1
         /* STABLE */
@@ -7721,10 +7732,10 @@ if (false) {}
 
 /***/ }),
 
-/***/ "./resources/js/inertia/Pages/BikeQuote/Create.vue":
-/*!*********************************************************!*\
-  !*** ./resources/js/inertia/Pages/BikeQuote/Create.vue ***!
-  \*********************************************************/
+/***/ "./resources/js/inertia/Pages/BikeQuote/Form.vue":
+/*!*******************************************************!*\
+  !*** ./resources/js/inertia/Pages/BikeQuote/Form.vue ***!
+  \*******************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
@@ -7732,15 +7743,15 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _Create_vue_vue_type_template_id_0b9966ae__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Create.vue?vue&type=template&id=0b9966ae */ "./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=template&id=0b9966ae");
-/* harmony import */ var _Create_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Create.vue?vue&type=script&setup=true&lang=js */ "./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=script&setup=true&lang=js");
+/* harmony import */ var _Form_vue_vue_type_template_id_1953a614__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Form.vue?vue&type=template&id=1953a614 */ "./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=template&id=1953a614");
+/* harmony import */ var _Form_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Form.vue?vue&type=script&setup=true&lang=js */ "./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=script&setup=true&lang=js");
 /* harmony import */ var _Users_faisalabbas_Sites_blanka_dev_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/vue-loader/dist/exportHelper.js */ "./node_modules/vue-loader/dist/exportHelper.js");
 
 
 
 
 ;
-const __exports__ = /*#__PURE__*/(0,_Users_faisalabbas_Sites_blanka_dev_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__["default"])(_Create_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"], [['render',_Create_vue_vue_type_template_id_0b9966ae__WEBPACK_IMPORTED_MODULE_0__.render],['__file',"resources/js/inertia/Pages/BikeQuote/Create.vue"]])
+const __exports__ = /*#__PURE__*/(0,_Users_faisalabbas_Sites_blanka_dev_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__["default"])(_Form_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"], [['render',_Form_vue_vue_type_template_id_1953a614__WEBPACK_IMPORTED_MODULE_0__.render],['__file',"resources/js/inertia/Pages/BikeQuote/Form.vue"]])
 /* hot reload */
 if (false) {}
 
@@ -8053,18 +8064,18 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=script&setup=true&lang=js":
-/*!********************************************************************************************!*\
-  !*** ./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=script&setup=true&lang=js ***!
-  \********************************************************************************************/
+/***/ "./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=script&setup=true&lang=js":
+/*!******************************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=script&setup=true&lang=js ***!
+  \******************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "default": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Create_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */   "default": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Form_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"])
 /* harmony export */ });
-/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Create_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./Create.vue?vue&type=script&setup=true&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=script&setup=true&lang=js");
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Form_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./Form.vue?vue&type=script&setup=true&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=script&setup=true&lang=js");
  
 
 /***/ }),
@@ -8277,18 +8288,18 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=template&id=0b9966ae":
-/*!***************************************************************************************!*\
-  !*** ./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=template&id=0b9966ae ***!
-  \***************************************************************************************/
+/***/ "./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=template&id=1953a614":
+/*!*************************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=template&id=1953a614 ***!
+  \*************************************************************************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Create_vue_vue_type_template_id_0b9966ae__WEBPACK_IMPORTED_MODULE_0__.render)
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Form_vue_vue_type_template_id_1953a614__WEBPACK_IMPORTED_MODULE_0__.render)
 /* harmony export */ });
-/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Create_vue_vue_type_template_id_0b9966ae__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./Create.vue?vue&type=template&id=0b9966ae */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Create.vue?vue&type=template&id=0b9966ae");
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Form_vue_vue_type_template_id_1953a614__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./Form.vue?vue&type=template&id=1953a614 */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/BikeQuote/Form.vue?vue&type=template&id=1953a614");
 
 
 /***/ }),
@@ -8428,8 +8439,8 @@ __webpack_require__.r(__webpack_exports__);
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var map = {
-	"./BikeQuote/Create": "./resources/js/inertia/Pages/BikeQuote/Create.vue",
-	"./BikeQuote/Create.vue": "./resources/js/inertia/Pages/BikeQuote/Create.vue",
+	"./BikeQuote/Form": "./resources/js/inertia/Pages/BikeQuote/Form.vue",
+	"./BikeQuote/Form.vue": "./resources/js/inertia/Pages/BikeQuote/Form.vue",
 	"./BikeQuote/Index": "./resources/js/inertia/Pages/BikeQuote/Index.vue",
 	"./BikeQuote/Index.vue": "./resources/js/inertia/Pages/BikeQuote/Index.vue",
 	"./HealthQuote/Create": "./resources/js/inertia/Pages/HealthQuote/Create.vue",

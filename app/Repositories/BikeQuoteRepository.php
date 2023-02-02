@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\PersonalQuoteTypes;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -20,12 +21,21 @@ class BikeQuoteRepository extends BaseRepository
      * @param $data
      * @return mixed
      */
-    public function fetchCreate($quoteTypeCode, $data)
+    public function fetchCreate($data)
     {
         //todo: send call to capi when API will be available
-        $data['personal_quote_type_id'] = PersonalQuoteTypeRepository::getByCode($quoteTypeCode)->id;
+        $data['personal_quote_type_id'] = PersonalQuoteTypeRepository::getByCode(PersonalQuoteTypes::BIKE)->id;
         $data['uuid'] = Str::orderedUuid();
-        return $this->create($data);
+        return  $this->create(Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'personal_quote_type_id', 'uuid']));
+    }
+
+    /**
+     * @param $column
+     * @param $value
+     * @return mixed
+     */
+    public function fetchGetBy($column = 'id', $value) {
+        return $this->where($column, $value)->with('bikeQuote')->first();
     }
 
     public function fetchGetData()

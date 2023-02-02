@@ -78,7 +78,6 @@ abstract class BaseRepository
     {
         if(strpos($method,'fetch') !== false) {
            $method = substr($method, strlen('fetch'));
-           array_shift($parameters);
            $method = lcfirst($method);
         }
 
