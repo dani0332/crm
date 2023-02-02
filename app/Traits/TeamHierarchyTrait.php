@@ -41,7 +41,6 @@ trait TeamHierarchyTrait
                 array_push($result, $subTeam);
             }
         }
-
         return $result;
     }
 
