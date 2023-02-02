@@ -178,13 +178,13 @@ class HealthQuoteController extends Controller
     public function healthPlanCreateQuote(Request $request)
     {
         $planData = [
-            'quoteUID' => $request->quote_uuid,
+            'quoteUID' => $request->quoteUID,
             'update' => false,
         ];
 
         $planData['plans'][] = [
-            'planId' => $request->plan_id,
-            'actualPremium' => $request->premium,
+            'planId' => $request->planId,
+            'actualPremium' => (float) $request->actualPremium,
             'discountPremium' => 0,
             'isManualUpdate' => false,
             'isManualPremium' => true,
@@ -192,7 +192,7 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->renewalCreatePlan($planData);
 
-        return redirect()->back()->with('response', $response);
+        return $response;
     }
 
     public function healthPlanUpdateManualProcess(Request $request)
