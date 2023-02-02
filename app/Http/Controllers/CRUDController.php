@@ -940,6 +940,10 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->status) {
             $results = getDataAgainstEveryStatus($request->modelType, $request);
 
+            if ($request->modelType == quoteTypeCode::Health) {
+                return $results;
+            }
+
             $html = '';
             if ($results) {
                 foreach ($results['leads_list'] as $result) {
@@ -980,6 +984,10 @@ class CRUDController extends Controller
     {
         if ($request->has('modelType') && $request->modelType && $request->term && $request->status) {
             $results = getDataAgainstSearchTerm($request->modelType, $request);
+
+            if ($request->modelType == quoteTypeCode::Health) {
+                return $results;
+            }
 
             $html = '';
             if ($results) {
