@@ -15,7 +15,7 @@ defineProps({
   paymentMethods: Object,
 });
 
-const createPayment = ref(false);
+const createPaymentModal = ref(false);
 const paymentMethod = ref('');
 const collectionType = ref('');
 
@@ -26,6 +26,13 @@ const rules = {
       return !!v || 'This field is required';
     }
     return true;
+  },
+  amount: v => {
+    const regex = /^\d+(\.\d{1,2})?$/;
+    if (regex.test(v)) {
+      return true;
+    }
+    return 'Amount must be a valid number';
   },
 };
 
@@ -83,35 +90,93 @@ const generateCCLink = async code => {
   }
 };
 
+const addPaymentModal = () => {
+  paymentMethodsForm.reset();
+  // clear all fields
+    paymentMethodsForm.payment_method = '';
+    paymentMethodsForm.collection_type = '';
+    paymentMethodsForm.amount = '';
+    paymentMethodsForm.payment_reference = '';
+    paymentMethodsForm.paymentCode = '';
+
+  paymentMethodsForm.status = 'create';
+  createPaymentModal.value = true;
+};
+
+const editPaymentModal = payment => {
+  paymentMethodsForm.reset();
+  paymentMethodsForm.status = 'edit';
+  paymentMethodsForm.payment_method = payment.payment_method.code;
+  paymentMethodsForm.collection_type = payment.collection_type;
+  paymentMethodsForm.amount = payment.captured_amount;
+  paymentMethodsForm.payment_reference = payment.reference;
+  paymentMethodsForm.paymentCode = payment.code;
+  createPaymentModal.value = true;
+};
+
 const paymentMethodsForm = useForm({
   payment_method: '',
   collection_type: '',
   amount: '',
   payment_reference: '',
+  paymentCode: '',
+  status: 'create',
 });
 
 const addPayment = isValid => {
   if (!isValid) return;
 
-    paymentMethodsForm.transform(data => ({
-      captured_amount: paymentMethodsForm.amount,
-      code: paymentMethodsForm.payment_method,
-      modelType: page.props.modelType,
-      quote_id: page.props.quoteRequest.id,
-      plan_id: page.props.quoteRequest.plan.id,
-      insurance_provider_id: providerId.value,
-      collection_type: paymentMethodsForm.collection_type,
-      payment_methods: paymentMethodsForm.payment_method,
-      reference: paymentMethodsForm.payment_reference,
-      isInertia: true,
-    })).post('/payments/Health/store', {
+  let data = {
+    captured_amount: paymentMethodsForm.amount,
+    code: paymentMethodsForm.payment_method,
+    modelType: page.props.modelType,
+    quote_id: page.props.quoteRequest.id,
+    plan_id: page.props.quoteRequest.plan.id,
+    insurance_provider_id: providerId.value,
+    collection_type: paymentMethodsForm.collection_type,
+    payment_methods: paymentMethodsForm.payment_method,
+    reference: paymentMethodsForm.payment_reference,
+    isInertia: true,
+  };
+
+  if (paymentMethodsForm.status === 'edit') {
+    let editData = {
+      ...data,
+      paymentCode: paymentMethodsForm.paymentCode,
+    };
+    paymentMethodsForm
+      .transform(data => editData)
+      .post('/payments/Health/update', {
+        preserveScroll: true,
+        onSuccess: () => {
+          notification.success({
+            title: 'Payment Updated',
+            position: 'top',
+          });
+          createPaymentModal.value = false;
+        },
+        onError: () => {
+          notification.error({
+            title: 'Payment Update Failed',
+            position: 'top',
+          });
+        },
+      });
+    return;
+  }
+  let storeData = {
+    ...data,
+  };
+  paymentMethodsForm
+    .transform(data => storeData)
+    .post('/payments/Health/store', {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
           title: 'Payment Added',
           position: 'top',
         });
-        createPayment.value = false;
+        createPaymentModal.value = false;
       },
       onError: () => {
         notification.error({
@@ -120,7 +185,6 @@ const addPayment = isValid => {
         });
       },
     });
-
 };
 
 const getPlanName = computed(() => {
@@ -144,11 +208,7 @@ const providerId = computed(() => {
   return null;
 });
 
-const editPayment = async payment => {};
-
-onMounted(() => {
-    console.log(page.props.quoteRequest);
-});
+onMounted(() => {});
 </script>
 
 <template>
@@ -159,7 +219,7 @@ onMounted(() => {
         size="xs"
         color="orange"
         v-if="permissions.can.create_payments"
-        @click="createPayment = true"
+        @click="addPaymentModal"
       >
         App Payment
       </x-button>
@@ -193,7 +253,7 @@ onMounted(() => {
               size="xs"
               color="emerald"
               v-if="permissions.can.edit_payments && item.edit_button"
-              @click="editPayment(item)"
+              @click="editPaymentModal(item)"
             >
               Edit
             </x-button>
@@ -214,16 +274,22 @@ onMounted(() => {
         </div>
       </template>
     </DataTable>
-    <x-modal v-model="createPayment" size="xl" show-close backdrop>
+    <x-modal v-model="createPaymentModal" size="xl" show-close backdrop>
       <template #header>
         <i class="fa fa-cog text-primary-800 mr-2"></i>
-        New Payment
+        <span class="text-primary-800 font-semibold">
+          {{
+            paymentMethodsForm.status == 'create'
+              ? 'New Payment'
+              : 'Update Payment'
+          }}
+        </span>
       </template>
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full">
           <x-input
             class="w-full"
-            :rules="[rules.isRequired]"
+            :rules="[rules.isRequired, rules.amount]"
             label="Capture Amount*"
             v-model="paymentMethodsForm.amount"
           />
@@ -272,8 +338,11 @@ onMounted(() => {
             v-model="paymentMethodsForm.payment_reference"
           />
         </div>
-        <div class="text-center">
-          <x-button color="primary" type="submit"> Submit </x-button>
+        <div class="text-center" v-if="paymentMethodsForm.status == 'create'">
+          <x-button color="primary" type="submit"> Create Payment </x-button>
+        </div>
+        <div class="text-center" v-if="paymentMethodsForm.status == 'edit'">
+          <x-button color="primary" type="submit"> Update Payment </x-button>
         </div>
       </x-form>
     </x-modal>
