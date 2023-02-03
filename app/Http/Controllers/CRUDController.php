@@ -530,7 +530,6 @@ class CRUDController extends Controller
                 ];
             });
 
-            // $paymentOptions = $this->lookupService->paymentMethodsWithSubMethods();
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,

@@ -92,12 +92,11 @@ const generateCCLink = async code => {
 
 const addPaymentModal = () => {
   paymentMethodsForm.reset();
-  // clear all fields
-    paymentMethodsForm.payment_method = '';
-    paymentMethodsForm.collection_type = '';
-    paymentMethodsForm.amount = '';
-    paymentMethodsForm.payment_reference = '';
-    paymentMethodsForm.paymentCode = '';
+  paymentMethodsForm.payment_method = '';
+  paymentMethodsForm.collection_type = '';
+  paymentMethodsForm.amount = '';
+  paymentMethodsForm.payment_reference = '';
+  paymentMethodsForm.paymentCode = '';
 
   paymentMethodsForm.status = 'create';
   createPaymentModal.value = true;
@@ -187,6 +186,28 @@ const addPayment = isValid => {
     });
 };
 
+const approvePayment = payment => {
+  let data = {
+    code: payment.code,
+    modelType: page.props.modelType,
+    quote_id: page.props.quoteRequest.id,
+  };
+  axios.post('/update-payment-status', data).then(response => {
+    if (response.data.success) {
+      notification.success({
+        title: 'Payment Approved',
+        position: 'top',
+      });
+      Inertia.reload();
+    } else {
+      notification.error({
+        title: 'Payment Approval Failed',
+        position: 'top',
+      });
+    }
+  });
+};
+
 const getPlanName = computed(() => {
   const plan = page.props.quoteRequest.plan;
   return plan ? plan.text : 'Not Available';
@@ -259,7 +280,12 @@ onMounted(() => {});
             </x-button>
           </div>
           <div v-if="permissions.can.approve_payments">
-            <x-button size="xs" color="error" v-if="item.approve_button">
+            <x-button
+              size="xs"
+              color="error"
+              v-if="item.approve_button"
+              @click="approvePayment(item)"
+            >
               Approve
             </x-button>
             <x-button
