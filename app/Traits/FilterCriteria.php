@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\FilterTypes;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
@@ -22,17 +23,17 @@ trait FilterCriteria
                     $value = request()->{$key};
 
                     switch ($operator) {
-                        case 'exact':
+                        case FilterTypes::EXACT:
                             $query->where($key, $value);
                         break;
-                        case 'free':
+                        case FilterTypes::FREE:
                             $query->where($key, 'like', '%' . $value . '%');
                         break;
-                        case 'date':
+                        case FilterTypes::DATE:
                             $date = Carbon::parse($value)->format('Y-m-d');
                             $query->whereDate($key, $date);
                         break;
-                        case 'dateBetween':
+                        case FilterTypes::DATE_BETWEEN:
                             if(isset(request()->{$key.'_start'}) && isset(request()->{$key.'_end'})) {
                                 $startDate = Carbon::parse(request()->{$key.'_start'})->format('Y-m-d');
                                 $endDate = Carbon::parse(request()->{$key.'_end'})->format('Y-m-d');
