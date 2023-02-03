@@ -6,7 +6,7 @@ import ExportExcel from '@/inertia/Components/ExportExcel.vue';
 import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 defineProps({
-    personalQuotes: Object,
+    quotes: Object,
 });
 
 const page = usePage();
@@ -170,7 +170,7 @@ const tableHeader = [
             table-class-name="tablefixed"
             :headers="tableHeader"
             :loading="loader.table"
-            :items="personalQuotes.data || []"
+            :items="quotes.data || []"
             border-cell
             hide-rows-per-page
             hide-footer
@@ -181,11 +181,11 @@ const tableHeader = [
 
         <Pagination
             :links="{
-                next: personalQuotes.next_page_url,
-                prev: personalQuotes.prev_page_url,
-                current: personalQuotes.current_page,
-                from: personalQuotes.from,
-                to: personalQuotes.to,
+                next: quotes.next_page_url,
+                prev: quotes.prev_page_url,
+                current: quotes.current_page,
+                from: quotes.from,
+                to: quotes.to,
             }"
         />
 

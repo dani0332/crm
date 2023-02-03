@@ -585,7 +585,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   __name: 'Index',
   props: {
-    personalQuotes: Object
+    quotes: Object
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -3474,7 +3474,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "table-class-name": "tablefixed",
     headers: $setup.tableHeader,
     loading: $setup.loader.table,
-    items: $props.personalQuotes.data || [],
+    items: $props.quotes.data || [],
     "border-cell": "",
     "hide-rows-per-page": "",
     "hide-footer": "",
@@ -3483,11 +3483,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["loading", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Pagination"], {
     links: {
-      next: $props.personalQuotes.next_page_url,
-      prev: $props.personalQuotes.prev_page_url,
-      current: $props.personalQuotes.current_page,
-      from: $props.personalQuotes.from,
-      to: $props.personalQuotes.to
+      next: $props.quotes.next_page_url,
+      prev: $props.quotes.prev_page_url,
+      current: $props.quotes.current_page,
+      from: $props.quotes.from,
+      to: $props.quotes.to
     }
   }, null, 8
   /* PROPS */

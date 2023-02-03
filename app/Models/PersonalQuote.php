@@ -2,18 +2,26 @@
 
 namespace App\Models;
 
+use App\Enums\FilterTypes;
+use App\Traits\FilterCriteria;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
 
 class PersonalQuote extends Model
 {
-    use HasFactory;
+    use HasFactory, FilterCriteria;
+
     protected $fillable = ['uuid', 'personal_quote_type_id', 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'uae_license_held_for_id', 'no_of_items',
         'value', 'year_of_manufacture_id' , 'insurance_provider_id'];
 
-    public  $filterable = [
-        'first_name',
+    public  $filterables = [
+        'first_name' => FilterTypes::EXACT,
+        'last_name' => FilterTypes::FREE,
+        'uuid' => FilterTypes::EXACT,
+        'email' => FilterTypes::EXACT,
+        'mobile_no' => FilterTypes::EXACT,
+        'created_at' => FilterTypes::DATE_BETWEEN
     ];
 
 

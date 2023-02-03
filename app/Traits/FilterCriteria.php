@@ -5,18 +5,16 @@ namespace App\Traits;
 use App\Enums\FilterTypes;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Request;
 
 trait FilterCriteria
 {
     public function scopeFilter($query, $paginate = true) {
 
-
         $filters = request()->all();
 
-        if(sizeof($filters) && sizeof($this->filterable))
+        if(sizeof($filters) && sizeof($this->filterables))
         {
-            foreach ($this->filterable as $key => $operator) {
+            foreach ($this->filterables as $key => $operator) {
 
                 if(isset(request()->{$key}) || $operator == 'dateBetween') {
 

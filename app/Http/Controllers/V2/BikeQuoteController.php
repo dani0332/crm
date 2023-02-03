@@ -25,7 +25,7 @@ class BikeQuoteController extends Controller
         $personalQuotes = BikeQuoteRepository::getData();
 
         return inertia('BikeQuote/Index', [
-            'personalQuotes' => $personalQuotes,
+            'quotes' => $personalQuotes,
         ]);
     }
 
