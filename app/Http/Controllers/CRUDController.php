@@ -240,15 +240,8 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
-            $genderOptions = [
-                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
-                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
-                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
-            ];
-
             return inertia('HealthQuote/Create', [
                 'dropdownSource' => $dropdownSource,
-                'genderOptions' => $genderOptions,
                 'model' => json_encode($model->properties),
             ]);
         }
@@ -481,11 +474,6 @@ class CRUDController extends Controller
             $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
             $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
             $leadStatuses = $this->healthQuoteService->statusesToDisplay($leadStatuses, $record);
-            $genderOptions = [
-                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
-                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
-                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
-            ];
 
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
@@ -507,7 +495,6 @@ class CRUDController extends Controller
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
-                'genderOptions' => $genderOptions,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'ecomDetails' => $ecomDetails,
                 'membersDetail' => $membersDetail,
@@ -526,8 +513,8 @@ class CRUDController extends Controller
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
                 'lostReasons' => $lostReasons,
-                'can' => [
-                    'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+                'permissions' => [
+                    'pa' => auth()->user()->hasRole(RolesEnum::PA),
                 ],
             ]);
         } else {
@@ -572,16 +559,9 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
-            $genderOptions = [
-                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
-                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
-                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
-            ];
-
             return inertia('HealthQuote/Edit', [
                 'quote' => $record,
                 'dropdownSource' => $dropdownSource,
-                'genderOptions' => $genderOptions,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
             ]);

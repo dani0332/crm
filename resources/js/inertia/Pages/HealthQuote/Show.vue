@@ -8,10 +8,10 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { useNotifications } from '@indielayer/ui';
 import axios from 'axios';
 import ComboBox from '@/inertia/Components/ComboBox.vue';
+import { genderOptions } from '@/inertia/Helpers/enums';
 
 defineProps({
   quote: Object,
-  genderOptions: Object,
   leadStatuses: Array,
   ecomDetails: Object,
   membersDetail: Array,
@@ -29,6 +29,7 @@ defineProps({
   customerAdditionalContacts: Array,
   lostReasons: Array,
   allowedDuplicateLOB: Array,
+  permissions: Object,
 });
 
 const page = usePage();
@@ -130,7 +131,7 @@ const onCopyText = text => {
 
 const genderText = gender =>
   computed(() => {
-    return page.props.genderOptions[gender];
+    return genderOptions[gender];
   });
 
 const memberCategoryText = memberCategoryId =>
@@ -156,9 +157,9 @@ const advisorOptions = computed(() => {
 });
 
 const genderSelect = computed(() => {
-  return Object.keys(page.props.genderOptions).map(status => ({
+  return Object.keys(genderOptions).map(status => ({
     value: status,
-    label: page.props.genderOptions[status],
+    label: genderOptions[status],
   }));
 });
 
@@ -1425,9 +1426,6 @@ onMounted(() => {
       >
         <template #item-actualPremium="{ actualPremium }">
           {{ fixedValue(actualPremium) }}
-        </template>
-        <template #item-premiumVat="{ actualPremium, vat }">
-          {{ fixedValue(actualPremium + vat) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">

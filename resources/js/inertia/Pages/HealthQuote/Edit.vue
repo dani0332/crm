@@ -2,18 +2,18 @@
 import { computed, ref } from 'vue';
 import { Head, router, useForm, Link } from '@inertiajs/vue3';
 import ComboBox from '@/inertia/Components/ComboBox.vue';
+import { genderOptions } from '@/inertia/Helpers/enums';
 
 const props = defineProps({
   quote: Object,
-  genderOptions: Object,
   dropdownSource: Object,
   model: String,
 });
 
 const genderSelect = computed(() => {
-  return Object.keys(props.genderOptions).map(status => ({
+  return Object.keys(genderOptions).map(status => ({
     value: status,
-    label: props.genderOptions[status],
+    label: genderOptions[status],
   }));
 });
 
