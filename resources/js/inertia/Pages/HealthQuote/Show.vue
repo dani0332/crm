@@ -431,12 +431,8 @@ const plansTable = reactive({
       value: 'name',
     },
     {
-      text: 'Actual Premium',
+      text: 'Premium with VAT and Basmah',
       value: 'actualPremium',
-    },
-    {
-      text: 'Premium with VAT',
-      value: 'premiumVat',
     },
     {
       text: 'Action',
