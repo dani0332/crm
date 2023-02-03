@@ -1237,6 +1237,10 @@ class CarQuoteService extends BaseService
         if ($lead->auto_assigned) {
             $lead->auto_assigned = false;
         }
+        info('new advisor alloc. count :'.$newAdvisorAllocationRecord->allocation_count.', manual count :'.$newAdvisorAllocationRecord->manual_assignment_count.', auto count :'.$newAdvisorAllocationRecord->auto_assignment_count);
+        if ($previousAdvisorAllocationRecord) {
+            info('previous advisor alloc. count :'.$previousAdvisorAllocationRecord->allocation_count.', manual count :'.$previousAdvisorAllocationRecord->manual_assignment_count.', auto count :'.$previousAdvisorAllocationRecord->auto_assignment_count);
+        }
         info('assignment count update for userId : '.$userId.', and leadId :  '.$lead->uuid);
     }
 

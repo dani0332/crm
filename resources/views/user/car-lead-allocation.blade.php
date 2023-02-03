@@ -305,7 +305,7 @@
                 @endif
 
 
-                @if(Auth::user()->hasRole(RolesEnum::LeadPool))
+                @if(Auth::user()->hasRole(RolesEnum::LeadPool) || Auth::user()->hasRole(RolesEnum::Admin))
                     <h2 style="margin-left:  80px !important">Pickup Sequence : FIFO</h2>
                     <span class="status-text"></span>
                     <label class="switch "
