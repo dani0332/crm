@@ -269,4 +269,66 @@ class SendEmailCustomerService extends BaseService
 
         return $emailSubject;
     }
+
+    public function sendMyAlfredWelcomeEmail($emailTemplateId, $emailData, $tag)
+    {
+        try {
+            $appEnv = config('constants.APP_ENV');
+
+            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+
+            $headers = [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'X-Postmark-Server-Token' => config('constants.POSTMARK_TOKEN'),
+                'Content-Type' => 'application/json',
+            ];
+
+            $body = json_encode([
+                'From' => 'Alfred <alfred@notify.instacover.ae>',
+                'ReplyTo' => 'support@myalfred.com',
+                'To' => $emailData->customerEmail,
+                'Tag' => $tag,
+                'TemplateId' => $emailTemplateId,
+                'TemplateModel' => [
+                    'params' => [
+                        'firstName' => $emailData->customerFirstName,
+                        'lastName'=> $emailData->customerLastName,
+                        'inviteCode'=> isset($emailData->inviteCode) ? $emailData->inviteCode : null,
+                        'email'=> $emailData->customerEmail,
+                    ],
+                    'subject' => 'Invitation to myAlfred | InsuranceMarket.ae!',
+                ],
+                'MessageStream' => 'myalfred-invite-transact',
+            ], JSON_UNESCAPED_SLASHES);
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                config('constants.POSTMARK_URL'),
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10,
+                ]
+            );
+
+            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $responseCode = $clientRequest->getStatusCode();
+
+            if ($responseCode == 200) {
+                $isEmailSent = 1;
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $quoteCdbId = isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null;
+            $responseDetail = 'PostMark Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            Log::error($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $isEmailSent = 0;
+        }
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
+
+        return $responseCode;
+    }
 }

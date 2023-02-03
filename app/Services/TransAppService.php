@@ -148,26 +148,24 @@ class TransAppService extends BaseService
     public function sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID'); //405
-        $redirect_url = 'https://myalfred.page.link/?link=https%3A%2F%2Fmyalfred.com%2F%3FinviteCode%3D'.$WEGenerateInviteCodeResponse.'%26installPopup%3D1&apn=com.myalfred.app&isi=6443714956&ibi=com.myalfred.app';
+        $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
 
         $emailData = (object) [
-            'customerName' => $customer->first_name.' '.$customer->last_name,
+            'customerFirstName' => $customer->first_name,
+            'customerLastName' => $customer->last_name,
             'customerEmail' => $customer->email,
-            'signUpButtonUrl' => $redirect_url,
             'inviteCode' => $WEGenerateInviteCodeResponse,
         ];
         info('sendWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
 
-        $getStatusCode = $this->sendEmailCustomerService->sendEmail($emailTemplateId, $emailData, $tag);
-        $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
+        $getStatusCode = $this->sendEmailCustomerService->sendMyAlfredWelcomeEmail($emailTemplateId, $emailData, $tag);
 
-        if ($getStatusCode == 201) {
+        if ($getStatusCode == 200) {
             info('sendWelcomeEmail MyAlfred welcome email sent to customer '.$customer->email);
             $customer->is_we_sent = true;
             $customer->save();
 
-            // $code = substr($WEGenerateInviteCodeResponse, strpos($WEGenerateInviteCodeResponse, 'signup/') + 7);
+            $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
             if (! $isCustomerExisting) {
                 $newMyAlFredUser = new MyAlFredUser;
                 $newMyAlFredUser->signup_url = null;
