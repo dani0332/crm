@@ -1,8 +1,9 @@
 <script setup>
-
-import { ref } from 'vue';
+import { onMounted, computed, ref } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { useNotifications } from '@indielayer/ui';
+import axios from 'axios';
+
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -11,7 +12,22 @@ defineProps({
   isBetaUser: Boolean,
   permissions: Object,
   quoteRequest: Object,
+  paymentMethods: Object,
 });
+
+const createPayment = ref(false);
+const paymentMethod = ref('');
+const collectionType = ref('');
+
+const rules = {
+  isRequired: v => !!v || 'This field is required',
+  reference: v => {
+    if (paymentMethodsForm.payment_method !== 'CC') {
+      return !!v || 'This field is required';
+    }
+    return true;
+  },
+};
 
 const paymentTableHeaders = [
   { text: 'Payment ID', value: 'code', align: 'center' },
@@ -24,6 +40,12 @@ const paymentTableHeaders = [
   { text: 'Payment method', value: 'payment_method.name' },
   { text: 'Reference', value: 'reference' },
   { text: 'Actions', value: 'actions', sortable: false },
+];
+
+const collectionTypes = [
+  { value: '', label: 'Select Collection Type' },
+  { value: 'broker', label: 'Broker' },
+  { value: 'insurer', label: 'Insurer' },
 ];
 
 const generateCCLink = async code => {
@@ -61,77 +83,199 @@ const generateCCLink = async code => {
   }
 };
 
-//on editPayment
-const editPayment = async payment => {
-  try {
-  } catch (err) {
-    notification.error({
-      title: 'Payment Edit Failed',
-      position: 'top',
+const paymentMethodsForm = useForm({
+  payment_method: '',
+  collection_type: '',
+  amount: '',
+  payment_reference: '',
+});
+
+const addPayment = isValid => {
+  if (!isValid) return;
+
+    paymentMethodsForm.transform(data => ({
+      captured_amount: paymentMethodsForm.amount,
+      code: paymentMethodsForm.payment_method,
+      modelType: page.props.modelType,
+      quote_id: page.props.quoteRequest.id,
+      plan_id: page.props.quoteRequest.plan.id,
+      insurance_provider_id: providerId.value,
+      collection_type: paymentMethodsForm.collection_type,
+      payment_methods: paymentMethodsForm.payment_method,
+      reference: paymentMethodsForm.payment_reference,
+      isInertia: true,
+    })).post('/payments/Health/store', {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Payment Added',
+          position: 'top',
+        });
+        createPayment.value = false;
+      },
+      onError: () => {
+        notification.error({
+          title: 'Payment Add Failed',
+          position: 'top',
+        });
+      },
     });
-  }
+
 };
+
+const getPlanName = computed(() => {
+  const plan = page.props.quoteRequest.plan;
+  return plan ? plan.text : 'Not Available';
+});
+
+const providerName = computed(() => {
+  const plan = page.props.quoteRequest.plan;
+  if (plan && plan.insurance_provider) {
+    return plan.insurance_provider.text;
+  }
+  return 'Not Available';
+});
+
+const providerId = computed(() => {
+  const plan = page.props.quoteRequest.plan;
+  if (plan && plan.insurance_provider) {
+    return plan.insurance_provider.id;
+  }
+  return null;
+});
+
+const editPayment = async payment => {};
+
+onMounted(() => {
+    console.log(page.props.quoteRequest);
+});
 </script>
 
-
 <template>
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isBetaUser">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
-        <x-button size="xs" color="orange" v-fi="permissions.can.create_payments">
-          App Payment
-        </x-button>
-      </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="paymentTableHeaders"
-        :items="payments || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-        :data-table-props="{
-          permissions: page.props.permissions,
-        }"
+  <div class="p-4 rounded shadow mb-6 bg-white" v-if="isBetaUser">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
+      <x-button
+        size="xs"
+        color="orange"
+        v-if="permissions.can.create_payments"
+        @click="createPayment = true"
       >
-        <template #item-code="{ code }">
-          {{ code.toUpperCase() }}
-        </template>
-        <template #item-actions="item">
-          <div class="flex gap-2">
-            <div v-if="!permissions.can.approve_payments">
-              <x-button
-                size="xs"
-                color="orange"
-                v-if="item.copy_link_button"
-                @click="generateCCLink(item.code)"
-              >
-                Copy Link
-              </x-button>
-              <x-button
-                size="xs"
-                color="emerald"
-                v-if="permissions.can.edit_payments && item.edit_button"
-                @click="editPayment(item)"
-              >
-                Edit
-              </x-button>
-            </div>
-            <div v-if="permissions.can.approve_payments">
-              <x-button size="xs" color="error" v-if="item.approve_button">
-                Approve
-              </x-button>
-              <x-button
-                size="xs"
-                disabled
-                color="error"
-                v-if="item.approved_button"
-              >
-                Approved
-              </x-button>
-            </div>
-          </div>
-        </template>
-      </DataTable>
+        App Payment
+      </x-button>
     </div>
+    <DataTable
+      table-class-name="tablefixed compact"
+      :headers="paymentTableHeaders"
+      :items="payments || []"
+      border-cell
+      hide-rows-per-page
+      hide-footer
+      :data-table-props="{
+        permissions: page.props.permissions,
+      }"
+    >
+      <template #item-code="{ code }">
+        {{ code.toUpperCase() }}
+      </template>
+      <template #item-actions="item">
+        <div class="flex gap-2">
+          <div v-if="!permissions.can.approve_payments">
+            <x-button
+              size="xs"
+              color="orange"
+              v-if="item.copy_link_button"
+              @click="generateCCLink(item.code)"
+            >
+              Copy Link
+            </x-button>
+            <x-button
+              size="xs"
+              color="emerald"
+              v-if="permissions.can.edit_payments && item.edit_button"
+              @click="editPayment(item)"
+            >
+              Edit
+            </x-button>
+          </div>
+          <div v-if="permissions.can.approve_payments">
+            <x-button size="xs" color="error" v-if="item.approve_button">
+              Approve
+            </x-button>
+            <x-button
+              size="xs"
+              disabled
+              color="error"
+              v-if="item.approved_button"
+            >
+              Approved
+            </x-button>
+          </div>
+        </div>
+      </template>
+    </DataTable>
+    <x-modal v-model="createPayment" size="xl" show-close backdrop>
+      <template #header>
+        <i class="fa fa-cog text-primary-800 mr-2"></i>
+        New Payment
+      </template>
+      <x-form @submit="addPayment" :auto-focus="false">
+        <div class="w-full">
+          <x-input
+            class="w-full"
+            :rules="[rules.isRequired]"
+            label="Capture Amount*"
+            v-model="paymentMethodsForm.amount"
+          />
+        </div>
+        <div class="w-full">
+          <x-select
+            class="w-full"
+            v-model="paymentMethodsForm.collection_type"
+            :options="collectionTypes"
+            label="Collection Type*"
+            :rules="[rules.isRequired]"
+          >
+          </x-select>
+        </div>
+        <div class="w-full">
+          <x-select
+            class="w-full"
+            v-model="paymentMethodsForm.payment_method"
+            :options="paymentMethods"
+            label="Payment Method*"
+            :rules="[rules.isRequired]"
+          >
+          </x-select>
+        </div>
 
+        <div class="flex gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <p class="text-sm text-gray-500 mt-2">
+              Provider Name:
+              <span class="text-primary-800">{{ providerName }}</span>
+            </p>
+          </div>
+          <div class="w-full md:w-1/2">
+            <p class="text-sm text-gray-500 mt-2">
+              Plan Name :
+              <span class="text-primary-800">{{ getPlanName }}</span>
+            </p>
+          </div>
+        </div>
+        <div class="mt-3 w-full">
+          <x-input
+            class="w-full"
+            label="Payment Reference*"
+            :rules="[rules.isRequired, rules.reference]"
+            v-show="paymentMethodsForm.payment_method != 'CC'"
+            v-model="paymentMethodsForm.payment_reference"
+          />
+        </div>
+        <div class="text-center">
+          <x-button color="primary" type="submit"> Submit </x-button>
+        </div>
+      </x-form>
+    </x-modal>
+  </div>
 </template>

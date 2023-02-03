@@ -38,6 +38,7 @@ defineProps({
   payments: Array,
   quoteRequest: Object,
   permissions: Object,
+  paymentMethods: Object,
 });
 
 const page = usePage();
@@ -1469,6 +1470,7 @@ onMounted(() => {
       :permissions="permissions"
       :isBetaUser="isBetaUser"
       :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">

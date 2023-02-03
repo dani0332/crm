@@ -15,4 +15,9 @@ class HealthPlan extends Model
     {
         return $this->hasOne(InsuranceProvider::class, 'id', 'provider_id');
     }
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'provider_id');
+    }
 }
