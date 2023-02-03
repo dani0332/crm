@@ -495,7 +495,7 @@ __webpack_require__.r(__webpack_exports__);
           },
           onSuccess: function onSuccess() {
             notification.success({
-              title: 'Quote created successfully',
+              title: 'Quote saved successfully',
               position: 'top'
             });
             setTimeout(function () {

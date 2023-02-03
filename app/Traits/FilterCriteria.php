@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\FilterTypes;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
 trait FilterCriteria
@@ -16,7 +17,7 @@ trait FilterCriteria
         {
             foreach ($this->filterables as $key => $operator) {
 
-                if(isset(request()->{$key}) || $operator == 'dateBetween') {
+                if(isset(request()->{$key}) || $operator == FilterTypes::DATE_BETWEEN) {
 
                     $value = request()->{$key};
 
@@ -33,8 +34,8 @@ trait FilterCriteria
                         break;
                         case FilterTypes::DATE_BETWEEN:
                             if(isset(request()->{$key.'_start'}) && isset(request()->{$key.'_end'})) {
-                                $startDate = Carbon::parse(request()->{$key.'_start'})->format('Y-m-d');
-                                $endDate = Carbon::parse(request()->{$key.'_end'})->format('Y-m-d');
+                                $startDate = Carbon::parse(request()->{$key.'_start'})->format(config('constants.DB_DATE_FORMAT_MATCH'));
+                                $endDate = Carbon::parse(request()->{$key.'_end'})->format(config('constants.DB_DATE_FORMAT_MATCH'));
                                 $query->whereBetween(DB::raw('date('.$key.')'), [$startDate, $endDate]);
                             }
                         break;

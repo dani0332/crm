@@ -64,7 +64,7 @@ function onSubmit(isValid) {
             onSuccess: () => {
 
                 notification.success({
-                    title: 'Quote created successfully',
+                    title: 'Quote saved successfully',
                     position: 'top'
                 });
 
