@@ -117,6 +117,9 @@ class QuoteDocumentController extends Controller
                 $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('SIB_CAR_SEND_POLICY_TEMPLATE_ID');
 
                 break;
+            case 'health':
+                $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('SIB_HEALTH_SEND_POLICY_TEMPLATE_ID');
+                break;
             default:
                 $emailTemplateId = false;
                 break;

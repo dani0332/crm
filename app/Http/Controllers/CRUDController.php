@@ -560,6 +560,7 @@ class CRUDController extends Controller
                 'quoteRequest' => $paymentEntityModel,
                 'payments' => $payments,
                 'paymentMethods' => $paymentMethods,
+                'sendPolicy' => $displaySendPolicyButton,
                 'permissions' => [
                     'can' => [
                         'approve_payments' => Gate::allows(PermissionsEnum::ApprovePayments),
