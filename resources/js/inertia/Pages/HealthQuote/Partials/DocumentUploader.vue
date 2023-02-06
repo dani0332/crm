@@ -60,7 +60,7 @@ const uploadFile = (doc, memberId, files) => {
           <div
             v-for="docType in docTypes['QUOTE']"
             :key="docType.id"
-            class="grid grid-cols-2 gap-2 my-4 border-b"
+            class="grid md:grid-cols-2 gap-2 my-4 border-b"
           >
             <div class="flex flex-col gap-1">
               <h5 class="text-sm font-semibold">
@@ -102,7 +102,7 @@ const uploadFile = (doc, memberId, files) => {
           <div
             v-for="docType in docTypes['MEMBER']"
             :key="docType.id"
-            class="grid grid-cols-2 gap-2 my-4 border-b"
+            class="grid md:grid-cols-2 gap-2 my-4 border-b"
           >
             <div class="flex flex-col gap-1">
               <h5 class="text-sm font-semibold">
