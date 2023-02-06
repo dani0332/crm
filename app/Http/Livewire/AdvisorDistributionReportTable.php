@@ -134,7 +134,10 @@ class AdvisorDistributionReportTable extends DataTableComponent
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', 'users.id')
-            ->join('teams', 'teams.id', 'user_team.team_id')
+            ->leftJoin('teams', function ($join) {
+                $join->on('users.team_id', '=', 'teams.id');
+                $join->on('users.sub_team_id', '=', 'teams.id');
+            })
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->where('tiers.name', 'not like', '%TR%')
             ->groupBy('users.email')

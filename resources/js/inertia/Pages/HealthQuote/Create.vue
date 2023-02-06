@@ -79,7 +79,7 @@ function onSubmit(isValid) {
       <h2 class="text-xl font-semibold">Create Health</h2>
       <div>
         <Link href="/quotes/health">
-          <x-button size="sm" color="#ff5e00"> Health List </x-button>
+          <x-button size="sm" color="#ff5e00" tag="div"> Health List </x-button>
         </Link>
       </div>
     </div>

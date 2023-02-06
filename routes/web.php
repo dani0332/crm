@@ -59,7 +59,6 @@ use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
-use App\Http\Livewire\CarQuoteTable;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
@@ -204,7 +203,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
 
-        Route::get('cartest', [CarQuoteTable::class, 'index']);
+        Route::get('health-cards', [HealthQuoteController::class, 'cardsView']);
 
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
@@ -332,14 +331,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
-    Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']);
+    // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
 
     Route::resource('members', MembersDetailController::class);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
+    Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
-    Route::post('/health-plan-manual-update-process', [AjaxController::class, 'healthPlanUpdateManualProcess']);
+    Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
+    Route::post('/health-plan-manual-create', [HealthQuoteController::class, 'healthPlanCreateQuote']);
 
     Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
 });

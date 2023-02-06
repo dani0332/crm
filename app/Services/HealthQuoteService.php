@@ -11,6 +11,7 @@ use App\Enums\RolesEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthMemberDetail;
+use App\Models\HealthPlan;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
@@ -985,6 +986,64 @@ class HealthQuoteService extends BaseService
         }
     }
 
+    public function getQuotePlansPriority($id)
+    {
+        $quoteUuId = HealthQuote::where('uuid', '=', $id)->value('uuid');
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority';
+        $plansApiToken = config('constants.KEN_API_TOKEN');
+        $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
+        $plansApiUserName = config('constants.KEN_API_USER');
+        $plansApiPassword = config('constants.KEN_API_PWD');
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+
+        $plansDataArr = [
+            'quoteUID' => $quoteUuId,
+            'lang' => 'en',
+        ];
+
+        $client = new \GuzzleHttp\Client();
+
+        try {
+            $kenRequest = $client->post(
+                $plansApiEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json', 'Accept' => 'application/json',
+                        'x-api-token' => $plansApiToken,
+                        'Authorization' => 'Basic '.$authBasic,
+                    ],
+                    'body' => json_encode($plansDataArr),
+                    'timeout' => $plansApiTimeout,
+                ]
+            );
+
+            $getStatusCode = $kenRequest->getStatusCode();
+
+            if ($getStatusCode == 200) {
+                $getContents = $kenRequest->getBody();
+                $getdecodeContents = json_decode($getContents);
+
+                return $getdecodeContents;
+            }
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $response = $e->getResponse();
+            $contents = (string) $response->getBody();
+            $response = json_decode($contents);
+
+            if (isset($response->message)) {
+                $responseBodyAsString = $response->message;
+            } elseif (isset($response->error)) {
+                $responseBodyAsString = $response->error;
+            } elseif (isset($response->msg)) {
+                $responseBodyAsString = $response->msg;
+            } else {
+                $responseBodyAsString = 'Quote unavailable for the selected location and region. Please call 800 ALFRED.';
+            }
+
+            return $responseBodyAsString;
+        }
+    }
+
     public function getMembersDetail($id)
     {
         return HealthMemberDetail::where('health_quote_request_id', $id)->with('nationality', 'emirate')->get();
@@ -1251,7 +1310,9 @@ class HealthQuoteService extends BaseService
             'apiPassword' => config('constants.KEN_API_PWD'),
         ];
 
-        return $this->httpService->processRequest($planData, $apiCreds);
+        $response = $this->httpService->processRequest($planData, $apiCreds);
+
+        return $response;
     }
 
     /**
@@ -1309,5 +1370,13 @@ class HealthQuoteService extends BaseService
         }
 
         return $leadStatuses->whereNotIn('id', $statusesToRemove);
+    }
+
+    public function getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId)
+    {
+        return HealthPlan::select('id', 'text')
+            ->where('provider_id', $insuranceProviderId)
+            ->whereNotIn('id', $quotePlanId)
+            ->get();
     }
 }

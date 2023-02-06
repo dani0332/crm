@@ -18,8 +18,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
-    //TODO:
-    Route::post('/imcrm/sib-flow', [ApiController::class, 'triggerSibFlow']);
 });
 
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);

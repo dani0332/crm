@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
-use App\Jobs\SyncSIBContactJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
@@ -27,9 +26,11 @@ class ApiService
     {
         $customer = CustomerService::getCustomerByEmail($email);
         if ($customer) {
-            $data = MyAlFredUser::select('signup_url')->whereCustomerId($customer->id)->latest()->first();
+            $data = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customer->id)->latest()->first();
             if ($data) {
-                return response()->json(['message' => $data->signup_url], 200);
+                return response()->json([
+                    'message' => isset($data->signup_url) ? $data->signup_url : $data->code,
+                ], 200);
             } else {
                 if (! $customer->is_we_sent) {
                     return $this->generateSignupUrl($customer, $request);
@@ -58,18 +59,6 @@ class ApiService
             return response()->json(['message' => $newMyAlFredUser->signup_url], 500);
         } else {
             return response()->json(['message' => $WEGenerateUrlResponse], 500);
-        }
-    }
-
-    public function triggerSibFlow($request)
-    {
-        try {
-            $quoteData = HealthQuote::where('uuid', $request->quoteUID)->where('quote_status_id', $request->QuoteStatus)->first();
-            if ($quoteData) {
-                SyncSIBContactJob::dispatch($quoteData);
-            }
-        } catch (Exception $e) {
-            return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
         }
     }
 

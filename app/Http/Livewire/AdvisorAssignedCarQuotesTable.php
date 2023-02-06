@@ -72,29 +72,38 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             info('inside lead type not interested');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec]);
         }
-        if ($this->leadType == 'in_progress') {
+        if ($this->leadType == ReportsLeadTypeEnum::IN_PROGRESS) {
             info('inside lead type in progress');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowedUp, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted]);
         }
-        if ($this->leadType == 'manual_created') {
-            info('inside lead type in progress');
+        if ($this->leadType == ReportsLeadTypeEnum::MANUAL_CREATED) {
+            info('inside lead type MANUAL_CREATED');
             $query->where('source', LeadSourceEnum::IMCRM);
         }
         if ($this->leadType == ReportsLeadTypeEnum::BAD_LEAD) {
-            info('inside lead type in progress');
+            info('inside lead type BAD_LEAD');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         }
         if ($this->leadType == ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT) {
-            info('inside lead type in progress');
+            info('inside lead type AFIA_RENEWALS_COUNT');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::AfiaRenewal);
         }
         if ($this->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
-            info('inside lead type in progress');
+            info('inside lead type SALE_LEAD');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::TransactionApproved);
         }
         if ($this->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
-            info('inside lead type in progress');
+            info('inside lead type CREATED_SALE_LEAD');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::TransactionApproved)->where('source', LeadSourceEnum::IMCRM);
+        }
+
+        if ($this->leadType == ReportsLeadTypeEnum::OTHERS) {
+            info('inside lead type in OTHERS');
+            $query->whereNotIn('car_quote_request.quote_status_id', [
+                QuoteStatusEnum::NewLead, QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested,
+                QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec, QuoteStatusEnum::NotContactablePe,
+                QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::Duplicate,
+                QuoteStatusEnum::Fake, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::AfiaRenewal]);
         }
 
         return $query;
