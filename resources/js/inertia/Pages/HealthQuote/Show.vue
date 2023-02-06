@@ -11,7 +11,6 @@ import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 defineProps({
   quote: Object,
-  genderOptions: Object,
   leadStatuses: Array,
   ecomDetails: Object,
   membersDetail: Array,
@@ -32,6 +31,8 @@ defineProps({
   modelType: String,
   notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
+  permissions: Object,
+  genderOptions: Object,
   isQuoteDocumentEnabled: Boolean,
   isBetaUser: Boolean,
 });
@@ -1617,9 +1618,6 @@ onMounted(() => {
       >
         <template #item-actualPremium="{ actualPremium }">
           {{ fixedValue(actualPremium) }}
-        </template>
-        <template #item-premiumVat="{ actualPremium, vat }">
-          {{ fixedValue(actualPremium + vat) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">

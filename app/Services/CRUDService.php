@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -454,5 +455,16 @@ class CRUDService extends BaseService
         }
 
         return $result;
+    }
+
+    public function getGenderOptions()
+    {
+        $genderOptions = [
+            GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
+            GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
+            GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
+        ];
+
+        return $genderOptions;
     }
 }

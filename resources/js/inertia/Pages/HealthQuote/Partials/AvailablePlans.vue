@@ -1,9 +1,13 @@
 <script setup>
 import { ref } from 'vue';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
+import { useDateFormat } from '@vueuse/shared';
+
 defineProps({
   plan: Object,
 });
+
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
   { index: 0, label: 'General Info' },
   { index: 1, label: 'Members' },
@@ -73,7 +77,7 @@ const tabs = ref([
               class="grid grid-cols-2 md:grid-cols-4 gap-2 my-4 border-b"
             >
               <div>{{ member.memberCategoryText }}</div>
-              <div>{{ member.dob }}</div>
+              <div>{{ dateFormat(member.dob) }}</div>
               <div>{{ member.gender }}</div>
               <x-input :value="member.premium" :disabled="true" size="sm" />
             </div>
