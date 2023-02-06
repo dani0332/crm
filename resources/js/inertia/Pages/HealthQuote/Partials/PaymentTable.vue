@@ -250,14 +250,6 @@ onMounted(() => {
         >
           App Payment
         </x-button>
-        <x-button
-          size="xs"
-          color="red"
-          v-if="sendPolicy"
-          @click="sendPolicyToClient"
-        >
-          Send Policy
-        </x-button>
       </div>
     </div>
     <DataTable
