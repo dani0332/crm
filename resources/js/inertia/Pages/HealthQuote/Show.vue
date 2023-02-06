@@ -929,8 +929,7 @@ const sendPolicyToClient = () => {
     let url =
       '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
     axios.post(url).then(response => {
-        console.log(response);
-        if (response.status == 200) {
+      if (response.status == 200) {
         notification.success({
           title: 'Documents Sent',
           position: 'top',
@@ -1711,20 +1710,19 @@ onMounted(() => {
           Documents
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
-      <div class="flex gap-2">
-        <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
-          Upload Documents
-        </x-button>
-        <x-button
-          size="sm"
-          color="red"
-          v-if="sendPolicy"
-          @click="sendPolicyToClient"
-        >
-          Send Policy
-        </x-button>
-      </div>
-
+        <div class="flex gap-2">
+          <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+            Upload Documents
+          </x-button>
+          <x-button
+            size="sm"
+            color="red"
+            v-if="sendPolicy"
+            @click="sendPolicyToClient"
+          >
+            Send Policy
+          </x-button>
+        </div>
       </div>
       <DataTable
         table-class-name="compact"

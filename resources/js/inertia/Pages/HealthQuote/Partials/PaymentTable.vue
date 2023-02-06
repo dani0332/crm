@@ -210,7 +210,6 @@ const approvePayment = payment => {
   }
 };
 
-
 const getPlanName = computed(() => {
   const plan = page.props.quoteRequest.plan;
   return plan ? plan.text : 'Not Available';
@@ -232,9 +231,7 @@ const providerId = computed(() => {
   return null;
 });
 
-onMounted(() => {
-
-});
+onMounted(() => {});
 </script>
 
 <template>
