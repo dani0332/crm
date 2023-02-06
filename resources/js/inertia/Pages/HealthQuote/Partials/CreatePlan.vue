@@ -76,7 +76,7 @@ watch(
 
 <template>
   <x-form @submit="onSubmit" :auto-focus="false">
-    <div class="grid gap-5 p-4">
+    <div class="grid gap-5">
       <x-select
         v-model="createForm.provider_id"
         :options="
