@@ -4,9 +4,9 @@ import { Head, router, useForm, Link } from '@inertiajs/vue3';
 import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 const props = defineProps({
-  genderOptions: Object,
   dropdownSource: Object,
   model: String,
+  genderOptions: Object,
 });
 
 const genderSelect = computed(() => {
