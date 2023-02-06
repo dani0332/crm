@@ -194,27 +194,29 @@ const approvePayment = payment => {
     modelType: page.props.modelType,
     quote_id: page.props.quoteRequest.id,
   };
-  axios.post('/update-payment-status', data).then(response => {
-    if (response.data.success) {
-      notification.success({
-        title: 'Payment Approved',
-        position: 'top',
-      });
-      Inertia.reload();
-    } else {
-      notification.error({
-        title: 'Payment Approval Failed',
-        position: 'top',
-      });
-    }
-  });
+  if (confirm('Are you sure you want to approve this payment?')) {
+    axios.post('/update-payment-status', data).then(response => {
+      if (response.data.success) {
+        notification.success({
+          title: 'Payment Approved',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Payment Approval Failed',
+          position: 'top',
+        });
+      }
+    });
+  }
 };
 
 const sendPolicyToClient = () => {
   if (confirm('Are you sure you want to send documents to customer?')) {
     let quoteType = page.props.modelType;
     let quoteUuId = page.props.quote.uuid;
-    let url = '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
+    let url =
+      '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
     axios.post(url).then(response => {
       if (response.data.success) {
         notification.success({
@@ -253,7 +255,7 @@ const providerId = computed(() => {
 });
 
 onMounted(() => {
-  console.log(page.props.quote);
+
 });
 </script>
 
@@ -261,22 +263,24 @@ onMounted(() => {
   <div class="p-4 rounded shadow mb-6 bg-white" v-if="isBetaUser">
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
-      <x-button
-        size="xs"
-        color="orange"
-        v-if="permissions.can.create_payments"
-        @click="addPaymentModal"
-      >
-        App Payment
-      </x-button>
-      <x-button
-        size="xs"
-        color="red"
-        v-if="sendPolicy"
-        @click="sendPolicyToClient"
-      >
-        Send Policy
-      </x-button>
+      <div class="flex gap-2" >
+        <x-button
+          size="xs"
+          color="orange"
+          v-if="permissions.can.create_payments"
+          @click="addPaymentModal"
+        >
+          App Payment
+        </x-button>
+        <x-button
+          size="xs"
+          color="red"
+          v-if="sendPolicy"
+          @click="sendPolicyToClient"
+        >
+          Send Policy
+        </x-button>
+      </div>
     </div>
     <DataTable
       table-class-name="tablefixed compact"
