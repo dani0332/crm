@@ -561,14 +561,10 @@ class CRUDController extends Controller
                 'payments' => $payments,
                 'paymentMethods' => $paymentMethods,
                 'sendPolicy' => $displaySendPolicyButton,
-                'permissions' => [
-                    'can' => [
-                        'approve_payments' => Gate::allows(PermissionsEnum::ApprovePayments),
-                        'edit_payments' => Gate::allows(PermissionsEnum::PaymentsEdit),
-                        'create_payments' => Gate::allows(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
-
-                    ],
                 'can' => [
+                    'approve_payments' => Gate::allows(PermissionsEnum::ApprovePayments),
+                    'edit_payments' => Gate::allows(PermissionsEnum::PaymentsEdit),
+                    'create_payments' => Gate::allows(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
                 ],
             ]);
