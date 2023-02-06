@@ -27,9 +27,14 @@ defineProps({
   activities: Array,
   customerAdditionalContacts: Array,
   lostReasons: Array,
+  quoteStatusEnum: Object,
+  modelType: String,
+  notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
   permissions: Object,
   genderOptions: Object,
+  isQuoteDocumentEnabled: Boolean,
+  isBetaUser: Boolean,
 });
 
 const page = usePage();
@@ -814,6 +819,104 @@ const historyDataTable = [
   { text: 'Lead Status', value: 'NewStatus' },
 ];
 
+const dateToYMD = date => {
+  if (date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = `0${d.getMonth() + 1}`.slice(-2);
+    const day = `0${d.getDate()}`.slice(-2);
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+};
+
+const policyDetails = useForm({
+  premium: page.props.quote.premium,
+  policy_number: page.props.quote.policy_number || '',
+  policy_start_date: dateToYMD(page.props.quote.policy_start_date),
+  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
+  quote_status_id: page.props.quote.quote_status_id,
+  canEdit:
+    page.props.quote.quote_status_id ==
+      page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.notProductionApproval,
+  editMode: false,
+  modelType: page.props.modelType,
+  quote_id: page.props.quote.id,
+});
+
+const policyDetailRules = {
+  policy_number: v => {
+    if (v) {
+      return (
+        v.length <= 50 || 'Policy Number should be less than 50 characters'
+      );
+    }
+    return true;
+  },
+  policy_start_date: v => {
+    if (v) {
+      const date = new Date(v);
+      return !isNaN(date.getTime());
+    }
+    return true;
+  },
+  renewal_expiry_date: v => {
+    if (v) {
+      const date = new Date(v);
+      if (policyDetails.policy_start_date) {
+        const startDate = new Date(policyDetails.policy_start_date);
+        if (startDate >= date) {
+          return 'Expiry date should be greater than Start Date';
+        }
+      }
+      return !isNaN(date.getTime());
+    }
+    return true;
+  },
+  premium: v => {
+    if (v) {
+      const premium = parseFloat(v);
+      if (premium < 0 || isNaN(premium)) {
+        return 'Premium should be greater than 0';
+      }
+    }
+    return true;
+  },
+};
+
+const cancelPolicyFrom = () => {
+  policyDetails.editMode = false;
+};
+
+const submitPolicyDetails = isValid => {
+  if (!isValid) return;
+  policyDetails
+    .transform(data => ({
+      quote_policy_number: data.policy_number,
+      quote_policy_start_date: data.policy_start_date,
+      quote_policy_expiry_date: data.renewal_expiry_date,
+      quote_policy_issuance_date: data.policy_issuance_date,
+      quote_premium: data.premium,
+      modelType: data.modelType,
+      quote_id: data.quote_id,
+      isInertia: true,
+    }))
+    .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Policy Details Updated',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        policyDetails.editMode = false;
+      },
+    });
+};
+
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
@@ -1377,6 +1480,95 @@ onMounted(() => {
           </div>
         </dl>
       </div>
+    </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <x-form @submit="submitPolicyDetails" :auto-focus="false">
+        <div class="flex gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.policy_number"
+              :disabled="!policyDetails.editMode"
+              label="Policy Number"
+              :rules="[rules.isRequired, policyDetailRules.policy_number]"
+              class="w-full"
+            />
+          </div>
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.policy_issuance_date"
+              :disabled="!policyDetails.editMode"
+              type="date"
+              label="Issuance Date"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="flex gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.policy_start_date"
+              :disabled="!policyDetails.editMode"
+              type="date"
+              label="Start Date"
+              :rules="[rules.isRequired, policyDetailRules.policy_start_date]"
+              class="w-full"
+            />
+          </div>
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.renewal_expiry_date"
+              :disabled="!policyDetails.editMode"
+              type="date"
+              label="Expiry Date"
+              :rules="[rules.isRequired, policyDetailRules.renewal_expiry_date]"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="flex gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.premium"
+              :disabled="!policyDetails.editMode"
+              label="Premium"
+              :rules="[rules.isRequired, policyDetailRules.premium]"
+              class="w-full"
+            />
+          </div>
+          <div class="w-full md:w-1/2"></div>
+        </div>
+
+        <div class="text-right space-x-4 mt-12" v-if="policyDetails.canEdit">
+          <x-button
+            color="#007bff"
+            size="sm"
+            v-show="policyDetails.editMode"
+            @click.prevent="cancelPolicyFrom"
+            >Cancel</x-button
+          >
+          <x-button
+            color="#26B99A"
+            type="submit"
+            size="sm"
+            v-show="policyDetails.editMode"
+            >Update</x-button
+          >
+          <x-button
+            color="#007bff"
+            size="sm"
+            type="submit"
+            v-show="!policyDetails.editMode"
+            @click.prevent="policyDetails.editMode = true"
+            >Edit</x-button
+          >
+        </div>
+      </x-form>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
