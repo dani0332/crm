@@ -243,6 +243,7 @@ class CRUDController extends Controller
             return inertia('HealthQuote/Create', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
+                'genderOptions' => $this->genderEumns(),
             ]);
         }
 
@@ -494,6 +495,7 @@ class CRUDController extends Controller
 
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
+                'genderOptions' => $this->genderEumns(),
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'ecomDetails' => $ecomDetails,
@@ -561,6 +563,7 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
             return inertia('HealthQuote/Edit', [
                 'quote' => $record,
+                'genderOptions' => $this->genderEumns(),
                 'dropdownSource' => $dropdownSource,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
@@ -1235,5 +1238,16 @@ class CRUDController extends Controller
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
+    }
+
+    public function genderEumns()
+    {
+        $genderOptions = [
+            GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
+            GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
+            GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
+        ];
+
+        return $genderOptions;
     }
 }

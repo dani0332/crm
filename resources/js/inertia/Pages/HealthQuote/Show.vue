@@ -8,7 +8,6 @@ import LazyCreatePlan from './Partials/CreatePlan.vue';
 import { useNotifications } from '@indielayer/ui';
 import axios from 'axios';
 import ComboBox from '@/inertia/Components/ComboBox.vue';
-import { genderOptions } from '@/inertia/Helpers/enums';
 
 defineProps({
   quote: Object,
@@ -30,6 +29,7 @@ defineProps({
   lostReasons: Array,
   allowedDuplicateLOB: Array,
   permissions: Object,
+  genderOptions: Object,
 });
 
 const page = usePage();
@@ -131,7 +131,7 @@ const onCopyText = text => {
 
 const genderText = gender =>
   computed(() => {
-    return genderOptions[gender];
+    return page.props.genderOptions[gender];
   });
 
 const memberCategoryText = memberCategoryId =>
@@ -157,9 +157,9 @@ const advisorOptions = computed(() => {
 });
 
 const genderSelect = computed(() => {
-  return Object.keys(genderOptions).map(status => ({
+  return Object.keys(page.props.genderOptions).map(status => ({
     value: status,
-    label: genderOptions[status],
+    label: page.props.genderOptions[status],
   }));
 });
 
