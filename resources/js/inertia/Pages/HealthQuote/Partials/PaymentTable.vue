@@ -13,7 +13,6 @@ defineProps({
   can: Object,
   quoteRequest: Object,
   paymentMethods: Object,
-  sendPolicy: Boolean,
   quote: Object,
 });
 
@@ -211,27 +210,6 @@ const approvePayment = payment => {
   }
 };
 
-const sendPolicyToClient = () => {
-  if (confirm('Are you sure you want to send documents to customer?')) {
-    let quoteType = page.props.modelType;
-    let quoteUuId = page.props.quote.uuid;
-    let url =
-      '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
-    axios.post(url).then(response => {
-      if (response.data.success) {
-        notification.success({
-          title: 'Documents Sent',
-          position: 'top',
-        });
-      } else {
-        notification.error({
-          title: 'Documents Sending Failed',
-          position: 'top',
-        });
-      }
-    });
-  }
-};
 
 const getPlanName = computed(() => {
   const plan = page.props.quoteRequest.plan;

@@ -922,6 +922,29 @@ const submitPolicyDetails = isValid => {
     });
 };
 
+const sendPolicyToClient = () => {
+  if (confirm('Are you sure you want to send documents to customer?')) {
+    let quoteType = page.props.modelType;
+    let quoteUuId = page.props.quote.uuid;
+    let url =
+      '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
+    axios.post(url).then(response => {
+        console.log(response);
+        if (response.status == 200) {
+        notification.success({
+          title: 'Documents Sent',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Documents Sending Failed',
+          position: 'top',
+        });
+      }
+    });
+  }
+};
+
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
@@ -1494,7 +1517,6 @@ onMounted(() => {
       :isBetaUser="isBetaUser"
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"
-      :sendPolicy="sendPolicy"
       :quote="quote"
     />
 
@@ -1689,9 +1711,20 @@ onMounted(() => {
           Documents
           <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
         </h3>
+      <div class="flex gap-2">
         <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
           Upload Documents
         </x-button>
+        <x-button
+          size="sm"
+          color="red"
+          v-if="sendPolicy"
+          @click="sendPolicyToClient"
+        >
+          Send Policy
+        </x-button>
+      </div>
+
       </div>
       <DataTable
         table-class-name="compact"
