@@ -560,11 +560,11 @@ class CRUDController extends Controller
                 'quoteRequest' => $paymentEntityModel,
                 'payments' => $payments,
                 'paymentMethods' => $paymentMethods,
-                'sendPolicy' => $displaySendPolicyButton,
+                'sendPolicy' => (bool) $displaySendPolicyButton,
                 'can' => [
-                    'approve_payments' => Gate::allows(PermissionsEnum::ApprovePayments),
-                    'edit_payments' => Gate::allows(PermissionsEnum::PaymentsEdit),
-                    'create_payments' => Gate::allows(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
+                    'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
+                    'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
+                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
                 ],
             ]);

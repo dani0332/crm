@@ -37,7 +37,7 @@ defineProps({
   isBetaUser: Boolean,
   payments: Array,
   quoteRequest: Object,
-  permissions: Object,
+  can: Object,
   paymentMethods: Object,
   sendPolicy: Boolean,
 });
@@ -1488,8 +1488,9 @@ onMounted(() => {
     </div>
 
     <PaymentTable
+      v-if="isBetaUser"
       :payments="payments"
-      :permissions="permissions"
+      :can="can"
       :isBetaUser="isBetaUser"
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"

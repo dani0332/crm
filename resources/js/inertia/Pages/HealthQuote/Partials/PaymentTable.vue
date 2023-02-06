@@ -10,7 +10,7 @@ const page = usePage();
 defineProps({
   payments: Array,
   isBetaUser: Boolean,
-  permissions: Object,
+  can: Object,
   quoteRequest: Object,
   paymentMethods: Object,
   sendPolicy: Boolean,
@@ -263,11 +263,11 @@ onMounted(() => {
   <div class="p-4 rounded shadow mb-6 bg-white" v-if="isBetaUser">
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
-      <div class="flex gap-2" >
+      <div class="flex gap-2">
         <x-button
           size="xs"
           color="orange"
-          v-if="permissions.can.create_payments"
+          v-if="can.create_payments && !can.approve_payments"
           @click="addPaymentModal"
         >
           App Payment
@@ -289,16 +289,13 @@ onMounted(() => {
       border-cell
       hide-rows-per-page
       hide-footer
-      :data-table-props="{
-        permissions: page.props.permissions,
-      }"
     >
       <template #item-code="{ code }">
         {{ code.toUpperCase() }}
       </template>
       <template #item-actions="item">
         <div class="flex gap-2">
-          <div v-if="!permissions.can.approve_payments">
+          <div v-if="!can.approve_payments">
             <x-button
               size="xs"
               color="orange"
@@ -310,13 +307,13 @@ onMounted(() => {
             <x-button
               size="xs"
               color="emerald"
-              v-if="permissions.can.edit_payments && item.edit_button"
+              v-if="can.edit_payments && item.edit_button"
               @click="editPaymentModal(item)"
             >
               Edit
             </x-button>
           </div>
-          <div v-if="permissions.can.approve_payments">
+          <div v-if="can.approve_payments">
             <x-button
               size="xs"
               color="error"
