@@ -128,7 +128,7 @@ const filteredList = computed(() =>
           >
             <li
               :class="{ 'text-primary': selected }"
-              class="relative flex items-center whitespace-nowrap px-2 text-sm cursor-pointer py-1 border-b last:border-b-0"
+              class="relative flex items-center whitespace-nowrap px-2 text-sm cursor-pointer py-1 border-b last:border-b-0 hover:bg-primary-50"
             >
               <span class="flex-1 truncate py-px">{{ list.label }}</span>
               <span class="ml-1 shrink-0">
