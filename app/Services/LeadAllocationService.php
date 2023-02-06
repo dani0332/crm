@@ -8,9 +8,9 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Jobs\CammyJob;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\GetQuotePlansJob;
-use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -159,8 +159,10 @@ class LeadAllocationService extends BaseService
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
                 $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
                 $leadCreated = Carbon::parse($lead->created_at)->timestamp;
-                if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-                    SyncSIBContactJob::dispatch($lead);
+
+                if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+                && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
+                    CammyJob::dispatch($lead, 'intro');
                 }
                 GetQuotePlansJob::dispatch($lead);
                 DB::commit();

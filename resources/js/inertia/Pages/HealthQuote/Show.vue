@@ -436,12 +436,8 @@ const plansTable = reactive({
       value: 'name',
     },
     {
-      text: 'Actual Premium with BASMAH',
+      text: 'Premium with VAT and Basmah',
       value: 'actualPremium',
-    },
-    {
-      text: 'Premium with VAT and BASMAH',
-      value: 'premiumVat',
     },
     {
       text: 'Action',
@@ -496,6 +492,31 @@ const onExportPlans = () => {
     .finally(() => {
       exportLoader.value = false;
     });
+};
+
+const onCreatePlan = () => {
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['listQuotePlans'],
+    onStart: () => {
+      modals.createPlan = false;
+    },
+    onFinish: () => {
+      notification.success({
+        title: 'Plan Created',
+        position: 'top',
+      });
+    },
+  });
+};
+
+const onPlanError = () => {
+  modals.createPlan = false;
+  notification.error({
+    title: 'Plan Creation Failed',
+    position: 'top',
+  });
 };
 
 // quoteDocuments
@@ -908,16 +929,16 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate"
-          >Duplicate Lead</x-button
-        >
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
 
         <Link href="/quotes/health" preserve-scroll>
-          <x-button size="sm" color="primary"> Health List </x-button>
+          <x-button size="sm" color="primary" tag="div"> Health List </x-button>
         </Link>
 
         <Link :href="`${quote.uuid}/edit`">
-          <x-button size="sm">Edit</x-button>
+          <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>
     </div>
@@ -1565,13 +1586,13 @@ onMounted(() => {
           >
             Download PDF
           </x-button>
-          <!-- <x-button
+          <x-button
             size="sm"
             color="primary"
             @click.prevent="modals.createPlan = true"
           >
             Create Quote
-          </x-button> -->
+          </x-button>
           <x-button
             v-if="listQuotePlans.length > 0"
             size="sm"
@@ -1591,13 +1612,14 @@ onMounted(() => {
         :items="listQuotePlans || []"
         border-cell
         hide-rows-per-page
-        hide-footer
+        :rows-per-page="15"
+        :hide-footer="listQuotePlans.length < 15"
       >
-        <template #item-actualPremium="{ actualPremium, basmah }">
-          {{ fixedValue(actualPremium + basmah) }}
+        <template #item-actualPremium="{ actualPremium }">
+          {{ fixedValue(actualPremium) }}
         </template>
-        <template #item-premiumVat="{ actualPremium, vat, basmah }">
-          {{ fixedValue(actualPremium + vat + basmah) }}
+        <template #item-premiumVat="{ actualPremium, vat }">
+          {{ fixedValue(actualPremium + vat) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
@@ -1636,7 +1658,11 @@ onMounted(() => {
 
       <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
         <template #header> Create Heath Quote </template>
-        <LazyCreatePlan />
+        <LazyCreatePlan
+          :uuid="quote.uuid"
+          @success="onCreatePlan"
+          @error="onPlanError"
+        />
       </x-modal>
     </div>
 
@@ -1656,7 +1682,8 @@ onMounted(() => {
         :items="quoteDocuments || []"
         border-cell
         hide-rows-per-page
-        hide-footer
+        :rows-per-page="15"
+        :hide-footer="quoteDocuments.length < 15"
       >
         <template #item-original_name="item">
           <a
@@ -1733,7 +1760,8 @@ onMounted(() => {
         :items="activities"
         border-cell
         hide-rows-per-page
-        hide-footer
+        :rows-per-page="15"
+        :hide-footer="activities.length < 15"
       >
         <template #item-status="{ status, id }">
           <x-checkbox
@@ -2010,7 +2038,8 @@ onMounted(() => {
         :items="historyData || []"
         border-cell
         hide-rows-per-page
-        hide-footer
+        :rows-per-page="15"
+        :hide-footer="historyData.length < 15"
       />
     </div>
   </div>

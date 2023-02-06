@@ -10,7 +10,7 @@ const navLinks = computed(() => page.props.sidebar);
 <template>
   <main class="flex w-full min-h-screen overflow-x-clip">
     <aside
-      class="fixed inset-y-0 left-0 z-20 flex flex-col h-screen overflow-hidden shadow-2xl transition-all bg-white lg:border-r lg:z-0 translate-x-0 max-w-[20em] lg:max-w-[var(--sidebar-width)]"
+      class="fixed inset-y-0 left-0 z-30 flex flex-col h-screen overflow-hidden shadow-2xl transition-all bg-white lg:border-r lg:z-0 translate-x-0 max-w-[17em] lg:max-w-[var(--sidebar-width)]"
     >
       <header
         class="border-b h-[4rem] shrink-0 flex items-center justify-center relative"

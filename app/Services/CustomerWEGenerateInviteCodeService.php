@@ -24,6 +24,7 @@ class CustomerWEGenerateInviteCodeService extends BaseService
                         'Accept' => 'application/json',
                         'Authorization' => 'Basic '.$inviteCodeGeneratauthBasic,
                     ],
+                    'timeout' => 10,
                 ]
             );
 

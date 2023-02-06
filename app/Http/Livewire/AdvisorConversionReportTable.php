@@ -109,11 +109,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             )->html()->footer(function ($rows) {
                 return $rows->sum('in_progress');
             }),
-            Column::make('Manual Created')->label(
-                fn ($row, Column $column) => '<a '.($row->manual_created > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `manual_created`])" class="text-sky-700 cursor-pointer">'.$row->manual_created.'</a>'
-            )->html()->footer(function ($rows) {
-                return $rows->sum('manual_created');
-            }),
+
             Column::make('Bad Leads')->label(
                 fn ($row, Column $column) => '<a '.($row->bad_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `bad_leads`])" class="text-sky-700 cursor-pointer">'.$row->bad_leads.'</a>'
             )->html()->footer(function ($rows) {
@@ -129,26 +125,35 @@ class AdvisorConversionReportTable extends DataTableComponent
             )->html()->footer(function ($rows) {
                 return $rows->sum('afia_renewals_count');
             }),
-            Column::make('Gross Conversion')->label(fn ($row) => number_format((float) (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->manual_created) : 1)), 2, '.', '').' %')
-                ->footer(function ($rows) {
-                    $total = 0;
-                    foreach ($rows as $row) {
-                        if (($row->total_leads - $row->manual_created) > 0) {
-                            $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) > 0 ? ($row->total_leads - $row->manual_created) : 1));
-                        }
-                    }
-
-                    return number_format((float) $total, 2, '.', '').' %';
-                }),
-            Column::make('Net Conversion')->label(fn ($row) => ($row->sale_leads - $row->created_sale_leads) > 0 ? (($row->total_leads - $row->bad_leads - $row->manual_created) / (($row->sale_leads - $row->created_sale_leads))).' %' : 'NaN')->footer(function ($rows) {
+            Column::make('Manual Created')->label(
+                fn ($row, Column $column) => '<a '.($row->manual_created > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `manual_created`])" class="text-sky-700 cursor-pointer">'.$row->manual_created.'</a>'
+            )->html()->footer(function ($rows) {
+                return $rows->sum('manual_created');
+            }),
+            Column::make('Others')->label(
+                fn ($row, Column $column) => '<a '.($row->others > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `others`])" class="text-sky-700 cursor-pointer">'.$row->others.'</a>'
+            )->html()->footer(function ($rows) {
+                return $rows->sum('others');
+            }),
+            Column::make('Gross Conversion')->label(fn ($row) => ($row->total_leads - $row->manual_created) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created))), 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
                 $total = 0;
                 foreach ($rows as $row) {
-                    if (($row->sale_leads - $row->created_sale_leads) > 0) {
-                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / ($row->total_leads - $row->bad_leads - $row->manual_created));
+                    if (($row->total_leads - $row->manual_created) > 0) {
+                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created)));
                     }
                 }
 
-                return number_format((float) $total, 2, '.', '').' %';
+                return number_format($total, 2, '.', '').' %';
+            }),
+            Column::make('Net Conversion')->label(fn ($row) => ($row->total_leads - $row->bad_leads - $row->manual_created) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created))), 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
+                $total = 0;
+                foreach ($rows as $row) {
+                    if (($row->total_leads - $row->bad_leads - $row->manual_created) > 0) {
+                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created)));
+                    }
+                }
+
+                return number_format($total, 2, '.', '').' %';
             }),
         ];
     }
@@ -170,6 +175,11 @@ class AdvisorConversionReportTable extends DataTableComponent
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE 0 END) as sale_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE 0 END) as created_sale_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::AfiaRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id not in (
+                    '.QuoteStatusEnum::NewLead.','.QuoteStatusEnum::PriceTooHigh.','.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.','.QuoteStatusEnum::NotInterested.',
+                    '.QuoteStatusEnum::NotEligibleForInsurance.','.QuoteStatusEnum::NotLookingForMotorInsurance.','.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::NotContactablePe.',
+                    '.QuoteStatusEnum::FollowupCall.','.QuoteStatusEnum::Interested.','.QuoteStatusEnum::NoAnswer.','.QuoteStatusEnum::Quoted.','.QuoteStatusEnum::Duplicate.',
+                    '.QuoteStatusEnum::Fake.','.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::AfiaRenewal.') THEN 1 ELSE 0 END) as others'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->leftJoin('teams', function ($join) {

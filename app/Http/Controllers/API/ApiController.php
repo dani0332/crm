@@ -4,7 +4,6 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
-use App\Http\Requests\SibFlowApi;
 use App\Services\ApiService;
 use Illuminate\Http\Request;
 
@@ -20,11 +19,6 @@ class ApiController extends Controller
     public function fetchSignupUrl(APiFetchUrl $request)
     {
         return $this->apiService->fetchSignupUrl($request);
-    }
-
-    public function triggerSibFlow(SibFlowApi $request)
-    {
-        return $this->apiService->triggerSibFlow($request);
     }
 
     public function sibHealthQuoteCallBack(Request $request)

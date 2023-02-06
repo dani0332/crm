@@ -81,23 +81,20 @@ class LeadDistributionReportTable extends DataTableComponent
     {
         return CarQuote::query()
             ->select(
-                DB::raw('SUM(CASE WHEN car_quote_request.source not in ('.LeadSourceEnum::RENEWAL_UPLOAD.','.LeadSourceEnum::IMCRM.','.LeadSourceEnum::TPL_RENEWALS.') THEN 1 ELSE 0 END) as received_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source not in ("'.LeadSourceEnum::RENEWAL_UPLOAD.'","'.LeadSourceEnum::IMCRM.'","'.LeadSourceEnum::TPL_RENEWALS.'") THEN 1 ELSE 0 END) as received_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as lead_created'),
                 DB::raw('count(car_quote_request.id) as total_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
-                DB::raw('la.auto_assignment_count as auto_assigned'),
-                DB::raw('la.manual_assignment_count as manually_assigned'),
+                DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 1 THEN 1 ELSE 0 END) as auto_assigned'),
+                DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 0 THEN 1 ELSE 0 END) as manually_assigned'),
             )
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-            ->join('lead_allocation as la', 'la.user_id', 'car_quote_request.advisor_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->groupBy('tiers.name');
     }
 
     public function filters(): array
     {
-        $this->applicationStorageService = app(ApplicationStorageService::class);
-
         return [
             TextFilter::make('Created Date', 'created_at')
                 ->config([
