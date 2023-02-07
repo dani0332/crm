@@ -11,10 +11,6 @@ class HealthPlan extends Model
 
     protected $table = 'health_plan';
 
-    public function provider_id()
-    {
-        return $this->hasOne(InsuranceProvider::class, 'id', 'provider_id');
-    }
 
     public function insuranceProvider()
     {
