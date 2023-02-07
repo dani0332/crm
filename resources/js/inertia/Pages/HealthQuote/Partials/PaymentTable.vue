@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, computed, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { useNotifications } from '@indielayer/ui';
 import axios from 'axios';
@@ -17,8 +17,6 @@ defineProps({
 });
 
 const createPaymentModal = ref(false);
-const paymentMethod = ref('');
-const collectionType = ref('');
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -230,24 +228,20 @@ const providerId = computed(() => {
   }
   return null;
 });
-
-onMounted(() => {});
 </script>
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white" v-if="isBetaUser">
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
-      <div class="flex gap-2">
-        <x-button
-          size="xs"
-          color="orange"
-          v-if="can.create_payments && !can.approve_payments"
-          @click="addPaymentModal"
-        >
-          App Payment
-        </x-button>
-      </div>
+      <x-button
+        v-if="can.create_payments && !can.approve_payments"
+        size="sm"
+        color="orange"
+        @click="addPaymentModal"
+      >
+        Add Payment
+      </x-button>
     </div>
     <DataTable
       table-class-name="tablefixed compact"
@@ -262,25 +256,7 @@ onMounted(() => {});
       </template>
       <template #item-actions="item">
         <div class="flex gap-2">
-          <div v-if="!can.approve_payments">
-            <x-button
-              size="xs"
-              color="orange"
-              v-if="item.copy_link_button"
-              @click="generateCCLink(item.code)"
-            >
-              Copy Link
-            </x-button>
-            <x-button
-              size="xs"
-              color="emerald"
-              v-if="can.edit_payments && item.edit_button"
-              @click="editPaymentModal(item)"
-            >
-              Edit
-            </x-button>
-          </div>
-          <div v-if="can.approve_payments">
+          <template v-if="can.approve_payments">
             <x-button
               size="xs"
               color="error"
@@ -297,13 +273,30 @@ onMounted(() => {});
             >
               Approved
             </x-button>
-          </div>
+          </template>
+          <template v-else>
+            <x-button
+              size="xs"
+              color="orange"
+              v-if="item.copy_link_button"
+              @click="generateCCLink(item.code)"
+            >
+              Copy Link
+            </x-button>
+            <x-button
+              size="xs"
+              color="emerald"
+              v-if="can.edit_payments && item.edit_button"
+              @click="editPaymentModal(item)"
+            >
+              Edit
+            </x-button>
+          </template>
         </div>
       </template>
     </DataTable>
-    <x-modal v-model="createPaymentModal" size="xl" show-close backdrop>
+    <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
       <template #header>
-        <i class="fa fa-cog text-primary-800 mr-2"></i>
         <span class="text-primary-800 font-semibold">
           {{
             paymentMethodsForm.status == 'create'
@@ -313,15 +306,14 @@ onMounted(() => {});
         </span>
       </template>
       <x-form @submit="addPayment" :auto-focus="false">
-        <div class="w-full">
+        <div class="w-full grid md:grid-cols-2 gap-5">
           <x-input
             class="w-full"
             :rules="[rules.isRequired, rules.amount]"
             label="Capture Amount*"
             v-model="paymentMethodsForm.amount"
           />
-        </div>
-        <div class="w-full">
+
           <x-select
             class="w-full"
             v-model="paymentMethodsForm.collection_type"
@@ -330,46 +322,46 @@ onMounted(() => {});
             :rules="[rules.isRequired]"
           >
           </x-select>
-        </div>
-        <div class="w-full">
+
           <x-select
-            class="w-full"
+            class="w-full md:col-span-2"
             v-model="paymentMethodsForm.payment_method"
             :options="paymentMethods"
             label="Payment Method*"
             :rules="[rules.isRequired]"
           >
           </x-select>
-        </div>
 
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <p class="text-sm text-gray-500 mt-2">
-              Provider Name:
-              <span class="text-primary-800">{{ providerName }}</span>
-            </p>
-          </div>
-          <div class="w-full md:w-1/2">
-            <p class="text-sm text-gray-500 mt-2">
-              Plan Name :
-              <span class="text-primary-800">{{ getPlanName }}</span>
-            </p>
-          </div>
-        </div>
-        <div class="mt-3 w-full">
+          <p class="text-sm text-gray-500">
+            Provider Name:
+            <span class="text-primary-800">{{ providerName }}</span>
+          </p>
+
+          <p class="text-sm text-gray-500">
+            Plan Name :
+            <span class="text-primary-800">{{ getPlanName }}</span>
+          </p>
+
           <x-input
-            class="w-full"
+            class="w-full md:col-span-2"
             label="Payment Reference*"
             :rules="[rules.isRequired, rules.reference]"
             v-show="paymentMethodsForm.payment_method != 'CC'"
             v-model="paymentMethodsForm.payment_reference"
           />
-        </div>
-        <div class="text-center" v-if="paymentMethodsForm.status == 'create'">
-          <x-button color="primary" type="submit"> Create Payment </x-button>
-        </div>
-        <div class="text-center" v-if="paymentMethodsForm.status == 'edit'">
-          <x-button color="primary" type="submit"> Update Payment </x-button>
+
+          <div
+            class="w-full md:col-span-2 flex justify-end"
+            v-if="
+              paymentMethodsForm.status == 'create' ||
+              paymentMethodsForm.status == 'edit'
+            "
+          >
+            <x-button color="primary" type="submit">
+              {{ paymentMethodsForm.status == 'create' ? 'Create' : 'Update' }}
+              Payment
+            </x-button>
+          </div>
         </div>
       </x-form>
     </x-modal>
