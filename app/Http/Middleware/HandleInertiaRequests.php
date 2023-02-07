@@ -49,7 +49,6 @@ class HandleInertiaRequests extends Middleware
                 ? $request->user()->only('id', 'name', 'email')
                 : null,
             'sidebar' => fn () => $this->buildNavigation()->tree(),
-
         ]);
     }
 

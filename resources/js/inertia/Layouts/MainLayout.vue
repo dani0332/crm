@@ -1,25 +1,34 @@
 <script setup>
-import { computed } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
+import { Link, usePage, router } from '@inertiajs/vue3';
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
+const openSidebar = ref(false);
+
+router.on('navigate', () => {
+  openSidebar.value = false;
+});
 </script>
 
 <template>
   <main class="flex w-full min-h-screen overflow-x-clip">
     <aside
-      class="fixed inset-y-0 left-0 z-30 flex flex-col h-screen overflow-hidden shadow-2xl transition-all bg-white lg:border-r lg:z-0 translate-x-0 max-w-[17em] lg:max-w-[var(--sidebar-width)]"
+      :class="
+        openSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      "
+      class="fixed inset-y-0 left-0 z-30 flex flex-col h-screen overflow-hidden shadow-2xl transition-all bg-white lg:border-r lg:z-0 max-w-[17em] lg:max-w-[var(--sidebar-width)]"
     >
       <header
         class="border-b h-[4rem] shrink-0 flex items-center justify-center relative"
       >
-        <div class="flex items-center justify-center px-6 w-full lg:px-4">
-          <!-- <button
+        <div class="flex items-center justify-center px-2 w-full lg:px-4">
+          <button
             type="button"
-            class="shrink-0 hidden lg:flex items-center justify-center w-10 h-10 text-primary-500 rounded-full hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none"
+            class="shrink-0 lg:hidden flex items-center justify-center w-10 h-10 text-primary-500 rounded-full hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none"
             aria-label="Collapse sidebar"
+            @click.prevent="openSidebar = !openSidebar"
           >
             <svg
               class="h-6 w-6"
@@ -37,34 +46,12 @@ const navLinks = computed(() => page.props.sidebar);
                 stroke-linejoin="round"
               ></path>
             </svg>
-          </button> -->
+          </button>
 
           <a href="/" class="block w-full">
             <img src="/images/logo.png" alt="IMCRM" class="w-full" />
           </a>
         </div>
-
-        <button
-          type="button"
-          class="shrink-0 flex items-center justify-center w-10 h-10 text-primary-500 rounded-full hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none"
-          aria-label="Collapse sidebar"
-          style="display: none"
-        >
-          <svg
-            class="w-6 h-6"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="2"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-            ></path>
-          </svg>
-        </button>
       </header>
 
       <nav
@@ -122,6 +109,12 @@ const navLinks = computed(() => page.props.sidebar);
         </template>
       </nav>
     </aside>
+    <div
+      v-if="openSidebar"
+      class="bg-black/75 backdrop-blur-sm w-full h-full fixed inset-0 z-20 lg:hidden"
+      @click.prevent="openSidebar = false"
+    ></div>
+
     <article
       class="flex-col gap-y-6 w-screen flex-1 h-full transition-all lg:pl-[var(--sidebar-width)]"
     >
@@ -131,7 +124,29 @@ const navLinks = computed(() => page.props.sidebar);
         <div
           class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
         >
-          <div></div>
+          <div>
+            <button
+              type="button"
+              class="shrink-0 flex lg:hidden items-center justify-center w-10 h-10 text-primary-500 rounded-full hover:bg-gray-500/5 focus:bg-primary-500/10 focus:outline-none"
+              aria-label="Open sidebar"
+              @click.prevent="openSidebar = !openSidebar"
+            >
+              <svg
+                class="w-6 h-6"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                ></path>
+              </svg>
+            </button>
+          </div>
           <div>
             <x-popover align="right" block>
               <x-button>{{ user.name }}</x-button>

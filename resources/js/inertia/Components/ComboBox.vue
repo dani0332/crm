@@ -80,7 +80,6 @@ const filteredList = computed(() =>
       class="relative"
     >
       <ComboboxInput
-        @change="query = $event.target.value"
         :displayValue="list => list?.label"
         :class="{
           'border-red-500': props.hasError,
@@ -88,16 +87,14 @@ const filteredList = computed(() =>
         class="appearance-none block placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 border shadow-sm rounded-md hover:border-gray-400 px-3 py-2 bg-white text-gray-700 focus:outline-sky-500 w-full"
         :placeholder="props.placeholder"
         :value="
-          query
-            ? query
-            : props.single
+          props.single
             ? props.options.find(option => option.value === props.modelValue)
                 ?.label
             : `${selectedValue.length} Selected`
         "
-        autocomplete="off"
+        readonly
       />
-      <ComboboxButton class="absolute bottom-0 right-0 w-10 h-10" />
+      <ComboboxButton class="absolute bottom-0 right-0 w-full h-full" />
       <TransitionRoot
         leave="transition ease-in duration-100"
         leaveFrom="opacity-100"
@@ -107,6 +104,15 @@ const filteredList = computed(() =>
         <ComboboxOptions
           class="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
         >
+          <li class="pt-1 px-2 -mb-2">
+            <x-input
+              size="xs"
+              v-model="query"
+              placeholder="Search Options"
+              class="w-full"
+            />
+          </li>
+
           <li
             v-if="filteredList.length === 0 && query !== ''"
             class="relative cursor-default select-none py-2 px-4 text-gray-600 text-xs"
@@ -117,12 +123,12 @@ const filteredList = computed(() =>
             as="template"
             v-slot="{ selected }"
             v-for="list in filteredList"
-            :key="list.value"
+            :key="list.label"
             :value="list"
           >
             <li
               :class="{ 'text-primary': selected }"
-              class="relative flex items-center whitespace-nowrap px-2 text-sm cursor-pointer py-1 border-b last:border-b-0"
+              class="relative flex items-center whitespace-nowrap px-2 text-sm cursor-pointer py-1 border-b last:border-b-0 hover:bg-primary-50"
             >
               <span class="flex-1 truncate py-px">{{ list.label }}</span>
               <span class="ml-1 shrink-0">

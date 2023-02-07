@@ -12,7 +12,6 @@ import PaymentTable from './Partials/PaymentTable.vue';
 
 defineProps({
   quote: Object,
-  genderOptions: Object,
   leadStatuses: Array,
   ecomDetails: Object,
   membersDetail: Array,
@@ -33,6 +32,8 @@ defineProps({
   modelType: String,
   notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
+  permissions: Object,
+  genderOptions: Object,
   isQuoteDocumentEnabled: Boolean,
   isBetaUser: Boolean,
   payments: Array,
@@ -954,7 +955,7 @@ onMounted(() => {
 <template>
   <div>
     <Head title="Health Detail" />
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
@@ -1014,7 +1015,7 @@ onMounted(() => {
     <x-divider class="my-4" />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/50">
-      <div class="flex gap-6 w-full">
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2 flex gap-2 items-end">
           <x-select
             v-model="assignSubteam"
@@ -1255,7 +1256,7 @@ onMounted(() => {
           Member Details
           <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
         </h3>
-        <x-button @click.prevent="onAddMemberModal" size="sm" color="#ff5e00">
+        <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
           Add Member
         </x-button>
       </div>
@@ -1418,7 +1419,7 @@ onMounted(() => {
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-      <div class="flex gap-6 w-full">
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-2/3">
           <x-textarea
             v-model="leadStatusForm.notes"
@@ -1609,12 +1610,12 @@ onMounted(() => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
+      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
           <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
         </h3>
-        <div class="space-x-4">
+        <div class="flex flex-wrap gap-3">
           <x-button
             v-if="selectedPlansPdf.length > 0"
             size="sm"
@@ -1655,9 +1656,6 @@ onMounted(() => {
       >
         <template #item-actualPremium="{ actualPremium }">
           {{ fixedValue(actualPremium) }}
-        </template>
-        <template #item-premiumVat="{ actualPremium, vat }">
-          {{ fixedValue(actualPremium + vat) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
@@ -1924,7 +1922,7 @@ onMounted(() => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
+      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Customer Additional Contacts
           <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
