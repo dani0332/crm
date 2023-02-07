@@ -52,11 +52,6 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             DB::raw("CONCAT('first_name', ' ', 'last_name') as fullName"),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->join('user_team', 'users.id', 'user_team.user_id')
-        ->join('teams', function ($join) {
-            $join->on('user_team.team_id', '=', 'teams.id');
-            $join->on('users.sub_team_id', '=', 'teams.id');
-        })
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->where('car_quote_request.advisor_id', $this->advisorId)

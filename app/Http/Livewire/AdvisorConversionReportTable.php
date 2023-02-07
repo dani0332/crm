@@ -204,18 +204,11 @@ class AdvisorConversionReportTable extends DataTableComponent
                 '.QuoteStatusEnum::Fake.','.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::AfiaRenewal.') THEN 1 ELSE 0 END) as others'),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->join('user_team', 'users.id', 'user_team.user_id')
-        ->join('teams', function ($join) {
-            $join->on('user_team.team_id', '=', 'teams.id');
-            $join->on('users.sub_team_id', '=', 'teams.id');
-        })
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->whereIn('car_quote_request.advisor_id', $userIds)
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
         ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
-
-        info('other statuses are : '.json_encode(Str::replaceArray('?', $query->getBindings(), $query->toSql())));
 
         return $query;
     }

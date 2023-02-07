@@ -141,13 +141,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw('SUM(car_quote_request.cost_per_lead) as total_lead_cost'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->join('user_team', 'user_team.user_id', 'users.id')
-            ->leftJoin('teams', function ($join) {
-                $join->on('users.team_id', '=', 'teams.id');
-                $join->on('users.sub_team_id', '=', 'teams.id');
-            })
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-            ->where('tiers.name', 'not like', '%TR%')
             ->groupBy('users.email')
             ->orderBy('users.name');
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
