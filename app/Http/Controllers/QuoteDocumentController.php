@@ -117,7 +117,7 @@ class QuoteDocumentController extends Controller
                 $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('SIB_CAR_SEND_POLICY_TEMPLATE_ID');
 
                 break;
-            case 'health':
+            case strtolower(quoteTypeCode::Health):
                 $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('SIB_HEALTH_SEND_POLICY_TEMPLATE_ID');
                 break;
             default:

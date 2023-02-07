@@ -504,9 +504,9 @@ class CRUDController extends Controller
 
             $payments->each(function ($payment) {
                 $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && !auth()->user()->hasRole(RolesEnum::PA);
-                $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID;
+                $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
                 $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
-                $payment->approve_button = optional($payment->paymentMethod)->code != 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
+                $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
                 && !auth()->user()->hasRole(RolesEnum::PA);
 
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
