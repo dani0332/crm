@@ -155,7 +155,7 @@
 
 </style>
 <meta name="csrf-token" content="{{ csrf_token() }}" />
-<div class="container">
+<div class="container" style="width:100% !important;">
     <div class="row" style="background-color: #f9fafb;padding:35px;box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);float: left;">
         <div  style="padding: 10px;">
             <div class="col-md-12">
