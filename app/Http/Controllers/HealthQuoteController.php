@@ -178,13 +178,13 @@ class HealthQuoteController extends Controller
     public function healthPlanCreateQuote(Request $request)
     {
         $planData = [
-            'quoteUID' => $request->quote_uuid,
+            'quoteUID' => $request->quoteUID,
             'update' => false,
         ];
 
         $planData['plans'][] = [
-            'planId' => $request->plan_id,
-            'actualPremium' => $request->premium,
+            'planId' => $request->planId,
+            'actualPremium' => (float) $request->actualPremium,
             'discountPremium' => 0,
             'isManualUpdate' => false,
             'isManualPremium' => true,
@@ -192,7 +192,7 @@ class HealthQuoteController extends Controller
 
         $response = $this->healthQuoteService->renewalCreatePlan($planData);
 
-        return redirect()->back()->with('response', $response);
+        return $response;
     }
 
     public function healthPlanUpdateManualProcess(Request $request)
@@ -238,5 +238,60 @@ class HealthQuoteController extends Controller
         $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
 
         return response()->json($healthPlans);
+    }
+
+    // TODO: Code Refactor
+    public function cardsView(Request $request)
+    {
+        $quotes = [];
+        $quotes[] = [
+            'id' => 8,
+            'title' => 'New Lead',
+            'data' => getDataAgainstStatus('Health', 8),
+        ];
+        $quotes[] = [
+            'id' => 2,
+            'title' => 'Quoted',
+            'data' => getDataAgainstStatus('Health', 2),
+        ];
+        $quotes[] = [
+            'id' => 31,
+            'title' => 'Qualified',
+            'data' => getDataAgainstStatus('Health', 31),
+        ];
+        $quotes[] = [
+            'id' => 25,
+            'title' => 'In Negotiation',
+            'data' => getDataAgainstStatus('Health', 25),
+        ];
+        $quotes[] = [
+            'id' => 26,
+            'title' => 'Application Pending',
+            'data' => getDataAgainstStatus('health', 26),
+        ];
+        $quotes[] = [
+            'id' => 28,
+            'title' => 'Payment Pending',
+            'data' => getDataAgainstStatus('Health', 28),
+        ];
+        $quotes[] = [
+            'id' => 36,
+            'title' => 'Application Submitted',
+            'data' => getDataAgainstStatus('Health', 36),
+        ];
+        $quotes[] = [
+            'id' => 15,
+            'title' => 'Transaction Approved',
+            'data' => getDataAgainstStatus('Health', 15),
+        ];
+        $quotes[] = [
+            'id' => 29,
+            'title' => 'Policy Documents Pending',
+            'data' => getDataAgainstStatus('Health', 29),
+        ];
+
+        return inertia('HealthQuote/Cards', [
+            'quotes' => $quotes,
+        ]);
     }
 }

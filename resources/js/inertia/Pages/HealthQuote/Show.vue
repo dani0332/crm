@@ -11,7 +11,6 @@ import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 defineProps({
   quote: Object,
-  genderOptions: Object,
   leadStatuses: Array,
   ecomDetails: Object,
   membersDetail: Array,
@@ -28,7 +27,14 @@ defineProps({
   activities: Array,
   customerAdditionalContacts: Array,
   lostReasons: Array,
+  quoteStatusEnum: Object,
+  modelType: String,
+  notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
+  permissions: Object,
+  genderOptions: Object,
+  isQuoteDocumentEnabled: Boolean,
+  isBetaUser: Boolean,
 });
 
 const page = usePage();
@@ -431,12 +437,8 @@ const plansTable = reactive({
       value: 'name',
     },
     {
-      text: 'Actual Premium with BASMAH',
+      text: 'Premium with VAT and Basmah',
       value: 'actualPremium',
-    },
-    {
-      text: 'Premium with VAT and BASMAH',
-      value: 'premiumVat',
     },
     {
       text: 'Action',
@@ -494,9 +496,26 @@ const onExportPlans = () => {
 };
 
 const onCreatePlan = () => {
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['listQuotePlans'],
+    onStart: () => {
+      modals.createPlan = false;
+    },
+    onFinish: () => {
+      notification.success({
+        title: 'Plan Created',
+        position: 'top',
+      });
+    },
+  });
+};
+
+const onPlanError = () => {
   modals.createPlan = false;
-  notification.success({
-    title: 'Plan Created',
+  notification.error({
+    title: 'Plan Creation Failed',
     position: 'top',
   });
 };
@@ -800,6 +819,104 @@ const historyDataTable = [
   { text: 'Lead Status', value: 'NewStatus' },
 ];
 
+const dateToYMD = date => {
+  if (date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = `0${d.getMonth() + 1}`.slice(-2);
+    const day = `0${d.getDate()}`.slice(-2);
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+};
+
+const policyDetails = useForm({
+  premium: page.props.quote.premium,
+  policy_number: page.props.quote.policy_number || '',
+  policy_start_date: dateToYMD(page.props.quote.policy_start_date),
+  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
+  quote_status_id: page.props.quote.quote_status_id,
+  canEdit:
+    page.props.quote.quote_status_id ==
+      page.props.quoteStatusEnum.TransactionApproved &&
+    page.props.notProductionApproval,
+  editMode: false,
+  modelType: page.props.modelType,
+  quote_id: page.props.quote.id,
+});
+
+const policyDetailRules = {
+  policy_number: v => {
+    if (v) {
+      return (
+        v.length <= 50 || 'Policy Number should be less than 50 characters'
+      );
+    }
+    return true;
+  },
+  policy_start_date: v => {
+    if (v) {
+      const date = new Date(v);
+      return !isNaN(date.getTime());
+    }
+    return true;
+  },
+  renewal_expiry_date: v => {
+    if (v) {
+      const date = new Date(v);
+      if (policyDetails.policy_start_date) {
+        const startDate = new Date(policyDetails.policy_start_date);
+        if (startDate >= date) {
+          return 'Expiry date should be greater than Start Date';
+        }
+      }
+      return !isNaN(date.getTime());
+    }
+    return true;
+  },
+  premium: v => {
+    if (v) {
+      const premium = parseFloat(v);
+      if (premium < 0 || isNaN(premium)) {
+        return 'Premium should be greater than 0';
+      }
+    }
+    return true;
+  },
+};
+
+const cancelPolicyFrom = () => {
+  policyDetails.editMode = false;
+};
+
+const submitPolicyDetails = isValid => {
+  if (!isValid) return;
+  policyDetails
+    .transform(data => ({
+      quote_policy_number: data.policy_number,
+      quote_policy_start_date: data.policy_start_date,
+      quote_policy_expiry_date: data.renewal_expiry_date,
+      quote_policy_issuance_date: data.policy_issuance_date,
+      quote_premium: data.premium,
+      modelType: data.modelType,
+      quote_id: data.quote_id,
+      isInertia: true,
+    }))
+    .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Policy Details Updated',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        policyDetails.editMode = false;
+      },
+    });
+};
+
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
@@ -810,19 +927,19 @@ onMounted(() => {
 <template>
   <div>
     <Head title="Health Detail" />
-    <div class="flex justify-between items-center">
+    <div class="flex justify-between items-center flex-wrap gap-2">
       <h2 class="text-xl font-semibold">Health Detail</h2>
       <div class="flex gap-2">
-        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate"
-          >Duplicate Lead</x-button
-        >
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
 
         <Link href="/quotes/health" preserve-scroll>
-          <x-button size="sm" color="primary"> Health List </x-button>
+          <x-button size="sm" color="primary" tag="div"> Health List </x-button>
         </Link>
 
         <Link :href="`${quote.uuid}/edit`">
-          <x-button size="sm">Edit</x-button>
+          <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>
     </div>
@@ -870,7 +987,7 @@ onMounted(() => {
     <x-divider class="my-4" />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/50">
-      <div class="flex gap-6 w-full">
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2 flex gap-2 items-end">
           <x-select
             v-model="assignSubteam"
@@ -1111,7 +1228,7 @@ onMounted(() => {
           Member Details
           <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
         </h3>
-        <x-button @click.prevent="onAddMemberModal" size="sm" color="#ff5e00">
+        <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
           Add Member
         </x-button>
       </div>
@@ -1274,7 +1391,7 @@ onMounted(() => {
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-      <div class="flex gap-6 w-full">
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-2/3">
           <x-textarea
             v-model="leadStatusForm.notes"
@@ -1365,13 +1482,102 @@ onMounted(() => {
       </div>
     </div>
 
+    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <x-form @submit="submitPolicyDetails" :auto-focus="false">
+        <div class="flex gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.policy_number"
+              :disabled="!policyDetails.editMode"
+              label="Policy Number"
+              :rules="[rules.isRequired, policyDetailRules.policy_number]"
+              class="w-full"
+            />
+          </div>
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.policy_issuance_date"
+              :disabled="!policyDetails.editMode"
+              type="date"
+              label="Issuance Date"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="flex gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.policy_start_date"
+              :disabled="!policyDetails.editMode"
+              type="date"
+              label="Start Date"
+              :rules="[rules.isRequired, policyDetailRules.policy_start_date]"
+              class="w-full"
+            />
+          </div>
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.renewal_expiry_date"
+              :disabled="!policyDetails.editMode"
+              type="date"
+              label="Expiry Date"
+              :rules="[rules.isRequired, policyDetailRules.renewal_expiry_date]"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="flex gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.premium"
+              :disabled="!policyDetails.editMode"
+              label="Premium"
+              :rules="[rules.isRequired, policyDetailRules.premium]"
+              class="w-full"
+            />
+          </div>
+          <div class="w-full md:w-1/2"></div>
+        </div>
+
+        <div class="text-right space-x-4 mt-12" v-if="policyDetails.canEdit">
+          <x-button
+            color="#007bff"
+            size="sm"
+            v-show="policyDetails.editMode"
+            @click.prevent="cancelPolicyFrom"
+            >Cancel</x-button
+          >
+          <x-button
+            color="#26B99A"
+            type="submit"
+            size="sm"
+            v-show="policyDetails.editMode"
+            >Update</x-button
+          >
+          <x-button
+            color="#007bff"
+            size="sm"
+            type="submit"
+            v-show="!policyDetails.editMode"
+            @click.prevent="policyDetails.editMode = true"
+            >Edit</x-button
+          >
+        </div>
+      </x-form>
+    </div>
+
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
+      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
           <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
         </h3>
-        <div class="space-x-4">
+        <div class="flex flex-wrap gap-3">
           <x-button
             v-if="selectedPlansPdf.length > 0"
             size="sm"
@@ -1407,13 +1613,11 @@ onMounted(() => {
         :items="listQuotePlans || []"
         border-cell
         hide-rows-per-page
-        hide-footer
+        :rows-per-page="15"
+        :hide-footer="listQuotePlans.length < 15"
       >
-        <template #item-actualPremium="{ actualPremium, basmah }">
-          {{ fixedValue(actualPremium + basmah) }}
-        </template>
-        <template #item-premiumVat="{ actualPremium, vat, basmah }">
-          {{ fixedValue(actualPremium + vat + basmah) }}
+        <template #item-actualPremium="{ actualPremium }">
+          {{ fixedValue(actualPremium) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
@@ -1452,7 +1656,11 @@ onMounted(() => {
 
       <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
         <template #header> Create Heath Quote </template>
-        <LazyCreatePlan :uuid="quote.uuid" @success="onCreatePlan" />
+        <LazyCreatePlan
+          :uuid="quote.uuid"
+          @success="onCreatePlan"
+          @error="onPlanError"
+        />
       </x-modal>
     </div>
 
@@ -1472,7 +1680,8 @@ onMounted(() => {
         :items="quoteDocuments || []"
         border-cell
         hide-rows-per-page
-        hide-footer
+        :rows-per-page="15"
+        :hide-footer="quoteDocuments.length < 15"
       >
         <template #item-original_name="item">
           <a
@@ -1549,7 +1758,8 @@ onMounted(() => {
         :items="activities"
         border-cell
         hide-rows-per-page
-        hide-footer
+        :rows-per-page="15"
+        :hide-footer="activities.length < 15"
       >
         <template #item-status="{ status, id }">
           <x-checkbox
@@ -1664,7 +1874,7 @@ onMounted(() => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
+      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Customer Additional Contacts
           <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
@@ -1826,7 +2036,8 @@ onMounted(() => {
         :items="historyData || []"
         border-cell
         hide-rows-per-page
-        hide-footer
+        :rows-per-page="15"
+        :hide-footer="historyData.length < 15"
       />
     </div>
   </div>

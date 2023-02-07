@@ -240,16 +240,10 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
-            $genderOptions = [
-                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
-                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
-                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
-            ];
-
             return inertia('HealthQuote/Create', [
                 'dropdownSource' => $dropdownSource,
-                'genderOptions' => $genderOptions,
                 'model' => json_encode($model->properties),
+                'genderOptions' => $this->crudService->getGenderOptions(),
             ]);
         }
 
@@ -481,11 +475,6 @@ class CRUDController extends Controller
             $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
             $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
             $leadStatuses = $this->healthQuoteService->statusesToDisplay($leadStatuses, $record);
-            $genderOptions = [
-                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
-                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
-                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
-            ];
 
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
@@ -504,10 +493,11 @@ class CRUDController extends Controller
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
 
+            $notProductionApproval = !auth()->user()->hasRole(RolesEnum::PA);
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
+                'genderOptions' => $this->crudService->getGenderOptions(),
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
-                'genderOptions' => $genderOptions,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'ecomDetails' => $ecomDetails,
                 'membersDetail' => $membersDetail,
@@ -526,6 +516,13 @@ class CRUDController extends Controller
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
                 'lostReasons' => $lostReasons,
+                'permissions' => [
+                    'pa' => auth()->user()->hasRole(RolesEnum::PA),
+                ],
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'modelType' => $quoteType,
+                'notProductionApproval' => $notProductionApproval,
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
             ]);
         } else {
             return view('shared.show', compact([
@@ -569,16 +566,10 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health) {
-            $genderOptions = [
-                GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
-                GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
-                GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
-            ];
-
             return inertia('HealthQuote/Edit', [
                 'quote' => $record,
+                'genderOptions' => $this->crudService->getGenderOptions(),
                 'dropdownSource' => $dropdownSource,
-                'genderOptions' => $genderOptions,
                 'isRenewalUser' => $isRenewalUser,
                 'model' => json_encode($model->properties),
             ]);
@@ -940,6 +931,10 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->status) {
             $results = getDataAgainstEveryStatus($request->modelType, $request);
 
+            if ($request->modelType == quoteTypeCode::Health) {
+                return $results;
+            }
+
             $html = '';
             if ($results) {
                 foreach ($results['leads_list'] as $result) {
@@ -980,6 +975,10 @@ class CRUDController extends Controller
     {
         if ($request->has('modelType') && $request->modelType && $request->term && $request->status) {
             $results = getDataAgainstSearchTerm($request->modelType, $request);
+
+            if ($request->modelType == quoteTypeCode::Health) {
+                return $results;
+            }
 
             $html = '';
             if ($results) {

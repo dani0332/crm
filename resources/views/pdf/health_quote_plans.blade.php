@@ -310,7 +310,7 @@
         ["code" => "consultation", "title" => "Consultation*", "type" => 'outpatient'],
         ["code" => "physiotherapy", "title" => "Physiotherapy*", "type" => 'outpatient'],
         ["code" => "dentalCover", "title" => "Dental*", "type" => ['outpatient', 'exclusion'] ],
-        ["code" => "opticalOp", "title" => "Optical*", "type" => 'outpatient'],
+        ["code" => "visionAndHearingCover", "title" => "Optical*", "type" => 'outpatient'],
         ["code" => "heading", "title" => "Inpatient Benefits", "description" => "*All benefits, limits and sub limits are subject to applicable excess co‐insurance/co‐pays and prior authorization; Specific benefits varies for each insurer, please refer to table of benefits for more details"],
         ["code" => "preExistingOrChronic", "title" => "Pre‐existing & Chronic Conditions*", "type" => 'inpatient'],
         ["code" => "medicine", "title" => "Medicines*", "type" => 'inpatient'],
@@ -322,11 +322,11 @@
         ["code" => "heading", "title" => "Co‐pay or Co‐insurance"],
         ["code" => "consultation", "title" => "Consultation*", "type" => 'coInsurance'],
         ["code" => "diagnostics", "title" => "Diagnostics*", "type" => 'coInsurance'],
-        ["code" => "damage", "title" => "Inpatient*", "type" => 'coInsurance'],
+        ["code" => "inpatient", "title" => "Inpatient*", "type" => 'coInsurance'],
         ["code" => "physiotherapy", "title" => "Physiotherapy*", "type" => 'coInsurance'],
-        ["code" => "medicineCo", "title" => "Medicine*", "type" => 'coInsurance'],
-        ["code" => "coDental", "title" => "Dental*", "type" => 'coInsurance'],
-        ["code" => "coOptical", "title" => "Optical*", "type" => 'coInsurance'],
+        ["code" => "medicine", "title" => "Medicine*", "type" => 'coInsurance'],
+        ["code" => "dentalCover", "title" => "Dental*", "type" => 'coInsurance'],
+        ["code" => "opticalCover", "title" => "Optical*", "type" => 'coInsurance'],
 
         ["code" => "heading", "title" => "Maternity Cover"],
         ["code" => "outpatient", "title" => "Outpatient", "type" => 'maternityCover'],
@@ -391,28 +391,28 @@
 <main>
     <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;">
         <thead>
-            <tr>
-                <th class="alfred" rowspan="3">
-                    <img src="{{public_path('images/alfred.png')}}"  />
+        <tr>
+            <th class="alfred" rowspan="3">
+                <img src="{{public_path('images/alfred.png')}}"  />
+            </th>
+
+            @foreach($planIds as $planId)
+                <th class="provider" style="border: solid 1px #bfbfbf;">
+                    <div class="rounded-full">
+                        <p class="relative top-[40%] m-auto text-xs">
+                            @php
+                                $providerLogoImage = public_path('images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png');
+
+                                if(!file_exists($providerLogoImage)) {
+                                    $providerLogoImage = public_path('images/insurance_providers/default.png');
+                                }
+
+                            @endphp
+                            <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
+                        </p>
+                    </div>
                 </th>
-
-                @foreach($planIds as $planId)
-                    <th class="provider" style="border: solid 1px #bfbfbf;">
-                        <div class="rounded-full">
-                            <p class="relative top-[40%] m-auto text-xs">
-                                @php
-                                    $providerLogoImage = public_path('images/insurance_providers/' . strtolower($plans[$planId]->providerCode) . '.png');
-
-                                    if(!file_exists($providerLogoImage)) {
-                                        $providerLogoImage = public_path('images/insurance_providers/default.png');
-                                    }
-
-                                @endphp
-                                <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
-                            </p>
-                        </div>
-                    </th>
-                @endforeach
+            @endforeach
 
         </tr>
 
