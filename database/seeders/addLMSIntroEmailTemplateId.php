@@ -29,7 +29,7 @@ class addLMSIntroEmailTemplateId extends Seeder
         if ($reassignEmailTemplateIdCount == null) {
             ApplicationStorage::insert([
                 'key_name' => 'LMS_REASSIGN_EMAIL_TEMPLATE_ID',
-                'value' => 426,
+                'value' => 428,
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,

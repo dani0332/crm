@@ -75,38 +75,44 @@ class AdvisorDistributionReportTable extends DataTableComponent
             Column::make('Total Leads')->label(fn ($row) => ($row->total_leads))->footer(function ($rows) {
                 return $rows->sum('total_leads');
             }),
-            Column::make('Tier 0 Lead Count')->label(fn ($row) => $row->tier_0_lead_count)->footer(function ($rows) {
+            Column::make('Tier 0')->label(fn ($row) => $row->tier_0_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_0_lead_count');
             }),
-            Column::make('Tier 1 Lead Count')->label(fn ($row) => $row->tier_1_lead_count)->footer(function ($rows) {
+            Column::make('Tier 1')->label(fn ($row) => $row->tier_1_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_1_lead_count');
             }),
-            Column::make('Tier 2 Lead Count')->label(fn ($row) => $row->tier_2_lead_count)->footer(function ($rows) {
+            Column::make('Tier 2')->label(fn ($row) => $row->tier_2_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_2_lead_count');
             }),
-            Column::make('Tier 3 Lead Count')->label(fn ($row) => $row->tier_3_lead_count)->footer(function ($rows) {
+            Column::make('Tier 3')->label(fn ($row) => $row->tier_3_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_3_lead_count');
             }),
-            Column::make('Tier 4 Lead Count')->label(fn ($row) => $row->tier_4_lead_count)->footer(function ($rows) {
+            Column::make('Tier 4')->label(fn ($row) => $row->tier_4_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_4_lead_count');
             }),
-            Column::make('Tier 5 Lead Count')->label(fn ($row) => $row->tier_5_lead_count)->footer(function ($rows) {
+            Column::make('Tier 5')->label(fn ($row) => $row->tier_5_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_5_lead_count');
             }),
-            Column::make('Tier 6 NON-ECOM COUNT')->label(fn ($row) => $row->tier_6_lead_count)->footer(function ($rows) {
+            Column::make('Tier 6 NON-ECOM')->label(fn ($row) => $row->tier_6_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_6_lead_count');
             }),
-            Column::make('Tier 6 ECOM COUNT')->label(fn ($row) => $row->tier_6_lead_count_e)->footer(function ($rows) {
+            Column::make('Tier 6 ECOM')->label(fn ($row) => $row->tier_6_lead_count_e)->footer(function ($rows) {
                 return $rows->sum('tier_6_lead_count_e');
             }),
-            Column::make('Tier H Lead Count')->label(fn ($row) => $row->tier_h_lead_count)->footer(function ($rows) {
+            Column::make('Tier H')->label(fn ($row) => $row->tier_h_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_h_lead_count');
             }),
-            Column::make('Tier L Lead Count')->label(fn ($row) => $row->tier_l_lead_count)->footer(function ($rows) {
+            Column::make('Tier L')->label(fn ($row) => $row->tier_l_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_l_lead_count');
             }),
-            Column::make('Tier R Lead Count')->label(fn ($row) => $row->tier_r_lead_count)->footer(function ($rows) {
+            Column::make('Tier R')->label(fn ($row) => $row->tier_r_lead_count)->footer(function ($rows) {
                 return $rows->sum('tier_r_lead_count');
+            }),
+            Column::make('Tier TR ECOM')->label(fn ($row) => $row->tier_tr_lead_count_e)->footer(function ($rows) {
+                return $rows->sum('tier_tr_lead_count_e');
+            }),
+            Column::make('Tier TR NON-ECOM')->label(fn ($row) => $row->tier_tr_lead_count)->footer(function ($rows) {
+                return $rows->sum('tier_tr_lead_count');
             }),
             Column::make('Total Lead Cost')->label(fn ($row) => $row->total_lead_cost)->footer(function ($rows) {
                 return $rows->sum('total_lead_cost');
@@ -130,6 +136,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier L' THEN 1 ELSE 0 END) as tier_l_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier H' THEN 1 ELSE 0 END) as tier_h_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_r_lead_count"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier TR (Ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_tr_lead_count_e"),
+                DB::raw("SUM(CASE WHEN tiers.name = 'Tier TR (Non ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_tr_lead_count"),
                 DB::raw('SUM(car_quote_request.cost_per_lead) as total_lead_cost'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
