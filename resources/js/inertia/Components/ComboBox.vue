@@ -30,6 +30,10 @@ const props = defineProps({
     type: String,
     default: 'Select an option',
   },
+  searchPlaceholder: {
+    type: String,
+    default: 'Search options',
+  },
   hasError: {
     type: Boolean,
     default: false,
@@ -108,7 +112,7 @@ const filteredList = computed(() =>
             <x-input
               size="xs"
               v-model="query"
-              placeholder="Search Options"
+              :placeholder="props.searchPlaceholder"
               class="w-full"
             />
           </li>
@@ -128,7 +132,7 @@ const filteredList = computed(() =>
           >
             <li
               :class="{ 'text-primary': selected }"
-              class="relative flex items-center whitespace-nowrap px-2 text-sm cursor-pointer py-1 border-b last:border-b-0 hover:bg-primary-50"
+              class="relative flex items-center whitespace-nowrap px-3 text-sm cursor-pointer py-1.5 hover:bg-primary-50"
             >
               <span class="flex-1 truncate py-px">{{ list.label }}</span>
               <span class="ml-1 shrink-0">

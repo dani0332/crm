@@ -51,6 +51,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Gate;
+use App\Enums\PermissionsEnum;
 
 class CRUDController extends Controller
 {
@@ -307,7 +309,10 @@ class CRUDController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
+     * @param  \Illuminate\Http\Request  $request
+     *
      * @return \Illuminate\Http\Response
+     * @return \Inertia\Response
      */
     public function show($id, Request $request)
     {
@@ -494,6 +499,26 @@ class CRUDController extends Controller
             $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
 
             $notProductionApproval = !auth()->user()->hasRole(RolesEnum::PA);
+            $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod']);
+            $paymentEntityModel->load(['plan.insuranceProvider']);
+
+            $payments->each(function ($payment) {
+                $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && !auth()->user()->hasRole(RolesEnum::PA);
+                $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
+                $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
+                $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
+                && !auth()->user()->hasRole(RolesEnum::PA);
+
+                $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
+            });
+
+            $paymentMethods = $paymentMethods->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->code,
+                    'label' => $paymentMethod->name
+                ];
+            });
+
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -523,6 +548,17 @@ class CRUDController extends Controller
                 'modelType' => $quoteType,
                 'notProductionApproval' => $notProductionApproval,
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+                'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+                'quoteRequest' => $paymentEntityModel,
+                'payments' => $payments,
+                'paymentMethods' => $paymentMethods,
+                'sendPolicy' => (bool) $displaySendPolicyButton,
+                'can' => [
+                    'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
+                    'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
+                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
+                    'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+                ],
             ]);
         } else {
             return view('shared.show', compact([

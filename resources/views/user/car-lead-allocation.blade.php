@@ -293,27 +293,27 @@
         <div class="x_panel">
             <div class="x_title">
 
-                @if(Auth::user()->hasRole(RolesEnum::SuperManagerLeadAllocation))
-                <h2>Car Lead Allocation Management</h2>
-                <span class="status-text"></span>
-                <label class="switch "
-                    style="margin-left: 20px;float: left;margin-top: 5px;">
-                    <input type="checkbox" @if($isAutoAllocationWorking=='1' ) checked="checked" @endif
-                        class="carLeadSwitch success" id="jobSwitch" name="jobSwitch">
-                    <span class="slider round"></span>
-                </label>
+                @if(Auth::user()->hasRole(RolesEnum::Admin))
+                    <h2>Car Lead Allocation Management</h2>
+                    <span class="status-text"></span>
+                    <label class="switch "
+                        style="margin-left: 20px;float: left;margin-top: 5px;">
+                        <input type="checkbox" @if($isAutoAllocationWorking=='1' ) checked="checked" @endif
+                            class="carLeadSwitch success" id="jobSwitch" name="jobSwitch">
+                        <span class="slider round"></span>
+                    </label>
                 @endif
 
 
-                @if(Auth::user()->hasRole(RolesEnum::SuperManagerLeadAllocation))
-                <h2 style="margin-left:  80px !important">Pickup Sequence : FIFO</h2>
-                <span class="status-text"></span>
-                <label class="switch "
-                    style="margin-left: 20px;float: left;margin-top: 5px;">
-                    <input type="checkbox" @if($isFIFO=='1' ) checked="checked" @endif
-                        class="carLeadFIFOSwitch success">
-                    <span class="slider round"></span>
-                </label>
+                @if(Auth::user()->hasRole(RolesEnum::LeadPool) || Auth::user()->hasRole(RolesEnum::Admin))
+                    <h2 style="margin-left:  80px !important">Pickup Sequence : FIFO</h2>
+                    <span class="status-text"></span>
+                    <label class="switch "
+                        style="margin-left: 20px;float: left;margin-top: 5px;">
+                        <input type="checkbox" @if($isFIFO=='1' ) checked="checked" @endif
+                            class="carLeadFIFOSwitch success">
+                        <span class="slider round"></span>
+                    </label>
                 @endif
                 <div class="clearfix"></div>
             </div>
@@ -346,7 +346,7 @@
                     </div>
                     <div class="col-md-3"
                         style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
-                        <span style="font-size: 21px">Availabe / UnAvailable</span>
+                        <span style="font-size: 21px">Available / UnAvailable</span>
                         <br />
                         <b><span style="color: black;"><label id="availableUsers">{{$availableUsers}} </label> /
                                 <label id="UnavailableUsers">{{$unAvailableUsers}}</label></span></b>

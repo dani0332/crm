@@ -149,7 +149,7 @@ transition duration-300 cursor-pointer;
 /* Footer */
 
 .vue3-easy-data-table__footer {
-  @apply flex flex-col items-start gap-5 lg:flex-row lg:items-center w-full p-4 text-sm border-t;
+  @apply flex flex-col items-start gap-5 lg:flex-row lg:items-center w-full p-3 text-sm border-t;
 }
 
 /* Rows per page */
@@ -207,7 +207,11 @@ transition duration-300 cursor-pointer;
 /* Paging arrows */
 .previous-page__click-button,
 .next-page__click-button {
-  @apply my-0 mx-1 cursor-pointer hidden lg:block;
+  @apply relative transition duration-150 focus:outline-none inline-flex items-center justify-center whitespace-nowrap overflow-hidden align-middle active:!shadow-none border rounded-md shadow-sm py-3 text-sm px-4 cursor-pointer hover:bg-primary-50;
+}
+.first-page,
+.last-page {
+  @apply shadow-none border-0 hover:bg-transparent opacity-25 cursor-default;
 }
 .previous-page__click-button .arrow,
 .next-page__click-button .arrow {
