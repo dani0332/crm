@@ -25,7 +25,8 @@ class CreatePersonalQuotesTable extends Migration
                 $table->string('first_name', 255)->nullable();
                 $table->string('last_name', 255)->nullable();
                 $table->date('dob')->nullable();
-                $table->unsignedBigInteger('nationality_id');
+                $table->unsignedBigInteger('nationality_id')->nullable();
+                $table->foreign('nationality_id')->references('id')->on('personal_quote_types');
 
                 $table->string('email', 100)->nullable();
                 $table->string('mobile_no', 20)->nullable();
@@ -53,7 +54,7 @@ class CreatePersonalQuotesTable extends Migration
                 $table->dateTime('policy_start_date')->nullable();
                 $table->dateTime('policy_issuance_date')->nullable();
 
-                $table->unsignedBigInteger('plan_id');
+                $table->unsignedBigInteger('plan_id')->nullable();
                 $table->dateTime('paid_at')->nullable();
                 $table->dateTime('quote_status_date')->nullable();
                 $table->dateTime('payment_status_date')->nullable();
