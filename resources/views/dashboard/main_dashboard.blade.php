@@ -155,9 +155,9 @@
 
 </style>
 <meta name="csrf-token" content="{{ csrf_token() }}" />
-<div class="container">
-    <div class="row" style="background-color: #f9fafb;min-height: 300px;padding:35px;box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);float: left;">
-        <div class="col-md-6" style="float: left;width:55%;padding: 10px;">
+<div class="container" style="width:100% !important;">
+    <div class="row" style="background-color: #f9fafb;padding:35px;box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);float: left;">
+        <div  style="padding: 10px;">
             <div class="col-md-12">
                 <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%));padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
                     <b style="color: cornflowerblue;">TOTAL LEADS RCVD</b>
@@ -191,24 +191,21 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6" style="float: right;width:45%;padding: 10px;">
-            <div class="col-md-12">
-                <h2 style="text-align: center;color: cornflowerblue;font-size: 25px;font-weight: 600;margin-top: -40px;">LEADS ASSIGNED AVERAGE</h2>
-                @foreach ($teamWiseLeadsAssignedAverage as $item)
-                @php
-                $backGroundColor = ['#FF7F50', '#22c55e','#ef4444', '#0c4a6e', '#0ea5e9', '#fbbf24','#0369a1'];
-                @endphp
-                <div class="col-md-1"
-                    style="background-color:white;margin-top:10px; margin-left:10px; float: right;border-radius: 8px;border: 1px solid black;padding: 10px;text-align: center;color:black;min-width:218px;">
-                    <b  style="color: cornflowerblue;">{{strtoupper($item['teamName'])}}</b>
-                    <div style="text-align: center;">
-                        <b id={{str_replace(' ', '', $item['teamName'])}}>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
-                            number_format((float)$item['totalUsersUnderTeam'] == 0 ? 0 : $item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
-                            }}</b>
-                    </div>
+    </div>
+    <div class="row" style="background-color: #f9fafb;padding:35px;box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);float: left;width:100%;">
+        <div class="col-md-12">
+            <h2 style="text-align: center;color: cornflowerblue;font-size: 25px;font-weight: 600;margin-top: -40px;">LEADS ASSIGNED AVERAGE</h2>
+            @foreach ($teamWiseLeadsAssignedAverage as $item)
+            <div class="col-md-1"
+                style="background-color:white;margin-top:10px; min-width:250px;float:left; margin-left:10px; border-radius: 8px;border: 1px solid black;padding: 10px;text-align: center;color:black;">
+                <b  style="color: cornflowerblue;">{{strtoupper($item['teamName'])}}</b>
+                <div style="text-align: center;">
+                    <b id={{str_replace(' ', '', $item['teamName'])}}>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
+                        number_format((float)$item['totalUsersUnderTeam'] == 0 ? 0 : $item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
+                        }}</b>
                 </div>
-                @endforeach
             </div>
+            @endforeach
         </div>
     </div>
     <div style="clear: both;"></div>
@@ -341,6 +338,7 @@
             'https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.css',
             ],
             zIndex: 10,
+            format: "DD MM YYYY",
             LockPlugin: {
                 maxDays: 31
             },
