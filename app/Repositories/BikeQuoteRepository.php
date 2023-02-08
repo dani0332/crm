@@ -47,7 +47,7 @@ class BikeQuoteRepository extends BaseRepository
      * @return mixed
      */
     public function fetchGetBy($column = 'id', $value) {
-        return $this->where($column, $value)->with('bikeQuote')->first();
+        return $this->where($column, $value)->with(['bikeQuote', 'advisor', 'nationality', 'quoteDetail.lostReason'])->first();
     }
 
     /**

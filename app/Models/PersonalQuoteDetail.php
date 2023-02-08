@@ -17,5 +17,9 @@ class PersonalQuoteDetail extends Model
         return $this->belongsTo(PersonalQuote::class);
     }
 
-    
+    public function lostReason()
+    {
+        return $this->belongsTo(LostReasons::class);
+    }
+
 }

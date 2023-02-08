@@ -148,7 +148,7 @@ const tableHeader = [
                     label="Created Date"
                     class="w-full"
                 />
-                <x-input
+                   <x-input
                     v-model="filters.created_at_end"
                     type="date"
                     name="created_at_end"
@@ -176,6 +176,15 @@ const tableHeader = [
             hide-footer
             fixed-checkbox
         >
+
+            <template #item-uuid="{ uuid }">
+                <Link
+                    :href="`/personal-quotes/bike/${uuid}`"
+                    class="text-primary-500 hover:underline"
+                >
+                    {{ uuid }}
+                </Link>
+            </template>
 
         </DataTable>
 

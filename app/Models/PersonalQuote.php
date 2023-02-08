@@ -24,6 +24,20 @@ class PersonalQuote extends Model
         'created_at' => FilterTypes::DATE_BETWEEN
     ];
 
+    /**
+     * @return void
+     */
+    public function quoteDetail() {
+        return $this->hasOne(PersonalQuoteDetail::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function advisor()
+    {
+        return $this->belongsTo(User::class)->select(['id', 'email', 'name']);
+    }
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -42,22 +56,64 @@ class PersonalQuote extends Model
     }
 
     /**
-     * @param $table
+     * @param $date
      * @return string
      */
-    public function getCreatedAtAttribute($table)
+    public function getCreatedAtAttribute($date)
     {
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
     }
 
     /**
-     * @param $table
+     * @param $date
      * @return string
      */
-    public function getUpdatedAtAttribute($table)
+    public function getUpdatedAtAttribute($date)
     {
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
     }
+
+    /**
+     * @param $date
+     * @return string
+     */
+    public function getDobAttribute($date)
+    {
+        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+    }
+
+    /**
+     * @param $date
+     * @return string
+     */
+    public function getPolicyStartDateAttribute($date) {
+        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+    }
+
+    /**
+     * @param $date
+     * @return string
+     */
+    public function getPolicyIssuanceDateAttribute($date) {
+        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+    }
+
+    /**
+     * @param $date
+     * @return string
+     */
+    public function getPreviousPolicyExpiryDateAttribute($date) {
+        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function nationality()
+    {
+        return $this->belongsTo(Nationality::class);
+    }
+
 
     /**
      * get data by personal quote type
