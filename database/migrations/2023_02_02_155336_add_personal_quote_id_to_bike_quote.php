@@ -16,6 +16,7 @@ class AddPersonalQuoteIdToBikeQuote extends Migration
         Schema::table('bike_quote_request', function (Blueprint $table) {
             if (! Schema::hasColumn('bike_quote_request', 'personal_quote_id') && Schema::hasTable('personal_quotes')) {
                 $table->unsignedBigInteger('personal_quote_id')->nullable();
+                $table->foreign('personal_quote_id')->references('id')->on('personal_quotes');
             }
         });
     }
@@ -29,6 +30,7 @@ class AddPersonalQuoteIdToBikeQuote extends Migration
     {
         Schema::table('bike_quote_request', function (Blueprint $table) {
             if(Schema::hasColumn('bike_quote_request', 'personal_quote_id')) {
+                $table->dropForeign('bike_quote_request_personal_quote_id_foreign');
                 $table->dropColumn('personal_quote_id');
             }
         });
