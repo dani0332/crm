@@ -47,12 +47,12 @@
             // validation before form submit usually for date fields
             $('#searchGenericSubmit').on('click', function(e) {
                 e.preventDefault();
-                if ($('#assigned_to_date_start').val() != '' && $('#assigned_to_date_end').val() == '') {
+                if ($('#advisor_assigned_date').val() != '' && $('#advisor_assigned_date_end').val() == '') {
                     $('#assigned_to_date_end').next().html('Please select assigned to end date');
                     return false;
                 }
-                if ($('#assigned_to_date_start').val() == '' && $('#assigned_to_date_end').val() != '') {
-                    $('#assigned_to_date_start').next().html('Please select assigned start date');
+                if ($('#advisor_assigned_date').val() == '' && $('#advisor_assigned_date_end').val() != '') {
+                    $('#advisor_assigned_date').next().html('Please select assigned start date');
                     return false;
                 }
                 if ($('#renewal_expiry_date').val() == '' && $('#renewal_expiry_date_end').val() != '') {
@@ -219,9 +219,7 @@
                             d['previous_policy_expiry_date_end'] = $('#previous_policy_expiry_date_end')
                                 .val();
                         }
-                        if (model.properties['next_followup_date'] && model.properties[
-                                'next_followup_date'].indexOf(
-                                'range') > -1) {
+                        if (model.properties['next_followup_date'] && model.properties['next_followup_date'].indexOf('range') > -1) {
                             d['next_followup_date_end'] = $('#next_followup_date_end').val();
                         }
                     }
