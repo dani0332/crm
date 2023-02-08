@@ -148,7 +148,6 @@ class TransAppService extends BaseService
     public function sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
-        $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
 
         $emailData = (object) [
             'customerFirstName' => $customer->first_name,
@@ -156,9 +155,8 @@ class TransAppService extends BaseService
             'customerEmail' => $customer->email,
             'inviteCode' => $WEGenerateInviteCodeResponse,
         ];
-        info('sendWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
 
-        $getStatusCode = $this->sendEmailCustomerService->sendMyAlfredWelcomeEmail($emailTemplateId, $emailData, $tag);
+        $getStatusCode = $this->sendEmailCustomerService->sendMyAlfredWelcomeEmail($emailData, $tag);
 
         if ($getStatusCode == 200) {
             info('sendWelcomeEmail MyAlfred welcome email sent to customer '.$customer->email);

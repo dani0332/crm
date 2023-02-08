@@ -270,11 +270,13 @@ class SendEmailCustomerService extends BaseService
         return $emailSubject;
     }
 
-    public function sendMyAlfredWelcomeEmail($emailTemplateId, $emailData, $tag)
+    public function sendMyAlfredWelcomeEmail($emailData, $tag)
     {
         try {
             $appEnv = config('constants.APP_ENV');
-
+            //Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler
+            $emailTemplateId = (int) config('constants.MA_POSTMARK_TEMPLATE');
+            info('sendWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
             $headers = [
@@ -285,8 +287,8 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $body = json_encode([
-                'From' => 'Alfred <alfred@notify.instacover.ae>',
-                'ReplyTo' => 'support@myalfred.com',
+                'From' => config('constants.MA_FROM_EMAIL'),
+                'ReplyTo' => config('constants.MAIL_MYALFRED_SUPPORT_REPLY_TO'),
                 'To' => $emailData->customerEmail,
                 'Tag' => $tag,
                 'TemplateId' => $emailTemplateId,
@@ -297,9 +299,9 @@ class SendEmailCustomerService extends BaseService
                         'inviteCode'=> isset($emailData->inviteCode) ? $emailData->inviteCode : null,
                         'email'=> $emailData->customerEmail,
                     ],
-                    'subject' => 'Invitation to myAlfred | InsuranceMarket.ae!',
+                    'subject' => config('constants.MA_WELCOME_SUBJECT'),
                 ],
-                'MessageStream' => 'myalfred-invite-transact',
+                'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
             ], JSON_UNESCAPED_SLASHES);
 
             $client = new \GuzzleHttp\Client();
