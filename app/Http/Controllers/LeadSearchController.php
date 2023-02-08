@@ -58,16 +58,6 @@ class LeadSearchController extends Controller
         return view('leadsearch.view', compact('leadType', 'isManager', 'managerRole'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-        dd('test');
-    }
 
     /**
      * Store a newly created resource in storage.
