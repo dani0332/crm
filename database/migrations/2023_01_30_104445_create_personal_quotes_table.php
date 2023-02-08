@@ -20,13 +20,13 @@ class CreatePersonalQuotesTable extends Migration
                 $table->unsignedBigInteger('personal_quote_type_id')->nullable(false);
                 $table->foreign('personal_quote_type_id')->references('id')->on('personal_quote_types');
 
-                $table->string('uuid', 100)->unique()->nullable(false);
+                $table->string('uuid', 50)->unique()->nullable(false);
                 $table->string('code', 50)->nullable(false);
                 $table->string('first_name', 255)->nullable();
                 $table->string('last_name', 255)->nullable();
                 $table->date('dob')->nullable();
-                $table->unsignedBigInteger('nationality_id')->nullable();
-                $table->foreign('nationality_id')->references('id')->on('personal_quote_types');
+                $table->integer('nationality_id')->nullable();
+                $table->foreign('nationality_id')->references('id')->on('nationality');
 
                 $table->string('email', 100)->nullable();
                 $table->string('mobile_no', 20)->nullable();
