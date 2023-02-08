@@ -53,4 +53,25 @@ class Payment extends Model
     {
         return (! empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
+
+    /**
+     * Prepare a date for array / JSON serialization.
+     *
+     * @param  \DateTimeInterface  $date
+     * @return string
+     */
+    protected function serializeDate(\DateTimeInterface $date)
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    public function healthPlan()
+    {
+        return $this->belongsTo('App\Models\HealthPlan', 'plan_id');
+    }
+
+    public function paymentStatusLog()
+    {
+        return $this->hasOne('App\Models\PaymentStatusLog', 'payment_code', 'code')->latest();
+    }
 }
