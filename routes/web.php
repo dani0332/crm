@@ -53,6 +53,7 @@ use App\Http\Controllers\TmLeadController;
 use App\Http\Controllers\TmLeadStatusController;
 use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TravelController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
@@ -239,6 +240,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-car-pdf', [CRUDController::class, 'exportCarPdf'])->name('exportCarPdf');
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
+
+        Route::resource('travel', TravelController::class)->only([
+            'index'
+        ]);
     });
 
     Route::group(['prefix' => 'generic'], function () {

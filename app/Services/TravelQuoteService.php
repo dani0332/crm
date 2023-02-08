@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Models\GenericModel;
 
 class TravelQuoteService extends BaseService
 {
@@ -834,5 +835,14 @@ class TravelQuoteService extends BaseService
         }
 
         return 'true';
+    }
+
+    public function getDropdownSource($quoteTypeId)
+    {
+        $dropdownSource = ['leads' => 'quote_status_id', 'payment_status' => 'payment_status_id', 'advisors' => 'advisor_id'];
+        foreach ($dropdownSource as $key => $value) {
+            $dropdownSource[$key] = (new DropdownSourceService())->getDropdownSource($value, $quoteTypeId)->toArray();
+        }
+        return $dropdownSource;
     }
 }
