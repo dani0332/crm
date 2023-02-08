@@ -16,6 +16,20 @@ $theme = $component->getTheme();
         </span>
     </button>
     <ul x-show="show" style="display: none" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-56 rounded-md p-1.5 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm divide-y" tabindex="-1" role="listbox" aria-labelledby="listbox-label" aria-activedescendant="listbox-option-3">
+        @if($filter->hasConfig('placeholder'))
+        <li>
+            <input
+                type="checkbox"
+                id="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-select-all"
+                wire:input="selectAllFilterOptions('{{ $filter->getKey() }}')"
+                {{ count($component->getAppliedFilterWithValue($filter->getKey()) ?? []) === count($filter->getOptions()) ? 'checked' : ''}}
+
+                class="text-indigo-600 mb-1 rounded border-gray-300 shadow-sm transition duration-150 ease-in-out focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-wait"
+            >
+            <label for="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-select-all" class="dark:text-white">Select All</label>
+        </li>
+        
+        @endif
         @foreach($filter->getOptions() as $key => $value)
         <li wire:key="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-multiselect-{{ $key }}" class="flex gap-1.5 py-1.5">
             <input type="checkbox" id="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" value="{{ $key }}" wire:key="{{ $component->getTableName() }}-filter-{{ $filter->getKey() }}-{{ $loop->index }}" wire:model.lazy="{{ $component->getTableName() }}.filters.{{ $filter->getKey() }}" @if($filter->hasConfig('max'))
