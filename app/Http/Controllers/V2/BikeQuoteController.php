@@ -59,10 +59,19 @@ class BikeQuoteController extends Controller
 
         $bikeQuote = BikeQuoteRepository::getBy('uuid', $uuid);
 
+
         return inertia('BikeQuote/Form', array_merge($data, [
             'bikeQuote' => $bikeQuote
             ])
         );
+    }
+
+    public function show($uuid)
+    {
+        $bikeQuote = BikeQuoteRepository::getBy('uuid', $uuid);
+        return inertia('BikeQuote/Show', [
+            'bikeQuote' => $bikeQuote
+        ]);
     }
 
     /**
