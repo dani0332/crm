@@ -33,7 +33,7 @@ const quoteForm = useForm({
     bike_company_to_insure: null,
     asset_value: null,
     currently_insured_with_id: null,
-    year_of_manufacture_id: null,
+    year_of_manufacture: null,
 });
 
 const rules = {
@@ -182,12 +182,12 @@ function onSubmit(isValid) {
                 />
 
                 <x-select
-                    v-model="quoteForm.year_of_manufacture_id"
+                    v-model="quoteForm.year_of_manufacture"
                     label="UAE licence held for"
                     :rules="[rules.isRequired]"
                     :options="
                         yearOfManufacture.map(item => ({
-                          value: item.id,
+                          value: item.text,
                           label: item.text,
                         }))
                     "

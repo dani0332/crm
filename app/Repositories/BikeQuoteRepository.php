@@ -3,14 +3,38 @@
 namespace App\Repositories;
 
 use App\Enums\PersonalQuoteTypes;
+use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 class BikeQuoteRepository extends BaseRepository
 {
     public function model() {
         return PersonalQuote::class;
+    }
+
+    public function buildData($data)
+    {
+        return [
+            "personalQuoteTypeId"=> 1,
+            "nationalityId"=> $data['nationality_id'],
+            "mobileNo"=> $data['mobile_no'],
+            "email"=> $data['email'],
+            "firstName"=> $data['first_name'],
+            "lastName"=> $data['last_name'],
+            "dob"=> $data['dob'],
+            "bikeCompanyToInsure"=> $data['bike_company_to_insure'],
+            "assetValue"=> $data['asset_value'],
+            "currentlyInsuredWithId"=> $data['currently_insured_with_id'],
+            "uaeLicenseHeldForId"=> $data['uae_license_held_for_id'],
+            "yearOfManufacture"=> $data['year_of_manufacture'],
+            "lang"=> "EN",
+            "device"=> request()->userAgent(),
+            "source"=> config('constants.SOURCE_NAME'),
+            "referenceUrl"=> URL::current(),
+        ];
     }
 
     /**
@@ -21,10 +45,8 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchCreate($data)
     {
-        //todo: send call to capi when API will be available
-        $data['personal_quote_type_id'] = PersonalQuoteTypeRepository::getByCode(PersonalQuoteTypes::BIKE)->id;
-        $data['uuid'] = Str::orderedUuid();
-        return  $this->create(Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'personal_quote_type_id', 'uuid']));
+        $data = $this->buildData($data);
+        return Capi::request('/api/v1-save-personal-quote', 'post', $data);
     }
 
     /**

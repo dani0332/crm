@@ -33,7 +33,7 @@ class PersonalQuoteRequest extends FormRequest
             'uae_license_held_for_id' => 'required',
             'bike_company_to_insure' => 'required',
             'asset_value' => 'required|numeric',
-            'year_of_manufacture_id' => 'required',
+            'year_of_manufacture' => 'required',
             'currently_insured_with_id' => 'required'
         ];
     }

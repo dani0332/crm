@@ -481,7 +481,7 @@ __webpack_require__.r(__webpack_exports__);
       bike_company_to_insure: null,
       asset_value: null,
       currently_insured_with_id: null,
-      year_of_manufacture_id: null
+      year_of_manufacture: null
     });
     var rules = {
       isEmail: function isEmail(v) {
@@ -4238,15 +4238,15 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, null, 8
       /* PROPS */
       , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
-        modelValue: $setup.quoteForm.year_of_manufacture_id,
+        modelValue: $setup.quoteForm.year_of_manufacture,
         "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
-          return $setup.quoteForm.year_of_manufacture_id = $event;
+          return $setup.quoteForm.year_of_manufacture = $event;
         }),
         label: "UAE licence held for",
         rules: [$setup.rules.isRequired],
         options: $props.yearOfManufacture.map(function (item) {
           return {
-            value: item.id,
+            value: item.text,
             label: item.text
           };
         }),
