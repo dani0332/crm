@@ -46,7 +46,7 @@ class ApiService
 
     private function generateSignupUrl($customer)
     {
-        $WEGenerateUrlResponse = CustomerWEGenerateUrlService::getCustomerWeUrl();
+        $WEGenerateUrlResponse = BerlinService::getCustomerWeUrl();
         if (gettype($WEGenerateUrlResponse) == 'string') {
             Customer::where('id', $customer->id)->update(['is_we_sent' => true]);
 

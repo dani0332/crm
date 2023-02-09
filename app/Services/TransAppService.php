@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\helpers\LookUpModelHelper;
+use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\CarQuotePolicy;
@@ -18,27 +20,29 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use LookUpModel;
 
 class TransAppService extends BaseService
 {
     protected $sendEmailCustomerService;
     protected $sendSmsCustomerService;
     protected $applicationStorageService;
+    protected $berlinService;
 
     public function __construct(
         SendEmailCustomerService $sendEmailCustomerService,
         SendSmsCustomerService $sendSmsCustomerService,
         ApplicationStorageService $applicationStorageService,
+        BerlinService $berlinService,
     ) {
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->sendSmsCustomerService = $sendSmsCustomerService;
         $this->applicationStorageService = $applicationStorageService;
+        $this->berlinService = $berlinService;
     }
 
     public function createTransaction(Request $request)
     {
-        $WEGenerateInviteCodeResponse = CustomerWEGenerateInviteCodeService::getCustomerInviteCode();
+        $WEGenerateInviteCodeResponse = $this->berlinService->getCustomerInviteCode();
 
         if (gettype($WEGenerateInviteCodeResponse) == 'string') {
             $existingCustomer = CustomerService::getCustomerByEmail($request->email);
@@ -74,7 +78,7 @@ class TransAppService extends BaseService
 
                     info('responseExtend: '.$responseExtend);
                     if ($responseExtend == 200) { // Send email/sms if customer not signup
-                        $this->sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, 'transapp-myalfred-we');
+                        $this->sendWelcomeEmail($customerId, 'transapp-myalfred-we');
                         $this->smsInitiator($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $transaction->id);
                     }
 
@@ -99,7 +103,7 @@ class TransAppService extends BaseService
             if ($request->has('car_quote_id')) {
                 $carQuoteObj = CarQuote::where('id', $request->input('car_quote_id'))->first();
                 if ($carQuoteObj) {
-                    $carQuoteObj->quote_status_id = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']); // Transaction Approved
+                    $carQuoteObj->quote_status_id = LookUpModelHelper::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']); // Transaction Approved
                     $carQuoteObj->pa_id = null;
                     if ($carQuoteObj->save()) {
                         $newPayment = new CarQuotePaymentHistory();
@@ -119,7 +123,7 @@ class TransAppService extends BaseService
             $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
 
             if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $isCustomerExisting) {
-                $this->sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, 'transapp-myalfred-we');
+                $this->sendWelcomeEmail($customerId, 'transapp-myalfred-we');
                 // Send SMS to customer
                 $this->smsInitiator($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $transaction->id);
             }
@@ -145,36 +149,11 @@ class TransAppService extends BaseService
         }
     }
 
-    public function sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, $tag)
+    public function sendWelcomeEmail($customerId, $tag)
     {
         $customer = CustomerService::getCustomerById($customerId);
 
-        $emailData = (object) [
-            'customerFirstName' => $customer->first_name,
-            'customerLastName' => $customer->last_name,
-            'customerEmail' => $customer->email,
-            'inviteCode' => $WEGenerateInviteCodeResponse,
-        ];
-
-        $getStatusCode = $this->sendEmailCustomerService->sendMyAlfredWelcomeEmail($emailData, $tag);
-
-        if ($getStatusCode == 200) {
-            info('sendWelcomeEmail MyAlfred welcome email sent to customer '.$customer->email);
-            $customer->is_we_sent = true;
-            $customer->save();
-
-            $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
-            if (! $isCustomerExisting) {
-                $newMyAlFredUser = new MyAlFredUser;
-                $newMyAlFredUser->signup_url = null;
-                $newMyAlFredUser->customer_id = $customerId;
-                $newMyAlFredUser->code = $WEGenerateInviteCodeResponse;
-                $newMyAlFredUser->source = 'TRANSAPP';
-                $newMyAlFredUser->save();
-            }
-        } else {
-            info('MyAlfred welcome email not sent to customer '.$customer->email.' getStatusCode: '.$getStatusCode);
-        }
+        dispatch(new MAWelcomeJob($customer->email, $customer->first_name, $customer->last_name, 'TRANSAPP', $tag));
     }
 
     public function sendWelcomeSms($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $recordId)

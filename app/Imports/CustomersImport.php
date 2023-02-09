@@ -2,7 +2,7 @@
 
 namespace App\Imports;
 
-use App\Jobs\ProcessSIBCustomerMail;
+use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
 use App\Services\CustomerService;
@@ -78,7 +78,7 @@ class CustomersImport implements OnEachRow, WithStartRow
             $customerModel = Customer::find($customerId);
             if ($this->inviatationEmail == 'on') {
                 if ($customerModel->is_we_sent == 0) {
-                    dispatch(new ProcessSIBCustomerMail($email, $firstName, $this->sendEmailCustomerService));
+                    dispatch(new MAWelcomeJob($email, $firstName, $lastName, 'CORPORTATE', 'corporate-myalfred-we'));
                 }
             }
 
