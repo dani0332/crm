@@ -270,12 +270,17 @@ class SendEmailCustomerService extends BaseService
         return $emailSubject;
     }
 
-    public function sendMyAlfredWelcomeEmail($emailData, $tag)
+    public function sendMyAlfredWelcomeEmail($emailData, $tag, $source = '')
     {
         try {
             $appEnv = config('constants.APP_ENV');
             //Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler
-            $emailTemplateId = (int) config('constants.MA_POSTMARK_TEMPLATE');
+            if ($source == 'CORPORATE') {
+                $emailTemplateId = (int) config('constants.MA_POSTMARK_CORPORATE_TEMPLATE');
+            } else {
+                $emailTemplateId = (int) config('constants.MA_POSTMARK_TEMPLATE');
+            }
+
             info('sendWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 

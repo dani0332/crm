@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\helpers\LookUpModelHelper;
+use App\Jobs\MAWelcomeJob;
 use App\Models\CarQuote;
 use App\Models\CarQuotePaymentHistory;
 use App\Models\CarQuotePolicy;
@@ -18,166 +20,129 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use LookUpModel;
 
 class TransAppService extends BaseService
 {
     protected $sendEmailCustomerService;
     protected $sendSmsCustomerService;
     protected $applicationStorageService;
+    protected $berlinService;
 
     public function __construct(
         SendEmailCustomerService $sendEmailCustomerService,
         SendSmsCustomerService $sendSmsCustomerService,
         ApplicationStorageService $applicationStorageService,
+        BerlinService $berlinService,
     ) {
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->sendSmsCustomerService = $sendSmsCustomerService;
         $this->applicationStorageService = $applicationStorageService;
+        $this->berlinService = $berlinService;
     }
 
     public function createTransaction(Request $request)
     {
-        $WEGenerateInviteCodeResponse = CustomerWEGenerateInviteCodeService::getCustomerInviteCode();
+        $existingCustomer = CustomerService::getCustomerByEmail($request->email);
+        $sendWelcomeEmail = ($existingCustomer && ! $existingCustomer->is_we_sent) || ! $existingCustomer ? true : false;
+        $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
+        $statusId = DB::table('statuses')->where('name', 'Active')->value('id');
 
-        if (gettype($WEGenerateInviteCodeResponse) == 'string') {
-            $existingCustomer = CustomerService::getCustomerByEmail($request->email);
-            $sendWelcomeEmail = ($existingCustomer && ! $existingCustomer->is_we_sent) || ! $existingCustomer ? true : false;
-            $customerId = CustomerService::getCustomerIdAndCreateIfNotExists($request->first_name, $request->last_name, $request->email);
-            $statusId = DB::table('statuses')->where('name', 'Active')->value('id');
+        $transaction = new Transaction;
+        $transaction->insurance_company_id = $request->insurance_company;
+        $transaction->customer_id = $customerId;
+        $transaction->assigned_to_id = $request->assigned_to_id;
+        $transaction->created_by_id = Auth::user()->id;
+        $transaction->modified_by_id = Auth::user()->id;
+        $transaction->payment_mode_id = $request->paymentmode;
+        $transaction->risk_details = $request->risk_detail;
+        $transaction->amount_paid = $request->amount_paid;
+        $transaction->status_id = $statusId;
+        $transaction->save();
+        $approvalCode = generate_code('T').$transaction->id;
+        Transaction::where('id', $transaction->id)->update(['approval_code' => $approvalCode]);
+        CustomerService::setCustomerAccess($customerId);
 
-            $transaction = new Transaction;
-            $transaction->insurance_company_id = $request->insurance_company;
-            $transaction->customer_id = $customerId;
-            $transaction->assigned_to_id = $request->assigned_to_id;
-            $transaction->created_by_id = Auth::user()->id;
-            $transaction->modified_by_id = Auth::user()->id;
-            $transaction->payment_mode_id = $request->paymentmode;
-            $transaction->risk_details = $request->risk_detail;
-            $transaction->amount_paid = $request->amount_paid;
-            $transaction->status_id = $statusId;
-            $transaction->save();
-            $approvalCode = generate_code('T').$transaction->id;
-            Transaction::where('id', $transaction->id)->update(['approval_code' => $approvalCode]);
-            CustomerService::setCustomerAccess($customerId);
+        $expiryDate = Carbon::now()->addMonths(12);
+        $customer = CustomerService::getCustomerById($customerId);
+        $customerEmail = $customer->email;
+        $customerMobile = $customer->mobile_no;
+        $customer->myalfred_expiry_date = $expiryDate;
+        $customer->save();
 
-            $expiryDate = Carbon::now()->addMonths(12);
-            $customer = CustomerService::getCustomerById($customerId);
-            $customerEmail = $customer->email;
-            $customerMobile = $customer->mobile_no;
-            $customer->myalfred_expiry_date = $expiryDate;
-            $customer->save();
+        if ($existingCustomer) { // Existing customer
+            if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
+                $responseExtend = $this->berlinService->extendCustomerSubscription($customerId);
 
-            if ($existingCustomer) { // Existing customer
-                if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
-                    $responseExtend = CustomerExtendSubscriptionService::extendCustomerSubscription($customerId);
+                if ($responseExtend == 200) { // Send email/sms if customer not signup
+                    dispatch(new MAWelcomeJob($customer->email, $customer->first_name, $customer->last_name, 'TRANSAPP', 'transapp-myalfred-we'));
+                    $this->smsInitiator($customerMobile, $customerEmail, $transaction->id);
+                }
 
-                    info('responseExtend: '.$responseExtend);
-                    if ($responseExtend == 200) { // Send email/sms if customer not signup
-                        $this->sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, 'transapp-myalfred-we');
-                        $this->smsInitiator($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $transaction->id);
-                    }
+                $responseContact = SIBService::contactCreateUpdate(config('constants.SIB_MYALFRED_CONTACTS_LIST_ID'), $request->first_name, $request->last_name, $request->email, $WEGenerateInviteCodeResponse);
 
-                    $responseContact = SIBService::contactCreateUpdate(config('constants.SIB_MYALFRED_CONTACTS_LIST_ID'), $request->first_name, $request->last_name, $request->email, $WEGenerateInviteCodeResponse);
-
-                    if ($responseContact != 201 && $responseContact != 204) {
-                        $message = 'myAlfred signup link to issued policy cases (SIB API)<br>
+                if ($responseContact != 201 && $responseContact != 204) {
+                    $message = 'myAlfred signup link to issued policy cases (SIB API)<br>
                         Customer Email: '.$request->email;
-                        Log::info($message);
-                    }
+                    Log::info($message);
+                }
 
-                    if ($responseExtend != 201) {
-                        $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at', 'asc')->first();
-                        $message = 'Customer trying to extend subscription but not exist in myAflred<br>
+                if ($responseExtend != 201) {
+                    $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at', 'asc')->first();
+                    $message = 'Customer trying to extend subscription but not exist in myAflred<br>
                         Customer Email: '.$request->email.'<br>
                         Token: '.$customerToken;
-                        Log::info($message);
-                    }
+                    Log::info($message);
                 }
             }
-
-            if ($request->has('car_quote_id')) {
-                $carQuoteObj = CarQuote::where('id', $request->input('car_quote_id'))->first();
-                if ($carQuoteObj) {
-                    $carQuoteObj->quote_status_id = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']); // Transaction Approved
-                    $carQuoteObj->pa_id = null;
-                    if ($carQuoteObj->save()) {
-                        $newPayment = new CarQuotePaymentHistory();
-                        $newPayment->status = 'Transaction Approved';
-                        $newPayment->notes = $approvalCode;
-                        $newPayment->car_quote_id = $request->input('car_quote_id');
-                        $newPayment->save();
-
-                        $createPolicy = new CarQuotePolicy();
-                        $createPolicy->car_quote_id = $request->input('car_quote_id');
-                        $createPolicy->transactions_id = $transaction->id;
-                        $createPolicy->save();
-                    }
-                }
-            }
-
-            $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
-
-            if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $isCustomerExisting) {
-                $this->sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, 'transapp-myalfred-we');
-                // Send SMS to customer
-                $this->smsInitiator($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $transaction->id);
-            }
-
-            return $approvalCode;
-        } else {
-            return $WEGenerateInviteCodeResponse;
         }
+
+        if ($request->has('car_quote_id')) {
+            $carQuoteObj = CarQuote::where('id', $request->input('car_quote_id'))->first();
+            if ($carQuoteObj) {
+                $carQuoteObj->quote_status_id = LookUpModelHelper::getLookModel('QuoteStatus', ['code', '=', 'transaction_approved']); // Transaction Approved
+                $carQuoteObj->pa_id = null;
+                if ($carQuoteObj->save()) {
+                    $newPayment = new CarQuotePaymentHistory();
+                    $newPayment->status = 'Transaction Approved';
+                    $newPayment->notes = $approvalCode;
+                    $newPayment->car_quote_id = $request->input('car_quote_id');
+                    $newPayment->save();
+
+                    $createPolicy = new CarQuotePolicy();
+                    $createPolicy->car_quote_id = $request->input('car_quote_id');
+                    $createPolicy->transactions_id = $transaction->id;
+                    $createPolicy->save();
+                }
+            }
+        }
+
+        $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
+
+        if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $isCustomerExisting) {
+            dispatch(new MAWelcomeJob($customer->email, $customer->first_name, $customer->last_name, 'TRANSAPP', 'transapp-myalfred-we'));
+            // Send SMS to customer
+            $this->smsInitiator($customerMobile, $customerEmail, $transaction->id);
+        }
+
+        return $approvalCode;
     }
 
-    public function smsInitiator($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $transactionId)
+    public function smsInitiator($customerMobile, $customerEmail, $transactionId)
     {
         $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
         if ($customerMobile != null) {
             if ($isSmsTestingEnabled == 0) {
-                $this->sendWelcomeSms($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $transactionId);
+                $this->sendWelcomeSms($customerMobile, $customerEmail, $transactionId);
             } else {
                 $isAfiaTester = $this->isAfiaEmail($customerEmail);
                 if ($isAfiaTester) {
-                    $this->sendWelcomeSms($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $transactionId);
+                    $this->sendWelcomeSms($customerMobile, $customerEmail, $transactionId);
                 }
             }
         }
     }
 
-    public function sendWelcomeEmail($customerId, $WEGenerateInviteCodeResponse, $tag)
-    {
-        $customer = CustomerService::getCustomerById($customerId);
-
-        $emailData = (object) [
-            'customerFirstName' => $customer->first_name,
-            'customerLastName' => $customer->last_name,
-            'customerEmail' => $customer->email,
-            'inviteCode' => $WEGenerateInviteCodeResponse,
-        ];
-
-        $getStatusCode = $this->sendEmailCustomerService->sendMyAlfredWelcomeEmail($emailData, $tag);
-
-        if ($getStatusCode == 200) {
-            info('sendWelcomeEmail MyAlfred welcome email sent to customer '.$customer->email);
-            $customer->is_we_sent = true;
-            $customer->save();
-
-            $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
-            if (! $isCustomerExisting) {
-                $newMyAlFredUser = new MyAlFredUser;
-                $newMyAlFredUser->signup_url = null;
-                $newMyAlFredUser->customer_id = $customerId;
-                $newMyAlFredUser->code = $WEGenerateInviteCodeResponse;
-                $newMyAlFredUser->source = 'TRANSAPP';
-                $newMyAlFredUser->save();
-            }
-        } else {
-            info('MyAlfred welcome email not sent to customer '.$customer->email.' getStatusCode: '.$getStatusCode);
-        }
-    }
-
-    public function sendWelcomeSms($customerMobile, $WEGenerateInviteCodeResponse, $customerEmail, $recordId)
+    public function sendWelcomeSms($customerMobile, $customerEmail, $recordId)
     {
         $customerMobile = str_replace([' ', '-'], '', $customerMobile);
         if (preg_match('/^(?:971|00971|\+971|0)?(?:50|51|52|54|55|56|58)\d{7}$/', $customerMobile)) {
@@ -187,6 +152,7 @@ class TransAppService extends BaseService
         }
 
         if ($mobileNumber != null) {
+            $WEGenerateInviteCodeResponse = $this->berlinService->getCustomerInviteCode();
             $smsMessage = 'Welcome to the InsuranceMarket.ae family! Avail offers from over 100 brands on the myAlfred app. Download the app and use code '.$WEGenerateInviteCodeResponse.' to sign up! optoutMA4741';
             $this->sendSmsCustomerService->sendSms($mobileNumber, $smsMessage, $customerEmail, $recordId);
         } else {
