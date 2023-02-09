@@ -934,6 +934,9 @@ html.dark{
 .mr-1{
   margin-right: 0.25rem;
 }
+.mb-5{
+  margin-bottom: 1.25rem;
+}
 .box-content{
   box-sizing: content-box;
 }
@@ -2307,6 +2310,10 @@ html.dark{
   --tw-text-opacity: 1;
   color: rgb(220 38 38 / var(--tw-text-opacity));
 }
+.text-primary-800{
+  --tw-text-opacity: 1;
+  color: rgb(19 85 122 / var(--tw-text-opacity));
+}
 .text-secondary-600{
   --tw-text-opacity: 1;
   color: rgb(242 89 0 / var(--tw-text-opacity));
@@ -2314,10 +2321,6 @@ html.dark{
 .text-primary-400{
   --tw-text-opacity: 1;
   color: rgb(85 148 196 / var(--tw-text-opacity));
-}
-.text-primary-800{
-  --tw-text-opacity: 1;
-  color: rgb(19 85 122 / var(--tw-text-opacity));
 }
 .text-primary-600{
   --tw-text-opacity: 1;

@@ -23,20 +23,18 @@ class PersonalQuoteRequest extends FormRequest
      */
     public function rules()
     {
-
-
         return [
-            'first_name' => 'required|max:1',
+            'first_name' => 'required',
             'last_name' => 'required',
             'email' => 'required',
             'mobile_no' => 'required',
             'dob'   => 'required',
             'nationality_id' => 'required',
             'uae_license_held_for_id' => 'required',
-            'no_of_items' => 'required|int',
-            'value' => 'required|numeric',
+            'bike_company_to_insure' => 'required',
+            'asset_value' => 'required|numeric',
             'year_of_manufacture_id' => 'required',
-            'insurance_provider_id' => 'required'
+            'currently_insured_with_id' => 'required'
         ];
     }
 }

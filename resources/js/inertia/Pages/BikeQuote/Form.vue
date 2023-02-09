@@ -30,12 +30,10 @@ const quoteForm = useForm({
     dob: props.bikeQuote?.dob || '',
     nationality_id: '',
     uae_license_held_for_id: null,
-    no_of_items: null,
-    value: null,
+    bike_company_to_insure: null,
+    asset_value: null,
     currently_insured_with_id: null,
     year_of_manufacture_id: null,
-    insurance_provider_id: null,
-
 });
 
 const rules = {
@@ -91,7 +89,11 @@ function onSubmit(isValid) {
         </div>
         <x-divider class="my-4" />
         <x-form @submit="onSubmit" :auto-focus="false">
+
+            <x-alert color="error" class="mb-5" v-if="quoteForm.errors.error" >{{quoteForm?.errors?.error}}</x-alert>
+
             <div class="grid sm:grid-cols-2 gap-4">
+
                 <x-input
                     v-model="quoteForm.first_name"
                     type="text"
@@ -164,22 +166,20 @@ function onSubmit(isValid) {
                 />
 
                 <x-input
-                    v-model="quoteForm.no_of_items"
+                    v-model="quoteForm.bike_company_to_insure"
                     type="number"
-                    label="No Of Bikes"
+                    label="Bike(s) to insure"
                     :rules="[rules.isRequired]"
                     class="w-full"
                 />
-
 
                 <x-input
-                    v-model="quoteForm.value"
+                    v-model="quoteForm.asset_value"
                     type="number"
-                    label="Bile Value"
+                    label="BiKe Value"
                     :rules="[rules.isRequired]"
                     class="w-full"
                 />
-
 
                 <x-select
                     v-model="quoteForm.year_of_manufacture_id"
@@ -195,7 +195,7 @@ function onSubmit(isValid) {
                 />
 
                 <x-select
-                    v-model="quoteForm.insurance_provider_id"
+                    v-model="quoteForm.currently_insured_with_id"
                     label="Currently Insured With"
                     :rules="[rules.isRequired]"
                     :options="
@@ -207,8 +207,8 @@ function onSubmit(isValid) {
                     class="w-full"
                 />
 
-
             </div>
+
             <x-divider class="my-4" />
             <div class="flex justify-end gap-3 mb-4">
                 <x-button

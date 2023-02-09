@@ -36,6 +36,6 @@ class CapiService
     {
         $url = $this->baseUrl . $path;
         $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url);
-        return $response->json();
+        return (object) $response->json();
     }
 }

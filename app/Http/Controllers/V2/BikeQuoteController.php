@@ -45,7 +45,12 @@ class BikeQuoteController extends Controller
      */
     public function store(PersonalQuoteRequest $request)
     {
-        BikeQuoteRepository::create($request->validated());
+        $response = BikeQuoteRepository::create($request->validated());
+
+        if(!empty($response->errors)) {
+            vAbort($response->message);
+        }
+
         return back()->with('message' , 'Quote created successfully');
     }
 
@@ -58,7 +63,6 @@ class BikeQuoteController extends Controller
         $data = BikeQuoteRepository::getFormOptions();
 
         $bikeQuote = BikeQuoteRepository::getBy('uuid', $uuid);
-
 
         return inertia('BikeQuote/Form', array_merge($data, [
             'bikeQuote' => $bikeQuote
