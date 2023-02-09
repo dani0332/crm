@@ -527,6 +527,9 @@
                                     ->hasRole(RolesEnum::CarAdvisor)
                             ) {
                                 $searchProperties[] = 'advisor_id';
+                                $searchProperties = array_unique($searchProperties);
+                            }else{
+                                unset( $searchProperties['advisor_id']);
                             }
 
                             $sourcePropertiesArry = $crudService->sortMetaArray($model->properties, 'ss:');
