@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\PersonalQuoteRequest;
+use App\Http\Requests\BikeQuoteRequest;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
@@ -40,10 +40,10 @@ class BikeQuoteController extends Controller
 
     /**
      * @param $quoteTypeCode
-     * @param PersonalQuoteRequest $request
+     * @param BikeQuoteRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(PersonalQuoteRequest $request)
+    public function store(BikeQuoteRequest $request)
     {
         $response = BikeQuoteRepository::create($request->validated());
 
@@ -81,10 +81,10 @@ class BikeQuoteController extends Controller
     /**
      * @param $quoteTypeCode
      * @param $quoteId
-     * @param PersonalQuoteRequest $request
+     * @param BikeQuoteRequest $request
      * @return void
      */
-    public function update($quoteTypeCode, $quoteId, PersonalQuoteRequest $request)
+    public function update($quoteTypeCode, $quoteId, BikeQuoteRequest $request)
     {
         dd($quoteTypeCode, $quoteId, $request->validated());
     }
