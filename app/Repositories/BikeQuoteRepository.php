@@ -6,6 +6,7 @@ use App\Enums\PersonalQuoteTypes;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
@@ -18,7 +19,7 @@ class BikeQuoteRepository extends BaseRepository
     public function buildData($data)
     {
         return [
-            "personalQuoteTypeId" => PersonalQuoteTypes::BIKE->id(),
+            "personalQuoteTypeId" => intval(PersonalQuoteTypes::BIKE->id()),
             "nationalityId" => $data['nationality_id'],
             "mobileNo"  => $data['mobile_no'],
             "email" => $data['email'],
@@ -31,7 +32,7 @@ class BikeQuoteRepository extends BaseRepository
             "uaeLicenseHeldForId"   => $data['uae_license_held_for_id'],
             "yearOfManufacture" => $data['year_of_manufacture'],
             "lang"  => "EN",
-            "device"    => request()->userAgent(),
+            "device"    => "DESKTOP",
             "source"    => config('constants.SOURCE_NAME'),
             "referenceUrl"  => URL::current(),
         ];
@@ -48,6 +49,26 @@ class BikeQuoteRepository extends BaseRepository
         $data = $this->buildData($data);
         return Capi::request('/api/v1-save-personal-quote', 'post', $data);
     }
+
+    /**
+     * @param $uuid
+     * @param $data
+     * @return mixed
+     */
+    public function fetchUpdate($uuid, $data)
+    {
+        return DB::transaction(function() use($uuid, $data)
+        {
+            $quote = $this->byQuoteTypeId(PersonalQuoteTypes::BIKE->id())->where('uuid', $uuid)->firstOrFail();
+
+            $quote->update(Arr::only($data, [
+                'first_name', 'last_name', 'dob', 'nationality_id', 'email', 'mobile_no', 'asset_value', 'currently_insured_with_id'
+            ]));
+
+            return $quote;
+        });
+    }
+
 
     /**
      * get all dropdown options required for form

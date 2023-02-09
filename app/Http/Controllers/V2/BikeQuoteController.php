@@ -47,8 +47,8 @@ class BikeQuoteController extends Controller
     {
         $response = BikeQuoteRepository::create($request->validated());
 
-        if(!empty($response->errors)) {
-            vAbort($response->message);
+        if(!empty($response->errors) || (!empty($response->errorType) && $response->errorType == "ERROR" )) {
+            vAbort($response->msg);
         }
 
         return back()->with('message' , 'Quote created successfully');
@@ -62,10 +62,10 @@ class BikeQuoteController extends Controller
     {
         $data = BikeQuoteRepository::getFormOptions();
 
-        $bikeQuote = BikeQuoteRepository::getBy('uuid', $uuid);
+        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
         return inertia('BikeQuote/Form', array_merge($data, [
-            'bikeQuote' => $bikeQuote
+            'quote' => $quote
             ])
         );
     }
@@ -76,9 +76,10 @@ class BikeQuoteController extends Controller
      */
     public function show($uuid)
     {
-        $bikeQuote = BikeQuoteRepository::getBy('uuid', $uuid);
+        $quote = BikeQuoteRepository::getBy('uuid', $uuid);
+
         return inertia('BikeQuote/Show', [
-            'bikeQuote' => $bikeQuote
+            'quote' => $quote
         ]);
     }
 
@@ -88,8 +89,9 @@ class BikeQuoteController extends Controller
      * @param BikeQuoteRequest $request
      * @return void
      */
-    public function update($quoteTypeCode, $quoteId, BikeQuoteRequest $request)
+    public function update($uuid, BikeQuoteRequest $request)
     {
-        dd($quoteTypeCode, $quoteId, $request->validated());
+        $response = BikeQuoteRepository::update($uuid, $request->validated());
+        return back()->with('message' , 'Quote updated successfully');
     }
 }

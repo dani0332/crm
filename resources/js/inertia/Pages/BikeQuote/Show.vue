@@ -6,7 +6,7 @@ import { useDateFormat, useClipboard } from '@vueuse/core';
 import { useNotifications } from '@indielayer/ui';
 
 defineProps({
-    bikeQuote: Object,
+    quote: Object,
 })
 
 const page = usePage();
