@@ -10,6 +10,22 @@ defineProps({
   dropdownSource: Object,
 });
 
+const rules = {
+  isRequired: v => !!v || 'This field is required',
+  created_at_end: v => {
+    if (filters.created_at) {
+      return !!v || 'This field is required';
+    }
+    return true;
+  },
+  created_at: v => {
+    if (filters.created_at_end) {
+      return !!v || 'This field is required';
+    }
+    return true;
+  },
+};
+
 const selectedItems = ref([]);
 
 const page = usePage();
@@ -20,12 +36,12 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
+  created_at: '',
   created_at_end: '',
-  quote_status: [],
-  advisors: [],
+  quote_status_id: [],
+  advisor_id: [],
   is_ecommerce: '',
-  payment_status: '',
+  payment_status_id: '',
   page: 1,
 });
 
@@ -81,24 +97,37 @@ const leadsStatusOptions = computed(() => {
   });
 });
 
-function filterQuotes() {
-  filters.page = 1;
-
+function filterQuotes(isValid) {
+  if (!isValid) {
+    return;
+  }
   for (const key in filters) {
     if (filters[key] === '') {
       delete filters[key];
     }
   }
+  if (filters.created_at) {
+    filters.created_at = filters.created_at.split('-').reverse().join('-');
+  }
+  if (filters.created_at_end) {
+    filters.created_at_end = filters.created_at_end
+      .split('-')
+      .reverse()
+      .join('-');
+  }
 
   router.visit('/quotes/travel', {
     method: 'get',
-    data: filters,
+    data: {
+      filters,
+    },
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
       loader.table = false;
     },
     onBefore: () => {
+      filters.page = 1;
       loader.table = true;
     },
   });
@@ -117,9 +146,17 @@ function setQueryFilters() {
     query = query.split('&');
     query.forEach(item => {
       const [key, value] = item.split('=');
-      filters[key] = value;
+      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
+        let id = key.slice(0, -2);
+        if (filters[id]) {
+          filters[id].push(parseInt(value));
+        }
+      } else {
+        filters[key] = value;
+      }
     });
   }
+  console.log(filters);
 }
 
 onMounted(() => {
@@ -186,13 +223,15 @@ onMounted(() => {
           placeholder="Search by Mobile Number"
         />
         <x-input
-          v-model="filters.created_at_start"
+          :rules="[rules.created_at_end]"
+          v-model="filters.created_at"
           type="date"
-          name="created_at_start"
+          name="created_at"
           label="Created Date"
           class="w-full"
         />
         <x-input
+          :rules="[rules.created_at]"
           v-model="filters.created_at_end"
           type="date"
           name="created_at_end"
@@ -201,14 +240,14 @@ onMounted(() => {
         />
 
         <ComboBox
-          v-model="filters.quote_status"
+          v-model="filters.quote_status_id"
           label="Lead Status"
-          name="quote_status"
+          name="quote_status_id"
           placeholder="Search by Lead Status"
           :options="leadsStatusOptions"
         />
         <ComboBox
-          v-model="filters.advisors"
+          v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorsOptions"
@@ -218,6 +257,7 @@ onMounted(() => {
           label="Ecommerce"
           placeholder="Search by Ecommerce"
           :options="[
+            { value: '', label: 'All' },
             { value: 'Yes', label: 'Yes' },
             { value: 'No', label: 'No' },
           ]"
@@ -225,7 +265,7 @@ onMounted(() => {
         />
         <x-select
           name="payment_status_id"
-          v-model="filters.payment_status"
+          v-model="filters.payment_status_id"
           label="PAYMENT STATUS"
           placeholder="Search by Payment Status"
           :options="paymentStatusOptions"
