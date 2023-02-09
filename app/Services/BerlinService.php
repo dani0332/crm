@@ -104,6 +104,11 @@ class BerlinService extends BaseService
 
         $customer = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->latest()->first();
 
+        if (! $customer) {
+            Log::error('Berlin Service - extendCustomerSubscription Error: MyAlFredUser not found - Customer ID: '.$customerId);
+
+            return false;
+        }
         $customerDataArr = json_encode([
             'token' => $customer->code,
             'isToken' => $customer->signup_url ? true : false,
