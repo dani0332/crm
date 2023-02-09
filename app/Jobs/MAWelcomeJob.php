@@ -35,9 +35,9 @@ class MAWelcomeJob implements ShouldQueue
 
     public function handle(BerlinService $berlinService, SendEmailCustomerService $sendEmailCustomerService)
     {
-        try {
-            $customerInviteCode = $berlinService->getCustomerInviteCode();
+        $customerInviteCode = $berlinService->getCustomerInviteCode();
 
+        try {
             $emailData = (object) [
                 'customerFirstName' => $this->firstName,
                 'customerLastName' => $this->lastName,
@@ -45,7 +45,7 @@ class MAWelcomeJob implements ShouldQueue
                 'inviteCode' => $customerInviteCode,
             ];
 
-            $statusCode = $sendEmailCustomerService->sendMyAlfredWelcomeEmail($emailData, $this->tag);
+            $statusCode = $sendEmailCustomerService->sendMyAlfredWelcomeEmail($emailData, $this->tag, $this->source);
 
             if ($statusCode == 200) {
                 info('MAWelcomeEmail Job - Email Sent to customer '.$this->email);

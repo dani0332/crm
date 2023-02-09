@@ -78,7 +78,7 @@ class CustomersImport implements OnEachRow, WithStartRow
             $customerModel = Customer::find($customerId);
             if ($this->inviatationEmail == 'on') {
                 if ($customerModel->is_we_sent == 0) {
-                    dispatch(new MAWelcomeJob($email, $firstName, $lastName, 'CORPORTATE', 'corporate-myalfred-we'));
+                    dispatch(new MAWelcomeJob($email, $firstName, $lastName, 'CORPORATE', 'corporate-myalfred-we'));
                 }
             }
 

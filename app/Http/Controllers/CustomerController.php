@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\Nationality;
@@ -120,13 +121,7 @@ class CustomerController extends Controller
         $customer->save();
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            $WEGenerateUrlResponse = $this->berlinService->getCustomerWeUrl();
-
-            if (gettype($WEGenerateUrlResponse) == 'string') {
-                $this->transAppService->sendWelcomeEmail($customer->id, $WEGenerateUrlResponse, $tag = 'customer-myalfred-we');
-            }
-            $customer->is_we_sent = true;
-            $customer->save();
+            dispatch(new MAWelcomeJob($customer->email, $customer->first_name, $customer->last_name, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
         }
 
         return redirect('customer/'.$customer->id)->with('success', 'Customer has been Updated');

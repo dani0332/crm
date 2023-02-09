@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\MyAlFredUser;
 use Illuminate\Support\Facades\Log;
 
 class BerlinService extends BaseService
@@ -92,6 +93,42 @@ class BerlinService extends BaseService
             if (isset($responseErrorCode)) {
                 $apiResponse = $responseErrorCode;
             }
+        }
+
+        return $apiResponse;
+    }
+
+    public function extendCustomerSubscription($customerId)
+    {
+        $this->berlinEndpoint .= '/auth/extend-subscription';
+
+        $customer = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->latest()->first();
+
+        $customerDataArr = json_encode([
+            'token' => $customer->code,
+            'isToken' => isset($customer->signup_url) ? true : false,
+        ]);
+
+        $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
+        $clientExtendSubscription = new \GuzzleHttp\Client();
+
+        try {
+            $requestExtendSubscription = $clientExtendSubscription->post(
+                $this->berlinEndpoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'Authorization' => 'Basic '.$magicUrlGeneratauthBasic,
+                    ],
+                    'body' => $customerDataArr,
+                ]
+            );
+
+            $apiResponse = $requestExtendSubscription->getStatusCode();
+        } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            $apiResponse = $e->getResponse()->getStatusCode();
+            Log::error('Berlin Service - extendCustomerSubscription Error: '.$apiResponse);
         }
 
         return $apiResponse;
