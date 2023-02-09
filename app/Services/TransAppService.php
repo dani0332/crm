@@ -76,9 +76,12 @@ class TransAppService extends BaseService
                 if ($responseExtend == 200) { // Send email/sms if customer not signup
                     dispatch(new MAWelcomeJob($customer->email, $customer->first_name, $customer->last_name, 'TRANSAPP', 'transapp-myalfred-we'));
                     $this->smsInitiator($customerMobile, $customerEmail, $transaction->id);
+                    info('MA Extended Customer Subscription Email & SMS Sent');
+                } else {
+                    info('MA Extended Customer Subscription Email & SMS Not Sent');
                 }
 
-                $responseContact = SIBService::contactCreateUpdate(config('constants.SIB_MYALFRED_CONTACTS_LIST_ID'), $request->first_name, $request->last_name, $request->email, $WEGenerateInviteCodeResponse);
+                $responseContact = SIBService::contactCreateUpdate(config('constants.SIB_MYALFRED_CONTACTS_LIST_ID'), $request->first_name, $request->last_name, $request->email, '');
 
                 if ($responseContact != 201 && $responseContact != 204) {
                     $message = 'myAlfred signup link to issued policy cases (SIB API)<br>

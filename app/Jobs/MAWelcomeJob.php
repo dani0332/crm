@@ -18,6 +18,9 @@ class MAWelcomeJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $tries = 3;
+    public $timeout = 15;
+    public $backoff = 20;
     private $email;
     private $firstName;
     private $lastName;
