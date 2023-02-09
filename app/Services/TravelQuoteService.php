@@ -114,7 +114,7 @@ class TravelQuoteService extends BaseService
             'currentlyLocatedInId' => $request->currently_located_in_id,
             'dob' => $request->dob,
         ];
-        if (! Auth::user()->hasRole('ADMIN') && ! Auth::user()->hasRole('Call Desk')) {
+        if (!Auth::user()->hasRole('ADMIN') && !Auth::user()->hasRole('Call Desk')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
@@ -173,13 +173,13 @@ class TravelQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->orderBy('advisor_id', 'ASC');
-        if (! empty($CDBID)) {
+        if (!empty($CDBID)) {
             $query->where('tqr.id', '=', $CDBID);
         }
-        if (! empty($email)) {
+        if (!empty($email)) {
             $query->where('tqr.email', '=', $email);
         }
-        if (! empty($mobile_no)) {
+        if (!empty($mobile_no)) {
             $query->where('tqr.mobile_no', '=', $mobile_no);
         }
 
@@ -302,105 +302,105 @@ class TravelQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
 
-        if ($request->ajax()) {
-            if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                    empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
-                $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
-            }
-            if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-                $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
-                $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-                $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
-            }
-            if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-                $dateFrom = $this->parseDate($request['created_at'], true);
-                $dateTo = $this->parseDate($request['created_at_end'], true);
-                $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
-            }
-            if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-                $dateFrom = $this->parseDate($request['next_followup_date'], true);
-                $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-                $this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
-            }
+        if (
+            empty($request->email) && empty($request->code) && empty($request->first_name) &&
+            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
+        ) {
+            $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
+        }
+        if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
+            $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
+            $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
+            $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+        }
+        if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
+            $dateFrom = $this->parseDate($request['created_at'], true);
+            $dateTo = $this->parseDate($request['created_at_end'], true);
+            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+        }
+        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
+            $dateFrom = $this->parseDate($request['next_followup_date'], true);
+            $dateTo = $this->parseDate($request['next_followup_date_end'], true);
+            $this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+        }
 
-            if (isset($request->code) && $request->code != '') {
-                $this->query->where('tqr.code', $request->code);
+        if (isset($request->code) && $request->code != '') {
+            $this->query->where('tqr.code', $request->code);
+        }
+        if (isset($request->first_name) && $request->first_name != '') {
+            $this->query->where('tqr.first_name', $request->first_name);
+        }
+        if (isset($request->last_name) && $request->last_name != '') {
+            $this->query->where('tqr.last_name', $request->last_name);
+        }
+        if (isset($request->email) && $request->email != '') {
+            $this->query->where('tqr.email', $request->email);
+        }
+        if (isset($request->mobile_no) && $request->mobile_no != '') {
+            $this->query->where('tqr.mobile_no', $request->mobile_no);
+        }
+        if (isset($request->policy_number) && $request->policy_number != '') {
+            $this->query->where('tqr.policy_number', $request->policy_number);
+        }
+        if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
+            // if user has advisor Role then fetch leads assigned to the user only
+            $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->whereNull('tqr.previous_quote_policy_number');
+        }
+        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+            $this->query->where('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+        }
+        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+            $this->query->where('tqr.renewal_batch', $request->renewal_batch);
+        }
+        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+            $this->query->where('tqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+        }
+        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
+            $this->query->whereBetween('tqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+        }
+        $this->whereBasedOnRole($this->query, 'tqr');
+
+        if (isset($request->is_renewal) && $request->is_renewal != '') {
+            if ($request->is_renewal == quoteTypeCode::yesText) {
+                $this->query->whereNotNull('tqr.previous_quote_policy_number');
             }
-            if (isset($request->first_name) && $request->first_name != '') {
-                $this->query->where('tqr.first_name', $request->first_name);
-            }
-            if (isset($request->last_name) && $request->last_name != '') {
-                $this->query->where('tqr.last_name', $request->last_name);
-            }
-            if (isset($request->email) && $request->email != '') {
-                $this->query->where('tqr.email', $request->email);
-            }
-            if (isset($request->mobile_no) && $request->mobile_no != '') {
-                $this->query->where('tqr.mobile_no', $request->mobile_no);
-            }
-            if (isset($request->policy_number) && $request->policy_number != '') {
-                $this->query->where('tqr.policy_number', $request->policy_number);
-            }
-            if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
-                // if user has advisor Role then fetch leads assigned to the user only
-                $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            if ($request->is_renewal == quoteTypeCode::noText) {
                 $this->query->whereNull('tqr.previous_quote_policy_number');
             }
-            if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-                $this->query->where('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+        }
+        if (isset($request->is_ecommerce) && $request->is_ecommerce != '') {
+            if ($request->is_ecommerce == quoteTypeCode::yesText) {
+                $this->query->where('tqr.is_ecommerce', 1);
             }
-            if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-                $this->query->where('tqr.renewal_batch', $request->renewal_batch);
+            if ($request->is_ecommerce == quoteTypeCode::noText) {
+                $this->query->where('tqr.is_ecommerce', 0);
             }
-            if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-                $this->query->where('tqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-            }
-            if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('tqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-            }
-            $this->whereBasedOnRole($this->query, 'tqr');
-
-            if (isset($request->is_renewal) && $request->is_renewal != '') {
-                if ($request->is_renewal == quoteTypeCode::yesText) {
-                    $this->query->whereNotNull('tqr.previous_quote_policy_number');
-                }
-                if ($request->is_renewal == quoteTypeCode::noText) {
-                    $this->query->whereNull('tqr.previous_quote_policy_number');
-                }
-            }
-            if (isset($request->is_ecommerce) && $request->is_ecommerce != '') {
-                if ($request->is_ecommerce == quoteTypeCode::yesText) {
-                    $this->query->where('tqr.is_ecommerce', 1);
-                }
-                if ($request->is_ecommerce == quoteTypeCode::noText) {
-                    $this->query->where('tqr.is_ecommerce', 0);
-                }
-            }
-            if (Auth::user()->isManagerOrDeputy()) {
-                $this->query->whereNotIn('tqr.id', $this->travelPreviousQuoteIds());
-                $this->query->whereNull('tqr.previous_quote_policy_number');
-            }
-            foreach ($searchProperties as $item) {
-                if (! empty($request[$item]) && $item != 'created_at') {
-                    if ($request[$item] == 'null') {
-                        $this->query->whereNull($item);
-                    } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                        if ($request[$item][0] == 'null') {
-                            $this->query->whereNull('advisor_id');
-                        } else {
-                            $this->query->whereIn('advisor_id', $request[$item]);
-                        }
-                    } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
-                        $this->query->whereIn('quote_status_id', $request[$item]);
+        }
+        if (Auth::user()->isManagerOrDeputy()) {
+            $this->query->whereNotIn('tqr.id', $this->travelPreviousQuoteIds());
+            $this->query->whereNull('tqr.previous_quote_policy_number');
+        }
+        foreach ($searchProperties as $item) {
+            if (!empty($request[$item]) && $item != 'created_at') {
+                if ($request[$item] == 'null') {
+                    $this->query->whereNull($item);
+                } elseif ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    if ($request[$item][0] == 'null') {
+                        $this->query->whereNull('advisor_id');
                     } else {
-                        $skipped = ['is_renewal', 'is_ecommerce', 'previous_policy_expiry_date', 'next_followup_date'];
-                        if (in_array($item, $skipped)) {
-                            continue;
-                        }
-                        $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
+                        $this->query->whereIn('advisor_id', $request[$item]);
                     }
+                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
+                    $this->query->whereIn('quote_status_id', $request[$item]);
+                } else {
+                    $skipped = ['is_renewal', 'is_ecommerce', 'previous_policy_expiry_date', 'next_followup_date'];
+                    if (in_array($item, $skipped)) {
+                        continue;
+                    }
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
@@ -501,7 +501,7 @@ class TravelQuoteService extends BaseService
     {
         $entity = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
         $lostId = 0;
-        if (! is_null($entity) && $entity->lost_reason_id) {
+        if (!is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
 
@@ -511,7 +511,7 @@ class TravelQuoteService extends BaseService
     public function getDetailEntity($id)
     {
         $entity = TravelQuoteRequestDetail::where('travel_quote_request_id', $id)->first();
-        if (! $entity) {
+        if (!$entity) {
             $entity = $this->createDetailEntity($id);
         }
 
@@ -548,7 +548,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('quote/travel/'.$id)->with('success', 'Travel Quote has been updated');
+            return redirect('quote/travel/' . $id)->with('success', 'Travel Quote has been updated');
         }
     }
 
@@ -723,12 +723,12 @@ class TravelQuoteService extends BaseService
     public function getQuotePlans($id)
     {
         $quoteUuId = TravelQuote::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-travel-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-travel-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
         $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
@@ -744,7 +744,7 @@ class TravelQuoteService extends BaseService
                     'headers' => [
                         'Content-Type' => 'application/json', 'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic '.$authBasic,
+                        'Authorization' => 'Basic ' . $authBasic,
                     ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
@@ -796,7 +796,7 @@ class TravelQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);

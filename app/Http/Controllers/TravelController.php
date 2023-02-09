@@ -10,6 +10,7 @@ use App\Enums\quoteTypeCode;
 use Illuminate\Http\Request;
 use Inertia\ResponseFactory;
 use App\Services\TravelQuoteService;
+use Yajra\DataTables\Facades\DataTables;
 
 class TravelController extends Controller
 {
@@ -35,11 +36,13 @@ class TravelController extends Controller
      * @return ResponseFactory|Response
      * @throws RuntimeException
      */
-    public function index()
+    public function index(Request $request)
     {
         $dropdownSource = $this->service->getDropdownSource(self::TYPE_ID);
+        $gridData = $this->service->getGridData($this->genericModel, $request);
+        $quotes = $gridData->simplePaginate(10)->withQueryString();
         return inertia('TravelQuote/Index', [
-            'quotes' => [],
+            'quotes' => $quotes,
             'dropdownSource' => $dropdownSource,
         ]);
     }

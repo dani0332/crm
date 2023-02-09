@@ -6,9 +6,11 @@ import ExportExcel from '@/inertia/Components/ExportExcel.vue';
 import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 defineProps({
-    'quotes': Object,
-    'dropdownSource': Object,
+  quotes: Object,
+  dropdownSource: Object,
 });
+
+const selectedItems = ref([]);
 
 const page = usePage();
 
@@ -27,37 +29,101 @@ const filters = reactive({
   page: 1,
 });
 
-const tableHeader = []
+const loader = reactive({
+  table: false,
+  export: false,
+});
+
+const tableHeader = [
+  { text: 'CDB ID', value: 'code' },
+  { text: 'FIRST NAME', value: 'first_name' },
+  { text: 'LAST NAME', value: 'last_name' },
+  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'CREATED DATE', value: 'created_at' },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  { text: 'TRANSAPP CODE', value: 'transapp_code' },
+  { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'SOURCE', value: 'source' },
+  { text: 'PREMIUM', value: 'premium' },
+  { text: 'POLICY NUMBER', value: 'policy_number' },
+  { text: 'DESTINATION', value: 'destination' },
+  { text: 'CURRENTLY LOCATED IN', value: '' },
+  { text: 'EXPIRY DATE', value: 'expiry_date' },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
+];
 
 const paymentStatusOptions = computed(() => {
-    return page.props.dropdownSource.payment_status.map((item) => {
-        return {
-            value: item.id,
-            label: item.text
-        }
-    });
+  return page.props.dropdownSource.payment_status.map(item => {
+    return {
+      value: item.id,
+      label: item.text,
+    };
+  });
 });
 
 const advisorsOptions = computed(() => {
-    return page.props.dropdownSource.advisors.map((item) => {
-        return {
-            value: item.id,
-            label: item.name
-        }
-    });
+  return page.props.dropdownSource.advisors.map(item => {
+    return {
+      value: item.id,
+      label: item.name,
+    };
+  });
 });
 
 const leadsStatusOptions = computed(() => {
-    return page.props.dropdownSource.leads.map((item) => {
-        return {
-            value: item.id,
-            label: item.text
-        }
-    });
+  return page.props.dropdownSource.leads.map(item => {
+    return {
+      value: item.id,
+      label: item.text,
+    };
+  });
 });
 
+function filterQuotes() {
+  filters.page = 1;
+
+  for (const key in filters) {
+    if (filters[key] === '') {
+      delete filters[key];
+    }
+  }
+
+  router.visit('/quotes/travel', {
+    method: 'get',
+    data: filters,
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => {
+      loader.table = false;
+    },
+    onBefore: () => {
+      loader.table = true;
+    },
+  });
+}
+
+function resetFilters() {
+  for (const key in filters) {
+    filters[key] = '';
+  }
+  filterQuotes();
+}
+
+function setQueryFilters() {
+  let query = router.page.url.split('?')[1];
+  if (query) {
+    query = query.split('&');
+    query.forEach(item => {
+      const [key, value] = item.split('=');
+      filters[key] = value;
+    });
+  }
+}
+
 onMounted(() => {
-    console.log(page.props.dropdownSource);
+  setQueryFilters();
 });
 </script>
 
@@ -77,7 +143,7 @@ onMounted(() => {
       </div>
     </div>
     <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
+    <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-input
           v-model="filters.code"
@@ -168,10 +234,48 @@ onMounted(() => {
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
+        <x-button size="sm" color="primary" @click.prevent="resetFilters">
           Reset
         </x-button>
       </div>
     </x-form>
+
+    <DataTable
+      v-model:items-selected="selectedItems"
+      table-class-name="tablefixed"
+      :loading="loader.table"
+      :headers="tableHeader"
+      :items="quotes.data || []"
+      border-cell
+      hide-rows-per-page
+      hide-footer
+      fixed-checkbox
+    >
+      <template #item-code="{ code, uuid }">
+        <Link
+          :href="`/quotes/travel/${uuid}`"
+          class="text-primary-500 hover:underline"
+        >
+          {{ code }}
+        </Link>
+      </template>
+      <template #item-is_ecommerce="{ is_ecommerce }">
+        <div class="text-center">
+          <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
+            {{ is_ecommerce ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+    </DataTable>
+
+    <Pagination
+      :links="{
+        next: quotes.next_page_url,
+        prev: quotes.prev_page_url,
+        current: quotes.current_page,
+        from: quotes.from,
+        to: quotes.to,
+      }"
+    />
   </div>
 </template>
