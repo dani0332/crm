@@ -106,7 +106,7 @@ class BerlinService extends BaseService
 
         $customerDataArr = json_encode([
             'token' => $customer->code,
-            'isToken' => isset($customer->signup_url) ? true : false,
+            'isToken' => $customer->signup_url ? true : false,
         ]);
 
         $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
@@ -122,6 +122,7 @@ class BerlinService extends BaseService
                         'Authorization' => 'Basic '.$magicUrlGeneratauthBasic,
                     ],
                     'body' => $customerDataArr,
+                    'timeout' => 10,
                 ]
             );
 

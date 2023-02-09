@@ -76,24 +76,18 @@ class TransAppService extends BaseService
                 if ($responseExtend == 200) { // Send email/sms if customer not signup
                     dispatch(new MAWelcomeJob($customer->email, $customer->first_name, $customer->last_name, 'TRANSAPP', 'transapp-myalfred-we'));
                     $this->smsInitiator($customerMobile, $customerEmail, $transaction->id);
-                    info('MA Extended Customer Subscription Email & SMS Sent');
-                } else {
-                    info('MA Extended Customer Subscription Email & SMS Not Sent');
                 }
 
                 $responseContact = SIBService::contactCreateUpdate(config('constants.SIB_MYALFRED_CONTACTS_LIST_ID'), $request->first_name, $request->last_name, $request->email, '');
 
                 if ($responseContact != 201 && $responseContact != 204) {
-                    $message = 'myAlfred signup link to issued policy cases (SIB API)<br>
-                        Customer Email: '.$request->email;
+                    $message = 'myAlfred signup link to issued - Customer Email: '.$request->email;
                     Log::info($message);
                 }
 
                 if ($responseExtend != 201) {
-                    $customerToken = MyAlFredUser::select('code')->where('customer_id', '=', $customerId)->orderBy('created_at', 'asc')->first();
-                    $message = 'Customer trying to extend subscription but not exist in myAflred<br>
-                        Customer Email: '.$request->email.'<br>
-                        Token: '.$customerToken;
+                    $customerToken = MyAlFredUser::select('code')->where('customer_id', $customerId)->orderBy('created_at', 'asc')->first();
+                    $message = 'Customer trying to extend subscription but not exist in myAflred - Customer Email: '.$request->email.' - Token: '.$customerToken;
                     Log::info($message);
                 }
             }
