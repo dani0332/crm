@@ -21,19 +21,18 @@ const props = defineProps({
 
 
 const quoteForm = useForm({
-    modelType: '"Health"',
     model: props.model,
     first_name: props.bikeQuote?.first_name || '',
     last_name: props.bikeQuote?.last_name || '',
     email: props.bikeQuote?.email || '',
     mobile_no: props.bikeQuote?.mobile_no || '',
     dob: props.bikeQuote?.dob || '',
-    nationality_id: '',
-    uae_license_held_for_id: null,
-    bike_company_to_insure: null,
-    asset_value: null,
-    currently_insured_with_id: null,
-    year_of_manufacture: null,
+    nationality_id: props.bikeQuote?.nationality_id || null,
+    uae_license_held_for_id: props.bikeQuote?.nationality_id || null,
+    bike_company_to_insure: props.bikeQuote?.bike_company_to_insure || null,
+    asset_value: props.bikeQuote?.asset_value || null,
+    currently_insured_with_id: props.bikeQuote?.currently_insured_with_id || null,
+    year_of_manufacture: props.bikeQuote?.year_of_manufacture || null,
 });
 
 const rules = {
@@ -78,9 +77,9 @@ function onSubmit(isValid) {
 
 <template>
     <div>
-        <Head title="Create Health" />
+        <Head title="Bike Quote" />
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Create Health</h2>
+            <h2 class="text-xl font-semibold">Bike Quote <span v-if="bikeQuote">{{bikeQuote?.uuid}}</span></h2>
             <div>
                 <Link href="/personal-quotes/bike">
                     <x-button size="sm" color="#ff5e00"> Bike Quotes List </x-button>
@@ -150,6 +149,7 @@ function onSubmit(isValid) {
             }))
           "
                     :hasError="isEmptyField"
+                    :error="quoteForm.errors.nationality_id"
                 />
 
                 <x-select
@@ -163,6 +163,7 @@ function onSubmit(isValid) {
                         }))
                     "
                     class="w-full"
+                    :error="quoteForm.errors.uae_license_held_for_id"
                 />
 
                 <x-input
@@ -171,6 +172,7 @@ function onSubmit(isValid) {
                     label="Bike(s) to insure"
                     :rules="[rules.isRequired]"
                     class="w-full"
+                    :error="quoteForm.errors.bike_company_to_insure"
                 />
 
                 <x-input
@@ -179,6 +181,7 @@ function onSubmit(isValid) {
                     label="BiKe Value"
                     :rules="[rules.isRequired]"
                     class="w-full"
+                    :error="quoteForm.errors.asset_value"
                 />
 
                 <x-select
@@ -192,6 +195,7 @@ function onSubmit(isValid) {
                         }))
                     "
                     class="w-full"
+                    :error="quoteForm.errors.year_of_manufacture"
                 />
 
                 <x-select
@@ -205,6 +209,7 @@ function onSubmit(isValid) {
                         }))
                     "
                     class="w-full"
+                    :error="quoteForm.errors.currently_insured_with_id"
                 />
 
             </div>

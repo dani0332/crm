@@ -26,15 +26,15 @@ class BikeQuoteRequest extends FormRequest
         return [
             'first_name' => 'required',
             'last_name' => 'required',
-            'email' => 'required',
+            'email' => 'required|email:rfc,dns',
             'mobile_no' => 'required',
-            'dob'   => 'required',
-            'nationality_id' => 'required',
-            'uae_license_held_for_id' => 'required',
+            'dob'   => 'required|date_format:Y-m-d|before:today',
+            'nationality_id' => 'required|exists:nationality,id',
+            'uae_license_held_for_id' => 'required|exists:uae_license_held_for,id',
             'bike_company_to_insure' => 'required',
             'asset_value' => 'required|numeric',
             'year_of_manufacture' => 'required',
-            'currently_insured_with_id' => 'required'
+            'currently_insured_with_id' => 'required|exists:insurance_provider,id'
         ];
     }
 }

@@ -907,6 +907,9 @@ html.dark{
 .-mb-2{
   margin-bottom: -0.5rem;
 }
+.mb-5{
+  margin-bottom: 1.25rem;
+}
 .mt-8{
   margin-top: 2rem;
 }
@@ -933,9 +936,6 @@ html.dark{
 }
 .mr-1{
   margin-right: 0.25rem;
-}
-.mb-5{
-  margin-bottom: 1.25rem;
 }
 .box-content{
   box-sizing: content-box;

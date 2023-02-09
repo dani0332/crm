@@ -70,6 +70,10 @@ class BikeQuoteController extends Controller
         );
     }
 
+    /**
+     * @param $uuid
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
     public function show($uuid)
     {
         $bikeQuote = BikeQuoteRepository::getBy('uuid', $uuid);

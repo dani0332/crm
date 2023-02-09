@@ -126,4 +126,14 @@ class PersonalQuote extends Model
         });
     }
 
+    /**
+     * @param $query
+     * @param $quoteTypeId
+     * @return mixed
+     */
+    public function scopeByQuoteTypeId($query, $quoteTypeId)
+    {
+        return $query->where('personal_quote_type_id', $quoteTypeId);
+    }
+
 }

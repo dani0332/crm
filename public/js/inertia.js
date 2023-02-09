@@ -462,26 +462,25 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   setup: function setup(__props, _ref) {
-    var _props$bikeQuote, _props$bikeQuote2, _props$bikeQuote3, _props$bikeQuote4, _props$bikeQuote5;
+    var _props$bikeQuote, _props$bikeQuote2, _props$bikeQuote3, _props$bikeQuote4, _props$bikeQuote5, _props$bikeQuote6, _props$bikeQuote7, _props$bikeQuote8, _props$bikeQuote9, _props$bikeQuote10, _props$bikeQuote11;
 
     var expose = _ref.expose;
     expose();
     var props = __props;
     var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_3__.useNotifications)('toast');
     var quoteForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
-      modelType: '"Health"',
       model: props.model,
       first_name: ((_props$bikeQuote = props.bikeQuote) === null || _props$bikeQuote === void 0 ? void 0 : _props$bikeQuote.first_name) || '',
       last_name: ((_props$bikeQuote2 = props.bikeQuote) === null || _props$bikeQuote2 === void 0 ? void 0 : _props$bikeQuote2.last_name) || '',
       email: ((_props$bikeQuote3 = props.bikeQuote) === null || _props$bikeQuote3 === void 0 ? void 0 : _props$bikeQuote3.email) || '',
       mobile_no: ((_props$bikeQuote4 = props.bikeQuote) === null || _props$bikeQuote4 === void 0 ? void 0 : _props$bikeQuote4.mobile_no) || '',
       dob: ((_props$bikeQuote5 = props.bikeQuote) === null || _props$bikeQuote5 === void 0 ? void 0 : _props$bikeQuote5.dob) || '',
-      nationality_id: '',
-      uae_license_held_for_id: null,
-      bike_company_to_insure: null,
-      asset_value: null,
-      currently_insured_with_id: null,
-      year_of_manufacture: null
+      nationality_id: ((_props$bikeQuote6 = props.bikeQuote) === null || _props$bikeQuote6 === void 0 ? void 0 : _props$bikeQuote6.nationality_id) || null,
+      uae_license_held_for_id: ((_props$bikeQuote7 = props.bikeQuote) === null || _props$bikeQuote7 === void 0 ? void 0 : _props$bikeQuote7.nationality_id) || null,
+      bike_company_to_insure: ((_props$bikeQuote8 = props.bikeQuote) === null || _props$bikeQuote8 === void 0 ? void 0 : _props$bikeQuote8.bike_company_to_insure) || null,
+      asset_value: ((_props$bikeQuote9 = props.bikeQuote) === null || _props$bikeQuote9 === void 0 ? void 0 : _props$bikeQuote9.asset_value) || null,
+      currently_insured_with_id: ((_props$bikeQuote10 = props.bikeQuote) === null || _props$bikeQuote10 === void 0 ? void 0 : _props$bikeQuote10.currently_insured_with_id) || null,
+      year_of_manufacture: ((_props$bikeQuote11 = props.bikeQuote) === null || _props$bikeQuote11 === void 0 ? void 0 : _props$bikeQuote11.year_of_manufacture) || null
     });
     var rules = {
       isEmail: function isEmail(v) {
@@ -4054,20 +4053,21 @@ __webpack_require__.r(__webpack_exports__);
 var _hoisted_1 = {
   "class": "flex justify-between items-center"
 };
-
-var _hoisted_2 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", {
+var _hoisted_2 = {
   "class": "text-xl font-semibold"
-}, "Create Health", -1
-/* HOISTED */
-);
-
+};
 var _hoisted_3 = {
-  "class": "grid sm:grid-cols-2 gap-4"
+  key: 0
 };
 var _hoisted_4 = {
+  "class": "grid sm:grid-cols-2 gap-4"
+};
+var _hoisted_5 = {
   "class": "flex justify-end gap-3 mb-4"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
+  var _$props$bikeQuote;
+
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-button");
 
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-divider");
@@ -4081,8 +4081,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-form");
 
   return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Head"], {
-    title: "Create Health"
-  }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Link"], {
+    title: "Bike Quote"
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_1, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)("Bike Quote "), $props.bikeQuote ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("span", _hoisted_3, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)((_$props$bikeQuote = $props.bikeQuote) === null || _$props$bikeQuote === void 0 ? void 0 : _$props$bikeQuote.uuid), 1
+  /* TEXT */
+  )) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Link"], {
     href: "/personal-quotes/bike"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -4123,7 +4125,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         _: 1
         /* STABLE */
 
-      })) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      })) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.first_name,
         "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
           return $setup.quoteForm.first_name = $event;
@@ -4196,10 +4198,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             label: item.text
           };
         }),
-        hasError: $setup.isEmptyField
+        hasError: $setup.isEmptyField,
+        error: $setup.quoteForm.errors.nationality_id
       }, null, 8
       /* PROPS */
-      , ["modelValue", "options", "hasError"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+      , ["modelValue", "options", "hasError", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.uae_license_held_for_id,
         "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
           return $setup.quoteForm.uae_license_held_for_id = $event;
@@ -4212,10 +4215,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             label: item.text
           };
         }),
-        "class": "w-full"
+        "class": "w-full",
+        error: $setup.quoteForm.errors.uae_license_held_for_id
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "options", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.bike_company_to_insure,
         "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
           return $setup.quoteForm.bike_company_to_insure = $event;
@@ -4223,10 +4227,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         type: "number",
         label: "Bike(s) to insure",
         rules: [$setup.rules.isRequired],
-        "class": "w-full"
+        "class": "w-full",
+        error: $setup.quoteForm.errors.bike_company_to_insure
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.asset_value,
         "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
           return $setup.quoteForm.asset_value = $event;
@@ -4234,10 +4239,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         type: "number",
         label: "BiKe Value",
         rules: [$setup.rules.isRequired],
-        "class": "w-full"
+        "class": "w-full",
+        error: $setup.quoteForm.errors.asset_value
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.year_of_manufacture,
         "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
           return $setup.quoteForm.year_of_manufacture = $event;
@@ -4250,10 +4256,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             label: item.text
           };
         }),
-        "class": "w-full"
+        "class": "w-full",
+        error: $setup.quoteForm.errors.year_of_manufacture
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+      , ["modelValue", "rules", "options", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.currently_insured_with_id,
         "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
           return $setup.quoteForm.currently_insured_with_id = $event;
@@ -4266,12 +4273,13 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             label: item.text
           };
         }),
-        "class": "w-full"
+        "class": "w-full",
+        error: $setup.quoteForm.errors.currently_insured_with_id
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "options"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
+      , ["modelValue", "rules", "options", "error"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
         "class": "my-4"
-      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "md",
         color: "emerald",
         type: "submit",

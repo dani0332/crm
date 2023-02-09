@@ -18,22 +18,22 @@ class BikeQuoteRepository extends BaseRepository
     public function buildData($data)
     {
         return [
-            "personalQuoteTypeId"=> 1,
-            "nationalityId"=> $data['nationality_id'],
-            "mobileNo"=> $data['mobile_no'],
-            "email"=> $data['email'],
-            "firstName"=> $data['first_name'],
-            "lastName"=> $data['last_name'],
-            "dob"=> $data['dob'],
-            "bikeCompanyToInsure"=> $data['bike_company_to_insure'],
-            "assetValue"=> $data['asset_value'],
-            "currentlyInsuredWithId"=> $data['currently_insured_with_id'],
-            "uaeLicenseHeldForId"=> $data['uae_license_held_for_id'],
-            "yearOfManufacture"=> $data['year_of_manufacture'],
-            "lang"=> "EN",
-            "device"=> request()->userAgent(),
-            "source"=> config('constants.SOURCE_NAME'),
-            "referenceUrl"=> URL::current(),
+            "personalQuoteTypeId" => PersonalQuoteTypes::BIKE->id(),
+            "nationalityId" => $data['nationality_id'],
+            "mobileNo"  => $data['mobile_no'],
+            "email" => $data['email'],
+            "firstName" => $data['first_name'],
+            "lastName"  => $data['last_name'],
+            "dob"   => $data['dob'],
+            "bikeCompanyToInsure"   => $data['bike_company_to_insure'],
+            "assetValue"    => $data['asset_value'],
+            "currentlyInsuredWithId"    => $data['currently_insured_with_id'],
+            "uaeLicenseHeldForId"   => $data['uae_license_held_for_id'],
+            "yearOfManufacture" => $data['year_of_manufacture'],
+            "lang"  => "EN",
+            "device"    => request()->userAgent(),
+            "source"    => config('constants.SOURCE_NAME'),
+            "referenceUrl"  => URL::current(),
         ];
     }
 
@@ -69,7 +69,10 @@ class BikeQuoteRepository extends BaseRepository
      * @return mixed
      */
     public function fetchGetBy($column = 'id', $value) {
-        return $this->where($column, $value)->with(['bikeQuote', 'advisor', 'nationality', 'quoteDetail.lostReason'])->first();
+
+        return $this->byQuoteTypeId(PersonalQuoteTypes::BIKE->id())
+            ->where($column, $value)
+            ->with(['bikeQuote', 'advisor', 'nationality', 'quoteDetail.lostReason'])->firstOrFail();
     }
 
     /**
