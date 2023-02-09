@@ -177,12 +177,12 @@ const tableHeader = [
             fixed-checkbox
         >
 
-            <template #item-uuid="{ uuid }">
+            <template #item-uuid="{ code, uuid }">
                 <Link
                     :href="`/personal-quotes/bike/${uuid}`"
                     class="text-primary-500 hover:underline"
                 >
-                    {{ uuid }}
+                    {{ code }}
                 </Link>
             </template>
 

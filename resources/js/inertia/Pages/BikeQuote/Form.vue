@@ -16,23 +16,23 @@ const props = defineProps({
     yearOfManufacture: Object,
     dropdownSource: Object,
     model: String,
-    bikeQuote: {type: Object, default: null},
+    quote: {type: Object, default: null},
 });
 
 
 const quoteForm = useForm({
     model: props.model,
-    first_name: props.bikeQuote?.first_name || '',
-    last_name: props.bikeQuote?.last_name || '',
-    email: props.bikeQuote?.email || '',
-    mobile_no: props.bikeQuote?.mobile_no || '',
-    dob: props.bikeQuote?.dob || '',
-    nationality_id: props.bikeQuote?.nationality_id || null,
-    uae_license_held_for_id: props.bikeQuote?.nationality_id || null,
-    bike_company_to_insure: props.bikeQuote?.bike_company_to_insure || null,
-    asset_value: props.bikeQuote?.asset_value || null,
-    currently_insured_with_id: props.bikeQuote?.currently_insured_with_id || null,
-    year_of_manufacture: props.bikeQuote?.year_of_manufacture || null,
+    first_name: props.quote?.first_name || '',
+    last_name: props.quote?.last_name || '',
+    email: props.quote?.email || '',
+    mobile_no: props.quote?.mobile_no || '',
+    dob: props.quote?.dob || '',
+    nationality_id: props.quote?.nationality_id || null,
+    uae_license_held_for_id: props.quote?.bike_quote?.uae_license_held_for_id || null,
+    bike_company_to_insure: props.quote?.bike_quote?.bike_company_to_insure || null,
+    asset_value: props.quote?.asset_value || null,
+    currently_insured_with_id: props.quote?.currently_insured_with_id || null,
+    year_of_manufacture: props.quote?.bike_quote?.year_of_manufacture || null,
 });
 
 const rules = {
@@ -52,9 +52,15 @@ function onSubmit(isValid) {
 
     if (isValid) {
 
-        let method = props.bikeQuote ? 'put' : 'post';
+        let method = 'post';
+        let url = `/personal-quotes/bike/`;
+        if(props.quote)
+        {
+            method = "put";
+            url = url + props.quote.uuid
+        }
 
-        quoteForm.submit(method, `/personal-quotes/bike/`, {
+        quoteForm.submit(method, url, {
             onError: errors => {
                 console.log(quoteForm.setError(errors));
             },
@@ -79,7 +85,7 @@ function onSubmit(isValid) {
     <div>
         <Head title="Bike Quote" />
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Bike Quote <span v-if="bikeQuote">{{bikeQuote?.uuid}}</span></h2>
+            <h2 class="text-xl font-semibold">Bike Quote <span v-if="quote">{{quote?.uuid}}</span></h2>
             <div>
                 <Link href="/personal-quotes/bike">
                     <x-button size="sm" color="#ff5e00"> Bike Quotes List </x-button>
@@ -168,7 +174,7 @@ function onSubmit(isValid) {
 
                 <x-input
                     v-model="quoteForm.bike_company_to_insure"
-                    type="number"
+                    type="text"
                     label="Bike(s) to insure"
                     :rules="[rules.isRequired]"
                     class="w-full"
@@ -186,7 +192,7 @@ function onSubmit(isValid) {
 
                 <x-select
                     v-model="quoteForm.year_of_manufacture"
-                    label="UAE licence held for"
+                    label="Year Of Manufacture"
                     :rules="[rules.isRequired]"
                     :options="
                         yearOfManufacture.map(item => ({
