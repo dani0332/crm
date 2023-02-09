@@ -202,11 +202,10 @@ class DashboardController extends Controller
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as created_sale_leads'),
         )
-        ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
         ->join('teams', 'teams.id', 'user_team.team_id')
-        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
         $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'null';
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);

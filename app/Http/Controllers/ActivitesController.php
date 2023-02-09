@@ -9,23 +9,22 @@ use App\Models\Activities;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
-use App\Services\HelperService;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\GetUserTreeTrait;
 
 class ActivitesController extends Controller
 {
+    use GetUserTreeTrait;
     protected $activitesService;
     protected $crudService;
-    protected $helperService;
 
-    public function __construct(ActivitiesService $activitesService, CRUDService $crudService, HelperService $helperService)
+    public function __construct(ActivitiesService $activitesService, CRUDService $crudService)
     {
         $this->activitesService = $activitesService;
         $this->crudService = $crudService;
-        $this->helperService = $helperService;
     }
 
     /**
@@ -36,7 +35,7 @@ class ActivitesController extends Controller
     public function index(Request $request)
     {
         $advisors = [];
-        $subOrdinates = $this->helperService->walkTree(Auth::user()->id);
+        $subOrdinates = $this->walkTree(Auth::user()->id);
         foreach ($subOrdinates as $subOrdinate) {
             $user = User::where('id', $subOrdinate)->first();
             if ($user->hasAnyRole(['CAR_ADVISOR', 'HEALTH_ADVISOR', 'TRAVEL_ADVISOR', 'HOME_ADVISOR', 'LIFE_ADVISOR', 'PET_ADVISOR',
