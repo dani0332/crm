@@ -328,6 +328,8 @@ class LeadAllocationService extends BaseService
                 LeadAllocation::whereNotNull('is_available')->update([
                     'is_available' => 0,
                     'allocation_count' => 0,
+                    'manual_assignment_count' => 0,
+                    'auto_assignment_count' => 0,
                 ]);
                 info('Advisors are now unavailable and allocation count is set to 0');
             }
@@ -580,6 +582,7 @@ class LeadAllocationService extends BaseService
             'advisorName' => $user->name,
             'landLine' => $user->landline_no,
             'mobilePhone' => $user->mobile_no,
+            'advisorEmail' => $user->email,
         ];
 
         return $emailData;
