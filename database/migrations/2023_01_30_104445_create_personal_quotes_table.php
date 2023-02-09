@@ -56,17 +56,19 @@ class CreatePersonalQuotesTable extends Migration
 
                 $table->unsignedBigInteger('plan_id')->nullable();
                 $table->dateTime('paid_at')->nullable();
-                $table->dateTime('quote_status_date')->nullable();
-                $table->dateTime('payment_status_date')->nullable();
+
+
                 $table->decimal('premium_authorized', 10,2)->nullable();
                 $table->decimal('premium_captured', 10,2)->nullable();
                 $table->decimal('premium_refunded', 10,2)->nullable();
 
                 $table->integer('payment_status_id')->nullable();
                 $table->foreign('payment_status_id')->references('id')->on('payment_status');
+                $table->dateTime('payment_status_date')->nullable();
 
                 $table->integer('quote_status_id')->nullable();
                 $table->foreign('quote_status_id')->references('id')->on('quote_status');
+                $table->dateTime('quote_status_date')->nullable();
 
                 $table->timestamps();
             });
