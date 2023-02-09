@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 use App\Models\Nationality;
+use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
-use App\Services\CustomerWEGenerateUrlService;
 use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
-use Config;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -23,18 +23,18 @@ class CustomerController extends Controller
 
     private $customerUploadFileService;
     private $transAppService;
-    private $customerWeEmailGenerateUrlService;
+    private $berlinService;
     private $customerService;
 
     public function __construct(
         CustomerUploadService $customerUploadFileService,
         TransAppService $transAppService,
-        CustomerWEGenerateUrlService $customerWeEmailGenerateUrlService,
+        BerlinService $berlinService,
         CustomerService $customerService
     ) {
         $this->customerUploadFileService = $customerUploadFileService;
         $this->transAppService = $transAppService;
-        $this->customerWeEmailGenerateUrlService = $customerWeEmailGenerateUrlService;
+        $this->berlinService = $berlinService;
         $this->customerService = $customerService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
         $this->middleware('permission:customers-edit', ['only' => ['edit', 'update']]);
@@ -120,14 +120,8 @@ class CustomerController extends Controller
         $customer->has_reward_access = $request->has_reward_access == 'on' ? 1 : 0;
         $customer->save();
 
-        if ($sendWelcomeEmail && Config::get('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            $WEGenerateUrlResponse = $this->customerWeEmailGenerateUrlService->getCustomerWeUrl();
-
-            if (gettype($WEGenerateUrlResponse) == 'string') {
-                $this->transAppService->sendWelcomeEmail($customer->id, $WEGenerateUrlResponse, $tag = 'customer-myalfred-we');
-            }
-            $customer->is_we_sent = true;
-            $customer->save();
+        if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
+            dispatch(new MAWelcomeJob($customer->email, $customer->first_name, $customer->last_name, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
         }
 
         return redirect('customer/'.$customer->id)->with('success', 'Customer has been Updated');
