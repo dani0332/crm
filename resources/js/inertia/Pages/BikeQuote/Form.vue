@@ -73,7 +73,7 @@ function onSubmit(isValid) {
 
                 setTimeout(function(){
                     router.get(`/personal-quotes/bike`);
-                }, 2000);
+                }, 500);
             },
         });
     }

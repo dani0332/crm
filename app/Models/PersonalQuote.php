@@ -12,8 +12,7 @@ class PersonalQuote extends Model
 {
     use HasFactory, FilterCriteria;
 
-    protected $fillable = ['uuid', 'personal_quote_type_id', 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id', 'uae_license_held_for_id', 'no_of_items',
-        'value', 'year_of_manufacture_id' , 'insurance_provider_id'];
+    protected $guarded = [];
 
     public  $filterables = [
         'first_name' => FilterTypes::EXACT,

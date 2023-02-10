@@ -519,7 +519,7 @@ __webpack_require__.r(__webpack_exports__);
             });
             setTimeout(function () {
               _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.get("/personal-quotes/bike");
-            }, 2000);
+            }, 500);
           }
         });
       }
@@ -4803,7 +4803,7 @@ var _hoisted_55 = {
 
 var _hoisted_56 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h3", {
   "class": "font-semibold text-primary-800"
-}, "Policy Policy Details", -1
+}, "Previous Policy Details", -1
 /* HOISTED */
 );
 

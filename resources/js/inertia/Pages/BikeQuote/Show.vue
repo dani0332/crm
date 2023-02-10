@@ -174,7 +174,7 @@ const historyDataTable = [
             </div>
 
             <div class="mt-6">
-                <h3 class="font-semibold text-primary-800">Policy Policy Details</h3>
+                <h3 class="font-semibold text-primary-800">Previous Policy Details</h3>
                 <x-divider class="mb-4 mt-1" />
             </div>
 
