@@ -20,8 +20,8 @@ class CreatePersonalQuotesTable extends Migration
                 $table->integer('quote_type_id')->nullable(false);
                 $table->foreign('quote_type_id')->references('id')->on('quote_type');
 
-                $table->string('uuid', 50)->unique()->nullable(false);
-                $table->string('code', 50)->nullable(false);
+                $table->string('uuid', 15)->unique()->nullable(false);
+                $table->string('code', 15)->nullable(false);
                 $table->string('first_name', 255)->nullable();
                 $table->string('last_name', 255)->nullable();
                 $table->date('dob')->nullable();
@@ -56,7 +56,6 @@ class CreatePersonalQuotesTable extends Migration
 
                 $table->unsignedBigInteger('plan_id')->nullable();
                 $table->dateTime('paid_at')->nullable();
-
 
                 $table->decimal('premium_authorized', 10,2)->nullable();
                 $table->decimal('premium_captured', 10,2)->nullable();
