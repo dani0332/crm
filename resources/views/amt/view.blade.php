@@ -48,7 +48,7 @@
                 });
                 dt.ajax.reload();
             }
-            
+       
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var isManagerOrDeputy = $("#isManagerOrDeputy").val();
         var isRenewalUser = JSON.parse('<?php echo json_encode(Auth::user()->hasAnyRole('GM_RENEWAL_ADVISOR', 'GM_RENEWAL_MANAGER')); ?>');
@@ -342,7 +342,6 @@
         window.onload = function () {
             window.localStorage.clear();
         }
-
 </script>
 <style>
 .date-search-field {
