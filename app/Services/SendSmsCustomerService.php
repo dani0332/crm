@@ -59,7 +59,7 @@ class SendSmsCustomerService extends BaseService
 
             $responseCode = $clientRequest->getStatusCode();
 
-            info('sendMAInviteSMS - Response: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email.' | Invite Code: '.$inviteCode);
+            info('sendMAInviteSMS - Sent - Response: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email.' | Invite Code: '.$inviteCode);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             info('sendMAInviteSMS - Error - Response Code: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email.' | Invite Code: '.$inviteCode.' | class: '.get_class());
