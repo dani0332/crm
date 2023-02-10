@@ -181,11 +181,23 @@
                     for (let i = 0; i < columns.length; i++) {
                         if (checkboxIndexes.includes(i)) {
                             const element = columns[i];
-                            if ($(element).text() == '1') {
-                                $(element).text('Yes');
-                            } else if ($(element).text() == '0') {
-                                $(element).text('No');
+                            if( $(rows[0]).find("th").last().text().indexOf('RECORD TYPE') > -1 ) {
+                                if ($(element).text() == '1') {
+                                    $(element).text('Product');
+                                } else if ($(element).text() == '2') {
+                                    $(element).text('Team');
+                                }
+                                else if ($(element).text() == '3') {
+                                    $(element).text('SubTeam');
+                                }
+                            }else{
+                                if ($(element).text() == '1') {
+                                    $(element).text('Yes');
+                                } else if ($(element).text() == '0') {
+                                    $(element).text('No');
+                                }
                             }
+
                         }
                     }
 
@@ -329,7 +341,7 @@
                                                         {{ str_replace('_', ' ', strtoupper($property)) }}
                                                     @endif
                                                 </span>
-                                                <input @if(str_contains($value, 'number')) min={{ explode('min:', $value)[1] }} @endif type={{ explode('|', $value)[1] }} id={{ $property }}
+                                                <input @if(str_contains($value, 'number') && str_contains($value, 'min')) min={{ explode('min:', $value)[1] }} @endif @if(str_contains($value, 'number') && str_contains($value, 'max')) max={{ explode('max:', $value)[1] }} @endif type={{ explode('|', $value)[1] }} id={{ $property }}
                                                     name={{ $property }} class="form-control">
                                                 @if ($errors->has($property))
                                                     <span class="text-danger">{{ $errors->first($property) }}</span>

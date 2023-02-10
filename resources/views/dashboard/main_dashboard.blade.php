@@ -154,11 +154,10 @@
     }
 
 </style>
-
-
-<div class="container">
-    <div class="row" style="background-color: #f9fafb;min-height: 300px;padding:35px;box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);float: left;">
-        <div class="col-md-6" style="float: left;width:55%;padding: 10px;">
+<meta name="csrf-token" content="{{ csrf_token() }}" />
+<div class="container" style="width:100% !important;">
+    <div class="row" style="background-color: #f9fafb;padding:35px;box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);float: left;">
+        <div  style="padding: 10px;">
             <div class="col-md-12">
                 <div class="col-md-2" style="box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%));padding: 10px;margin-top: 10px;margin-left: 10px;text-align: center;border-radius:5px;min-width:325px;float:left;margin-left:10px;background-color: white;color:black;border:1px solid black; min-height:50px;">
                     <b style="color: cornflowerblue;">TOTAL LEADS RCVD</b>
@@ -192,24 +191,21 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6" style="float: right;width:45%;padding: 10px;">
-            <div class="col-md-12">
-                <h2 style="text-align: center;color: cornflowerblue;font-size: 25px;font-weight: 600;margin-top: -40px;">LEADS ASSIGNED AVERAGE</h2>
-                @foreach ($teamWiseLeadsAssignedAverage as $item)
-                @php
-                $backGroundColor = ['#FF7F50', '#22c55e','#ef4444', '#0c4a6e', '#0ea5e9', '#fbbf24','#0369a1'];
-                @endphp
-                <div class="col-md-1"
-                    style="background-color:white;margin-top:10px; margin-left:10px; float: right;border-radius: 8px;border: 1px solid black;padding: 10px;text-align: center;color:black;min-width:218px;">
-                    <b  style="color: cornflowerblue;">{{strtoupper($item['teamName'])}}</b>
-                    <div style="text-align: center;">
-                        <b id={{str_replace(' ', '', $item['teamName'])}}>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
-                            number_format((float)$item['totalUsersUnderTeam'] == 0 ? 0 : $item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
-                            }}</b>
-                    </div>
+    </div>
+    <div class="row" style="background-color: #f9fafb;padding:35px;box-shadow: 5px 5px 5px 1px rgb(0 0 0 / 10%);float: left;width:100%;">
+        <div class="col-md-12">
+            <h2 style="text-align: center;color: cornflowerblue;font-size: 25px;font-weight: 600;margin-top: -40px;">LEADS ASSIGNED AVERAGE</h2>
+            @foreach ($teamWiseLeadsAssignedAverage as $item)
+            <div class="col-md-1"
+                style="background-color:white;margin-top:10px; min-width:250px;float:left; margin-left:10px; border-radius: 8px;border: 1px solid black;padding: 10px;text-align: center;color:black;">
+                <b  style="color: cornflowerblue;">{{strtoupper($item['teamName'])}}</b>
+                <div style="text-align: center;">
+                    <b id={{str_replace(' ', '', $item['teamName'])}}>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
+                        number_format((float)$item['totalUsersUnderTeam'] == 0 ? 0 : $item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
+                        }}</b>
                 </div>
-                @endforeach
             </div>
+            @endforeach
         </div>
     </div>
     <div style="clear: both;"></div>
@@ -272,10 +268,10 @@
     <div style="clear: both;">
     </div>
     <div class="row">
-        <div class="col-md-3" style="float: right;">
+        <div class="col-md-3 relative flex justify-end">
             <select
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                id="advisor-filter" style="margin-left: 10px;">
+                id="advisor-filter" style="margin-left: 10px;width:350px;" multiple="multiple">
                 <option value="">Select Advisor</option>
                 @foreach ($carAdvisors as $team)
                 <option value="{{$team->id}}">{{$team->name}}</option>
@@ -293,10 +289,10 @@
     <div style="clear: both;"  style="margin-bottom: 40px;">
     </div>
     <div class="row" style="margin-top: 40px;">
-        <div class="col-md-3" style="float: right;">
+        <div class="col-md-3 relative flex justify-end">
             <select
                 class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                id="team-filter" style="margin-left: 10px;">
+                id="team-filter" multiple="multiple" style="margin-left: 10px;width:350px;">
                 <option value="">Select Team</option>
                 @foreach ($teams as $team)
                 <option value="{{$team->id}}">{{$team->name}}</option>
@@ -315,9 +311,15 @@
     </div>
 </div>
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.umd.min.js"></script>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+
 <script type="text/javascript" defer>
    var leadsCountByTier = <?php echo json_encode($leadsCountByTier)?>;
    var unAssignedLeadsByTier = <?php echo json_encode($unAssignedLeadsByTier)?>;
@@ -327,12 +329,16 @@
    var assignedLeadsBySource = <?php echo json_encode($assignedLeadsBySource)?>;
    var leadRcdSummaryByTierPieChart =  revivalLeadsCountChart = assignedLeadsBySourceChart = advisorConversionChart = leadAssignCountByAdvisorChart = {};
    $(function(){
+        setTimeout(function() {
+            window.location.reload(1);
+        }, 80000);
         const picker = new easepick.create({
             element: document.getElementById('reloadDailyStatsDate'),
             css: [
             'https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.css',
             ],
             zIndex: 10,
+            format: "DD MM YYYY",
             LockPlugin: {
                 maxDays: 31
             },
@@ -382,55 +388,79 @@
             });
         });
         $('#advisor-filter').on('change', function (e) {
-            var advisorFitlerValue = $('#advisor-filter option:selected').val();
-            $.get('/get-advisor-conversion-stats?advisorFilter=' + advisorFitlerValue, function (result) {
-               if(result){
-                var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
-                var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
-                var numbers = [];
-                var cData = [];
-                for (let index = 0; index < result.length; index++) {
-                    var node = result[index];
-                    cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( ( node.sale_leads - node.created_sale_leads ) / (node.total_leads - node.bad_leads - node.manual_created )  )});
+            var advisorFitlerValue = $('#advisor-filter').val();
+            advisorConversionChart.showLoading();
+            $.ajax({
+                url: "/get-advisor-conversion-stats",
+                type: "post",
+                data: { 'advisorFilter' : advisorFitlerValue} ,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (result) {
+                    if(result) {
+                        var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
+                        var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
+                        var numbers = [];
+                        var cData = [];
+                        for (let index = 0; index < result.length; index++) {
+                            var node = result[index];
+                            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( ( node.sale_leads - node.created_sale_leads ) / (node.total_leads - node.bad_leads - node.manual_created )  )});
+                        }
+                        if(cData.length > 0 ){
+                            advisorConversionChart.destroy();
+                            createAdvisorConversionChart(cData);
+                        }else{
+                            advisorConversionChart.destroy();
+                            createAdvisorConversionChart([{name: '', y: 0}]);
+                        }
+                    }
+                    advisorConversionChart.hideLoading();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    advisorConversionChart.hideLoading();
+                    console.log(textStatus, errorThrown);
                 }
-                if(cData.length > 0 ){
-                    advisorConversionChart.destroy();
-                    createAdvisorConversionChart(cData);
-                }else{
-                    advisorConversionChart.destroy();
-                    createAdvisorConversionChart([{name: '', y: 0}]);
-                }
-               }
             });
         });
-
         $('#team-filter').on('change', function (e) {
-            var teamFilteValue = $('#team-filter option:selected').val();
-            $.get('/get-team-conversion-stats?teamFilter=' + teamFilteValue, function (result) {
-               if(result){
-                var cData = [];
-                for (let index = 0; index < result.length; index++) {
-                    var node = result[index];
-                    cData.push({name: node.name, y: parseFloat( node.total_leads )});
+            var teamFilteValue = $('#team-filter').val();
+            leadAssignCountByAdvisorChart.showLoading();
+            $.ajax({
+                url: "/get-team-conversion-stats",
+                type: "post",
+                data: { 'teamFilter' : teamFilteValue} ,
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (result) {
+                    if(result) {
+                        var cData = [];
+                        for (let index = 0; index < result.length; index++) {
+                            var node = result[index];
+                            cData.push({name: node.name, y: parseFloat( node.total_leads )});
+                        }
+                        if(cData.length > 0 ){
+                            leadAssignCountByAdvisorChart.destroy();
+                            createLeadAssignCountSummaryByAdvisorChart(cData);
+                        }else{
+                            leadAssignCountByAdvisorChart.destroy();
+                            createLeadAssignCountSummaryByAdvisorChart([{name: '', y: 0}]);
+                        }
+                    }
+                    leadAssignCountByAdvisorChart.hideLoading();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    leadAssignCountByAdvisorChart.hideLoading();
+                    console.log(textStatus, errorThrown);
                 }
-                if(cData.length > 0 ){
-                    leadAssignCountByAdvisorChart.destroy();
-                    createLeadAssignCountSummaryByAdvisorChart(cData);
-                }else{
-                    leadAssignCountByAdvisorChart.destroy();
-                    createLeadAssignCountSummaryByAdvisorChart([{name: '', y: 0}]);
-                }
-               }
             });
         });
-
-
         var cData = [];
         for (let index = 0; index < leadsCountByTier.length; index++) {
             cData.push({name: leadsCountByTier[index]['tierNames'], y: parseFloat(leadsCountByTier[index]['leadCount'])});
         }
         createLeadRcdSummaryByTierPieChart(cData);
-
 
 
         var cData = [];
@@ -456,7 +486,7 @@
         var cData = [];
         for (let index = 0; index < advisorConversionData.length; index++) {
             var node = advisorConversionData[index];
-            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( (node.total_leads - node.bad_leads - node.manual_created ) / ( node.sale_leads - node.created_sale_leads ) )});
+            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat(  ( node.sale_leads - node.created_sale_leads ) / (node.total_leads - node.bad_leads - node.manual_created ) )});
         }
         createAdvisorConversionChart(cData);
 
@@ -704,7 +734,7 @@
                     borderWidth: 0,
                     dataLabels: {
                         enabled: true,
-                        format: '{point.y:.1f}%'
+                        format: '{point.y:.1f}'
                     }
                 }
             },
@@ -725,5 +755,17 @@
     {
 
     }
+
+    const selectSettings = {
+        plugins: ['remove_button', 'checkbox_options'],
+        create: true,
+        onItemAdd: function() {
+            this.setTextboxValue('');
+            this.refreshOptions();
+        },
+    }
+
+    new TomSelect(["#team-filter"], selectSettings);
+    new TomSelect(["#advisor-filter"], selectSettings);
 </script>
 @endsection

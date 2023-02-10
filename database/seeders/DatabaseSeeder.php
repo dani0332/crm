@@ -31,7 +31,12 @@ class DatabaseSeeder extends Seeder
             addCarAllocationMasterSwitch::class,
             addPermissionsForDashboard::class,
             //CarQuoteRequestSeeder::class,
-            //QuoteStatusTableSeeder::class,
+            QuoteStatusTableSeeder::class,
+            QuoteStatusMapCarTransactionApproved::class,
+            UpdateApplicationStorage::class,
+            addReportsMaxDays::class,
+            addCostPerLeadForExistingLeads::class,
+            addLMSIntroEmailTemplateId::class,
         ]);
     }
 }

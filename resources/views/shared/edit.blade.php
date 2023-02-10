@@ -62,7 +62,7 @@
             return obj.name === 'update'
             });
         $('#skip').val(result[0].value);
-        var record = JSON.parse('<?php echo json_encode($record) ?>');
+        var record = JSON.parse(`<?php echo json_encode($record) ?>`);
         String.prototype.replaceAll = function(search, replacement) {
             var target = this;
             return target.replace(new RegExp(search, 'g'), replacement);
@@ -193,7 +193,7 @@
             });
         }
 
-        $('#previous_policy_expiry_date').datepicker({
+        $('#previous_policy_expiry_date, #dob').datepicker({
             changeMonth: true,
             changeYear: true,
             dateFormat: 'yy-mm-dd',
@@ -267,18 +267,18 @@
                                                 @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
                                                 @if(explode("|", $value)[1] != 'date') type={{ explode("|", $value)[1] }} @endif 
                                                 id={{$property}} name={{$property}}
-                                                @if($property == 'email' || $property == 'mobile_no') disabled="disabled" @endif
+                                                @if($property == DatabaseColumnsString::EMAIL || $property == DatabaseColumnsString::MOBILE || $property == DatabaseColumnsString::CAR_VALUE_TIER) style="background-color: #e9ecef !important;" disabled="disabled" @endif
                                                 value="{{ old($property, $record->$property) }}" class="form-control" 
                                                 @if(!Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::Admin]))
                                                     @if($property == DatabaseColumnsString::RENEWAL_BATCH || $property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER || $property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE) 
-                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;pointer-events: none;"
+                                                        readonly="readonly" style="background-color: #e9ecef !important;pointer-events: none;"
                                                     @endif
                                                 @else 
                                                     @if($property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER && $record->$property)
-                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;"
+                                                        readonly="readonly" style="background-color: #e9ecef !important;"
                                                     @endif
                                                     @if($property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE && $record->$property)
-                                                        readonly="readonly" style="background-color: rgb(246, 246, 246) !important;pointer-events: none;"
+                                                        readonly="readonly" style="background-color: #e9ecef !important;pointer-events: none;"
                                                     @endif
                                                 @endif >
                                             @if ($errors->has($property))

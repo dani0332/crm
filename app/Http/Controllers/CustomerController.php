@@ -194,7 +194,16 @@ class CustomerController extends Controller
             if ($quoteObject->customer) {
                 Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request->value);
                 $quoteObject->customer->update(['mobile_no' => $request->value]);
+
+                if (isset($request->quote_primary_mobile_no) && isset($request->quote_customer_id)) {
+                    CustomerAdditionalContact::create([
+                        'customer_id' => $request->quote_customer_id,
+                        'key' => 'mobile_no',
+                        'value' => trim($request->quote_primary_mobile_no),
+                    ]);
+                }
             }
+            // Add quote_previous_primary_mobile_no in customer_additional_contact
         }
         $quoteObject->save();
 

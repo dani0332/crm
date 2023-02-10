@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @section('title', 'Add '.$model->modelType )
 @section('content')
+@php
+    use App\Enums\GenericRequestEnum;
+@endphp
 <style>
     .form-control:disabled, .form-control[readonly]{
         background-color: white !important;
@@ -60,7 +63,7 @@
                                             <span class='required'>*</span>
                                             @endif
                                         </span>
-                                        <input @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
+                                        <input @if(str_contains($value, GenericRequestEnum::DISABLED_ATTRIBUTE)) disabled="disabled" @endif @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
                                         @if(strpos($value, 'min') !== false)
 
                                             min="{{explode(":", $value)[1]}}"
@@ -87,7 +90,7 @@
                                             @endif
                                         </span>
 
-                                        <select @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}">
+                                        <select @if(str_contains($value, GenericRequestEnum::DISABLED_ATTRIBUTE)) disabled @endif  @if(strpos($value, 'multiple')) name="{{$property.'[]'}}" multiple="multiple" class="form-control select2 select-roles" @else class="form-control" name="{{$property}}" @endif id="{{$property}}">
                                             @if(strpos($value, 'title'))
                                                 <option value="">{{"Please select ".$customTitles[$property] }}</option>
                                             @else

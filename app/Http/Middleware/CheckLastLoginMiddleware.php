@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CheckLastLoginMiddleware
 {
@@ -19,11 +20,15 @@ class CheckLastLoginMiddleware
     {
         if (auth()->user()) {
             $lastLoginDate = Carbon::parse(auth()->user()->last_login);
-            if (now()->diffInDays($lastLoginDate) > 0) {
+            if (! now()->isSameDay($lastLoginDate)) {
                 auth()->logout();
 
-                return redirect('/login');
+                return redirect()->route('login');
             }
+        } else {
+            Auth::logout();
+
+            return redirect()->route('login');
         }
 
         return $next($request);

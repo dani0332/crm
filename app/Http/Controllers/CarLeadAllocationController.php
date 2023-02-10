@@ -36,12 +36,13 @@ class CarLeadAllocationController extends Controller
             $availableUsers = 0;
             $unAvailableUsers = 0;
             $todayTotalLeadCount = $this->carLeadAllocationService->getTodaysCarTotalLeadsCount();
+            $todayTotalUnAssignedLeadCount = $this->carLeadAllocationService->getTodaysCarTotalUnAssignedLeadsCount();
             $isAutoAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
             $isRenewalLeadAllocationWorking = $this->applicationStorageService->getValueByKey('CAR_RENEWAL_LEAD_ALLOCATION');
             $isFIFO = $this->applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
             $data = $this->carLeadAllocationService->getGridData();
             foreach ($data as $key => $value) {
-                $totalAssignedLeadCount += $value->allocationCount;
+                $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
                 $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
             }
             if ($request->ajax()) {
@@ -50,7 +51,7 @@ class CarLeadAllocationController extends Controller
                     ->make(true);
             }
 
-            return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO', 'todayTotalLeadCount']));
+            return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO', 'todayTotalLeadCount', 'todayTotalUnAssignedLeadCount']));
         } else {
             abort(403, 'Unauthorized action.');
         }

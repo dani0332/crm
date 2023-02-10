@@ -12,7 +12,7 @@ final class GenericModelTypeEnum extends Enum
     const CAR_PLAN_ADDON = 'carplanaddon';
     const CAR_PLAN_ADDON_OPTION = 'carplanaddonoption';
     const APPLICATION_STORAGE = 'applicationstorage';
-    const TEAMS = 'teams';
+    const TEAMS = 'team';
     const LEAD_STATUS = 'leadstatus';
     const TIER = 'tier';
     const QUADRANT = 'quadrant';
