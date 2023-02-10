@@ -920,7 +920,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'advisor_id'];
 
         return $searchProperties;
     }
@@ -1157,15 +1157,13 @@ class CarQuoteService extends BaseService
 
     public function processManualLeadAssignment($request): array
     {
+        info('called by : '. debug_backtrace()[1]['function']);
         $userId = (int) $request->assigned_to_id_new;
         $result = [];
 
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-
-            $isReAssignment = $lead->advisor_id != null ? true : false;
-            $currentAssignedAdvisorId = $isReAssignment ? $lead->advisor_id : null;
-
+            $previousAdvisorId = $lead->advisor_id;
             $lead->advisor_id = $userId;
             $lead->auto_assigned = false;
 
@@ -1173,7 +1171,8 @@ class CarQuoteService extends BaseService
             $this->updateChildRecord($lead->id);
 
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $isReAssignment, $currentAssignedAdvisorId);
+            
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId);
 
             $lead->save();
 
@@ -1188,6 +1187,7 @@ class CarQuoteService extends BaseService
                     'advisorName' => $currentAdvisor->name,
                     'landLine' => $currentAdvisor->landline_no,
                     'mobilePhone' => $currentAdvisor->mobile_no,
+                    'advisorEmail' => $currentAdvisor->email,
                 ];
 
                 $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
@@ -1211,31 +1211,45 @@ class CarQuoteService extends BaseService
         return $leadIds;
     }
 
-    public function addManualAllocationCountAndUpdate($userId, $lead, $isReAssignment, $currentAssignedAdvisorId)
+    public function addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId)
     {
+        info('lead current advisor_id is : '.json_encode($previousAdvisorId).' and lead created date is : '.$lead->created_at);
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($userId);
-        if ($isReAssignment) {
-            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($currentAssignedAdvisorId);
+        if ($lead->advisor_id != null) {
+            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
         }
+        info('new advisor ('.$userId.')  manual count before update is : '.$newAdvisorAllocationRecord->manual_assignment_count.' and auto assignment count is : '.$newAdvisorAllocationRecord->auto_assignment_count);
         $newAdvisorAllocationRecord->manual_assignment_count = $newAdvisorAllocationRecord->manual_assignment_count + 1;
         $newAdvisorAllocationRecord->allocation_count = $newAdvisorAllocationRecord->allocation_count + 1;
         $newAdvisorAllocationRecord->updated_at = now();
         $newAdvisorAllocationRecord->save();
-
-        if ($isReAssignment && $lead->created_at > now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
+        info('new advisor after update is : '.json_encode($newAdvisorAllocationRecord));
+        if ($lead->advisor_id != null && Carbon::parse($lead->created_at)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
             if ($lead->auto_assigned) {
-                $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
+                if($previousAdvisorAllocationRecord->auto_assignment_count > 0){
+                    info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
+                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
+                }
             } else {
-                $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
+                if($previousAdvisorAllocationRecord->manual_assignment_count > 0){
+                    info('previous advisor ('.$userId.')  manual count before update is : '.$previousAdvisorAllocationRecord->manual_assignment_count);
+                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
+                }
             }
             if ($previousAdvisorAllocationRecord->allocation_count > 0) { // will reduce count for previous advisor if the count is greater than 0 to avoid going in -1
+                info('previous advisor ('.$userId.')  allocation_count count before update is : '.$previousAdvisorAllocationRecord->allocation_count);
                 $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
             }
             $previousAdvisorAllocationRecord->updated_at = now();
             $previousAdvisorAllocationRecord->save();
+            info('previous advisor after update is : '.json_encode($previousAdvisorAllocationRecord));
         }
         if ($lead->auto_assigned) {
             $lead->auto_assigned = false;
+        }
+        info('new advisor alloc. count :'.$newAdvisorAllocationRecord->allocation_count.', manual count :'.$newAdvisorAllocationRecord->manual_assignment_count.', auto count :'.$newAdvisorAllocationRecord->auto_assignment_count);
+        if ($previousAdvisorAllocationRecord != null) {
+            info('previous advisor alloc. count :'.$previousAdvisorAllocationRecord->allocation_count.', manual count :'.$previousAdvisorAllocationRecord->manual_assignment_count.', auto count :'.$previousAdvisorAllocationRecord->auto_assignment_count);
         }
         info('assignment count update for userId : '.$userId.', and leadId :  '.$lead->uuid);
     }

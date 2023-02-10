@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract
@@ -100,5 +100,15 @@ class HealthQuote extends Model implements AuditableContract
     public function availablePlans()
     {
         return $this->hasMany(HealthAvailablePlan::class, 'uuid', 'uuid');
+    }
+
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function plan()
+    {
+        return $this->belongsTo(HealthPlan::class, 'plan_id');
     }
 }

@@ -298,6 +298,10 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
                 ]],
+                'bcc' => [[
+                    'email' => $emailData->advisorEmail,
+                    'name' => $emailData->advisorName,
+                ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
                     'clientFullName' => $emailData->clientFullName,
@@ -310,7 +314,6 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
-
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,

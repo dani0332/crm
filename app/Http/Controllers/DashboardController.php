@@ -42,7 +42,7 @@ class DashboardController extends Controller
     {
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $car = $this->getProductByName(quoteTypeCode::Car);
-        $teams = $this->getTeamsByProductId($car->id);
+        $teams = $this->getTeamsSubTeamsByProductId($car->id);
         $carAdvisors = $this->getUsersByTeamId($car->id);
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams);
 
