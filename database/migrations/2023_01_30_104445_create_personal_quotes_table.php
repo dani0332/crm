@@ -17,8 +17,8 @@ class CreatePersonalQuotesTable extends Migration
             Schema::create('personal_quotes', function (Blueprint $table) {
 
                 $table->id();
-                $table->unsignedBigInteger('personal_quote_type_id')->nullable(false);
-                $table->foreign('personal_quote_type_id')->references('id')->on('personal_quote_types');
+                $table->integer('quote_type_id')->nullable(false);
+                $table->foreign('quote_type_id')->references('id')->on('quote_type');
 
                 $table->string('uuid', 50)->unique()->nullable(false);
                 $table->string('code', 50)->nullable(false);

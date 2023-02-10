@@ -2,9 +2,9 @@
 
 namespace App\Enums;
 
-enum PersonalQuoteTypes: string {
+enum QuoteTypes: string {
 
-    case BIKE = 'BIKE';
+    case BIKE = 'Bike';
 
     /**
      * @return string
@@ -14,12 +14,12 @@ enum PersonalQuoteTypes: string {
     }
 
     /**
-     * @param PersonalQuoteTypes $value
+     * @param QuoteTypes $value
      * @return int
      */
     public static function getId(self $value): int {
         return match ($value) {
-            PersonalQuoteTypes::BIKE => 1
+            QuoteTypes::BIKE => 6
         };
     }
 }

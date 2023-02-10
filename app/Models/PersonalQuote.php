@@ -41,8 +41,8 @@ class PersonalQuote extends Model
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function personalQuoteType() {
-        return $this->belongsTo(PersonalQuoteType::class);
+    public function quoteType() {
+        return $this->belongsTo(QuoteType::class);
     }
 
     /**
@@ -120,8 +120,8 @@ class PersonalQuote extends Model
      * @return mixed
      */
     public function scopeByQuoteTypeCode($query, $quoteTypeCode) {
-        return $query->whereHas('personalQuoteType', function($q) use($quoteTypeCode) {
-            $q->where('code', $quoteTypeCode);
+        return $query->whereHas('quoteType', function($q) use($quoteTypeCode) {
+            $q->where('code', ($quoteTypeCode));
         });
     }
 
@@ -132,7 +132,7 @@ class PersonalQuote extends Model
      */
     public function scopeByQuoteTypeId($query, $quoteTypeId)
     {
-        return $query->where('personal_quote_type_id', $quoteTypeId);
+        return $query->where('quote_type_id', $quoteTypeId);
     }
 
 }

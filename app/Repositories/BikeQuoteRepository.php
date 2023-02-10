@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Enums\PersonalQuoteTypes;
+use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
@@ -25,7 +25,7 @@ class BikeQuoteRepository extends BaseRepository
     public function fetchCreate($data)
     {
         $quoteData = [
-            "personalQuoteTypeId" => intval(PersonalQuoteTypes::BIKE->id()),
+            "quoteTypeId" => intval(QuoteTypes::BIKE->id()),
             "nationalityId" => $data['nationality_id'],
             "mobileNo"  => $data['mobile_no'],
             "email" => $data['email'],
@@ -55,7 +55,7 @@ class BikeQuoteRepository extends BaseRepository
     {
         return DB::transaction(function() use($uuid, $data)
         {
-            $quote = $this->byQuoteTypeId(PersonalQuoteTypes::BIKE->id())->where('uuid', $uuid)->firstOrFail();
+            $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())->where('uuid', $uuid)->firstOrFail();
 
             $quote->update(Arr::only($data, [
                 'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id',  'asset_value', 'currently_insured_with_id'
@@ -89,7 +89,7 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column = 'id', $value) {
 
-        return $this->byQuoteTypeId(PersonalQuoteTypes::BIKE->id())
+        return $this->byQuoteTypeId(QuoteTypes::BIKE->id())
             ->where($column, $value)
             ->with(['bikeQuote', 'advisor', 'nationality', 'quoteDetail.lostReason'])->firstOrFail();
     }
@@ -99,8 +99,7 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchGetData()
     {
-        return $this->byQuoteTypeCode(PersonalQuoteTypes::BIKE)->filter()->simplePaginate();
+        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->filter()->simplePaginate();
     }
-
 
 }
