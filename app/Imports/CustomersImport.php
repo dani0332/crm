@@ -33,7 +33,6 @@ class CustomersImport implements OnEachRow, WithStartRow
      */
     public function onRow(Row $row)
     {
-        Log::info('Entered in Excel Import per row');
         $row = $row->toArray();
 
         $email = $row[1];
@@ -75,15 +74,15 @@ class CustomersImport implements OnEachRow, WithStartRow
                 $customerId = $newCustomer->id;
             }
 
-            $customerModel = Customer::find($customerId);
+            $customer = Customer::find($customerId);
             if ($this->inviatationEmail == 'on') {
-                if ($customerModel->is_we_sent == 0) {
-                    dispatch(new MAWelcomeJob($email, $firstName, $lastName, 'CORPORATE', 'corporate-myalfred-we'));
+                if ($customer->is_we_sent == 0) {
+                    dispatch(new MAWelcomeJob($customer, 'CORPORATE', 'corporate-myalfred-we'));
                 }
             }
 
             $existingQuoteCustomer = QuoteCustomer::where([['customer_id', '=', $customerId], ['cdb_id', '=', $this->CDBId]])->get();
-            if ($existingQuoteCustomer->isEmpty()) {
+            if (! $existingQuoteCustomer) {
                 $newQuoteCustomer = new QuoteCustomer();
                 $newQuoteCustomer->cdb_id = $this->CDBId;
                 $newQuoteCustomer->customer_id = $customerId;

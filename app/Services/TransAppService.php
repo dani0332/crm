@@ -74,7 +74,7 @@ class TransAppService extends BaseService
                 $responseExtend = $this->berlinService->extendCustomerSubscription($customerId);
 
                 if ($responseExtend == 200) { // Send email/sms if customer not signup
-                    dispatch(new MAWelcomeJob($customer->email, $customer->first_name, $customer->last_name, 'TRANSAPP', 'transapp-myalfred-we'));
+                    dispatch(new MAWelcomeJob($customer, 'TRANSAPP', 'transapp-myalfred-we'));
                     $this->smsInitiator($customerMobile, $customerEmail, $transaction->id);
                 }
 
@@ -116,7 +116,7 @@ class TransAppService extends BaseService
         $isCustomerExisting = MyAlFredUser::where('customer_id', $customerId)->first();
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $isCustomerExisting) {
-            dispatch(new MAWelcomeJob($customer->email, $customer->first_name, $customer->last_name, 'TRANSAPP', 'transapp-myalfred-we'));
+            dispatch(new MAWelcomeJob($customer, 'TRANSAPP', 'transapp-myalfred-we'));
             // Send SMS to customer
             $this->smsInitiator($customerMobile, $customerEmail, $transaction->id);
         }
