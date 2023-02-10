@@ -7,6 +7,7 @@ use App\Models\MyAlFredUser;
 use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SendSmsCustomerService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,7 +34,7 @@ class MAWelcomeJob implements ShouldQueue
         $this->tag = $tag;
     }
 
-    public function handle(BerlinService $berlinService, SendEmailCustomerService $sendEmailCustomerService)
+    public function handle(BerlinService $berlinService, SendEmailCustomerService $sendEmailCustomerService, SendSmsCustomerService $sendSmsCustomerService)
     {
         if (! $this->customer) {
             info('MAWelcomeJob - Error - Empty Customer Object');
@@ -51,7 +52,7 @@ class MAWelcomeJob implements ShouldQueue
             $statusCode = $sendEmailCustomerService->sendMyAlfredWelcomeEmail($data, $this->tag, $this->source);
 
             if ($statusCode == 200) {
-                info('MAWelcomeJob - Email Sent to customer '.$this->customer->email);
+                info('MAWelcomeJob - Email Sent to customer '.$this->customer->email.' - Invite Code - '.$customerInviteCode);
                 $customer = CustomerService::getCustomerByEmail($this->customer->email);
                 if ($customer) {
                     $customer->is_we_sent = true;
@@ -72,15 +73,8 @@ class MAWelcomeJob implements ShouldQueue
             }
         } catch (Exception $e) {
             Log::error('MAWelcomeJob - Error - Customer Email: '.$this->customer->email.' Message: '.$e->getMessage());
-
-            return $e->getMessage();
         }
 
-        try {
-        } catch (Exception $e) {
-            Log::error('MAWelcomeJob - Error - Customer SMS: '.$this->customer->mobile_no.' Message: '.$e->getMessage());
-
-            return $e->getMessage();
-        }
+        $sendSmsCustomerService->sendMAInviteSMS($this->customer, $customerInviteCode);
     }
 }

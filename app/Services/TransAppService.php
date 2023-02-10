@@ -75,7 +75,6 @@ class TransAppService extends BaseService
 
                 if ($responseExtend == 200) { // Send email/sms if customer not signup
                     dispatch(new MAWelcomeJob($customer, 'TRANSAPP', 'transapp-myalfred-we'));
-                    $this->smsInitiator($customerMobile, $customerEmail, $transaction->id);
                 }
 
                 $responseContact = SIBService::contactCreateUpdate(config('constants.SIB_MYALFRED_CONTACTS_LIST_ID'), $request->first_name, $request->last_name, $request->email, '');
@@ -117,44 +116,9 @@ class TransAppService extends BaseService
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $isCustomerExisting) {
             dispatch(new MAWelcomeJob($customer, 'TRANSAPP', 'transapp-myalfred-we'));
-            // Send SMS to customer
-            $this->smsInitiator($customerMobile, $customerEmail, $transaction->id);
         }
 
         return $approvalCode;
-    }
-
-    public function smsInitiator($customerMobile, $customerEmail, $transactionId)
-    {
-        $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
-        if ($customerMobile != null) {
-            if ($isSmsTestingEnabled == 0) {
-                $this->sendWelcomeSms($customerMobile, $customerEmail, $transactionId);
-            } else {
-                $isAfiaTester = $this->isAfiaEmail($customerEmail);
-                if ($isAfiaTester) {
-                    $this->sendWelcomeSms($customerMobile, $customerEmail, $transactionId);
-                }
-            }
-        }
-    }
-
-    public function sendWelcomeSms($customerMobile, $customerEmail, $recordId)
-    {
-        $customerMobile = str_replace([' ', '-'], '', $customerMobile);
-        if (preg_match('/^(?:971|00971|\+971|0)?(?:50|51|52|54|55|56|58)\d{7}$/', $customerMobile)) {
-            $mobileNumber = '971'.substr($customerMobile, -9);
-        } else {
-            $mobileNumber = null;
-        }
-
-        if ($mobileNumber != null) {
-            $WEGenerateInviteCodeResponse = $this->berlinService->getCustomerInviteCode();
-            $smsMessage = 'Welcome to the InsuranceMarket.ae family! Avail offers from over 100 brands on the myAlfred app. Download the app and use code '.$WEGenerateInviteCodeResponse.' to sign up! optoutMA4741';
-            $this->sendSmsCustomerService->sendSms($mobileNumber, $smsMessage, $customerEmail, $recordId);
-        } else {
-            Log::info('Invalid mobile number: '.$customerMobile.' | email: '.$customerEmail.' | record_id: '.$recordId.' | class: '.get_class());
-        }
     }
 
     public function getTransactors()
