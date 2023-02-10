@@ -2,10 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Models\Customer;
 use App\Models\MyAlFredUser;
 use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
+use App\Services\SendSmsCustomerService;
 use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,38 +23,37 @@ class MAWelcomeJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 15;
     public $backoff = 20;
-    private $email;
-    private $firstName;
-    private $lastName;
     private $source;
     private $tag;
+    private Customer $customer;
 
-    public function __construct($email, $firstName, $lastName, $source, $tag)
+    public function __construct(Customer $customer, $source, $tag)
     {
-        $this->email = $email;
-        $this->firstName = $firstName;
-        $this->lastName = $lastName;
+        $this->customer = $customer;
         $this->source = $source;
         $this->tag = $tag;
     }
 
-    public function handle(BerlinService $berlinService, SendEmailCustomerService $sendEmailCustomerService)
+    public function handle(BerlinService $berlinService, SendEmailCustomerService $sendEmailCustomerService, SendSmsCustomerService $sendSmsCustomerService)
     {
+        if (! $this->customer) {
+            info('MAWelcomeJob - Error - Empty Customer Object');
+
+            return false;
+        }
         $customerInviteCode = $berlinService->getCustomerInviteCode();
-
+        $data = (object) [
+            'customerFirstName' => $this->customer->first_name,
+            'customerLastName' => $this->customer->last_name,
+            'customerEmail' => $this->customer->email,
+            'inviteCode' => $customerInviteCode,
+        ];
         try {
-            $emailData = (object) [
-                'customerFirstName' => $this->firstName,
-                'customerLastName' => $this->lastName,
-                'customerEmail' => $this->email,
-                'inviteCode' => $customerInviteCode,
-            ];
-
-            $statusCode = $sendEmailCustomerService->sendMyAlfredWelcomeEmail($emailData, $this->tag, $this->source);
+            $statusCode = $sendEmailCustomerService->sendMyAlfredWelcomeEmail($data, $this->tag, $this->source);
 
             if ($statusCode == 200) {
-                info('MAWelcomeEmail Job - Email Sent to customer '.$this->email);
-                $customer = CustomerService::getCustomerByEmail($this->email);
+                info('MAWelcomeJob - Email Sent to customer '.$this->customer->email.' - Invite Code - '.$customerInviteCode);
+                $customer = CustomerService::getCustomerByEmail($this->customer->email);
                 if ($customer) {
                     $customer->is_we_sent = true;
                     $customer->save();
@@ -68,12 +69,12 @@ class MAWelcomeJob implements ShouldQueue
                     }
                 }
             } else {
-                info('MAWelcomeEmail Job - Email not sent to customer '.$this->email.' getStatusCode: '.$statusCode);
+                info('MAWelcomeJob - Email not sent to customer '.$this->customer->email.' getStatusCode: '.$statusCode);
             }
         } catch (Exception $e) {
-            Log::error('MAWelcomeEmail Job - Error - Customer Email: '.$this->email.' Message: '.$e->getMessage());
-
-            return $e->getMessage();
+            Log::error('MAWelcomeJob - Error - Customer Email: '.$this->customer->email.' Message: '.$e->getMessage());
         }
+
+        $sendSmsCustomerService->sendMAInviteSMS($this->customer, $customerInviteCode);
     }
 }
