@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -12,19 +11,20 @@ class Activities extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
 
-    protected $table = 'activitìes';
+    protected $table = 'activities';
 
-    public function getCreatedAtAttribute($table)
+    public function getCreatedAtAttribute($date)
     {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 
-    public function getUpdatedAtAttribute($table)
+    public function getUpdatedAtAttribute($date)
     {
-        $date_time_format = Config::get('constants.datetime_format');
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
+    }
 
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+    public function getDueDateAttribute($date)
+    {
+        return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
     }
 }

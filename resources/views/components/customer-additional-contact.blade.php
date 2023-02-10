@@ -1,9 +1,15 @@
+@php
+use App\Enums\RolesEnum;
+use App\Enums\DatabaseColumnsString;
+@endphp
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
             <div class="x_title">
                 <h2>Customer Additional Contacts</h2>
-                <button id="additional-contact-add-btn" class="btn btn-warning btn-sm" style="float:right;">Add Additional Contact</button>
+                @if(! auth()->user()->hasRole(RolesEnum::PA))
+                    <button id="additional-contact-add-btn" class="btn btn-warning btn-sm" style="float:right;">Add Additional Contact</button>
+                @endif
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -22,20 +28,31 @@
                                 @continue
                             @endif
                             <tr>
-                                <td>{{ ucwords(str_replace("_", " ", $customerAdditionalContact->key)) }}</td>
+                                <td>{{ ucwords(str_replace("_", " ", $customerAdditionalContact->key)).'.' }}</td>
                                 <td>{{ $customerAdditionalContact->value }}</td>
                                 <td>{{ $customerAdditionalContact->created_at }}</td>
                                 <td style="float:right;">
-                                    @if($customerAdditionalContact->key == 'email')
-                                    <button class="btn btn-success btn-sm additional-email-make-primary-btn" 
-                                            data-record-id="{{ $customerAdditionalContact->id }}" 
-                                            data-quote-id="{{ $record->id }}" 
-                                            data-key="{{ $customerAdditionalContact->key }}" 
-                                            data-value="{{ $customerAdditionalContact->value }}" 
-                                            data-quote-type="{{ $quoteType }}" 
-                                            >Make Primary</button>
+                                    @if(! auth()->user()->hasRole(RolesEnum::PA))
+                                        @if($customerAdditionalContact->key == DatabaseColumnsString::EMAIL)
+                                            <button class="btn btn-success btn-sm additional-email-make-primary-btn" 
+                                                data-record-id="{{ $customerAdditionalContact->id }}" 
+                                                data-quote-id="{{ $record->id }}" 
+                                                data-key="{{ $customerAdditionalContact->key }}" 
+                                                data-value="{{ $customerAdditionalContact->value }}" 
+                                                data-quote-type="{{ $quoteType }}">Make Primary</button>
+                                        @else
+                                            <button class="btn btn-success btn-sm additional-mobile-no-make-primary-btn" 
+                                                data-quote-id="{{ $record->id }}" 
+                                                data-key="{{ $customerAdditionalContact->key }}" 
+                                                data-value="{{ $customerAdditionalContact->value }}" 
+                                                data-quote-type="{{ $quoteType }}" 
+                                                data-quote-primary-mobile-no="{{ $record->mobile_no }}" 
+                                                data-quote-customer-id="{{ $record->customer_id }}">Make Primary</button>
+                                        @endif
+                                        @isset($customerAdditionalContact->id)
+                                            <button class="btn btn-danger btn-sm additional-contact-delete-btn" data-customer-additional-contact-id="{{ $customerAdditionalContact->id }}">Delete</button>
+                                        @endisset    
                                     @endif
-                                    <button class="btn btn-danger btn-sm additional-contact-delete-btn" data-customer-additional-contact-id="{{ $customerAdditionalContact->id }}">Delete</button>
                                 </td>
                             </tr>
                         @endforeach
