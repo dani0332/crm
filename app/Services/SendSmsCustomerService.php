@@ -36,6 +36,8 @@ class SendSmsCustomerService extends BaseService
 
         if (! $mobileNumber) {
             info('Invalid mobile number: '.$customerMobile.' | email: '.$customer->email.' | class: '.get_class());
+
+            return false;
         }
 
         $smsMessage = 'Welcome to the InsuranceMarket.ae family! Avail offers from over 100 brands on the myAlfred app. Download the app and use code '.$inviteCode.' to sign up! optoutMA4741';
