@@ -244,6 +244,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('travel', TravelController::class)->only([
             'index'
         ]);
+        Route::get('travel-cards', [TravelController::class, 'cardsView']);
     });
 
     Route::group(['prefix' => 'generic'], function () {

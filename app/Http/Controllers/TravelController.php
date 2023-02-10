@@ -10,7 +10,7 @@ use App\Enums\quoteTypeCode;
 use Illuminate\Http\Request;
 use Inertia\ResponseFactory;
 use App\Services\TravelQuoteService;
-use Yajra\DataTables\Facades\DataTables;
+
 
 class TravelController extends Controller
 {
@@ -44,6 +44,43 @@ class TravelController extends Controller
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
             'dropdownSource' => $dropdownSource,
+        ]);
+    }
+
+
+    /**
+     * @param Request $request
+     *
+     * @return ResponseFactory|Response
+     * @throws RuntimeException
+     */
+    public function cardsView(Request $request)
+    {
+        $quotes = [];
+
+        $quotes[] = [
+            'id' => 8,
+            'title' => 'New Lead',
+            'data' => getDataAgainstStatus('Travel', 8),
+        ];
+        $quotes[] = [
+            'id' => 2,
+            'title' => 'Quoted',
+            'data' => getDataAgainstStatus('Travel', 2),
+        ];
+        $quotes[] = [
+            'id' => 31,
+            'title' => 'Qualified',
+            'data' => getDataAgainstStatus('Travel', 31),
+        ];
+        $quotes[] = [
+            'id' => 28,
+            'title' => 'Payment Pending',
+            'data' => getDataAgainstStatus('Travel', 28),
+        ];
+
+        return inertia('TravelQuote/Cards', [
+            'quotes' => $quotes,
         ]);
     }
 }
