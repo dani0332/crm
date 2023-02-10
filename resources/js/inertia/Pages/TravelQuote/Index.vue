@@ -13,14 +13,14 @@ defineProps({
 const rules = {
   isRequired: v => !!v || 'This field is required',
   created_at_end: v => {
-    if (filters.created_at) {
-      return !!v || 'This field is required';
+    if (filters.created_at && !v) {
+      return 'This field is required';
     }
     return true;
   },
   created_at: v => {
-    if (filters.created_at_end) {
-      return !!v || 'This field is required';
+    if (filters.created_at_end && !v) {
+      return 'This field is required';
     }
     return true;
   },
@@ -106,20 +106,17 @@ function filterQuotes(isValid) {
       delete filters[key];
     }
   }
-  if (filters.created_at) {
-    filters.created_at = filters.created_at.split('-').reverse().join('-');
-  }
-  if (filters.created_at_end) {
-    filters.created_at_end = filters.created_at_end
-      .split('-')
-      .reverse()
-      .join('-');
-  }
 
   router.visit('/quotes/travel', {
     method: 'get',
     data: {
-      filters,
+      ...filters,
+      created_at: filters.created_at
+        ? filters.created_at.split('-').reverse().join('-')
+        : '',
+      created_at_end: filters.created_at_end
+        ? filters.created_at_end.split('-').reverse().join('-')
+        : '',
     },
     preserveState: true,
     preserveScroll: true,
@@ -137,7 +134,7 @@ function resetFilters() {
   for (const key in filters) {
     filters[key] = '';
   }
-  filterQuotes();
+  filterQuotes(true);
 }
 
 function setQueryFilters() {
@@ -146,7 +143,10 @@ function setQueryFilters() {
     query = query.split('&');
     query.forEach(item => {
       const [key, value] = item.split('=');
-      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
+
+      if (key === 'created_at' || key === 'created_at_end') {
+        filters[key] = value.split('-').reverse().join('-');
+      } else if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
         let id = key.slice(0, -2);
         if (filters[id]) {
           filters[id].push(parseInt(value));
@@ -156,7 +156,6 @@ function setQueryFilters() {
       }
     });
   }
-  console.log(filters);
 }
 
 onMounted(() => {
@@ -223,7 +222,7 @@ onMounted(() => {
           placeholder="Search by Mobile Number"
         />
         <x-input
-          :rules="[rules.created_at_end]"
+          :rules="[rules.created_at]"
           v-model="filters.created_at"
           type="date"
           name="created_at"
@@ -231,7 +230,7 @@ onMounted(() => {
           class="w-full"
         />
         <x-input
-          :rules="[rules.created_at]"
+          :rules="[rules.created_at_end]"
           v-model="filters.created_at_end"
           type="date"
           name="created_at_end"
