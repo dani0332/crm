@@ -14,6 +14,7 @@ use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
 use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
 
 class AdvisorDistributionReportTable extends DataTableComponent
 {
@@ -60,7 +61,6 @@ class AdvisorDistributionReportTable extends DataTableComponent
             SELECT * FROM teams_cte ORDER BY depth;"))
             ->keyBy('id')
             ->map(fn ($team) => $team->name)
-            ->prepend('All', '')
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
@@ -141,6 +141,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw('SUM(car_quote_request.cost_per_lead) as total_lead_cost'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->groupBy('users.email')
             ->orderBy('users.name');
@@ -170,13 +172,17 @@ class AdvisorDistributionReportTable extends DataTableComponent
         if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             array_push(
                 $filters,
-                SelectFilter::make('Teams')
-                    ->options($this->teams)
+                MultiSelectFilter::make('Teams')
+                ->options($this->teams)->config([
+                    'placeholder' => 'SELECT ALL TEAMS',
+                ])
                     ->filter(function (Builder $builder, $value) {
                         $builder->where('teams.id', $value);
                     }),
-                SelectFilter::make('Tiers')
-                    ->options($this->tiers)
+                    MultiSelectFilter::make('Tiers')
+                    ->options($this->tiers)->config([
+                        'placeholder' => 'SELECT ALL TIERS',
+                    ])
                     ->filter(function (Builder $builder, $value) {
                         $builder->where('car_quote_request.tier_id', $value);
                     })

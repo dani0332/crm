@@ -114,8 +114,8 @@ class DashboardController extends Controller
         ->select(
             'quote_batches.id',
             'quote_batches.name',
-            'quote_batches.start_date',
-            'quote_batches.end_date',
+            DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
+            DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
             DB::raw('count(car_quote_request.id) as total_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
@@ -194,8 +194,8 @@ class DashboardController extends Controller
         $records = QuoteBatches::query()
         ->select(
             'quote_batches.name',
-            'quote_batches.start_date',
-            'quote_batches.end_date',
+            DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
+            DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
             DB::raw('count(car_quote_request.id) as total_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
@@ -223,6 +223,16 @@ class DashboardController extends Controller
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
 
+        if (isset($request->excludeFilter)) {
+            if ($request->excludeFilter == 'no') {
+                $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::EQUAL_SEARCH);
+            }
+            if ($request->excludeFilter == 'yes') {
+                $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::NOT_EQUAL);
+            }
+        }
+
+
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
@@ -248,7 +258,7 @@ class DashboardController extends Controller
     public function renderComprehensiveDashboard(Request $request)
     {
         $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
-        $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->get();
+        $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('is_active', 1)->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
