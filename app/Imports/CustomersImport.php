@@ -9,10 +9,9 @@ use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\OnEachRow;
-use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Row;
 
-class CustomersImport implements OnEachRow, WithStartRow
+class CustomersImport implements OnEachRow
 {
     public $myalfredExpiryDate;
     public $CDBId;
@@ -33,6 +32,10 @@ class CustomersImport implements OnEachRow, WithStartRow
      */
     public function onRow(Row $row)
     {
+        if ($row->getIndex() == 1) {
+            return null;
+        }
+
         $row = $row->toArray();
 
         $email = $row[1];
@@ -90,10 +93,5 @@ class CustomersImport implements OnEachRow, WithStartRow
                 Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , CDB Id ->'.$this->CDBId);
             }
         }
-    }
-
-    public function startRow(): int
-    {
-        return 2;
     }
 }
