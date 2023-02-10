@@ -251,6 +251,15 @@ class AdvisorConversionReportTable extends DataTableComponent
 
         ];
         if (! auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+            array_push($filters, SelectFilter::make('Exclude Created Leads')
+            ->options([
+                'no' => 'No',
+                'yes' => 'Yes',
+            ])->filter(function (Builder $builder, string $value) {
+                if($value == 'yes'){
+                    $builder->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
+                }               
+            }));
             array_push($filters, MultiSelectFilter::make('Lead Source')
             ->options($this->leadSources)->filter(function (Builder $builder, $value) {
                 $builder->whereIn('car_quote_request.source', $value);
