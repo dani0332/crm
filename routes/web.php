@@ -246,6 +246,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'personal-quotes'], function () {
         Route::resource('bike', \App\Http\Controllers\V2\BikeQuoteController::class);
+        Route::post('bike/documents', [BikeQuoteController::class, 'uploadDocument']);
     });
 
     Route::group(['prefix' => 'generic'], function () {

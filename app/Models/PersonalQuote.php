@@ -135,4 +135,9 @@ class PersonalQuote extends Model
         return $query->where('quote_type_id', $quoteTypeId);
     }
 
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
 }
