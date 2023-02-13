@@ -281,7 +281,7 @@ class SendEmailCustomerService extends BaseService
                 $emailTemplateId = (int) config('constants.MA_POSTMARK_TEMPLATE');
             }
 
-            info('sendWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
+            info('sendMyAlfredWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
             $headers = [
