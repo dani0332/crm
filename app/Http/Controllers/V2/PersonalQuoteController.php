@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
+use App\Http\Requests\PersonalQuotePaymentRequest;
 use App\Http\Requests\PersonalQuoteStatusRequest;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
@@ -32,6 +33,18 @@ class PersonalQuoteController extends Controller
     {
         PersonalQuoteRepository::updateStatus($quoteType, $quoteId, $request->validated());
         return back()->with('message' , 'Status updated successfully');
+    }
+
+    
+    public function uploadDocument($quoteType, $quoteId)
+    {
+        PersonalQuoteRepository::uploadDocument(request()->file('file'), request()->all());
+        return back()->with('message' , 'Document uploaded successfully');
+    }
+
+    public function createPayment(PersonalQuotePaymentRequest $request)
+    {
+        PersonalQuoteRepository::createPayment($request->validated());
     }
 
 }

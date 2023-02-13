@@ -74,11 +74,6 @@ class BikeQuoteController extends Controller
         );
     }
 
-    public function uploadDocument()
-    {
-        BikeQuoteRepository::uploadDocument(request()->file('file'), request()->all());
-    }
-
     /**
      * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory

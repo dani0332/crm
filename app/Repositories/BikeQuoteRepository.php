@@ -102,36 +102,6 @@ class BikeQuoteRepository extends BaseRepository
         return $this->byQuoteTypeCode(QuoteTypes::BIKE)->filter()->simplePaginate();
     }
 
-    public function fetchUploadDocument($file, $data)
-    {
-        $documentType = DocumentTypeRepository::where('code', $data['document_type_code'])->first();
-        $quote = $this->whereId($data['quote_id'])->first();
 
-        $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
-        $fileMimeType = $file->getClientMimeType();
-
-        //upload file to azure
-        $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
-        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
-
-        //generate unique uuid
-        $docUuid = uniqid();
-        while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
-            $docUuid = uniqid().rand(1, 100);
-        }
-
-        return $quote->documents()->create([
-            'doc_name' => $docName,
-            'original_name' => $originalName,
-            'doc_url' => $filePathAzure,
-            'doc_mime_type' => $fileMimeType,
-            'document_type_code' => $documentType->code,
-            'document_type_text' => $documentType->text,
-            'doc_uuid' => $docUuid,
-            'member_detail_id' => $data['member_detail_id'] ?? null,
-            'created_by_id' => auth()->id(),
-        ]);
-    }
 
 }
