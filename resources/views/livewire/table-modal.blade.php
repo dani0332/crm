@@ -15,7 +15,9 @@
             @if ($show)
                 <h2 class="text-lg font-semibold mb-4 text-center pb-2 border-b">Advisor Leads</h2>
                 <div>
-                    @livewire('advisor-assigned-car-quotes-table', ['advisorId' => $this->advisorId, 'leadType' => $this->leadType, 'startDate' => $startDate, 'endDate' => $endDate, 'filters' => $filters])
+                    @livewire('advisor-assigned-car-quotes-table', ['advisorId' => $this->advisorId, 'leadType' => $this->leadType, 'startDate' => $startDate, 'endDate' => $endDate,
+                    'excludeCreatedLeadsFilter' => $excludeCreatedLeadsFilter, 'createdAtFilter' => $createdAtFilter, 'ecommerceFilter' => $ecommerceFilter, 'batchNumberFilter' => $batchNumberFilter, 'tiersFilter' => $tiersFilter
+                    , 'leadSourceFilter' => $leadSourceFilter, 'teamsFilter' => $teamsFilter,'advisorsFilter' => $advisorsFilter])
                 </div>
             @endif
 

@@ -12,6 +12,7 @@ use DB;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
+use Carbon\Carbon;
 
 class AdvisorAssignedCarQuotesTable extends DataTableComponent
 {
@@ -21,7 +22,14 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
     public $leadType;
     public $startDate;
     public $endDate;
-    public $filters;
+    public $createdAtFilter;
+    public $ecommerceFilter;
+    public $excludeCreatedLeadsFilter;
+    public $batchNumberFilter;
+    public $tiersFilter;
+    public $leadSourceFilter;
+    public $teamsFilter;
+    public $advisorsFilter;
     protected string $emptyMessage = 'No data available';
 
     public function configure(): void
@@ -47,8 +55,11 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         info('leadType : '.$this->leadType);
         info('start date : '.$this->startDate);
         info('end date : '.$this->endDate);
-        info('filters are : '. json_encode($this->filters));
+       
+        info('ecommerceFilter are : '. $this->excludeCreatedLeadsFilter );
+
         $batch = QuoteBatches::where('start_date', $this->startDate)->where('end_date', $this->endDate)->first();
+
         $query = CarQuote::query()
         ->select(
             DB::raw("CONCAT('first_name', ' ', 'last_name') as fullName"),
@@ -58,9 +69,27 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         ->whereNull('car_quote_request.renewal_import_code')
         ->where('car_quote_request.advisor_id', $this->advisorId)
         ->orderBy('car_quote_request.created_at', 'desc');
+
         if ($batch != null) {
             info('batch : '.json_encode($batch->id));
             $query->where('quote_batch_id', $batch->id);
+        }
+        if(isset($this->createdAtFilter)){
+            info('createdAtFilter are : '. $this->createdAtFilter);
+            $startDate = Carbon::parse(explode('|', $this->createdAtFilter)[0]);
+            $endDate =  Carbon::parse(explode('|', $this->createdAtFilter)[1]);
+            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
+        }
+        if(isset($this->ecommerceFilter)){
+            info('ecommerceFilter are : '. $this->ecommerceFilter );
+            $query->where('car_quote_request.is_ecommerce', $this->ecommerceFilter == 'yes' ? 1 : 0);
+        }
+        if(isset($this->excludeCreatedLeadsFilter)) {
+            info('excludeCreatedLeadsFilter are : '. $this->excludeCreatedLeadsFilter);
+            if($this->excludeCreatedLeadsFilter == 'yes'){
+                info('inside excludeCreatedLeadsFilter');
+                $query->where('car_quote_request.source', '!=', 'IMCRM');
+            }
         }
         if ($this->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
             info('inside lead type new');
