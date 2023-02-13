@@ -4,7 +4,7 @@ import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 import { useDateFormat, useClipboard } from '@vueuse/core';
 
 import { useNotifications } from '@indielayer/ui';
-import DocumentUploader from '../PersonalQuote/Partials/DocumentUploader';
+import QuoteDocuments from "../PersonalQuote/Partials/QuoteDocuments";
 
 defineProps({
     quote: Object,
@@ -35,72 +35,6 @@ const historyDataTable = [
     { text: 'Notes', value: 'NewNotes' },
     { text: 'Lead Status', value: 'NewStatus' },
 ];
-
-
-const quoteDocumentsTable = reactive({
-    isLoading: false,
-    columns: [
-        {
-            text: 'Document Type',
-            value: 'document_type_text',
-        },
-        {
-            text: 'Document Name',
-            value: 'original_name',
-        },
-        {
-            text: 'Created At',
-            value: 'created_at',
-        },
-        {
-            text: 'Created By',
-            value: 'created_by_name',
-        },
-        {
-            text: 'Action',
-            value: 'action',
-        },
-    ],
-});
-
-const confirmDeleteData = reactive({
-    docs: null,
-    member: null,
-    activity: null,
-    contact: null,
-});
-
-const onDocDelete = name => {
-    modals.docConfirm = true;
-    confirmDeleteData.docs = name;
-};
-
-const confirmDeleteDoc = () => {
-    quoteDocumentsTable.isLoading = true;
-    router.post(
-        `/documents/delete`,
-        {
-            docName: confirmDeleteData.docs,
-            quoteId: page.props.quote.id,
-        },
-        {
-            preserveScroll: true,
-            onFinish: () => {
-                modals.docConfirm = false;
-                quoteDocumentsTable.isLoading = false;
-                notification.error({
-                    title: 'File Deleted',
-                    position: 'top',
-                });
-            },
-        },
-    );
-};
-
-const modals = reactive({
-    doc: false,
-    docConfirm: false,
-});
 
 </script>
 
@@ -300,89 +234,12 @@ const modals = reactive({
             />
         </div>
 
-
-
-        <!-- quote documents start       -->
-        <div class="p-4 rounded shadow mb-6 bg-white">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold text-primary-800 text-lg">
-                    Documents
-                    <x-tag size="sm">{{ quote.documents.length || 0 }}</x-tag>
-                </h3>
-                <div class="flex gap-2">
-                    <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
-                        Upload Documents
-                    </x-button>
-                </div>
-            </div>
-
-            <x-modal v-model="modals.doc" size="xl" show-close backdrop>
-                <template #header> Upload Documents </template>
-                <DocumentUploader
-                    :document-types="documentTypes"
-                    :quote-documents="quote.documents || []"
-                    :storageUrl="storageUrl"
-                />
-            </x-modal>
-
-            <x-modal v-model="modals.docConfirm" show-close backdrop>
-                <template #header> Delete Document </template>
-                <p>Are you sure you want to delete this document?</p>
-                <template #actions>
-                    <div class="text-right space-x-4">
-                        <x-button
-                            size="sm"
-                            ghost
-                            @click.prevent="modals.docConfirm = false"
-                        >
-                            Cancel
-                        </x-button>
-                        <x-button
-                            size="sm"
-                            color="error"
-                            @click.prevent="confirmDeleteDoc"
-                            :loading="quoteDocumentsTable.isLoading"
-                        >
-                            Delete
-                        </x-button>
-                    </div>
-                </template>
-            </x-modal>
-
-            <DataTable
-                table-class-name="compact"
-                :headers="quoteDocumentsTable.columns"
-                :items="quote.documents || []"
-                border-cell
-                hide-rows-per-page
-                :rows-per-page="15"
-                :hide-footer="quote.documents.length < 15"
-            >
-                <template #item-original_name="item">
-                    <a
-                        :href="storageUrl + item.doc_url"
-                        target="_blank"
-                        class="text-primary-600"
-                    >
-                        {{ item.original_name }}
-                    </a>
-                </template>
-                <template #item-action="{ doc_name }">
-                    <div>
-                        <x-button
-                            size="xs"
-                            color="error"
-                            outlined
-                            @click.prevent="onDocDelete(doc_name)"
-                        >
-                            Delete
-                        </x-button>
-                    </div>
-                </template>
-            </DataTable>
-
-            <!-- quote documents end       -->
-        </div>
+        <QuoteDocuments
+            :document-types="documentTypes"
+            :quote-documents="quote.documents || []"
+            :storageUrl="storageUrl"
+            :quote="quote"
+        />
 
 </div>
 

@@ -1420,15 +1420,15 @@ html.dark{
   margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(1rem * var(--tw-space-y-reverse));
 }
-.space-x-4 > :not([hidden]) ~ :not([hidden]){
-  --tw-space-x-reverse: 0;
-  margin-right: calc(1rem * var(--tw-space-x-reverse));
-  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
-}
 .space-x-3 > :not([hidden]) ~ :not([hidden]){
   --tw-space-x-reverse: 0;
   margin-right: calc(0.75rem * var(--tw-space-x-reverse));
   margin-left: calc(0.75rem * calc(1 - var(--tw-space-x-reverse)));
+}
+.space-x-4 > :not([hidden]) ~ :not([hidden]){
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1rem * var(--tw-space-x-reverse));
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
 }
 .space-y-2 > :not([hidden]) ~ :not([hidden]){
   --tw-space-y-reverse: 0;
@@ -2314,10 +2314,6 @@ html.dark{
   --tw-text-opacity: 1;
   color: rgb(19 85 122 / var(--tw-text-opacity));
 }
-.text-primary-600{
-  --tw-text-opacity: 1;
-  color: rgb(28 124 178 / var(--tw-text-opacity));
-}
 .text-secondary-600{
   --tw-text-opacity: 1;
   color: rgb(242 89 0 / var(--tw-text-opacity));
@@ -2325,6 +2321,10 @@ html.dark{
 .text-primary-400{
   --tw-text-opacity: 1;
   color: rgb(85 148 196 / var(--tw-text-opacity));
+}
+.text-primary-600{
+  --tw-text-opacity: 1;
+  color: rgb(28 124 178 / var(--tw-text-opacity));
 }
 .text-gray-300{
   --tw-text-opacity: 1;
