@@ -2,13 +2,45 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use Exception;
-use Illuminate\Support\Facades\Log;
 
 class SendSmsCustomerService extends BaseService
 {
-    public function sendSms($customerMobile, $smsText, $customerEmail, $recordId)
+    private $applicationStorageService;
+
+    public function __construct(ApplicationStorageService $applicationStorageService)
     {
+        $this->applicationStorageService = $applicationStorageService;
+    }
+
+    public function sendMAInviteSMS(Customer $customer, $inviteCode)
+    {
+        if (! $customer->mobile_no) {
+            info('sendMAInviteSMS - Error - No Mobile Number for Customer');
+
+            return false;
+        }
+        $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
+
+        if ($isSmsTestingEnabled && ! $this->isAfiaEmail($customer->email)) {
+            return false;
+        }
+
+        $customerMobile = str_replace([' ', '-'], '', $customer->mobile_no);
+        if (preg_match('/^(?:971|00971|\+971|0)?(?:50|51|52|54|55|56|58)\d{7}$/', $customerMobile)) {
+            $mobileNumber = '971'.substr($customerMobile, -9);
+        } else {
+            $mobileNumber = null;
+        }
+
+        if (! $mobileNumber) {
+            info('Invalid mobile number: '.$customerMobile.' | email: '.$customer->email.' | class: '.get_class());
+
+            return false;
+        }
+
+        $smsMessage = 'Welcome to the InsuranceMarket.ae family! Avail offers from over 100 brands on the myAlfred app. Download the app and use code '.$inviteCode.' to sign up! optoutMA4741';
         try {
             $smsEndpoint = config('constants.SMS_ENDPOINT');
             $smsSender = config('constants.SMS_SENDER_ID');
@@ -21,17 +53,16 @@ class SendSmsCustomerService extends BaseService
                 'password' => $smsPassword,
                 'senderid' => $smsSender,
                 'to' => $customerMobile,
-                'text' => $smsText,
+                'text' => $smsMessage,
                 'type' => 'text',
             ]]);
 
             $responseCode = $clientRequest->getStatusCode();
 
-            Log::info('Response: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customerEmail.' | record_id '.$recordId.' | class: '.get_class());
+            info('sendMAInviteSMS - Sent - Response: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email.' | Invite Code: '.$inviteCode);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            info($responseCode);
-            Log::info('Error sending sms - info: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customerEmail.' | record_id: '.$recordId.' | class: '.get_class());
+            info('sendMAInviteSMS - Error - Response Code: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email.' | Invite Code: '.$inviteCode.' | class: '.get_class());
         }
 
         return $responseCode;
@@ -70,9 +101,22 @@ class SendSmsCustomerService extends BaseService
             $response = $response->short_url;
         } catch (Exception $ex) {
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
-            Log::info($response);
+            info($response);
         }
 
         return $response;
+    }
+
+    private function isAfiaEmail($email)
+    {
+        $isAfiaEmail = false;
+
+        $acceptedDomains = ['afia.ae', 'insurancemarket.ae'];
+
+        if (in_array(substr($email, strrpos($email, '@') + 1), $acceptedDomains)) {
+            $isAfiaEmail = true;
+        }
+
+        return $isAfiaEmail;
     }
 }
