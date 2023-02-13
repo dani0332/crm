@@ -91,6 +91,9 @@ const docForm = useForm({
 });
 
 const uploadFile = (doc,  files) => {
+
+    let url = '/personal-quotes/bike/'+docForm.quote_id+'/documents';
+
     if (files.length == 0) return;
     isUploading.value = true;
     docForm
@@ -101,7 +104,7 @@ const uploadFile = (doc,  files) => {
             folder_path: doc.folder_path,
             file: files[0].file,
         }))
-        .post('/personal-quotes/bike/documents', {
+        .post(url, {
             preserveScroll: true,
             preserveState: true,
             only: ['quoteDocuments'],

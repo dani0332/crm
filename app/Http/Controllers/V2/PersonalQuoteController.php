@@ -35,7 +35,7 @@ class PersonalQuoteController extends Controller
         return back()->with('message' , 'Status updated successfully');
     }
 
-    
+
     public function uploadDocument($quoteType, $quoteId)
     {
         PersonalQuoteRepository::uploadDocument(request()->file('file'), request()->all());

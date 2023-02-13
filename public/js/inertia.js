@@ -3557,6 +3557,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     });
 
     var uploadFile = function uploadFile(doc, files) {
+      var url = '/personal-quotes/bike/' + docForm.quote_id + '/documents';
       if (files.length == 0) return;
       isUploading.value = true;
       docForm.transform(function (data) {
@@ -3566,7 +3567,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           folder_path: doc.folder_path,
           file: files[0].file
         });
-      }).post('/personal-quotes/bike/documents', {
+      }).post(url, {
         preserveScroll: true,
         preserveState: true,
         only: ['quoteDocuments'],

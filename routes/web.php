@@ -247,8 +247,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'personal-quotes'], function () {
         Route::patch('{quoteType}/{quoteId}/update-status', [PersonalQuoteController::class, 'updateStatus']);
+        Route::post('{quoteType}/{quoteId}/documents', [PersonalQuoteController::class, 'uploadDocument']);
         Route::resource('bike', BikeQuoteController::class);
-        Route::post('bike/documents', [BikeQuoteController::class, 'uploadDocument']);
     });
 
     Route::group(['prefix' => 'generic'], function () {
