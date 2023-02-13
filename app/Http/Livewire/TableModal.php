@@ -11,6 +11,7 @@ class TableModal extends Component
     public $leadType;
     public $startDate;
     public $endDate;
+    public $filters;
     protected $listeners = [
         'show' => 'show',
     ];
