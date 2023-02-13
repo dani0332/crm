@@ -223,6 +223,8 @@ class AdvisorConversionReportTable extends DataTableComponent
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+        ->join('user_team', 'user_team.user_id', 'users.id')
+        ->join('teams', 'teams.id', 'user_team.team_id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->whereIn('car_quote_request.advisor_id', $userIds)
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')

@@ -365,15 +365,11 @@ class LeadAllocationService extends BaseService
             if ($dateTimeNow >= $timeForStart && $carLeadAllocationSwitch == 0) {
                 $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
             }
-            if ($dateTimeNow >= $timeForEnd && $carLeadAllocationSwitch == 1) {
+            if ($dateTimeNow >= $timeForEnd && $carLeadAllocationSwitch == 1 || ($currentDay == DaysNameEnum::SATURDAY && $dateTimeNow >= $saturdayResetTime) || $currentDay != DaysNameEnum::SUNDAY && $dateTimeNow >= $normalResetTime) {
                 info('setMaxCapAndAllocationStatus - going to shutdown the car lead allocation switch');
                 $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
             }
-            if ($currentDay == DaysNameEnum::SATURDAY && $dateTimeNow >= $saturdayResetTime) {
-                $this->updateUserMaxCapacity();
-            }
-            if ($currentDay != DaysNameEnum::SUNDAY && $dateTimeNow >= $normalResetTime) {
-                info('setMaxCapAndAllocationStatus - going to update normal reset cap');
+            if ($dateTimeNow >= '23:55') {
                 $this->updateUserMaxCapacity();
             }
             DB::commit();

@@ -51,12 +51,6 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        info('advisorId : '.$this->advisorId);
-        info('leadType : '.$this->leadType);
-        info('start date : '.$this->startDate);
-        info('end date : '.$this->endDate);
-       
-        info('ecommerceFilter are : '. $this->excludeCreatedLeadsFilter );
 
         $batch = QuoteBatches::where('start_date', $this->startDate)->where('end_date', $this->endDate)->first();
 
@@ -66,6 +60,8 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+        ->join('user_team', 'user_team.user_id', 'users.id')
+        ->join('teams', 'teams.id', 'user_team.team_id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->where('car_quote_request.advisor_id', $this->advisorId)
         ->orderBy('car_quote_request.created_at', 'desc');
@@ -74,22 +70,38 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             info('batch : '.json_encode($batch->id));
             $query->where('quote_batch_id', $batch->id);
         }
-        if(isset($this->createdAtFilter)){
+        if($this->createdAtFilter != ''){
             info('createdAtFilter are : '. $this->createdAtFilter);
             $startDate = Carbon::parse(explode('|', $this->createdAtFilter)[0]);
             $endDate =  Carbon::parse(explode('|', $this->createdAtFilter)[1]);
             $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
         }
-        if(isset($this->ecommerceFilter)){
+        if($this->ecommerceFilter != ''){
             info('ecommerceFilter are : '. $this->ecommerceFilter );
             $query->where('car_quote_request.is_ecommerce', $this->ecommerceFilter == 'yes' ? 1 : 0);
         }
-        if(isset($this->excludeCreatedLeadsFilter)) {
+        if($this->excludeCreatedLeadsFilter != '') {
             info('excludeCreatedLeadsFilter are : '. $this->excludeCreatedLeadsFilter);
             if($this->excludeCreatedLeadsFilter == 'yes'){
                 info('inside excludeCreatedLeadsFilter');
                 $query->where('car_quote_request.source', '!=', 'IMCRM');
             }
+        }
+        if($this->tiersFilter != ''){
+            info('tiersFilter are : '. $this->tiersFilter );
+            $query->whereIn('car_quote_request.tier_is', $this->tiersFilter);
+        }
+        if($this->leadSourceFilter != ''){
+            info('leadSourceFilter are : '. $this->leadSourceFilter );
+            $query->whereIn('car_quote_request.source', $this->leadSourceFilter);
+        }
+        if($this->teamsFilter != ''){
+            info('teamsFilter are : '. $this->teamsFilter );
+            $query->whereIn('teams.id', $this->teamsFilter);
+        }
+        if($this->advisorsFilter != ''){
+            info('advisorsFilter are : '. $this->advisorsFilter );
+            $query->whereIn('car_quote_request.advisor_id', $this->advisorsFilter);
         }
         if ($this->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
             info('inside lead type new');
