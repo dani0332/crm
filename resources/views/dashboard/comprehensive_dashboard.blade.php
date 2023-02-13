@@ -67,10 +67,35 @@
     }
     $(function() {
         createComprehensiveConversionChart(comprehensiveDashboardStats);
-        $('#tier-filter, #userFilter, #team-filter','#excludeManualFilter').on('change', function(e) {
+        $('#tier-filter, #userFilter, #team-filter , #excludeManualFilter').on('change', function(e) {
+            debugger;
             var tierFilterValue = $('#tier-filter').val();
             var userFilterValue = $('#userFilter option:selected').val();
             var teamFilterValue = $('#team-filter').val();
+            if(e.target.id == 'team-filter') {
+                $.ajax({
+                    url: "/get-users-by-team",
+                    type: "post",
+                    data: {'team_filter' : teamFilterValue } ,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (users) {
+                        if (users) {
+                            $('#userFilter').empty();
+                            users.forEach(user => {
+                                $('#userFilter').append($('<option>', { 
+                                    value: user.id,
+                                    text : user.name 
+                                }));
+                            });
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.log(textStatus, errorThrown);
+                    }
+                });
+            }
             var excludeFilterValue = $('#excludeManualFilter option:selected').val();
             comprehensiveDashboardStatChart.showLoading();
             $.ajax({

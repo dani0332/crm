@@ -21,6 +21,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
     public $leadType;
     public $startDate;
     public $endDate;
+    public $filters;
     protected string $emptyMessage = 'No data available';
 
     public function configure(): void
@@ -46,6 +47,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         info('leadType : '.$this->leadType);
         info('start date : '.$this->startDate);
         info('end date : '.$this->endDate);
+        info('filters are : '. json_encode($this->filters));
         $batch = QuoteBatches::where('start_date', $this->startDate)->where('end_date', $this->endDate)->first();
         $query = CarQuote::query()
         ->select(

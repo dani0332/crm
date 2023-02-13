@@ -188,9 +188,9 @@ class DashboardController extends Controller
         return $query;
     }
 
-    public function getComprehensiveDashboardStats(Request $request, $tiers): array
+    public function getComprehensiveDashboardStats(Request $request): array
     {
-        $compTiers = $tiers->pluck('id');
+        $compTiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('is_active', 1)->get()->pluck('id');
         $records = QuoteBatches::query()
         ->select(
             'quote_batches.name',
@@ -324,5 +324,10 @@ class DashboardController extends Controller
     public function getAdvisorConversionStats(Request $request)
     {
         return $this->dashboardService->getAdvisorConversionData($request->advisorFilter);
+    }
+
+    public function getUsersByTeam(Request $request)
+    {
+        return $this->getUsersByTeamId($request->team_filter);
     }
 }
