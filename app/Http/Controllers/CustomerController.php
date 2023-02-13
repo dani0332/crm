@@ -121,7 +121,7 @@ class CustomerController extends Controller
         $customer->save();
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            dispatch(new MAWelcomeJob($customer->email, $customer->first_name, $customer->last_name, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
+            dispatch(new MAWelcomeJob($customer, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
         }
 
         return redirect('customer/'.$customer->id)->with('success', 'Customer has been Updated');
