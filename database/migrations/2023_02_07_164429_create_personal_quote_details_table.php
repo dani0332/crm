@@ -39,7 +39,8 @@ class CreatePersonalQuoteDetailsTable extends Migration
             $table->string('utm_medium', 50)->nullable();
             $table->string('utm_campaign', 50)->nullable();
 
-            $table->timestamps();
+            $table->dateTime('created_at')->nullable();
+            $table->dateTime('updated_at')->nullable();
         });
     }
 

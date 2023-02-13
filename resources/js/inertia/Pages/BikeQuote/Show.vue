@@ -218,7 +218,7 @@ const historyDataTable = [
                     outlined
                     @click.prevent="onLoadHistoryData"
                     :loading="historyLoading"
-                >
+                                                                              >
                     Load History Data
                 </x-button>
             </div>

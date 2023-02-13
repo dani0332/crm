@@ -230,7 +230,6 @@ const uploadFile = (doc,  files) => {
             </template>
         </x-modal>
 
-
     </div>
 
 </template>
