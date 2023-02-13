@@ -69,6 +69,8 @@ class CreatePersonalQuotesTable extends Migration
                 $table->foreign('quote_status_id')->references('id')->on('quote_status');
                 $table->dateTime('quote_status_date')->nullable();
 
+                $table->string('notes', 500)->nullable();
+
                 $table->dateTime('created_at')->nullable();
                 $table->dateTime('updated_at')->nullable();
             });

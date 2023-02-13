@@ -62,6 +62,7 @@ use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\PersonalQuoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -245,7 +246,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'personal-quotes'], function () {
-        Route::resource('bike', \App\Http\Controllers\V2\BikeQuoteController::class);
+        Route::patch('{quoteType}/{quoteId}/update-status', [PersonalQuoteController::class, 'updateStatus']);
+        Route::resource('bike', BikeQuoteController::class);
         Route::post('bike/documents', [BikeQuoteController::class, 'uploadDocument']);
     });
 

@@ -8,11 +8,13 @@ use App\Http\Requests\BikeQuoteRequest;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\PersonalQuote;
+use App\Models\QuoteStatus;
 use App\Models\UAELicenseHeldFor;
 use App\Models\YearOfManufacture;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\PersonalQuoteRepository;
+use App\Repositories\QuoteStatusRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -85,6 +87,8 @@ class BikeQuoteController extends Controller
     {
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
+        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
+
         $quote->load('documents');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
@@ -92,7 +96,7 @@ class BikeQuoteController extends Controller
         return inertia('BikeQuote/Show', [
             'quote' => $quote,
             'documentTypes' => $documentTypes,
-            'quoteDocuments' => [],
+            'quoteStatuses' => $quoteStatuses,
             'storageUrl' => storageUrl()
         ]);
     }

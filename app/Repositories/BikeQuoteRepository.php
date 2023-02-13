@@ -9,7 +9,6 @@ use App\Models\QuoteDocument;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Str;
 
 class BikeQuoteRepository extends BaseRepository
 {

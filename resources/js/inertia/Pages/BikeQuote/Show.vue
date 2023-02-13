@@ -5,10 +5,13 @@ import { useDateFormat, useClipboard } from '@vueuse/core';
 
 import { useNotifications } from '@indielayer/ui';
 import QuoteDocuments from "../PersonalQuote/Partials/QuoteDocuments";
+import LeadStatus from "../PersonalQuote/Partials/QuoteStatus";
+import QuoteStatus from "../PersonalQuote/Partials/QuoteStatus";
 
 defineProps({
     quote: Object,
     documentTypes: Object,
+    quoteStatuses: Object,
     storageUrl: String
 })
 
@@ -204,6 +207,17 @@ const historyDataTable = [
 
         </div>
 
+        <QuoteStatus
+            :quote="quote"
+            :quote-statuses="quoteStatuses"
+        />
+
+        <QuoteDocuments
+            :document-types="documentTypes"
+            :quote-documents="quote.documents || []"
+            :storageUrl="storageUrl"
+            :quote="quote"
+        />
 
         <!--  show lead history data -->
         <div class="p-4 rounded shadow mb-6 bg-white">
@@ -234,12 +248,7 @@ const historyDataTable = [
             />
         </div>
 
-        <QuoteDocuments
-            :document-types="documentTypes"
-            :quote-documents="quote.documents || []"
-            :storageUrl="storageUrl"
-            :quote="quote"
-        />
+
 
 </div>
 
