@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Models\InsuranceProvider;
@@ -10,6 +11,7 @@ use App\Models\PersonalQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Models\YearOfManufacture;
 use App\Repositories\BikeQuoteRepository;
+use App\Repositories\DocumentTypeRepository;
 use App\Repositories\PersonalQuoteRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -70,6 +72,11 @@ class BikeQuoteController extends Controller
         );
     }
 
+    public function uploadDocument()
+    {
+        BikeQuoteRepository::uploadDocument(request()->file('file'), request()->all());
+    }
+
     /**
      * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
@@ -78,8 +85,15 @@ class BikeQuoteController extends Controller
     {
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
+        $quote->load('documents');
+
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
+
         return inertia('BikeQuote/Show', [
-            'quote' => $quote
+            'quote' => $quote,
+            'documentTypes' => $documentTypes,
+            'quoteDocuments' => [],
+            'storageUrl' => storageUrl()
         ]);
     }
 
