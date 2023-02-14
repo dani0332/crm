@@ -42,6 +42,17 @@ class AdvisorConversionReportTable extends DataTableComponent
     public $leadSourceFilter;
     public $teamsFilter;
     public $advisorsFilter;
+
+    protected $listeners = [
+        'tableModal' => 'showTableModal',
+    ];
+
+
+    public function showTableModal($data)
+    {
+        $this->emitTo('table-modal', 'show', $data, $this->getAppliedFilters());
+    }
+
     public function configure(): void
     {
         $this->setPrimaryKey('id')
@@ -119,7 +130,7 @@ class AdvisorConversionReportTable extends DataTableComponent
         $this->leadSourceFilter = $this->getAppliedFilterWithValue('lead_source');
         $this->teamsFilter = $this->getAppliedFilterWithValue('teams');
         $this->advisorsFilter = $this->getAppliedFilterWithValue('advisors');
-        
+
         return [
             Column::make('Batch Number', 'batch.name')->footer(function () {
                 return  'Total';
@@ -133,7 +144,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             Column::make('Advisor Name', 'advisor.name')->searchable(),
             Column::make('Total Leads')
                 ->label(
-                    fn ($row, Column $column) => '<a '.($row->total_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `total_leads`, `'.$this->createdAtFilter.'`,  `'.$this->excludeCreatedLeadsFilter.'`, `'.$this->ecommerceFilter.'`, `'.$this->batchNumberFilter.'`, `'.$this->tiersFilter.'`, `'.$this->leadSourceFilter.'`, `'.$this->teamsFilter.'`, `'.$this->advisorsFilter.'`])" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
+                    fn ($row, Column $column) => '<a '.($row->total_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"'). ' x-on:click="window.livewire.emit(`tableModal`, ' . $row . ')" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
                 )->html()->footer(function ($rows) {
                     return $rows->sum('total_leads');
                 }),
@@ -280,7 +291,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ])->filter(function (Builder $builder, string $value) {
                 if($value == 'yes'){
                     $builder->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
-                }               
+                }
             }));
             array_push($filters, MultiSelectFilter::make('Lead Source')
             ->options($this->leadSources)->filter(function (Builder $builder, $value) {

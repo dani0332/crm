@@ -24,8 +24,10 @@ class TableModal extends Component
         'show' => 'show',
     ];
 
-    public function show($data)
+    public function show($data, $filters = [])
     {
+        info($data);
+        info($filters);
         $this->advisorId = $data[0]['advisorId'];
         $this->startDate = $data[0]['batch.start_date'];
         $this->endDate = $data[0]['batch.end_date'];
