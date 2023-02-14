@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
@@ -89,6 +90,7 @@ class LeadDistributionReportTable extends DataTableComponent
                 DB::raw('count(car_quote_request.id) as total_leads'),
             )
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->where('car_quote_request.quote_status_id', '!=' , QuoteStatusEnum::Fake)
             ->groupBy('tiers.name');
     }
 
@@ -103,8 +105,8 @@ class LeadDistributionReportTable extends DataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $dates = explode('~', $value);
-                    $dates[0] = Carbon::parse($dates[0])->format('Y-m-d');
-                    $dates[1] = Carbon::parse($dates[1])->format('Y-m-d');
+                    $dates[0] = Carbon::parse($dates[0])->startOfDay()->format('Y-m-d H:i:s');
+                    $dates[1] = Carbon::parse($dates[1])->endOfDay()->format('Y-m-d H:i:s');
                     $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
             MultiSelectFilter::make('Tiers')
