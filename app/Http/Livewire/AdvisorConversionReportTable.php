@@ -60,8 +60,10 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $loginUserId = auth()->user()->id;
+        $userIds = $this->walkTree($loginUserId);
         $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
-        $this->advisors = User::whereIn('id', $this->walkTree(auth()->user()->id))
+        $this->advisors = User::whereIn('id', $userIds)
             ->orderBy('name')
             ->where('is_active', 1)
             ->get()
@@ -73,7 +75,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             CONCAT(teams.`name`,' ', CASE WHEN `type` = 2 THEN '- Team' ELSE '- SubTeam' END) as name,
             teams.id
             from teams
-            where id in (select team_id from user_team where user_id = '".auth()->user()->id."' ) OR id = (select sub_team_id from users where id =  '".auth()->user()->id."');"))
+            where id in (select team_id from user_team where user_id = '".$loginUserId."' ) OR id = (select sub_team_id from users where id =  '".$loginUserId."');"))
             ->keyBy('id')
             ->map(fn ($Teams) => $Teams->name)
             ->toArray();
@@ -223,6 +225,8 @@ class AdvisorConversionReportTable extends DataTableComponent
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+        ->join('user_team', 'user_team.user_id', 'users.id')
+        ->join('teams', 'teams.id', 'user_team.team_id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->whereIn('car_quote_request.advisor_id', $userIds)
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
