@@ -88,7 +88,7 @@ class LeadDistributionReportTable extends DataTableComponent
                 DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 0 THEN 1 ELSE 0 END) as manually_assigned'),
                 DB::raw('count(car_quote_request.id) as total_leads'),
             )
-            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->groupBy('tiers.name');
     }
 
