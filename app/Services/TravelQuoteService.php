@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\DatabaseColumnsString;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\TravelMemberDetail;
@@ -837,12 +838,13 @@ class TravelQuoteService extends BaseService
         return 'true';
     }
 
-    public function getDropdownSource($quoteTypeId)
+    public function getQuoteByUUID($uuid)
     {
-        $dropdownSource = ['leads' => 'quote_status_id', 'payment_status' => 'payment_status_id', 'advisors' => 'advisor_id'];
-        foreach ($dropdownSource as $key => $value) {
-            $dropdownSource[$key] = (new DropdownSourceService())->getDropdownSource($value, $quoteTypeId)->toArray();
-        }
-        return $dropdownSource;
+        return TravelQuote::where('uuid', $uuid)->firstOrFail();
+    }
+
+    public function getQuoteStatuses()
+    {
+        return [QuoteStatusEnum::NewLead, QuoteStatusEnum::Quoted, QuoteStatusEnum::FollowedUp, QuoteStatusEnum::InNegotiation, QuoteStatusEnum::PaymentPending];
     }
 }

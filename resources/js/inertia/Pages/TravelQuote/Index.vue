@@ -71,7 +71,7 @@ const tableHeader = [
 ];
 
 const paymentStatusOptions = computed(() => {
-  return page.props.dropdownSource.payment_status.map(item => {
+  return page.props.dropdownSource.payment_status_id.map(item => {
     return {
       value: item.id,
       label: item.text,
@@ -80,7 +80,7 @@ const paymentStatusOptions = computed(() => {
 });
 
 const advisorsOptions = computed(() => {
-  return page.props.dropdownSource.advisors.map(item => {
+  return page.props.dropdownSource.advisor_id.map(item => {
     return {
       value: item.id,
       label: item.name,
@@ -89,7 +89,7 @@ const advisorsOptions = computed(() => {
 });
 
 const leadsStatusOptions = computed(() => {
-  return page.props.dropdownSource.leads.map(item => {
+  return page.props.dropdownSource.quote_status_id.map(item => {
     return {
       value: item.id,
       label: item.text,

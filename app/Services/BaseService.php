@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\GenericModel;
+use App\Services\DropdownSourceService;
 
 class BaseService
 {
@@ -45,5 +46,18 @@ class BaseService
     public function fillModelSearchProperties()
     {
         return [];
+    }
+
+
+    public function dropdownSource($properties, $quoteTypeId)
+    {
+        $dropdownSource = [];
+        foreach ($properties as $key => $value) {
+            $data = (new DropdownSourceService())->getDropdownSource($key, $quoteTypeId);
+            if ($data) {
+                $dropdownSource[$key] = $data->toArray();
+            }
+        }
+        return $dropdownSource;
     }
 }
