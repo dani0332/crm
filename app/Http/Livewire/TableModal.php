@@ -6,7 +6,7 @@ use Livewire\Component;
 
 class TableModal extends Component
 {
-    public bool $show = false;
+    public $show = false;
     public $advisorId;
     public $leadType;
     public $startDate;
@@ -24,20 +24,21 @@ class TableModal extends Component
         'show' => 'show',
     ];
 
-    public function show($data)
+    public function show($data, $filters = [], $leadType)
     {
-        $this->advisorId = $data[0]['advisorId'];
-        $this->startDate = $data[0]['batch.start_date'];
-        $this->endDate = $data[0]['batch.end_date'];
-        $this->leadType = $data[1];
-        $this->createdAtFilter = $data[2];
-        $this->excludeCreatedLeadsFilter = $data[3];
-        $this->ecommerceFilter = $data[4];
-        $this->batchNumberFilter = $data[5];
-        $this->tiersFilter = $data[6];
-        $this->leadSourceFilter = $data[7];
-        $this->teamsFilter = $data[8];
-        $this->advisorsFilter = $data[9];
+        if(array_key_exists('created_at', $filters)) $this->createdAtFilter = str_replace('~', '|',$filters['created_at']);
+        if(array_key_exists('ecommerce', $filters)) $this->ecommerceFilter = $filters['ecommerce'];
+        if(array_key_exists('exclude_created_leads', $filters)) $this->excludeCreatedLeadsFilter = $filters['exclude_created_leads'];
+        if(array_key_exists('batch_number', $filters)) $this->batchNumberFilter = $filters['batch_number'];
+        if(array_key_exists('tiers', $filters)) $this->tiersFilter =$filters['tiers'];
+        if(array_key_exists('lead_source', $filters)) $this->leadSourceFilter =$filters['lead_source'];
+        if(array_key_exists('teams', $filters)) $this->teamsFilter =$filters['teams'];
+        if(array_key_exists('advisors', $filters)) $this->advisorsFilter =$filters['advisors'];
+        info('lead type : '. $leadType);
+        $this->advisorId = $data['advisorId'];
+        $this->startDate = $data['batch.start_date'];
+        $this->endDate = $data['batch.end_date'];
+        $this->leadType = $leadType;
         $this->show = true;
     }
 

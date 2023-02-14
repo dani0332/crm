@@ -42,6 +42,17 @@ class AdvisorConversionReportTable extends DataTableComponent
     public $leadSourceFilter;
     public $teamsFilter;
     public $advisorsFilter;
+
+    protected $listeners = [
+        'tableModal' => 'showTableModal',
+    ];
+
+
+    public function showTableModal($data, $leadType)
+    {
+        $this->emitTo('table-modal', 'show', $data, $this->getAppliedFilters(), $leadType);
+    }
+
     public function configure(): void
     {
         $this->setPrimaryKey('id')
@@ -111,15 +122,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function columns(): array
     {
-        $this->createdAtFilter = str_replace('~', '|', $this->getAppliedFilterWithValue('created_at'));
-        $this->ecommerceFilter = $this->getAppliedFilterWithValue('ecommerce');
-        $this->excludeCreatedLeadsFilter = $this->getAppliedFilterWithValue('exclude_created_leads');
-        $this->batchNumberFilter = $this->getAppliedFilterWithValue('batch_number');
-        $this->tiersFilter = $this->getAppliedFilterWithValue('tiers');
-        $this->leadSourceFilter = $this->getAppliedFilterWithValue('lead_source');
-        $this->teamsFilter = $this->getAppliedFilterWithValue('teams');
-        $this->advisorsFilter = $this->getAppliedFilterWithValue('advisors');
-        
+
         return [
             Column::make('Batch Number', 'batch.name')->footer(function () {
                 return  'Total';
@@ -133,48 +136,48 @@ class AdvisorConversionReportTable extends DataTableComponent
             Column::make('Advisor Name', 'advisor.name')->searchable(),
             Column::make('Total Leads')
                 ->label(
-                    fn ($row, Column $column) => '<a '.($row->total_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `total_leads`, `'.$this->createdAtFilter.'`,  `'.$this->excludeCreatedLeadsFilter.'`, `'.$this->ecommerceFilter.'`, `'.$this->batchNumberFilter.'`, `'.$this->tiersFilter.'`, `'.$this->leadSourceFilter.'`, `'.$this->teamsFilter.'`, `'.$this->advisorsFilter.'`])" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
+                    fn ($row, Column $column) => '<a '.($row->total_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"'). ' x-on:click="window.livewire.emit(`tableModal`, ' . $row . ', `total_leads`)" class="text-sky-700 cursor-pointer">'.$row->total_leads.'</a>'
                 )->html()->footer(function ($rows) {
                     return $rows->sum('total_leads');
                 }),
             Column::make('New Leads')->label(
-                fn ($row, Column $column) => '<a '.($row->new_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `new_leads`, `'.$this->createdAtFilter.'`,  `'.$this->excludeCreatedLeadsFilter.'`, `'.$this->ecommerceFilter.'`, `'.$this->batchNumberFilter.'`, `'.$this->tiersFilter.'`, `'.$this->leadSourceFilter.'`, `'.$this->teamsFilter.'`, `'.$this->advisorsFilter.'`])" class="text-sky-700 cursor-pointer">'.$row->new_leads.'</a>'
+                fn ($row, Column $column) => '<a '.($row->new_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`tableModal`, ' . $row . ', `new_leads`)" class="text-sky-700 cursor-pointer">'.$row->new_leads.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('new_leads');
             }),
             Column::make('Not Interested')->label(
-                fn ($row, Column $column) => '<a '.($row->not_interested > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `not_interested`, `'.$this->createdAtFilter.'`,  `'.$this->excludeCreatedLeadsFilter.'`, `'.$this->ecommerceFilter.'`, `'.$this->batchNumberFilter.'`, `'.$this->tiersFilter.'`, `'.$this->leadSourceFilter.'`, `'.$this->teamsFilter.'`, `'.$this->advisorsFilter.'`])" class="text-sky-700 cursor-pointer">'.$row->not_interested.'</a>'
+                fn ($row, Column $column) => '<a '.($row->not_interested > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`tableModal`, ' . $row . ', `not_interested`)" class="text-sky-700 cursor-pointer">'.$row->not_interested.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('not_interested');
             }),
             Column::make('In Progress')->label(
-                fn ($row, Column $column) => '<a '.($row->in_progress > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `in_progress`, `'.$this->createdAtFilter.'`,  `'.$this->excludeCreatedLeadsFilter.'`, `'.$this->ecommerceFilter.'`, `'.$this->batchNumberFilter.'`, `'.$this->tiersFilter.'`, `'.$this->leadSourceFilter.'`, `'.$this->teamsFilter.'`, `'.$this->advisorsFilter.'`])" class="text-sky-700 cursor-pointer">'.$row->in_progress.'</a>'
+                fn ($row, Column $column) => '<a '.($row->in_progress > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').' x-on:click="window.livewire.emitTo(`tableModal`, ' . $row . ', `in_progress`)" class="text-sky-700 cursor-pointer">'.$row->in_progress.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('in_progress');
             }),
 
             Column::make('Bad Leads')->label(
-                fn ($row, Column $column) => '<a '.($row->bad_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `bad_leads`, `'.$this->createdAtFilter.'`,  `'.$this->excludeCreatedLeadsFilter.'`, `'.$this->ecommerceFilter.'`, `'.$this->batchNumberFilter.'`, `'.$this->tiersFilter.'`, `'.$this->leadSourceFilter.'`, `'.$this->teamsFilter.'`, `'.$this->advisorsFilter.'`])" class="text-sky-700 cursor-pointer">'.$row->bad_leads.'</a>'
+                fn ($row, Column $column) => '<a '.($row->bad_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`tableModal`, ' . $row . ', `bad_leads`)" class="text-sky-700 cursor-pointer">'.$row->bad_leads.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('bad_leads');
             }),
             Column::make('Sale Leads')->label(
-                fn ($row, Column $column) => '<a '.($row->sale_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `sale_leads`, `'.$this->createdAtFilter.'`,  `'.$this->excludeCreatedLeadsFilter.'`, `'.$this->ecommerceFilter.'`, `'.$this->batchNumberFilter.'`, `'.$this->tiersFilter.'`, `'.$this->leadSourceFilter.'`, `'.$this->teamsFilter.'`, `'.$this->advisorsFilter.'`])" class="text-sky-700 cursor-pointer">'.$row->sale_leads.'</a>'
+                fn ($row, Column $column) => '<a '.($row->sale_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`tableModal`, ' . $row . ', `sale_leads`)" class="text-sky-700 cursor-pointer">'.$row->sale_leads.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('sale_leads');
             }),
             Column::make('AFIA Renewals')->label(
-                fn ($row, Column $column) => '<a '.($row->afia_renewals_count > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `afia_renewals_count`, `'.$this->createdAtFilter.'`,  `'.$this->excludeCreatedLeadsFilter.'`, `'.$this->ecommerceFilter.'`, `'.$this->batchNumberFilter.'`, `'.$this->tiersFilter.'`, `'.$this->leadSourceFilter.'`, `'.$this->teamsFilter.'`, `'.$this->advisorsFilter.'`])" class="text-sky-700 cursor-pointer">'.$row->afia_renewals_count.'</a>'
+                fn ($row, Column $column) => '<a '.($row->afia_renewals_count > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`tableModal`, ' . $row . ', `afia_renewals_count`)" class="text-sky-700 cursor-pointer">'.$row->afia_renewals_count.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('afia_renewals_count');
             }),
             Column::make('Manual Created')->label(
-                fn ($row, Column $column) => '<a '.($row->manual_created > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `manual_created`, `'.$this->createdAtFilter.'`,  `'.$this->excludeCreatedLeadsFilter.'`, `'.$this->ecommerceFilter.'`, `'.$this->batchNumberFilter.'`, `'.$this->tiersFilter.'`, `'.$this->leadSourceFilter.'`, `'.$this->teamsFilter.'`, `'.$this->advisorsFilter.'`])" class="text-sky-700 cursor-pointer">'.$row->manual_created.'</a>'
+                fn ($row, Column $column) => '<a '.($row->manual_created > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`tableModal`, ' . $row . ', `manual_created`)" class="text-sky-700 cursor-pointer">'.$row->manual_created.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('manual_created');
             }),
             Column::make('Others')->label(
-                fn ($row, Column $column) => '<a '.($row->others > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`table-modal`, `show`, ['.$row.', `others`, `'.$this->createdAtFilter.'`,  `'.$this->excludeCreatedLeadsFilter.'`, `'.$this->ecommerceFilter.'`, `'.$this->batchNumberFilter.'`, `'.$this->tiersFilter.'`, `'.$this->leadSourceFilter.'`, `'.$this->teamsFilter.'`, `'.$this->advisorsFilter.'`])" class="text-sky-700 cursor-pointer">'.$row->others.'</a>'
+                fn ($row, Column $column) => '<a '.($row->others > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emitTo(`tableModal`, ' . $row . ', `others`)" class="text-sky-700 cursor-pointer">'.$row->others.'</a>'
             )->html()->footer(function ($rows) {
                 return $rows->sum('others');
             }),
@@ -280,7 +283,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ])->filter(function (Builder $builder, string $value) {
                 if($value == 'yes'){
                     $builder->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
-                }               
+                }
             }));
             array_push($filters, MultiSelectFilter::make('Lead Source')
             ->options($this->leadSources)->filter(function (Builder $builder, $value) {

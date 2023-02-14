@@ -71,36 +71,36 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             $query->where('quote_batch_id', $batch->id);
         }
         if($this->createdAtFilter != ''){
-            info('createdAtFilter are : '. $this->createdAtFilter);
+            info('createdAtFilter are : '. json_encode($this->createdAtFilter));
             $startDate = Carbon::parse(explode('|', $this->createdAtFilter)[0]);
             $endDate =  Carbon::parse(explode('|', $this->createdAtFilter)[1]);
             $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
         }
         if($this->ecommerceFilter != ''){
-            info('ecommerceFilter are : '. $this->ecommerceFilter );
+            info('ecommerceFilter are : '. json_encode($this->ecommerceFilter) );
             $query->where('car_quote_request.is_ecommerce', $this->ecommerceFilter == 'yes' ? 1 : 0);
         }
         if($this->excludeCreatedLeadsFilter != '') {
-            info('excludeCreatedLeadsFilter are : '. $this->excludeCreatedLeadsFilter);
+            info('excludeCreatedLeadsFilter are : '. json_encode($this->excludeCreatedLeadsFilter));
             if($this->excludeCreatedLeadsFilter == 'yes'){
                 info('inside excludeCreatedLeadsFilter');
                 $query->where('car_quote_request.source', '!=', 'IMCRM');
             }
         }
-        if($this->tiersFilter != ''){
-            info('tiersFilter are : '. $this->tiersFilter );
+        if($this->tiersFilter != '' && count($this->tiersFilter) > 0){
+            info('tiersFilter are : '. json_encode($this->tiersFilter) );
             $query->whereIn('car_quote_request.tier_is', $this->tiersFilter);
         }
-        if($this->leadSourceFilter != ''){
-            info('leadSourceFilter are : '. $this->leadSourceFilter );
+        if($this->leadSourceFilter != '' && count($this->leadSourceFilter) > 0){
+            info('leadSourceFilter are : '. json_encode($this->leadSourceFilter) );
             $query->whereIn('car_quote_request.source', $this->leadSourceFilter);
         }
-        if($this->teamsFilter != ''){
-            info('teamsFilter are : '. $this->teamsFilter );
+        if($this->teamsFilter != '' && count($this->teamsFilter) > 0){
+            info('teamsFilter are : '. json_encode($this->teamsFilter) );
             $query->whereIn('teams.id', $this->teamsFilter);
         }
-        if($this->advisorsFilter != ''){
-            info('advisorsFilter are : '. $this->advisorsFilter );
+        if($this->advisorsFilter != '' && count($this->advisorsFilter) > 0){
+            info('advisorsFilter are : '. json_encode($this->advisorsFilter) );
             $query->whereIn('car_quote_request.advisor_id', $this->advisorsFilter);
         }
         if ($this->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
