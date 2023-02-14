@@ -2,6 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
@@ -53,6 +56,11 @@ class PersonalQuoteRepository extends BaseRepository
        });
     }
 
+    /**
+     * @param $file
+     * @param $data
+     * @return mixed
+     */
     public function fetchUploadDocument($file, $data)
     {
         $documentType = DocumentTypeRepository::where('code', $data['document_type_code'])->first();
@@ -83,5 +91,39 @@ class PersonalQuoteRepository extends BaseRepository
             'member_detail_id' => $data['member_detail_id'] ?? null,
             'created_by_id' => auth()->id(),
         ]);
+    }
+
+
+    /**
+     * @param $quoteType
+     * @param $quoteId
+     * @param $data
+     * @return mixed
+     */
+    public function fetchCreatePayment($quoteType, $quoteId, $data)
+    {
+        return DB::transaction(function() use ($quoteType, $quoteId, $data)
+        {
+            $quote =  $this->where('id', $quoteId)->firstOrFail();
+
+            $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'reference', 'payment_methods_code', 'insurance_provider_id', 'plan_id']);
+
+            if($data['payment_methods_code'] != PaymentMethodsEnum::CreditCard) {
+                $paymentData['authorized_at'] = now();
+            }
+
+            $paymentData['code'] = 'P-'.strtoupper(substr(uniqid(''), 0, 8));
+            $paymentData['payment_status_id'] = PaymentStatusEnum::PENDING;
+            $quote->payments()->create($paymentData);
+
+            PaymentStatusLogRepository::create([
+                'current_payment_status_id' => PaymentStatusEnum::PENDING,
+                'payment_code' => $paymentData['code']
+            ]);
+
+            $quote->update(['quote_status_id' => QuoteStatusEnum::PaymentPending]);
+
+            return $quote;
+        });
     }
 }

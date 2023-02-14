@@ -7,12 +7,18 @@ import { useNotifications } from '@indielayer/ui';
 import QuoteDocuments from "../PersonalQuote/Partials/QuoteDocuments";
 import LeadStatus from "../PersonalQuote/Partials/QuoteStatus";
 import QuoteStatus from "../PersonalQuote/Partials/QuoteStatus";
+import QuotePayments from "../PersonalQuote/Partials/QuotePayments";
 
 defineProps({
     quote: Object,
     documentTypes: Object,
     quoteStatuses: Object,
-    storageUrl: String
+    paymentMethods: Object,
+    insuranceProviders: Object,
+    personalPlans: Object,
+    isBetaUser: Boolean,
+    storageUrl: String,
+    quoteType: String,
 })
 
 const page = usePage();
@@ -207,8 +213,18 @@ const historyDataTable = [
 
         </div>
 
+        <QuotePayments
+            :payments="quote.payments"
+            :quote-type="quoteType"
+            :payment-methods="paymentMethods"
+            :insurance-providers="insuranceProviders"
+            :is-beta-user="isBetaUser"
+            :personal-plans="personalPlans"
+        />
+
         <QuoteStatus
             :quote="quote"
+            :quote-type="quoteType"
             :quote-statuses="quoteStatuses"
         />
 

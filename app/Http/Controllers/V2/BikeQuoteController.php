@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Models\InsuranceProvider;
@@ -13,6 +14,9 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\YearOfManufacture;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\PaymentMethodRepository;
+use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use Illuminate\Http\Request;
@@ -87,11 +91,20 @@ class BikeQuoteController extends Controller
         $quote->load('documents');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
+        $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
+
+        $insuranceProviders = InsuranceProviderRepository::getList();
+        $personalPlans = PersonalPlanRepository::get();
 
         return inertia('BikeQuote/Show', [
+            'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,
+            'paymentMethods' => $paymentMethods,
+            'insuranceProviders' => $insuranceProviders,
+            'personalPlans' => $personalPlans,
+            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl()
         ]);
     }

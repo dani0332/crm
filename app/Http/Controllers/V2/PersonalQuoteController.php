@@ -42,9 +42,14 @@ class PersonalQuoteController extends Controller
         return back()->with('message' , 'Document uploaded successfully');
     }
 
-    public function createPayment(PersonalQuotePaymentRequest $request)
+    /**
+     * @param PersonalQuotePaymentRequest $request
+     * @return void
+     */
+    public function createPayment($quoteType, $quoteId, PersonalQuotePaymentRequest $request)
     {
-        PersonalQuoteRepository::createPayment($request->validated());
+        PersonalQuoteRepository::createPayment($quoteType, $quoteId, $request->validated());
+        return back()->with('message' , 'Payment created successfully');
     }
 
 }

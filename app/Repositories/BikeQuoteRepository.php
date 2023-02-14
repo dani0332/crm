@@ -91,7 +91,9 @@ class BikeQuoteRepository extends BaseRepository
 
         return $this->byQuoteTypeId(QuoteTypes::BIKE->id())
             ->where($column, $value)
-            ->with(['bikeQuote', 'advisor', 'nationality', 'quoteDetail.lostReason'])->firstOrFail();
+            ->with(['bikeQuote', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function($q){
+                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+            }])->firstOrFail();
     }
 
     /**
