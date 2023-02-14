@@ -177,6 +177,41 @@ const paymentTableHeaders = [
 ];
 
 
+const generateCCLink = async code => {
+    try {
+        const response = await axios.post('/generate-payment-link', {
+            quoteId: page.props.quote.id,
+            modelType: 'personal',
+            paymentCode: code,
+            isInertia: true,
+        });
+
+        if (response.data.success) {
+            const el = document.createElement('textarea');
+            el.value = response.data.payment_link;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            notification.success({
+                title: 'Payment Link Generated',
+                position: 'top',
+            });
+        } else {
+            notification.error({
+                title: 'Payment Link Generation Failed',
+                position: 'top',
+            });
+        }
+    } catch (err) {
+        notification.error({
+            title: 'Payment Link Generation Failed',
+            position: 'top',
+        });
+    }
+};
+
 </script>
 
 <template>
@@ -205,8 +240,30 @@ const paymentTableHeaders = [
                 {{ code.toUpperCase() }}
             </template>
 
+            <template #item-actions="item">
+                <div class="flex gap-2">
 
 
+
+                    <x-button
+                        size="xs"
+                        color="orange"
+
+                        @click="generateCCLink(item.code)"
+                    >
+                        Copy Link
+                    </x-button>
+
+                    <x-button
+                        size="xs"
+                        color="emerald"
+
+                        @click="editPaymentModal(item)"
+                    >
+                        Edit
+                    </x-button>
+                </div>
+            </template>
 
         </DataTable>
 

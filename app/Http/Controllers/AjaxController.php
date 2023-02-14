@@ -9,6 +9,8 @@ use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
+use App\Models\PersonalPlan;
+use App\Models\PersonalQuote;
 use App\Services\HealthQuoteService;
 use App\Services\NetworkPaymentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -117,6 +119,9 @@ class AjaxController extends Controller
             return response()->json(['success' => true, 'payment_link' => $payment->payment_link]);
         } else {
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
+
+            $description = (get_class($quoteModel) == PersonalQuote::class) ?  $payment->personalPlan->text : $quoteModel->plan->text;
+           
             $tokenRequest = NetworkPaymentService::sendNetworkTokenRequest();
             if ($tokenRequest->getStatusCode() == 200) {
                 $getContents = $tokenRequest->getBody();
@@ -132,7 +137,7 @@ class AjaxController extends Controller
                     'paymentAttempts' => 3,
                     'items' => [
                         [
-                            'description' => $quoteModel->plan->text,
+                            'description' => $description,
                             'totalPrice' => [
                                 'currencyCode' => 'AED',
                                 'value' => ceil($payment->captured_amount * 100),
