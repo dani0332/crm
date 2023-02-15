@@ -13,13 +13,14 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Mail;
+use Symfony\Component\HttpClient\Exception\TimeoutException as ExceptionTimeoutException;
 
 class LeadAllocationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, GetUserTreeTrait;
 
     public $tries = 2;
-    public $timeout = 50;
+    public $timeout = 55;
     public $backoff = 20;
     private $leadAllocationJobId = 'lead_allocation';
 
@@ -120,10 +121,11 @@ class LeadAllocationJob implements ShouldQueue
 
                 return;
             }
-        } catch (\Exception $e) {
-            info('Lead Allocation Job Failed');
+        } catch (ExceptionTimeoutException $e) {
+            info('**************** Lead Allocation Job is timed out now at : '. now() . ' **************** ');
 
             info('message: '.$e->getMessage());
+            $this->delete();
         }
     }
 
