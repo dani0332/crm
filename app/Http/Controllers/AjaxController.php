@@ -21,6 +21,7 @@ class AjaxController extends Controller
     use GenericQueriesAllLobs;
 
     protected $healthQuoteService;
+
     public function __construct(HealthQuoteService $healthQuoteService)
     {
         $this->healthQuoteService = $healthQuoteService;
@@ -29,7 +30,7 @@ class AjaxController extends Controller
     public function carModelBasedOnCarMake(Request $request)
     {
         $carmodel = CarModel::activeWithCode($request->make_code)
-        ->select('id', 'text', 'code')->get();
+        ->select('id', 'text', 'code')->orderBy('text')->get();
 
         return response()->json($carmodel);
     }
@@ -41,14 +42,14 @@ class AjaxController extends Controller
             $carMakeCode = $request->id;
         }
         $carmodel = CarModel::activeWithCode($carMakeCode)
-        ->select('id', 'text', 'code', 'car_make_code')->get();
+        ->select('id', 'text', 'code', 'car_make_code')->orderBy('text')->get();
 
         return response()->json($carmodel);
     }
 
     public function getCarMake()
     {
-        $carMakes = CarMake::active()->select('id', 'text', 'code')->get();
+        $carMakes = CarMake::active()->select('id', 'text', 'code')->orderBy('text')->get();
 
         return response()->json($carMakes);
     }
