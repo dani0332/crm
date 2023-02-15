@@ -3592,34 +3592,26 @@ __webpack_require__.r(__webpack_exports__);
 
     var onActivitySubmit = function onActivitySubmit(isValid) {
       if (!isValid) return;
+      var url = "/activities/v2/";
+      var method = "post";
 
       if (activityActionEdit.value) {
-        activityForm.patch("/activities/v2/".concat(activityForm.activity_id), {
-          preserveScroll: true,
-          onSuccess: function onSuccess() {
-            notification.success({
-              title: 'Activity Updated',
-              position: 'top'
-            });
-          },
-          onFinish: function onFinish() {
-            modals.activity = false;
-          }
-        });
-      } else {
-        activityForm.post("/activities/v2/", {
-          preserveScroll: true,
-          onSuccess: function onSuccess() {
-            notification.success({
-              title: 'Activity Added',
-              position: 'top'
-            });
-          },
-          onFinish: function onFinish() {
-            modals.activity = false;
-          }
-        });
+        url += activityForm.activity_id;
+        method = 'patch';
       }
+
+      activityForm.submit(method, url, {
+        preserveScroll: true,
+        onSuccess: function onSuccess() {
+          notification.success({
+            title: 'Activity saved',
+            position: 'top'
+          });
+        },
+        onFinish: function onFinish() {
+          modals.activity = false;
+        }
+      });
     };
 
     var activityDelete = function activityDelete(id) {
@@ -3628,10 +3620,7 @@ __webpack_require__.r(__webpack_exports__);
     };
 
     var confirmDeleteData = (0,vue__WEBPACK_IMPORTED_MODULE_1__.reactive)({
-      docs: null,
-      member: null,
-      activity: null,
-      contact: null
+      activity: null
     });
 
     var activityDeleteConfirmed = function activityDeleteConfirmed() {

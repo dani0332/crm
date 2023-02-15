@@ -91,34 +91,29 @@ const activityEdit = data => {
 };
 
 const onActivitySubmit = isValid => {
+
     if (!isValid) return;
+
+    let url = `/activities/v2/`;
+    let method = `post`;
+
     if (activityActionEdit.value) {
-        activityForm.patch(`/activities/v2/${activityForm.activity_id}`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                notification.success({
-                    title: 'Activity Updated',
-                    position: 'top',
-                });
-            },
-            onFinish: () => {
-                modals.activity = false;
-            },
-        });
-    } else {
-        activityForm.post(`/activities/v2/`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                notification.success({
-                    title: 'Activity Added',
-                    position: 'top',
-                });
-            },
-            onFinish: () => {
-                modals.activity = false;
-            },
-        });
+        url += activityForm.activity_id;
+        method = 'patch';
     }
+
+    activityForm.submit(method, url, {
+        preserveScroll: true,
+        onSuccess: () => {
+            notification.success({
+                title: 'Activity saved',
+                position: 'top',
+            });
+        },
+        onFinish: () => {
+            modals.activity = false;
+        },
+    });
 };
 
 const activityDelete = id => {
@@ -127,10 +122,7 @@ const activityDelete = id => {
 };
 
 const confirmDeleteData = reactive({
-    docs: null,
-    member: null,
-    activity: null,
-    contact: null,
+    activity: null
 });
 
 const activityDeleteConfirmed = () => {
