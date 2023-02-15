@@ -179,14 +179,14 @@ class AdvisorDistributionReportTable extends DataTableComponent
                     'placeholder' => 'SELECT ALL TEAMS',
                 ])
                     ->filter(function (Builder $builder, $value) {
-                        $builder->where('teams.id', $value);
+                        $builder->whereIn('teams.id', $value);
                     }),
                     MultiSelectFilter::make('Tiers')
                     ->options($this->tiers)->config([
                         'placeholder' => 'SELECT ALL TIERS',
                     ])
                     ->filter(function (Builder $builder, $value) {
-                        $builder->where('car_quote_request.tier_id', $value);
+                        $builder->whereIn('car_quote_request.tier_id', $value);
                     })
             );
         }

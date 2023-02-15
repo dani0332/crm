@@ -755,4 +755,18 @@ class LeadAllocationService extends BaseService
     {
         ApplicationStorage::where('key_name', $keyName)->update(['value' => $value]);
     }
+
+    public function shouldCarAllocationProceed()
+    {
+        $shouldProcess = true;
+        if(config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == "0" || config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0){
+            $shouldProcess = false;
+        };
+
+        if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
+            info('Car lead allocation master switch is off');
+            $shouldProcess = false;;
+        }
+        return $shouldProcess;
+    }
 }

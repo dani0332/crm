@@ -44,11 +44,10 @@ class LeadAllocationJob implements ShouldQueue
 
             $leadAllocationService->setMaxCapAndAllocationStatus();
             info('CAR LEAD ALLOCATION MASTER SWITCH VALUE IS : '. config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH'));
-            if (config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == "0" || config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
+            if (!$leadAllocationService->shouldCarAllocationProceed()) {
                 info('CAR Lead Allocation Job Switch is OFF');
             } else {
                 info('CAR Lead Allocation Job Switch is ON and job is about to start');
-
                 $leadAllocationService->processCarLeads();
             }
             if (! $leadAllocationService->leadAllocationSwitchStatus()) {
