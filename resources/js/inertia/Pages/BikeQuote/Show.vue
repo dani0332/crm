@@ -19,6 +19,7 @@ defineProps({
     isBetaUser: Boolean,
     storageUrl: String,
     quoteType: String,
+    can: Object,
 })
 
 const page = usePage();
@@ -214,6 +215,7 @@ const historyDataTable = [
         </div>
 
         <QuotePayments
+            :can="can"
             :payments="quote.payments"
             :quote-type="quoteType"
             :payment-methods="paymentMethods"

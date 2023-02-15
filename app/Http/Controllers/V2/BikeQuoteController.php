@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -96,6 +97,7 @@ class BikeQuoteController extends Controller
         $insuranceProviders = InsuranceProviderRepository::getList();
         $personalPlans = PersonalPlanRepository::get();
 
+
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
@@ -105,7 +107,13 @@ class BikeQuoteController extends Controller
             'insuranceProviders' => $insuranceProviders,
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
-            'storageUrl' => storageUrl()
+            'storageUrl' => storageUrl(),
+            'can' => [
+                'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
+                'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
+                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && !auth()->user()->hasRole(RolesEnum::PA),
+                'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+            ],
         ]);
     }
 

@@ -121,7 +121,7 @@ class AjaxController extends Controller
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
 
             $description = (get_class($quoteModel) == PersonalQuote::class) ?  $payment->personalPlan->text : $quoteModel->plan->text;
-           
+
             $tokenRequest = NetworkPaymentService::sendNetworkTokenRequest();
             if ($tokenRequest->getStatusCode() == 200) {
                 $getContents = $tokenRequest->getBody();

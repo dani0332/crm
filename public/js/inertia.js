@@ -802,7 +802,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     personalPlans: Object,
     isBetaUser: Boolean,
     storageUrl: String,
-    quoteType: String
+    quoteType: String,
+    can: Object
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -3658,12 +3659,6 @@ function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try
 
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
 
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 
 
 
@@ -3686,7 +3681,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     expose();
     var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_3__.useNotifications)('toast');
     var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.usePage)();
-    var createPaymentModal = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
+    var paymentModal = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
     var rules = {
       isRequired: function isRequired(v) {
         return !!v || 'This field is required';
@@ -3742,18 +3737,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         };
       });
     });
-
-    var addPaymentModal = function addPaymentModal() {
-      paymentForm.reset();
-      paymentForm.payment_method = '';
-      paymentForm.collection_type = '';
-      paymentForm.amount = '';
-      paymentForm.payment_reference = '';
-      paymentForm.paymentCode = '';
-      paymentForm.status = 'create';
-      createPaymentModal.value = true;
-    };
-
     var paymentForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
       collection_type: '',
       captured_amount: '',
@@ -3762,21 +3745,52 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       plan_id: '',
       reference: '',
       paymentCode: '',
-      status: 'create'
+      status: 'create',
+      paymentId: ''
     });
 
+    var addPaymentModal = function addPaymentModal() {
+      paymentForm.reset();
+      paymentForm.payment_method_code = '';
+      paymentForm.collection_type = '';
+      paymentForm.amount = '';
+      paymentForm.payment_reference = '';
+      paymentForm.paymentCode = '';
+      paymentForm.status = 'create';
+      paymentModal.value = true;
+    };
+
+    var editPaymentModal = function editPaymentModal(payment) {
+      paymentForm.reset();
+      paymentForm.status = 'edit';
+      paymentForm.payment_methods_code = payment.payment_methods_code;
+      paymentForm.collection_type = payment.collection_type;
+      paymentForm.captured_amount = payment.captured_amount;
+      paymentForm.reference = payment.reference;
+      paymentForm.insurance_provider_id = payment.insurance_provider_id;
+      paymentForm.plan_id = payment.plan_id;
+      paymentForm.paymentCode = payment.code;
+      paymentModal.value = true;
+    };
+
     var addPayment = function addPayment(isValid) {
-      console.log('kejk');
       if (!isValid) return;
-      var url = '/personal-quotes/' + page.props.quoteType.toLowerCase() + '/' + page.props.quote.id + '/payments';
-      paymentForm.post(url, {
+      var url = '/personal-quotes/' + page.props.quote.id + '/payments';
+      var method = 'post';
+
+      if (paymentForm.status == 'edit') {
+        url += '/' + paymentForm.paymentCode;
+        method = 'patch';
+      }
+
+      paymentForm.submit(method, url, {
         preserveScroll: true,
         onSuccess: function onSuccess() {
           notification.success({
             title: 'Payment Added',
             position: 'top'
           });
-          createPaymentModal.value = false;
+          paymentModal.value = false;
         },
         onError: function onError() {
           notification.error({
@@ -3796,32 +3810,31 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       //     reference: paymentMethodsForm.payment_reference,
       //     isInertia: true,
       // };
-
-      if (paymentForm.status === 'edit') {
-        var editData = _objectSpread(_objectSpread({}, data), {}, {
-          paymentCode: paymentForm.paymentCode
-        });
-
-        paymentForm.transform(function (data) {
-          return editData;
-        }).post('/payments/Health/update', {
-          preserveScroll: true,
-          onSuccess: function onSuccess() {
-            notification.success({
-              title: 'Payment Updated',
-              position: 'top'
-            });
-            createPaymentModal.value = false;
-          },
-          onError: function onError() {
-            notification.error({
-              title: 'Payment Update Failed',
-              position: 'top'
-            });
-          }
-        });
-        return;
-      }
+      // if (paymentForm.status === 'edit') {
+      //     let editData = {
+      //         ...data,
+      //         paymentCode: paymentForm.paymentCode,
+      //     };
+      //     paymentForm
+      //         .transform(data => editData)
+      //         .post('/payments/Health/update', {
+      //             preserveScroll: true,
+      //             onSuccess: () => {
+      //                 notification.success({
+      //                     title: 'Payment Updated',
+      //                     position: 'top',
+      //                 });
+      //                 paymentModal.value = false;
+      //             },
+      //             onError: () => {
+      //                 notification.error({
+      //                     title: 'Payment Update Failed',
+      //                     position: 'top',
+      //                 });
+      //             },
+      //         });
+      //     return;
+      // }
     };
 
     var getPlanName = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
@@ -3924,14 +3937,15 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var __returned__ = {
       notification: notification,
       page: page,
-      createPaymentModal: createPaymentModal,
+      paymentModal: paymentModal,
       rules: rules,
       collectionTypes: collectionTypes,
       paymentMethodOptions: paymentMethodOptions,
       insuranceProviderOptions: insuranceProviderOptions,
       personalPlanOptions: personalPlanOptions,
-      addPaymentModal: addPaymentModal,
       paymentForm: paymentForm,
+      addPaymentModal: addPaymentModal,
+      editPaymentModal: editPaymentModal,
       addPayment: addPayment,
       getPlanName: getPlanName,
       paymentTableHeaders: paymentTableHeaders,
@@ -5586,6 +5600,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   )]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_63, [_hoisted_64, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($props.quote.previous_quote_policy_premium), 1
   /* TEXT */
   )])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["QuotePayments"], {
+    can: $props.can,
     payments: $props.quote.payments,
     "quote-type": $props.quoteType,
     "payment-methods": $props.paymentMethods,
@@ -5594,7 +5609,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "personal-plans": $props.personalPlans
   }, null, 8
   /* PROPS */
-  , ["payments", "quote-type", "payment-methods", "insurance-providers", "is-beta-user", "personal-plans"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["QuoteStatus"], {
+  , ["can", "payments", "quote-type", "payment-methods", "insurance-providers", "is-beta-user", "personal-plans"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["QuoteStatus"], {
     quote: $props.quote,
     "quote-type": $props.quoteType,
     "quote-statuses": $props.quoteStatuses
@@ -10668,7 +10683,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   var _component_x_modal = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-modal");
 
-  return $props.isBetaUser ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_1, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_2, [_hoisted_3, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+  return $props.isBetaUser ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_1, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_2, [_hoisted_3, $props.can.create_payments && !$props.can.approve_payments ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_button, {
+    key: 0,
     size: "sm",
     color: "orange",
     onClick: $setup.addPaymentModal
@@ -10679,7 +10695,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
     /* STABLE */
 
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_DataTable, {
+  })) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_DataTable, {
     "table-class-name": "tablefixed compact",
     headers: $setup.paymentTableHeaders,
     items: $props.payments || [],
@@ -10695,6 +10711,32 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     "item-actions": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (item) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+        size: "xs",
+        color: "error",
+        onClick: function onClick($event) {
+          return _ctx.approvePayment(item);
+        }
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Approve ")];
+        }),
+        _: 2
+        /* DYNAMIC */
+
+      }, 1032
+      /* PROPS, DYNAMIC_SLOTS */
+      , ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+        size: "xs",
+        disabled: "",
+        color: "error"
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Approved ")];
+        }),
+        _: 1
+        /* STABLE */
+
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "xs",
         color: "orange",
         onClick: function onClick($event) {
@@ -10713,7 +10755,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         size: "xs",
         color: "emerald",
         onClick: function onClick($event) {
-          return _ctx.editPaymentModal(item);
+          return $setup.editPaymentModal(item);
         }
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -10732,9 +10774,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, 8
   /* PROPS */
   , ["items"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_modal, {
-    modelValue: $setup.createPaymentModal,
+    modelValue: $setup.paymentModal,
     "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
-      return $setup.createPaymentModal = $event;
+      return $setup.paymentModal = $event;
     }),
     size: "lg",
     "show-close": "",

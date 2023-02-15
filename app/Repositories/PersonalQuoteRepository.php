@@ -13,6 +13,7 @@ use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
@@ -100,9 +101,9 @@ class PersonalQuoteRepository extends BaseRepository
      * @param $data
      * @return mixed
      */
-    public function fetchCreatePayment($quoteType, $quoteId, $data)
+    public function fetchCreatePayment($quoteId, $data)
     {
-        return DB::transaction(function() use ($quoteType, $quoteId, $data)
+        return DB::transaction(function() use ($quoteId, $data)
         {
             $quote =  $this->where('id', $quoteId)->firstOrFail();
 
@@ -125,5 +126,23 @@ class PersonalQuoteRepository extends BaseRepository
 
             return $quote;
         });
+    }
+
+    /**
+     * @param $quoteId
+     * @param $paymentCode
+     * @param $data
+     * @return mixed
+     */
+    public function fetchUpdatePayment($quoteId, $paymentCode, $data)
+    {
+        $payment = PaymentRepository::where('code', $paymentCode)->firstOrFail();
+        $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'payment_methods_code']);
+
+        if(!empty($data['reference'])) $paymentData['reference'] = $data['reference'];
+        $paymentData['updated_by'] = Auth::user()->id;
+
+        $payment->update($paymentData);
+        return $payment;
     }
 }

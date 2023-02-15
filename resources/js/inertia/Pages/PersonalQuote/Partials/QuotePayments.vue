@@ -19,7 +19,7 @@ defineProps({
     quoteType: String
 });
 
-const createPaymentModal = ref(false);
+const paymentModal = ref(false);
 
 const rules = {
     isRequired: v => !!v || 'This field is required',
@@ -67,19 +67,6 @@ const personalPlanOptions = computed(() => {
     }));
 });
 
-
-
-const addPaymentModal = () => {
-    paymentForm.reset();
-    paymentForm.payment_method = '';
-    paymentForm.collection_type = '';
-    paymentForm.amount = '';
-    paymentForm.payment_reference = '';
-    paymentForm.paymentCode = '';
-    paymentForm.status = 'create';
-    createPaymentModal.value = true;
-};
-
 const paymentForm = useForm({
     collection_type: '',
     captured_amount: '',
@@ -89,22 +76,54 @@ const paymentForm = useForm({
     reference: '',
     paymentCode: '',
     status: 'create',
+    paymentId: '',
 });
 
+const addPaymentModal = () => {
+    paymentForm.reset();
+    paymentForm.payment_method_code = '';
+    paymentForm.collection_type = '';
+    paymentForm.amount = '';
+    paymentForm.payment_reference = '';
+    paymentForm.paymentCode = '';
+    paymentForm.status = 'create';
+    paymentModal.value = true;
+};
+
+const editPaymentModal = payment => {
+    paymentForm.reset();
+    paymentForm.status = 'edit';
+    paymentForm.payment_methods_code = payment.payment_methods_code;
+    paymentForm.collection_type = payment.collection_type;
+    paymentForm.captured_amount = payment.captured_amount;
+    paymentForm.reference = payment.reference;
+    paymentForm.insurance_provider_id = payment.insurance_provider_id;
+    paymentForm.plan_id = payment.plan_id;
+    paymentForm.paymentCode = payment.code;
+    paymentModal.value = true;
+};
+
 const addPayment = isValid => {
-    console.log('kejk')
+
     if (!isValid) return;
 
-    let url = '/personal-quotes/' + page.props.quoteType.toLowerCase() + '/' + page.props.quote.id + '/payments';
+    let url = '/personal-quotes/' + page.props.quote.id + '/payments';
+    let method = 'post';
+
+    if(paymentForm.status == 'edit') {
+        url += '/' + paymentForm.paymentCode;
+        method = 'patch';
+    }
+
     paymentForm
-        .post(url, {
+        .submit(method, url, {
             preserveScroll: true,
             onSuccess: () => {
                 notification.success({
                     title: 'Payment Added',
                     position: 'top',
                 });
-                createPaymentModal.value = false;
+                paymentModal.value = false;
             },
             onError: () => {
 
@@ -128,31 +147,31 @@ const addPayment = isValid => {
     //     isInertia: true,
     // };
 
-    if (paymentForm.status === 'edit') {
-        let editData = {
-            ...data,
-            paymentCode: paymentForm.paymentCode,
-        };
-        paymentForm
-            .transform(data => editData)
-            .post('/payments/Health/update', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    notification.success({
-                        title: 'Payment Updated',
-                        position: 'top',
-                    });
-                    createPaymentModal.value = false;
-                },
-                onError: () => {
-                    notification.error({
-                        title: 'Payment Update Failed',
-                        position: 'top',
-                    });
-                },
-            });
-        return;
-    }
+    // if (paymentForm.status === 'edit') {
+    //     let editData = {
+    //         ...data,
+    //         paymentCode: paymentForm.paymentCode,
+    //     };
+    //     paymentForm
+    //         .transform(data => editData)
+    //         .post('/payments/Health/update', {
+    //             preserveScroll: true,
+    //             onSuccess: () => {
+    //                 notification.success({
+    //                     title: 'Payment Updated',
+    //                     position: 'top',
+    //                 });
+    //                 paymentModal.value = false;
+    //             },
+    //             onError: () => {
+    //                 notification.error({
+    //                     title: 'Payment Update Failed',
+    //                     position: 'top',
+    //                 });
+    //             },
+    //         });
+    //     return;
+    // }
 
 };
 
@@ -220,6 +239,7 @@ const generateCCLink = async code => {
         <div class="flex justify-between gap-4 items-center mb-4">
             <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
             <x-button
+                v-if="can.create_payments && !can.approve_payments"
                 size="sm"
                 color="orange"
                 @click="addPaymentModal"
@@ -241,14 +261,28 @@ const generateCCLink = async code => {
             </template>
 
             <template #item-actions="item">
+
                 <div class="flex gap-2">
 
+                    <x-button
+                        size="xs"
+                        color="error"
+                        @click="approvePayment(item)"
+                    >
+                        Approve
+                    </x-button>
 
+                    <x-button
+                        size="xs"
+                        disabled
+                        color="error"
+                    >
+                        Approved
+                    </x-button>
 
                     <x-button
                         size="xs"
                         color="orange"
-
                         @click="generateCCLink(item.code)"
                     >
                         Copy Link
@@ -257,18 +291,21 @@ const generateCCLink = async code => {
                     <x-button
                         size="xs"
                         color="emerald"
-
                         @click="editPaymentModal(item)"
                     >
                         Edit
                     </x-button>
                 </div>
+
             </template>
+
+
+
 
         </DataTable>
 
 
-        <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
+        <x-modal v-model="paymentModal" size="lg" show-close backdrop>
             <template #header>
             <span class="text-primary-800 font-semibold">
               {{

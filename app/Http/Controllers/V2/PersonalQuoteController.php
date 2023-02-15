@@ -15,6 +15,7 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\YearOfManufacture;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\PaymentRepository;
 use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use Illuminate\Http\Request;
@@ -46,10 +47,23 @@ class PersonalQuoteController extends Controller
      * @param PersonalQuotePaymentRequest $request
      * @return void
      */
-    public function createPayment($quoteType, $quoteId, PersonalQuotePaymentRequest $request)
+    public function createPayment($quoteId, PersonalQuotePaymentRequest $request)
     {
-        PersonalQuoteRepository::createPayment($quoteType, $quoteId, $request->validated());
+        PersonalQuoteRepository::createPayment($quoteId, $request->validated());
         return back()->with('message' , 'Payment created successfully');
+    }
+
+
+    /**
+     * @param $quoteId
+     * @param $paymentCode
+     * @param PersonalQuotePaymentRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updatePayment($quoteId, $paymentCode, PersonalQuotePaymentRequest $request)
+    {
+        PersonalQuoteRepository::updatePayment($quoteId, $paymentCode, $request->validated());
+        return back()->with('message' , 'Payment updated successfully');
     }
 
 }
