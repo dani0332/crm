@@ -43,12 +43,11 @@ class LeadAllocationJob implements ShouldQueue
             $leadAllocationService->setAdvisorsToUnavailable();
 
             $leadAllocationService->setMaxCapAndAllocationStatus();
-            info('CAR LEAD ALLOCATION MASTER SWITCH VALUE IS : '. config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH'));
-            if (config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == "0" || config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
+            info('CAR LEAD ALLOCATION MASTER SWITCH VALUE IS : '.config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH'));
+            if (! $leadAllocationService->shouldCarAllocationProceed()) {
                 info('CAR Lead Allocation Job Switch is OFF');
             } else {
                 info('CAR Lead Allocation Job Switch is ON and job is about to start');
-
                 $leadAllocationService->processCarLeads();
             }
             if (! $leadAllocationService->leadAllocationSwitchStatus()) {
@@ -122,7 +121,7 @@ class LeadAllocationJob implements ShouldQueue
                 return;
             }
         } catch (ExceptionTimeoutException $e) {
-            info('**************** Lead Allocation Job is timed out now at : '. now() . ' **************** ');
+            info('**************** Lead Allocation Job is timed out now at : '.now().' **************** ');
 
             info('message: '.$e->getMessage());
             $this->delete();

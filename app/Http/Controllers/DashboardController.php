@@ -232,7 +232,6 @@ class DashboardController extends Controller
             }
         }
 
-
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {

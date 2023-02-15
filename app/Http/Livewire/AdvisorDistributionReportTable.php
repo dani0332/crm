@@ -3,8 +3,8 @@
 namespace App\Http\Livewire;
 
 use App\Enums\GenericRequestEnum;
-use App\Enums\RolesEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
@@ -13,9 +13,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorDistributionReportTable extends DataTableComponent
 {
@@ -145,7 +144,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-            ->where('car_quote_request.quote_status_id', '!=' , QuoteStatusEnum::Fake)
+            ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->groupBy('users.email')
             ->orderBy('users.name');
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
@@ -179,15 +178,15 @@ class AdvisorDistributionReportTable extends DataTableComponent
                     'placeholder' => 'SELECT ALL TEAMS',
                 ])
                     ->filter(function (Builder $builder, $value) {
-                        $builder->where('teams.id', $value);
+                        $builder->whereIn('teams.id', $value);
                     }),
-                    MultiSelectFilter::make('Tiers')
-                    ->options($this->tiers)->config([
-                        'placeholder' => 'SELECT ALL TIERS',
-                    ])
-                    ->filter(function (Builder $builder, $value) {
-                        $builder->where('car_quote_request.tier_id', $value);
-                    })
+                MultiSelectFilter::make('Tiers')
+                ->options($this->tiers)->config([
+                    'placeholder' => 'SELECT ALL TIERS',
+                ])
+                ->filter(function (Builder $builder, $value) {
+                    $builder->whereIn('car_quote_request.tier_id', $value);
+                })
             );
         }
 

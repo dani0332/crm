@@ -3,9 +3,9 @@
 namespace App\Http\Livewire;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
-use App\Enums\QuoteStatusEnum;
 use App\Services\ApplicationStorageService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -136,7 +136,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
                 $join->on('users.team_id', '=', 'teams.id');
                 $join->on('users.sub_team_id', '=', 'teams.id');
             })
-            ->where('car_quote_request.quote_status_id', '!=' , QuoteStatusEnum::Fake)
+            ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->whereNull('car_quote_request.renewal_import_code')
             ->groupBy('car_quote_request.advisor_id')
             ->orderBy('users.email');

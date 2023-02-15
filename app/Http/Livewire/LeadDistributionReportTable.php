@@ -90,7 +90,7 @@ class LeadDistributionReportTable extends DataTableComponent
                 DB::raw('count(car_quote_request.id) as total_leads'),
             )
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-            ->where('car_quote_request.quote_status_id', '!=' , QuoteStatusEnum::Fake)
+            ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->groupBy('tiers.name');
     }
 

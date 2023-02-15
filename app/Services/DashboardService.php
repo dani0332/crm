@@ -123,7 +123,8 @@ class DashboardService extends BaseService
     {
         $userIds = $this->walkTree(auth()->user()->id);
         info('user ids for advisor conversion report are : '.json_encode($userIds));
-        $query = CarQuote::select(
+        $query = CarQuote::query()
+        ->select(
             'users.id as advisorId',
             DB::raw('count(car_quote_request.id) as total_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
@@ -135,23 +136,20 @@ class DashboardService extends BaseService
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE 0 END) as created_sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::AfiaRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id not in (
-                    '.QuoteStatusEnum::NewLead.','.QuoteStatusEnum::PriceTooHigh.','.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.','.QuoteStatusEnum::NotInterested.',
-                    '.QuoteStatusEnum::NotEligibleForInsurance.','.QuoteStatusEnum::NotLookingForMotorInsurance.','.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::NotContactablePe.',
-                    '.QuoteStatusEnum::FollowupCall.','.QuoteStatusEnum::Interested.','.QuoteStatusEnum::NoAnswer.','.QuoteStatusEnum::Quoted.','.QuoteStatusEnum::Duplicate.',
-                    '.QuoteStatusEnum::Fake.','.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::AfiaRenewal.') THEN 1 ELSE 0 END) as others'),
+                '.QuoteStatusEnum::NewLead.','.QuoteStatusEnum::PriceTooHigh.','.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.','.QuoteStatusEnum::NotInterested.',
+                '.QuoteStatusEnum::NotEligibleForInsurance.','.QuoteStatusEnum::NotLookingForMotorInsurance.','.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::NotContactablePe.',
+                '.QuoteStatusEnum::FollowupCall.','.QuoteStatusEnum::Interested.','.QuoteStatusEnum::NoAnswer.','.QuoteStatusEnum::Quoted.','.QuoteStatusEnum::Duplicate.',
+                '.QuoteStatusEnum::Fake.','.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::AfiaRenewal.') THEN 1 ELSE 0 END) as others'),
         )
-            ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->join('user_team', 'users.id', 'user_team.user_id')
-            ->leftJoin('teams', function ($join) {
-                $join->on('user_team.team_id', '=', 'teams.id');
-                $join->on('users.sub_team_id', '=', 'teams.id');
-            })
-            ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-            ->whereNull('car_quote_request.renewal_import_code')
-            ->whereIn('car_quote_request.advisor_id', $userIds)
-            ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
-            ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
-            ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email')->take(10);
+        ->join('users', 'users.id', 'car_quote_request.advisor_id')
+        ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+        ->join('user_team', 'user_team.user_id', 'users.id')
+        ->join('teams', 'teams.id', 'user_team.team_id')
+        ->whereNull('car_quote_request.renewal_import_code')
+        ->whereIn('car_quote_request.advisor_id', $userIds)
+        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
+        ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email')->take(10);
         if (isset($advisorId)) {
             $query->where('car_quote_request.advisor_id', $advisorId);
         }
