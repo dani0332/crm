@@ -346,8 +346,6 @@ class LeadAllocationService extends BaseService
             DB::beginTransaction();
             if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
                 info('Car lead allocation master switch is off');
-                DB::commit();
-
                 return false;
             }
             info('setMaxCapAndAllocationStatus -- started');
@@ -485,7 +483,7 @@ class LeadAllocationService extends BaseService
 
                 return false;
             }
-            
+
             $currentIterationTime = now();
             info('----------------------- CAR LEAD ALLOCATION STARTED FOR '.$currentIterationTime.' -----------------------');
             $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
