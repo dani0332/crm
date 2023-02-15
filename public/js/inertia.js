@@ -3801,7 +3801,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }).post(url, {
         preserveScroll: true,
         preserveState: true,
-        only: ['quoteDocuments'],
         onFinish: function onFinish() {
           isUploading.value = false;
           notification.success({

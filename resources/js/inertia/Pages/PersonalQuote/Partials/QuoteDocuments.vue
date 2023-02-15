@@ -107,7 +107,6 @@ const uploadFile = (doc,  files) => {
         .post(url, {
             preserveScroll: true,
             preserveState: true,
-            only: ['quoteDocuments'],
             onFinish: () => {
                 isUploading.value = false;
                 notification.success({
