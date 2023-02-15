@@ -346,6 +346,7 @@ class LeadAllocationService extends BaseService
             DB::beginTransaction();
             if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
                 info('Car lead allocation master switch is off');
+
                 return false;
             }
             info('setMaxCapAndAllocationStatus -- started');
@@ -476,7 +477,6 @@ class LeadAllocationService extends BaseService
     public function processCarLeads()
     {
         try {
-
             if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
                 info('Car lead allocation master switch is off');
                 DB::commit();
@@ -759,14 +759,15 @@ class LeadAllocationService extends BaseService
     public function shouldCarAllocationProceed()
     {
         $shouldProcess = true;
-        if(config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == "0" || config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0){
+        if (config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
             $shouldProcess = false;
-        };
+        }
 
         if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
             info('Car lead allocation master switch is off');
-            $shouldProcess = false;;
+            $shouldProcess = false;
         }
+
         return $shouldProcess;
     }
 }

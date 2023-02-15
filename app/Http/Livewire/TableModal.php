@@ -19,22 +19,37 @@ class TableModal extends Component
     public $leadSourceFilter;
     public $teamsFilter;
     public $advisorsFilter;
-
     protected $listeners = [
         'show' => 'show',
     ];
 
-    public function show($data, $filters = [], $leadType)
+    public function show($data, $filters, $leadType)
     {
-        if(array_key_exists('created_at', $filters)) $this->createdAtFilter = str_replace('~', '|',$filters['created_at']);
-        if(array_key_exists('ecommerce', $filters)) $this->ecommerceFilter = $filters['ecommerce'];
-        if(array_key_exists('exclude_created_leads', $filters)) $this->excludeCreatedLeadsFilter = $filters['exclude_created_leads'];
-        if(array_key_exists('batch_number', $filters)) $this->batchNumberFilter = $filters['batch_number'];
-        if(array_key_exists('tiers', $filters)) $this->tiersFilter =$filters['tiers'];
-        if(array_key_exists('lead_source', $filters)) $this->leadSourceFilter =$filters['lead_source'];
-        if(array_key_exists('teams', $filters)) $this->teamsFilter =$filters['teams'];
-        if(array_key_exists('advisors', $filters)) $this->advisorsFilter =$filters['advisors'];
-        info('lead type : '. $leadType);
+        if (array_key_exists('created_at', $filters)) {
+            $this->createdAtFilter = str_replace('~', '|', $filters['created_at']);
+        }
+        if (array_key_exists('ecommerce', $filters)) {
+            $this->ecommerceFilter = $filters['ecommerce'];
+        }
+        if (array_key_exists('exclude_created_leads', $filters)) {
+            $this->excludeCreatedLeadsFilter = $filters['exclude_created_leads'];
+        }
+        if (array_key_exists('batch_number', $filters)) {
+            $this->batchNumberFilter = $filters['batch_number'];
+        }
+        if (array_key_exists('tiers', $filters)) {
+            $this->tiersFilter = $filters['tiers'];
+        }
+        if (array_key_exists('lead_source', $filters)) {
+            $this->leadSourceFilter = $filters['lead_source'];
+        }
+        if (array_key_exists('teams', $filters)) {
+            $this->teamsFilter = $filters['teams'];
+        }
+        if (array_key_exists('advisors', $filters)) {
+            $this->advisorsFilter = $filters['advisors'];
+        }
+        info('lead type : '.$leadType);
         $this->advisorId = $data['advisorId'];
         $this->startDate = $data['batch.start_date'];
         $this->endDate = $data['batch.end_date'];

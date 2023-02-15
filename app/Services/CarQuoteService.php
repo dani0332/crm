@@ -1158,7 +1158,7 @@ class CarQuoteService extends BaseService
 
     public function processManualLeadAssignment($request): array
     {
-        info('called by : '. debug_backtrace()[1]['function']);
+        info('called by : '.debug_backtrace()[1]['function']);
         $userId = (int) $request->assigned_to_id_new;
         $result = [];
 
@@ -1172,7 +1172,7 @@ class CarQuoteService extends BaseService
             $this->updateChildRecord($lead->id);
 
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
-            
+
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId);
 
             $lead->save();
@@ -1227,12 +1227,12 @@ class CarQuoteService extends BaseService
         info('new advisor after update is : '.json_encode($newAdvisorAllocationRecord));
         if ($lead->advisor_id != null && Carbon::parse($lead->created_at)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
             if ($lead->auto_assigned) {
-                if($previousAdvisorAllocationRecord->auto_assignment_count > 0){
+                if ($previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
                     $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
                 }
             } else {
-                if($previousAdvisorAllocationRecord->manual_assignment_count > 0){
+                if ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  manual count before update is : '.$previousAdvisorAllocationRecord->manual_assignment_count);
                     $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
                 }

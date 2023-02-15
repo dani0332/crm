@@ -74,7 +74,7 @@ trait TeamHierarchyTrait
 
     public function getUsersByTeamId($teamId)
     {
-        if(gettype($teamId) == "integer") {
+        if (gettype($teamId) == 'integer') {
             $teamIds = [$teamId];
         } else {
             $teamIds = $teamId;
