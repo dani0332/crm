@@ -63,6 +63,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\V2\BikeQuoteController;
 use App\Http\Controllers\V2\PersonalQuoteController;
+use App\Http\Controllers\V2\ActivityController;
 
 /*
 |--------------------------------------------------------------------------
@@ -119,6 +120,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'update' => 'leadassignment.update',
         'destroy' => 'leadassignment.destroy',
     ]);
+
+    Route::post('activities/v2', [ActivityController::class, 'store']);
+    Route::patch('activities/v2/{id}', [ActivityController::class, 'update']);
+
     Route::get('activities', [ActivitesController::class, 'index'])->name('activities.index');
     Route::post('/activities/create-activity', [ActivitesController::class, 'store']);
     Route::post('activities/{id}/update', [ActivitesController::class, 'update']);

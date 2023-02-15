@@ -8,6 +8,7 @@ import QuoteDocuments from "../PersonalQuote/Partials/QuoteDocuments";
 import LeadStatus from "../PersonalQuote/Partials/QuoteStatus";
 import QuoteStatus from "../PersonalQuote/Partials/QuoteStatus";
 import QuotePayments from "../PersonalQuote/Partials/QuotePayments";
+import QuoteActivities from "../PersonalQuote/Partials/QuoteActivities";
 
 defineProps({
     quote: Object,
@@ -20,6 +21,8 @@ defineProps({
     storageUrl: String,
     quoteType: String,
     can: Object,
+    activities: Object,
+    advisors: Object,
 })
 
 const page = usePage();
@@ -213,6 +216,14 @@ const historyDataTable = [
             </div>
 
         </div>
+
+        <QuoteActivities
+            :can="can"
+            :quote="quote"
+            :activities="activities"
+            :advisors="advisors"
+            :quote-type="quoteType"
+        />
 
         <QuotePayments
             :can="can"

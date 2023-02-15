@@ -41,6 +41,16 @@ if (! function_exists('vAbort')) {
     }
 }
 
+if(!function_exists('generateUuid')) {
+    function generateUuid() {
+
+        $client = new Hidehalo\Nanoid\Client();
+        $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $nanoId = $client->formattedId($alphabets, 8);
+        return $nanoId;
+    }
+}
+
 if (! function_exists('storageUrl')) {
 
     /**

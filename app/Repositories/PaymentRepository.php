@@ -10,6 +10,10 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 {
     protected $paymentService;
 
+    public function model() {
+        return Payment::class;
+    }
+
     public function getPaymentsByQuoteId($quoteId, $quoteTypeId)
     {
         return Payment::where('quote_id', $quoteId)->where('quote_type_id', $quoteTypeId)->get();
@@ -43,8 +47,4 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
         return $paymentLink;
     }
 
-    public function model()
-    {
-        return Payment::class;
-    }
 }

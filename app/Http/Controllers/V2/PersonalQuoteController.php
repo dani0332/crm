@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ActivityRequest;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\PersonalQuotePaymentRequest;
 use App\Http\Requests\PersonalQuoteStatusRequest;
