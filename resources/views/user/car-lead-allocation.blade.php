@@ -361,7 +361,7 @@
                     </div>
                     <div class="col-md-3"
                         style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 350px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
-                        <span style="font-size: 21px">Total UnAssigned Leads Today </span>
+                        <span style="font-size: 21px">Total UnAssigned Leads </span>
                         <br />
                         <b><span style="color: black;">{{ $todayTotalUnAssignedLeadCount}}</span></b>
                     </div>
