@@ -28,4 +28,15 @@ class ActivityController extends Controller
         ActivityRepository::update($id, $request->validated());
         return back()->with('message' , 'Activity updated successfully');
     }
+
+    /**
+     * @param $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updateStatus($id)
+    {
+        $activity = ActivityRepository::where('id', $id)->firstOrFail();
+        $activity->update(['status' => 1]);
+        return back()->with('message' , 'Activity status updated successfully');
+    }
 }

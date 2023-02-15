@@ -3565,9 +3565,9 @@ __webpack_require__.r(__webpack_exports__);
       modals.activity = true;
     };
 
-    var onActivityStatusUpdate = function onActivityStatusUpdate(id) {
+    var onStatusUpdate = function onStatusUpdate(id) {
       activityForm.activity_id = id;
-      activityForm.post("/activities/updateStatus", {
+      activityForm.patch("/activities/v2/".concat(id, "/update-status"), {
         preserveScroll: true,
         onSuccess: function onSuccess() {
           notification.success({
@@ -3578,19 +3578,17 @@ __webpack_require__.r(__webpack_exports__);
       });
     };
 
-    var activityEdit = function activityEdit(data) {
+    var onEdit = function onEdit(activity) {
       activityActionEdit.value = true;
       modals.activity = true;
-      activityForm.activity_id = data.id;
-      activityForm.uuid = data.uuid;
-      activityForm.title = data.title;
-      activityForm.description = data.description;
-      activityForm.due_date = data.due_date ? data.due_date.split(' ')[0].split('-').reverse().join('-') + 'T' + data.due_date.split(' ')[1] : null;
-      activityForm.assignee_id = data.assignee_id;
-      activityForm.status = data.status;
+      activityForm.activity_id = activity.id;
+      activityForm.title = activity.title;
+      activityForm.description = activity.description;
+      activityForm.due_date = activity.due_date ? activity.due_date.split(' ')[0].split('-').reverse().join('-') + 'T' + activity.due_date.split(' ')[1] : null;
+      activityForm.assignee_id = activity.assignee_id;
     };
 
-    var onActivitySubmit = function onActivitySubmit(isValid) {
+    var onSubmit = function onSubmit(isValid) {
       if (!isValid) return;
       var url = "/activities/v2/";
       var method = "post";
@@ -3614,17 +3612,17 @@ __webpack_require__.r(__webpack_exports__);
       });
     };
 
-    var activityDelete = function activityDelete(id) {
+    var confirmDelete = function confirmDelete(id) {
       modals.activityConfirm = true;
-      confirmDeleteData.activity = id;
+      deleteData.activity_id = id;
     };
 
-    var confirmDeleteData = (0,vue__WEBPACK_IMPORTED_MODULE_1__.reactive)({
-      activity: null
+    var deleteData = (0,vue__WEBPACK_IMPORTED_MODULE_1__.reactive)({
+      activity_id: null
     });
 
-    var activityDeleteConfirmed = function activityDeleteConfirmed() {
-      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router.post("/activities/".concat(confirmDeleteData.activity, "/delete"), {
+    var onDeleteConfirmation = function onDeleteConfirmation() {
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router.post("/activities/".concat(deleteData.activity, "/delete"), {
         isInertia: true,
         quote_uuid: page.props.quote.uuid
       }, {
@@ -3651,12 +3649,12 @@ __webpack_require__.r(__webpack_exports__);
       activityTable: activityTable,
       activityForm: activityForm,
       addActivity: addActivity,
-      onActivityStatusUpdate: onActivityStatusUpdate,
-      activityEdit: activityEdit,
-      onActivitySubmit: onActivitySubmit,
-      activityDelete: activityDelete,
-      confirmDeleteData: confirmDeleteData,
-      activityDeleteConfirmed: activityDeleteConfirmed,
+      onStatusUpdate: onStatusUpdate,
+      onEdit: onEdit,
+      onSubmit: onSubmit,
+      confirmDelete: confirmDelete,
+      deleteData: deleteData,
+      onDeleteConfirmation: onDeleteConfirmation,
 
       get router() {
         return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router;
@@ -10721,7 +10719,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         modelValue: status === 1,
         disabled: status === 1,
         onChange: function onChange($event) {
-          return $setup.onActivityStatusUpdate(id);
+          return $setup.onStatusUpdate(id);
         }
       }, null, 8
       /* PROPS */
@@ -10734,7 +10732,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         outlined: "",
         disabled: item.status === 1,
         onClick: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)(function ($event) {
-          return $setup.activityEdit(item);
+          return $setup.onEdit(item);
         }, ["prevent"])
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -10751,7 +10749,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         disabled: item.status === 1,
         outlined: "",
         onClick: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)(function ($event) {
-          return $setup.activityDelete(item.id);
+          return $setup.confirmDelete(item.id);
         }, ["prevent"])
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -10785,7 +10783,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_form, {
-        onSubmit: $setup.onActivitySubmit,
+        onSubmit: $setup.onSubmit,
         "auto-focus": false
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -10901,7 +10899,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         size: "sm",
         color: "error",
         loading: $setup.activityForm.processing,
-        onClick: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)($setup.activityDeleteConfirmed, ["prevent"])
+        onClick: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)($setup.onDeleteConfirmation, ["prevent"])
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Delete ")];

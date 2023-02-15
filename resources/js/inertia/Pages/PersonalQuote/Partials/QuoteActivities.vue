@@ -61,9 +61,9 @@ const addActivity = () => {
     modals.activity = true;
 };
 
-const onActivityStatusUpdate = id => {
+const onStatusUpdate = id => {
     activityForm.activity_id = id;
-    activityForm.post(`/activities/updateStatus`, {
+    activityForm.patch(`/activities/v2/${id}/update-status`, {
         preserveScroll: true,
         onSuccess: () => {
             notification.success({
@@ -74,23 +74,21 @@ const onActivityStatusUpdate = id => {
     });
 };
 
-const activityEdit = data => {
+const onEdit = activity => {
     activityActionEdit.value = true;
     modals.activity = true;
-    activityForm.activity_id = data.id;
-    activityForm.uuid = data.uuid;
-    activityForm.title = data.title;
-    activityForm.description = data.description;
-    activityForm.due_date = data.due_date
-        ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
+    activityForm.activity_id = activity.id;
+    activityForm.title = activity.title;
+    activityForm.description = activity.description;
+    activityForm.due_date = activity.due_date
+        ? activity.due_date.split(' ')[0].split('-').reverse().join('-') +
         'T' +
-        data.due_date.split(' ')[1]
+        activity.due_date.split(' ')[1]
         : null;
-    activityForm.assignee_id = data.assignee_id;
-    activityForm.status = data.status;
+    activityForm.assignee_id = activity.assignee_id;
 };
 
-const onActivitySubmit = isValid => {
+const onSubmit = isValid => {
 
     if (!isValid) return;
 
@@ -116,18 +114,18 @@ const onActivitySubmit = isValid => {
     });
 };
 
-const activityDelete = id => {
+const confirmDelete = id => {
     modals.activityConfirm = true;
-    confirmDeleteData.activity = id;
+    deleteData.activity_id = id;
 };
 
-const confirmDeleteData = reactive({
-    activity: null
+const deleteData = reactive({
+    activity_id: null
 });
 
-const activityDeleteConfirmed = () => {
+const onDeleteConfirmation = () => {
     router.post(
-        `/activities/${confirmDeleteData.activity}/delete`,
+        `/activities/${deleteData.activity}/delete`,
         {
             isInertia: true,
             quote_uuid: page.props.quote.uuid,
@@ -178,7 +176,7 @@ const activityDeleteConfirmed = () => {
                     size="xl"
                     :modelValue="status === 1"
                     :disabled="status === 1"
-                    @change="onActivityStatusUpdate(id)"
+                    @change="onStatusUpdate(id)"
                 />
             </template>
             <template #item-action="item">
@@ -188,19 +186,21 @@ const activityDeleteConfirmed = () => {
                         color="primary"
                         outlined
                         :disabled="item.status === 1"
-                        @click.prevent="activityEdit(item)"
+                        @click.prevent="onEdit(item)"
                     >
                         Edit
                     </x-button>
+
                     <x-button
                         size="xs"
                         color="error"
                         :disabled="item.status === 1"
                         outlined
-                        @click.prevent="activityDelete(item.id)"
+                        @click.prevent="confirmDelete(item.id)"
                     >
                         Delete
                     </x-button>
+
                 </div>
             </template>
         </DataTable>
@@ -209,7 +209,7 @@ const activityDeleteConfirmed = () => {
                 {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
             </template>
 
-            <x-form @submit="onActivitySubmit" :auto-focus="false">
+            <x-form @submit="onSubmit" :auto-focus="false">
                 <div class="grid gap-4">
                     <x-input
                         v-model="activityForm.title"
@@ -259,11 +259,13 @@ const activityDeleteConfirmed = () => {
                 </div>
             </x-form>
         </x-modal>
+
         <x-modal v-model="modals.activityConfirm" show-close backdrop>
             <template #header> Delete Activity </template>
             <p>Are you sure you want to delete this activity?</p>
             <template #actions>
                 <div class="text-right space-x-4">
+
                     <x-button
                         size="sm"
                         ghost
@@ -271,17 +273,20 @@ const activityDeleteConfirmed = () => {
                     >
                         Cancel
                     </x-button>
+
                     <x-button
                         size="sm"
                         color="error"
                         :loading="activityForm.processing"
-                        @click.prevent="activityDeleteConfirmed"
+                        @click.prevent="onDeleteConfirmation"
                     >
                         Delete
                     </x-button>
                 </div>
             </template>
         </x-modal>
+
+
     </div>
 
 </template>
