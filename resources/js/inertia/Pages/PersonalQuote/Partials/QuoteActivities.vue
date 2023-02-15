@@ -124,15 +124,15 @@ const deleteData = reactive({
 });
 
 const onDeleteConfirmation = () => {
-    router.post(
-        `/activities/${deleteData.activity}/delete`,
+    router.delete(
+        `/activities/v2/${deleteData.activity_id}/`,
         {
-            isInertia: true,
             quote_uuid: page.props.quote.uuid,
         },
         {
             preserveScroll: true,
             onSuccess: () => {
+                modals.activityConfirm = false;
                 notification.error({
                     title: 'Activity Deleted',
                     position: 'top',

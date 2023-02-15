@@ -124,6 +124,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('activities/v2', [ActivityController::class, 'store']);
     Route::patch('activities/v2/{id}', [ActivityController::class, 'update']);
     Route::patch('activities/v2/{id}/update-status', [ActivityController::class, 'updateStatus']);
+    Route::delete('activities/v2/{id}/', [ActivityController::class, 'destroy']);
 
     Route::get('activities', [ActivitesController::class, 'index'])->name('activities.index');
     Route::post('/activities/create-activity', [ActivitesController::class, 'store']);

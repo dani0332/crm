@@ -39,4 +39,15 @@ class ActivityController extends Controller
         $activity->update(['status' => 1]);
         return back()->with('message' , 'Activity status updated successfully');
     }
+
+    /**
+     * @param $id
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy($id)
+    {
+        $activity = ActivityRepository::findOrFail($id);
+        $activity->delete();
+        return back()->with('message' , 'Activity status updated successfully');
+    }
 }

@@ -3622,12 +3622,12 @@ __webpack_require__.r(__webpack_exports__);
     });
 
     var onDeleteConfirmation = function onDeleteConfirmation() {
-      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router.post("/activities/".concat(deleteData.activity, "/delete"), {
-        isInertia: true,
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router["delete"]("/activities/v2/".concat(deleteData.activity_id, "/"), {
         quote_uuid: page.props.quote.uuid
       }, {
         preserveScroll: true,
         onSuccess: function onSuccess() {
+          modals.activityConfirm = false;
           notification.error({
             title: 'Activity Deleted',
             position: 'top'
