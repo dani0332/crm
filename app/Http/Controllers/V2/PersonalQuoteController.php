@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PersonalQuotePaymentRequest;
+use App\Http\Requests\PersonalQuotePolicyRequest;
 use App\Http\Requests\PersonalQuoteStatusRequest;
 use App\Repositories\PersonalQuoteRepository;
 
@@ -51,5 +52,12 @@ class PersonalQuoteController extends Controller
         PersonalQuoteRepository::updatePayment($quoteId, $paymentCode, $request->validated());
 
         return back()->with('message', 'Payment updated successfully');
+    }
+
+
+    public function updatePolicyDetails($id, PersonalQuotePolicyRequest $request)
+    {
+        $response = PersonalQuoteRepository::updatePolicyDetails($id, $request->validated());
+        return back();
     }
 }

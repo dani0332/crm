@@ -147,4 +147,17 @@ class PersonalQuoteRepository extends BaseRepository
 
         return $payment;
     }
+
+    /**
+     * @param $id
+     * @param $data
+     * @return mixed
+     */
+    public function fetchUpdatePolicyDetails($id, $data)
+    {
+        $quote = $this->findOrFail($id);
+        info(json_encode($data));
+        $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'renewal_expiry_date', 'premium']));
+        return $quote;
+    }
 }
