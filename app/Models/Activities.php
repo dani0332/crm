@@ -12,7 +12,7 @@ class Activities extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
 
-    protected $table = 'activities';
+    protected $table = 'activitìes';
 
     public function getCreatedAtAttribute($table)
     {
