@@ -56,6 +56,7 @@ use App\Enums\GenericRequestEnum;
               selectedLeadId: $('#entityId').val(),
               selectedTierId: $('#new_selected_tier').val(),
               modelType: $('#modelType').val(),
+              entityCode: $('#entityCode').val(),
               _token: config._token,
             },
             success: function (response) {
@@ -118,6 +119,7 @@ use App\Enums\GenericRequestEnum;
                             @method('POST')
                             <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType" id="modelType">
                             <input type="hidden" value="{{ strtolower($record->id) }}" name="entityId" id="entityId">
+                            <input type="hidden" value="{{ strtolower($record->uuid) }}" name="entityCode" id="entityCode">
                             <div class="col-md-6">
                                 <div class="col-md-4">
                                     <h2><b>Assign Tier</b></h2>
