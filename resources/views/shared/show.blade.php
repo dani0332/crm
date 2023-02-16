@@ -42,6 +42,36 @@ use App\Enums\GenericRequestEnum;
     $('#add-activity-btn').on('click', function(){
         $('#activityModal').modal({ show: true });
     });
+    $(function(){
+        $('#manualTierAssignmentBtn').on('click', function (e) {
+        e.preventDefault();
+        if ($('#new_selected_tier').val() == '') {
+          $('#tierAssignValidation').show().fadeOut(5000);
+        } else {
+          $.ajax({
+            url: '/manual-tier-assignment',
+            type: 'PUT',
+            data: {
+              selectedLeadId: $('#entityId').val(),
+              selectedTierId: $('#new_selected_tier').val(),
+              _token: config._token,
+            },
+            success: function (response) {
+              $('#teamassignmentSuccess')
+                .html('Tier Assigned Successfully')
+                .show()
+                .fadeOut(5000);
+              setTimeout(() => {
+                window.location.reload(true);
+              }, 2000);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+              console.log(jqXHR, textStatus, errorThrown);
+            },
+          });
+        }
+      });
+    });
 </script>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
