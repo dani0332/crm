@@ -99,8 +99,8 @@ class TravelController extends Controller
         $documentTypes = collect($documentTypes)->groupBy('category');
 
         $membersDetail = $this->service->getMembersDetail($record->id);
-
-
+        $activities = $this->service->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
+        
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -120,6 +120,10 @@ class TravelController extends Controller
             'cdnPath' => $cdnPath,
             'membersDetail' => $membersDetail,
             'memberCategories' => $this->lookupService->getMemberCategories(),
+            'emailStatuses' => $this->service->getEmailStatus(self::TYPE_ID, $record->id),
+            'listQuotePlans' => $this->service->listQuotePlans($id),
+            'activities' => $activities,
+            'isAdmin' => auth()->user()->isAdmin(),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,

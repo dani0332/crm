@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\GenericModel;
 use App\Enums\QuoteStatusEnum;
+use App\Services\EmailStatusService;
 use App\Services\QuoteDocumentService;
 use App\Services\DropdownSourceService;
 
@@ -81,5 +82,10 @@ class BaseService
     public function getQuoteDocumentsForUpload($type)
     {
         return (new QuoteDocumentService())->getQuoteDocumentsForUpload($type);
+    }
+
+    public function getEmailStatus($typeId, $quoteId)
+    {
+        return (new EmailStatusService())->getEmailStatus($typeId, $quoteId);
     }
 }

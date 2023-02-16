@@ -2,22 +2,23 @@
 
 namespace App\Services;
 
-use App\Enums\DatabaseColumnsString;
-use App\Enums\quoteStatusCode;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Models\TravelMemberDetail;
-use App\Models\TravelQuote;
-use App\Models\TravelQuoteRequestDetail;
-use App\Traits\AddPremiumAllLobs;
-use App\Traits\GetTravelPreviousQuoteIds;
-use App\Traits\RolePermissionConditions;
+use DB;
 use Auth;
 use Carbon\Carbon;
-use DB;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use App\Models\User;
+use App\Models\TravelQuote;
+use App\Enums\quoteTypeCode;
 use App\Models\GenericModel;
+use Illuminate\Http\Request;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
+use App\Traits\AddPremiumAllLobs;
+use App\Models\TravelMemberDetail;
+use Illuminate\Support\Facades\Log;
+use App\Enums\DatabaseColumnsString;
+use App\Models\TravelQuoteRequestDetail;
+use App\Traits\RolePermissionConditions;
+use App\Traits\GetTravelPreviousQuoteIds;
 
 class TravelQuoteService extends BaseService
 {
@@ -846,5 +847,45 @@ class TravelQuoteService extends BaseService
     public function getQuoteStatuses()
     {
         return [QuoteStatusEnum::NewLead, QuoteStatusEnum::Quoted, QuoteStatusEnum::FollowedUp, QuoteStatusEnum::InNegotiation, QuoteStatusEnum::PaymentPending];
+    }
+
+    public function listQuotePlans($id)
+    {
+        $listQuotePlans = '';
+        $quotePlans = $this->getQuotePlans($id);
+        if (isset($quotePlans->message) && $quotePlans->message != '') {
+            $listQuotePlans = $quotePlans->message;
+        } else {
+            if (gettype($quotePlans) != 'string') {
+                $listQuotePlans = $quotePlans->quotes->plans;
+            } else {
+                $listQuotePlans = $quotePlans;
+            }
+        }
+        return $listQuotePlans;
+    }
+
+    public function getActivityByLeadId($id, $type)
+    {
+        $activitiesData =  (app(ActivitiesService::class))->getActivityByLeadId($id, $type);
+        $activities = [];
+        foreach ($activitiesData as $activity) {
+            $updatedActivity = [
+                'id' => $activity->id,
+                'uuid' => $activity->uuid,
+                'title' => $activity->title,
+                'description' => $activity->description,
+                'quote_request_id' => $activity->quote_request_id,
+                'quote_type_id' => $activity->quote_type_id,
+                'quote_uuid' => $activity->quote_uuid,
+                'client_name' => $activity->client_name,
+                'due_date' => $activity->due_date,
+                'assignee' => User::where('id', $activity->assignee_id)->first()->name,
+                'assignee_id' => $activity->assignee_id,
+                'status' => $activity->status,
+            ];
+            array_push($activities, $updatedActivity);
+        }
+        return $activities;
     }
 }
