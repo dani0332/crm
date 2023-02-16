@@ -37,7 +37,8 @@ class Nationality extends BaseModel
         return true;
     }
 
-    public function scopeWithActive($query) {
+    public function scopeWithActive($query)
+    {
         return $query->where('is_active', 1);
     }
 
