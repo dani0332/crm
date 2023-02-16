@@ -4238,7 +4238,7 @@ __webpack_require__.r(__webpack_exports__);
     });
     var quoteStatusForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
       quote_uuid: page.props.quote.uuid,
-      quote_status_id: page.props.quote.quote_status_id || null,
+      quote_status_id: null,
       notes: page.props.quote.notes || null,
       trans_code: page.props.quote.transapp_code || null,
       lost_reason_id: page.props.quote.lost_reason_id || null
