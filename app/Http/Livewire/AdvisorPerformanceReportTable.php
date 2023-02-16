@@ -157,14 +157,18 @@ class AdvisorPerformanceReportTable extends DataTableComponent
                     $dates[1] = Carbon::parse($dates[1])->endOfDay()->format('Y-m-d H:i:s');
                     $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
-            SelectFilter::make('Teams')
-                ->options($this->teams)->filter(function (Builder $builder, $value) {
-                    $builder->where('teams.id', $value);
-                }),
-            SelectFilter::make('Tiers')
-                ->options($this->tiers)->filter(function (Builder $builder, $value) {
-                    $builder->where('car_quote_request.tier_id', $value);
-                }),
+            MultiSelectFilter::make('Teams')->config([
+                'placeholder' => 'SELECT ALL TEAMS',
+            ])
+            ->options($this->teams)->filter(function (Builder $builder, $value) {
+                $builder->whereIn('teams.id', $value);
+            }),
+            MultiSelectFilter::make('Tiers')->config([
+                'placeholder' => 'SELECT ALL TIERS',
+            ])
+            ->options($this->tiers)->filter(function (Builder $builder, $value) {
+                $builder->whereIn('car_quote_request.tier_id', $value);
+            }),
             MultiSelectFilter::make('Lead Source')
                 ->options($this->leadSources)->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.source', $value);
