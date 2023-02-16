@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\GenericModel;
 use App\Enums\QuoteStatusEnum;
 use App\Services\CustomerService;
+use Illuminate\Support\Facades\DB;
 use App\Services\EmailStatusService;
 use App\Services\QuoteDocumentService;
 use App\Services\DropdownSourceService;
@@ -93,5 +94,16 @@ class BaseService
     public function getAdditionalContacts($customerId, $mobileNo)
     {
      return (new CustomerService())->getAdditionalContacts($customerId, $mobileNo);
+    }
+
+
+    public function audits($auditableId, $auditableType)
+    {
+        return DB::table('audits')
+        ->select('audits.*', 'users.name')
+        ->join('users', 'audits.user_id', 'users.id')
+        ->where('auditable_id', $auditableId)
+        ->where('auditable_type', $auditableType)
+        ->get();
     }
 }

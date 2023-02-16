@@ -55,21 +55,22 @@ const confirmData = reactive({
 });
 
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
-    assignLead = ref(null),
-    memberActionEdit = ref(false),
-    activityActionEdit = ref(false),
-    selectedPlan = ref(null),
-    selectedPlansPdf = ref([]),
-    exportLoader = ref(false),
-    contactLoader = ref(false),
-    historyLoading = ref(false),
-    isDisabled = ref(false),
-    lostReasonId = ref(
-        page.props.lostReasons.find(
-            reason => reason.text === page.props.quote.lost_reason,
-        )?.id || null,
-    );
-    
+  assignLead = ref(null),
+  memberActionEdit = ref(false),
+  activityActionEdit = ref(false),
+  selectedPlan = ref(null),
+  selectedPlansPdf = ref([]),
+  exportLoader = ref(false),
+  contactLoader = ref(false),
+  historyLoading = ref(false),
+  auditLogLoading = ref(false),
+  isDisabled = ref(false),
+  lostReasonId = ref(
+    page.props.lostReasons.find(
+      reason => reason.text === page.props.quote.lost_reason,
+    )?.id || null,
+  );
+
 const subTeamOptions = computed(() => {
   if (page.props.renewalAdvisors.length > 0) {
     return page.props.renewalAdvisors.map(advisor => ({
@@ -864,6 +865,40 @@ const historyDataTable = [
   { text: 'Modified By', value: 'ModifiedBy' },
   { text: 'Notes', value: 'NewNotes' },
   { text: 'Lead Status', value: 'NewStatus' },
+];
+
+const auditLogsData = ref(null);
+
+const onLoadAuditLogData = async () => {
+  try {
+    auditLogLoading.value = true;
+    axios
+      .post('/auditable', {
+        auditableType: 'App\\Models\\TravelQuote',
+        auditableId: page.props.quote.id,
+        jsonData: true,
+      })
+      .then(res => {
+        console.log(res);
+        auditLogsData.value = res.data;
+        auditLogLoading.value = false;
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  } catch (err) {
+    auditLogLoading.value = false;
+  }
+};
+
+const auditLogsDataTable = [
+  { text: 'Id', value: 'id' },
+  { text: 'User', value: 'name' },
+  { text: 'Event', value: 'event' },
+  { text: 'Old Values', value: 'old_values' },
+  { text: 'New Values', value: 'new_values' },
+  { text: 'Ip Address', value: 'ip_address' },
+  { text: 'Logged At', value: 'created_at' },
 ];
 
 onMounted(() => {
@@ -1881,32 +1916,59 @@ onMounted(() => {
     </x-modal>
   </div>
 
-<div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div v-if="historyData === null" class="text-center py-3">
-        <x-button
-          size="sm"
-          color="primary"
-          outlined
-          @click.prevent="onLoadHistoryData"
-          :loading="historyLoading"
-        >
-          Load History Data
-        </x-button>
-      </div>
-      <DataTable
-        v-else
-        table-class-name="compact"
-        :headers="historyDataTable"
-        :items="historyData || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="historyData.length < 15"
-      />
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <div>
+      <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+      <x-divider class="mb-4 mt-1" />
     </div>
+    <div v-if="historyData === null" class="text-center py-3">
+      <x-button
+        size="sm"
+        color="primary"
+        outlined
+        @click.prevent="onLoadHistoryData"
+        :loading="historyLoading"
+      >
+        Load History Data
+      </x-button>
+    </div>
+    <DataTable
+      v-else
+      table-class-name="compact"
+      :headers="historyDataTable"
+      :items="historyData || []"
+      border-cell
+      hide-rows-per-page
+      :rows-per-page="15"
+      :hide-footer="historyData.length < 15"
+    />
+  </div>
 
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <div>
+      <h3 class="font-semibold text-primary-800 text-lg">Audit Logs</h3>
+      <x-divider class="mb-4 mt-1" />
+    </div>
+    <div class="text-center py-3" v-if="auditLogsData === null">
+      <x-button
+        size="sm"
+        color="primary"
+        outlined
+        @click.prevent="onLoadAuditLogData"
+        :loading="auditLogLoading"
+      >
+        Load Audit Logs
+      </x-button>
+    </div>
+    <DataTable
+      v-else
+      table-class-name="compact"
+      :headers="auditLogsDataTable"
+      :items="auditLogsData || []"
+      border-cell
+      hide-rows-per-page
+      :rows-per-page="15"
+      :hide-footer="auditLogsData?.length < 15"
+    />
+  </div>
 </template>
