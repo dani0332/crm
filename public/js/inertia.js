@@ -4224,6 +4224,8 @@ __webpack_require__.r(__webpack_exports__);
     storageUrl: String
   },
   setup: function setup(__props, _ref) {
+    var _page$props$quote, _page$props$quote$quo, _page$props$quote2, _page$props$quote2$qu;
+
     var expose = _ref.expose;
     expose();
     var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_2__.useNotifications)('toast');
@@ -4238,10 +4240,10 @@ __webpack_require__.r(__webpack_exports__);
     });
     var quoteStatusForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
       quote_uuid: page.props.quote.uuid,
-      quote_status_id: null,
+      quote_status_id: page.props.quote.quote_status_id || null,
       notes: page.props.quote.notes || null,
-      trans_code: page.props.quote.transapp_code || null,
-      lost_reason_id: page.props.quote.lost_reason_id || null
+      transapp_code: ((_page$props$quote = page.props.quote) === null || _page$props$quote === void 0 ? void 0 : (_page$props$quote$quo = _page$props$quote.quote_detail) === null || _page$props$quote$quo === void 0 ? void 0 : _page$props$quote$quo.transapp_code) || null,
+      lost_reason_id: ((_page$props$quote2 = page.props.quote) === null || _page$props$quote2 === void 0 ? void 0 : (_page$props$quote2$qu = _page$props$quote2.quote_detail) === null || _page$props$quote2$qu === void 0 ? void 0 : _page$props$quote2$qu.lost_reason_id) || null
     });
 
     var onLeadStatus = function onLeadStatus() {
@@ -4259,12 +4261,21 @@ __webpack_require__.r(__webpack_exports__);
       });
     };
 
+    var allowStatusUpdate = page.props.quote.quote_status_id == 15;
     var __returned__ = {
       notification: notification,
       page: page,
       quoteStatusOptions: quoteStatusOptions,
       quoteStatusForm: quoteStatusForm,
       onLeadStatus: onLeadStatus,
+
+      get allowStatusUpdate() {
+        return allowStatusUpdate;
+      },
+
+      set allowStatusUpdate(v) {
+        allowStatusUpdate = v;
+      },
 
       get useForm() {
         return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm;
@@ -11490,7 +11501,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     placeholder: "Lead Notes",
     "class": "w-full",
     error: $setup.quoteStatusForm.errors.notes,
-    disabled: $props.quote.quote_status_id == 15
+    disabled: $setup.allowStatusUpdate
   }, null, 8
   /* PROPS */
   , ["modelValue", "error", "disabled"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
@@ -11501,28 +11512,29 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     label: "Status",
     error: $setup.quoteStatusForm.errors.quote_status_id,
     options: $setup.quoteStatusOptions,
-    disabled: $props.quote.quote_status_id == 15,
+    disabled: $setup.allowStatusUpdate,
     placeholder: "Lead Status",
     "class": "w-full"
   }, null, 8
   /* PROPS */
-  , ["modelValue", "error", "options", "disabled"]), $setup.quoteStatusForm.leadStatus == 15 ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
+  , ["modelValue", "error", "options", "disabled"]), $setup.quoteStatusForm.quote_status_id == 15 ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
     key: 0,
-    modelValue: _ctx.leadStatusForm.trans_code,
+    modelValue: $setup.quoteStatusForm.transapp_code,
     "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
-      return _ctx.leadStatusForm.trans_code = $event;
+      return $setup.quoteStatusForm.transapp_code = $event;
     }),
     label: "TransApp Code",
     placeholder: "TransApp Code is required",
     "class": "w-full",
-    error: $setup.quoteStatusForm.errors.trans_code
+    disabled: $setup.allowStatusUpdate,
+    error: $setup.quoteStatusForm.errors.transapp_code
   }, null, 8
   /* PROPS */
-  , ["modelValue", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), $setup.quoteStatusForm.leadStatus == 17 ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_select, {
+  , ["modelValue", "disabled", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), $setup.quoteStatusForm.quote_status_id == 17 ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_select, {
     key: 1,
-    modelValue: $setup.quoteStatusForm.lostReason,
+    modelValue: $setup.quoteStatusForm.lost_reason_id,
     "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
-      return $setup.quoteStatusForm.lostReason = $event;
+      return $setup.quoteStatusForm.lost_reason_id = $event;
     }),
     label: "Lost Reason",
     options: (_ctx$lostReasons = _ctx.lostReasons) === null || _ctx$lostReasons === void 0 ? void 0 : _ctx$lostReasons.map(function (item) {
@@ -11533,7 +11545,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     placeholder: "Lost Reason is required",
     "class": "w-full",
-    error: $setup.quoteStatusForm.errors.lostReason
+    error: $setup.quoteStatusForm.errors.lost_reason_id
   }, null, 8
   /* PROPS */
   , ["modelValue", "options", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_7, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
@@ -11541,7 +11553,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     color: "emerald",
     size: "sm",
     loading: $setup.quoteStatusForm.processing,
-    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)($setup.onLeadStatus, ["prevent"])
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)($setup.onLeadStatus, ["prevent"]),
+    disabled: $setup.allowStatusUpdate
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Change Status ")];
@@ -11551,7 +11564,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   }, 8
   /* PROPS */
-  , ["loading", "onClick"])])])])]);
+  , ["loading", "onClick", "disabled"])])])])]);
 }
 
 /***/ }),

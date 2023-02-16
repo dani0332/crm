@@ -7,24 +7,14 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
-use App\Models\Activities;
-use App\Models\InsuranceProvider;
-use App\Models\Nationality;
-use App\Models\PersonalQuote;
-use App\Models\QuoteStatus;
-use App\Models\UAELicenseHeldFor;
-use App\Models\YearOfManufacture;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
-use App\Repositories\PersonalQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class BikeQuoteController extends Controller
 {

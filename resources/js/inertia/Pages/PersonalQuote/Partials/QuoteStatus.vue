@@ -24,10 +24,10 @@ const quoteStatusOptions = computed(() => {
 
 const quoteStatusForm = useForm({
     quote_uuid: page.props.quote.uuid,
-    quote_status_id:  null,
+    quote_status_id: page.props.quote.quote_status_id || null,
     notes: page.props.quote.notes || null,
-    trans_code: page.props.quote.transapp_code || null,
-    lost_reason_id: page.props.quote.lost_reason_id || null,
+    transapp_code: page.props.quote?.quote_detail?.transapp_code || null,
+    lost_reason_id: page.props.quote?.quote_detail?.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -48,8 +48,10 @@ const onLeadStatus = () => {
     );
 };
 
-</script>
+let allowStatusUpdate = page.props.quote.quote_status_id == 15;
 
+</script>
+<!-- todo: remove hardcode status ids -->
 <template>
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
         <div>
@@ -65,7 +67,7 @@ const onLeadStatus = () => {
                     placeholder="Lead Notes"
                     class="w-full"
                     :error="quoteStatusForm.errors.notes"
-                    :disabled="quote.quote_status_id == 15"
+                    :disabled="allowStatusUpdate"
                 />
             </div>
             <div class="w-full md:w-1/3">
@@ -75,31 +77,32 @@ const onLeadStatus = () => {
                         label="Status"
                         :error="quoteStatusForm.errors.quote_status_id"
                         :options="quoteStatusOptions"
-                        :disabled="quote.quote_status_id == 15"
+                        :disabled="allowStatusUpdate"
                         placeholder="Lead Status"
                         class="w-full"
                     />
                     <x-input
-                        v-if="quoteStatusForm.leadStatus == 15"
-                        v-model="leadStatusForm.trans_code"
+                        v-if="quoteStatusForm.quote_status_id == 15"
+                        v-model="quoteStatusForm.transapp_code"
                         label="TransApp Code"
                         placeholder="TransApp Code is required"
                         class="w-full"
-                        :error="quoteStatusForm.errors.trans_code"
+                        :disabled="allowStatusUpdate"
+                        :error="quoteStatusForm.errors.transapp_code"
                     />
                     <x-select
-                        v-if="quoteStatusForm.leadStatus == 17"
-                        v-model="quoteStatusForm.lostReason"
+                        v-if="quoteStatusForm.quote_status_id == 17"
+                        v-model="quoteStatusForm.lost_reason_id"
                         label="Lost Reason"
                         :options="
-                lostReasons?.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))
-              "
+                            lostReasons?.map(item => ({
+                              value: item.id,
+                              label: item.text,
+                            }))
+                        "
                         placeholder="Lost Reason is required"
                         class="w-full"
-                        :error="quoteStatusForm.errors.lostReason"
+                        :error="quoteStatusForm.errors.lost_reason_id"
                     />
                 </div>
 
@@ -110,6 +113,7 @@ const onLeadStatus = () => {
                         size="sm"
                         :loading="quoteStatusForm.processing"
                         @click.prevent="onLeadStatus"
+                        :disabled="allowStatusUpdate"
                     >
                         Change Status
                     </x-button>

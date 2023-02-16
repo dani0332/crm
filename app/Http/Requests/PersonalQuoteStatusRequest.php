@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\QuoteStatusEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PersonalQuoteStatusRequest extends FormRequest
@@ -23,9 +24,26 @@ class PersonalQuoteStatusRequest extends FormRequest
      */
     public function rules()
     {
-        return [
+        $data = request()->all();
+
+        $rules = [
             'quote_status_id' => 'required',
             'notes'=> 'nullable',
         ];
+
+        if(!empty($data['quote_status_id']))
+        {
+            if($data['quote_status_id'] == QuoteStatusEnum::TransactionApproved) {
+                $rules['transapp_code'] = 'required';
+            }
+
+            if($data['quote_status_id'] == QuoteStatusEnum::Lost) {
+                $rules['lost_reason_id'] = 'required';
+            }
+        }
+
+
+
+        return $rules;
     }
 }
