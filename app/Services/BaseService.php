@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\GenericModel;
+use App\Enums\QuoteStatusEnum;
+use App\Services\QuoteDocumentService;
 use App\Services\DropdownSourceService;
 
 class BaseService
@@ -59,5 +61,25 @@ class BaseService
             }
         }
         return $dropdownSource;
+    }
+
+    public function quoteDocumentEnabled($type)
+    {
+        return (new QuoteDocumentService())->isEnabled($type);
+    }
+
+    public function getQuoteDocuments($quoteId, $type)
+    {
+        return (new QuoteDocumentService())->getQuoteDocuments($quoteId, $type);
+    }
+
+    public function displaySendPolicyButton($record, $quoteDocuments, $quoteTypeId)
+    {
+        return (new QuoteDocumentService())->showSendPolicyButton($record, $quoteDocuments, $quoteTypeId);
+    }
+
+    public function getQuoteDocumentsForUpload($type)
+    {
+        return (new QuoteDocumentService())->getQuoteDocumentsForUpload($type);
     }
 }

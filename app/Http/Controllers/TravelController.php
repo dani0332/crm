@@ -11,7 +11,11 @@ use App\Enums\quoteTypeCode;
 use Illuminate\Http\Request;
 use Inertia\ResponseFactory;
 use App\Services\CRUDService;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Services\LookupService;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\GenericRequestEnum;
 use App\Services\TravelQuoteService;
 use Illuminate\Support\Facades\Auth;
 
@@ -59,7 +63,6 @@ class TravelController extends Controller
 
     public function show($id)
     {
-
         $quote = $this->service->getQuoteByUUID($id);
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
@@ -82,15 +85,55 @@ class TravelController extends Controller
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
 
+        $ecomDetails = [
+            'premium' => $record->premium,
+            'paidAt' => $record->paid_at,
+            'paymentStatus' => $record->payment_status_id_text,
+            'planName' => $record->plan_id_text,
+        ];
+        $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
+        $isQuoteDocumentEnabled = $this->service->quoteDocumentEnabled($this->genericModel->modelType);
+        $quoteDocuments = $this->service->getQuoteDocuments($this->genericModel->modelType, $record->id);
+        $displaySendPolicyButton = $this->service->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
+        $documentTypes = $this->service->getQuoteDocumentsForUpload(self::TYPE_ID);
+        $documentTypes = collect($documentTypes)->groupBy('category');
+
+        $membersDetail = $this->service->getMembersDetail($record->id);
+
+
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
         return inertia('TravelQuote/Show', [
-            'quote' => $quote,
+            'quote' => $record,
+            'modelType' => $this->genericModel->modelType,
             'dropdownSource' => $dropdownSource,
+            'leadStatuses' => $dropdownSource['quote_status_id'],
             'advisors' => $advisors,
             'renewalAdvisors' => $renewalAdvisors,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
+            'assignmentTypes' => $assignmentTypes,
+            'genderOptions' => $this->crudService->getGenderOptions(),
+            'lostReasons' => $this->lookupService->getLostReasons(),
+            'travelers' => $this->service->getMembersDetail($record->id),
+            'ecomDetails' => $ecomDetails,
+            'quoteDocuments' => $quoteDocuments,
+            'documentTypes' => $documentTypes,
+            'cdnPath' => $cdnPath,
+            'membersDetail' => $membersDetail,
+            'memberCategories' => $this->lookupService->getMemberCategories(),
             'permissions' => [
-                'dmin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
-            ]
+                'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
+                'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
+                'notProductionApproval' => !auth()->user()->hasRole(RolesEnum::PA),
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+                'displaySendPolicyButton' => $displaySendPolicyButton,
+                'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
+                'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
+                'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
+            ],
+            'enums' => [
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            ],
         ]);
     }
 

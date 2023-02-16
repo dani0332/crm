@@ -1,20 +1,33 @@
 <script setup>
+import axios from 'axios';
+import { useNotifications } from '@indielayer/ui';
 import { computed, ref, reactive, onMounted } from 'vue';
-import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
+import ComboBox from '@/inertia/Components/ComboBox.vue';
 import { useDateFormat, useClipboard } from '@vueuse/core';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import LazyAvailablePlan from './Partials/AvailablePlans.vue';
-import LazyCreatePlan from './Partials/CreatePlan.vue';
-import { useNotifications } from '@indielayer/ui';
-import axios from 'axios';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-import PaymentTable from './Partials/PaymentTable.vue';
+import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 
 defineProps({
   quote: Object,
-    allowedDuplicateLOB: Array,
-    advisors: Array,
-    renewalAdvisors: Array,
+  allowedDuplicateLOB: Array,
+  advisors: Array,
+  renewalAdvisors: Array,
+  assignmentTypes: Object,
+  isManualAllocationAllowed: Boolean,
+  genderOptions: Object,
+  leadStatuses: Array,
+  permissions: Object,
+  enums: Object,
+  lostReasons: Array,
+  ecomDetails: Object,
+  travelers: Array,
+  modelType: String,
+  quoteDocuments: Array,
+  displaySendPolicyButton: Boolean,
+  documentTypes: Object,
+  cdnPath: String,
+  membersDetail: Array,
+  memberCategories: Array,
 });
 
 const page = usePage();
@@ -25,25 +38,34 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 
-const assignSubteam = ref(page.props.quote.health_team_type || '');
+const assignSubteam = ref(page.props.quote.health_team_type || ''),
+  assignLead = ref(null),
+  lostReasonId = ref(
+    page.props.lostReasons.find(
+      reason => reason.text === page.props.quote.lost_reason,
+    )?.id || null,
+  ),
+  isDisabled = ref(false);
 
 const subTeamOptions = computed(() => {
-    // if renewalAdvisors is not empty then return renewal advisor list otherwise return advisor list
-    console.log(page.props.renewalAdvisors);
-    console.log(page.props.advisors);
-    if (page.props.renewalAdvisors.length > 0) {
-        return page.props.renewalAdvisors.map(advisor => ({
-            value: advisor.id,
-            label: advisor.name,
-        }));
-    }
-    return page.props.advisors.map(advisor => ({
-        value: advisor.id,
-        label: advisor.name,
+  if (page.props.renewalAdvisors.length > 0) {
+    return page.props.renewalAdvisors.map(advisor => ({
+      value: advisor.id,
+      label: advisor.name,
     }));
+  }
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
 
-})
-
+const leadAssignmentTypes = computed(() => {
+  return Object.keys(page.props.assignmentTypes).map(key => ({
+    value: key,
+    label: page.props.assignmentTypes[key],
+  }));
+});
 
 const leadDuplicateForm = useForm({
   modelType: 'travel',
@@ -76,13 +98,422 @@ const onCreateDuplicate = isValid => {
   });
 };
 
+const onAssignLead = () => {
+  if (!assignSubteam.value) {
+    notification.error({
+      title: 'Please select a Advisor',
+      position: 'top',
+    });
+    return;
+  }
+  if (!assignLead.value) {
+    notification.error({
+      title: 'Please select a type',
+      position: 'top',
+    });
+    return;
+  }
+  router.post(
+    `/quotes/travel/manualLeadAssign`,
+    {
+      modelType: 'Travel',
+      entityId: page.props.quote.id,
+      assigned_to_id_new: assignSubteam.value,
+      assignment_type: assignLead.value,
+      isManualAllocationAllowed: 1,
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        isDisabled.value = true;
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Lead Assigned',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        isDisabled.value = false;
+      },
+    },
+  );
+};
 
-const modals = reactive({
-  duplicate: false
+const genderText = gender =>
+  computed(() => {
+    return page.props.genderOptions[gender];
+  });
+
+const lostReasonsOptions = computed(() => {
+  return page.props.lostReasons.map(reason => ({
+    value: reason.id,
+    label: reason.text,
+  }));
 });
 
+const modals = reactive({
+  duplicate: false,
+  member: false,
+  memberConfirm: false,
+  doc: false,
+  docConfirm: false,
+  plan: false,
+  createPlan: false,
+  activity: false,
+  activityConfirm: false,
+  addContact: false,
+  contactDeleteConfirm: false,
+  contactPrimaryConfirm: false,
+});
+
+const leadStatusForm = useForm({
+  modelType: 'Travel',
+  leadId: page.props.quote.id,
+  quote_uuid: page.props.quote.uuid,
+  assigned_to_user_id: page.props.quote.advisor_id,
+  leadStatus: page.props.quote.quote_status_id || null,
+  notes: page.props.quote.notes || null,
+  trans_code: page.props.quote.transapp_code || null,
+  lostReason: lostReasonId.value || '',
+});
+
+const leadStatusOptions = computed(() => {
+  return page.props.leadStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
+});
+
+const onLeadStatus = () => {
+  leadStatusForm.post(
+    `/quotes/Travel/${page.props.quote.id}/update-lead-status`,
+    {
+      preserveScroll: true,
+      onError: errors => {
+        console.log(errors);
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Lead Status Updated',
+          position: 'top',
+        });
+      },
+    },
+  );
+};
+
+const travelerForm = useForm({
+  dob: '',
+  travel_quote_request_id: page.props.quote.id,
+});
+
+const travelerTable = reactive({
+  isLoading: false,
+  addTraveler: false,
+  processing: false,
+  columns: [
+    {
+      text: 'Name',
+      value: 'name',
+    },
+    {
+      text: 'DOB',
+      value: 'dob',
+    },
+    {
+      text: 'Created At',
+      value: 'created_at',
+    },
+    {
+      text: 'Updated At',
+      value: 'updated_at',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const submitTraveler = isValid => {
+  if (!isValid) return;
+  console.log(travelerForm);
+  if (travelerForm.id) {
+    editTraveler(isValid);
+  } else {
+    addTravelMember(isValid);
+  }
+};
+
+const addTravelMember = isValid => {
+  if (!isValid) return;
+
+  travelerForm.post('/travelers', {
+    preserveScroll: true,
+    onBefore: () => {
+      travelerTable.processing = true;
+    },
+    onSuccess: () => {
+      notification.success({
+        title: 'Traveler Added',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      travelerTable.addTraveler = false;
+      travelerTable.processing = false;
+      travelerForm.reset();
+    },
+  });
+};
+
+const onEditTraveler = traveler => {
+  travelerForm.dob = traveler.dob;
+  travelerForm.id = traveler.id;
+  travelerTable.addTraveler = true;
+};
+
+const editTraveler = isValid => {
+  if (!isValid) return;
+
+  travelerForm.put(`/travelers/${travelerForm.id}`, {
+    preserveScroll: true,
+    onBefore: () => {
+      travelerTable.processing = true;
+    },
+    onSuccess: () => {
+      notification.success({
+        title: 'Traveler Updated',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      travelerTable.addTraveler = false;
+      travelerTable.processing = false;
+      travelerForm.reset();
+    },
+  });
+};
+
+const deleteTraveler = id => {
+  router.delete(`/travelers/${id}`, {
+    preserveScroll: true,
+    onBefore: () => {
+      travelerTable.processing = true;
+    },
+    onSuccess: () => {
+      notification.success({
+        title: 'Traveler Deleted',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      travelerTable.processing = false;
+      confirmModal.show = false;
+    },
+  });
+};
+
+const confirmModal = reactive({
+  show: false,
+  title: 'Delete',
+  message: 'Are you sure you want to delete this?',
+  onConfirm: () => {
+    confirmModal.show = false;
+  },
+});
+
+const policyDetailRules = {
+  policy_number: v => {
+    if (v) {
+      return (
+        v.length <= 50 || 'Policy Number should be less than 50 characters'
+      );
+    }
+    return true;
+  },
+  policy_start_date: v => {
+    if (v) {
+      const date = new Date(v);
+      return !isNaN(date.getTime());
+    }
+    return true;
+  },
+  renewal_expiry_date: v => {
+    if (v) {
+      const date = new Date(v);
+      if (policyDetails.policy_start_date) {
+        const startDate = new Date(policyDetails.policy_start_date);
+        if (startDate >= date) {
+          return 'Expiry date should be greater than Start Date';
+        }
+      }
+      return !isNaN(date.getTime());
+    }
+    return true;
+  },
+  premium: v => {
+    if (v) {
+      const premium = parseFloat(v);
+      if (premium < 0 || isNaN(premium)) {
+        return 'Premium should be greater than 0';
+      }
+    }
+    return true;
+  },
+};
+const dateToYMD = date => {
+  if (date) {
+    const d = new Date(date);
+    const year = d.getFullYear();
+    const month = `0${d.getMonth() + 1}`.slice(-2);
+    const day = `0${d.getDate()}`.slice(-2);
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+};
+
+const policyDetails = useForm({
+  premium: page.props.quote.premium,
+  policy_number: page.props.quote.policy_number || '',
+  policy_start_date: dateToYMD(page.props.quote.policy_start_date),
+  renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
+  policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
+  quote_status_id: page.props.quote.quote_status_id,
+  canEdit:
+    page.props.quote.quote_status_id ==
+      page.props.enums.quoteStatusEnum.TransactionApproved &&
+    page.props.permissions.notProductionApproval,
+  editMode: false,
+  modelType: page.props.modelType,
+  quote_id: page.props.quote.id,
+});
+
+const cancelPolicyFrom = () => {
+  policyDetails.editMode = false;
+};
+
+const submitPolicyDetails = isValid => {
+  if (!isValid) return;
+  policyDetails
+    .transform(data => ({
+      quote_policy_number: data.policy_number,
+      quote_policy_start_date: data.policy_start_date,
+      quote_policy_expiry_date: data.renewal_expiry_date,
+      quote_policy_issuance_date: data.policy_issuance_date,
+      quote_premium: data.premium,
+      modelType: data.modelType,
+      quote_id: data.quote_id,
+      isInertia: true,
+    }))
+    .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Policy Details Updated',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        policyDetails.editMode = false;
+      },
+    });
+};
+
+const memberCategoryText = memberCategoryId =>
+  computed(() => {
+    return page.props.memberCategories.find(
+      category => category.id === memberCategoryId,
+    )?.text;
+  });
+
+const memberDataDocs = membersDetail => {
+  return membersDetail
+    .map(member => ({
+      id: member.id,
+      name: memberCategoryText(member.member_category_id).value,
+    }))
+    .filter(member => member.name !== undefined);
+};
+
+const quoteDocumentsTable = reactive({
+  isLoading: false,
+  columns: [
+    {
+      text: 'Document Type',
+      value: 'document_type_text',
+    },
+    {
+      text: 'Document Name',
+      value: 'original_name',
+    },
+    {
+      text: 'Created At',
+      value: 'created_at',
+    },
+    {
+      text: 'Created By',
+      value: 'created_by_name',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const sendPolicyToClient = () => {
+  if (confirm('Are you sure you want to send documents to customer?')) {
+    let quoteType = page.props.modelType;
+    let quoteUuId = page.props.quote.uuid;
+    let url =
+      '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
+    axios.post(url).then(response => {
+      if (response.status == 200) {
+        notification.success({
+          title: 'Documents Sent',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Documents Sending Failed',
+          position: 'top',
+        });
+      }
+    });
+  }
+};
+
+const onDocDelete = name => {
+  modals.docConfirm = true;
+  confirmDeleteData.docs = name;
+};
+
+const confirmDeleteDoc = () => {
+  quoteDocumentsTable.isLoading = true;
+  router.post(
+    `/documents/delete`,
+    {
+      docName: confirmDeleteData.docs,
+      quoteId: page.props.quote.id,
+    },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        modals.docConfirm = false;
+        quoteDocumentsTable.isLoading = false;
+        notification.error({
+          title: 'File Deleted',
+          position: 'top',
+        });
+      },
+    },
+  );
+};
+
 onMounted(() => {
-    console.log(page.props.quote);
+  console.log(page.props.enums);
 });
 </script>
 <template>
@@ -152,28 +583,18 @@ onMounted(() => {
         <div class="w-full md:w-1/2 flex gap-2 items-end">
           <x-select
             v-model="assignSubteam"
-            label="Assign Subteam"
+            label="Assign Advisor"
             :options="subTeamOptions"
-            placeholder="Select Subteam"
+            placeholder="Select Advisor"
             class="w-auto flex-1"
           />
-          <div>
-            <x-button
-              color="orange"
-              size="sm"
-              @click.prevent="onTeamAssign"
-              :loading="isDisabled"
-            >
-              Assign Team
-            </x-button>
-          </div>
         </div>
         <div class="w-full md:w-1/2 flex gap-2 items-end">
           <x-select
             v-model="assignLead"
-            label="Assign Lead"
-            :options="advisorOptions"
-            placeholder="Select Lead"
+            label="Assignment Type"
+            :options="leadAssignmentTypes"
+            placeholder="Select Type"
             class="w-auto flex-1"
           />
           <div>
@@ -189,6 +610,584 @@ onMounted(() => {
         </div>
       </div>
     </div>
+  </div>
 
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="text-sm">
+      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">CDB ID</dt>
+          <dd>{{ quote.code }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">CREATED DATE</dt>
+          <dd>{{ quote.created_at }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">SUBTEAM</dt>
+          <dd>{{ quote.health_team_type }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">ADVISOR</dt>
+          <dd>{{ quote.advisor_id_text }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">SOURCE</dt>
+          <dd>{{ quote.source }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">LAST MODIFIED DATE</dt>
+          <dd>{{ quote.updated_at }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">PARENT CDB ID</dt>
+          <dd>{{ quote.parent_duplicate_quote_id }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">IS ECOMMERCE</dt>
+          <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">IS EBP RENEWAL</dt>
+          <dd>{{ quote.is_ebp_renewal ? 'Yes' : 'No' }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">RENEWAL BATCH</dt>
+          <dd>{{ quote.renewal_batch }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">LOST REASON</dt>
+          <dd>{{ quote.lost_reason }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">DEVICE</dt>
+          <dd>{{ quote.device }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="mt-6">
+      <h3 class="font-semibold text-primary-800">Customer Profile</h3>
+      <x-divider class="mb-4 mt-1" />
+    </div>
+
+    <div class="text-sm">
+      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">FIRST NAME</dt>
+          <dd>{{ quote.first_name }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">LAST NAME</dt>
+          <dd>{{ quote.last_name }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">MOBILE NUMBER</dt>
+          <dd>{{ quote.mobile_no }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">EMAIL</dt>
+          <dd>{{ quote.email }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">GENDER</dt>
+          <dd>{{ genderText(quote.gender).value }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">MARITAL STATUS</dt>
+          <dd>{{ quote.marital_status_id_text }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">NATIONALITY</dt>
+          <dd>{{ quote.nationality_id_text }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">DATE OF BIRTH</dt>
+          <dd>{{ quote.dob }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">EMIRATE OF VISA</dt>
+          <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">MEMBER CATEGORY</dt>
+          <dd>{{ quote.member_category_id_text }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">SALARY BAND</dt>
+          <dd>{{ quote.salary_band_id_text }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="mt-6">
+      <h3 class="font-semibold text-primary-800">Quote Details</h3>
+      <x-divider class="mb-4 mt-1" />
+    </div>
+
+    <div class="text-sm">
+      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">WHO ARE YOU LOOKING TO COVER?</dt>
+          <dd>{{ quote.cover_for_id_text }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">CURRENTLY INSURED WITH</dt>
+          <dd>{{ quote.currently_insured_with_id_text }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">TYPE OF PLAN</dt>
+          <dd>{{ quote.plan_id }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
+          <dd>{{ quote.next_followup_date }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">DETAILS</dt>
+          <dd>{{ quote.details }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="mt-6">
+      <h3 class="font-semibold text-primary-800">Last Year's Policy Details</h3>
+      <x-divider class="mb-4 mt-1" />
+    </div>
+
+    <div class="text-sm">
+      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
+          <dd>{{ quote.previous_quote_policy_number }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+          <dd>{{ quote.previous_quote_policy_premium }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
+          <dd>{{ quote.previous_policy_expiry_date }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <div class="mt-6">
+      <h3 class="font-semibold text-primary-800">Policy Details</h3>
+      <x-divider class="mb-4 mt-1" />
+    </div>
+
+    <div class="text-sm">
+      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">POLICY NUMBER</dt>
+          <dd>{{ quote.policy_number }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">POLICY START DATE</dt>
+          <dd>{{ quote.policy_start_date }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">POLICY END DATE</dt>
+          <dd>{{ quote.policy_issuance_date }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">PREMIUM</dt>
+          <dd>{{ quote.premium }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">TRANSAPP CODE</dt>
+          <dd>{{ quote.transapp_code }}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+    <div>
+      <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+      <x-divider class="mb-4 mt-1" />
+    </div>
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+      <div class="w-full md:w-2/3">
+        <x-textarea
+          v-model="leadStatusForm.notes"
+          type="text"
+          label="Notes"
+          placeholder="Lead Notes"
+          class="w-full"
+          :disabled="
+            quote.quote_status_id == enums.quoteStatusEnum.transactionApproved
+          "
+        />
+      </div>
+      <div class="w-full md:w-1/3">
+        <div class="flex flex-col gap-4">
+          <x-select
+            v-model="leadStatusForm.leadStatus"
+            label="Status"
+            :options="leadStatusOptions"
+            :disabled="
+              quote.quote_status_id == enums.quoteStatusEnum.transactionApproved
+            "
+            placeholder="Lead Status"
+            class="w-full"
+          />
+          <x-input
+            v-if="
+              leadStatusForm.leadStatus ==
+              enums.quoteStatusEnum.transactionApproved
+            "
+            v-model="leadStatusForm.trans_code"
+            label="TransApp Code"
+            placeholder="TransApp Code is required"
+            class="w-full"
+            :error="leadStatusForm.errors.trans_code"
+          />
+          <x-select
+            v-if="leadStatusForm.leadStatus == 17"
+            v-model="leadStatusForm.lostReason"
+            label="Lost Reason"
+            :options="lostReasonsOptions"
+            placeholder="Lost Reason is required"
+            class="w-full"
+            :error="leadStatusForm.errors.lostReason"
+          />
+        </div>
+
+        <div class="flex justify-end">
+          <x-button
+            class="mt-4"
+            color="emerald"
+            size="sm"
+            :loading="leadStatusForm.processing"
+            @click.prevent="onLeadStatus"
+          >
+            Change Status
+          </x-button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <div>
+      <h3 class="font-semibold text-primary-800 text-lg">E-COM Details</h3>
+      <x-divider class="mb-4 mt-1" />
+    </div>
+    <div class="text-sm">
+      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">PREMIUM</dt>
+          <dd>{{ ecomDetails.premium }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">PAID AT</dt>
+          <dd>{{ ecomDetails.paidAt }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">PAYMENT STATUS</dt>
+          <dd>{{ ecomDetails.paymentStatus }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">PROVIDER NAME</dt>
+          <dd>{{ ecomDetails.planName }}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Travelers
+        <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
+      </h3>
+      <div class="flex flex-wrap gap-3">
+        <x-button
+          size="sm"
+          color="primary"
+          @click.prevent="travelerTable.addTraveler = true"
+        >
+          Add Traveler
+        </x-button>
+      </div>
+    </div>
+    <DataTable
+      table-class-name="tablefixed compact"
+      :headers="travelerTable.columns"
+      :items="travelers || []"
+      border-cell
+      hide-rows-per-page
+      :rows-per-page="15"
+    >
+      <template #item-name="item"> Traveler {{ item.key + 1 }} </template>
+      <template #item-action="item">
+        <div class="flex gap-2 pr-2">
+          <x-button
+            size="xs"
+            color="primary"
+            @click.prevent="onEditTraveler(item)"
+            outlined
+          >
+            Edit
+          </x-button>
+          <x-button
+            size="xs"
+            color="emerald"
+            @click.prevent="
+              confirmModal.onConfirm = () => deleteTraveler(item.id);
+              confirmModal.show = true;
+            "
+            outlined
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </DataTable>
+    <x-modal v-model="travelerTable.addTraveler" size="lg" show-close backdrop>
+      <template #header> <i class="fa fa-user"></i> New Members </template>
+      <x-form @submit="submitTraveler" :auto-focus="false">
+        <x-input
+          label="Name"
+          placeholder="Name"
+          value="Member"
+          readonly
+          disabled
+          class="w-full"
+        />
+        <x-input
+          v-model="travelerForm.dob"
+          label="Date of Birth"
+          placeholder="Date of Birth"
+          class="w-full"
+          :rules="[rules.isRequired]"
+          type="date"
+        />
+        <div class="flex justify-end">
+          <x-button
+            class="mt-4"
+            color="emerald"
+            size="sm"
+            type="submit"
+            :loading="travelerTable.processing"
+          >
+            {{ travelerForm.id ? 'Update Traveler' : 'Add Traveler' }}
+          </x-button>
+        </div>
+      </x-form>
+    </x-modal>
+  </div>
+
+  <x-modal v-model="confirmModal.show" show-close backdrop>
+    <template #header> {{ confirmModal.title }} </template>
+    <p>{{ confirmModal.message }}</p>
+    <template #actions>
+      <div class="text-right space-x-4">
+        <x-button size="sm" ghost @click.prevent="confirmModal.show = false">
+          Cancel
+        </x-button>
+        <x-button
+          size="sm"
+          color="error"
+          @click.prevent="confirmModal.onConfirm"
+          :loading="confirmModal.processing"
+        >
+          Delete
+        </x-button>
+      </div>
+    </template>
+  </x-modal>
+
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <div>
+      <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+      <x-divider class="mb-4 mt-1" />
+    </div>
+    <x-form @submit="submitPolicyDetails" :auto-focus="false">
+      <div class="flex gap-6 w-full">
+        <div class="w-full md:w-1/2">
+          <x-input
+            v-model="policyDetails.policy_number"
+            :disabled="!policyDetails.editMode"
+            label="Policy Number"
+            :rules="[rules.isRequired, policyDetailRules.policy_number]"
+            class="w-full"
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <x-input
+            v-model="policyDetails.policy_issuance_date"
+            :disabled="!policyDetails.editMode"
+            type="date"
+            label="Issuance Date"
+            :rules="[rules.isRequired]"
+            class="w-full"
+          />
+        </div>
+      </div>
+      <div class="flex gap-6 w-full">
+        <div class="w-full md:w-1/2">
+          <x-input
+            v-model="policyDetails.policy_start_date"
+            :disabled="!policyDetails.editMode"
+            type="date"
+            label="Start Date"
+            :rules="[rules.isRequired, policyDetailRules.policy_start_date]"
+            class="w-full"
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <x-input
+            v-model="policyDetails.renewal_expiry_date"
+            :disabled="!policyDetails.editMode"
+            type="date"
+            label="Expiry Date"
+            :rules="[rules.isRequired, policyDetailRules.renewal_expiry_date]"
+            class="w-full"
+          />
+        </div>
+      </div>
+      <div class="flex gap-6 w-full">
+        <div class="w-full md:w-1/2">
+          <x-input
+            v-model="policyDetails.premium"
+            :disabled="!policyDetails.editMode"
+            label="Premium"
+            :rules="[rules.isRequired, policyDetailRules.premium]"
+            class="w-full"
+          />
+        </div>
+        <div class="w-full md:w-1/2"></div>
+      </div>
+
+      <div class="text-right space-x-4 mt-12" v-if="policyDetails.canEdit">
+        <x-button
+          color="#007bff"
+          size="sm"
+          v-show="policyDetails.editMode"
+          @click.prevent="cancelPolicyFrom"
+          >Cancel</x-button
+        >
+        <x-button
+          color="#26B99A"
+          type="submit"
+          size="sm"
+          v-show="policyDetails.editMode"
+          >Update</x-button
+        >
+        <x-button
+          color="#007bff"
+          size="sm"
+          type="submit"
+          v-show="!policyDetails.editMode"
+          @click.prevent="policyDetails.editMode = true"
+          >Edit</x-button
+        >
+      </div>
+    </x-form>
+  </div>
+
+  <div
+    class="p-4 rounded shadow mb-6 bg-white"
+    v-if="permissions.isQuoteDocumentEnabled"
+  >
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Documents
+        <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+      </h3>
+      <div class="flex gap-2">
+        <x-button
+          @click.prevent="modals.doc = true"
+          size="sm"
+          color="orange"
+          v-if="
+            permissions.canNotEditPayments && permissions.notProductionApproval
+          "
+        >
+          Upload Documents
+        </x-button>
+        <x-button
+          size="sm"
+          color="red"
+          v-if="displaySendPolicyButton && permissions.notProductionApproval"
+          @click="sendPolicyToClient"
+        >
+          Send Policy
+        </x-button>
+        <x-button
+          size="sm"
+          color="green"
+          v-if="
+            enums.paymentStatusEnum.AUTHORISED == quote.payment_status_id &&
+            permissions.notProductionApproval
+          "
+        >
+          Copy Upload Link
+        </x-button>
+      </div>
+    </div>
+    <DataTable
+      table-class-name="compact"
+      :headers="quoteDocumentsTable.columns"
+      :items="quoteDocuments || []"
+      border-cell
+      hide-rows-per-page
+      :rows-per-page="15"
+      :hide-footer="quoteDocuments.length < 15"
+    >
+      <template #item-original_name="item">
+        <a
+          :href="cdnPath + item.doc_url"
+          target="_blank"
+          class="text-primary-600"
+        >
+          {{ item.original_name }}
+        </a>
+      </template>
+      <template #item-action="{ doc_name }">
+        <div>
+          <x-button
+            size="xs"
+            color="error"
+            outlined
+            @click.prevent="onDocDelete(doc_name)"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </DataTable>
+
+    <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+      <template #header> Upload Documents </template>
+      <LazyDocumentUploader
+        :members="memberDataDocs(membersDetail)"
+        :doc-types="documentTypes"
+        :docs="quoteDocuments || []"
+        :cdn="cdnPath"
+      />
+    </x-modal>
+    <x-modal v-model="modals.docConfirm" show-close backdrop>
+      <template #header> Delete Document </template>
+      <p>Are you sure you want to delete this document?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="confirmDeleteDoc"
+            :loading="quoteDocumentsTable.isLoading"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
   </div>
 </template>
