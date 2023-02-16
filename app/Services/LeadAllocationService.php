@@ -362,13 +362,11 @@ class LeadAllocationService extends BaseService
                             )->get();
 
         foreach ($users as $user) {
-
-            info('max_capacity for user : '.$user->userEmail. ' is about to get reset ');
+            info('max_capacity for user : '.$user->userEmail.' is about to get reset ');
 
             $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
 
             if ($leadAllocationRecord) {
-
                 // updating the max capacity if the quad is 1 then we should reset all the user to 4 otherwise everything should be 5
                 $leadAllocationRecord->max_capacity = str_contains($user->quads, '1') ? 4 : 5;
 
@@ -727,10 +725,9 @@ class LeadAllocationService extends BaseService
 
         $carLeadAllocationSwitch = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
 
-        info('updateAllocationStatusIfNeeded -- current time is : ' . now()->toTimeString() . ' , endTime is : '. $endTimeForAllocation. ' , Switch is : '. $carLeadAllocationSwitch);
+        info('updateAllocationStatusIfNeeded -- current time is : '.now()->toTimeString().' , endTime is : '.$endTimeForAllocation.' , Switch is : '.$carLeadAllocationSwitch);
 
-        if(now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
-
+        if (now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
             // stopping car lead allocation if the end time for allocation is reached and allocation is still ON
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
 
@@ -753,7 +750,8 @@ class LeadAllocationService extends BaseService
             $shouldProcess = false;
         }
 
-        info('shouldCarAllocationProceed -- output is : '. json_encode($shouldProcess));
+        info('shouldCarAllocationProceed -- output is : '.json_encode($shouldProcess));
+
         return $shouldProcess;
     }
 }

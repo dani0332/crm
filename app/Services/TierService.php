@@ -230,6 +230,7 @@ class TierService extends BaseService
     public function isTierRAssigned($leadAssignedTierId)
     {
         $assignedTier = Tier::where('id', $leadAssignedTierId)->where('is_active', 1)->orderBy('name')->first();
+
         return str_contains($assignedTier->name, TiersEnum::TIER_R);
     }
 }
