@@ -30,8 +30,9 @@ defineProps({
   memberCategories: Array,
   emailStatuses: Array,
   isAdmin: Boolean,
-    listQuotePlans: Array,
+  listQuotePlans: Array,
   activities: Array,
+  customerAdditionalContacts: Array,
 });
 
 const page = usePage();
@@ -42,14 +43,26 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 
+const confirmDeleteData = reactive({
+  docs: null,
+  member: null,
+  activity: null,
+  contact: null,
+});
+
+const confirmData = reactive({
+  contactPrimary: null,
+});
+
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
   assignLead = ref(null),
   lostReasonId = ref(
     page.props.lostReasons.find(
       reason => reason.text === page.props.quote.lost_reason,
     )?.id || null,
-    ),
+  ),
   activityActionEdit = ref(false),
+  contactLoader = ref(false),
   isDisabled = ref(false);
 
 const subTeamOptions = computed(() => {
@@ -722,6 +735,112 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
+
+// additional contact
+
+const additionalContactTable = [
+  { text: 'Type', value: 'key' },
+  { text: 'Value', value: 'value' },
+  { text: 'Created At', value: 'created_at' },
+  { text: 'Action', value: 'action' },
+];
+
+const additionalContact = useForm({
+  id: null,
+  additional_contact_type: null,
+  additional_contact_val: null,
+  quote_id: page.props.quote.id,
+  customer_id: page.props.quote.customer_id,
+  quote_type: 'health',
+});
+
+const onAdditionalContactSubmit = isValid => {
+  if (!isValid) return;
+  additionalContact
+    .transform(data => ({
+      ...data,
+      isInertia: true,
+    }))
+    .post(`/customer-additional-contact/add`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Additional Contact Added',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.addContact = false;
+      },
+    });
+};
+
+const additionalContactDelete = id => {
+  modals.contactDeleteConfirm = true;
+  confirmDeleteData.contact = id;
+};
+
+const additionalContactDeleteConfirmed = () => {
+  router.post(
+    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
+    {
+      isInertia: true,
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        contactLoader.value = true;
+      },
+      onSuccess: () => {
+        notification.error({
+          title: 'Additional Contact Deleted',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        contactLoader.value = false;
+        modals.contactDeleteConfirm = false;
+      },
+    },
+  );
+};
+
+const additionalContactPrimary = data => {
+  modals.contactPrimaryConfirm = true;
+  confirmData.contactPrimary = data;
+};
+
+const additionalContactPrimaryConfirmed = () => {
+  const isEmail = confirmData.contactPrimary.key === 'email';
+  router.post(
+    `/customer-additional-contact/${
+      isEmail ? confirmData.contactPrimary.id : 0
+    }/make-primary`,
+    {
+      isInertia: true,
+      quote_id: page.props.quote.id,
+      key: confirmData.contactPrimary.key,
+      value: confirmData.contactPrimary.value,
+      quote_type: 'health',
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        contactLoader.value = true;
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Additional Contact Primary',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        contactLoader.value = false;
+        modals.contactPrimaryConfirm = false;
+      },
+    },
+  );
+};
 
 onMounted(() => {
   console.log(page.props.enums);
@@ -1459,142 +1578,282 @@ onMounted(() => {
       </DataTable>
     </div>
     <div v-else>
-      <p class="text-center text-primary-600">{{ listQuotePlans.toUpperCase() }}</p>
+      <p class="text-center text-primary-600">
+        {{ listQuotePlans.toUpperCase() }}
+      </p>
     </div>
   </div>
 
   <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Lead Activities
-          <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-        </h3>
-        <x-button size="sm" color="orange" @click.prevent="addActivity">
-          Add Activity
-        </x-button>
-      </div>
-      <x-divider class="my-4" />
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Lead Activities
+        <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+      </h3>
+      <x-button size="sm" color="orange" @click.prevent="addActivity">
+        Add Activity
+      </x-button>
+    </div>
+    <x-divider class="my-4" />
 
-      <DataTable
-        table-class-name="compact"
-        :headers="activityTable"
-        :items="activities"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="activities.length < 15"
-      >
-        <template #item-status="{ status, id }">
-          <x-checkbox
-            color="emerald"
-            size="xl"
-            :modelValue="status === 1"
-            :disabled="status === 1"
-            @change="onActivityStatusUpdate(id)"
+    <DataTable
+      table-class-name="compact"
+      :headers="activityTable"
+      :items="activities"
+      border-cell
+      hide-rows-per-page
+      :rows-per-page="15"
+      :hide-footer="activities.length < 15"
+    >
+      <template #item-status="{ status, id }">
+        <x-checkbox
+          color="emerald"
+          size="xl"
+          :modelValue="status === 1"
+          :disabled="status === 1"
+          @change="onActivityStatusUpdate(id)"
+        />
+      </template>
+      <template #item-action="item">
+        <div class="space-x-4">
+          <x-button
+            size="xs"
+            color="primary"
+            outlined
+            :disabled="item.status === 1"
+            @click.prevent="activityEdit(item)"
+          >
+            Edit
+          </x-button>
+          <x-button
+            size="xs"
+            color="error"
+            :disabled="item.status === 1"
+            outlined
+            @click.prevent="activityDelete(item.id)"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </DataTable>
+    <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+      <template #header>
+        {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+      </template>
+
+      <x-form @submit="onActivitySubmit" :auto-focus="false">
+        <div class="grid gap-4">
+          <x-input
+            v-model="activityForm.title"
+            label="Title"
+            :rules="[rules.isRequired]"
+            class="w-full"
           />
-        </template>
-        <template #item-action="item">
-          <div class="space-x-4">
-            <x-button
-              size="xs"
-              color="primary"
-              outlined
-              :disabled="item.status === 1"
-              @click.prevent="activityEdit(item)"
-            >
-              Edit
-            </x-button>
-            <x-button
-              size="xs"
-              color="error"
-              :disabled="item.status === 1"
-              outlined
-              @click.prevent="activityDelete(item.id)"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </DataTable>
-      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-        <template #header>
-          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-        </template>
 
-        <x-form @submit="onActivitySubmit" :auto-focus="false">
-          <div class="grid gap-4">
-            <x-input
-              v-model="activityForm.title"
-              label="Title"
-              :rules="[rules.isRequired]"
-              class="w-full"
-            />
+          <x-textarea
+            v-model="activityForm.description"
+            label="Description"
+            :adjust-to-text="false"
+            class="w-full"
+          />
 
-            <x-textarea
-              v-model="activityForm.description"
-              label="Description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
+          <x-select
+            v-model="activityForm.assignee_id"
+            label="Assignee"
+            :options="advisorOptions"
+            :rules="[rules.isRequired]"
+            placeholder="Select Assignee"
+            class="w-full"
+          />
 
-            <x-select
-              v-model="activityForm.assignee_id"
-              label="Assignee"
-              :options="advisorOptions"
-              :rules="[rules.isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
+          <x-input
+            v-model="activityForm.due_date"
+            label="Due Date"
+            type="datetime-local"
+            :rules="[rules.isRequired]"
+            class="w-full"
+          />
+        </div>
 
-            <x-input
-              v-model="activityForm.due_date"
-              label="Due Date"
-              type="datetime-local"
-              :rules="[rules.isRequired]"
-              class="w-full"
-            />
-          </div>
+        <div class="text-right space-x-4 mt-12">
+          <x-button size="sm" @click.prevent="modals.activity = false">
+            Cancel
+          </x-button>
 
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.activity = false">
-              Cancel
-            </x-button>
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="activityForm.processing"
+            type="submit"
+          >
+            {{ activityActionEdit ? 'Update' : 'Save' }}
+          </x-button>
+        </div>
+      </x-form>
+    </x-modal>
+    <x-modal v-model="modals.activityConfirm" show-close backdrop>
+      <template #header> Delete Activity </template>
+      <p>Are you sure you want to delete this activity?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.activityConfirm = false"
+          >
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            :loading="activityForm.processing"
+            @click.prevent="activityDeleteConfirmed"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+  </div>
 
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="activityForm.processing"
-              type="submit"
-            >
-              {{ activityActionEdit ? 'Update' : 'Save' }}
-            </x-button>
-          </div>
-        </x-form>
-      </x-modal>
-      <x-modal v-model="modals.activityConfirm" show-close backdrop>
-        <template #header> Delete Activity </template>
-        <p>Are you sure you want to delete this activity?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.activityConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              :loading="activityForm.processing"
-              @click.prevent="activityDeleteConfirmed"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
+  <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Customer Additional Contacts
+        <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
+      </h3>
+      <x-button
+        size="sm"
+        color="orange"
+        @click.prevent="modals.addContact = true"
+      >
+        Add Additional Contacts
+      </x-button>
     </div>
 
+    <DataTable
+      table-class-name="compact"
+      :headers="additionalContactTable"
+      :items="customerAdditionalContacts || []"
+      border-cell
+      hide-rows-per-page
+      hide-footer
+    >
+      <template #item-key="{ key }">
+        <span v-if="key === 'email'"> Email Address </span>
+        <span v-else> Mobile Number </span>
+      </template>
+      <template #item-action="item">
+        <div class="space-x-4">
+          <x-button
+            size="xs"
+            color="emerald"
+            outlined
+            @click.prevent="additionalContactPrimary(item)"
+          >
+            Make Primary
+          </x-button>
+          <x-button
+            size="xs"
+            color="error"
+            outlined
+            @click.prevent="additionalContactDelete(item.id)"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </DataTable>
 
+    <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
+      <template #header> Add Additional Contacts </template>
+
+      <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+        <div class="grid gap-4">
+          <x-select
+            v-model="additionalContact.additional_contact_type"
+            label="Type"
+            :options="[
+              { value: 'email', label: 'Email' },
+              { value: 'mobile_no', label: 'Mobile Number' },
+            ]"
+            :rules="[rules.isRequired]"
+            placeholder="Select Type"
+            class="w-full"
+          />
+
+          <x-input
+            v-model="additionalContact.additional_contact_val"
+            label="Value"
+            :rules="[rules.isRequired]"
+            class="w-full"
+          />
+        </div>
+
+        <div class="text-right space-x-4 mt-12">
+          <x-button size="sm" @click.prevent="modals.addContact = false">
+            Cancel
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="additionalContact.processing"
+            type="submit"
+          >
+            Save
+          </x-button>
+        </div>
+      </x-form>
+    </x-modal>
+
+    <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
+      <template #header> Delete Additional Contact </template>
+      <p>Are you sure you want to delete this?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.contactDeleteConfirm = false"
+          >
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="additionalContactDeleteConfirmed"
+            :loading="contactLoader"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+
+    <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
+      <template #header> Primary Additional Contact </template>
+      <p>Are you sure you want to make this information as Primary?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.contactPrimaryConfirm = false"
+          >
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="emerald"
+            @click.prevent="additionalContactPrimaryConfirmed"
+            :loading="contactLoader"
+          >
+            Confirm
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+  </div>
 </template>

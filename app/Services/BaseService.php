@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\GenericModel;
 use App\Enums\QuoteStatusEnum;
+use App\Services\CustomerService;
 use App\Services\EmailStatusService;
 use App\Services\QuoteDocumentService;
 use App\Services\DropdownSourceService;
@@ -87,5 +88,10 @@ class BaseService
     public function getEmailStatus($typeId, $quoteId)
     {
         return (new EmailStatusService())->getEmailStatus($typeId, $quoteId);
+    }
+
+    public function getAdditionalContacts($customerId, $mobileNo)
+    {
+     return (new CustomerService())->getAdditionalContacts($customerId, $mobileNo);
     }
 }
