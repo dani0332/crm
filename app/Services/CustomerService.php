@@ -5,13 +5,12 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
-use Illuminate\Support\Facades\Log;
 
 class CustomerService extends BaseService
 {
     public static function getCustomerByEmail($email)
     {
-        return Customer::where('email', $email)->first();
+        return Customer::where('email', strtolower(trim($email)))->first();
     }
 
     public static function getUniqueCustomerByMobileNo($mobileNo)
@@ -21,17 +20,12 @@ class CustomerService extends BaseService
 
     public static function updatePolicyExpiry($email, $expiry_date)
     {
-        //Log::info('Inside updatePolicyExpiry');
-        $customer = Customer::where('email', $email)->first();
-        //Log::info('Inside updatePolicyExpiry customer found');
+        $customer = Customer::where('email', strtolower(trim($email)))->first();
         $parsedPolicyExpiry = date('Y-m-d', strtotime(str_replace('.', '-', $expiry_date)));
         $parsedCustomerExpiry = date('Y-m-d', strtotime($customer->myalfred_expiry_date));
         if ($parsedCustomerExpiry < $parsedPolicyExpiry) {
             $customer->myalfred_expiry_date = $parsedPolicyExpiry;
             $customer->save();
-        //Log::info('Inside updatePolicyExpiry record updated');
-        } else {
-            //Log::info('Inside updatePolicyExpiry record date is already newer than policy date');
         }
     }
 
@@ -52,15 +46,14 @@ class CustomerService extends BaseService
 
     public static function createCustomerAndGetId($firstName, $lastName, $email)
     {
-        //Log::info('creating customer inside customer service');
-        $existingCustomer = Customer::where('email', $email)->first();
+        $existingCustomer = Customer::where('email', strtolower(trim($email)))->first();
         if (! $existingCustomer) {
-            $customer = new Customer();
-            $customer->first_name = $firstName;
-            $customer->last_name = $lastName;
-            $customer->email = strtolower($email);
-            $customer->lang = 'EN';
-            $customer->save();
+            $customer = Customer::create([
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'email' => strtolower(trim($email)),
+                'lang' => 'EN',
+            ]);
 
             return $customer->id;
         } else {
