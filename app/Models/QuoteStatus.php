@@ -44,6 +44,6 @@ class QuoteStatus extends BaseModel
 
     public function quoteStatusMap()
     {
-        return $this->hasMany(quoteStatusMap::class);
+        return $this->hasMany(QuoteStatusMap::class);
     }
 }
