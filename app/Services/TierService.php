@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\TiersEnum;
 use App\Models\Tier;
 use DB;
 use Illuminate\Http\Request;
@@ -219,5 +220,16 @@ class TierService extends BaseService
     public function getCompTiers()
     {
         return Tier::where('can_handle_tpl', 1)->where('is_active', 1)->orderBy('name')->get();
+    }
+
+    public function getTiersExceptTierR()
+    {
+        return Tier::where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->orderBy('name')->get();
+    }
+
+    public function isTierRAssigned($leadAssignedTierId)
+    {
+        $assignedTier = Tier::where('id', $leadAssignedTierId)->where('is_active', 1)->orderBy('name')->first();
+        return str_contains($assignedTier->name, TiersEnum::TIER_R);
     }
 }
