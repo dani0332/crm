@@ -6,7 +6,8 @@ use App\Models\Nationality;
 
 class NationalityRepository extends BaseRepository
 {
-    public function model() {
+    public function model()
+    {
         return Nationality::class;
     }
 }

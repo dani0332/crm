@@ -14,7 +14,6 @@ class CreatePersonalPlansTable extends Migration
     public function up()
     {
         Schema::create('personal_plans', function (Blueprint $table) {
-
             $table->id();
 
             $table->integer('quote_type_id')->nullable(false);

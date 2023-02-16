@@ -18,7 +18,6 @@ use App\Repositories\UserRepository;
 
 class BikeQuoteController extends Controller
 {
-
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -37,23 +36,24 @@ class BikeQuoteController extends Controller
     public function create()
     {
         $data = BikeQuoteRepository::getFormOptions();
+
         return inertia('BikeQuote/Form', $data);
     }
 
     /**
      * @param $quoteTypeCode
-     * @param BikeQuoteRequest $request
+     * @param  BikeQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(BikeQuoteRequest $request)
     {
         $response = BikeQuoteRepository::create($request->validated());
 
-        if(!empty($response->errors) || (!empty($response->errorType) && $response->errorType == "ERROR" )) {
+        if (! empty($response->errors) || (! empty($response->errorType) && $response->errorType == 'ERROR')) {
             vAbort($response->msg);
         }
 
-        return back()->with('message' , 'Quote created successfully');
+        return back()->with('message', 'Quote created successfully');
     }
 
     /**
@@ -67,8 +67,8 @@ class BikeQuoteController extends Controller
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
         return inertia('BikeQuote/Form', array_merge($data, [
-            'quote' => $quote
-            ])
+            'quote' => $quote,
+        ])
         );
     }
 
@@ -93,9 +93,8 @@ class BikeQuoteController extends Controller
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::BIKE->id(),
-            'quote_request_id' => $quote->id
+            'quote_request_id' => $quote->id,
         ])->orderBy('created_at', 'desc')->get();
-
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
@@ -112,7 +111,7 @@ class BikeQuoteController extends Controller
             'can' => [
                 'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                 'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
-                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && !auth()->user()->hasRole(RolesEnum::PA),
+                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && ! auth()->user()->hasRole(RolesEnum::PA),
                 'isPA' => auth()->user()->hasRole(RolesEnum::PA),
             ],
         ]);
@@ -121,12 +120,13 @@ class BikeQuoteController extends Controller
     /**
      * @param $quoteTypeCode
      * @param $quoteId
-     * @param BikeQuoteRequest $request
+     * @param  BikeQuoteRequest  $request
      * @return void
      */
     public function update($uuid, BikeQuoteRequest $request)
     {
         $response = BikeQuoteRepository::update($uuid, $request->validated());
-        return back()->with('message' , 'Quote updated successfully');
+
+        return back()->with('message', 'Quote updated successfully');
     }
 }

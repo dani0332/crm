@@ -2,22 +2,24 @@
 
 namespace App\Enums;
 
-enum QuoteTypes: string {
-
+enum QuoteTypes: string
+{
     case BIKE = 'Bike';
 
     /**
      * @return string
      */
-    public function id(): string {
+    public function id(): string
+    {
         return static::getId($this);
     }
 
     /**
-     * @param QuoteTypes $value
+     * @param  QuoteTypes  $value
      * @return int
      */
-    public static function getId(self $value): int {
+    public static function getId(self $value): int
+    {
         return match ($value) {
             QuoteTypes::BIKE => 6
         };

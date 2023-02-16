@@ -5,23 +5,18 @@ namespace App\Repositories;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Facades\Capi;
-use App\Models\Activities;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
-use App\Models\QuoteStatus;
 use App\Models\QuoteStatusLog;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\URL;
 
 class PersonalQuoteRepository extends BaseRepository
 {
-    public function model() {
+    public function model()
+    {
         return PersonalQuote::class;
     }
 
@@ -32,34 +27,35 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchUpdateStatus($quoteType, $quoteId, $data)
     {
-       return DB::transaction(function() use($quoteType, $quoteId, $data)
-       {
-           $quote = $this->where('id', $quoteId)->firstOrFail();
+        return DB::transaction(function () use ($quoteId, $data) {
+            $quote = $this->where('id', $quoteId)->firstOrFail();
 
-           $previousStatusId = $quote->quote_status_id;
+            $previousStatusId = $quote->quote_status_id;
 
-           $quoteData['quote_status_id'] = $data['quote_status_id'];
+            $quoteData['quote_status_id'] = $data['quote_status_id'];
 
-           if(!empty($data['notes'])) $quoteData['notes'] = $data['notes'];
+            if (! empty($data['notes'])) {
+                $quoteData['notes'] = $data['notes'];
+            }
 
-           $quote->update($quoteData);
+            $quote->update($quoteData);
 
-           $detailData = array_filter(Arr::only($data, ['lost_reason_id', 'transapp_code']));
-           if(sizeof($detailData)) {
-               $quote->quoteDetail()->updateOrCreate($detailData);
-           }
+            $detailData = array_filter(Arr::only($data, ['lost_reason_id', 'transapp_code']));
+            if (count($detailData)) {
+                $quote->quoteDetail()->updateOrCreate($detailData);
+            }
 
-           QuoteStatusLog::create([
-               'quote_type_id' => $quote->quote_type_id,
-               'quote_request_id' => $quote->id,
-               'current_quote_status_id' => $quote->quote_status_id,
-               'previous_quote_status_id' => $previousStatusId,
-               'created_at' => Carbon::now(),
-               'updated_at' => Carbon::now(),
-           ]);
+            QuoteStatusLog::create([
+                'quote_type_id' => $quote->quote_type_id,
+                'quote_request_id' => $quote->id,
+                'current_quote_status_id' => $quote->quote_status_id,
+                'previous_quote_status_id' => $previousStatusId,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
 
-           return $quote;
-       });
+            return $quote;
+        });
     }
 
     /**
@@ -99,7 +95,6 @@ class PersonalQuoteRepository extends BaseRepository
         ]);
     }
 
-
     /**
      * @param $quoteType
      * @param $quoteId
@@ -108,13 +103,12 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchCreatePayment($quoteId, $data)
     {
-        return DB::transaction(function() use ($quoteId, $data)
-        {
-            $quote =  $this->where('id', $quoteId)->firstOrFail();
+        return DB::transaction(function () use ($quoteId, $data) {
+            $quote = $this->where('id', $quoteId)->firstOrFail();
 
             $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'reference', 'payment_methods_code', 'insurance_provider_id', 'plan_id']);
 
-            if($data['payment_methods_code'] != PaymentMethodsEnum::CreditCard) {
+            if ($data['payment_methods_code'] != PaymentMethodsEnum::CreditCard) {
                 $paymentData['authorized_at'] = now();
             }
 
@@ -124,7 +118,7 @@ class PersonalQuoteRepository extends BaseRepository
 
             PaymentStatusLogRepository::create([
                 'current_payment_status_id' => PaymentStatusEnum::PENDING,
-                'payment_code' => $paymentData['code']
+                'payment_code' => $paymentData['code'],
             ]);
 
             $quote->update(['quote_status_id' => QuoteStatusEnum::PaymentPending]);
@@ -144,10 +138,13 @@ class PersonalQuoteRepository extends BaseRepository
         $payment = PaymentRepository::where('code', $paymentCode)->firstOrFail();
         $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'payment_methods_code']);
 
-        if(!empty($data['reference'])) $paymentData['reference'] = $data['reference'];
+        if (! empty($data['reference'])) {
+            $paymentData['reference'] = $data['reference'];
+        }
         $paymentData['updated_by'] = Auth::user()->id;
 
         $payment->update($paymentData);
+
         return $payment;
     }
 }

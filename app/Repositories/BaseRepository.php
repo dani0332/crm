@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Traits\FilterCriteria;
 use Illuminate\Container\Container as Application;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Traits\ForwardsCalls;
@@ -10,6 +9,7 @@ use Illuminate\Support\Traits\ForwardsCalls;
 abstract class BaseRepository
 {
     use ForwardsCalls;
+
     private $model;
 
     /**
@@ -26,12 +26,13 @@ abstract class BaseRepository
      */
     public static function __callStatic($method, $parameters)
     {
-        $method = 'fetch'. ucfirst($method);
+        $method = 'fetch'.ucfirst($method);
+
         return (new static)->forwardScopeCall($method, $parameters);
     }
 
     /**
-     * @param Application $app
+     * @param  Application  $app
      */
     public function __construct()
     {
@@ -41,23 +42,23 @@ abstract class BaseRepository
 
     /**
      * @return Model
+     *
      * @throws RepositoryException
      */
     public function makeModel()
     {
         $model = $this->app->make($this->model());
 
-        if (!$model instanceof Model)
-        {
+        if (! $model instanceof Model) {
             throw new \Exception("Class {$this->model()} must be an instance of Illuminate\\Database\\Eloquent\\Model");
         }
 
         $this->model = $model;
+
         return $this->model;
     }
 
     /**
-     *
      * @param $method
      * @param $parameters
      * @return mixed
@@ -70,18 +71,18 @@ abstract class BaseRepository
 
     /**
      * forward call to connected model
+     *
      * @param $method
      * @param $parameters
      * @return mixed
      */
     public function __call($method, $parameters)
     {
-        if(strpos($method,'fetch') !== false) {
-           $method = substr($method, strlen('fetch'));
-           $method = lcfirst($method);
+        if (strpos($method, 'fetch') !== false) {
+            $method = substr($method, strlen('fetch'));
+            $method = lcfirst($method);
         }
 
         return $this->forwardCallTo($this->model, $method, $parameters);
     }
-
 }

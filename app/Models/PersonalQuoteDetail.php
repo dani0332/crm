@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class PersonalQuoteDetail extends Model
 {
     use HasFactory;
+
     protected $guarded = [];
 
     /**
@@ -22,5 +23,4 @@ class PersonalQuoteDetail extends Model
     {
         return $this->belongsTo(LostReasons::class);
     }
-
 }

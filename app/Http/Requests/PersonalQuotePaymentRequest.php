@@ -26,16 +26,16 @@ class PersonalQuotePaymentRequest extends FormRequest
     {
         $data = request()->all();
 
-        $rules =  [
+        $rules = [
             'collection_type' => 'required',
             'captured_amount' => 'required|numeric',
             'payment_methods_code' => 'required',
             'insurance_provider_id' => 'required|int|exists:insurance_provider,id',
             'plan_id' => 'required|int|exists:personal_plans,id',
-            'reference' => 'nullable'
+            'reference' => 'nullable',
         ];
 
-        if(!empty($data['payment_method_code']) && $data['payment_method_code'] != PaymentMethodsEnum::CreditCard) {
+        if (! empty($data['payment_method_code']) && $data['payment_method_code'] != PaymentMethodsEnum::CreditCard) {
             $rules['reference'] = 'required';
         }
 

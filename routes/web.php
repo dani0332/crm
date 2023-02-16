@@ -57,13 +57,13 @@ use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\V2\BikeQuoteController;
-use App\Http\Controllers\V2\PersonalQuoteController;
-use App\Http\Controllers\V2\ActivityController;
 
 /*
 |--------------------------------------------------------------------------
@@ -205,8 +205,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
     });
-
-
 
     Route::group(['prefix' => 'quotes'], function () {
         Route::resource('carquotes', CarQuoteController::class);

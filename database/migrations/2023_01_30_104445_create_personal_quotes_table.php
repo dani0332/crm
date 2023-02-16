@@ -13,9 +13,8 @@ class CreatePersonalQuotesTable extends Migration
      */
     public function up()
     {
-        if(!Schema::hasTable('personal_quotes')) {
+        if (! Schema::hasTable('personal_quotes')) {
             Schema::create('personal_quotes', function (Blueprint $table) {
-
                 $table->id();
                 $table->integer('quote_type_id')->nullable(false);
                 $table->foreign('quote_type_id')->references('id')->on('quote_type');
@@ -44,22 +43,22 @@ class CreatePersonalQuotesTable extends Migration
                 $table->string('policy_number')->nullable();
                 $table->unsignedBigInteger('advisor_id')->nullable();
                 $table->foreign('advisor_id')->references('id')->on('users')->onDelete('no action');
-                $table->decimal('premium', 10,2)->nullable();
+                $table->decimal('premium', 10, 2)->nullable();
                 $table->string('renewal_batch')->nullable();
                 $table->dateTime('renewal_expiry_date')->nullable();
                 $table->string('previous_quote_policy_number', 100)->nullable();
                 $table->string('renewal_import_code', 50)->nullable();
                 $table->date('previous_policy_expiry_date')->nullable();
-                $table->decimal('previous_quote_policy_premium', 10,2)->nullable();
+                $table->decimal('previous_quote_policy_premium', 10, 2)->nullable();
                 $table->dateTime('policy_start_date')->nullable();
                 $table->dateTime('policy_issuance_date')->nullable();
 
                 $table->unsignedBigInteger('plan_id')->nullable();
                 $table->dateTime('paid_at')->nullable();
 
-                $table->decimal('premium_authorized', 10,2)->nullable();
-                $table->decimal('premium_captured', 10,2)->nullable();
-                $table->decimal('premium_refunded', 10,2)->nullable();
+                $table->decimal('premium_authorized', 10, 2)->nullable();
+                $table->decimal('premium_captured', 10, 2)->nullable();
+                $table->decimal('premium_refunded', 10, 2)->nullable();
 
                 $table->integer('payment_status_id')->nullable();
                 $table->foreign('payment_status_id')->references('id')->on('payment_status');

@@ -9,47 +9,47 @@ use App\Repositories\PersonalQuoteRepository;
 
 class PersonalQuoteController extends Controller
 {
-
     /**
      * @param $quoteType
      * @param $quoteId
-     * @param PersonalQuoteStatusRequest $request
+     * @param  PersonalQuoteStatusRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updateStatus($quoteType, $quoteId, PersonalQuoteStatusRequest $request)
     {
         PersonalQuoteRepository::updateStatus($quoteType, $quoteId, $request->validated());
-        return back()->with('message' , 'Status updated successfully');
-    }
 
+        return back()->with('message', 'Status updated successfully');
+    }
 
     public function uploadDocument($quoteType, $quoteId)
     {
         PersonalQuoteRepository::uploadDocument(request()->file('file'), request()->all());
-        return back()->with('message' , 'Document uploaded successfully');
+
+        return back()->with('message', 'Document uploaded successfully');
     }
 
     /**
-     * @param PersonalQuotePaymentRequest $request
+     * @param  PersonalQuotePaymentRequest  $request
      * @return void
      */
     public function createPayment($quoteId, PersonalQuotePaymentRequest $request)
     {
         PersonalQuoteRepository::createPayment($quoteId, $request->validated());
-        return back()->with('message' , 'Payment created successfully');
-    }
 
+        return back()->with('message', 'Payment created successfully');
+    }
 
     /**
      * @param $quoteId
      * @param $paymentCode
-     * @param PersonalQuotePaymentRequest $request
+     * @param  PersonalQuotePaymentRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updatePayment($quoteId, $paymentCode, PersonalQuotePaymentRequest $request)
     {
         PersonalQuoteRepository::updatePayment($quoteId, $paymentCode, $request->validated());
-        return back()->with('message' , 'Payment updated successfully');
-    }
 
+        return back()->with('message', 'Payment updated successfully');
+    }
 }

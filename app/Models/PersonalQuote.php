@@ -13,20 +13,20 @@ class PersonalQuote extends Model
     use HasFactory, FilterCriteria;
 
     protected $guarded = [];
-
-    public  $filterables = [
+    public $filterables = [
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::FREE,
         'uuid' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
-        'created_at' => FilterTypes::DATE_BETWEEN
+        'created_at' => FilterTypes::DATE_BETWEEN,
     ];
 
     /**
      * @return void
      */
-    public function quoteDetail() {
+    public function quoteDetail()
+    {
         return $this->hasOne(PersonalQuoteDetail::class);
     }
 
@@ -41,12 +41,14 @@ class PersonalQuote extends Model
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function quoteType() {
+    public function quoteType()
+    {
         return $this->belongsTo(QuoteType::class);
     }
 
     /**
      * bike quote request relation
+     *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function bikeQuote()
@@ -85,7 +87,8 @@ class PersonalQuote extends Model
      * @param $date
      * @return string
      */
-    public function getPolicyStartDateAttribute($date) {
+    public function getPolicyStartDateAttribute($date)
+    {
         return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
     }
 
@@ -93,7 +96,8 @@ class PersonalQuote extends Model
      * @param $date
      * @return string
      */
-    public function getPolicyIssuanceDateAttribute($date) {
+    public function getPolicyIssuanceDateAttribute($date)
+    {
         return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
     }
 
@@ -101,7 +105,8 @@ class PersonalQuote extends Model
      * @param $date
      * @return string
      */
-    public function getPreviousPolicyExpiryDateAttribute($date) {
+    public function getPreviousPolicyExpiryDateAttribute($date)
+    {
         return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
     }
 
@@ -113,14 +118,15 @@ class PersonalQuote extends Model
         return $this->belongsTo(Nationality::class);
     }
 
-
     /**
      * get data by personal quote type
+     *
      * @param $query
      * @return mixed
      */
-    public function scopeByQuoteTypeCode($query, $quoteTypeCode) {
-        return $query->whereHas('quoteType', function($q) use($quoteTypeCode) {
+    public function scopeByQuoteTypeCode($query, $quoteTypeCode)
+    {
+        return $query->whereHas('quoteType', function ($q) use ($quoteTypeCode) {
             $q->where('code', ($quoteTypeCode));
         });
     }
@@ -150,5 +156,4 @@ class PersonalQuote extends Model
     {
         return $this->morphMany(Payment::class, 'paymentable');
     }
-
 }

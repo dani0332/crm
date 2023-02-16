@@ -9,7 +9,6 @@ use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
-use App\Models\PersonalPlan;
 use App\Models\PersonalQuote;
 use App\Services\HealthQuoteService;
 use App\Services\NetworkPaymentService;
@@ -120,7 +119,7 @@ class AjaxController extends Controller
         } else {
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
 
-            $description = (get_class($quoteModel) == PersonalQuote::class) ?  $payment->personalPlan->text : $quoteModel->plan->text;
+            $description = (get_class($quoteModel) == PersonalQuote::class) ? $payment->personalPlan->text : $quoteModel->plan->text;
 
             $tokenRequest = NetworkPaymentService::sendNetworkTokenRequest();
             if ($tokenRequest->getStatusCode() == 200) {

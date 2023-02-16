@@ -17,10 +17,12 @@ class UAELicenseHeldFor extends BaseModel
 
     /**
      * scope to get active records
+     *
      * @param $query
      * @return mixed
      */
-    public function scopeWithActive($query) {
+    public function scopeWithActive($query)
+    {
         return $query->where('is_active', 1);
     }
 

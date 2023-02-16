@@ -10,7 +10,8 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 {
     protected $paymentService;
 
-    public function model() {
+    public function model()
+    {
         return Payment::class;
     }
 
@@ -46,5 +47,4 @@ class PaymentRepository extends BaseRepository implements PaymentRepositoryInter
 
         return $paymentLink;
     }
-
 }

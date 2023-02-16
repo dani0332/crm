@@ -15,7 +15,7 @@ class KenServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        App::bind('ken',function() {
+        App::bind('ken', function () {
             return new KenService;
         });
     }

@@ -14,7 +14,7 @@ class CapiServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        App::bind('capi',function() {
+        App::bind('capi', function () {
             return new CapiService;
         });
     }

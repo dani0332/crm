@@ -5,19 +5,20 @@ namespace App\Repositories;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
-use App\Models\QuoteDocument;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
 class BikeQuoteRepository extends BaseRepository
 {
-    public function model() {
+    public function model()
+    {
         return PersonalQuote::class;
     }
 
     /**
      * create new personal quote
+     *
      * @param $quoteTypeCode
      * @param $data
      * @return mixed
@@ -25,22 +26,22 @@ class BikeQuoteRepository extends BaseRepository
     public function fetchCreate($data)
     {
         $quoteData = [
-            "quoteTypeId" => intval(QuoteTypes::BIKE->id()),
-            "nationalityId" => $data['nationality_id'],
-            "mobileNo"  => $data['mobile_no'],
-            "email" => $data['email'],
-            "firstName" => $data['first_name'],
-            "lastName"  => $data['last_name'],
-            "dob"   => $data['dob'],
-            "bikeCompanyToInsure"   => $data['bike_company_to_insure'],
-            "assetValue"    => $data['asset_value'],
-            "currentlyInsuredWithId"    => $data['currently_insured_with_id'],
-            "uaeLicenseHeldForId"   => $data['uae_license_held_for_id'],
-            "yearOfManufacture" => $data['year_of_manufacture'],
-            "lang"  => "EN",
-            "device"    => "DESKTOP",
-            "source"    => config('constants.SOURCE_NAME'),
-            "referenceUrl"  => URL::current(),
+            'quoteTypeId' => intval(QuoteTypes::BIKE->id()),
+            'nationalityId' => $data['nationality_id'],
+            'mobileNo' => $data['mobile_no'],
+            'email' => $data['email'],
+            'firstName' => $data['first_name'],
+            'lastName' => $data['last_name'],
+            'dob' => $data['dob'],
+            'bikeCompanyToInsure' => $data['bike_company_to_insure'],
+            'assetValue' => $data['asset_value'],
+            'currentlyInsuredWithId' => $data['currently_insured_with_id'],
+            'uaeLicenseHeldForId' => $data['uae_license_held_for_id'],
+            'yearOfManufacture' => $data['year_of_manufacture'],
+            'lang' => 'EN',
+            'device' => 'DESKTOP',
+            'source' => config('constants.SOURCE_NAME'),
+            'referenceUrl' => URL::current(),
         ];
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
@@ -53,23 +54,22 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchUpdate($uuid, $data)
     {
-        return DB::transaction(function() use($uuid, $data)
-        {
+        return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())->where('uuid', $uuid)->firstOrFail();
 
             $quote->update(Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id',  'asset_value', 'currently_insured_with_id'
+                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id',  'asset_value', 'currently_insured_with_id',
             ]));
 
-            $quote->bikeQuote->update( Arr::only($data,['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id']));
+            $quote->bikeQuote->update(Arr::only($data, ['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id']));
 
             return $quote;
         });
     }
 
-
     /**
      * get all dropdown options required for form
+     *
      * @return array
      */
     public function fetchGetFormOptions()
@@ -78,7 +78,7 @@ class BikeQuoteRepository extends BaseRepository
             'nationalities' => NationalityRepository::withActive()->get(),
             'uaeLicenses' => UaeLicenseHeldRepository::withActive()->get(),
             'yearOfManufacture' => YearOfManufactureRepository::get(),
-            'insuranceProviders' => InsuranceProviderRepository::select('id', 'text')->orderBy('text', 'asc')->get()
+            'insuranceProviders' => InsuranceProviderRepository::select('id', 'text')->orderBy('text', 'asc')->get(),
         ];
     }
 
@@ -87,11 +87,11 @@ class BikeQuoteRepository extends BaseRepository
      * @param $value
      * @return mixed
      */
-    public function fetchGetBy($column = 'id', $value) {
-
+    public function fetchGetBy($column, $value)
+    {
         return $this->byQuoteTypeId(QuoteTypes::BIKE->id())
             ->where($column, $value)
-            ->with(['bikeQuote', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function($q){
+            ->with(['bikeQuote', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
             }])->firstOrFail();
     }
@@ -103,7 +103,4 @@ class BikeQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeCode(QuoteTypes::BIKE)->filter()->simplePaginate();
     }
-
-
-
 }

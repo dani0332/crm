@@ -10,15 +10,16 @@ use App\Models\Activities;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
+use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Traits\GetUserTreeTrait;
 
 class ActivitesController extends Controller
 {
     use GetUserTreeTrait;
+
     protected $activitesService;
     protected $crudService;
 

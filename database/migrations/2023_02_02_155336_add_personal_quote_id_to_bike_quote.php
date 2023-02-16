@@ -29,7 +29,7 @@ class AddPersonalQuoteIdToBikeQuote extends Migration
     public function down()
     {
         Schema::table('bike_quote_request', function (Blueprint $table) {
-            if(Schema::hasColumn('bike_quote_request', 'personal_quote_id')) {
+            if (Schema::hasColumn('bike_quote_request', 'personal_quote_id')) {
                 $table->dropForeign('bike_quote_request_personal_quote_id_foreign');
                 $table->dropColumn('personal_quote_id');
             }

@@ -243,7 +243,7 @@ return [
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'LookUpModel' => App\helpers\LookUpModelHelper::class,
         'KenService' => \App\Services\KenService::class,
-        'CapiService' => \App\Services\CapiService::class
+        'CapiService' => \App\Services\CapiService::class,
     ],
 
 ];

@@ -6,7 +6,8 @@ use App\Models\DocumentType;
 
 class DocumentTypeRepository extends BaseRepository
 {
-    public function model() {
+    public function model()
+    {
         return DocumentType::class;
     }
 }
