@@ -135,6 +135,7 @@ class TravelController extends Controller
                 'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                 'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
                 'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
+                'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
             ],
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
