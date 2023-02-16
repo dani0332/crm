@@ -8,6 +8,7 @@ defineProps({
     quote: Object,
     documentTypes: Object,
     quoteStatuses: Object,
+    lostReasons: Object,
     storageUrl: String
 })
 

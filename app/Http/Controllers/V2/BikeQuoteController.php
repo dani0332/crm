@@ -11,6 +11,7 @@ use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
@@ -96,10 +97,13 @@ class BikeQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->orderBy('created_at', 'desc')->get();
 
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
             'activities' => $activities,
+            'lostReasons' => $lostReasons,
             'advisors' => $advisors,
             'documentTypes' => $documentTypes,
             'quoteStatuses' => $quoteStatuses,

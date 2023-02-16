@@ -807,7 +807,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     quoteType: String,
     can: Object,
     activities: Object,
-    advisors: Object
+    advisors: Object,
+    lostReasons: Object
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -4221,6 +4222,7 @@ __webpack_require__.r(__webpack_exports__);
     quote: Object,
     documentTypes: Object,
     quoteStatuses: Object,
+    lostReasons: Object,
     storageUrl: String
   },
   setup: function setup(__props, _ref) {
@@ -5849,10 +5851,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   , ["can", "payments", "quote-type", "payment-methods", "insurance-providers", "is-beta-user", "personal-plans"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["QuoteStatus"], {
     quote: $props.quote,
     "quote-type": $props.quoteType,
-    "quote-statuses": $props.quoteStatuses
+    "quote-statuses": $props.quoteStatuses,
+    "lost-reasons": $props.lostReasons
   }, null, 8
   /* PROPS */
-  , ["quote", "quote-type", "quote-statuses"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["QuoteDocuments"], {
+  , ["quote", "quote-type", "quote-statuses", "lost-reasons"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["QuoteDocuments"], {
     "document-types": $props.documentTypes,
     "quote-documents": $props.quote.documents || [],
     storageUrl: $props.storageUrl,
@@ -11477,7 +11480,7 @@ var _hoisted_7 = {
   "class": "flex justify-end"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
-  var _ctx$lostReasons;
+  var _$props$lostReasons;
 
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-divider");
 
@@ -11537,7 +11540,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return $setup.quoteStatusForm.lost_reason_id = $event;
     }),
     label: "Lost Reason",
-    options: (_ctx$lostReasons = _ctx.lostReasons) === null || _ctx$lostReasons === void 0 ? void 0 : _ctx$lostReasons.map(function (item) {
+    options: (_$props$lostReasons = $props.lostReasons) === null || _$props$lostReasons === void 0 ? void 0 : _$props$lostReasons.map(function (item) {
       return {
         value: item.id,
         label: item.text

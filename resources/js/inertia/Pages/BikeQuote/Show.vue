@@ -23,6 +23,7 @@ defineProps({
     can: Object,
     activities: Object,
     advisors: Object,
+    lostReasons: Object,
 })
 
 const page = usePage();
@@ -239,6 +240,7 @@ const historyDataTable = [
             :quote="quote"
             :quote-type="quoteType"
             :quote-statuses="quoteStatuses"
+            :lost-reasons="lostReasons"
         />
 
         <QuoteDocuments
