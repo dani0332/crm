@@ -68,7 +68,7 @@ class CustomersImport implements OnEachRow
                 $newCustomer = new Customer([
                     'first_name' => $firstName,
                     'last_name' => $lastName,
-                    'email' => $email,
+                    'email' => strtolower(trim($email)),
                     'has_alfred_access' => true,
                     'has_reward_access' => true,
                     'myalfred_expiry_date' => $myalfredExpiryDate,
