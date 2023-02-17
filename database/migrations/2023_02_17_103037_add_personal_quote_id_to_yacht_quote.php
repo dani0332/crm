@@ -14,7 +14,7 @@ class AddPersonalQuoteIdToYachtQuote extends Migration
     public function up()
     {
         Schema::table('yacht_quote_request', function (Blueprint $table) {
-            if (! Schema::hasColumn('bike_quote_request', 'personal_quote_id') && Schema::hasTable('personal_quotes')) {
+            if (! Schema::hasColumn('yacht_quote_request', 'personal_quote_id') && Schema::hasTable('personal_quotes')) {
                 $table->unsignedBigInteger('personal_quote_id')->nullable();
                 $table->foreign('personal_quote_id')->references('id')->on('personal_quotes');
             }
@@ -29,8 +29,8 @@ class AddPersonalQuoteIdToYachtQuote extends Migration
     public function down()
     {
         Schema::table('yacht_quote_request', function (Blueprint $table) {
-            if (Schema::hasColumn('bike_quote_request', 'personal_quote_id')) {
-                $table->dropForeign('bike_quote_request_personal_quote_id_foreign');
+            if (Schema::hasColumn('yacht_quote_request', 'personal_quote_id')) {
+                $table->dropForeign('yacht_quote_request_personal_quote_id_foreign');
                 $table->dropColumn('personal_quote_id');
             }
         });

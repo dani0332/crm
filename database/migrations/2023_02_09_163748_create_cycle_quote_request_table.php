@@ -15,8 +15,8 @@ class CreateCycleQuoteRequestTable extends Migration
     {
         Schema::create('cycle_quote_request', function (Blueprint $table) {
             $table->id();
-            $table->integer('quote_type_id')->nullable(false);
-            $table->foreign('quote_type_id')->references('id')->on('quote_type');
+            $table->integer('personal_quote_id')->nullable(false);
+            $table->foreign('personal_quote_id')->references('id')->on('personal_quotes');
 
             $table->string('cycle_make', 50)->nullable();
             $table->string('cycle_model', 50)->nullable();
