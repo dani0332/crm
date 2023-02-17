@@ -38,7 +38,7 @@ const activityTable = [
     { text: 'Title', value: 'title' },
     { text: 'Client Name', value: 'client_name' },
     { text: 'Followup Date', value: 'due_date' },
-    { text: 'Assigned To', value: 'assignee' },
+    { text: 'Assigned To', value: 'assignee.email' },
     { text: 'Action', value: 'action' },
 ];
 

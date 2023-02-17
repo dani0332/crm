@@ -29,7 +29,7 @@ const quoteDocumentsTable = reactive({
         },
         {
             text: 'Created By',
-            value: 'created_by_name',
+            value: 'created_by.email',
         },
         {
             text: 'Action',

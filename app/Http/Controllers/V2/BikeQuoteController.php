@@ -84,7 +84,7 @@ class BikeQuoteController extends Controller
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
 
-        $quote->load('documents');
+        $quote->load('documents.createdBy');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
@@ -96,9 +96,10 @@ class BikeQuoteController extends Controller
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::BIKE->id(),
             'quote_request_id' => $quote->id,
-        ])->orderBy('created_at', 'desc')->get();
+        ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,

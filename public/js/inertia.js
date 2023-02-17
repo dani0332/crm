@@ -3549,7 +3549,7 @@ __webpack_require__.r(__webpack_exports__);
       value: 'due_date'
     }, {
       text: 'Assigned To',
-      value: 'assignee'
+      value: 'assignee.email'
     }, {
       text: 'Action',
       value: 'action'
@@ -3744,7 +3744,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         value: 'created_at'
       }, {
         text: 'Created By',
-        value: 'created_by_name'
+        value: 'created_by.email'
       }, {
         text: 'Action',
         value: 'action'
