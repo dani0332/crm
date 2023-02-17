@@ -22,6 +22,11 @@ class BikeQuote extends Model implements AuditableContract
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
+    public function yearOfManufacture()
+    {
+        return $this->belongsTo(YearOfManufacture::class, 'year_of_manufacture');
+    }
+
     public function getUpdatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');

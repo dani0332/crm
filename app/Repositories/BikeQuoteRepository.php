@@ -37,7 +37,7 @@ class BikeQuoteRepository extends BaseRepository
             'assetValue' => $data['asset_value'],
             'currentlyInsuredWithId' => strval($data['currently_insured_with_id']),
             'uaeLicenseHeldForId' => strval($data['uae_license_held_for_id']),
-            'yearOfManufacture' => $data['year_of_manufacture'],
+            'yearOfManufactureId' => strval($data['year_of_manufacture']),
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
@@ -92,7 +92,7 @@ class BikeQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeId(QuoteTypes::BIKE->id())
             ->where($column, $value)
-            ->with(['bikeQuote', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
+            ->with(['bikeQuote.yearOfManufacture', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
             }])->firstOrFail();
     }

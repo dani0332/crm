@@ -462,7 +462,7 @@ __webpack_require__.r(__webpack_exports__);
     }
   },
   setup: function setup(__props, _ref) {
-    var _props$quote, _props$quote2, _props$quote3, _props$quote4, _props$quote5, _props$quote6, _props$quote7, _props$quote7$bike_qu, _props$quote8, _props$quote8$bike_qu, _props$quote9, _props$quote10, _props$quote11, _props$quote11$bike_q;
+    var _props$quote, _props$quote2, _props$quote3, _props$quote4, _props$quote5, _props$quote6, _props$quote7, _props$quote7$bike_qu, _props$quote8, _props$quote8$bike_qu, _props$quote9, _props$quote10, _props$quote11, _props$quote11$bike_q, _props$quote11$bike_q2;
 
     var expose = _ref.expose;
     expose();
@@ -480,7 +480,7 @@ __webpack_require__.r(__webpack_exports__);
       bike_company_to_insure: ((_props$quote8 = props.quote) === null || _props$quote8 === void 0 ? void 0 : (_props$quote8$bike_qu = _props$quote8.bike_quote) === null || _props$quote8$bike_qu === void 0 ? void 0 : _props$quote8$bike_qu.bike_company_to_insure) || null,
       asset_value: ((_props$quote9 = props.quote) === null || _props$quote9 === void 0 ? void 0 : _props$quote9.asset_value) || null,
       currently_insured_with_id: ((_props$quote10 = props.quote) === null || _props$quote10 === void 0 ? void 0 : _props$quote10.currently_insured_with_id) || null,
-      year_of_manufacture: ((_props$quote11 = props.quote) === null || _props$quote11 === void 0 ? void 0 : (_props$quote11$bike_q = _props$quote11.bike_quote) === null || _props$quote11$bike_q === void 0 ? void 0 : _props$quote11$bike_q.year_of_manufacture) || null
+      year_of_manufacture: ((_props$quote11 = props.quote) === null || _props$quote11 === void 0 ? void 0 : (_props$quote11$bike_q = _props$quote11.bike_quote) === null || _props$quote11$bike_q === void 0 ? void 0 : (_props$quote11$bike_q2 = _props$quote11$bike_q.year_of_manufacture) === null || _props$quote11$bike_q2 === void 0 ? void 0 : _props$quote11$bike_q2.id) || null
     });
     var rules = {
       isEmail: function isEmail(v) {
@@ -3796,7 +3796,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     });
 
     var uploadFile = function uploadFile(doc, files) {
-      var url = '/personal-quotes/bike/' + docForm.quote_id + '/documents';
+      var url = '/personal-quotes/' + docForm.quote_id + '/documents';
       if (files.length == 0) return;
       isUploading.value = true;
       docForm.transform(function (data) {
@@ -5295,7 +5295,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         rules: [$setup.rules.isRequired],
         options: $props.yearOfManufacture.map(function (item) {
           return {
-            value: item.text,
+            value: item.id,
             label: item.text
           };
         }),

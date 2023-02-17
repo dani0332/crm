@@ -32,7 +32,7 @@ const quoteForm = useForm({
     bike_company_to_insure: props.quote?.bike_quote?.bike_company_to_insure || null,
     asset_value: props.quote?.asset_value || null,
     currently_insured_with_id: props.quote?.currently_insured_with_id || null,
-    year_of_manufacture: props.quote?.bike_quote?.year_of_manufacture || null,
+    year_of_manufacture: props.quote?.bike_quote?.year_of_manufacture?.id || null,
 });
 
 const rules = {
@@ -196,7 +196,7 @@ function onSubmit(isValid) {
                     :rules="[rules.isRequired]"
                     :options="
                         yearOfManufacture.map(item => ({
-                          value: item.text,
+                          value: item.id,
                           label: item.text,
                         }))
                     "

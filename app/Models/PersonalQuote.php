@@ -78,10 +78,10 @@ class PersonalQuote extends Model
      * @param $date
      * @return string
      */
-    public function getDobAttribute($date)
-    {
-        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
-    }
+//    public function getDobAttribute($date)
+//    {
+//        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+//    }
 
     /**
      * @param $date
