@@ -54,7 +54,7 @@ const confirmData = reactive({
   contactPrimary: null,
 });
 
-const assignSubteam = ref(page.props.quote.health_team_type || ''),
+const assignSubteam = ref(page.props.quote.travel_team_type || ''),
   assignLead = ref(null),
   memberActionEdit = ref(false),
   activityActionEdit = ref(false),
@@ -757,7 +757,7 @@ const additionalContact = useForm({
   additional_contact_val: null,
   quote_id: page.props.quote.id,
   customer_id: page.props.quote.customer_id,
-  quote_type: 'health',
+  quote_type: 'travel',
 });
 
 const onAdditionalContactSubmit = isValid => {
@@ -827,7 +827,7 @@ const additionalContactPrimaryConfirmed = () => {
       quote_id: page.props.quote.id,
       key: confirmData.contactPrimary.key,
       value: confirmData.contactPrimary.value,
-      quote_type: 'health',
+      quote_type: 'travel',
     },
     {
       preserveScroll: true,
@@ -1014,7 +1014,7 @@ onMounted(() => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">SUBTEAM</dt>
-          <dd>{{ quote.health_team_type }}</dd>
+          <dd>{{ quote.travel_team_type }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">ADVISOR</dt>
