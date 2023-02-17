@@ -27,7 +27,7 @@ class BikeQuoteRepository extends BaseRepository
     {
         $quoteData = [
             'quoteTypeId' => intval(QuoteTypes::BIKE->id()),
-            'nationalityId' => $data['nationality_id'],
+            'nationalityId' => strval($data['nationality_id']),
             'mobileNo' => $data['mobile_no'],
             'email' => $data['email'],
             'firstName' => $data['first_name'],
@@ -35,8 +35,8 @@ class BikeQuoteRepository extends BaseRepository
             'dob' => $data['dob'],
             'bikeCompanyToInsure' => $data['bike_company_to_insure'],
             'assetValue' => $data['asset_value'],
-            'currentlyInsuredWithId' => $data['currently_insured_with_id'],
-            'uaeLicenseHeldForId' => $data['uae_license_held_for_id'],
+            'currentlyInsuredWithId' => strval($data['currently_insured_with_id']),
+            'uaeLicenseHeldForId' => strval($data['uae_license_held_for_id']),
             'yearOfManufacture' => $data['year_of_manufacture'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
@@ -44,6 +44,7 @@ class BikeQuoteRepository extends BaseRepository
             'referenceUrl' => URL::current(),
         ];
 
+        info( 'bikeQuote:' . json_encode($quoteData));
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
     }
 
