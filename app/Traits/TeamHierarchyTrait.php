@@ -134,4 +134,15 @@ trait TeamHierarchyTrait
 
         return DB::table('user_team')->where('team_id', $teamId)->get()->pluck('user_id');
     }
+
+    public function getCurrentUserTeamsAndSubTeams($userId)
+    {
+        $teams = collect(DB::select("
+        select
+            CONCAT(teams.`name`,' ', CASE WHEN `type` = 2 THEN '- Team' ELSE '- SubTeam' END) as name, teams.id
+            from teams
+            where id in (select team_id from user_team where user_id = '".$userId."' ) OR id = (select sub_team_id from users where id =  '".$userId."');"));
+
+        return $teams;
+    }
 }

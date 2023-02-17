@@ -27,6 +27,8 @@ class CarLeadAllocationDashboardService extends BaseService
                             ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
                             ->leftJoin('quadrants as q', 'q.id', 'qu.quad_id')
                             ->join('lead_allocation as la', 'la.user_id', 'users.id')
+                            ->join('user_team', 'user_team.user_id', 'users.id')
+                            ->join('teams', 'teams.id', 'user_team.team_id')
                             ->where('users.is_active', 1)
                             ->groupBy('users.name', 'users.id', 'la.id')
                             ->select(
