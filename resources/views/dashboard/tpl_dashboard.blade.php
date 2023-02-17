@@ -124,12 +124,6 @@
 <div>
     <div class="flex gap-4 justify-end mb-4">
         <div>
-            <select id="source-filter" class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
-                <option value="no" selected>No</option>
-                <option value="yes">Yes</option>
-            </select>
-        </div>
-        <div>
             <select multiple name="tiers[]" id="tier-filter">
                 <option value="">Select Tier</option>
                 @foreach ($tiers as $tier)

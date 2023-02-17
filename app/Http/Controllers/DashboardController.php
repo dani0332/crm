@@ -140,12 +140,6 @@ class DashboardController extends Controller
                 $records = $this->applyFilter($records, 'teams.id', $commonTeams[0], IMCRMSearchTypesEnum::EQUAL_SEARCH);
             }
         }
-        if (isset($request->source)) {
-            if ($request->source == 'yes') {
-                $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::NOT_EQUAL);
-            }
-        }
-
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
@@ -218,12 +212,6 @@ class DashboardController extends Controller
 
         if (isset($request->userFilter) && $request->userFilter != 'null') {
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
-        }
-
-        if (isset($request->excludeFilter)) {
-            if ($request->excludeFilter == 'yes') {
-                $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::NOT_EQUAL);
-            }
         }
 
         $labels = [];
