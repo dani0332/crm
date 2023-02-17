@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title','View Reward')
+@section('title','Rewards')
 @section('content')
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -12,24 +12,18 @@
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <br />
-                @if(session()->has('message'))
-                    <div class="alert alert-danger">{{ session()->get('message') }}</div>
-                @endif
                 <table class="table table-striped jambo_table reward-data-table">
                       <thead>
                         <tr>
-                        <th>Id</th>
-                          <th>Coupon Code</th>
-                          <th>Partner</th>
-                          <th>Discount</th>
-                          <th>Start Date</th>
-                          <th>End Date</th>
-                          <th>Is Active</th>
+                            <th>Id</th>
+                            <th>Coupon Code</th>
+                            <th>Partner</th>
+                            <th>Discount</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Is Active</th>
                         </tr>
                       </thead>
-
-
                       <tbody>
                       </tbody>
                     </table>

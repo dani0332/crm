@@ -81,6 +81,7 @@ class RewardController extends Controller
         $reward->is_flat_discount = $request->is_flat_discount == 'on' ? 1 : 0;
         $reward->viewed_count = 0;
         $reward->viewed_count_unique = 0;
+        $reward->sort_order = $request->sort_order;
         $reward->save();
         if (isset($request->reward_categories)) {
             foreach ($request->reward_categories as $rewardCategory) {
@@ -149,6 +150,7 @@ class RewardController extends Controller
         $reward->end_date = $request->end_date;
         $reward->is_flat_discount = $request->is_flat_discount == 'on' ? 1 : 0;
         $reward->is_active = $request->is_active == 'on' ? 1 : 0;
+        $reward->sort_order = $request->sort_order;
         $reward->save();
         if (isset($request->reward_categories)) {
             $rewardCategoryMapping = new RewardCategoryMapping;
