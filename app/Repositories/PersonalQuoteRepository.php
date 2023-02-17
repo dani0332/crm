@@ -63,17 +63,17 @@ class PersonalQuoteRepository extends BaseRepository
      * @param $data
      * @return mixed
      */
-    public function fetchUploadDocument($file, $data)
+    public function fetchUploadDocument($id, $file, $data)
     {
         $documentType = DocumentTypeRepository::where('code', $data['document_type_code'])->first();
-        $quote = $this->whereId($data['quote_id'])->first();
+        $quote = $this->whereId($id)->first();
 
         $originalName = $file->getClientOriginalName();
         $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
         $fileMimeType = $file->getClientMimeType();
 
         //upload file to azure
-        $fileNameAzure = uniqid().'_'.$data['quote_uuid'].'_'.$docName;
+        $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
         $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
 
         //generate unique uuid
@@ -90,7 +90,6 @@ class PersonalQuoteRepository extends BaseRepository
             'document_type_code' => $documentType->code,
             'document_type_text' => $documentType->text,
             'doc_uuid' => $docUuid,
-            'member_detail_id' => $data['member_detail_id'] ?? null,
             'created_by_id' => auth()->id(),
         ]);
     }
@@ -104,6 +103,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchCreatePayment($quoteId, $data)
     {
         return DB::transaction(function () use ($quoteId, $data) {
+
             $quote = $this->where('id', $quoteId)->firstOrFail();
 
             $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'reference', 'payment_methods_code', 'insurance_provider_id', 'plan_id']);
@@ -156,7 +156,6 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUpdatePolicyDetails($id, $data)
     {
         $quote = $this->findOrFail($id);
-        info(json_encode($data));
         $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'renewal_expiry_date', 'premium']));
         return $quote;
     }

@@ -3791,7 +3791,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       quote_uuid: (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.usePage)().props.quote.code || null,
       quote_type_id: null,
       document_type_code: null,
-      folder_path: null,
       file: null
     });
 
@@ -3809,12 +3808,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }).post(url, {
         preserveScroll: true,
         preserveState: true,
-        onFinish: function onFinish() {
-          isUploading.value = false;
+        onError: function onError(errors) {
+          docForm.setError(errors.error);
+          console.log(errors.error);
+          notification.error({
+            title: 'File upload failed',
+            position: 'top'
+          });
+        },
+        onSuccess: function onSuccess() {
           notification.success({
             title: 'File Uploaded',
             position: 'top'
           });
+        },
+        onFinish: function onFinish() {
+          isUploading.value = false;
         }
       });
     };
@@ -11171,6 +11180,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   var _component_DataTable = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("DataTable");
 
+  var _component_x_alert = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-alert");
+
   var _component_x_modal = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-modal");
 
   return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_1, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h3", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Documents "), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_tag, {
@@ -11253,7 +11264,22 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Upload Documents ")];
     }),
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-      return [((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.renderList)($props.documentTypes, function (documentType) {
+      return [$setup.docForm.errors.error ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_alert, {
+        key: 0,
+        color: "error",
+        "class": "mb-5"
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+          var _$setup$docForm, _$setup$docForm$error;
+
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)((_$setup$docForm = $setup.docForm) === null || _$setup$docForm === void 0 ? void 0 : (_$setup$docForm$error = _$setup$docForm.errors) === null || _$setup$docForm$error === void 0 ? void 0 : _$setup$docForm$error.error), 1
+          /* TEXT */
+          )];
+        }),
+        _: 1
+        /* STABLE */
+
+      })) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.renderList)($props.documentTypes, function (documentType) {
         return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", {
           key: documentType.id,
           "class": "grid md:grid-cols-2 gap-2 my-4 border-b"

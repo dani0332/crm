@@ -86,13 +86,12 @@ const docForm = useForm({
     quote_uuid: usePage().props.quote.code || null,
     quote_type_id: null,
     document_type_code: null,
-    folder_path: null,
     file: null,
 });
 
 const uploadFile = (doc,  files) => {
 
-    let url = '/personal-quotes/bike/'+docForm.quote_id+'/documents';
+    let url = '/personal-quotes/'+docForm.quote_id+'/documents';
 
     if (files.length == 0) return;
     isUploading.value = true;
@@ -107,12 +106,22 @@ const uploadFile = (doc,  files) => {
         .post(url, {
             preserveScroll: true,
             preserveState: true,
-            onFinish: () => {
-                isUploading.value = false;
+            onError: errors => {
+                docForm.setError(errors.error);
+                console.log(errors.error);
+                notification.error({
+                    title: 'File upload failed',
+                    position: 'top',
+                });
+            },
+            onSuccess : () => {
                 notification.success({
                     title: 'File Uploaded',
                     position: 'top',
                 });
+            },
+            onFinish: () => {
+                isUploading.value = false;
             },
         });
 };
@@ -169,6 +178,8 @@ const uploadFile = (doc,  files) => {
 
         <x-modal v-model="modals.doc" size="xl" show-close backdrop>
             <template #header> Upload Documents </template>
+
+            <x-alert color="error" class="mb-5" v-if="docForm.errors.error" >{{docForm?.errors?.error}}</x-alert>
 
             <div
                 v-for="documentType in documentTypes"

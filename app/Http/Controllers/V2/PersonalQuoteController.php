@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\PersonalQuoteDocumentRequest;
 use App\Http\Requests\PersonalQuotePaymentRequest;
 use App\Http\Requests\PersonalQuotePolicyRequest;
 use App\Http\Requests\PersonalQuoteStatusRequest;
@@ -23,9 +24,9 @@ class PersonalQuoteController extends Controller
         return back()->with('message', 'Status updated successfully');
     }
 
-    public function uploadDocument($quoteType, $quoteId)
+    public function uploadDocument($quoteId, PersonalQuoteDocumentRequest $request)
     {
-        PersonalQuoteRepository::uploadDocument(request()->file('file'), request()->all());
+        PersonalQuoteRepository::uploadDocument($quoteId, request()->file('file'), $request->validated());
 
         return back()->with('message', 'Document uploaded successfully');
     }
