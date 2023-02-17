@@ -229,6 +229,7 @@ class CarQuoteService extends BaseService
         $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
         $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
         $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? $request->previous_policy_expiry_date : null;
+        $carQuote->updated_by = auth()->user()->email;
         $carQuote->save();
 
         if (isset($request->return_to_view)) {

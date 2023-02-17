@@ -9,10 +9,9 @@ use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\OnEachRow;
-use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Row;
 
-class CustomersImport implements OnEachRow, WithStartRow
+class CustomersImport implements OnEachRow
 {
     public $myalfredExpiryDate;
     public $CDBId;
@@ -33,7 +32,10 @@ class CustomersImport implements OnEachRow, WithStartRow
      */
     public function onRow(Row $row)
     {
-        Log::info('Entered in Excel Import per row');
+        if ($row->getIndex() == 1) {
+            return null;
+        }
+
         $row = $row->toArray();
 
         $email = $row[1];
@@ -75,15 +77,15 @@ class CustomersImport implements OnEachRow, WithStartRow
                 $customerId = $newCustomer->id;
             }
 
-            $customerModel = Customer::find($customerId);
+            $customer = Customer::find($customerId);
             if ($this->inviatationEmail == 'on') {
-                if ($customerModel->is_we_sent == 0) {
-                    dispatch(new MAWelcomeJob($email, $firstName, $lastName, 'CORPORATE', 'corporate-myalfred-we'));
+                if ($customer->is_we_sent == 0) {
+                    dispatch(new MAWelcomeJob($customer, 'CORPORATE', 'corporate-myalfred-we'));
                 }
             }
 
             $existingQuoteCustomer = QuoteCustomer::where([['customer_id', '=', $customerId], ['cdb_id', '=', $this->CDBId]])->get();
-            if ($existingQuoteCustomer->isEmpty()) {
+            if (! $existingQuoteCustomer) {
                 $newQuoteCustomer = new QuoteCustomer();
                 $newQuoteCustomer->cdb_id = $this->CDBId;
                 $newQuoteCustomer->customer_id = $customerId;
@@ -91,10 +93,5 @@ class CustomersImport implements OnEachRow, WithStartRow
                 Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , CDB Id ->'.$this->CDBId);
             }
         }
-    }
-
-    public function startRow(): int
-    {
-        return 2;
     }
 }
