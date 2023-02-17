@@ -12,8 +12,8 @@ use App\Models\Tier;
 use App\Services\DashboardService;
 use App\Services\TierService;
 use App\Traits\TeamHierarchyTrait;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -42,7 +42,7 @@ class DashboardController extends Controller
     {
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $car = $this->getProductByName(quoteTypeCode::Car);
-        $teams = $this->getTeamsSubTeamsByProductId($car->id);
+        $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
         $carAdvisors = $this->getUsersByTeamId($car->id);
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams);
 

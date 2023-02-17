@@ -12,6 +12,7 @@ use App\Models\Tier;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Traits\GetUserTreeTrait;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 class AdvisorConversionReportTable extends DataTableComponent
 {
     use GetUserTreeTrait;
+    use TeamHierarchyTrait;
 
     public $url;
     public $tiers = [];
@@ -77,13 +79,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
-        $this->teams = collect(DB::select("
-            select
-            CONCAT(teams.`name`,' ', CASE WHEN `type` = 2 THEN '- Team' ELSE '- SubTeam' END) as name,
-            teams.id
-            from teams
-            where id in (select team_id from user_team where user_id = '".$loginUserId."' ) OR id = (select sub_team_id from users where id =  '".$loginUserId."');"))
-            ->keyBy('id')
+        $this->teams = $this->getCurrentUserTeamsAndSubTeams($loginUserId)->keyBy('id')
             ->map(fn ($Teams) => $Teams->name)
             ->toArray();
         $this->tiers = Tier::query()
