@@ -31,7 +31,6 @@ class RewardRequest extends FormRequest
             'end_date' => 'required',
             'reward_categories' => 'required',
             'reward_tags' => 'required',
-            'sort_order' => 'required|numeric',
         ];
     }
 }

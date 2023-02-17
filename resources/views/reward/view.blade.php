@@ -21,6 +21,7 @@
                             <th>Discount</th>
                             <th>Start Date</th>
                             <th>End Date</th>
+                            <th>Sort Order</th>
                             <th>Is Active</th>
                         </tr>
                       </thead>
