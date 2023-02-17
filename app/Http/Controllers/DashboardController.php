@@ -119,8 +119,8 @@ class DashboardController extends Controller
             DB::raw('count(car_quote_request.id) as total_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
         )
         ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
