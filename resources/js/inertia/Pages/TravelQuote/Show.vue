@@ -54,9 +54,7 @@ const confirmData = reactive({
   contactPrimary: null,
 });
 
-const assignSubteam = ref(page.props.quote.travel_team_type || ''),
-  assignLead = ref(null),
-  memberActionEdit = ref(false),
+const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
   selectedPlansPdf = ref([]),
@@ -64,32 +62,13 @@ const assignSubteam = ref(page.props.quote.travel_team_type || ''),
   contactLoader = ref(false),
   historyLoading = ref(false),
   auditLogLoading = ref(false),
-  isDisabled = ref(false),
   lostReasonId = ref(
     page.props.lostReasons.find(
       reason => reason.text === page.props.quote.lost_reason,
     )?.id || null,
   );
 
-const subTeamOptions = computed(() => {
-  if (page.props.renewalAdvisors.length > 0) {
-    return page.props.renewalAdvisors.map(advisor => ({
-      value: advisor.id,
-      label: advisor.name,
-    }));
-  }
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
-});
 
-const leadAssignmentTypes = computed(() => {
-  return Object.keys(page.props.assignmentTypes).map(key => ({
-    value: key,
-    label: page.props.assignmentTypes[key],
-  }));
-});
 
 const leadDuplicateForm = useForm({
   modelType: 'travel',
@@ -122,47 +101,6 @@ const onCreateDuplicate = isValid => {
   });
 };
 
-const onAssignLead = () => {
-  if (!assignSubteam.value) {
-    notification.error({
-      title: 'Please select a Advisor',
-      position: 'top',
-    });
-    return;
-  }
-  if (!assignLead.value) {
-    notification.error({
-      title: 'Please select a type',
-      position: 'top',
-    });
-    return;
-  }
-  router.post(
-    `/quotes/travel/manualLeadAssign`,
-    {
-      modelType: 'Travel',
-      entityId: page.props.quote.id,
-      assigned_to_id_new: assignSubteam.value,
-      assignment_type: assignLead.value,
-      isManualAllocationAllowed: 1,
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        isDisabled.value = true;
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Assigned',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        isDisabled.value = false;
-      },
-    },
-  );
-};
 
 const genderText = gender =>
   computed(() => {
@@ -966,39 +904,6 @@ onMounted(() => {
     </x-modal>
 
     <x-divider class="my-4" />
-
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/50">
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/2 flex gap-2 items-end">
-          <x-select
-            v-model="assignSubteam"
-            label="Assign Advisor"
-            :options="subTeamOptions"
-            placeholder="Select Advisor"
-            class="w-auto flex-1"
-          />
-        </div>
-        <div class="w-full md:w-1/2 flex gap-2 items-end">
-          <x-select
-            v-model="assignLead"
-            label="Assignment Type"
-            :options="leadAssignmentTypes"
-            placeholder="Select Type"
-            class="w-auto flex-1"
-          />
-          <div>
-            <x-button
-              color="orange"
-              size="sm"
-              @click.prevent="onAssignLead"
-              :loading="isDisabled"
-            >
-              Assign
-            </x-button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 
   <div class="p-4 rounded shadow mb-6 bg-white">
