@@ -108,6 +108,9 @@ class AdvisorPerformanceReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
+        $userIds = $this->walkTree(auth()->user()->id);
+        info('user ids for advisor performance report are : '.json_encode($userIds));
+
         return CarQuote::query()
             ->select(
                 DB::raw('count(car_quote_request.id) as total_leads'),
@@ -130,6 +133,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
                 $join->on('users.sub_team_id', '=', 'teams.id');
             })
             ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
+            ->whereIn('car_quote_request.advisor_id', $userIds)
             ->whereNull('car_quote_request.renewal_import_code')
             ->groupBy('car_quote_request.advisor_id')
             ->orderBy('users.email');
