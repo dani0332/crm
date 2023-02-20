@@ -74,20 +74,19 @@ trait TeamHierarchyTrait
 
     public function getUsersByTeamId($teamId)
     {
-        if (gettype($teamId) == 'integer') {
-            $teamIds = [$teamId];
-        } else {
-            $teamIds = $teamId;
-        }
-        $teamUserId = DB::table('user_team')->whereIn('team_id', $teamIds)->pluck('user_id');
+        $userIds = User::where(function ($query) use ($teamId) {
+            $query->whereIn('id', function ($subQuery) use ($teamId) {
+                $subQuery->select('user_id')
+                    ->from('user_team')
+                    ->whereIn('team_id', (array) $teamId);
+            })->orWhereIn('sub_team_id', (array) $teamId);
+        })->where('is_active', 1)
+          ->pluck('id')
+          ->toArray();
 
-        $subTeamUserIds = User::whereIn('sub_team_id', $teamIds)->select('id')->get();
-
-        $userIds = count($subTeamUserIds) > 0 ? $teamUserId->merge($subTeamUserIds)->toArray() : $teamUserId->toArray();
-
-        $integerIDs = array_map('intval', $userIds);
-
-        $users = User::whereIn('id', $integerIDs)->where('is_active', 1)->select('id', 'name')->get();
+        $users = User::whereIn('id', $userIds)
+            ->select('id', 'name')
+            ->get();
 
         return $users;
     }
