@@ -114,6 +114,33 @@ const historyDataTable = [
                         <dt class="font-medium">DEVICE</dt>
                         <dd>{{ quote.device }}</dd>
                     </div>
+
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">UAE licence held for</dt>
+                        <dd>{{ quote?.bike_quote?.uae_license_held_for.text }}</dd>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">Bike(s) to insure</dt>
+                        <dd>{{ quote?.bike_quote?.bike_company_to_insure }}</dd>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">Bike value(AED)</dt>
+                        <dd>{{ quote.asset_value }}</dd>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">Year of manufacture</dt>
+                        <dd>{{ quote?.bike_quote.year_of_manufacture }}</dd>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">Currently with</dt>
+                        <dd>{{ quote?.bike_quote.currently_insured_with?.text }}</dd>
+                    </div>
+
+
                 </dl>
             </div>
 
@@ -229,6 +256,7 @@ const historyDataTable = [
         />
 
         <QuotePayments
+            v-if="isBetaUser"
             :can="can"
             :payments="quote.payments"
             :quote-type="quoteType"

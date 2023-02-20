@@ -54,12 +54,12 @@ class PersonalQuoteDocumentRequest extends FormRequest
 
                 //validate if payment is authorized
                 if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
-                    //vAbort('Documents can be uploaded once payment is authorized.');
+                   $validator->errors()->add('error', 'Documents can be uploaded once payment is authorized.');
                 }
 
                 //check for maximum number of files uploaded against selected quote and document type
                 if ($this->documentType && $quote && $quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
-                    vAbort('You can only upload a maximum of '.$this->documentType->max_files.' files');
+                    $validator->errors()->add('error', 'You can only upload a maximum of '.$this->documentType->max_files.' files for ( ' . $this->documentType->text . ' )');
                 }
             }
         });

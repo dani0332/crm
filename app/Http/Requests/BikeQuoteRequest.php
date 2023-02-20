@@ -33,7 +33,7 @@ class BikeQuoteRequest extends FormRequest
             'uae_license_held_for_id' => 'required|exists:uae_license_held_for,id',
             'bike_company_to_insure' => 'required',
             'asset_value' => 'required|numeric',
-            'year_of_manufacture' => 'required|exists:year_of_manufacture,id',
+            'year_of_manufacture' => 'required|exists:year_of_manufacture,text',
             'currently_insured_with_id' => 'required|exists:insurance_provider,id',
         ];
     }

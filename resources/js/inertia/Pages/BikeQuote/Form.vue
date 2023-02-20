@@ -196,7 +196,7 @@ function onSubmit(isValid) {
                     :rules="[rules.isRequired]"
                     :options="
                         yearOfManufacture.map(item => ({
-                          value: item.id,
+                          value: item.text,
                           label: item.text,
                         }))
                     "
