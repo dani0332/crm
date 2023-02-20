@@ -1136,6 +1136,7 @@ class CRUDController extends Controller
         info('manualTierAssignment  -- selected Tier Id : '.$selectedLeadId.' , selected Lead is : '.$entityCode.', requested by '.auth()->user()->email);
         CarQuote::where('id', $selectedLeadId)->update([
             'tier_id' => $selectedTierId,
+            'cost_per_lead' => Tier::where('id', $selectedTierId)->get()->first()->cost_per_lead,
             'updated_at' => now(),
             'updated_by' => auth()->user()->email,
             'advisor_id' => null,
