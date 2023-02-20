@@ -19,6 +19,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 class AdvisorPerformanceReportTable extends DataTableComponent
 {
     use TeamHierarchyTrait;
+
     public $url;
     public $tiers = [];
     public $teams = [];
@@ -52,9 +53,9 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             ->map(fn ($users) => $users->name)
             ->toArray();
 
-            $this->teams = $this->getCurrentUserTeamsAndSubTeams($loginUserId)->keyBy('id')
-            ->map(fn ($Teams) => $Teams->name)
-            ->toArray();
+        $this->teams = $this->getCurrentUserTeamsAndSubTeams($loginUserId)->keyBy('id')
+        ->map(fn ($Teams) => $Teams->name)
+        ->toArray();
 
         $this->leadSources = CarQuote::query()
             ->select('source as name')
