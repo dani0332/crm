@@ -115,6 +115,16 @@ const historyDataTable = [
                         <dd>{{ quote.device }}</dd>
                     </div>
 
+                </dl>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="font-semibold text-primary-800">Quote Details</h3>
+                <x-divider class="mb-4 mt-1" />
+            </div>
+
+            <div class="text-sm">
+                <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">UAE licence held for</dt>
                         <dd>{{ quote?.bike_quote?.uae_license_held_for.text }}</dd>
@@ -139,11 +149,8 @@ const historyDataTable = [
                         <dt class="font-medium">Currently with</dt>
                         <dd>{{ quote?.bike_quote.currently_insured_with?.text }}</dd>
                     </div>
-
-
                 </dl>
             </div>
-
 
             <div class="mt-6">
                 <h3 class="font-semibold text-primary-800">Customer Profile</h3>
@@ -184,43 +191,8 @@ const historyDataTable = [
                 </dl>
             </div>
 
-
             <div class="mt-6">
-                <h3 class="font-semibold text-primary-800">Policy Details</h3>
-                <x-divider class="mb-4 mt-1" />
-            </div>
-
-            <div class="text-sm">
-                <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">POLICY NUMBER</dt>
-                        <dd>{{ quote.policy_number }}</dd>
-                    </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">PREVIOUS QUOTE POLICY NUMBER</dt>
-                        <dd>{{ quote.previous_quote_policy_number }}</dd>
-                    </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">POLICY START DATE</dt>
-                        <dd>{{ quote.policy_start_date }}</dd>
-                    </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">POLICY END DATE</dt>
-                        <dd>{{ quote.policy_issuance_date }}</dd>
-                    </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">PREMIUM</dt>
-                        <dd>{{ quote.premium }}</dd>
-                    </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">TRANSAPP CODE</dt>
-                        <dd>{{ quote?.quote_detail?.transapp_code }}</dd>
-                    </div>
-                </dl>
-            </div>
-
-            <div class="mt-6">
-                <h3 class="font-semibold text-primary-800">Previous Policy Details</h3>
+                <h3 class="font-semibold text-primary-800">Last Year's Policy Details </h3>
                 <x-divider class="mb-4 mt-1" />
             </div>
 
@@ -242,6 +214,36 @@ const historyDataTable = [
                         <dd>{{ quote.previous_quote_policy_premium }}</dd>
                     </div>
 
+                </dl>
+            </div>
+
+            <div class="mt-6">
+                <h3 class="font-semibold text-primary-800">Policy Details</h3>
+                <x-divider class="mb-4 mt-1" />
+            </div>
+
+            <div class="text-sm">
+                <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">POLICY NUMBER</dt>
+                        <dd>{{ quote.policy_number }}</dd>
+                    </div>
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">POLICY START DATE</dt>
+                        <dd>{{ quote.policy_start_date }}</dd>
+                    </div>
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">POLICY END DATE</dt>
+                        <dd>{{ quote.policy_issuance_date }}</dd>
+                    </div>
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">PREMIUM</dt>
+                        <dd>{{ quote.premium }}</dd>
+                    </div>
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">TRANSAPP CODE</dt>
+                        <dd>{{ quote?.quote_detail?.transapp_code }}</dd>
+                    </div>
                 </dl>
             </div>
 
