@@ -9,7 +9,6 @@ use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
 use App\Traits\GetUserTreeTrait;
-use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
