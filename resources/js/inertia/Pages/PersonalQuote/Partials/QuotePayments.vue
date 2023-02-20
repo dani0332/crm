@@ -263,45 +263,43 @@ const generateCCLink = async code => {
             <template #item-actions="item">
 
                 <div class="flex gap-2">
+                    <template v-if="can.approve_payments">
+                        <x-button
+                            size="xs"
+                            color="error"
+                            @click="approvePayment(item)"
+                        >
+                            Approve
+                        </x-button>
 
-                    <x-button
-                        size="xs"
-                        color="error"
-                        @click="approvePayment(item)"
-                    >
-                        Approve
-                    </x-button>
-
-                    <x-button
-                        size="xs"
-                        disabled
-                        color="error"
-                    >
-                        Approved
-                    </x-button>
-
-                    <x-button
-                        size="xs"
-                        color="orange"
-                        @click="generateCCLink(item.code)"
-                    >
-                        Copy Link
-                    </x-button>
-
-                    <x-button
-                        size="xs"
-                        color="emerald"
-                        @click="editPaymentModal(item)"
-                    >
-                        Edit
-                    </x-button>
+                        <x-button
+                            size="xs"
+                            disabled
+                            color="error"
+                        >
+                            Approved
+                        </x-button>
+                    </template>
+                    <template v-else>
+                        <x-button
+                            size="xs"
+                            color="orange"
+                            v-if="item.copy_link_button"
+                            @click="generateCCLink(item.code)"
+                        >
+                            Copy Link
+                        </x-button>
+                        <x-button
+                            size="xs"
+                            color="emerald"
+                            v-if="can.edit_payments && item.edit_button"
+                            @click="editPaymentModal(item)"
+                        >
+                            Edit
+                        </x-button>
+                    </template>
                 </div>
-
             </template>
-
-
-
-
         </DataTable>
 
 
