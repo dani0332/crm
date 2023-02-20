@@ -71,22 +71,22 @@ class DashboardController extends Controller
     {
         $startDate = explode(',', $request->range)[0];
         $endDate = explode(',', $request->range)[1];
-        $allCarQuotesToday = CarQuote::whereBetween('created_at', [$startDate, $endDate])->get();
-        $car = $this->getProductByName(quoteTypeCode::Car);
-        $teams = $this->getTeamsByProductId($car->id);
+        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
+        $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
+
         foreach ($teams as $team) {
-            $teamUserIds = $this->getUsersByTeamId($team->id)->pluck('id');
+            $teamUserIds = $this->getUsersByTeamId($team->id);
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => count($teamUserIds),
                 'teamName' => $team->name,
-                'totalLeadsCount' => CarQuote::whereIn('advisor_id', $teamUserIds)->whereBetween('created_at', [$startDate, $endDate])->count(),
+                'totalLeadsCount' => $todaysLeads->whereIn('advisor_id', $teamUserIds)->count(),
             ];
         }
-        $totalLeadsReceived = count($allCarQuotesToday);
-        $totalLeadsReceivedEcommerce = count($allCarQuotesToday->where('is_ecommerce', 1));
-        $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
-        $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($allCarQuotesToday->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
+        $totalLeadsReceived = count($todaysLeads);
+        $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
+        $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
+        $totalUnAssignedLeadsReceivedEcommerce = count($todaysLeads->whereNull('advisor_id')->where('is_ecommerce', 1));
+        $totalUnAssignedRevivalLeads = count($todaysLeads->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($startDate, $endDate);
         $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($startDate, $endDate);
 
