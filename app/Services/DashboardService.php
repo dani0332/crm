@@ -179,14 +179,12 @@ class DashboardService extends BaseService
 
     public function getTeamWiseLeadStats($todaysLeads, $teams)
     {
-
         $teamWiseLeadsAssignedAverage = [];
         foreach ($teams as $team) {
             $teamUserIds = $this->getUsersByTeamId($team->id);
 
             $usersCount = count($teamUserIds);
-            $leadsCount  = $todaysLeads->whereIn('advisor_id', $teamUserIds)->count();
-
+            $leadsCount = $todaysLeads->whereIn('advisor_id', $teamUserIds)->count();
 
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => $usersCount,
@@ -194,6 +192,7 @@ class DashboardService extends BaseService
                 'totalLeadsCount' => $leadsCount,
             ];
         }
+
         return $teamWiseLeadsAssignedAverage;
     }
 }
