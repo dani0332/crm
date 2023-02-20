@@ -339,6 +339,7 @@ $(document).ready(function () {
       { data: 'discount', name: 'discount' },
       { data: 'start_date', name: 'start_date' },
       { data: 'end_date', name: 'end_date' },
+      { data: 'sort_order', name: 'sort_order' },
       { data: 'is_active', name: 'is_active' },
     ],
   });
