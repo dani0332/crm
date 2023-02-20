@@ -146,7 +146,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->orderBy('users.name');
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $query->where('users.id', auth()->user()->id);
-        }else{
+        } else {
             $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
