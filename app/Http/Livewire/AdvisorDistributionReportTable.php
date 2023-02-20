@@ -52,9 +52,9 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->map(fn ($tier) => $tier->name)
             ->toArray();
 
-            $this->teams = $this->getCurrentUserTeamsAndSubTeams($loginUserId)->keyBy('id')
-            ->map(fn ($team) => $team->name)
-            ->toArray();
+        $this->teams = $this->getCurrentUserTeamsAndSubTeams($loginUserId)->keyBy('id')
+        ->map(fn ($team) => $team->name)
+        ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
             $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
