@@ -273,11 +273,17 @@ class AdvisorConversionReportTable extends DataTableComponent
             }));
 
             array_push($filters, MultiSelectFilter::make('Teams')
+            ->config([
+                'placeholder' => 'SELECT ALL TEAMS',
+            ])
             ->options($this->teams)->filter(function (Builder $builder, $value) {
                 $builder->whereIn('teams.id', $value);
             }));
 
             array_push($filters, MultiSelectFilter::make('Advisors')
+            ->config([
+                'placeholder' => 'SELECT ALL ADVISORS',
+            ])
             ->options($this->advisors)->filter(function (Builder $builder, $value) {
                 $builder->whereIn('car_quote_request.advisor_id', $value);
             }));

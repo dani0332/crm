@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorPerformanceReportTable extends DataTableComponent
 {
+    use TeamHierarchyTrait;
     public $url;
     public $tiers = [];
     public $teams = [];
@@ -40,6 +42,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
 
     public function mount()
     {
+        $loginUserId = auth()->user()->id;
         $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
@@ -49,17 +52,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             ->map(fn ($users) => $users->name)
             ->toArray();
 
-        $this->teams = collect(DB::select("
-            WITH RECURSIVE teams_cte (id, name, parent_team_id, type, depth) AS (
-                SELECT id, concat(name,' - (Team)') as name, parent_team_id, type, 0 as depth FROM teams WHERE parent_team_id = (SELECT id FROM teams WHERE name = 'Car')
-                AND is_active = true
-                UNION ALL
-                SELECT t.id, concat(t.name,' - (Subteam)') as name, t.parent_team_id, t.type, cte.depth + 1 as depth FROM teams_cte cte
-                JOIN teams t ON t.parent_team_id = cte.id
-                AND t.is_active = true
-            )
-            SELECT * FROM teams_cte ORDER BY depth;"))
-            ->keyBy('id')
+            $this->teams = $this->getCurrentUserTeamsAndSubTeams($loginUserId)->keyBy('id')
             ->map(fn ($Teams) => $Teams->name)
             ->toArray();
 
