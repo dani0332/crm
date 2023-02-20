@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\Tier;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -1167,6 +1168,10 @@ class CarQuoteService extends BaseService
             $previousAdvisorId = $lead->advisor_id;
             $lead->advisor_id = $userId;
             $lead->auto_assigned = false;
+
+            if($lead->tier_id != null){
+                $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
+            }
 
             info('Manual assignment done for lead : '.$lead->uuid);
             $this->updateChildRecord($lead->id);
