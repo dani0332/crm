@@ -7,6 +7,8 @@ use Inertia\Response;
 use RuntimeException;
 use App\Enums\RolesEnum;
 use App\Enums\QuoteTypeId;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use App\Enums\quoteTypeCode;
 use Illuminate\Http\Request;
 use Inertia\ResponseFactory;
@@ -144,6 +146,80 @@ class TravelController extends Controller
         ]);
     }
 
+    /**
+     * @param Request $request
+     * @param $id
+     *
+     * @return ResponseFactory|Response
+     * @throws RuntimeException
+     */
+    public function edit($id)
+    {
+        $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $fieldsToUpdate = $this->service->getFieldsToUpdate($this->genericModel);
+        $customTitles = [];
+        foreach ($fieldsToUpdate as $property => $value) {
+            if (str_contains($value, 'title')) {
+                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+            }else{
+                $customTitles[$property] = ucwords(str_replace('_', ' ', $property));
+             }
+        }
+
+        $fields = [];
+        foreach ($fieldsToUpdate as $property => $value) {
+            $value = array_diff(explode('|', $value), ['title']);
+            $type = $value[0] == 'select' ? 'select' : $value[1] ?? 'text';
+            $fields[$property] = [
+                'type' => $type,
+                'required' => in_array('required', $value),
+                'readonly' => in_array('readonly', $value),
+                'disabled' => in_array('disabled', $value),
+                'value' => $record->$property,
+                'label' => $customTitles[$property],
+                'options' => $dropdownSource[$property] ?? [],
+            ];
+        }
+        $fields['email']['disabled'] = true;
+        $fields['mobile_no']['disabled'] = true;
+        // dd($fields);
+        return inertia('TravelQuote/Edit', [
+            'quote' => $record,
+            'modelType' => $this->genericModel->modelType,
+            'genderOptions' => $this->crudService->getGenderOptions(),
+            'dropdownSource' => $dropdownSource,
+            'model' => json_encode($this->genericModel->properties),
+            'fields' => $fields,
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
+    {
+        $modelPropertiesList = json_decode($request->all()['model'], true);
+
+        $modelType = json_decode($request->all()['modelType'], true);
+        $validateArray = [];
+        
+        $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
+        foreach ($modelPropertiesList as $property => $value) {
+            if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && !strpos($modelSkipPropertiesList['update'], $property)) {
+                $validateArray[$property] = 'required';
+            }
+        }
+        $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
+        $this->validate($request, $validateArray);
+        $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+
+        return redirect('/quotes/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
+    }
 
 
     /**

@@ -106,4 +106,21 @@ class BaseService
         ->where('auditable_type', $auditableType)
         ->get();
     }
+
+    /**
+     * @param GenericModel $genericModel
+     * @return array
+     */
+    public function getFieldsToUpdate(GenericModel $genericModel): array
+    {
+        $skip = explode(",", data_get($genericModel, 'skipProperties.update', ''));
+        $properties = $genericModel->properties;
+        $fieldsToUpdate = [];
+        foreach ($properties as $key => $property) {
+            if (!in_array($key, $skip)) {
+                $fieldsToUpdate[$key] = $property;
+            }
+        }
+        return $fieldsToUpdate;
+    }
 }

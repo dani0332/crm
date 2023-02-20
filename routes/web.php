@@ -245,6 +245,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
          Route::resource('travel', TravelController::class)->only([
              'index',
              'show',
+             'edit',
+             'update',
          ]);
 
         // Route::get('travel-cards', [TravelController::class, 'cardsView']);
