@@ -138,10 +138,31 @@ trait TeamHierarchyTrait
     public function getCurrentUserTeamsAndSubTeams($userId)
     {
         $teams = collect(DB::select("
-        select
-            CONCAT(teams.`name`,' ', CASE WHEN `type` = 2 THEN '- Team' ELSE '- SubTeam' END) as name, teams.id
-            from teams
-            where id in (select team_id from user_team where user_id = '".$userId."' ) OR id = (select sub_team_id from users where id =  '".$userId."');"));
+        WITH RECURSIVE team_hierarchy
+                AS (
+                    SELECT id,
+                        name,
+                        parent_team_id
+                    FROM teams
+                    WHERE name IN (
+                            SELECT teams.name
+                            FROM user_team
+                            INNER JOIN teams ON teams.id = user_team.team_id
+                            WHERE user_id = '".auth()->user()->id."'
+                            ) -- Replace with the list of team names
+
+                    UNION ALL
+
+                    SELECT t.id,
+                        t.name,
+                        t.parent_team_id
+                    FROM teams t
+                    JOIN team_hierarchy th ON th.id = t.parent_team_id
+                    )
+                SELECT id,
+                    name,
+                    parent_team_id
+                FROM team_hierarchy;"));
 
         return $teams;
     }

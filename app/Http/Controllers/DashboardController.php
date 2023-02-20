@@ -40,10 +40,13 @@ class DashboardController extends Controller
 
     public function renderMainDashboard(Request $request)
     {
+        $loggedInUserId = auth()->user()->id;
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $car = $this->getProductByName(quoteTypeCode::Car);
-        $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
-        $carAdvisors = $this->getUsersByTeamId($car->id);
+        $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
+        $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
+
+        $carAdvisors = $this->getUsersByTeamId($teamIds);
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams);
 
         $totalLeadsReceived = count($todaysLeads);
