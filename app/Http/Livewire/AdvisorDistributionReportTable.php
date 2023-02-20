@@ -8,6 +8,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
+use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,7 +20,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorDistributionReportTable extends DataTableComponent
 {
-    use TeamHierarchyTrait;
+    use GetUserTreeTrait;
 
     public $url;
     public $tiers = [];
