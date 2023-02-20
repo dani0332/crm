@@ -46,7 +46,7 @@ class DashboardController extends Controller
         $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
         $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
 
-        $carAdvisors = $this->getUsersByTeamId($teamIds);
+        $carAdvisors = $this->getUsersByTeamId($teamIds ?? []);
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams);
 
         $totalLeadsReceived = count($todaysLeads);
