@@ -1169,7 +1169,7 @@ class CarQuoteService extends BaseService
             $lead->advisor_id = $userId;
             $lead->auto_assigned = false;
 
-            if($lead->tier_id != null){
+            if ($lead->tier_id != null) {
                 $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
             }
 
