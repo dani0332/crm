@@ -22,7 +22,7 @@ defineProps({
   ecomDetails: Object,
   travelers: Array,
   modelType: String,
-  quoteDocuments: Array,
+  quoteDocuments: Object,
   displaySendPolicyButton: Boolean,
   documentTypes: Object,
   cdnPath: String,
@@ -68,8 +68,6 @@ const memberActionEdit = ref(false),
     )?.id || null,
   );
 
-
-
 const leadDuplicateForm = useForm({
   modelType: 'travel',
   parentType: 'travel',
@@ -101,7 +99,6 @@ const onCreateDuplicate = isValid => {
   });
 };
 
-
 const genderText = gender =>
   computed(() => {
     return page.props.genderOptions[gender];
@@ -127,6 +124,7 @@ const modals = reactive({
   addContact: false,
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
+  planDetails: false,
 });
 
 const leadStatusForm = useForm({
@@ -839,6 +837,24 @@ const auditLogsDataTable = [
   { text: 'Logged At', value: 'created_at' },
 ];
 
+// selected tab
+
+const selectedTab = ref('general_info');
+const planDetails = ref(null);
+
+const getPlanDetails = id => {
+  axios
+    .get(`/quotes/travel/${page.props.quote.uuid}/plan_details/${id}`)
+    .then(res => {
+      planDetails.value = res.data;
+      console.log(res.data);
+      modals.planDetails = true;
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
 onMounted(() => {
   console.log(page.props.enums);
 });
@@ -1534,9 +1550,16 @@ onMounted(() => {
             item.discountPremium + item.vat
           }}</span>
         </template>
-        <template #item-action="{ item }">
+        <template #item-action="item">
           <div>
-            <x-button size="xs" color="error" outlined> View </x-button>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="getPlanDetails(item.id)"
+            >
+              View
+            </x-button>
           </div>
         </template>
       </DataTable>
@@ -1546,6 +1569,25 @@ onMounted(() => {
         {{ listQuotePlans.toUpperCase() }}
       </p>
     </div>
+
+    <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>
+      <template #header> Plan Details </template>
+      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+        <x-tab-group v-model="selectedTab" class="w-full" variant="block" grow>
+          <x-tab value="general_info" label="General Info">
+            <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+              <h3 class="font-semibold text-primary-800 text-lg">
+                General Info
+              </h3>
+            </div>
+          </x-tab>
+          <x-tab value="members" label="Members"> </x-tab>
+          <x-tab value="inclusions" label="Inclusions"> </x-tab>
+          <x-tab value="exclusions" label="Exclusions"> </x-tab>
+          <x-tab value="covid" label="COVID-19 Cover"> </x-tab>
+        </x-tab-group>
+      </div>
+    </x-modal>
   </div>
 
   <div class="p-4 rounded shadow mb-6 bg-white">

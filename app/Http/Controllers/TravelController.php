@@ -15,6 +15,7 @@ use Inertia\ResponseFactory;
 use App\Services\CRUDService;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use Illuminate\Support\Carbon;
 use App\Services\LookupService;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
@@ -205,9 +206,8 @@ class TravelController extends Controller
     {
         $modelPropertiesList = json_decode($request->all()['model'], true);
 
-        $modelType = json_decode($request->all()['modelType'], true);
         $validateArray = [];
-        
+
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         foreach ($modelPropertiesList as $property => $value) {
             if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && !strpos($modelSkipPropertiesList['update'], $property)) {

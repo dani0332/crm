@@ -30,6 +30,11 @@ const quoteForm = useForm({
   model: props.model,
   ...formFields.value.reduce((acc, field) => {
     acc[field.value] = props.quote[field.value];
+    if (field.value === 'dob' || field.value === 'policy_start_date') {
+      acc[field.value] = props.quote[field.value]
+        ? props.quote[field.value].split('-').reverse().join('-')
+        : null;
+    }
     return acc;
   }, {}),
 });
@@ -45,8 +50,7 @@ const rules = {
 const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
-  console.log(quoteForm);
-
+  
   if (isValid) {
     quoteForm.put(`/quotes/travel/${props.quote.uuid}`, {
       onSuccess: () => {
