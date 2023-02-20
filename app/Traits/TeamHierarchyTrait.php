@@ -163,6 +163,7 @@ trait TeamHierarchyTrait
                     name,
                     parent_team_id
                 FROM team_hierarchy;"));
+
         return $teams;
     }
 }
