@@ -7,7 +7,7 @@ import Dropzone from '@/inertia/Components/Dropzone.vue';
 defineProps({
     quote: Object,
     documentTypes: Object,
-    storageUrl: String
+    storageUrl: String,
 })
 
 const page = usePage();
@@ -108,7 +108,7 @@ const uploadFile = (doc,  files) => {
             preserveState: true,
             onError: errors => {
                 docForm.setError(errors.error);
-                console.log(errors.error);
+                console.log(errors);
                 notification.error({
                     title: 'File upload failed',
                     position: 'top',
@@ -179,7 +179,9 @@ const uploadFile = (doc,  files) => {
         <x-modal v-model="modals.doc" size="xl" show-close backdrop>
             <template #header> Upload Documents </template>
 
-            <x-alert color="error" class="mb-5" v-if="docForm.errors.error" >{{docForm?.errors?.error}}</x-alert>
+            <x-alert color="error" class="mb-5" v-if="Object.keys(docForm.errors).length" >
+                <ul><li v-for="error in docForm?.errors">{{error}}</li></ul>
+            </x-alert>
 
             <div
                 v-for="documentType in documentTypes"
