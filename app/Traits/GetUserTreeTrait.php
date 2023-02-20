@@ -37,7 +37,7 @@ trait GetUserTreeTrait
             }
         }
 
-        return $childUserIds;
+        return array_unique($childUserIds);
     }
 
     public static function StaticWalkTree($userId)
