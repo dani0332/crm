@@ -15,7 +15,7 @@ class AddSortOrderToRewardTable extends Migration
     {
         Schema::table('reward', function (Blueprint $table) {
             if (! Schema::hasColumn('reward', 'sort_order')) {
-                $table->integer('sort_order')->nullable();
+                $table->integer('sort_order')->nullable()->default(null);
             }
         });
     }
