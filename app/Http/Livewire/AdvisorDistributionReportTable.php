@@ -43,6 +43,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $loginUserId = auth()->user()->id;
         $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
