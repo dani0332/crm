@@ -7,7 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
-use App\Traits\TeamHierarchyTrait;
+use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +18,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorPerformanceReportTable extends DataTableComponent
 {
-    use TeamHierarchyTrait;
+    use GetUserTreeTrait;
 
     public $url;
     public $tiers = [];
@@ -108,6 +108,9 @@ class AdvisorPerformanceReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
+        $userIds = $this->walkTree(auth()->user()->id);
+        info('user ids for advisor performance report are : '.json_encode($userIds));
+
         return CarQuote::query()
             ->select(
                 DB::raw('count(car_quote_request.id) as total_leads'),
@@ -125,11 +128,10 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->leftJoin('lead_allocation as la', 'la.user_id', 'users.id')
             ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
-            ->leftJoin('teams', function ($join) {
-                $join->on('users.team_id', '=', 'teams.id');
-                $join->on('users.sub_team_id', '=', 'teams.id');
-            })
+            ->join('user_team', 'user_team.user_id', 'users.id')
+            ->join('teams', 'teams.id', 'user_team.team_id')
             ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
+            ->whereIn('car_quote_request.advisor_id', $userIds)
             ->whereNull('car_quote_request.renewal_import_code')
             ->groupBy('car_quote_request.advisor_id')
             ->orderBy('users.email');

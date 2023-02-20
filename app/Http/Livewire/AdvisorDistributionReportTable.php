@@ -8,7 +8,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
-use App\Traits\TeamHierarchyTrait;
+use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +19,7 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorDistributionReportTable extends DataTableComponent
 {
-    use TeamHierarchyTrait;
+    use GetUserTreeTrait;
 
     public $url;
     public $tiers = [];
@@ -116,6 +116,9 @@ class AdvisorDistributionReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
+        $userIds = $this->walkTree(auth()->user()->id);
+        info('user ids for advisor distribution report are : '.json_encode($userIds));
+
         $query = CarQuote::query()
             ->select(
                 DB::raw('count(*) as total_leads'),
@@ -143,6 +146,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->orderBy('users.name');
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $query->where('users.id', auth()->user()->id);
+        } else {
+            $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
         return $query;

@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
+use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +19,8 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class LeadDistributionReportTable extends DataTableComponent
 {
+    use GetUserTreeTrait;
+
     public $url;
     public $tiers = [];
     private $maxDays = 92;
@@ -80,6 +83,9 @@ class LeadDistributionReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
+        $userIds = $this->walkTree(auth()->user()->id);
+        info('user ids for lead distribution report are : '.json_encode($userIds));
+
         return CarQuote::query()
             ->select(
                 DB::raw('SUM(CASE WHEN car_quote_request.source not in ("'.LeadSourceEnum::RENEWAL_UPLOAD.'","'.LeadSourceEnum::IMCRM.'","'.LeadSourceEnum::TPL_RENEWALS.'") THEN 1 ELSE 0 END) as received_leads'),
@@ -90,6 +96,7 @@ class LeadDistributionReportTable extends DataTableComponent
                 DB::raw('count(car_quote_request.id) as total_leads'),
             )
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->whereIn('car_quote_request.advisor_id', $userIds)
             ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->groupBy('tiers.name');
     }
