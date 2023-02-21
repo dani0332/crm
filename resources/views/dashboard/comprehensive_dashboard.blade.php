@@ -84,9 +84,9 @@
                         if (users) {
                             $('#userFilter').empty();
                             users.forEach(user => {
-                                $('#userFilter').append($('<option>', { 
+                                $('#userFilter').append($('<option>', {
                                     value: user.id,
-                                    text : user.name 
+                                    text : user.name
                                 }));
                             });
                         }
@@ -166,13 +166,6 @@
                 @foreach ($tiers as $tier)
                 <option value="{{$tier->id}}"> {{ $tier->name }} </option>
                 @endforeach
-            </select>
-        </div>
-        <div>
-            <label>Exclude Manual Leads</label>
-            <select id="excludeManualFilter" class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
-               <option value="no">No</option>
-               <option value="yes">Yes</option>
             </select>
         </div>
         <div>
