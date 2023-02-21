@@ -186,7 +186,7 @@ const getPlanName = computed(() => {
 const paymentTableHeaders = [
     { text: 'Payment ID', value: 'code', align: 'center' },
     { text: 'Payment Status', value: 'payment_status.code' },
-    { text: 'Plan Name', value: 'personal_plan.text' },
+    { text: 'Plan Name', value: 'personal_plan?.text' },
     { text: 'Captured Amount', value: 'captured_amount', sortable: true },
     { text: 'Status Change Date', value: 'payment_status_log.created_at' },
     { text: 'Captured At', value: 'captured_at' },

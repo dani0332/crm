@@ -692,17 +692,23 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       text: 'LAST NAME',
       value: 'last_name'
     }, {
-      text: 'Email',
-      value: 'email'
-    }, {
-      text: 'Mobile No',
-      value: 'mobile_no'
-    }, {
       text: 'CREATED DATE',
       value: 'created_at'
     }, {
       text: 'LAST MODIFIED DATE',
       value: 'updated_at'
+    }, {
+      text: 'PREMIUM',
+      value: 'premium'
+    }, {
+      text: 'POLICY NO',
+      value: 'policy_no'
+    }, {
+      text: 'Source',
+      value: 'source'
+    }, {
+      text: 'IS ECOMMERCE',
+      value: 'is_ecommerce'
     }];
     var __returned__ = {
       page: page,
@@ -4085,7 +4091,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       value: 'payment_status.code'
     }, {
       text: 'Plan Name',
-      value: 'personal_plan.text'
+      value: 'personal_plan?.text'
     }, {
       text: 'Captured Amount',
       value: 'captured_amount',
@@ -5384,6 +5390,9 @@ var _hoisted_3 = {
 var _hoisted_4 = {
   "class": "flex justify-end gap-3 mb-4"
 };
+var _hoisted_5 = {
+  "class": "text-center"
+};
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-button");
 
@@ -5392,6 +5401,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_x_input = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-input");
 
   var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-form");
+
+  var _component_x_tag = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-tag");
 
   var _component_DataTable = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("DataTable");
 
@@ -5554,6 +5565,30 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, 1032
       /* PROPS, DYNAMIC_SLOTS */
       , ["href"])];
+    }),
+    "item-is_ecommerce": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (_ref2) {
+      var is_ecommerce = _ref2.is_ecommerce;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_tag, {
+        size: "sm",
+        color: is_ecommerce ? 'success' : 'error'
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(is_ecommerce ? 'Yes' : 'No'), 1
+          /* TEXT */
+          )];
+        }),
+        _: 2
+        /* DYNAMIC */
+
+      }, 1032
+      /* PROPS, DYNAMIC_SLOTS */
+      , ["color"])])];
+    }),
+    "item-quote_status": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (_ref3) {
+      var item = _ref3.item;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(item === null || item === void 0 ? void 0 : item.id), 1
+      /* TEXT */
+      )];
     }),
     _: 1
     /* STABLE */
@@ -5959,7 +5994,7 @@ var _hoisted_79 = {
   "class": "text-center py-3"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
-  var _$props$quote$advisor, _$props$quote$quote_d, _$props$quote$quote_d2, _$props$quote, _$props$quote$bike_qu, _$props$quote2, _$props$quote2$bike_q, _$props$quote3, _$props$quote4, _$props$quote4$bike_q, _$props$quote$nationa, _$props$quote5, _$props$quote5$quote_;
+  var _$props$quote$advisor, _$props$quote$quote_d, _$props$quote$quote_d2, _$props$quote, _$props$quote$bike_qu, _$props$quote2, _$props$quote2$bike_q, _$props$quote3, _$props$quote3$bike_q, _$props$quote4, _$props$quote4$bike_q, _$props$quote4$bike_q2, _$props$quote$nationa, _$props$quote5, _$props$quote5$quote_;
 
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-button");
 
@@ -6035,9 +6070,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* TEXT */
   )]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_31, [_hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($props.quote.asset_value), 1
   /* TEXT */
-  )]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_33, [_hoisted_34, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)((_$props$quote3 = $props.quote) === null || _$props$quote3 === void 0 ? void 0 : _$props$quote3.bike_quote.year_of_manufacture), 1
+  )]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_33, [_hoisted_34, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)((_$props$quote3 = $props.quote) === null || _$props$quote3 === void 0 ? void 0 : (_$props$quote3$bike_q = _$props$quote3.bike_quote) === null || _$props$quote3$bike_q === void 0 ? void 0 : _$props$quote3$bike_q.year_of_manufacture), 1
   /* TEXT */
-  )]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_35, [_hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)((_$props$quote4 = $props.quote) === null || _$props$quote4 === void 0 ? void 0 : (_$props$quote4$bike_q = _$props$quote4.bike_quote.currently_insured_with) === null || _$props$quote4$bike_q === void 0 ? void 0 : _$props$quote4$bike_q.text), 1
+  )]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_35, [_hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)((_$props$quote4 = $props.quote) === null || _$props$quote4 === void 0 ? void 0 : (_$props$quote4$bike_q = _$props$quote4.bike_quote) === null || _$props$quote4$bike_q === void 0 ? void 0 : (_$props$quote4$bike_q2 = _$props$quote4$bike_q.currently_insured_with) === null || _$props$quote4$bike_q2 === void 0 ? void 0 : _$props$quote4$bike_q2.text), 1
   /* TEXT */
   )])])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_37, [_hoisted_38, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"

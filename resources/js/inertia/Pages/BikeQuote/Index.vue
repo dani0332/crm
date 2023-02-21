@@ -30,12 +30,15 @@ const filters = reactive(availableFilters);
 
 function onSubmit(isValid) {
     if (isValid) {
+
         filters.page = 1;
+
         Object.keys(filters).forEach(
             key =>
                 (filters[key] === '' || filters[key].length === 0) &&
                 delete filters[key],
         );
+
         router.visit('/personal-quotes/bike', {
             method: 'get',
             data: filters,
@@ -44,6 +47,7 @@ function onSubmit(isValid) {
             onBefore: () => (loader.table = true),
             onSuccess: () => (loader.table = false),
         });
+
     } else {
         console.log('Invalid');
     }
@@ -78,10 +82,12 @@ const tableHeader = [
     { text: 'CDB ID', value: 'uuid' },
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
-    { text: 'Email', value: 'email' },
-    { text: 'Mobile No', value: 'mobile_no' },
     { text: 'CREATED DATE', value: 'created_at' },
     { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+    { text: 'PREMIUM', value: 'premium' },
+    { text: 'POLICY NO', value: 'policy_no' },
+    { text: 'Source', value: 'source' },
+    { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
 
@@ -184,6 +190,18 @@ const tableHeader = [
                 >
                     {{ code }}
                 </Link>
+            </template>
+
+            <template #item-is_ecommerce="{ is_ecommerce }">
+                <div class="text-center">
+                    <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
+                        {{ is_ecommerce ? 'Yes' : 'No' }}
+                    </x-tag>
+                </div>
+            </template>
+
+            <template #item-quote_status="{item}">
+                {{item?.id}}
             </template>
 
         </DataTable>

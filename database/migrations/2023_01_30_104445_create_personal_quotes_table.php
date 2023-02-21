@@ -69,6 +69,7 @@ class CreatePersonalQuotesTable extends Migration
                 $table->dateTime('quote_status_date')->nullable();
 
                 $table->string('notes', 500)->nullable();
+                $table->boolean('is_ecommerce')->default(0);
 
                 $table->dateTime('created_at')->nullable();
                 $table->dateTime('updated_at')->nullable();

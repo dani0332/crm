@@ -15,7 +15,7 @@ class CreateCycleQuoteRequestTable extends Migration
     {
         Schema::create('cycle_quote_request', function (Blueprint $table) {
             $table->id();
-            $table->integer('personal_quote_id')->nullable(false);
+            $table->unsignedBigInteger('personal_quote_id')->nullable(false);
             $table->foreign('personal_quote_id')->references('id')->on('personal_quotes');
 
             $table->string('cycle_make', 50)->nullable();

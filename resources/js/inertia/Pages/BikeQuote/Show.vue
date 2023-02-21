@@ -142,12 +142,12 @@ const historyDataTable = [
 
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">Year of manufacture</dt>
-                        <dd>{{ quote?.bike_quote.year_of_manufacture }}</dd>
+                        <dd>{{ quote?.bike_quote?.year_of_manufacture }}</dd>
                     </div>
 
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">Currently with</dt>
-                        <dd>{{ quote?.bike_quote.currently_insured_with?.text }}</dd>
+                        <dd>{{ quote?.bike_quote?.currently_insured_with?.text }}</dd>
                     </div>
                 </dl>
             </div>
