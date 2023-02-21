@@ -279,6 +279,24 @@ onMounted(() => {
       </div>
     </x-form>
 
+    <Transition name="fade">
+      <div v-if="selectedItems.length > 0" class="mb-4">
+        <ExportExcel
+          :data="selectedItems"
+          :columns="tableHeader"
+          :filename="'Health-List'"
+          :sheetname="'Leads'"
+        >
+          <x-button size="sm" color="emerald">
+            Export -
+            <span class="lining-nums">
+              Selected: {{ selectedItems.length }}
+            </span>
+          </x-button>
+        </ExportExcel>
+      </div>
+    </Transition>
+
     <DataTable
       v-model:items-selected="selectedItems"
       table-class-name="tablefixed"
