@@ -167,11 +167,13 @@ class DashboardService extends BaseService
             DB::raw('COUNT(car_quote_request.id) AS total_leads'),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
+        ->join('user_team', 'users.id', 'user_team.user_id')
+        ->join('teams', 'teams.id', 'user_team.team_id')
         ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
         if (isset($teamIds)) {
-            $query->whereIn('user_team.team_id', $teamIds);
+            $query->whereIn('teams.id', $teamIds);
         }
 
         return $query->get();
