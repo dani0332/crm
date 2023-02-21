@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 class CarLeadAllocationDashboardService extends BaseService
 {
     use TeamHierarchyTrait;
+
     protected $applicationStorageService;
     public function __construct(ApplicationStorageService $applicationStorageService)
     {
