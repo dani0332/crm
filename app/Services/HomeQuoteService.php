@@ -88,7 +88,7 @@ class HomeQuoteService extends BaseService
     {
         $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
         $lostId = 0;
-        if (! is_null($entity) && $entity->lost_reason_id) {
+        if (!is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
 
@@ -98,7 +98,7 @@ class HomeQuoteService extends BaseService
     public function getDetailEntity($id)
     {
         $entity = HomeQuoteRequestDetail::where('home_quote_request_id', $id)->first();
-        if (! $entity) {
+        if (!$entity) {
             $entity = $this->createDetailEntity($id);
         }
 
@@ -138,7 +138,7 @@ class HomeQuoteService extends BaseService
             'isPropertyRentedHolidayHome' => $request->is_property_rented_holiday_home == 'on' ? true : false,
             'referenceUrl' => $appUrl,
         ];
-        if (! Auth::user()->hasRole('ADMIN')) {
+        if (!Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
@@ -167,8 +167,10 @@ class HomeQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
         if ($request->ajax()) {
-            if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                    empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+            if (
+                empty($request->email) && empty($request->code) && empty($request->first_name) &&
+                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
+            ) {
                 $this->query->where('hqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
@@ -233,23 +235,23 @@ class HomeQuoteService extends BaseService
                 }
             }
             foreach ($searchProperties as $item) {
-                if (! empty($request[$item]) && $item != 'created_at') {
+                if (!empty($request[$item]) && $item != 'created_at') {
                     if ($request[$item] == 'null') {
                         $this->query->whereNull($item);
-                    } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    } elseif ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
                         if ($request[$item][0] == 'null') {
                             $this->query->whereNull('advisor_id');
                         } else {
                             $this->query->whereIn('advisor_id', $request[$item]);
                         }
-                    } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
+                    } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                         $this->query->whereIn('quote_status_id', $request[$item]);
                     } else {
                         $skipped = ['is_renewal', 'previous_policy_expiry_date', 'next_followup_date'];
                         if (in_array($item, $skipped)) {
                             continue;
                         }
-                        $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                     }
                 }
             }
@@ -483,13 +485,13 @@ class HomeQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->orderBy('advisor_id', 'ASC');
-        if (! empty($CDBID)) {
+        if (!empty($CDBID)) {
             $query->where('hqr.id', '=', $CDBID);
         }
-        if (! empty($email)) {
+        if (!empty($email)) {
             $query->where('hqr.email', '=', $email);
         }
-        if (! empty($mobile_no)) {
+        if (!empty($mobile_no)) {
             $query->where('hqr.mobile_no', '=', $mobile_no);
         }
 
@@ -515,7 +517,7 @@ class HomeQuoteService extends BaseService
         $homeQuote->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('quote/home/'.$id)->with('success', 'Home Quote has been updated');
+            return redirect('quote/home/' . $id)->with('success', 'Home Quote has been updated');
         }
     }
 
@@ -699,7 +701,7 @@ class HomeQuoteService extends BaseService
                     }
                 }
             } else {
-                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code' && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id' && $propertyName != 'policy_number' && $propertyName != 'previous_quote_policy_premium' && $propertyName != 'transapp_code' && $propertyName != 'premium' && $propertyName != 'previous_quote_id' && $propertyName != 'is_renewal' && $propertyName != 'renewal_expiry_date' && $propertyName != 'renewal_batch' && $propertyName != 'previous_quote_policy_number' && $propertyName != 'previous_policy_expiry_date') {
+                if ($propertyName != 'id' && $propertyName != 'email' && $propertyName != 'code' && $propertyName != 'created_at' && $propertyName != 'updated_at' && $propertyName != 'mobile_no' && $propertyName != 'quote_status_id' && $propertyName != 'next_followup_date' && $propertyName != 'lost_reason' && $propertyName != 'source' && $propertyName != 'advisor_id' && $propertyName != 'policy_number' && $propertyName != 'previous_quote_policy_premium' && $propertyName != 'transapp_code' && $propertyName != 'premium' && $propertyName != 'previous_quote_id' && $propertyName != 'is_renewal' && $propertyName != 'renewal_expiry_date' && $propertyName != 'renewal_batch' && $propertyName != 'previous_quote_policy_number' && $propertyName != 'previous_policy_expiry_date' && $propertyName != 'parent_duplicate_quote_id' && $propertyName !== 'renewal_import_code') {
                     $validationArray[$propertyName] = 'required';
                 }
             }
@@ -726,7 +728,7 @@ class HomeQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
