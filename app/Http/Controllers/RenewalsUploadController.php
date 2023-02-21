@@ -15,7 +15,10 @@ use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
+use App\Jobs\Renewals\RenewalsQuoteAmlJob;
+use App\Models\AML;
 use App\Models\CarQuote;
+use App\Models\QuoteType;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
@@ -24,6 +27,7 @@ use App\Services\RenewalsUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Yajra\Datatables\Datatables;
 
 class RenewalsUploadController extends Controller
@@ -370,5 +374,55 @@ class RenewalsUploadController extends Controller
                 return abort(404);
                 break;
         }
+    }
+
+    /**
+     * schedule AML check for non-motor uploaded through renewals process
+     *
+     * @return void
+     *
+     * @throws \Laravel\SerializableClosure\Exceptions\PhpVersionNotSupportedException
+     */
+    public function scheduleNonMotorAml()
+    {
+        $logPrefix = 'Renewals AML - fn: scheduleNonMotorAml';
+        $jobs = [];
+
+        $jobNo = 1;
+
+        RenewalQuoteProcess::where([
+            'type' => RenewalsUploadType::CREATE_LEADS,
+            'status' => RenewalProcessStatuses::PROCESSED,
+        ])->whereIn('quote_type', QuoteType::where('short_code', '<>', QuoteTypeShortCode::CAR)->get()->pluck('short_code')->toArray())
+            ->whereNotNull('quote_id')
+            ->groupBy('quote_id')
+            ->chunkById(50, function ($leads) use (&$jobs, &$jobNo) {
+                foreach ($leads as $lead) {
+                    $jobs[] = new RenewalsQuoteAmlJob($lead, $jobNo);
+                    $jobNo++;
+                }
+            });
+
+        info($logPrefix.' totalJobs: '.count($jobs));
+
+        if ($jobs != null && count($jobs)) {
+            Haystack::build()
+                ->onQueue('renewals')
+                ->addJobs($jobs)
+                ->then(function () use ($logPrefix) {
+                    info($logPrefix.' all jobs completed successfully');
+                })
+                ->catch(function () use ($logPrefix) {
+                    info($logPrefix.' one of batch is failed. ');
+                })
+                ->finally(function () use ($logPrefix) {
+                    info($logPrefix.' everything done');
+                })
+                ->allowFailures()
+                ->withDelay(2)
+                ->dispatch();
+        }
+
+        return redirect('/');
     }
 }
