@@ -10,21 +10,22 @@ use App\Models\Activities;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
+use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Traits\GetUserTreeTrait;
 
 class ActivitesController extends Controller
 {
     use GetUserTreeTrait;
-    protected $activitesService;
+
+    protected $activitiesService;
     protected $crudService;
 
-    public function __construct(ActivitiesService $activitesService, CRUDService $crudService)
+    public function __construct(ActivitiesService $activitiesService, CRUDService $crudService)
     {
-        $this->activitesService = $activitesService;
+        $this->activitiesService = $activitiesService;
         $this->crudService = $crudService;
     }
 
@@ -45,7 +46,7 @@ class ActivitesController extends Controller
             }
         }
         if ($request->ajax()) {
-            $activites = $this->activitesService->getGridData($request);
+            $activites = $this->activitiesService->getGridData($request);
 
             return DataTables::of($activites)
                 ->addIndexColumn()
@@ -77,7 +78,7 @@ class ActivitesController extends Controller
         if (isset($request->entityId)) {
             $record = $this->crudService->getEntity($request->modelType, $request->entityUId);
         }
-        $this->activitesService->createActivity($request, $record);
+        $this->activitiesService->createActivity($request, $record);
         if (isset($request->isActivityView)) {
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
         } else {
@@ -93,7 +94,7 @@ class ActivitesController extends Controller
      */
     public function show($id)
     {
-        $record = $this->activitesService->getActivityByUUID($id);
+        $record = $this->activitiesService->getActivityByUUID($id);
 
         if ($record) {
             $record->assignee_name = User::where('id', $record->assignee_id)->first()->name;
@@ -112,7 +113,7 @@ class ActivitesController extends Controller
      */
     public function edit($id)
     {
-        $record = $this->activitesService->getActivityByUUID($id);
+        $record = $this->activitiesService->getActivityByUUID($id);
         $record->assignee_name = User::where('id', $record->assignee_id)->first()->name;
         $quotetypename = $this->getQuoteTypeNameFromId($record->quote_type_id);
         $advisors = $this->getAdvisorsForActivity($quotetypename, $record->health_team_type);
@@ -129,7 +130,7 @@ class ActivitesController extends Controller
      */
     public function update(ActivitiesRequest $request, $id)
     {
-        $record = $this->activitesService->getActivityByUUID($id);
+        $record = $this->activitiesService->getActivityByUUID($id);
         if (isset($request->assignee_id) && $request->assignee_id != '') {
             $record->assignee_id = $request->assignee_id;
         }
@@ -170,7 +171,7 @@ class ActivitesController extends Controller
 
     public function updateStatus(Request $request)
     {
-        $record = $this->activitesService->getActivityById($request->activity_id);
+        $record = $this->activitiesService->getActivityById($request->activity_id);
         if (isset($record)) {
             $record->status = $record->status == 0 ? 1 : 0;
             $record->save();
@@ -179,7 +180,7 @@ class ActivitesController extends Controller
 
     public function getEditView(Request $request)
     {
-        $record = $this->activitesService->getActivityById($request->activity_id);
+        $record = $this->activitiesService->getActivityById($request->activity_id);
         $advisors = [];
         if (isset($request->quote_uuid)) {
             $quoteRecord = $this->crudService->getEntityByUUID($request->quote_uuid, $request->quoteType);

@@ -3,21 +3,24 @@
 namespace App\Http\Livewire;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
+use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorDistributionReportTable extends DataTableComponent
 {
+    use GetUserTreeTrait;
+
     public $url;
     public $tiers = [];
     public $teams = [];
@@ -40,6 +43,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
 
     public function mount()
     {
+        $loginUserId = auth()->user()->id;
         $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->tiers = Tier::query()
             ->orderBy('name')
@@ -49,19 +53,9 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->map(fn ($tier) => $tier->name)
             ->toArray();
 
-        $this->teams = collect(DB::select("
-            WITH RECURSIVE teams_cte (id, name, parent_team_id, type, depth) AS (
-                SELECT id, concat(name,' - (Team)') as name, parent_team_id, type, 0 as depth FROM teams WHERE parent_team_id = (SELECT id FROM teams WHERE name = 'Car')
-                AND is_active = true
-                UNION ALL
-                SELECT t.id, concat(t.name,' - (Subteam)') as name, t.parent_team_id, t.type, cte.depth + 1 as depth FROM teams_cte cte
-                JOIN teams t ON t.parent_team_id = cte.id
-                AND t.is_active = true
-            )
-            SELECT * FROM teams_cte ORDER BY depth;"))
-            ->keyBy('id')
-            ->map(fn ($team) => $team->name)
-            ->toArray();
+        $this->teams = $this->getCurrentUserTeamsAndSubTeams($loginUserId)->keyBy('id')
+        ->map(fn ($team) => $team->name)
+        ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
             $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
@@ -122,6 +116,9 @@ class AdvisorDistributionReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
+        $userIds = $this->walkTree(auth()->user()->id);
+        info('user ids for advisor distribution report are : '.json_encode($userIds));
+
         $query = CarQuote::query()
             ->select(
                 DB::raw('count(*) as total_leads'),
@@ -144,10 +141,13 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->groupBy('users.email')
             ->orderBy('users.name');
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $query->where('users.id', auth()->user()->id);
+        } else {
+            $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
         return $query;
@@ -164,8 +164,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $dates = explode('~', $value);
-                    $dates[0] = Carbon::parse($dates[0])->format('Y-m-d');
-                    $dates[1] = Carbon::parse($dates[1])->format('Y-m-d');
+                    $dates[0] = Carbon::parse($dates[0])->startOfDay()->format('Y-m-d H:i:s');
+                    $dates[1] = Carbon::parse($dates[1])->endOfDay()->format('Y-m-d H:i:s');
                     $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
         ];
@@ -177,15 +177,15 @@ class AdvisorDistributionReportTable extends DataTableComponent
                     'placeholder' => 'SELECT ALL TEAMS',
                 ])
                     ->filter(function (Builder $builder, $value) {
-                        $builder->where('teams.id', $value);
+                        $builder->whereIn('teams.id', $value);
                     }),
-                    MultiSelectFilter::make('Tiers')
-                    ->options($this->tiers)->config([
-                        'placeholder' => 'SELECT ALL TIERS',
-                    ])
-                    ->filter(function (Builder $builder, $value) {
-                        $builder->where('car_quote_request.tier_id', $value);
-                    })
+                MultiSelectFilter::make('Tiers')
+                ->options($this->tiers)->config([
+                    'placeholder' => 'SELECT ALL TIERS',
+                ])
+                ->filter(function (Builder $builder, $value) {
+                    $builder->whereIn('car_quote_request.tier_id', $value);
+                })
             );
         }
 

@@ -12,8 +12,8 @@ use App\Models\Tier;
 use App\Services\DashboardService;
 use App\Services\TierService;
 use App\Traits\TeamHierarchyTrait;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -40,10 +40,13 @@ class DashboardController extends Controller
 
     public function renderMainDashboard(Request $request)
     {
+        $loggedInUserId = auth()->user()->id;
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $car = $this->getProductByName(quoteTypeCode::Car);
-        $teams = $this->getTeamsSubTeamsByProductId($car->id);
-        $carAdvisors = $this->getUsersByTeamId($car->id);
+        $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
+        $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
+
+        $carAdvisors = $this->getUsersByTeamId(count($teamIds) > 0 ? $teamIds : []);
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams);
 
         $totalLeadsReceived = count($todaysLeads);
@@ -68,22 +71,22 @@ class DashboardController extends Controller
     {
         $startDate = explode(',', $request->range)[0];
         $endDate = explode(',', $request->range)[1];
-        $allCarQuotesToday = CarQuote::whereBetween('created_at', [$startDate, $endDate])->get();
-        $car = $this->getProductByName(quoteTypeCode::Car);
-        $teams = $this->getTeamsByProductId($car->id);
+        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
+        $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
+
         foreach ($teams as $team) {
-            $teamUserIds = $this->getUsersByTeamId($team->id)->pluck('id');
+            $teamUserIds = $this->getUsersByTeamId($team->id);
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => count($teamUserIds),
                 'teamName' => $team->name,
-                'totalLeadsCount' => CarQuote::whereIn('advisor_id', $teamUserIds)->whereBetween('created_at', [$startDate, $endDate])->count(),
+                'totalLeadsCount' => $todaysLeads->whereIn('advisor_id', $teamUserIds)->count(),
             ];
         }
-        $totalLeadsReceived = count($allCarQuotesToday);
-        $totalLeadsReceivedEcommerce = count($allCarQuotesToday->where('is_ecommerce', 1));
-        $totalUnAssignedLeadsReceived = count($allCarQuotesToday->whereNull('advisor_id'));
-        $totalUnAssignedLeadsReceivedEcommerce = count($allCarQuotesToday->whereNull('advisor_id')->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($allCarQuotesToday->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
+        $totalLeadsReceived = count($todaysLeads);
+        $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
+        $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
+        $totalUnAssignedLeadsReceivedEcommerce = count($todaysLeads->whereNull('advisor_id')->where('is_ecommerce', 1));
+        $totalUnAssignedRevivalLeads = count($todaysLeads->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($startDate, $endDate);
         $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($startDate, $endDate);
 
@@ -119,8 +122,8 @@ class DashboardController extends Controller
             DB::raw('count(car_quote_request.id) as total_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
         )
         ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
@@ -140,15 +143,6 @@ class DashboardController extends Controller
                 $records = $this->applyFilter($records, 'teams.id', $commonTeams[0], IMCRMSearchTypesEnum::EQUAL_SEARCH);
             }
         }
-        if (isset($request->source)) {
-            if ($request->source == 'no') {
-                $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::EQUAL_SEARCH);
-            }
-            if ($request->source == 'yes') {
-                $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::NOT_EQUAL);
-            }
-        }
-
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
@@ -199,8 +193,8 @@ class DashboardController extends Controller
             DB::raw('count(car_quote_request.id) as total_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
         )
         ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
@@ -222,16 +216,6 @@ class DashboardController extends Controller
         if (isset($request->userFilter) && $request->userFilter != 'null') {
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
-
-        if (isset($request->excludeFilter)) {
-            if ($request->excludeFilter == 'no') {
-                $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::EQUAL_SEARCH);
-            }
-            if ($request->excludeFilter == 'yes') {
-                $records = $this->applyFilter($records, 'car_quote_request.source', LeadSourceEnum::IMCRM, IMCRMSearchTypesEnum::NOT_EQUAL);
-            }
-        }
-
 
         $labels = [];
         $data = [];
