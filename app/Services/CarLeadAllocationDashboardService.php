@@ -25,7 +25,7 @@ class CarLeadAllocationDashboardService extends BaseService
     public function getGridData()
     {
         try {
-            $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id');
+            $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
             $users = User::join('tier_users as tu', 'tu.user_id', 'users.id')
                             ->join('tiers as t', 't.id', 'tu.tier_id')
                             ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
