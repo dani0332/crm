@@ -34,7 +34,7 @@ class CarLeadAllocationDashboardService extends BaseService
                             ->join('user_team', 'user_team.user_id', 'users.id')
                             ->join('teams', 'teams.id', 'user_team.team_id')
                             ->where('users.is_active', 1)
-                            ->where('teams.id', $userTeamIds)
+                            ->whereIn('teams.id', $userTeamIds)
                             ->groupBy('users.name', 'users.id', 'la.id')
                             ->select(
                                 'users.id as userId',
