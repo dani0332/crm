@@ -67,15 +67,41 @@
     }
     $(function() {
         createComprehensiveConversionChart(comprehensiveDashboardStats);
-        $('#tier-filter, #userFilter, #team-filter').on('change', function(e) {
+        $('#tier-filter, #userFilter, #team-filter , #excludeManualFilter').on('change', function(e) {
+            debugger;
             var tierFilterValue = $('#tier-filter').val();
             var userFilterValue = $('#userFilter option:selected').val();
             var teamFilterValue = $('#team-filter').val();
+            if(e.target.id == 'team-filter') {
+                $.ajax({
+                    url: "/get-users-by-team",
+                    type: "post",
+                    data: {'team_filter' : teamFilterValue } ,
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function (users) {
+                        if (users) {
+                            $('#userFilter').empty();
+                            users.forEach(user => {
+                                $('#userFilter').append($('<option>', {
+                                    value: user.id,
+                                    text : user.name
+                                }));
+                            });
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.log(textStatus, errorThrown);
+                    }
+                });
+            }
+            var excludeFilterValue = $('#excludeManualFilter option:selected').val();
             comprehensiveDashboardStatChart.showLoading();
             $.ajax({
                 url: "/get-comp-filter-stats",
                 type: "post",
-                data: { 'tier_filter' : tierFilterValue, 'team_filter' : teamFilterValue , 'userFilter' : userFilterValue } ,
+                data: { 'tier_filter' : tierFilterValue, 'team_filter' : teamFilterValue , 'userFilter' : userFilterValue, 'excludeFilter' : excludeFilterValue } ,
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
@@ -125,6 +151,7 @@
 <div>
     <div class="flex gap-4 justify-end mb-4">
         <div>
+        <label>Advisor Filter</label>
             <select id="userFilter" class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
                 <option value="">All Users</option>
                 @foreach ($carUsers as $carUser)
@@ -133,6 +160,7 @@
             </select>
         </div>
         <div>
+        <label>Tiers Filter</label>
             <select multiple name="tiers[]" id="tier-filter">
                 <option value="">Select Tier</option>
                 @foreach ($tiers as $tier)
@@ -141,6 +169,7 @@
             </select>
         </div>
         <div>
+        <label>Teams Filter</label>
             <select multiple name="teams[]" id="team-filter">
                 <option value="">Select Team</option>
                 @foreach ($teams as $team)

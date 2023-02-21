@@ -74,9 +74,21 @@ trait TeamHierarchyTrait
 
     public function getUsersByTeamId($teamId)
     {
-        $teamUserId = DB::table('user_team')->where('team_id', $teamId)->pluck('user_id');
+        $userIds = User::where(function ($query) use ($teamId) {
+            $query->whereIn('id', function ($subQuery) use ($teamId) {
+                $subQuery->select('user_id')
+                    ->from('user_team')
+                    ->whereIn('team_id', (array) $teamId);
+            })->orWhereIn('sub_team_id', (array) $teamId);
+        })->where('is_active', 1)
+          ->pluck('id')
+          ->toArray();
 
-        return User::whereIn('id', $teamUserId)->where('is_active', 1)->get();
+        $users = User::whereIn('id', $userIds)
+            ->select('id', 'name')
+            ->get();
+
+        return $users;
     }
 
     public function getUsersByTeamIds($teamIds)
@@ -128,5 +140,37 @@ trait TeamHierarchyTrait
         $teamId = $this->getTeamsByProductName($productName)->first()->id;
 
         return DB::table('user_team')->where('team_id', $teamId)->get()->pluck('user_id');
+    }
+
+    public function getCurrentUserTeamsAndSubTeams($userId)
+    {
+        $teams = collect(DB::select("
+        WITH RECURSIVE team_hierarchy
+                AS (
+                    SELECT id,
+                        name,
+                        parent_team_id
+                    FROM teams
+                    WHERE name IN (
+                            SELECT teams.name
+                            FROM user_team
+                            INNER JOIN teams ON teams.id = user_team.team_id
+                            WHERE user_id = '".auth()->user()->id."'
+                            ) -- Replace with the list of team names
+
+                    UNION ALL
+
+                    SELECT t.id,
+                        t.name,
+                        t.parent_team_id
+                    FROM teams t
+                    JOIN team_hierarchy th ON th.id = t.parent_team_id
+                    )
+                SELECT id,
+                    name,
+                    parent_team_id
+                FROM team_hierarchy;"));
+
+        return $teams;
     }
 }

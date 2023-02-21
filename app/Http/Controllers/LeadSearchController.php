@@ -58,7 +58,6 @@ class LeadSearchController extends Controller
         return view('leadsearch.view', compact('leadType', 'isManager', 'managerRole'));
     }
 
-
     /**
      * Store a newly created resource in storage.
      *

@@ -270,6 +270,75 @@ class SendEmailCustomerService extends BaseService
         return $emailSubject;
     }
 
+    public function sendMyAlfredWelcomeEmail($emailData, $tag, $source = '')
+    {
+        try {
+            $appEnv = config('constants.APP_ENV');
+            //Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler
+            if ($source == 'CORPORATE') {
+                $emailTemplateId = (int) config('constants.MA_POSTMARK_CORPORATE_TEMPLATE');
+            } else {
+                $emailTemplateId = (int) config('constants.MA_POSTMARK_TEMPLATE');
+            }
+
+            info('sendMyAlfredWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
+            $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
+
+            $headers = [
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'X-Postmark-Server-Token' => config('constants.POSTMARK_TOKEN'),
+                'Content-Type' => 'application/json',
+            ];
+
+            $body = json_encode([
+                'From' => config('constants.MA_FROM_EMAIL'),
+                'ReplyTo' => config('constants.MAIL_MYALFRED_SUPPORT_REPLY_TO'),
+                'To' => $emailData->customerEmail,
+                'Tag' => $tag,
+                'TemplateId' => $emailTemplateId,
+                'TemplateModel' => [
+                    'params' => [
+                        'firstName' => $emailData->customerFirstName,
+                        'lastName' => $emailData->customerLastName,
+                        'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
+                        'email' => $emailData->customerEmail,
+                    ],
+                    'subject' => config('constants.MA_WELCOME_SUBJECT'),
+                ],
+                'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
+            ], JSON_UNESCAPED_SLASHES);
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                config('constants.POSTMARK_URL'),
+                [
+                    'headers' => $headers,
+                    'body' => $body,
+                    'timeout' => 10,
+                ]
+            );
+
+            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $responseCode = $clientRequest->getStatusCode();
+
+            if ($responseCode == 200) {
+                $isEmailSent = 1;
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $quoteCdbId = isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null;
+            $responseDetail = 'PostMark Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            Log::error($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $isEmailSent = 0;
+        }
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
+
+        return $responseCode;
+    }
+
     public function sendLMSIntroEmail($emailTemplateId, $emailData, $tag)
     {
         try {
@@ -320,7 +389,7 @@ class SendEmailCustomerService extends BaseService
                 [
                     'headers' => $headers,
                     'body' => $body,
-                    'timeout' => 10000,
+                    'timeout' => 10,
                 ]
             );
 

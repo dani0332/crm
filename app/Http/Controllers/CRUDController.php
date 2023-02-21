@@ -1340,4 +1340,21 @@ class CRUDController extends Controller
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: ' . $responseCode], 500);
         }
     }
+
+    public function manualTierAssignment(Request $request)
+    {
+        $selectedLeadId = $request->selectedLeadId;
+        $selectedTierId = $request->selectedTierId;
+        $entityCode = $request->entityCode;
+        info('manualTierAssignment  -- selected Tier Id : '.$selectedLeadId.' , selected Lead is : '.$entityCode.', requested by '.auth()->user()->email);
+        CarQuote::where('id', $selectedLeadId)->update([
+            'tier_id' => $selectedTierId,
+            'cost_per_lead' => Tier::where('id', $selectedTierId)->get()->first()->cost_per_lead,
+            'updated_at' => now(),
+            'updated_by' => auth()->user()->email,
+            'advisor_id' => null,
+            'quote_status_id' => QuoteStatusEnum::NewLead,
+            'is_renewal_tier_email_sent' => 0,
+        ]);
+    }
 }
