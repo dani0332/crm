@@ -11,6 +11,14 @@
 <script src="{{ asset('js/bootstrap-toggle.min.js') }}"></script>
 
 <script>
+    const dateOptions = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    };
     let columns = [{
         data: 'userId',
         name: 'userId',
@@ -62,7 +70,7 @@
                 if (data == null) {
                     return '-';
                 } else {
-                    return new Date(data * 1000).toLocaleString();
+                    return new Date(data * 1000).toLocaleString('en-US', dateOptions).replace(',', '').replace(/ /, ' '); // add leading zero to hour;
                 }
             }
         },
@@ -115,6 +123,13 @@
         name: 'lastLogin',
         orderable: true,
         searchable: false,
+        render: function(data, type, row) {
+            if (data == null) {
+                return '-';
+            } else {
+                return new Date(data).toLocaleString('en-US', dateOptions).replace(',', '').replace(/ /, ' ');;
+            }
+        }
     })
     @endif
 
