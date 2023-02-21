@@ -162,6 +162,9 @@ class DashboardService extends BaseService
 
     public function getAdvisorLeadAssignedData($teamIds)
     {
+        $userIds = $this->walkTree(auth()->user()->id);
+        info('user ids for advisor conversion report are : '.json_encode($userIds));
+
         $query = CarQuote::select(
             'users.name',
             DB::raw('COUNT(car_quote_request.id) AS total_leads'),
@@ -170,6 +173,7 @@ class DashboardService extends BaseService
         ->join('user_team', 'users.id', 'user_team.user_id')
         ->join('teams', 'teams.id', 'user_team.team_id')
         ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+        ->whereIn('users.id', $userIds)
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
         if (isset($teamIds)) {
