@@ -163,9 +163,9 @@ class TravelController extends Controller
         foreach ($fieldsToUpdate as $property => $value) {
             if (str_contains($value, 'title')) {
                 $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
-            }else{
+            } else {
                 $customTitles[$property] = ucwords(str_replace('_', ' ', $property));
-             }
+            }
         }
 
         $fields = [];
@@ -222,6 +222,62 @@ class TravelController extends Controller
     }
 
 
+    public function planDetails($quoteId, $planId)
+    {
+        $quotePlans = $this->service->getQuotePlans($quoteId);
+
+        if (gettype($quotePlans) == 'string') {
+            return response()->json([
+                'message' => $quotePlans,
+            ], 404);
+        }
+
+        $listQuotePlans = $quotePlans->quotes->plans;
+        foreach ($listQuotePlans as $listQuotePlan) {
+            if ($listQuotePlan->id == $planId) {
+                $listQuotePlansMembers = $listQuotePlan->memberPremiumBreakdown;
+                $listQuotePlanName = $listQuotePlan->name;
+                $providerCode = $listQuotePlan->providerCode;
+                $providerName = $listQuotePlan->providerName;
+                $travelType = $listQuotePlan->travelType;
+                $actualPremium = $listQuotePlan->actualPremium;
+                $discountPremium = $listQuotePlan->discountPremium;
+                $listQuotePlanBenefitsInclusions = $listQuotePlan->benefits->inclusion;
+                $listQuotePlanBenefitstravelInconvenienceCover = $listQuotePlan->benefits->travelInconvenienceCover;
+                $listQuotePlanBenefitsemergencyMedicalCover = $listQuotePlan->benefits->emergencyMedicalCover;
+                $listQuotePlanBenefitsExclusions = $listQuotePlan->benefits->exclusion;
+                $listQuotePlanBenefitsFeatures = $listQuotePlan->benefits->feature;
+                $listQuotePlanBenefitsCovid19 = $listQuotePlan->benefits->covid19;
+                $listQuotePlanBenefitsPolicyDetails = $listQuotePlan->policyWordings;
+
+                foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail) {
+                    $listQuotePlanBenefitsPolicyDetailLink = $listQuotePlanBenefitsPolicyDetail->link;
+                }
+            }
+        }
+
+        $data =  [
+            'listQuotePlanName' => $listQuotePlanName,
+            'providerCode' => $providerCode,
+            'providerName' => $providerName,
+            'travelType' => $travelType,
+            'actualPremium' => $actualPremium,
+            'discountPremium' => $discountPremium,
+            'listQuotePlanBenefitsInclusions' => $listQuotePlanBenefitsInclusions,
+            'listQuotePlanBenefitsExclusions' => $listQuotePlanBenefitsExclusions,
+            'listQuotePlanBenefitsFeatures' => $listQuotePlanBenefitsFeatures,
+            'listQuotePlanBenefitsCovid19' => $listQuotePlanBenefitsCovid19,
+            'listQuotePlanBenefitsPolicyDetails' => $listQuotePlanBenefitsPolicyDetails,
+            'listQuotePlanBenefitsPolicyDetailLink' => $listQuotePlanBenefitsPolicyDetailLink ?? '',
+            'modelName' => self::TYPE,
+            'listQuotePlansMembers' => $listQuotePlansMembers,
+            'listQuotePlanBenefitstravelInconvenienceCover' => $listQuotePlanBenefitstravelInconvenienceCover,
+            'listQuotePlanBenefitsemergencyMedicalCover' => $listQuotePlanBenefitsemergencyMedicalCover,
+        ];
+
+        return response()->json($data, 200);
+    }
+
     /**
      * @param Request $request
      *
@@ -235,7 +291,7 @@ class TravelController extends Controller
         $allowedStatusIds = $this->service->getQuoteStatuses();
 
         foreach ($dropdownSource['quote_status_id'] as $key => $status) {
-            if(!in_array($status['id'], $allowedStatusIds)) {
+            if (!in_array($status['id'], $allowedStatusIds)) {
                 continue;
             }
 

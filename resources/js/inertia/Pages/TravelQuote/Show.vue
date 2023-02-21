@@ -843,16 +843,29 @@ const selectedTab = ref('general_info');
 const planDetails = ref(null);
 
 const getPlanDetails = id => {
-  axios
-    .get(`/quotes/travel/${page.props.quote.uuid}/plan_details/${id}`)
-    .then(res => {
-      planDetails.value = res.data;
-      console.log(res.data);
-      modals.planDetails = true;
-    })
-    .catch(err => {
-      console.log(err);
+  try {
+    axios
+      .get(`/quotes/travel/${page.props.quote.uuid}/plan_details/${id}`)
+      .then(res => {
+        planDetails.value = res.data;
+        modals.planDetails = true;
+      })
+      .catch(err => {
+        notification.error({
+          title: 'Error',
+          message: 'Plan Details Not Found',
+          position: 'top',
+        });
+        console.log(err);
+      });
+  } catch (err) {
+    console.log(err);
+    notification.error({
+      title: 'Error',
+      message: 'Something went wrong',
+      position: 'top',
     });
+  }
 };
 
 onMounted(() => {
@@ -1575,16 +1588,187 @@ onMounted(() => {
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <x-tab-group v-model="selectedTab" class="w-full" variant="block" grow>
           <x-tab value="general_info" label="General Info">
-            <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-              <h3 class="font-semibold text-primary-800 text-lg">
-                General Info
-              </h3>
+            <div
+              class="flex flex-wrap gap-4 justify-between items-center mb-4 mt-4"
+            >
+              <div class="w-full md:w-1/2">
+                <p class="text-primary-600">
+                  Provider Code:
+                  <span class="text-black">{{ planDetails.providerCode }}</span>
+                </p>
+                <p class="text-primary-600">
+                  Provider Name:
+                  <span class="text-black">{{ planDetails.providerName }}</span>
+                </p>
+                <p class="text-primary-600">
+                  Travel Type:
+                  <span class="text-black">{{ planDetails.travelType }}</span>
+                </p>
+                <p class="text-primary-600">
+                  Actual Premium:
+                  <span class="text-black">{{
+                    planDetails.actualPremium
+                  }}</span>
+                </p>
+                <p class="text-primary-600">
+                  Discount Premium:
+                  <span class="text-black">{{
+                    planDetails.discountPremium
+                  }}</span>
+                </p>
+              </div>
             </div>
           </x-tab>
-          <x-tab value="members" label="Members"> </x-tab>
-          <x-tab value="inclusions" label="Inclusions"> </x-tab>
-          <x-tab value="exclusions" label="Exclusions"> </x-tab>
-          <x-tab value="covid" label="COVID-19 Cover"> </x-tab>
+          <x-tab value="members" label="Members">
+            <div
+              v-for="(member, index) in planDetails.listQuotePlansMembers"
+              class="gap-4 justify-between items-center mb-4 mt-4"
+            >
+              <p class="">Member {{ index + 1 }}</p>
+
+              <div class="grid grid-cols-2 gap-2">
+                <span>Premium: {{ member.premium }}</span>
+                <span>DOB: {{ member.dob }}</span>
+              </div>
+            </div>
+          </x-tab>
+          <x-tab value="inclusions" label="Inclusions">
+            <table cellpadding="3" cellspacing="3" class="table-auto">
+              <thead class="">
+                <tr>
+                  <th class="px-6 py-3" scope="col">Features & Benefits</th>
+                  <th class="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="feature in planDetails.listQuotePlanBenefitsFeatures"
+                  :key="feature.id"
+                >
+                  <td class="px-4 py-2">{{ feature.text }}</td>
+                  <td class="px-4 py-2">{{ feature.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table cellpadding="3" cellspacing="3" class="table-auto">
+              <thead>
+                <tr>
+                  <th class="px-4 py-2">Travel Inconvenience Cover</th>
+                  <th class="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="feature in planDetails.listQuotePlanBenefitstravelInconvenienceCover"
+                  :key="feature.id"
+                >
+                  <td class="px-4 py-2">{{ feature.text }}</td>
+                  <td class="px-4 py-2">{{ feature.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table cellpadding="3" cellspacing="3" class="table-auto">
+              <thead>
+                <tr>
+                  <th class="px-4 py-2">Emergency Medical Cover</th>
+                  <th class="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="feature in planDetails.listQuotePlanBenefitsemergencyMedicalCover"
+                  :key="feature.id"
+                >
+                  <td class="px-4 py-2">{{ feature.text }}</td>
+                  <td class="px-4 py-2">{{ feature.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table cellpadding="3" cellspacing="3" class="table-auto">
+              <thead>
+                <tr>
+                  <th class="px-4 py-2">Included in the plan</th>
+                  <th class="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="feature in planDetails.listQuotePlanBenefitsInclusions"
+                  :key="feature.id"
+                >
+                  <td class="px-4 py-2">{{ feature.text }}</td>
+                  <td class="px-4 py-2">{{ feature.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </x-tab>
+          <x-tab value="exclusions" label="Exclusions">
+            <table cellpadding="3" cellspacing="3" class="table-auto">
+              <thead>
+                <tr>
+                  <th class="px-4 py-2">Exclusions</th>
+                  <th class="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="feature in planDetails.listQuotePlanBenefitsExclusions"
+                  :key="feature.id"
+                >
+                  <td class="px-4 py-2">{{ feature.text }}</td>
+                  <td class="px-4 py-2">{{ feature.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </x-tab>
+          <x-tab value="covid" label="COVID-19 Cover">
+            <table cellpadding="3" cellspacing="3" class="table-auto">
+              <thead>
+                <tr>
+                  <th class="px-4 py-2">COVID-19 Cover</th>
+                  <th class="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="feature in planDetails.listQuotePlanBenefitsCovid19"
+                  :key="feature.id"
+                >
+                  <td class="px-4 py-2">{{ feature.text }}</td>
+                  <td class="px-4 py-2">{{ feature.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </x-tab>
+
+          <x-tab value="" label="Policy Details">
+            <table cellpadding="3" cellspacing="3" class="table-auto">
+              <thead>
+                <tr>
+                  <th class="px-4 py-2">Policy Details</th>
+                  <th class="px-4 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="feature in planDetails.listQuotePlanBenefitsPolicyDetails"
+                  :key="feature.id"
+                >
+                  <td class="px-4 py-2">
+                    <a
+                      :href="feature.link"
+                      target="_blank"
+                      title="click to open"
+                      >📃 {{ feature.text }}</a
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </x-tab>
         </x-tab-group>
       </div>
     </x-modal>

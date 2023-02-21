@@ -224,7 +224,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('health/healthTeamAssign', [CRUDController::class, 'healthTeamAssign'])->name('healthTeamAssign');
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/create-quote', [CRUDController::class, 'addCarQuotePlan']);
-        Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
         Route::get('health/{quoteId}/plan_details/{planId}', [CRUDController::class, 'health_plan_details'])->name('health_plan_detail');
         Route::post('car/SaveCarPlan', [CRUDController::class, 'SaveCarPlan'])->name('SaveCarPlan');
         Route::get('{leadId}/lead_details', [CRUDController::class, 'leadDetails'])->name('lead_details');
@@ -248,6 +247,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
              'edit',
              'update',
          ]);
+        Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
         // Route::get('travel-cards', [TravelController::class, 'cardsView']);
     });
