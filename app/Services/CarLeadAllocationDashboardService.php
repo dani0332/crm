@@ -25,7 +25,7 @@ class CarLeadAllocationDashboardService extends BaseService
     public function getGridData()
     {
         try {
-            $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+
             $users = User::join('tier_users as tu', 'tu.user_id', 'users.id')
                             ->join('tiers as t', 't.id', 'tu.tier_id')
                             ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
@@ -34,7 +34,6 @@ class CarLeadAllocationDashboardService extends BaseService
                             ->join('user_team', 'user_team.user_id', 'users.id')
                             ->join('teams', 'teams.id', 'user_team.team_id')
                             ->where('users.is_active', 1)
-                            ->whereIn('teams.id', $userTeamIds)
                             ->groupBy('users.name', 'users.id', 'la.id')
                             ->select(
                                 'users.id as userId',
@@ -46,6 +45,10 @@ class CarLeadAllocationDashboardService extends BaseService
                                 'la.is_available as isAvailable',
                                 'users.last_login as lastLogin', 'la.id as id', 'la.manual_assignment_count as manualAllocationCount', 'la.auto_assignment_count as autoAllocationCount'
                             );
+            if(!auth()->user()->hasRole(RolesEnum::Admin)){
+                $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+                $users = $users->whereIn('teams.id', $userTeamIds);
+            }
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $users = $users->where('users.manager_id', auth()->user()->id);
             }

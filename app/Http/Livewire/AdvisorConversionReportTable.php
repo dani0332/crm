@@ -197,8 +197,6 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        $userIds = $this->walkTree(auth()->user()->id);
-        info('user ids for advisor conversion report are : '.json_encode($userIds));
         $query = CarQuote::query()
         ->select(
             'users.id as advisorId',
@@ -222,10 +220,14 @@ class AdvisorConversionReportTable extends DataTableComponent
         ->join('user_team', 'user_team.user_id', 'users.id')
         ->join('teams', 'teams.id', 'user_team.team_id')
         ->whereNull('car_quote_request.renewal_import_code')
-        ->whereIn('car_quote_request.advisor_id', $userIds)
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
         ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
+        if(!auth()->user()->hasRole(RolesEnum::Admin)){
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for advisor conversion report are : '.json_encode($userIds));
+            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+        }
         return $query;
     }
 

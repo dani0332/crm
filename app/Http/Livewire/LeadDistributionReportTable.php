@@ -5,6 +5,7 @@ namespace App\Http\Livewire;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
@@ -83,22 +84,26 @@ class LeadDistributionReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        $userIds = $this->walkTree(auth()->user()->id);
-        info('user ids for lead distribution report are : '.json_encode($userIds));
+        $query = CarQuote::query()
+        ->select(
+            DB::raw('SUM(CASE WHEN car_quote_request.source not in ("'.LeadSourceEnum::RENEWAL_UPLOAD.'","'.LeadSourceEnum::IMCRM.'","'.LeadSourceEnum::TPL_RENEWALS.'") THEN 1 ELSE 0 END) as received_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as lead_created'),
+            DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 1 THEN 1 ELSE 0 END) as auto_assigned'),
+            DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 0 THEN 1 ELSE 0 END) as manually_assigned'),
+            DB::raw('count(car_quote_request.id) as total_leads'),
+        )
+        ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
+        ->groupBy('tiers.name');
 
-        return CarQuote::query()
-            ->select(
-                DB::raw('SUM(CASE WHEN car_quote_request.source not in ("'.LeadSourceEnum::RENEWAL_UPLOAD.'","'.LeadSourceEnum::IMCRM.'","'.LeadSourceEnum::TPL_RENEWALS.'") THEN 1 ELSE 0 END) as received_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as lead_created'),
-                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 1 THEN 1 ELSE 0 END) as auto_assigned'),
-                DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 0 THEN 1 ELSE 0 END) as manually_assigned'),
-                DB::raw('count(car_quote_request.id) as total_leads'),
-            )
-            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-            ->whereIn('car_quote_request.advisor_id', $userIds)
-            ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
-            ->groupBy('tiers.name');
+        if(!auth()->user()->hasRole(RolesEnum::Admin)) {
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for lead distribution report are : '.json_encode($userIds));
+            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+        }
+
+        return $query;
     }
 
     public function filters(): array

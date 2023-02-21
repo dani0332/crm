@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -121,8 +122,6 @@ class DashboardService extends BaseService
 
     public function getAdvisorConversionData($advisorId)
     {
-        $userIds = $this->walkTree(auth()->user()->id);
-        info('user ids for advisor conversion report are : '.json_encode($userIds));
         $query = CarQuote::query()
         ->select(
             'users.id as advisorId',
@@ -149,12 +148,16 @@ class DashboardService extends BaseService
         ->join('user_team', 'user_team.user_id', 'users.id')
         ->join('teams', 'teams.id', 'user_team.team_id')
         ->whereNull('car_quote_request.renewal_import_code')
-        ->whereIn('car_quote_request.advisor_id', $userIds)
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
         ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email')->take(10);
         if (isset($advisorId)) {
             $query->where('car_quote_request.advisor_id', $advisorId);
+        }
+        if(!auth()->user()->hasRole(RolesEnum::Admin)){
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for advisor conversion report are : '.json_encode($userIds));
+            $query = $query->whereIn('teams.id', $userIds);
         }
 
         return $query->get();
@@ -162,8 +165,6 @@ class DashboardService extends BaseService
 
     public function getAdvisorLeadAssignedData($teamIds)
     {
-        $userIds = $this->walkTree(auth()->user()->id);
-        info('user ids for advisor conversion report are : '.json_encode($userIds));
 
         $query = CarQuote::select(
             'users.name',
@@ -173,11 +174,16 @@ class DashboardService extends BaseService
         ->join('user_team', 'users.id', 'user_team.user_id')
         ->join('teams', 'teams.id', 'user_team.team_id')
         ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-        ->whereIn('car_quote_request.advisor_id', $userIds)
+
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
         if (isset($teamIds)) {
             $query->whereIn('teams.id', $teamIds);
+        }
+        if(!auth()->user()->hasRole(RolesEnum::Admin)){
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for advisor conversion report are : '.json_encode($userIds));
+            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
         return $query->get();
