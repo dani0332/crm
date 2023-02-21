@@ -97,7 +97,7 @@ class LeadDistributionReportTable extends DataTableComponent
         ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
         ->groupBy('tiers.name');
 
-        if(!auth()->user()->hasRole(RolesEnum::Admin)) {
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);
             info('user ids for lead distribution report are : '.json_encode($userIds));
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);

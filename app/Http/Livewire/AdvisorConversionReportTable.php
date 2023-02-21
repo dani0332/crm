@@ -223,11 +223,12 @@ class AdvisorConversionReportTable extends DataTableComponent
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
         ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
-        if(!auth()->user()->hasRole(RolesEnum::Admin)){
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);
             info('user ids for advisor conversion report are : '.json_encode($userIds));
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
+
         return $query;
     }
 

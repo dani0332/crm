@@ -25,7 +25,6 @@ class CarLeadAllocationDashboardService extends BaseService
     public function getGridData()
     {
         try {
-
             $users = User::join('tier_users as tu', 'tu.user_id', 'users.id')
                             ->join('tiers as t', 't.id', 'tu.tier_id')
                             ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
@@ -45,7 +44,7 @@ class CarLeadAllocationDashboardService extends BaseService
                                 'la.is_available as isAvailable',
                                 'users.last_login as lastLogin', 'la.id as id', 'la.manual_assignment_count as manualAllocationCount', 'la.auto_assignment_count as autoAllocationCount'
                             );
-            if(!auth()->user()->hasRole(RolesEnum::Admin)){
+            if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
                 $users = $users->whereIn('teams.id', $userTeamIds);
             }

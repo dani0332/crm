@@ -154,7 +154,7 @@ class DashboardService extends BaseService
         if (isset($advisorId)) {
             $query->where('car_quote_request.advisor_id', $advisorId);
         }
-        if(!auth()->user()->hasRole(RolesEnum::Admin)){
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);
             info('user ids for advisor conversion report are : '.json_encode($userIds));
             $query = $query->whereIn('teams.id', $userIds);
@@ -165,7 +165,6 @@ class DashboardService extends BaseService
 
     public function getAdvisorLeadAssignedData($teamIds)
     {
-
         $query = CarQuote::select(
             'users.name',
             DB::raw('COUNT(car_quote_request.id) AS total_leads'),
@@ -180,7 +179,7 @@ class DashboardService extends BaseService
         if (isset($teamIds)) {
             $query->whereIn('teams.id', $teamIds);
         }
-        if(!auth()->user()->hasRole(RolesEnum::Admin)){
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);
             info('user ids for advisor conversion report are : '.json_encode($userIds));
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
