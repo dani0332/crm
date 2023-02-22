@@ -3286,6 +3286,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (!Boolean(quoteForm.has_personal_belongings)) {
         quoteForm.personal_belongings_aed = null;
       }
+
+      if (quoteForm.has_contents || quoteForm.has_building) {
+        hasContentOrBuilding.value = true;
+      }
     };
 
     function onSubmit(isValid) {
@@ -3294,7 +3298,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           quoteForm.transform(function (data) {
             return _objectSpread(_objectSpread({}, data), {}, {
               has_contents: data.has_contents ? true : false,
-              has_personal_belongings: data.has_contents ? data.has_personal_belongings ? true : false : false,
+              has_personal_belongings: data.has_personal_belongings ? true : false,
               has_building: data.has_building ? true : false
             });
           }).put("/quotes/home/".concat(props.quote.uuid), {
