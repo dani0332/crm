@@ -3220,7 +3220,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
 /* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
-/* harmony import */ var _inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/inertia/Components/ComboBox.vue */ "./resources/js/inertia/Components/ComboBox.vue");
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 
 
@@ -3255,36 +3259,7 @@ __webpack_require__.r(__webpack_exports__);
       contents_aed: props.quote.contents_aed,
       building_aed: props.quote.building_aed,
       personal_belongings_aed: props.quote.personal_belongings_aed
-    }); // watch(
-    //   [
-    //     () => quoteForm.iam_possesion_type_id,
-    //     () => quoteForm.has_building,
-    //     () => quoteForm.has_contents,
-    //     () => quoteForm.has_personal_belongings,
-    //   ],
-    //   (value, oldValue) => {
-    //     console.log('value ===>>', value, 'oldValue ===>>', oldValue);
-    //     if (value[0] !== props.homePossessionTypeEnum.LANDLORD) {
-    //       quoteForm.has_building = false;
-    //     }
-    //     if (!Boolean(value[1])) {
-    //       quoteForm.building_aed = null;
-    //     }
-    //     if (!Boolean(value[2])) {
-    //       quoteForm.contents_aed = null;
-    //       quoteForm.has_personal_belongings = false;
-    //     }
-    //     if (!Boolean(value[3])) {
-    //       quoteForm.personal_belongings_aed = null;
-    //     }
-    //     if (Boolean(value[1]) || Boolean(value[2])) {
-    //       hasContentOrBuilding.value = true;
-    //     }
-    //   },
-    //   // { immediate: true },
-    // );
-    // console.log('quoteForm ===>>', quoteForm);
-
+    });
     var rules = {
       isEmail: function isEmail(v) {
         return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || 'E-mail must be valid';
@@ -3316,7 +3291,16 @@ __webpack_require__.r(__webpack_exports__);
     function onSubmit(isValid) {
       if (quoteForm.has_contents || quoteForm.has_building) {
         if (isValid) {
-          quoteForm.put("/quotes/home/".concat(props.quote.uuid), {
+          quoteForm.transform(function (data) {
+            return _objectSpread(_objectSpread({}, data), {}, {
+              has_contents: data.has_contents ? true : false,
+              has_personal_belongings: data.has_contents ? data.has_personal_belongings ? true : false : false,
+              has_building: data.has_building ? true : false
+            });
+          }).put("/quotes/home/".concat(props.quote.uuid), {
+            onError: function onError(errors) {
+              console.log(errors);
+            },
             onSuccess: function onSuccess() {
               _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.get("/quotes/home/".concat(props.quote.uuid));
             }
@@ -3334,9 +3318,7 @@ __webpack_require__.r(__webpack_exports__);
       rules: rules,
       handleConditionalFields: handleConditionalFields,
       onSubmit: onSubmit,
-      computed: vue__WEBPACK_IMPORTED_MODULE_0__.computed,
       ref: vue__WEBPACK_IMPORTED_MODULE_0__.ref,
-      watch: vue__WEBPACK_IMPORTED_MODULE_0__.watch,
 
       get Head() {
         return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Head;
@@ -3352,9 +3334,8 @@ __webpack_require__.r(__webpack_exports__);
 
       get Link() {
         return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Link;
-      },
+      }
 
-      ComboBox: _inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
       enumerable: false,
@@ -10854,7 +10835,6 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             label: item.text
           };
         }),
-        onChange: $setup.handleConditionalFields,
         "class": "w-full"
       }, null, 8
       /* PROPS */
