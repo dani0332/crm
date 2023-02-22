@@ -38,10 +38,27 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 
+const handleConditionalFields = () => {
+  if (
+    quoteForm.iam_possesion_type_id !== props.homePossessionTypeEnum.LANDLORD
+  ) {
+    quoteForm.has_building = false;
+  }
+  if (!Boolean(quoteForm.has_building)) {
+    quoteForm.building_aed = null;
+  }
+  if (!Boolean(quoteForm.has_contents)) {
+    quoteForm.contents_aed = null;
+    quoteForm.has_personal_belongings = false;
+  }
+  if (!Boolean(quoteForm.has_personal_belongings)) {
+    quoteForm.personal_belongings_aed = null;
+  }
+};
+
 function onSubmit(isValid) {
   if (quoteForm.has_contents || quoteForm.has_building) {
     if (isValid) {
-      console.log(quoteForm);
       quoteForm
         .transform(data => ({
           ...data,
@@ -169,6 +186,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.has_contents"
             label="HAS CONTENTS"
             color="primary"
+            @change="handleConditionalFields"
           />
 
           <x-checkbox
@@ -176,6 +194,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.has_personal_belongings"
             label="HAS PERSONAL BELONGINGS"
             color="primary"
+            @change="handleConditionalFields"
           />
 
           <x-checkbox
@@ -185,6 +204,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.has_building"
             label="HAS BUILDING"
             color="primary"
+            @change="handleConditionalFields"
           />
 
           <p v-if="!hasContentOrBuilding" class="text-sm text-red-500">
