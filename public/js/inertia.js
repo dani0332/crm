@@ -604,7 +604,9 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   __name: 'Index',
   props: {
-    quotes: Object
+    quotes: Object,
+    quoteStatuses: Array,
+    advisors: Array
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -622,6 +624,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       mobile_no: '',
       created_at_start: '',
       created_at_end: '',
+      renewal_batch: '',
       page: 1
     };
     var filters = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)(availableFilters);
@@ -5497,7 +5500,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         type: "date",
         name: "created_at_start",
-        label: "Created Date",
+        label: "Created Date Start",
         "class": "w-full"
       }, null, 8
       /* PROPS */
@@ -5512,7 +5515,35 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "class": "w-full"
       }, null, 8
       /* PROPS */
-      , ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+      , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+        modelValue: $setup.filters.renewal_batch,
+        "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
+          return $setup.filters.renewal_batch = $event;
+        }),
+        type: "search",
+        name: "renewal_batch",
+        label: "Renewal Batch",
+        "class": "w-full",
+        placeholder: "Search by Renewal Batch"
+      }, null, 8
+      /* PROPS */
+      , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["ComboBox"], {
+        modelValue: $setup.filters.quote_status_id,
+        "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
+          return $setup.filters.quote_status_id = $event;
+        }),
+        label: "Lead Status",
+        name: "quote_status",
+        placeholder: "Search by Lead Status",
+        options: $props.quoteStatuses.map(function (item) {
+          return {
+            value: item.id,
+            label: item.text
+          };
+        })
+      }, null, 8
+      /* PROPS */
+      , ["modelValue", "options"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "sm",
         color: "#ff5e00",
         type: "submit"

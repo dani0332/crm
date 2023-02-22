@@ -21,6 +21,8 @@ class PersonalQuote extends Model
         'email' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,
+        'renewal_batch' => FilterTypes::EXACT,
+        'quote_status_id' => FilterTypes::IN
     ];
 
     /**

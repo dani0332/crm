@@ -10,4 +10,5 @@ final class FilterTypes extends Enum
     public const FREE = 'free';
     public const DATE = 'date';
     public const DATE_BETWEEN = 'date_between';
+    public const IN = 'in';
 }

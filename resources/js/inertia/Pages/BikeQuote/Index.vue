@@ -7,6 +7,8 @@ import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 defineProps({
     quotes: Object,
+    quoteStatuses: Array,
+    advisors: Array,
 });
 
 const page = usePage();
@@ -23,6 +25,7 @@ let availableFilters = {
     mobile_no: '',
     created_at_start: '',
     created_at_end: '',
+    renewal_batch: '',
     page: 1,
 };
 
@@ -154,7 +157,7 @@ const tableHeader = [
                     v-model="filters.created_at_start"
                     type="date"
                     name="created_at_start"
-                    label="Created Date"
+                    label="Created Date Start"
                     class="w-full"
                 />
                    <x-input
@@ -163,6 +166,26 @@ const tableHeader = [
                     name="created_at_end"
                     label="Created Date End"
                     class="w-full"
+                />
+
+                <x-input
+                    v-model="filters.renewal_batch"
+                    type="search"
+                    name="renewal_batch"
+                    label="Renewal Batch"
+                    class="w-full"
+                    placeholder="Search by Renewal Batch"
+                />
+
+                <ComboBox
+                    v-model="filters.quote_status_id"
+                    label="Lead Status"
+                    name="quote_status"
+                    placeholder="Search by Lead Status"
+                    :options="quoteStatuses.map(item => ({
+                      value: item.id,
+                      label: item.text,
+                    }))"
                 />
 
             </div>

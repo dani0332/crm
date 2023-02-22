@@ -27,8 +27,11 @@ class BikeQuoteController extends Controller
     {
         $personalQuotes = BikeQuoteRepository::getData();
 
+        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
+
         return inertia('BikeQuote/Index', [
             'quotes' => $personalQuotes,
+            'quoteStatuses' => $quoteStatuses
         ]);
     }
 
