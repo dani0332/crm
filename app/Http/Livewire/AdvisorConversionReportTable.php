@@ -157,6 +157,11 @@ class AdvisorConversionReportTable extends DataTableComponent
             )->html()->footer(function ($rows) {
                 return $rows->sum('sale_leads');
             }),
+            Column::make('Created Sale Leads')->label(
+                fn ($row, Column $column) => '<a '.($row->created_sale_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emit(`tableModal`, '.$row.', `created_sale_leads`)" class="text-sky-700 cursor-pointer">'.$row->created_sale_leads.'</a>'
+            )->html()->footer(function ($rows) {
+                return $rows->sum('created_sale_leads');
+            }),
             Column::make('AFIA Renewals')->label(
                 fn ($row, Column $column) => '<a '.($row->afia_renewals_count > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emit(`tableModal`, '.$row.', `afia_renewals_count`)" class="text-sky-700 cursor-pointer">'.$row->afia_renewals_count.'</a>'
             )->html()->footer(function ($rows) {
