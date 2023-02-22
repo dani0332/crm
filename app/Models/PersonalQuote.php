@@ -12,6 +12,8 @@ class PersonalQuote extends Model
 {
     use HasFactory, FilterCriteria;
 
+    protected $appends = ['dob_formatted'];
+
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
@@ -91,10 +93,10 @@ class PersonalQuote extends Model
      * @param $date
      * @return string
      */
-//    public function getDobAttribute($date)
-//    {
-//        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
-//    }
+    public function getDobFormattedAttribute()
+    {
+        return $this->attributes['dob_formatted'] = $this->asDateTime($this->dob)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+    }
 
     /**
      * @param $date

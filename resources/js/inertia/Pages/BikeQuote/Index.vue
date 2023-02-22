@@ -88,14 +88,15 @@ const tableHeader = [
     { text: 'CDB ID', value: 'uuid' },
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
+    { text: 'DOB', value: 'dob_formatted' },
     { text: 'LEAD STATUS', value: 'quote_status' },
     { text: 'ADVISOR', value: 'advisor' },
     { text: 'CREATED DATE', value: 'created_at' },
     { text: 'LAST MODIFIED DATE', value: 'updated_at' },
     { text: 'PREMIUM', value: 'premium' },
     { text: 'POLICY NO', value: 'policy_no' },
-    { text: 'Source', value: 'source' },
-    { text: 'Currently Insured With', value: 'currently_insured_with' },
+    { text: 'SOURCE', value: 'source' },
+    { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
     { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 

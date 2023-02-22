@@ -698,6 +698,9 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       text: 'LAST NAME',
       value: 'last_name'
     }, {
+      text: 'DOB',
+      value: 'dob_formatted'
+    }, {
       text: 'LEAD STATUS',
       value: 'quote_status'
     }, {
@@ -716,10 +719,10 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       text: 'POLICY NO',
       value: 'policy_no'
     }, {
-      text: 'Source',
+      text: 'SOURCE',
       value: 'source'
     }, {
-      text: 'Currently Insured With',
+      text: 'CURRENTLY INSURED WITH',
       value: 'currently_insured_with'
     }, {
       text: 'IS ECOMMERCE',
