@@ -7,42 +7,29 @@ const props = defineProps({
   dropdownSource: Object,
   model: String,
   genderOptions: Object,
+  homePossessionTypeEnum: Object,
 });
 
-const genderSelect = computed(() => {
-  return Object.keys(props.genderOptions).map(status => ({
-    value: status,
-    label: props.genderOptions[status],
-  }));
-});
+const hasContentOrBuilding = ref(true);
 
 const quoteForm = useForm({
-  modelType: '"Health"',
+  modelType: '"Home"',
   model: props.model,
   first_name: '',
   last_name: '',
   email: '',
   mobile_no: '',
-  dob: '',
   premium: null,
   policy_number: null,
-  preference: '',
-  details: '',
-  marital_status_id: null,
-  cover_for_id: null,
-  nationality_id: null,
-  lead_type_id: null,
-  emirate_of_your_visa_id: null,
-  salary_band_id: null,
-  member_category_id: null,
-  gender: null,
-  currently_insured_with_id: null,
-  policy_start_date: null,
-  is_ebp_renewal: null,
-  is_ecommerce: null,
-  has_dental: null,
-  has_worldwide_cover: null,
-  has_home: null,
+  iam_possesion_type_id: null,
+  ilivein_accommodation_type_id: null,
+  address: '',
+  has_contents: false,
+  has_building: false,
+  has_personal_belongings: false,
+  contents_aed: null,
+  building_aed: null,
+  personal_belongings_aed: null,
 });
 
 const rules = {
@@ -54,32 +41,31 @@ const rules = {
 
 const isEmptyField = ref(false);
 function onSubmit(isValid) {
-  if (quoteForm.nationality_id == null) {
-    isEmptyField.value = true;
+  if (quoteForm.has_contents || quoteForm.has_building) {
+    if (isValid) {
+      quoteForm.post(`/quotes/save`, {
+        onError: errors => {
+          console.log(errors);
+        },
+        onSuccess: () => {
+          router.get(`/quotes/home/`);
+        },
+      });
+    }
   } else {
-    isEmptyField.value = false;
-  }
-  if (isValid) {
-    quoteForm.post(`/quotes/save`, {
-      onError: errors => {
-        console.log(errors);
-      },
-      onSuccess: () => {
-        router.get(`/quotes/health/`);
-      },
-    });
+    hasContentOrBuilding.value = false;
   }
 }
 </script>
 
 <template>
   <div>
-    <Head title="Create Health" />
+    <Head title="Create Home" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Create Health</h2>
+      <h2 class="text-xl font-semibold">Create Home</h2>
       <div>
-        <Link href="/quotes/health">
-          <x-button size="sm" color="#ff5e00" tag="div"> Health List </x-button>
+        <Link href="/quotes/home">
+          <x-button size="sm" color="#ff5e00" tag="div"> Home List </x-button>
         </Link>
       </div>
     </div>
@@ -116,15 +102,6 @@ function onSubmit(isValid) {
           label="MOBILE NUMBER"
           :rules="[rules.isRequired]"
           class="w-full"
-          :error="quoteForm.errors.mobile_no"
-        />
-
-        <x-input
-          v-model="quoteForm.dob"
-          type="date"
-          label="DATE OF BIRTH"
-          :rules="[rules.isRequired]"
-          class="w-full"
         />
 
         <x-input
@@ -142,87 +119,25 @@ function onSubmit(isValid) {
         />
 
         <x-select
-          v-model="quoteForm.cover_for_id"
-          label="WHO WOULD YOU LIKE COVER FOR?"
+          v-model="quoteForm.iam_possesion_type_id"
+          label="I AM"
           :rules="[rules.isRequired]"
           :options="
-            dropdownSource.cover_for_id.map(item => ({
+            dropdownSource.iam_possesion_type_id.map(item => ({
               value: item.id,
               label: item.text,
             }))
           "
-          class="w-full"
-        />
-
-        <x-input
-          v-model="quoteForm.preference"
-          type="text"
-          label="PREFERENCE"
-          class="w-full"
-        />
-
-        <x-input
-          v-model="quoteForm.details"
-          type="text"
-          label="DETAILS"
+          @change="handleConditionalFields"
           class="w-full"
         />
 
         <x-select
-          v-model="quoteForm.lead_type_id"
-          label="LEAD TYPE"
-          :options="
-            dropdownSource.lead_type_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.currently_insured_with_id"
-          label="CURRENTLY INSURED WITH"
-          :options="
-            dropdownSource.currently_insured_with_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.marital_status_id"
-          label="MARITAL STATUS"
-          :options="
-            dropdownSource.marital_status_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <ComboBox
-          v-model="quoteForm.nationality_id"
-          label="NATIONALITY"
-          :single="true"
-          :options="
-            dropdownSource.nationality_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          :hasError="isEmptyField"
-        />
-
-        <x-select
-          v-model="quoteForm.emirate_of_your_visa_id"
-          label="EMIRATE OF YOUR VISA"
+          v-model="quoteForm.ilivein_accommodation_type_id"
+          label="I LIVE IN"
           :rules="[rules.isRequired]"
           :options="
-            dropdownSource.emirate_of_your_visa_id.map(item => ({
+            dropdownSource.ilivein_accommodation_type_id.map(item => ({
               value: item.id,
               label: item.text,
             }))
@@ -230,70 +145,71 @@ function onSubmit(isValid) {
           class="w-full"
         />
 
-        <x-select
-          v-model="quoteForm.member_category_id"
-          label="MEMBER CATEGORY"
-          :options="
-            dropdownSource.member_category_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.salary_band_id"
-          label="SALARY BAND"
-          :options="
-            dropdownSource.salary_band_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.gender"
-          label="GENDER"
-          :options="genderSelect"
-          class="w-full"
-        />
-
-        <x-input
-          v-model="quoteForm.policy_start_date"
+        <x-textarea
+          v-model="quoteForm.address"
           type="text"
-          label="POLICY START DATE"
+          label="ADDRESS"
+          :rules="[rules.isRequired]"
           class="w-full"
         />
 
         <div class="grid grid-cols-2 gap-2">
           <x-checkbox
-            v-model="quoteForm.is_ebp_renewal"
-            label="IS EBP RENEWAL"
+            v-model="quoteForm.has_contents"
+            label="HAS CONTENTS"
             color="primary"
-            class="w-full"
+            @change="handleConditionalFields"
           />
 
           <x-checkbox
-            v-model="quoteForm.has_dental"
-            label="DENTAL"
+            v-model="quoteForm.has_personal_belongings"
+            v-if="quoteForm.has_contents"
+            label="HAS PERSONAL BELONGINGS"
             color="primary"
+            @change="handleConditionalFields"
           />
 
           <x-checkbox
-            v-model="quoteForm.has_worldwide_cover"
-            label="WORLDWIDE COVER"
+            v-model="quoteForm.has_building"
+            v-if="
+              quoteForm.iam_possesion_type_id == homePossessionTypeEnum.LANDLORD
+            "
+            label="HAS BUILDING"
             color="primary"
+            @change="handleConditionalFields"
           />
 
-          <x-checkbox
-            v-model="quoteForm.has_home"
-            label="HOME COUNTRY COVER"
-            color="primary"
-          />
+          <p v-if="!hasContentOrBuilding" class="text-sm text-red-500">
+            Must be selected at least one of the above
+          </p>
         </div>
+
+        <x-input
+          v-model="quoteForm.contents_aed"
+          v-if="quoteForm.has_contents"
+          label="CONTENTS AED"
+          type="number"
+          class="w-full"
+          :rules="[rules.isRequired]"
+        />
+
+        <x-input
+          v-model="quoteForm.personal_belongings_aed"
+          v-if="quoteForm.has_personal_belongings"
+          label="PERSONAL BELONGINGS AED"
+          type="number"
+          class="w-full"
+          :rules="[rules.isRequired]"
+        />
+
+        <x-input
+          v-model="quoteForm.building_aed"
+          v-if="quoteForm.has_building"
+          label="BUILDING AED"
+          type="number"
+          class="w-full"
+          :rules="[rules.isRequired]"
+        />
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

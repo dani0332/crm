@@ -264,6 +264,14 @@ class CRUDController extends Controller
             ]);
         }
 
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
+            return inertia('HomeQuote/Create', [
+                'dropdownSource' => $dropdownSource,
+                'model' => json_encode($model->properties),
+                'homePossessionTypeEnum' => HomePossessionType::asArray(),
+            ]);
+        }
+
         return view('shared.add', compact('model', 'dropdownSource', 'customTitles', 'isRenewalUser'));
     }
 
@@ -1346,7 +1354,7 @@ class CRUDController extends Controller
         $selectedLeadId = $request->selectedLeadId;
         $selectedTierId = $request->selectedTierId;
         $entityCode = $request->entityCode;
-        info('manualTierAssignment  -- selected Tier Id : '.$selectedLeadId.' , selected Lead is : '.$entityCode.', requested by '.auth()->user()->email);
+        info('manualTierAssignment  -- selected Tier Id : ' . $selectedLeadId . ' , selected Lead is : ' . $entityCode . ', requested by ' . auth()->user()->email);
         CarQuote::where('id', $selectedLeadId)->update([
             'tier_id' => $selectedTierId,
             'cost_per_lead' => Tier::where('id', $selectedTierId)->get()->first()->cost_per_lead,
