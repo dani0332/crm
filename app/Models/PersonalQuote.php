@@ -17,6 +17,7 @@ class PersonalQuote extends Model
         'first_name' => FilterTypes::EXACT,
         'last_name' => FilterTypes::FREE,
         'uuid' => FilterTypes::EXACT,
+        'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,

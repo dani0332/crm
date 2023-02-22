@@ -111,7 +111,7 @@ const tableHeader = [
         <x-form @submit="onSubmit" :auto-focus="false">
             <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <x-input
-                    v-model="filters.uuid"
+                    v-model="filters.code"
                     type="search"
                     name="code"
                     label="CDB ID"
