@@ -1,6 +1,6 @@
 @import url(https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap);
 /*
-! tailwindcss v3.2.1 | MIT License | https://tailwindcss.com
+! tailwindcss v3.2.4 | MIT License | https://tailwindcss.com
 */
 
 /*
@@ -27,6 +27,7 @@
 2. Prevent adjustments of font size after orientation changes in iOS.
 3. Use a more readable tab size.
 4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
 */
 
 html {
@@ -36,6 +37,7 @@ html {
   -o-tab-size: 4;
      tab-size: 4; /* 3 */
   font-family: Inter, sans-serif; /* 4 */
+  font-feature-settings: normal; /* 5 */
 }
 
 /*
@@ -443,53 +445,6 @@ html.dark{
   --tw-backdrop-sepia:  ;
 }
 
-::-webkit-backdrop{
-  --tw-border-spacing-x: 0;
-  --tw-border-spacing-y: 0;
-  --tw-translate-x: 0;
-  --tw-translate-y: 0;
-  --tw-rotate: 0;
-  --tw-skew-x: 0;
-  --tw-skew-y: 0;
-  --tw-scale-x: 1;
-  --tw-scale-y: 1;
-  --tw-pan-x:  ;
-  --tw-pan-y:  ;
-  --tw-pinch-zoom:  ;
-  --tw-scroll-snap-strictness: proximity;
-  --tw-ordinal:  ;
-  --tw-slashed-zero:  ;
-  --tw-numeric-figure:  ;
-  --tw-numeric-spacing:  ;
-  --tw-numeric-fraction:  ;
-  --tw-ring-inset:  ;
-  --tw-ring-offset-width: 0px;
-  --tw-ring-offset-color: #fff;
-  --tw-ring-color: rgb(59 130 246 / 0.5);
-  --tw-ring-offset-shadow: 0 0 #0000;
-  --tw-ring-shadow: 0 0 #0000;
-  --tw-shadow: 0 0 #0000;
-  --tw-shadow-colored: 0 0 #0000;
-  --tw-blur:  ;
-  --tw-brightness:  ;
-  --tw-contrast:  ;
-  --tw-grayscale:  ;
-  --tw-hue-rotate:  ;
-  --tw-invert:  ;
-  --tw-saturate:  ;
-  --tw-sepia:  ;
-  --tw-drop-shadow:  ;
-  --tw-backdrop-blur:  ;
-  --tw-backdrop-brightness:  ;
-  --tw-backdrop-contrast:  ;
-  --tw-backdrop-grayscale:  ;
-  --tw-backdrop-hue-rotate:  ;
-  --tw-backdrop-invert:  ;
-  --tw-backdrop-opacity:  ;
-  --tw-backdrop-saturate:  ;
-  --tw-backdrop-sepia:  ;
-}
-
 ::backdrop{
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
@@ -632,7 +587,6 @@ html.dark{
   position: relative;
 }
 .sticky{
-  position: -webkit-sticky;
   position: sticky;
 }
 .inset-0{
@@ -799,10 +753,6 @@ html.dark{
   margin-left: 2.25rem;
   margin-right: 2.25rem;
 }
-.mx-1{
-  margin-left: 0.25rem;
-  margin-right: 0.25rem;
-}
 .-mx-2{
   margin-left: -0.5rem;
   margin-right: -0.5rem;
@@ -810,6 +760,10 @@ html.dark{
 .mx-2{
   margin-left: 0.5rem;
   margin-right: 0.5rem;
+}
+.mx-1{
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
 }
 .ml-3{
   margin-left: 0.75rem;
@@ -1017,7 +971,6 @@ html.dark{
 }
 .h-fit{
   height: -moz-fit-content;
-  height: -webkit-fit-content;
   height: fit-content;
 }
 .h-1\.5{
@@ -1124,12 +1077,10 @@ html.dark{
 }
 .w-fit{
   width: -moz-fit-content;
-  width: -webkit-fit-content;
   width: fit-content;
 }
 .w-max{
   width: -moz-max-content;
-  width: -webkit-max-content;
   width: max-content;
 }
 .w-\[2\.75rem\]{
@@ -1256,13 +1207,6 @@ html.dark{
 .transform{
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
-@-webkit-keyframes ping{
-
-  75%, 100%{
-    transform: scale(2);
-    opacity: 0;
-  }
-}
 @keyframes ping{
 
   75%, 100%{
@@ -1271,14 +1215,7 @@ html.dark{
   }
 }
 .animate-ping{
-  -webkit-animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-          animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-@-webkit-keyframes pulse{
-
-  50%{
-    opacity: .5;
-  }
+  animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 @keyframes pulse{
 
@@ -1287,8 +1224,7 @@ html.dark{
   }
 }
 .animate-pulse{
-  -webkit-animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 .cursor-pointer{
   cursor: pointer;
@@ -1300,11 +1236,9 @@ html.dark{
   cursor: not-allowed;
 }
 .cursor-grabbing{
-  cursor: -webkit-grabbing;
   cursor: grabbing;
 }
 .cursor-grab{
-  cursor: -webkit-grab;
   cursor: grab;
 }
 .select-none{
@@ -3201,12 +3135,6 @@ label{
   height: 80%;
   width: 80%;
 }
-@-webkit-keyframes spin{
-
-  to{
-    transform: rotate(360deg);
-  }
-}
 @keyframes spin{
 
   to{
@@ -3214,8 +3142,7 @@ label{
   }
 }
 .lds-ring div{
-  -webkit-animation: spin 1s linear infinite;
-          animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
   border-radius: 9999px;
   border-width: 4px;
   border-color: 4;

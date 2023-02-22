@@ -23,6 +23,14 @@ class PersonalQuote extends Model
     ];
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function quoteStatus()
+    {
+        return $this->belongsTo(QuoteStatus::class);
+    }
+
+    /**
      * @return void
      */
     public function quoteDetail()
@@ -155,5 +163,13 @@ class PersonalQuote extends Model
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function currentlyInsuredWith()
+    {
+        return $this->belongsTo(InsuranceProvider::class);
     }
 }

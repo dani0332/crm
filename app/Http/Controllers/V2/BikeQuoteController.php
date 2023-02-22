@@ -100,6 +100,7 @@ class BikeQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
+
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,

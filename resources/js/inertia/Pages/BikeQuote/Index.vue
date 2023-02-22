@@ -82,11 +82,14 @@ const tableHeader = [
     { text: 'CDB ID', value: 'uuid' },
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
+    { text: 'LEAD STATUS', value: 'quote_status' },
+    { text: 'ADVISOR', value: 'advisor' },
     { text: 'CREATED DATE', value: 'created_at' },
     { text: 'LAST MODIFIED DATE', value: 'updated_at' },
     { text: 'PREMIUM', value: 'premium' },
     { text: 'POLICY NO', value: 'policy_no' },
     { text: 'Source', value: 'source' },
+    { text: 'Currently Insured With', value: 'currently_insured_with' },
     { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
@@ -192,6 +195,18 @@ const tableHeader = [
                 </Link>
             </template>
 
+            <template #item-advisor="{ advisor }">
+                {{advisor?.email}}
+            </template>
+
+            <template #item-quote_status="{ quote_status }">
+                {{quote_status?.text}}
+            </template>
+
+            <template #item-currently_insured_with="{ currently_insured_with }">
+                {{currently_insured_with?.text}}
+            </template>
+
             <template #item-is_ecommerce="{ is_ecommerce }">
                 <div class="text-center">
                     <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
@@ -200,9 +215,6 @@ const tableHeader = [
                 </div>
             </template>
 
-            <template #item-quote_status="{item}">
-                {{item?.id}}
-            </template>
 
         </DataTable>
 
