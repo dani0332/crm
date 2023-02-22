@@ -40,13 +40,13 @@ class LeadAllocationJob implements ShouldQueue
         try {
             info('Lead Allocation Job Started');
 
+            now()->toTimeString() >= '23:55' ?? $leadAllocationService->setAdvisorsToUnavailable();
+
             $leadAllocationService->updateAllocationStatusIfNeeded();
 
             if (! $leadAllocationService->shouldCarAllocationProceed()) {
                 info('CAR Lead Allocation Job Switch is OFF');
             } else {
-                now()->toTimeString() >= '23:55' ?? $leadAllocationService->setAdvisorsToUnavailable();
-
                 info('CAR Lead Allocation Job Switch is ON and job is about to start');
                 $leadAllocationService->processCarLeads();
             }
