@@ -21,6 +21,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
 use App\Services\TravelQuoteService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 
 
 class TravelController extends Controller
@@ -186,7 +187,7 @@ class TravelController extends Controller
                 'options' => $dropdownSource[$property] ?? [],
             ];
         }
-        // dd($fields);
+
         $model = $this->genericModel;
 
         return inertia('TravelQuote/Create', [
@@ -198,6 +199,47 @@ class TravelController extends Controller
             'isRenewalUser' => $isRenewalUser,
             'isNewBusinessUser' => $isNewBusinessUser ?? false,
         ]);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        $modelPropertiesList = $this->genericModel->properties;
+        $modelSkipPropertiesList = $this->genericModel->skipProperties;
+        $modelType = self::TYPE;
+
+        $validateArray = [];
+        foreach ($modelPropertiesList as $property => $value) {
+            if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['create'], $property)) {
+                $validateArray[$property] = 'required';
+            }
+        }
+        $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
+        if ($request->has('email')) {
+            $this->validate($request, [
+                'email' => 'required|email:rfc,dns|max:150',
+            ]);
+        }
+        if ($request->has('mobile_no')) {
+            $this->validate($request, [
+                'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
+            ]);
+        }
+
+        $this->validate($request, $validateArray);
+
+        $record = $this->crudService->saveModelByType($modelType, $request);
+
+        if (isset($record->message) && str_contains($record->message, 'Error')) {
+            return Redirect::back()->with('message', $record->message)->withInput();
+        }
+
+        redirect('/quotes/travel')->with('message', 'Record created successfully');
     }
 
     /**

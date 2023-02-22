@@ -5,7 +5,6 @@ import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 const props = defineProps({
   dropdownSource: Object,
-  model: String,
   genderOptions: Object,
   fields: Object,
 });
@@ -25,8 +24,6 @@ const formFields = computed(() => {
 });
 
 const quoteForm = useForm({
-  modelType: '"Travel"',
-  model: props.model,
   ...formFields.value.reduce((acc, field) => {
     acc[field.value] = '';
     return acc;
@@ -40,15 +37,15 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 
-const isEmptyField = ref(false);
+
 function onSubmit(isValid) {
   if (isValid) {
-    quoteForm.post(`/quotes/save`, {
+    quoteForm.post(`/quotes/travel`, {
       onError: errors => {
         console.log(errors);
       },
       onSuccess: () => {
-        router.get(`/quotes/health/`);
+        router.get(`/quotes/travel/`);
       },
     });
   }
@@ -80,6 +77,7 @@ onMounted(() => {
             :label="field.label"
             :rules="[field.required === true ? rules.isRequired : false]"
             :disabled="field.disabled"
+            :error="quoteForm.errors[index]"
             class="w-full"
           />
 
@@ -94,6 +92,7 @@ onMounted(() => {
             ]"
             :disabled="field.disabled"
             class="w-full"
+            :error="quoteForm.errors[index]"
           />
 
           <x-input
@@ -102,6 +101,7 @@ onMounted(() => {
             :label="field.label"
             :disabled="field.disabled"
             class="w-full"
+            :error="quoteForm.errors[index]"
           />
 
           <x-input
@@ -111,6 +111,7 @@ onMounted(() => {
             :label="field.label"
             :disabled="field.disabled"
             class="w-full"
+            :error="quoteForm.errors[index]"
           />
 
           <x-select
@@ -126,6 +127,7 @@ onMounted(() => {
               }))
             "
             class="w-full"
+            :error="quoteForm.errors[index]"
           />
 
           <x-textarea
@@ -135,6 +137,7 @@ onMounted(() => {
             :rules="[field.required === true ? rules.isRequired : false]"
             :disabled="field.disabled"
             class="w-full"
+            :error="quoteForm.errors[index]"
           />
         </template>
       </div>
