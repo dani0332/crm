@@ -31,9 +31,9 @@ class AdvisorConversionReportTable extends DataTableComponent
     public $tiers = [];
     public $batches = [];
     public $leadSources = [];
-    private $maxDays = 92;
-    private $advisors = [];
-    private $teams = [];
+    public $maxDays = 92;
+    public $advisors = [];
+    public $teams = [];
     public $createdAtFilter;
     public $ecommerceFilter;
     public $excludeCreatedLeadsFilter;
