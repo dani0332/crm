@@ -19,7 +19,9 @@ use App\Jobs\Renewals\CreateRenewalQuotesJob;
 use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
 use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
 use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
+use App\Jobs\Renewals\RenewalsQuoteAmlJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
+use App\Models\AML;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarPlan;
@@ -247,7 +249,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(1)
+                   ->withDelay(2)
                    ->dispatch();
             } else {
                 info($logPrefix.' No jobs to create quotes');
@@ -293,7 +295,7 @@ class RenewalsUploadService
                        info($logPrefix.' everything done');
                    })
                    ->allowFailures()
-                   ->withDelay(1)
+                   ->withDelay(2)
                    ->dispatch();
 
                 info($logPrefix.' jobs dispatched');
@@ -402,10 +404,6 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
-            info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
-            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
-            info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
-
             if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
                 info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('.$leadData->provider_name.') for UUID: '.$quote->uuid);
                 $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id);
@@ -693,17 +691,15 @@ class RenewalsUploadService
      */
     public function createQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
-        return DB::transaction(function () use ($renewalQuoteProcess) {
-            $data = $renewalQuoteProcess->data;
+        $data = $renewalQuoteProcess->data;
+        $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
+        $logPrefix = 'UAC FN: createQuote Policy NO: '.$data['policy_number'].' EndDate: '.$data['end_date'];
+        info($logPrefix.' Quote creation started');
 
-            $logPrefix = 'UAC FN: createQuote Policy NO: '.$data['policy_number'].' EndDate: '.$data['end_date'];
-            info($logPrefix.' Quote creation started');
-
+        $quote = DB::transaction(function () use ($renewalQuoteProcess, $logPrefix, $data, $quoteType) {
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
 
             $transApprovedId = $this->getquoteStatusIdbyCode(quoteStatusCode::NEW_LEAD);
-
-            $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
 
             //advisor and previous advisors will be ignored when not exists
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
@@ -728,7 +724,6 @@ class RenewalsUploadService
                 'renewal_batch' => $data['batch'],
                 'quote_status_id' => $transApprovedId,
                 'renewal_import_code' => $renewalUploadLead->renewal_import_code,
-
                 'previous_quote_policy_number' => $data['policy_number'],
                 'previous_policy_expiry_date' => $this->formatDate($data['end_date']),
                 'previous_quote_policy_premium' => $data['premium'],
@@ -783,6 +778,44 @@ class RenewalsUploadService
 
             return $quote;
         });
+
+        if ($quote) {
+            info($logPrefix.' AML check started for UUID: '.$quote->uuid);
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
+        }
+
+        return $quote;
+    }
+
+    /**
+     * run aml for renewal quote process
+     *
+     * @param $renewalQuoteProcess
+     * @return bool
+     */
+    public function checkAml($renewalQuoteProcess)
+    {
+        $logPrefix = 'Renewals AML - CL: RenewalsUploadService FN: checkAml. ';
+
+        $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
+        if ($aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first()) {
+            info($logPrefix.' aml already ran for renewalQuoteProcess id: '.$renewalQuoteProcess->id.' quote_id: '.$renewalQuoteProcess->quote_id);
+            return true;
+        }
+
+        $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
+        $quoteObject = $this->createQuoteObject($quoteType->code);
+        if ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first()) {
+            info($logPrefix.' AML process Started for quote uuid: '.$quote->uuid.' quote_id: '.$renewalQuoteProcess->quote_id);
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            info($logPrefix.' AML process completed for quote uuid: '.$quote->uuid);
+            return true;
+        }
+
+        info($logPrefix.' quote not found for renewalQuoteProcess id: '.$renewalQuoteProcess->id.' quote_id: '.$renewalQuoteProcess->quote_id);
+
+        return false;
     }
 
     /**
@@ -815,10 +848,13 @@ class RenewalsUploadService
      */
     public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
     {
-        return DB::transaction(function () use ($renewalQuoteProcess) {
-            $logPrefix = 'UAU FN: updateQuote';
-            $data = $renewalQuoteProcess->data;
+        $logPrefix = 'UAU FN: updateQuote';
+        $data = $renewalQuoteProcess->data;
+        $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
 
+        $isNameChanged = false;
+
+        $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, &$isNameChanged) {
             throw_if($data['quote_type'] != QuoteTypeShortCode::CAR, 'Only Insurance Type Car is allowed to update lead');
 
             $renewalUploadLead = RenewalsUploadLeads::where('id', $renewalQuoteProcess->renewals_upload_lead_id)->first();
@@ -856,6 +892,12 @@ class RenewalsUploadService
             info($logPrefix.' quote found to update with UUID: '.$quote->uuid);
 
             $customerData = $this->buildCustomerData($data);
+
+            //check if name is changed , then run AML again
+            if (($quote->first_name != $customerData['first_name'] || $quote->last_name != $customerData['last_name'])) {
+                $isNameChanged = true;
+            }
+
             $this->updateCustomer($customerData, $quote->customer_id);
 
             $quoteData = $this->getNonEmptyValues([
@@ -925,11 +967,18 @@ class RenewalsUploadService
             ]);
 
             RenewalsUploadLeads::where('id', $renewalUploadLead->id)->update(['good' => DB::raw('good+1')]);
-
             info($logPrefix.' quoted updated completed for UUID: '.$quote->uuid);
 
             return $quote;
         });
+
+        if ($quote && $isNameChanged) {
+            info($logPrefix.' AML check started for UUID: '.$quote->uuid);
+            $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+            info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
+        }
+
+        return $quote;
     }
 
     /**
