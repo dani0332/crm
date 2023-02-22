@@ -22,7 +22,9 @@ class PersonalQuote extends Model
         'mobile_no' => FilterTypes::EXACT,
         'created_at' => FilterTypes::DATE_BETWEEN,
         'renewal_batch' => FilterTypes::EXACT,
-        'quote_status_id' => FilterTypes::IN
+        'quote_status_id' => FilterTypes::IN,
+        'is_ecommerce' => FilterTypes::EXACT,
+        'previous_quote_policy_number' => FilterTypes::NULL_CHECK
     ];
 
     /**

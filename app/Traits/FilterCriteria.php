@@ -28,6 +28,13 @@ trait FilterCriteria
                             $date = Carbon::parse($value)->format('Y-m-d');
                             $query->whereDate($key, $date);
                             break;
+                        case FilterTypes::IN:
+                            if(is_array($value) && sizeof($value)) $query->whereIn($key, $value);
+                            break;
+                        case FilterTypes::NULL_CHECK:
+                            if($value == 1) $query->whereNull($key);
+                            else if($value == 0) $query->whereNotNull($key);
+                        break;
                         case FilterTypes::DATE_BETWEEN:
                             if (isset(request()->{$key.'_start'}) && isset(request()->{$key.'_end'})) {
                                 $startDate = Carbon::parse(request()->{$key.'_start'})->format(config('constants.DB_DATE_FORMAT_MATCH'));

@@ -625,6 +625,9 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       created_at_start: '',
       created_at_end: '',
       renewal_batch: '',
+      previous_quote_policy_number: '',
+      is_ecommerce: '',
+      quote_status_id: '',
       page: 1
     };
     var filters = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)(availableFilters);
@@ -5407,6 +5410,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   var _component_x_input = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-input");
 
+  var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-select");
+
   var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-form");
 
   var _component_x_tag = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-tag");
@@ -5543,7 +5548,47 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         })
       }, null, 8
       /* PROPS */
-      , ["modelValue", "options"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+      , ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+        modelValue: $setup.filters.is_ecommerce,
+        "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
+          return $setup.filters.is_ecommerce = $event;
+        }),
+        label: "Is Ecommerce",
+        placeholder: "Search by Ecommerce",
+        options: [{
+          value: '',
+          label: 'All'
+        }, {
+          value: 1,
+          label: 'Yes'
+        }, {
+          value: 0,
+          label: 'No'
+        }],
+        "class": "w-full"
+      }, null, 8
+      /* PROPS */
+      , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+        modelValue: $setup.filters.previous_quote_policy_number,
+        "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
+          return $setup.filters.previous_quote_policy_number = $event;
+        }),
+        label: "Is Renewal",
+        placeholder: "Search by Renewal",
+        options: [{
+          value: '',
+          label: 'All'
+        }, {
+          value: 0,
+          label: 'Yes'
+        }, {
+          value: 1,
+          label: 'No'
+        }],
+        "class": "w-full"
+      }, null, 8
+      /* PROPS */
+      , ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "sm",
         color: "#ff5e00",
         type: "submit"

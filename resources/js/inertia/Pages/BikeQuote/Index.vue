@@ -26,6 +26,9 @@ let availableFilters = {
     created_at_start: '',
     created_at_end: '',
     renewal_batch: '',
+    previous_quote_policy_number: '',
+    is_ecommerce: '',
+    quote_status_id: '',
     page: 1,
 };
 
@@ -186,6 +189,30 @@ const tableHeader = [
                       value: item.id,
                       label: item.text,
                     }))"
+                />
+
+                <x-select
+                    v-model="filters.is_ecommerce"
+                    label="Is Ecommerce"
+                    placeholder="Search by Ecommerce"
+                    :options="[
+            { value: '', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+                    class="w-full"
+                />
+
+                <x-select
+                    v-model="filters.previous_quote_policy_number"
+                    label="Is Renewal"
+                    placeholder="Search by Renewal"
+                    :options="[
+            { value: '', label: 'All' },
+            { value: 0, label: 'Yes' },
+            { value: 1, label: 'No' },
+          ]"
+                    class="w-full"
                 />
 
             </div>
