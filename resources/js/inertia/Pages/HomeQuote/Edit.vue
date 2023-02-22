@@ -1,7 +1,6 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { ref } from 'vue';
 import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 const props = defineProps({
   quote: Object,
@@ -32,37 +31,6 @@ const quoteForm = useForm({
   personal_belongings_aed: props.quote.personal_belongings_aed,
 });
 
-// watch(
-//   [
-//     () => quoteForm.iam_possesion_type_id,
-//     () => quoteForm.has_building,
-//     () => quoteForm.has_contents,
-//     () => quoteForm.has_personal_belongings,
-//   ],
-//   (value, oldValue) => {
-//     console.log('value ===>>', value, 'oldValue ===>>', oldValue);
-//     if (value[0] !== props.homePossessionTypeEnum.LANDLORD) {
-//       quoteForm.has_building = false;
-//     }
-//     if (!Boolean(value[1])) {
-//       quoteForm.building_aed = null;
-//     }
-//     if (!Boolean(value[2])) {
-//       quoteForm.contents_aed = null;
-//       quoteForm.has_personal_belongings = false;
-//     }
-//     if (!Boolean(value[3])) {
-//       quoteForm.personal_belongings_aed = null;
-//     }
-//     if (Boolean(value[1]) || Boolean(value[2])) {
-//       hasContentOrBuilding.value = true;
-//     }
-//   },
-//   // { immediate: true },
-// );
-
-// console.log('quoteForm ===>>', quoteForm);
-
 const rules = {
   isEmail: v =>
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
@@ -70,32 +38,29 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 
-const handleConditionalFields = () => {
-  if (
-    quoteForm.iam_possesion_type_id !== props.homePossessionTypeEnum.LANDLORD
-  ) {
-    quoteForm.has_building = false;
-  }
-  if (!Boolean(quoteForm.has_building)) {
-    quoteForm.building_aed = null;
-  }
-  if (!Boolean(quoteForm.has_contents)) {
-    quoteForm.contents_aed = null;
-    quoteForm.has_personal_belongings = false;
-  }
-  if (!Boolean(quoteForm.has_personal_belongings)) {
-    quoteForm.personal_belongings_aed = null;
-  }
-};
-
 function onSubmit(isValid) {
   if (quoteForm.has_contents || quoteForm.has_building) {
     if (isValid) {
-      quoteForm.put(`/quotes/home/${props.quote.uuid}`, {
-        onSuccess: () => {
-          router.get(`/quotes/home/${props.quote.uuid}`);
-        },
-      });
+      console.log(quoteForm);
+      quoteForm
+        .transform(data => ({
+          ...data,
+          has_contents: data.has_contents ? true : false,
+          has_personal_belongings: data.has_contents
+            ? data.has_personal_belongings
+              ? true
+              : false
+            : false,
+          has_building: data.has_building ? true : false,
+        }))
+        .put(`/quotes/home/${props.quote.uuid}`, {
+          onError: errors => {
+            console.log(errors);
+          },
+          onSuccess: () => {
+            router.get(`/quotes/home/${props.quote.uuid}`);
+          },
+        });
     }
   } else {
     hasContentOrBuilding.value = false;
@@ -176,7 +141,6 @@ function onSubmit(isValid) {
               label: item.text,
             }))
           "
-          @change="handleConditionalFields"
           class="w-full"
         />
 
@@ -205,25 +169,22 @@ function onSubmit(isValid) {
             v-model="quoteForm.has_contents"
             label="HAS CONTENTS"
             color="primary"
-            @change="handleConditionalFields"
           />
 
           <x-checkbox
-            v-model="quoteForm.has_personal_belongings"
             v-if="quoteForm.has_contents"
+            v-model="quoteForm.has_personal_belongings"
             label="HAS PERSONAL BELONGINGS"
             color="primary"
-            @change="handleConditionalFields"
           />
 
           <x-checkbox
-            v-model="quoteForm.has_building"
             v-if="
               quoteForm.iam_possesion_type_id == homePossessionTypeEnum.LANDLORD
             "
+            v-model="quoteForm.has_building"
             label="HAS BUILDING"
             color="primary"
-            @change="handleConditionalFields"
           />
 
           <p v-if="!hasContentOrBuilding" class="text-sm text-red-500">
@@ -232,8 +193,8 @@ function onSubmit(isValid) {
         </div>
 
         <x-input
-          v-model="quoteForm.contents_aed"
           v-if="quoteForm.has_contents"
+          v-model="quoteForm.contents_aed"
           label="CONTENTS AED"
           type="number"
           class="w-full"
@@ -241,8 +202,8 @@ function onSubmit(isValid) {
         />
 
         <x-input
-          v-model="quoteForm.personal_belongings_aed"
           v-if="quoteForm.has_personal_belongings"
+          v-model="quoteForm.personal_belongings_aed"
           label="PERSONAL BELONGINGS AED"
           type="number"
           class="w-full"
@@ -250,8 +211,8 @@ function onSubmit(isValid) {
         />
 
         <x-input
-          v-model="quoteForm.building_aed"
           v-if="quoteForm.has_building"
+          v-model="quoteForm.building_aed"
           label="BUILDING AED"
           type="number"
           class="w-full"
