@@ -617,6 +617,9 @@ class LeadAllocationService extends BaseService
 
     public function checkIfLeadIsRenewal($lead)
     {
+        if($lead->tier_id != null) {
+            return false;
+        }
         $dateFrom = Carbon::now()->addDays(-30);
         $dateTo = Carbon::now()->addDays(90);
 
