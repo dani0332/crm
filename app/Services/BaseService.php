@@ -58,12 +58,17 @@ class BaseService
     {
         $dropdownSource = [];
         foreach ($properties as $key => $value) {
-            $data = (new DropdownSourceService())->getDropdownSource($key, $quoteTypeId);
+            $data = $this->dropdownValues($key, $quoteTypeId);
             if ($data) {
                 $dropdownSource[$key] = $data->toArray();
             }
         }
         return $dropdownSource;
+    }
+
+    public function dropdownValues($key, $quoteTypeId)
+    {
+        return (new DropdownSourceService())->getDropdownSource($key, $quoteTypeId);
     }
 
     public function quoteDocumentEnabled($type)
@@ -113,14 +118,25 @@ class BaseService
      */
     public function getFieldsToUpdate(GenericModel $genericModel): array
     {
-        $skip = explode(",", data_get($genericModel, 'skipProperties.update', ''));
+        return $this->getSkipProperties($genericModel, 'update');
+    }
+
+    public function getFieldsToCreate(GenericModel $genericModel): array
+    {
+        return $this->getSkipProperties($genericModel, 'create');
+    }
+
+    public function getSkipProperties(GenericModel $genericModel, $skipType)
+    {
+        $skipped = explode(",", data_get($genericModel, 'skipProperties.' . $skipType, ''));
+        $skipped = array_map('trim', $skipped);
+        $fields = [];
         $properties = $genericModel->properties;
-        $fieldsToUpdate = [];
         foreach ($properties as $key => $property) {
-            if (!in_array($key, $skip)) {
-                $fieldsToUpdate[$key] = $property;
+            if (!in_array($key, $skipped)) {
+                $fields[$key] = $property;
             }
         }
-        return $fieldsToUpdate;
+        return $fields;
     }
 }

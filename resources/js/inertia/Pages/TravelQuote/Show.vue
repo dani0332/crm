@@ -869,7 +869,6 @@ const getPlanDetails = id => {
 };
 
 onMounted(() => {
-  console.log(page.props.enums);
 });
 </script>
 <template>

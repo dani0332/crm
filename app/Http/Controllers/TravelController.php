@@ -64,6 +64,7 @@ class TravelController extends Controller
 
 
 
+
     public function show($id)
     {
         $quote = $this->service->getQuoteByUUID($id);
@@ -147,6 +148,58 @@ class TravelController extends Controller
         ]);
     }
 
+    public function create(Request $request)
+    {
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
+            $isRenewalUser = true;
+            $this->crudService->fillRenewalData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
+        } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
+            $isNewBusinessUser = true;
+            $this->crudService->fillNewBusinessData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
+        }
+
+        $fieldsToCreate = $this->service->getFieldsToCreate($this->genericModel);
+        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $customTitles = [];
+        foreach ($fieldsToCreate as $property => $value) {
+            if (str_contains($value, 'title')) {
+                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+            } else {
+                $customTitles[$property] = ucwords(str_replace('_', ' ', $property));
+            }
+        }
+
+        $fields = [];
+        foreach ($fieldsToCreate as $property => $value) {
+            $value = array_diff(explode('|', $value), ['title']);
+            $type = $value[0] == 'select' ? 'select' : $value[1] ?? 'text';
+            $fields[$property] = [
+                'type' => $type,
+                'required' => in_array('required', $value),
+                'readonly' => in_array('readonly', $value),
+                'disabled' => in_array('disabled', $value),
+                'value' => '',
+                'label' => $customTitles[$property],
+                'options' => $dropdownSource[$property] ?? [],
+            ];
+        }
+        // dd($fields);
+        $model = $this->genericModel;
+
+        return inertia('TravelQuote/Create', [
+            'model' => json_encode($model->properties),
+            'customTitles' => $customTitles,
+            'fields' => $fields,
+            'dropdownSource' => $dropdownSource,
+            'renewalAdvisors' => $renewalAdvisors ?? [],
+            'isRenewalUser' => $isRenewalUser,
+            'isNewBusinessUser' => $isNewBusinessUser ?? false,
+        ]);
+    }
+
     /**
      * @param Request $request
      * @param $id
@@ -177,14 +230,14 @@ class TravelController extends Controller
                 'required' => in_array('required', $value),
                 'readonly' => in_array('readonly', $value),
                 'disabled' => in_array('disabled', $value),
-                'value' => $record->$property,
+                'value' => $record->$property ?? '',
                 'label' => $customTitles[$property],
                 'options' => $dropdownSource[$property] ?? [],
             ];
         }
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
-        // dd($fields);
+
         return inertia('TravelQuote/Edit', [
             'quote' => $record,
             'modelType' => $this->genericModel->modelType,

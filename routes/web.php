@@ -247,6 +247,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
              'show',
              'edit',
              'update',
+             'create',
          ]);
         Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 

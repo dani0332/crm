@@ -3088,6 +3088,128 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=script&setup=true&lang=js":
+/*!**************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=script&setup=true&lang=js ***!
+  \**************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var _inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/inertia/Components/ComboBox.vue */ "./resources/js/inertia/Components/ComboBox.vue");
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  __name: 'Create',
+  props: {
+    dropdownSource: Object,
+    model: String,
+    genderOptions: Object,
+    fields: Object
+  },
+  setup: function setup(__props, _ref) {
+    var expose = _ref.expose;
+    expose();
+    var props = __props;
+    var genderSelect = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      return Object.keys(props.genderOptions).map(function (status) {
+        return {
+          value: status,
+          label: props.genderOptions[status]
+        };
+      });
+    });
+    var formFields = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      return Object.keys(props.fields).map(function (key) {
+        return {
+          value: key,
+          label: props.fields[key].label
+        };
+      });
+    });
+    var quoteForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)(_objectSpread({
+      modelType: '"Travel"',
+      model: props.model
+    }, formFields.value.reduce(function (acc, field) {
+      acc[field.value] = '';
+      return acc;
+    }, {})));
+    var rules = {
+      isEmail: function isEmail(v) {
+        return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || 'E-mail must be valid';
+      },
+      isRequired: function isRequired(v) {
+        return !!v || 'This field is required';
+      }
+    };
+    var isEmptyField = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
+
+    function onSubmit(isValid) {
+      if (isValid) {
+        quoteForm.post("/quotes/save", {
+          onError: function onError(errors) {
+            console.log(errors);
+          },
+          onSuccess: function onSuccess() {
+            _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.get("/quotes/health/");
+          }
+        });
+      }
+    }
+
+    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {});
+    var __returned__ = {
+      props: props,
+      genderSelect: genderSelect,
+      formFields: formFields,
+      quoteForm: quoteForm,
+      rules: rules,
+      isEmptyField: isEmptyField,
+      onSubmit: onSubmit,
+      computed: vue__WEBPACK_IMPORTED_MODULE_0__.computed,
+      ref: vue__WEBPACK_IMPORTED_MODULE_0__.ref,
+      onMounted: vue__WEBPACK_IMPORTED_MODULE_0__.onMounted,
+
+      get Head() {
+        return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Head;
+      },
+
+      get router() {
+        return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router;
+      },
+
+      get useForm() {
+        return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm;
+      },
+
+      get Link() {
+        return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Link;
+      },
+
+      ComboBox: _inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+    };
+    Object.defineProperty(__returned__, '__isScriptSetup', {
+      enumerable: false,
+      value: true
+    });
+    return __returned__;
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/TravelQuote/Edit.vue?vue&type=script&setup=true&lang=js":
 /*!************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/TravelQuote/Edit.vue?vue&type=script&setup=true&lang=js ***!
@@ -4521,9 +4643,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     };
 
-    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
-      console.log(page.props.enums);
-    });
+    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {});
     var __returned__ = {
       page: page,
       notification: notification,
@@ -10233,6 +10353,187 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
 /***/ }),
 
+/***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=template&id=ca283332":
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=template&id=ca283332 ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* binding */ render)
+/* harmony export */ });
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+
+var _hoisted_1 = {
+  "class": "flex justify-between items-center"
+};
+
+var _hoisted_2 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", {
+  "class": "text-xl font-semibold"
+}, "Create Travel", -1
+/* HOISTED */
+);
+
+var _hoisted_3 = {
+  "class": "grid sm:grid-cols-2 gap-4"
+};
+var _hoisted_4 = {
+  "class": "flex justify-end gap-3 mb-4"
+};
+function render(_ctx, _cache, $props, $setup, $data, $options) {
+  var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-button");
+
+  var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-divider");
+
+  var _component_x_input = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-input");
+
+  var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-select");
+
+  var _component_x_textarea = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-textarea");
+
+  var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-form");
+
+  return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Head"], {
+    title: "Create Travel"
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Link"], {
+    href: "/quotes/travel"
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+        size: "sm",
+        color: "#ff5e00",
+        tag: "div"
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Travel List ")];
+        }),
+        _: 1
+        /* STABLE */
+
+      })];
+    }),
+    _: 1
+    /* STABLE */
+
+  })])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
+    "class": "my-4"
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_form, {
+    onSubmit: $setup.onSubmit,
+    "auto-focus": false
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_3, [((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.renderList)($setup.props.fields, function (field, index) {
+        return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, [field.type == 'text' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
+          key: 0,
+          modelValue: $setup.quoteForm[index],
+          "onUpdate:modelValue": function onUpdateModelValue($event) {
+            return $setup.quoteForm[index] = $event;
+          },
+          label: field.label,
+          rules: [field.required === true ? $setup.rules.isRequired : false],
+          disabled: field.disabled,
+          "class": "w-full"
+        }, null, 8
+        /* PROPS */
+        , ["modelValue", "onUpdate:modelValue", "label", "rules", "disabled"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'email' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
+          key: 1,
+          modelValue: $setup.quoteForm[index],
+          "onUpdate:modelValue": function onUpdateModelValue($event) {
+            return $setup.quoteForm[index] = $event;
+          },
+          type: "email",
+          label: field.label,
+          rules: [field.required === true ? $setup.rules.isRequired : false, $setup.rules.isEmail],
+          disabled: field.disabled,
+          "class": "w-full"
+        }, null, 8
+        /* PROPS */
+        , ["modelValue", "onUpdate:modelValue", "label", "rules", "disabled"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'number' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
+          key: 2,
+          modelValue: $setup.quoteForm[index],
+          "onUpdate:modelValue": function onUpdateModelValue($event) {
+            return $setup.quoteForm[index] = $event;
+          },
+          label: field.label,
+          disabled: field.disabled,
+          "class": "w-full"
+        }, null, 8
+        /* PROPS */
+        , ["modelValue", "onUpdate:modelValue", "label", "disabled"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'date' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
+          key: 3,
+          modelValue: $setup.quoteForm[index],
+          "onUpdate:modelValue": function onUpdateModelValue($event) {
+            return $setup.quoteForm[index] = $event;
+          },
+          type: "date",
+          label: field.label,
+          disabled: field.disabled,
+          "class": "w-full"
+        }, null, 8
+        /* PROPS */
+        , ["modelValue", "onUpdate:modelValue", "label", "disabled"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'select' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_select, {
+          key: 4,
+          modelValue: $setup.quoteForm[index],
+          "onUpdate:modelValue": function onUpdateModelValue($event) {
+            return $setup.quoteForm[index] = $event;
+          },
+          label: field.label,
+          rules: [field.required === true ? $setup.rules.isRequired : false],
+          disabled: field.disabled,
+          options: field.options.map(function (option) {
+            return {
+              value: option.id,
+              label: option.text
+            };
+          }),
+          "class": "w-full"
+        }, null, 8
+        /* PROPS */
+        , ["modelValue", "onUpdate:modelValue", "label", "rules", "disabled", "options"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'textarea' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_textarea, {
+          key: 5,
+          modelValue: $setup.quoteForm[index],
+          "onUpdate:modelValue": function onUpdateModelValue($event) {
+            return $setup.quoteForm[index] = $event;
+          },
+          label: field.label,
+          rules: [field.required === true ? $setup.rules.isRequired : false],
+          disabled: field.disabled,
+          "class": "w-full"
+        }, null, 8
+        /* PROPS */
+        , ["modelValue", "onUpdate:modelValue", "label", "rules", "disabled"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)], 64
+        /* STABLE_FRAGMENT */
+        );
+      }), 256
+      /* UNKEYED_FRAGMENT */
+      ))]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
+        "class": "my-4"
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+        size: "md",
+        color: "emerald",
+        type: "submit",
+        loading: $setup.quoteForm.processing
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Create ")];
+        }),
+        _: 1
+        /* STABLE */
+
+      }, 8
+      /* PROPS */
+      , ["loading"])])];
+    }),
+    _: 1
+    /* STABLE */
+
+  })]);
+}
+
+/***/ }),
+
 /***/ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/TravelQuote/Edit.vue?vue&type=template&id=646ed596":
 /*!*****************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/TravelQuote/Edit.vue?vue&type=template&id=646ed596 ***!
@@ -14107,6 +14408,34 @@ if (false) {}
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/TravelQuote/Create.vue":
+/*!***********************************************************!*\
+  !*** ./resources/js/inertia/Pages/TravelQuote/Create.vue ***!
+  \***********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _Create_vue_vue_type_template_id_ca283332__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Create.vue?vue&type=template&id=ca283332 */ "./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=template&id=ca283332");
+/* harmony import */ var _Create_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Create.vue?vue&type=script&setup=true&lang=js */ "./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=script&setup=true&lang=js");
+/* harmony import */ var C_Users_ranam_code_blanka_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/vue-loader/dist/exportHelper.js */ "./node_modules/vue-loader/dist/exportHelper.js");
+
+
+
+
+;
+const __exports__ = /*#__PURE__*/(0,C_Users_ranam_code_blanka_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__["default"])(_Create_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"], [['render',_Create_vue_vue_type_template_id_ca283332__WEBPACK_IMPORTED_MODULE_0__.render],['__file',"resources/js/inertia/Pages/TravelQuote/Create.vue"]])
+/* hot reload */
+if (false) {}
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (__exports__);
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/TravelQuote/Edit.vue":
 /*!*********************************************************!*\
   !*** ./resources/js/inertia/Pages/TravelQuote/Edit.vue ***!
@@ -14459,6 +14788,22 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=script&setup=true&lang=js":
+/*!**********************************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=script&setup=true&lang=js ***!
+  \**********************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Create_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Create_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./Create.vue?vue&type=script&setup=true&lang=js */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=script&setup=true&lang=js");
+ 
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/TravelQuote/Edit.vue?vue&type=script&setup=true&lang=js":
 /*!********************************************************************************************!*\
   !*** ./resources/js/inertia/Pages/TravelQuote/Edit.vue?vue&type=script&setup=true&lang=js ***!
@@ -14763,6 +15108,22 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=template&id=ca283332":
+/*!*****************************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=template&id=ca283332 ***!
+  \*****************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "render": () => (/* reexport safe */ _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Create_vue_vue_type_template_id_ca283332__WEBPACK_IMPORTED_MODULE_0__.render)
+/* harmony export */ });
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_2_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Create_vue_vue_type_template_id_ca283332__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./Create.vue?vue&type=template&id=ca283332 */ "./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[2]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/TravelQuote/Create.vue?vue&type=template&id=ca283332");
+
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/TravelQuote/Edit.vue?vue&type=template&id=646ed596":
 /*!***************************************************************************************!*\
   !*** ./resources/js/inertia/Pages/TravelQuote/Edit.vue?vue&type=template&id=646ed596 ***!
@@ -14854,6 +15215,8 @@ var map = {
 	"./HealthQuote/Show.vue": "./resources/js/inertia/Pages/HealthQuote/Show.vue",
 	"./TravelQuote/Cards": "./resources/js/inertia/Pages/TravelQuote/Cards.vue",
 	"./TravelQuote/Cards.vue": "./resources/js/inertia/Pages/TravelQuote/Cards.vue",
+	"./TravelQuote/Create": "./resources/js/inertia/Pages/TravelQuote/Create.vue",
+	"./TravelQuote/Create.vue": "./resources/js/inertia/Pages/TravelQuote/Create.vue",
 	"./TravelQuote/Edit": "./resources/js/inertia/Pages/TravelQuote/Edit.vue",
 	"./TravelQuote/Edit.vue": "./resources/js/inertia/Pages/TravelQuote/Edit.vue",
 	"./TravelQuote/Index": "./resources/js/inertia/Pages/TravelQuote/Index.vue",
