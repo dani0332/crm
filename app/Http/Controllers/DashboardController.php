@@ -12,6 +12,7 @@ use App\Models\Tier;
 use App\Services\DashboardService;
 use App\Services\TierService;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -69,9 +70,10 @@ class DashboardController extends Controller
 
     public function getRecentDailyStats(Request $request)
     {
-        $startDate = explode(',', $request->range)[0];
-        $endDate = explode(',', $request->range)[1];
-        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
+
+        $startDate = Carbon::parse(explode(',', $request->range)[0])->format('Y-m-d');
+        $endDate = Carbon::parse(explode(',', $request->range)[1])->format('Y-m-d');
+        $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
 
         foreach ($teams as $team) {
@@ -79,7 +81,7 @@ class DashboardController extends Controller
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => count($teamUserIds),
                 'teamName' => $team->name,
-                'totalLeadsCount' => $todaysLeads->whereIn('advisor_id', $teamUserIds)->count(),
+                'totalLeadsCount' => count($todaysLeads->whereIn('car_quote_request.advisor_id', $teamUserIds)),
             ];
         }
         $totalLeadsReceived = count($todaysLeads);
