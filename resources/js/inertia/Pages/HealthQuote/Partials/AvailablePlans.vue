@@ -1,11 +1,16 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
 import { useDateFormat } from '@vueuse/shared';
 
-defineProps({
+const props = defineProps({
   plan: Object,
+  genders: Object,
 });
+
+const genderText = v => {
+  return props.genders[v];
+};
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
@@ -52,50 +57,51 @@ const tabs = ref([
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Code</dt>
-              <dd>{{ plan.code }}</dd>
+              <dd>{{ props.plan.code }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Name</dt>
-              <dd>{{ plan.providerName }}</dd>
+              <dd>{{ props.plan.providerName }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Actual Premium</dt>
-              <dd>{{ plan.actualPremium }}</dd>
+              <dd>{{ props.plan.actualPremium }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Discount Premium</dt>
-              <dd>{{ plan.discountPremium }}</dd>
+              <dd>{{ props.plan.discountPremium }}</dd>
             </div>
           </dl>
         </TabPanel>
 
         <TabPanel>
           <div class="p-4">
-            <div
-              v-for="member in plan.memberPremiumBreakdown || []"
-              :key="member.memberId"
-              class="grid grid-cols-2 md:grid-cols-4 gap-2 my-4 border-b"
+            <x-table
+              :headers="[
+                { text: 'Relationship', value: 'memberCategoryText' },
+                { text: 'DOB', value: 'dob' },
+                { text: 'Gender', value: 'gender' },
+                { text: 'Premium', value: 'premium' },
+              ]"
+              :items="props.plan.memberPremiumBreakdown || []"
             >
-              <div>{{ member.memberCategoryText }}</div>
-              <div>{{ dateFormat(member.dob) }}</div>
-              <div>{{ member.gender }}</div>
-              <x-input :value="member.premium" :disabled="true" size="sm" />
-            </div>
+              <template #item-dob="{ item }">
+                {{ dateFormat(item.dob) }}
+              </template>
+              <template #item-gender="{ item }">
+                {{ genderText(item.gender) }}
+              </template>
+              <template #item-premium="{ item }">
+                <x-input :value="item.premium" :disabled="true" size="sm" />
+              </template>
+            </x-table>
           </div>
         </TabPanel>
 
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
-            <div v-for="data in plan.benefits.inpatient || []" :key="data.code">
-              <dt class="font-medium mb-1">{{ data.text }}</dt>
-              <dd>{{ data.value }}</dd>
-            </div>
-          </dl>
-        </TabPanel>
-        <TabPanel>
-          <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
-              v-for="data in plan.benefits.outpatient || []"
+              v-for="data in props.plan.benefits.inpatient || []"
               :key="data.code"
             >
               <dt class="font-medium mb-1">{{ data.text }}</dt>
@@ -106,7 +112,7 @@ const tabs = ref([
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
-              v-for="data in plan.benefits.coInsurance || []"
+              v-for="data in props.plan.benefits.outpatient || []"
               :key="data.code"
             >
               <dt class="font-medium mb-1">{{ data.text }}</dt>
@@ -117,14 +123,7 @@ const tabs = ref([
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
-              v-for="data in plan.benefits.regionCover || []"
-              :key="data.code"
-            >
-              <dt class="font-medium mb-1">{{ data.text }}</dt>
-              <dd>{{ data.value }}</dd>
-            </div>
-            <div
-              v-for="data in plan.benefits.networkList || []"
+              v-for="data in props.plan.benefits.coInsurance || []"
               :key="data.code"
             >
               <dt class="font-medium mb-1">{{ data.text }}</dt>
@@ -135,7 +134,14 @@ const tabs = ref([
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
-              v-for="data in plan.benefits.maternityCover || []"
+              v-for="data in props.plan.benefits.regionCover || []"
+              :key="data.code"
+            >
+              <dt class="font-medium mb-1">{{ data.text }}</dt>
+              <dd>{{ data.value }}</dd>
+            </div>
+            <div
+              v-for="data in props.plan.benefits.networkList || []"
               :key="data.code"
             >
               <dt class="font-medium mb-1">{{ data.text }}</dt>
@@ -145,7 +151,21 @@ const tabs = ref([
         </TabPanel>
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
-            <div v-for="data in plan.benefits.exclusion || []" :key="data.code">
+            <div
+              v-for="data in props.plan.benefits.maternityCover || []"
+              :key="data.code"
+            >
+              <dt class="font-medium mb-1">{{ data.text }}</dt>
+              <dd>{{ data.value }}</dd>
+            </div>
+          </dl>
+        </TabPanel>
+        <TabPanel>
+          <dl class="grid md:grid-cols-2 gap-5 p-4">
+            <div
+              v-for="data in props.plan.benefits.exclusion || []"
+              :key="data.code"
+            >
               <dt class="font-medium mb-1">{{ data.text }}</dt>
               <dd>{{ data.value }}</dd>
             </div>
@@ -154,7 +174,7 @@ const tabs = ref([
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <x-link
-              v-for="data in plan.benefits.networkLink || []"
+              v-for="data in props.plan.benefits.networkLink || []"
               :key="data.code"
               :href="data.value"
               target="_blank"
