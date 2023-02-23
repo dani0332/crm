@@ -319,18 +319,14 @@ class LeadAllocationService extends BaseService
             DB::beginTransaction();
             info('setAdvisorsToUnavailable -- started');
             $dateTimeNow = now()->toTimeString();
-            info('Current time is '.$dateTimeNow);
-            if ($dateTimeNow >= '23:55') {
-                info('Current time before unavailable is '.$dateTimeNow);
-                info('Setting advisors to unavailable');
-                LeadAllocation::whereNotNull('is_available')->update([
-                    'is_available' => 0,
-                    'allocation_count' => 0,
-                    'manual_assignment_count' => 0,
-                    'auto_assignment_count' => 0,
-                ]);
-                info('Advisors are now unavailable and allocation count is set to 0');
-            }
+            info('Current time before unavailable is '.$dateTimeNow);
+            LeadAllocation::whereNotNull('is_available')->update([
+                'is_available' => 0,
+                'allocation_count' => 0,
+                'manual_assignment_count' => 0,
+                'auto_assignment_count' => 0,
+            ]);
+            info('Advisors are now unavailable and allocation count is set to 0');
             DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -546,6 +542,8 @@ class LeadAllocationService extends BaseService
             'landLine' => $user->landline_no,
             'mobilePhone' => $user->mobile_no,
             'advisorEmail' => $user->email,
+            'cdbId' => $carQuote->code,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
         ];
 
         return $emailData;
@@ -707,7 +705,7 @@ class LeadAllocationService extends BaseService
     public function getAppStorageValueByKey($keyName)
     {
         $query = ApplicationStorage::select('value')
-        ->where('key_name', $keyName)
+        ->where('key_name', '"'.$keyName.'"')
         ->first();
 
         if (! $query) {
@@ -726,7 +724,9 @@ class LeadAllocationService extends BaseService
     {
         $currentDay = Carbon::parse(now())->format('l');
 
-        $endTimeForAllocation = Carbon::parse($this->getAppStorageValueByKey($currentDay == DaysNameEnum::SATURDAY ? 'SATURDAY_CAP_RESET_TIME' : 'NORMAL_CAP_RESET_TIME'))->toTimeString();
+        $resetKeyTime = $currentDay == DaysNameEnum::SATURDAY ? 'SATURDAY_CAP_RESET_TIME' : 'NORMAL_CAP_RESET_TIME';
+
+        $endTimeForAllocation = Carbon::parse($this->getAppStorageValueByKey($resetKeyTime))->toTimeString();
 
         $carLeadAllocationSwitch = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
 

@@ -19,7 +19,6 @@ use App\Jobs\Renewals\CreateRenewalQuotesJob;
 use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
 use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
 use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
-use App\Jobs\Renewals\RenewalsQuoteAmlJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
 use App\Models\AML;
 use App\Models\CarMake;
@@ -801,6 +800,7 @@ class RenewalsUploadService
         $quoteType = $this->getQuoteTypeByShortCode($renewalQuoteProcess->quote_type);
         if ($aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first()) {
             info($logPrefix.' aml already ran for renewalQuoteProcess id: '.$renewalQuoteProcess->id.' quote_id: '.$renewalQuoteProcess->quote_id);
+
             return true;
         }
 
@@ -810,6 +810,7 @@ class RenewalsUploadService
             info($logPrefix.' AML process Started for quote uuid: '.$quote->uuid.' quote_id: '.$renewalQuoteProcess->quote_id);
             $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML process completed for quote uuid: '.$quote->uuid);
+
             return true;
         }
 
@@ -853,7 +854,6 @@ class RenewalsUploadService
         $quoteType = $this->getQuoteTypeByShortCode($data['quote_type']);
 
         $isNameChanged = false;
-
 
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, &$isNameChanged) {
             throw_if($data['quote_type'] != QuoteTypeShortCode::CAR, 'Only Insurance Type Car is allowed to update lead');
