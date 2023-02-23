@@ -3,13 +3,19 @@
 namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
-use App\Models\User;
+use App\Traits\GetUserTreeTrait;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DB;
 
 class DashboardService extends BaseService
 {
+    use TeamHierarchyTrait;
+    use GetUserTreeTrait;
+
     public function getDashboardStatsByDate($start, $end, $type)
     {
         $tableName = $type.'_quote_request';
@@ -58,6 +64,7 @@ class DashboardService extends BaseService
             DB::raw('count(*) as leadCount')
         )
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
         ->groupBy('tiers.name');
         if ($startDate == null && $endDate == null) {
             $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
@@ -77,6 +84,7 @@ class DashboardService extends BaseService
         )
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->whereNull('car_quote_request.advisor_id')
+        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('tiers.name')
         ->get();
@@ -87,7 +95,7 @@ class DashboardService extends BaseService
         $query = CarQuote::select(
             DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
             DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
-        );
+        )->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
         if ($startDate == null && $endDate == null) {
             $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
         } else {
@@ -102,7 +110,7 @@ class DashboardService extends BaseService
         $query = CarQuote::select(
             DB::raw('distinct(source) as sourceName'),
             DB::raw('count(*) as sourceCount'),
-        );
+        )->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->groupBy('source');
         if ($startDate == null && $endDate == null) {
             $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
         } else {
@@ -114,24 +122,42 @@ class DashboardService extends BaseService
 
     public function getAdvisorConversionData($advisorId)
     {
-        $query = CarQuote::select(
-            'quote_batches.name',
-            'quote_batches.start_date',
-            'quote_batches.end_date',
-            DB::raw('COUNT(car_quote_request.id) AS total_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) AS manual_created'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id IN (9, 35) THEN 1 ELSE 0 END) AS bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) AS sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM"
-            AND car_quote_request.quote_status_id = 15 THEN 1 ELSE 0 END) AS created_sale_leads'),
+        $query = CarQuote::query()
+        ->select(
+            'users.id as advisorId',
+            DB::raw('count(car_quote_request.id) as total_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.') THEN 1 ELSE 0 END) as not_interested'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.') THEN 1 ELSE 0 END) as in_progress'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')  THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::AfiaRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id not in (
+                '.QuoteStatusEnum::NewLead.','.QuoteStatusEnum::PriceTooHigh.','.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.','.QuoteStatusEnum::NotInterested.',
+                '.QuoteStatusEnum::NotEligibleForInsurance.','.QuoteStatusEnum::NotLookingForMotorInsurance.','.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::NotContactablePe.',
+                '.QuoteStatusEnum::FollowupCall.','.QuoteStatusEnum::Interested.','.QuoteStatusEnum::NoAnswer.','.QuoteStatusEnum::Quoted.','.QuoteStatusEnum::Duplicate.',
+                '.QuoteStatusEnum::Fake.','.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::AfiaRenewal.') THEN 1 ELSE 0 END) as others'),
+            'quote_batches.name as name',
+            'quote_batches.start_date as start_date',
+            'quote_batches.start_date as end_date'
         )
+        ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->groupBy('quote_batches.name')
+        ->join('user_team', 'user_team.user_id', 'users.id')
+        ->join('teams', 'teams.id', 'user_team.team_id')
+        ->whereNull('car_quote_request.renewal_import_code')
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
-        ->orderBy('quote_batches.id', 'desc')
-        ->take(10);
+        ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
+        ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email')->take(10);
         if (isset($advisorId)) {
             $query->where('car_quote_request.advisor_id', $advisorId);
+        }
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for advisor conversion report are : '.json_encode($userIds));
+            $query = $query->whereIn('teams.id', $userIds);
         }
 
         return $query->get();
@@ -144,28 +170,37 @@ class DashboardService extends BaseService
             DB::raw('COUNT(car_quote_request.id) AS total_leads'),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
+        ->join('user_team', 'users.id', 'user_team.user_id')
+        ->join('teams', 'teams.id', 'user_team.team_id')
+        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+
         ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
         if (isset($teamIds)) {
-            $userIds = User::where(function ($query) use ($teamIds) {
-                $query->whereIn('team_id', [$teamIds])
-                ->orWhere('sub_team_id', [$teamIds]);
-            })->pluck('id');
-            $query->whereIn('users.id', $userIds);
+            $query->whereIn('teams.id', $teamIds);
+        }
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for advisor conversion report are : '.json_encode($userIds));
+            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
         return $query->get();
     }
 
-    public function getTeamWiseLeadStats($todaysLeads, $teams, $carAdvisors)
+    public function getTeamWiseLeadStats($todaysLeads, $teams)
     {
         $teamWiseLeadsAssignedAverage = [];
         foreach ($teams as $team) {
-            $teamUserIds = $carAdvisors->where('sub_team_id', $team->id)->pluck('id');
+            $teamUserIds = $this->getUsersByTeamId($team->id)->pluck('id');
+
+            $usersCount = count($teamUserIds);
+            $leadsCount = $todaysLeads->whereIn('advisor_id', $teamUserIds)->count();
+
             $teamWiseLeadsAssignedAverage[] = [
-                'totalUsersUnderTeam' => count($teamUserIds),
+                'totalUsersUnderTeam' => $usersCount,
                 'teamName' => $team->name,
-                'totalLeadsCount' => $todaysLeads->whereIn('advisor_id', $teamUserIds)->count(),
+                'totalLeadsCount' => $leadsCount,
             ];
         }
 

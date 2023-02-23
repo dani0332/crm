@@ -46,6 +46,7 @@ use App\Http\Controllers\RewardTranslationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
+use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TmCallStatusController;
 use App\Http\Controllers\TmInsuranceTypeController;
 use App\Http\Controllers\TmLeadController;
@@ -77,10 +78,12 @@ Route::get('/', function () {
     return redirect('login');
 });
 
+Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
+
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
-Route::middleware(['auth'])->get('/home', function () {
+Route::middleware(['auth', 'last_login_check'])->get('/home', function () {
     return view('home');
 });
 
@@ -123,8 +126,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('activities/getEditView', [ActivitesController::class, 'getEditView'])->name('activities.getEditView');
     Route::post('updateActivity', [CRUDController::class, 'updateActivity'])->name('updateActivity');
     Route::get('getAdvisors', [LeadAssignmentController::class, 'getAdvisors'])->name('getAdvisors');
-    Route::get('getTeamManagers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
-    Route::get('getSubTeams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
+    Route::post('get-team-managers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
+    Route::post('get-sub-teams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
+    Route::post('get-product-teams', [UserController::class, 'getProductTeams'])->name('getProductTeams');
     Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerUpload']);
@@ -166,10 +170,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard']);
     Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard']);
-    Route::get('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
-    Route::get('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
-    Route::get('/get-advisor-conversion-stats', [DashboardController::class, 'getAdvisorConversionStats']);
-    Route::get('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
+    Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
+    Route::post('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
+    Route::post('/get-advisor-conversion-stats', [DashboardController::class, 'getAdvisorConversionStats']);
+    Route::post('/get-users-by-team', [DashboardController::class, 'getUsersByTeam']);
+    Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
     Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard']);
     Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport']);
@@ -207,7 +212,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('business', CRUDController::class);
         Route::resource('travel', CRUDController::class);
         Route::resource('pet', CRUDController::class);
-        Route::resource('teams', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
@@ -216,6 +220,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
         Route::post('{quoteType}/manualLeadAssign', [CRUDController::class, 'manualLeadAssign'])->name('manualLeadAssign');
         Route::post('wcuAssign', [CRUDController::class, 'wcuAssign'])->name('wcuAssign');
+        Route::post('manual-tier-assignment', [CRUDController::class, 'manualTierAssignment'])->name('manualTierAssignment');
         Route::post('/{modelType}/{QuoteUId}/update-lead-status', [CRUDController::class, 'updateLeadStatus'])->name('updateLeadStatus');
         Route::post('health/healthTeamAssign', [CRUDController::class, 'healthTeamAssign'])->name('healthTeamAssign');
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
@@ -245,7 +250,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('carplanaddon', GenericCrudController::class);
         Route::resource('carplanaddonoption', GenericCrudController::class);
         Route::resource('applicationstorage', GenericCrudController::class);
-        Route::resource('teams', GenericCrudController::class);
+        Route::resource('team', TeamController::class);
         Route::resource('leadstatus', GenericCrudController::class);
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);

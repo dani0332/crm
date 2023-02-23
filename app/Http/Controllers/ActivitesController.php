@@ -9,22 +9,23 @@ use App\Models\Activities;
 use App\Models\User;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
-use App\Services\HelperService;
+use App\Traits\GetUserTreeTrait;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ActivitesController extends Controller
 {
-    protected $activitesService;
-    protected $crudService;
-    protected $helperService;
+    use GetUserTreeTrait;
 
-    public function __construct(ActivitiesService $activitesService, CRUDService $crudService, HelperService $helperService)
+    protected $activitiesService;
+    protected $crudService;
+
+    public function __construct(ActivitiesService $activitiesService, CRUDService $crudService)
     {
-        $this->activitesService = $activitesService;
+        $this->activitiesService = $activitiesService;
         $this->crudService = $crudService;
-        $this->helperService = $helperService;
     }
 
     /**
@@ -35,7 +36,7 @@ class ActivitesController extends Controller
     public function index(Request $request)
     {
         $advisors = [];
-        $subOrdinates = $this->helperService->walkTree(Auth::user()->id);
+        $subOrdinates = $this->walkTree(Auth::user()->id);
         foreach ($subOrdinates as $subOrdinate) {
             $user = User::where('id', $subOrdinate)->first();
             if ($user->hasAnyRole(['CAR_ADVISOR', 'HEALTH_ADVISOR', 'TRAVEL_ADVISOR', 'HOME_ADVISOR', 'LIFE_ADVISOR', 'PET_ADVISOR',
@@ -44,7 +45,7 @@ class ActivitesController extends Controller
             }
         }
         if ($request->ajax()) {
-            $activites = $this->activitesService->getGridData($request);
+            $activites = $this->activitiesService->getGridData($request);
 
             return DataTables::of($activites)
                 ->addIndexColumn()
@@ -76,7 +77,7 @@ class ActivitesController extends Controller
         if (isset($request->entityId)) {
             $record = $this->crudService->getEntity($request->modelType, $request->entityUId);
         }
-        $this->activitesService->createActivity($request, $record);
+        $this->activitiesService->createActivity($request, $record);
         if (isset($request->isActivityView)) {
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
         } else {
@@ -92,7 +93,7 @@ class ActivitesController extends Controller
      */
     public function show($id)
     {
-        $record = $this->activitesService->getActivityByUUID($id);
+        $record = $this->activitiesService->getActivityByUUID($id);
 
         if ($record) {
             $record->assignee_name = User::where('id', $record->assignee_id)->first()->name;
@@ -111,7 +112,7 @@ class ActivitesController extends Controller
      */
     public function edit($id)
     {
-        $record = $this->activitesService->getActivityByUUID($id);
+        $record = $this->activitiesService->getActivityByUUID($id);
         $record->assignee_name = User::where('id', $record->assignee_id)->first()->name;
         $quotetypename = $this->getQuoteTypeNameFromId($record->quote_type_id);
         $advisors = $this->getAdvisorsForActivity($quotetypename, $record->health_team_type);
@@ -128,13 +129,13 @@ class ActivitesController extends Controller
      */
     public function update(ActivitiesRequest $request, $id)
     {
-        $record = $this->activitesService->getActivityByUUID($id);
+        $record = $this->activitiesService->getActivityByUUID($id);
         if (isset($request->assignee_id) && $request->assignee_id != '') {
             $record->assignee_id = $request->assignee_id;
         }
         $record->title = $request->title;
         $record->description = $request->description;
-        $record->due_date = $request->due_date;
+        $record->due_date = Carbon::parse($request->due_date)->format('Y-m-d H:i:s');
         $record->save();
         if (isset($request->fromLeadView) && $request->fromLeadView == 1) {
             return redirect('/quotes/'.$this->getQuoteTypeNameFromId($request->quoteType).'/'.$request->quote_uuid)->with('success', 'Activity updated successfully');
@@ -161,7 +162,7 @@ class ActivitesController extends Controller
 
     public function updateStatus(Request $request)
     {
-        $record = $this->activitesService->getActivityById($request->activity_id);
+        $record = $this->activitiesService->getActivityById($request->activity_id);
         if (isset($record)) {
             $record->status = $record->status == 0 ? 1 : 0;
             $record->save();
@@ -170,7 +171,7 @@ class ActivitesController extends Controller
 
     public function getEditView(Request $request)
     {
-        $record = $this->activitesService->getActivityById($request->activity_id);
+        $record = $this->activitiesService->getActivityById($request->activity_id);
         $advisors = [];
         if (isset($request->quote_uuid)) {
             $quoteRecord = $this->crudService->getEntityByUUID($request->quote_uuid, $request->quoteType);

@@ -42,4 +42,11 @@ class CacheManager
     {
         Cache::tags($tag)->put($key, Cache::get($key), now()->addDays(7));
     }
+
+    public static function setTimedBasedItem($key, $time, $value)
+    {
+        $value = Cache::remember($key, 3600, function () {
+            return 'Hello, World!';
+        });
+    }
 }

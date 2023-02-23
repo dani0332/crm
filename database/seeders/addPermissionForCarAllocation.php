@@ -17,10 +17,10 @@ class addPermissionForCarAllocation extends Seeder
      */
     public function run()
     {
-        $sundayResetTime = ApplicationStorage::where('key_name', 'SUNDAY_CAP_RESET_TIME')->first();
+        $sundayResetTime = ApplicationStorage::where('key_name', 'SATURDAY_CAP_RESET_TIME')->first();
         if ($sundayResetTime == null) {
             ApplicationStorage::insert([
-                'key_name' => 'SUNDAY_CAP_RESET_TIME',
+                'key_name' => 'SATURDAY_CAP_RESET_TIME',
                 'value' => '12:55',
                 'created_at' => now(),
                 'updated_at' => now(),

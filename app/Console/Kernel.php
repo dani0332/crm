@@ -27,15 +27,13 @@ class Kernel extends ConsoleKernel
     {
         $schedule
             ->command('LeadAllocation:cron')
-            ->timezone('Asia/Dubai')
             ->everyMinute()
-            ->onOneServer()
-            ->withoutOverlapping(1);
+            ->onOneServer();
 
         $schedule
             ->command('AddBatchNumber:cron')
             ->timezone('Asia/Dubai')
-            ->everySixHours()
+            ->weeklyOn(1, '0:00')
             ->onOneServer()
             ->withoutOverlapping(1);
     }

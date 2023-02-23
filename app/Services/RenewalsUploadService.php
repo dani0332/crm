@@ -854,6 +854,7 @@ class RenewalsUploadService
 
         $isNameChanged = false;
 
+
         $quote = DB::transaction(function () use ($renewalQuoteProcess, $data, $logPrefix, &$isNameChanged) {
             throw_if($data['quote_type'] != QuoteTypeShortCode::CAR, 'Only Insurance Type Car is allowed to update lead');
 

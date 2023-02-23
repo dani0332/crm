@@ -108,8 +108,10 @@ class ActivitiesService extends BaseService
             $quoteStatus = QuoteStatus::select('text')->where('id', $request->leadStatus)->first();
             $request->title = $quoteStatus->text;
         }
+        $nextFollowupDate = isset($request->next_followup_date) ? Carbon::parse($request->next_followup_date)->format('Y-m-d H:i:s') : null;
+        $dueDate = isset($request->due_date) ? Carbon::parse($request->due_date)->format('Y-m-d H:i:s') : null;
         $request->assignee_id = isset($request->assigned_to_user_id) ? $request->assigned_to_user_id : $request->assignee_id;
-        $activity->due_date = isset($request->due_date) ? $request->due_date : $request->next_followup_date;
+        $activity->due_date = isset($request->due_date) ? $dueDate : $nextFollowupDate;
         $activity->assignee_id = isset($request->assignee_id) ? $request->assignee_id : auth()->user()->id;
         $activity->description = isset($request->description) ? $request->description : $request->notes;
         $activity->title = $request->title;

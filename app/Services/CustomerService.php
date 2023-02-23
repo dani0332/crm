@@ -94,10 +94,21 @@ class CustomerService extends BaseService
         return $customer_email;
     }
 
-    public function getAdditionalContacts($customerId)
+    public function getAdditionalContacts($customerId, $quoteMobileNo)
     {
-        return CustomerAdditionalContact::where('customer_id', $customerId)
-        ->orderBy('created_at', 'desc')->get();
+        $customer = $this->getCustomerById($customerId);
+        $additionalContacts = CustomerAdditionalContact::where('customer_id', $customerId)->orderBy('created_at', 'desc')->get();
+
+        if (isset($customer) && $quoteMobileNo != $customer->mobile_no) {
+            $customerMobileNo = (object) [
+                'key' => 'mobile_no',
+                'value' => isset($customer->mobile_no) ? $customer->mobile_no : '',
+                'created_at' => isset($customer->created_at) ? $customer->created_at : '',
+            ];
+            $additionalContacts->push($customerMobileNo);
+        }
+
+        return $additionalContacts;
     }
 
     public function checkAdditionalEmailExist($quoteObject, $newAdditionalEmail)
