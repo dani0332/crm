@@ -395,13 +395,11 @@ class RenewalsUploadController extends Controller
             'status' => RenewalProcessStatuses::PROCESSED,
         ])->whereIn('quote_type', QuoteType::where('short_code', '<>', QuoteTypeShortCode::CAR)->get()->pluck('short_code')->toArray())
             ->whereNotNull('quote_id')
+            ->groupBy('quote_id')
             ->chunkById(50, function ($leads) use (&$jobs, &$jobNo) {
                 foreach ($leads as $lead) {
-                    $quoteType = $this->renewalsUploadFileService->getQuoteTypeByShortCode($lead->quote_type);
-                    if (! $aml = AML::where('quote_request_id', $lead->quote_id)->where('quote_type_id', $quoteType->id)->first()) {
-                        $jobs[] = new RenewalsQuoteAmlJob($lead, $jobNo);
-                        $jobNo++;
-                    }
+                    $jobs[] = new RenewalsQuoteAmlJob($lead, $jobNo);
+                    $jobNo++;
                 }
             });
 
