@@ -839,11 +839,6 @@ class TravelQuoteService extends BaseService
         return 'true';
     }
 
-    public function getQuoteByUUID($uuid)
-    {
-        return TravelQuote::where('uuid', $uuid)->firstOrFail();
-    }
-
     public function getQuoteStatuses()
     {
         return [QuoteStatusEnum::NewLead, QuoteStatusEnum::Quoted, QuoteStatusEnum::FollowedUp, QuoteStatusEnum::InNegotiation, QuoteStatusEnum::PaymentPending];

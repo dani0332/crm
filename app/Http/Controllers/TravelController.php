@@ -68,15 +68,12 @@ class TravelController extends Controller
 
     public function show($id)
     {
-        $quote = $this->service->getQuoteByUUID($id);
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        $payments = $quote->payments;
-        $paymentMethods = $this->lookupService->getPaymentMethods();
-        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $quote->code);
+
+        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-        //Checking if the loggedIn user is Renewal User
 
         $isRenewalUser = Auth::user()->isRenewalUser();
         $renewalAdvisors = [];
@@ -124,13 +121,13 @@ class TravelController extends Controller
             'quoteDocuments' => $quoteDocuments,
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
-            'membersDetail' => $membersDetail,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'emailStatuses' => $this->service->getEmailStatus(self::TYPE_ID, $record->id),
             'listQuotePlans' => $this->service->listQuotePlans($id),
             'activities' => $activities,
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
+            'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
@@ -141,6 +138,7 @@ class TravelController extends Controller
                 'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
                 'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
+                'canNotApprovePayments' => auth()->user()->cannot(PermissionsEnum::ApprovePayments),
             ],
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
@@ -236,7 +234,7 @@ class TravelController extends Controller
         $record = $this->crudService->saveModelByType($modelType, $request);
 
         if (isset($record->message) && str_contains($record->message, 'Error')) {
-            return Redirect::back()->with('message', $record->message)->withInput();
+            return redirect()->back()->with('message', $record->message)->withInput();
         }
 
         redirect('/quotes/travel')->with('message', 'Record created successfully');

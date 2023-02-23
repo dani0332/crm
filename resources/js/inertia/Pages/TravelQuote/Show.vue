@@ -26,13 +26,13 @@ defineProps({
   displaySendPolicyButton: Boolean,
   documentTypes: Object,
   cdnPath: String,
-  membersDetail: Array,
   memberCategories: Array,
   emailStatuses: Array,
   isAdmin: Boolean,
   listQuotePlans: Array,
   activities: Array,
   customerAdditionalContacts: Array,
+  ecomTravelInsuranceQuoteUrl: String,
 });
 
 const page = usePage();
@@ -198,7 +198,6 @@ const travelerTable = reactive({
 
 const submitTraveler = isValid => {
   if (!isValid) return;
-  console.log(travelerForm);
   if (travelerForm.id) {
     editTraveler(isValid);
   } else {
@@ -868,8 +867,17 @@ const getPlanDetails = id => {
   }
 };
 
-onMounted(() => {
-});
+const { copy, copied } = useClipboard();
+const onCopyText = text => {
+  copy(text);
+  if (copied)
+    notification.success({
+      title: 'Link copied to clipboard',
+      position: 'top',
+    });
+};
+
+onMounted(() => {});
 </script>
 <template>
   <div>
@@ -1486,7 +1494,7 @@ onMounted(() => {
     <x-modal v-model="modals.doc" size="xl" show-close backdrop>
       <template #header> Upload Documents </template>
       <LazyDocumentUploader
-        :members="memberDataDocs(membersDetail)"
+        :members="memberDataDocs(travelers)"
         :doc-types="documentTypes"
         :docs="quoteDocuments || []"
         :cdn="cdnPath"
@@ -1539,6 +1547,14 @@ onMounted(() => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
+    <x-button
+      v-if="listQuotePlans.length > 0 && permissions.canNotApprovePayments"
+      size="sm"
+      color="orange"
+      @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
+    >
+      Copy Link
+    </x-button>
     </div>
     <div v-if="typeof listQuotePlans !== 'string'">
       <DataTable
