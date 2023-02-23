@@ -40,7 +40,9 @@ class LeadAllocationJob implements ShouldQueue
         try {
             info('Lead Allocation Job Started');
 
-            now()->toTimeString() >= '23:55' ?? $leadAllocationService->setAdvisorsToUnavailable();
+            if (now()->toTimeString() >= '23:55:00') {
+                $leadAllocationService->setAdvisorsToUnavailable();
+            }
 
             $leadAllocationService->updateAllocationStatusIfNeeded();
 
