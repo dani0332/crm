@@ -104,6 +104,10 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchGetData()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])->filter()->simplePaginate();
+        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->filter()
+            ->orderBy('created_at', 'desc')
+            ->simplePaginate();
+
     }
 }

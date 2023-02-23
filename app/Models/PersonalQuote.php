@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
@@ -77,7 +78,7 @@ class PersonalQuote extends Model
      */
     public function getCreatedAtAttribute($date)
     {
-        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        if(!empty($date)) return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
     }
 
     /**
@@ -86,7 +87,7 @@ class PersonalQuote extends Model
      */
     public function getUpdatedAtAttribute($date)
     {
-        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        if(!empty($date)) return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
     }
 
     /**
