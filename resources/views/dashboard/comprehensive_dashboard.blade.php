@@ -68,7 +68,6 @@
     $(function() {
         createComprehensiveConversionChart(comprehensiveDashboardStats);
         $('#tier-filter, #user-filter, #team-filter , #excludeManualFilter').on('change', function(e) {
-            debugger;
             var tierFilterValue = $('#tier-filter').val();
             var userFilterValue = $('#user-filter').val();
             var teamFilterValue = $('#team-filter').val();
