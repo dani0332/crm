@@ -759,4 +759,15 @@ class LeadAllocationService extends BaseService
 
         return $shouldProcess;
     }
+
+    public function shouldResetUserAssignmentCountAndAvailability()
+    {
+        $shouldProcess = false;
+
+        if (now()->toTimeString() >= $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET')) {
+            $shouldProcess = true;
+        }
+
+        return $shouldProcess;
+    }
 }
