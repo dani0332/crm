@@ -67,10 +67,10 @@
     }
     $(function() {
         createComprehensiveConversionChart(comprehensiveDashboardStats);
-        $('#tier-filter, #userFilter, #team-filter , #excludeManualFilter').on('change', function(e) {
+        $('#tier-filter, #user-filter, #team-filter , #excludeManualFilter').on('change', function(e) {
             debugger;
             var tierFilterValue = $('#tier-filter').val();
-            var userFilterValue = $('#userFilter option:selected').val();
+            var userFilterValue = $('#user-filter').val();
             var teamFilterValue = $('#team-filter').val();
             if(e.target.id == 'team-filter') {
                 $.ajax({
@@ -82,9 +82,9 @@
                     },
                     success: function (users) {
                         if (users) {
-                            $('#userFilter').empty();
+                            $('#user-filter').empty();
                             users.forEach(user => {
-                                $('#userFilter').append($('<option>', {
+                                $('#user-filter').append($('<option>', {
                                     value: user.id,
                                     text : user.name
                                 }));
@@ -143,6 +143,7 @@
         },
     }
 
+    new TomSelect(["#user-filter"], selectSettings);
     new TomSelect(["#tier-filter"], selectSettings);
     new TomSelect(["#team-filter"], selectSettings);
 </script>
@@ -152,8 +153,8 @@
     <div class="flex gap-4 justify-end mb-4">
         <div>
         <label>Advisor Filter</label>
-            <select id="userFilter" class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
-                <option value="">All Users</option>
+        <select multiple name="users[]" id="user-filter">
+                <option value="">Select Users</option>
                 @foreach ($carUsers as $carUser)
                 <option value="{{$carUser->id}}"> {{ $carUser->name }} </option>
                 @endforeach
