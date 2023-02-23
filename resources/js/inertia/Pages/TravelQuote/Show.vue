@@ -1556,7 +1556,8 @@ onMounted(() => {});
       Copy Link
     </x-button>
     </div>
-    <div v-if="typeof listQuotePlans !== 'string'">
+
+    <div v-if="listQuotePlans.length > 0">
       <DataTable
         table-class-name="tablefixed compact"
         :headers="availablePlansTable.columns"
@@ -1567,11 +1568,11 @@ onMounted(() => {});
       >
         <template #item-providerName="item">
           <span class="text-primary-600">{{
-            item.providerName.toUpperCase()
+            item.providerName?.toUpperCase()
           }}</span>
         </template>
         <template #item-name="item">
-          <span class="text-primary-600">{{ item.name.toUpperCase() }}</span>
+          <span class="text-primary-600">{{ item.name?.toUpperCase() }}</span>
         </template>
         <template #item-discountPremium="item">
           <span class="text-primary-600">{{
