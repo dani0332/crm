@@ -5202,7 +5202,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.quoteForm.first_name = $event;
         }),
         type: "text",
-        label: "FIRST NAME",
+        label: "First Name*",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         error: $setup.quoteForm.errors.first_name
@@ -5214,7 +5214,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.quoteForm.last_name = $event;
         }),
         type: "text",
-        label: "LAST NAME",
+        label: "Last Name*",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         error: $setup.quoteForm.errors.last_name
@@ -5226,7 +5226,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.quoteForm.email = $event;
         }),
         type: "email",
-        label: "EMAIL",
+        label: "Email*",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         error: $setup.quoteForm.errors.email
@@ -5238,7 +5238,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.quoteForm.mobile_no = $event;
         }),
         type: "tel",
-        label: "MOBILE NUMBER",
+        label: "Phone Number*",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         error: $setup.quoteForm.errors.mobile_no
@@ -5250,7 +5250,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.quoteForm.dob = $event;
         }),
         type: "date",
-        label: "DATE OF BIRTH",
+        label: "Date of Birth",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         error: $setup.quoteForm.errors.dob
@@ -5261,7 +5261,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
           return $setup.quoteForm.nationality_id = $event;
         }),
-        label: "NATIONALITY",
+        label: "Nationality*",
         single: true,
         options: $props.nationalities.map(function (item) {
           return {
@@ -5278,7 +5278,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
           return $setup.quoteForm.uae_license_held_for_id = $event;
         }),
-        label: "UAE licence held for",
+        label: "UAE licence held for*",
         rules: [$setup.rules.isRequired],
         options: $props.uaeLicenses.map(function (item) {
           return {
@@ -5296,7 +5296,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.quoteForm.bike_company_to_insure = $event;
         }),
         type: "text",
-        label: "Bike(s) to insure",
+        label: "Bike(s) to insure*",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         error: $setup.quoteForm.errors.bike_company_to_insure
@@ -5308,7 +5308,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.quoteForm.asset_value = $event;
         }),
         type: "number",
-        label: "BiKe Value",
+        label: "Bike value(AED)*",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         error: $setup.quoteForm.errors.asset_value
@@ -5319,7 +5319,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
           return $setup.quoteForm.year_of_manufacture = $event;
         }),
-        label: "Year Of Manufacture",
+        label: "Year of manufacture*",
         rules: [$setup.rules.isRequired],
         options: $props.yearOfManufacture.map(function (item) {
           return {
@@ -5336,7 +5336,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
           return $setup.quoteForm.currently_insured_with_id = $event;
         }),
-        label: "Currently Insured With",
+        label: "Currently with:*",
         rules: [$setup.rules.isRequired],
         options: $props.insuranceProviders.map(function (item) {
           return {

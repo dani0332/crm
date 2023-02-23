@@ -103,7 +103,7 @@ function onSubmit(isValid) {
                 <x-input
                     v-model="quoteForm.first_name"
                     type="text"
-                    label="FIRST NAME"
+                    label="First Name*"
                     :rules="[rules.isRequired]"
                     class="w-full"
                     :error="quoteForm.errors.first_name"
@@ -112,7 +112,7 @@ function onSubmit(isValid) {
                 <x-input
                     v-model="quoteForm.last_name"
                     type="text"
-                    label="LAST NAME"
+                    label="Last Name*"
                     :rules="[rules.isRequired]"
                     class="w-full"
                     :error="quoteForm.errors.last_name"
@@ -121,7 +121,7 @@ function onSubmit(isValid) {
                 <x-input
                     v-model="quoteForm.email"
                     type="email"
-                    label="EMAIL"
+                    label="Email*"
                     :rules="[rules.isRequired]"
                     class="w-full"
                     :error="quoteForm.errors.email"
@@ -130,7 +130,7 @@ function onSubmit(isValid) {
                 <x-input
                     v-model="quoteForm.mobile_no"
                     type="tel"
-                    label="MOBILE NUMBER"
+                    label="Phone Number*"
                     :rules="[rules.isRequired]"
                     class="w-full"
                     :error="quoteForm.errors.mobile_no"
@@ -139,7 +139,7 @@ function onSubmit(isValid) {
                 <x-input
                     v-model="quoteForm.dob"
                     type="date"
-                    label="DATE OF BIRTH"
+                    label="Date of Birth"
                     :rules="[rules.isRequired]"
                     class="w-full"
                     :error="quoteForm.errors.dob"
@@ -147,7 +147,7 @@ function onSubmit(isValid) {
 
                 <ComboBox
                     v-model="quoteForm.nationality_id"
-                    label="NATIONALITY"
+                    label="Nationality*"
                     :single="true"
                     :options="
             nationalities.map(item => ({
@@ -161,7 +161,7 @@ function onSubmit(isValid) {
 
                 <x-select
                     v-model="quoteForm.uae_license_held_for_id"
-                    label="UAE licence held for"
+                    label="UAE licence held for*"
                     :rules="[rules.isRequired]"
                     :options="
                         uaeLicenses.map(item => ({
@@ -176,7 +176,7 @@ function onSubmit(isValid) {
                 <x-input
                     v-model="quoteForm.bike_company_to_insure"
                     type="text"
-                    label="Bike(s) to insure"
+                    label="Bike(s) to insure*"
                     :rules="[rules.isRequired]"
                     class="w-full"
                     :error="quoteForm.errors.bike_company_to_insure"
@@ -185,7 +185,7 @@ function onSubmit(isValid) {
                 <x-input
                     v-model="quoteForm.asset_value"
                     type="number"
-                    label="BiKe Value"
+                    label="Bike value(AED)*"
                     :rules="[rules.isRequired]"
                     class="w-full"
                     :error="quoteForm.errors.asset_value"
@@ -193,7 +193,7 @@ function onSubmit(isValid) {
 
                 <x-select
                     v-model="quoteForm.year_of_manufacture"
-                    label="Year Of Manufacture"
+                    label="Year of manufacture*"
                     :rules="[rules.isRequired]"
                     :options="
                         yearOfManufacture.map(item => ({
@@ -207,7 +207,7 @@ function onSubmit(isValid) {
 
                 <x-select
                     v-model="quoteForm.currently_insured_with_id"
-                    label="Currently Insured With"
+                    label="Currently with:*"
                     :rules="[rules.isRequired]"
                     :options="
                         insuranceProviders.map(item => ({
