@@ -81,11 +81,6 @@ const historyDataTable = [
                     </div>
 
                     <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">CREATED DATE</dt>
-                        <dd>{{ quote.created_at }}</dd>
-                    </div>
-
-                    <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">ADVISOR</dt>
                         <dd>{{ quote.advisor?.email }}</dd>
                     </div>
@@ -93,6 +88,21 @@ const historyDataTable = [
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">SOURCE</dt>
                         <dd>{{ quote.source }}</dd>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">CREATED DATE</dt>
+                        <dd>{{ quote.created_at }}</dd>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">CREATED BY</dt>
+                        <dd>{{ quote?.created_by?.email }}</dd>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">UPDATED BY</dt>
+                        <dd>{{ quote?.updated_by?.email }}</dd>
                     </div>
 
                     <div class="grid sm:grid-cols-2">

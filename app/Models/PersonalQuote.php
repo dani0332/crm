@@ -100,6 +100,21 @@ class PersonalQuote extends Model
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function createdBy() {
+        return $this->belongsTo(User::class)->select(['id', 'name', 'email']);
+    }
+
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function updatedBy() {
+        return $this->belongsTo(User::class)->select(['id', 'name', 'email']);
+    }
+
+    /**
      * @param $date
      * @return string
      */
