@@ -43,6 +43,7 @@ class BikeQuoteRepository extends BaseRepository
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
+            'createdById' => Auth::user()->id
         ];
 
         info( 'bikeQuote:' . json_encode($quoteData));
