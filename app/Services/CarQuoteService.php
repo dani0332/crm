@@ -1195,7 +1195,7 @@ class CarQuoteService extends BaseService
                     'landLine' => $currentAdvisor->landline_no,
                     'mobilePhone' => $currentAdvisor->mobile_no,
                     'advisorEmail' => $currentAdvisor->email,
-                    'cdbId' => $lead->code,
+                    'carQuoteId' => $lead->code,
                     'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
                 ];
 

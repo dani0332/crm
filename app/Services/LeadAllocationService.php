@@ -542,7 +542,7 @@ class LeadAllocationService extends BaseService
             'landLine' => $user->landline_no,
             'mobilePhone' => $user->mobile_no,
             'advisorEmail' => $user->email,
-            'cdbId' => $carQuote->code,
+            'carQuoteId' => $carQuote->code,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
         ];
 
