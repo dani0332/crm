@@ -111,11 +111,6 @@ const historyDataTable = [
                     </div>
 
                     <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">RENEWAL BATCH</dt>
-                        <dd>{{ quote.renewal_batch }}</dd>
-                    </div>
-
-                    <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">LOST REASON</dt>
                         <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
                     </div>
@@ -195,7 +190,7 @@ const historyDataTable = [
 
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">DATE OF BIRTH</dt>
-                        <dd>{{ quote.dob }}</dd>
+                        <dd>{{ quote.dob_formatted }}</dd>
                     </div>
 
                 </dl>
@@ -210,7 +205,7 @@ const historyDataTable = [
                 <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
 
                     <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">PREVIOUS QUOTE POLICY NUMBER</dt>
+                        <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
                         <dd>{{ quote.previous_quote_policy_number }}</dd>
                     </div>
 
@@ -222,6 +217,11 @@ const historyDataTable = [
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
                         <dd>{{ quote.previous_quote_policy_premium }}</dd>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">RENEWAL BATCH</dt>
+                        <dd>{{ quote.renewal_batch }}</dd>
                     </div>
 
                 </dl>
