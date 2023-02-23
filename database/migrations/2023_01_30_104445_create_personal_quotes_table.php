@@ -71,6 +71,12 @@ class CreatePersonalQuotesTable extends Migration
                 $table->string('notes', 500)->nullable();
                 $table->boolean('is_ecommerce')->default(0);
 
+                $table->unsignedBigInteger('created_by_id')->nullable();
+                $table->foreign('created_by_id')->references('id')->on('users')->onDelete('no action');
+
+                $table->unsignedBigInteger('updated_by_id')->nullable();
+                $table->foreign('updated_by_id')->references('id')->on('users');
+
                 $table->dateTime('created_at')->nullable();
                 $table->dateTime('updated_at')->nullable();
             });
