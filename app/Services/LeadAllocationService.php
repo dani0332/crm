@@ -764,9 +764,10 @@ class LeadAllocationService extends BaseService
     {
         $shouldProcess = false;
 
-        if (now()->toTimeString() >= $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET'))  {
+        if (now()->toTimeString() >= $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET')) {
             $shouldProcess = true;
         }
+
         return $shouldProcess;
     }
 }
