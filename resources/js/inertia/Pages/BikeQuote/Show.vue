@@ -77,7 +77,7 @@ const historyDataTable = [
                 <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CDB ID</dt>
-                        <dd>{{ quote.uuid }}</dd>
+                        <dd>{{ quote.code }}</dd>
                     </div>
 
                     <div class="grid sm:grid-cols-2">

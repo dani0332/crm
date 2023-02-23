@@ -76,6 +76,7 @@ function onSubmit(isValid) {
                 }, 500);
             },
         });
+
     }
 }
 
