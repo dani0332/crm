@@ -3751,7 +3751,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     documentTypes: Object,
     cdnPath: String,
     memberCategories: Array,
-    emailStatuses: Array,
     isAdmin: Boolean,
     activities: Array,
     customerAdditionalContacts: Array
@@ -3789,8 +3788,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       return reason.text === page.props.quote.lost_reason;
     })) === null || _page$props$lostReaso === void 0 ? void 0 : _page$props$lostReaso.id) || null);
     var leadDuplicateForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
-      modelType: 'travel',
-      parentType: 'travel',
+      modelType: 'life',
+      parentType: 'life',
       entityId: page.props.quote.id,
       entityCode: page.props.quote.code,
       entityUId: page.props.quote.uid,
@@ -3849,7 +3848,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       planDetails: false
     });
     var leadStatusForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
-      modelType: 'Travel',
+      modelType: 'Life',
       leadId: page.props.quote.id,
       quote_uuid: page.props.quote.uuid,
       assigned_to_user_id: page.props.quote.advisor_id,
@@ -3868,7 +3867,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     });
 
     var onLeadStatus = function onLeadStatus() {
-      leadStatusForm.post("/quotes/Travel/".concat(page.props.quote.id, "/update-lead-status"), {
+      leadStatusForm.post("/quotes/Life/".concat(page.props.quote.id, "/update-lead-status"), {
         preserveScroll: true,
         onError: function onError(errors) {
           console.log(errors);
@@ -4066,46 +4065,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     };
 
-    var emailStatusesTable = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
-      isLoading: false,
-      columns: [{
-        text: 'Id',
-        value: 'id'
-      }, {
-        text: 'Email Subject',
-        value: 'email_subject'
-      }, {
-        text: 'Email Address',
-        value: 'email_address'
-      }, {
-        text: 'Status',
-        value: 'status'
-      }, {
-        text: 'Reason',
-        value: 'reason'
-      }, {
-        text: 'Template Id',
-        value: 'template_id'
-      }, {
-        text: 'Customer Id',
-        value: 'customer_id'
-      }, {
-        text: 'Created At',
-        value: 'created_at'
-      }, {
-        text: 'Updated At',
-        value: 'updated_at'
-      }]
-    });
-    var emailStatusesTableColumns = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
-      return emailStatusesTable.columns.filter(function (column) {
-        if (!page.props.isAdmin) {
-          return column.value !== 'customer_id' && column.value !== 'template_id';
-        }
-
-        return column;
-      });
-    });
     var advisorOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
       return page.props.advisors.map(function (advisor) {
         return {
@@ -4134,7 +4093,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       additional_contact_val: null,
       quote_id: page.props.quote.id,
       customer_id: page.props.quote.customer_id,
-      quote_type: 'travel'
+      quote_type: 'life'
     });
 
     var onAdditionalContactSubmit = function onAdditionalContactSubmit(isValid) {
@@ -4195,7 +4154,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         quote_id: page.props.quote.id,
         key: confirmData.contactPrimary.key,
         value: confirmData.contactPrimary.value,
-        quote_type: 'travel'
+        quote_type: 'life'
       }, {
         preserveScroll: true,
         onBefore: function onBefore() {
@@ -4329,7 +4288,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
     var getPlanDetails = function getPlanDetails(id) {
       try {
-        axios__WEBPACK_IMPORTED_MODULE_5__["default"].get("/quotes/travel/".concat(page.props.quote.uuid, "/plan_details/").concat(id)).then(function (res) {
+        axios__WEBPACK_IMPORTED_MODULE_5__["default"].get("/quotes/life/".concat(page.props.quote.uuid, "/plan_details/").concat(id)).then(function (res) {
           planDetails.value = res.data;
           modals.planDetails = true;
         })["catch"](function (err) {
@@ -4386,8 +4345,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       sendPolicyToClient: sendPolicyToClient,
       onDocDelete: onDocDelete,
       confirmDeleteDoc: confirmDeleteDoc,
-      emailStatusesTable: emailStatusesTable,
-      emailStatusesTableColumns: emailStatusesTableColumns,
       advisorOptions: advisorOptions,
       additionalContactTable: additionalContactTable,
       additionalContact: additionalContact,
@@ -12816,7 +12773,7 @@ var _hoisted_1 = {
 
 var _hoisted_2 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", {
   "class": "text-xl font-semibold"
-}, "Travel Detail", -1
+}, "Life Detail", -1
 /* HOISTED */
 );
 
@@ -13357,86 +13314,68 @@ var _hoisted_122 = {
 var _hoisted_123 = {
   "class": "p-4 rounded shadow mb-6 bg-white"
 };
-
-var _hoisted_124 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", {
-  "class": "flex flex-wrap gap-4 justify-between items-center mb-4"
-}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h3", {
-  "class": "font-semibold text-primary-800 text-lg"
-}, "Email Status")], -1
-/* HOISTED */
-);
-
-var _hoisted_125 = {
-  "class": "text-primary-600"
-};
-var _hoisted_126 = {
-  "class": "text-primary-600"
-};
-var _hoisted_127 = {
-  "class": "p-4 rounded shadow mb-6 bg-white"
-};
-var _hoisted_128 = {
+var _hoisted_124 = {
   "class": "flex flex-wrap gap-3 justify-between items-center mb-4"
 };
-var _hoisted_129 = {
+var _hoisted_125 = {
   "class": "font-semibold text-primary-800 text-lg"
 };
-var _hoisted_130 = {
+var _hoisted_126 = {
   key: 0
 };
-var _hoisted_131 = {
+var _hoisted_127 = {
   key: 1
 };
-var _hoisted_132 = {
+var _hoisted_128 = {
   "class": "space-x-4"
 };
-var _hoisted_133 = {
+var _hoisted_129 = {
   "class": "grid gap-4"
 };
-var _hoisted_134 = {
+var _hoisted_130 = {
   "class": "text-right space-x-4 mt-12"
 };
 
-var _hoisted_135 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, "Are you sure you want to delete this?", -1
+var _hoisted_131 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, "Are you sure you want to delete this?", -1
 /* HOISTED */
 );
 
-var _hoisted_136 = {
+var _hoisted_132 = {
   "class": "text-right space-x-4"
 };
 
-var _hoisted_137 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, "Are you sure you want to make this information as Primary?", -1
+var _hoisted_133 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, "Are you sure you want to make this information as Primary?", -1
 /* HOISTED */
 );
 
-var _hoisted_138 = {
+var _hoisted_134 = {
   "class": "text-right space-x-4"
 };
-var _hoisted_139 = {
+var _hoisted_135 = {
   "class": "p-4 rounded shadow mb-6 bg-white"
 };
 
-var _hoisted_140 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h3", {
+var _hoisted_136 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h3", {
   "class": "font-semibold text-primary-800 text-lg"
 }, "Lead History", -1
 /* HOISTED */
 );
 
-var _hoisted_141 = {
+var _hoisted_137 = {
   key: 0,
   "class": "text-center py-3"
 };
-var _hoisted_142 = {
+var _hoisted_138 = {
   "class": "p-4 rounded shadow mb-6 bg-white"
 };
 
-var _hoisted_143 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h3", {
+var _hoisted_139 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h3", {
   "class": "font-semibold text-primary-800 text-lg"
 }, "Audit Logs", -1
 /* HOISTED */
 );
 
-var _hoisted_144 = {
+var _hoisted_140 = {
   key: 0,
   "class": "text-center py-3"
 };
@@ -13462,7 +13401,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_DataTable = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("DataTable");
 
   return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Head"], {
-    title: "Travel Detail"
+    title: "Life Detail"
   }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
     size: "sm",
     color: "#ff5e00",
@@ -13477,7 +13416,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, 8
   /* PROPS */
   , ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Link"], {
-    href: "/quotes/travel",
+    href: "/quotes/life",
     "preserve-scroll": ""
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -13487,7 +13426,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         tag: "div"
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Travel List ")];
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)("Life List ")];
         }),
         _: 1
         /* STABLE */
@@ -14049,30 +13988,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   }, 8
   /* PROPS */
-  , ["modelValue"])])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_123, [_hoisted_124, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_DataTable, {
-    "table-class-name": "tablefixed compact",
-    headers: $setup.emailStatusesTableColumns,
-    items: $props.emailStatuses || [],
-    "border-cell": "",
-    "hide-rows-per-page": "",
-    "rows-per-page": 15
-  }, {
-    "item-email_status": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (item) {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", _hoisted_125, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(item.email_status.toUpperCase()), 1
-      /* TEXT */
-      )];
-    }),
-    "item-reason": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (item) {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", _hoisted_126, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(item.reason.toUpperCase()), 1
-      /* TEXT */
-      )];
-    }),
-    _: 1
-    /* STABLE */
-
-  }, 8
-  /* PROPS */
-  , ["headers", "items"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_127, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_128, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h3", _hoisted_129, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Customer Additional Contacts "), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_tag, {
+  , ["modelValue"])])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_123, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_124, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h3", _hoisted_125, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Customer Additional Contacts "), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_tag, {
     size: "sm"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -14106,10 +14022,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, {
     "item-key": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (_ref2) {
       var key = _ref2.key;
-      return [key === 'email' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("span", _hoisted_130, " Email Address ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("span", _hoisted_131, " Mobile Number "))];
+      return [key === 'email' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("span", _hoisted_126, " Email Address ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("span", _hoisted_127, " Mobile Number "))];
     }),
     "item-action": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (item) {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_132, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_128, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "xs",
         color: "emerald",
         outlined: "",
@@ -14166,7 +14082,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "auto-focus": false
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_133, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_129, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
             modelValue: $setup.additionalContact.additional_contact_type,
             "onUpdate:modelValue": _cache[19] || (_cache[19] = function ($event) {
               return $setup.additionalContact.additional_contact_type = $event;
@@ -14194,7 +14110,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "class": "w-full"
           }, null, 8
           /* PROPS */
-          , ["modelValue", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_134, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+          , ["modelValue", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_130, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
             size: "sm",
             onClick: _cache[21] || (_cache[21] = (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)(function ($event) {
               return $setup.modals.addContact = false;
@@ -14244,7 +14160,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Delete Additional Contact ")];
     }),
     actions: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_136, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_132, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
         onClick: _cache[23] || (_cache[23] = (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)(function ($event) {
@@ -14274,7 +14190,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       , ["onClick", "loading"])])];
     }),
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-      return [_hoisted_135];
+      return [_hoisted_131];
     }),
     _: 1
     /* STABLE */
@@ -14293,7 +14209,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Primary Additional Contact ")];
     }),
     actions: (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_138, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_134, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
         onClick: _cache[25] || (_cache[25] = (0,vue__WEBPACK_IMPORTED_MODULE_0__.withModifiers)(function ($event) {
@@ -14323,16 +14239,16 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       , ["onClick", "loading"])])];
     }),
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-      return [_hoisted_137];
+      return [_hoisted_133];
     }),
     _: 1
     /* STABLE */
 
   }, 8
   /* PROPS */
-  , ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_139, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", null, [_hoisted_140, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
+  , ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_135, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", null, [_hoisted_136, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
-  })]), $setup.historyData === null ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_141, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+  })]), $setup.historyData === null ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_137, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
     size: "sm",
     color: "primary",
     outlined: "",
@@ -14358,9 +14274,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "hide-footer": $setup.historyData.length < 15
   }, null, 8
   /* PROPS */
-  , ["items", "hide-footer"]))]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_142, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", null, [_hoisted_143, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
+  , ["items", "hide-footer"]))]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_138, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", null, [_hoisted_139, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
-  })]), $setup.auditLogsData === null ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_144, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+  })]), $setup.auditLogsData === null ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_140, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
     size: "sm",
     color: "primary",
     outlined: "",
@@ -17389,7 +17305,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
     /* STABLE */
 
-  })) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)]), typeof $props.listQuotePlans !== 'string' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_149, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_DataTable, {
+  })) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)]), $props.listQuotePlans.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_149, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_DataTable, {
     "table-class-name": "tablefixed compact",
     headers: $setup.availablePlansTable.columns,
     items: $props.listQuotePlans || [],
@@ -17398,12 +17314,16 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "rows-per-page": 15
   }, {
     "item-providerName": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (item) {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", _hoisted_150, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(item.providerName.toUpperCase()), 1
+      var _item$providerName;
+
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", _hoisted_150, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)((_item$providerName = item.providerName) === null || _item$providerName === void 0 ? void 0 : _item$providerName.toUpperCase()), 1
       /* TEXT */
       )];
     }),
     "item-name": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (item) {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", _hoisted_151, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(item.name.toUpperCase()), 1
+      var _item$name;
+
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", _hoisted_151, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)((_item$name = item.name) === null || _item$name === void 0 ? void 0 : _item$name.toUpperCase()), 1
       /* TEXT */
       )];
     }),
