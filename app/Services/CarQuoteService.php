@@ -1165,6 +1165,7 @@ class CarQuoteService extends BaseService
 
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
             $lead = $this->getEntityPlain($leadId);
+            $isReassignment = $lead->advisor_id != null ? true : false;
             $previousAdvisorId = $lead->advisor_id;
             $lead->advisor_id = $userId;
             $lead->auto_assigned = false;
@@ -1194,11 +1195,13 @@ class CarQuoteService extends BaseService
                     'landLine' => $currentAdvisor->landline_no,
                     'mobilePhone' => $currentAdvisor->mobile_no,
                     'advisorEmail' => $currentAdvisor->email,
+                    'cdbId' => $lead->code,
+                    'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $lead->uuid,
                 ];
 
-                $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
-
-                $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-reassignment-email');
+                $emailTemplateIdReassign = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
+                $emailTemplateIIntro = (int) $this->applicationStorageService->getValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
+                $this->sendEmailCustomerService->sendLMSIntroEmail($isReassignment ? $emailTemplateIdReassign : $emailTemplateIIntro, $emailData, 'send-lms-reassignment-email');
             }
         }
 
