@@ -543,7 +543,7 @@ class LeadAllocationService extends BaseService
             'mobilePhone' => $user->mobile_no,
             'advisorEmail' => $user->email,
             'cdbId' => $carQuote->code,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
         ];
 
         return $emailData;
@@ -724,7 +724,7 @@ class LeadAllocationService extends BaseService
     {
         $currentDay = Carbon::parse(now())->format('l');
 
-        $resetKeyTime = $currentDay == DaysNameEnum::SATURDAY ? "SATURDAY_CAP_RESET_TIME" : "NORMAL_CAP_RESET_TIME";
+        $resetKeyTime = $currentDay == DaysNameEnum::SATURDAY ? 'SATURDAY_CAP_RESET_TIME' : 'NORMAL_CAP_RESET_TIME';
 
         $endTimeForAllocation = Carbon::parse($this->getAppStorageValueByKey($resetKeyTime))->toTimeString();
 

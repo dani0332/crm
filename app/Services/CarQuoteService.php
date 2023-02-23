@@ -1196,7 +1196,7 @@ class CarQuoteService extends BaseService
                     'mobilePhone' => $currentAdvisor->mobile_no,
                     'advisorEmail' => $currentAdvisor->email,
                     'cdbId' => $lead->code,
-                    'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $lead->uuid,
+                    'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
                 ];
 
                 $emailTemplateIdReassign = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
