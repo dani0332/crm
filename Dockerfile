@@ -13,7 +13,7 @@ WORKDIR /var/www
 # Install php extensions
 #RUN chmod +x /usr/local/bin/install-php-extensions && sync
 #RUN install-php-extensions mbstring pdo_mysql zip exif pcntl gd memcached
-RUN apt-get install php-mbstring php-pdo_mysql exif php-gd php-memcached 
+RUN apt-get install php8.1-mbstring php8.1-mysql php8.1-gd 
 RUN pecl install redis \
     && docker-php-ext-enable redis
 
