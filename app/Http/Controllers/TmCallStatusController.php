@@ -51,6 +51,7 @@ class TmCallStatusController extends Controller
     /**
      * Store a newly created resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -80,6 +81,7 @@ class TmCallStatusController extends Controller
     /**
      * Display the specified resource.
      *
+     * @param  \App\Models\TmCallStatus  $tmcallstatus
      * @return \Illuminate\Http\Response
      */
     public function show(TmCallStatus $tmcallstatus)
@@ -90,6 +92,7 @@ class TmCallStatusController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
+     * @param  \App\Models\TmCallStatus  $tmcallstatus
      * @return \Illuminate\Http\Response
      */
     public function edit(TmCallStatus $tmcallstatus)
@@ -100,6 +103,8 @@ class TmCallStatusController extends Controller
     /**
      * Update the specified resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\TmCallStatus  $tmcallstatus
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, TmCallStatus $tmcallstatus)
@@ -128,6 +133,7 @@ class TmCallStatusController extends Controller
     /**
      * Remove the specified resource from storage.
      *
+     * @param  \App\Models\TmCallStatus  $tmcallstatus
      * @return \Illuminate\Http\Response
      */
     public function destroy(TmCallStatus $tmcallstatus)

@@ -34,6 +34,9 @@ class RenewalsImportUpdate implements OnEachRow, WithStartRow, WithValidation, S
         $this->uploadType = $uploadType;
     }
 
+    /**
+     * @param  Row  $row
+     */
     public function onRow(Row $row)
     {
         $this->rows++;

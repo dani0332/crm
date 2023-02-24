@@ -94,6 +94,7 @@ class CustomerController extends Controller
     /**
      * Update the specified resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @param  \App\Customer  $customer
      * @return \Illuminate\Http\Response
      */
@@ -129,6 +130,7 @@ class CustomerController extends Controller
     /**
      * Store a newly uploaded customer.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @param \Illuminate\Http\Response
      */
     public function processCustomerUpload(Request $request)

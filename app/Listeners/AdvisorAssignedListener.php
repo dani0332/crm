@@ -23,6 +23,7 @@ class AdvisorAssignedListener
     /**
      * Handle the event.
      *
+     * @param  \App\Events\AdvisorAssigned  $event
      * @return void
      */
     public function handle(AdvisorAssigned $event)

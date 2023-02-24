@@ -62,6 +62,7 @@ class RewardSliderController extends Controller
     /**
      * Display the specified resource.
      *
+     * @param  \App\Models\RewardSlider  $rewardSlider
      * @return \Illuminate\Http\Response
      */
     public function show(RewardSlider $rewardSlider)
@@ -72,6 +73,7 @@ class RewardSliderController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
+     * @param  \App\Models\RewardSlider  $rewardSlider
      * @return \Illuminate\Http\Response
      */
     public function edit(RewardSlider $rewardSlider)
@@ -83,6 +85,7 @@ class RewardSliderController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\RewardSlider  $rewardSlider
      * @return \Illuminate\Http\Response
      */
     public function update(RewardSliderRequest $request, RewardSlider $rewardSlider)
@@ -107,6 +110,7 @@ class RewardSliderController extends Controller
     /**
      * Remove the specified resource from storage.
      *
+     * @param  \App\Models\RewardSlider  $rewardSlider
      * @return \Illuminate\Http\Response
      */
     public function destroy(RewardSlider $rewardSlider)

@@ -42,6 +42,7 @@ class RenewalsUploadController extends Controller
     /**
      * process upload and create import.
      *
+     * @param  RenewalsUploadRequest  $request
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function renewalsUploadCreate(RenewalsUploadRequest $request)
@@ -101,6 +102,8 @@ class RenewalsUploadController extends Controller
 
     /**
      * renew the quote against the customer.
+     *
+     * @param  \Illuminate\Http\Request  $request
      */
     public function renewalsUploadProcess(Request $request)
     {
@@ -266,6 +269,7 @@ class RenewalsUploadController extends Controller
     /**
      * fetch plans for all pending quotes.
      *
+     * @param $batch
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|never
      */
     public function plansProcesses($batch)
