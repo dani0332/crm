@@ -457,7 +457,7 @@ class LeadAllocationService extends BaseService
                     continue;
                 }
                 info('trying to check tier against the current lead : '.$carLead->code);
-                $selectedTier = $this->getTierForValue($carLead);
+                $selectedTier = $carLead->tier_id == null ? $this->getTierForValue($carLead) : Tier::where('id', $carLead->tier_id)->first();
                 if ($selectedTier) {
                     info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
