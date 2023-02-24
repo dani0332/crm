@@ -34,7 +34,6 @@ class RewardTranslationController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request, Reward $reward)
@@ -117,7 +116,6 @@ class RewardTranslationController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  \App\Reward  $reward
      * @return \Illuminate\Http\Response
      */

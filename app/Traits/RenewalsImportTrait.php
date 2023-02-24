@@ -10,7 +10,6 @@ trait RenewalsImportTrait
     /**
      * map row with keys.
      *
-     * @param $row
      * @return array
      */
     public function mapQuoteData($row)
@@ -34,7 +33,6 @@ trait RenewalsImportTrait
     }
 
     /**
-     * @param $row
      * @return array
      */
     public function mapData($row)
@@ -77,7 +75,6 @@ trait RenewalsImportTrait
     }
 
     /**
-     * @param $value
      * @return bool
      */
     public function validateDate($value)

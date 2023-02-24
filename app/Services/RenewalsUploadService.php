@@ -120,7 +120,6 @@ class RenewalsUploadService
     }
 
     /**
-     * @param $uploadedFile
      * @return RenewalsUploadLeads
      */
     public function createRenewalsLead($uploadedFile, $renewalImportType)
@@ -140,7 +139,6 @@ class RenewalsUploadService
     /**
      * renewals upload and create.
      *
-     * @param $data
      * @return mixed
      */
     public function renewalsUploadCreate($data)
@@ -161,7 +159,6 @@ class RenewalsUploadService
     /**
      * this will be triggered by job to start import process for upload and create.
      *
-     * @param  RenewalsUploadLeads  $renewalsUploadLead
      * @return void
      */
     public function processUploadCreate(RenewalsUploadLeads $renewalsUploadLead)
@@ -210,7 +207,6 @@ class RenewalsUploadService
     }
 
     /**
-     * @param  RenewalsUploadLeads  $renewalsUploadLead
      * @return void
      *
      * @throws \Throwable
@@ -312,7 +308,6 @@ class RenewalsUploadService
      * call get plans
      * todo: refine later.
      *
-     * @param $id
      * @return mixed|string|null
      */
     public function getPlans($id)
@@ -391,8 +386,6 @@ class RenewalsUploadService
     /**
      * fetch plans for individual quote.
      *
-     * @param  RenewalQuoteProcess  $renewalQuoteProcess
-     * @param  RenewalStatusProcess  $renewalStatusProcess
      * @return false|void
      */
     public function fetchQuotePlans(RenewalQuoteProcess $renewalQuoteProcess, RenewalStatusProcess $renewalStatusProcess)
@@ -403,8 +396,7 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
-
-            if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (!$aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first()) ) {
+            if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (! $aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first())) {
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
                 $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
@@ -448,7 +440,6 @@ class RenewalsUploadService
     }
 
     /**
-     * @param $data
      * @return bool
      */
     public function renewalsUploadUpdate($data)
@@ -466,7 +457,6 @@ class RenewalsUploadService
     }
 
     /**
-     * @param  RenewalsUploadLeads  $renewalsUploadLead
      * @return bool
      */
     public function processUploadUpdate(RenewalsUploadLeads $renewalsUploadLead)
@@ -518,7 +508,6 @@ class RenewalsUploadService
     /**
      * create quote object.
      *
-     * @param $quoteType
      * @return false|mixed
      */
     public function createQuoteObject($quoteType)
@@ -532,7 +521,6 @@ class RenewalsUploadService
     /**
      * get quote request detail class.
      *
-     * @param $quoteType
      * @return string
      */
     public function getQuoteRequestDetailClass($quoteType)
@@ -543,7 +531,6 @@ class RenewalsUploadService
     /**
      * clean input.
      *
-     * @param $value
      * @return array|string|string[]
      */
     public function cleanValue($value)
@@ -556,7 +543,6 @@ class RenewalsUploadService
     /**
      * build customer data.
      *
-     * @param $data
      * @return array
      */
     public function buildCustomerData($data)
@@ -599,7 +585,6 @@ class RenewalsUploadService
     /**
      * create new customer with additional mobiles and email if customer doesn't exist.
      *
-     * @param $customerData
      * @return mixed
      */
     public function getCustomer($customerData)
@@ -632,7 +617,6 @@ class RenewalsUploadService
      * update customer detail if required
      * todo: test its working.
      *
-     * @param $customerData
      * @return void
      */
     public function updateCustomer($customerData, $customerId)
@@ -672,7 +656,6 @@ class RenewalsUploadService
     }
 
     /**
-     * @param $shortCode
      * @return mixed
      */
     public function getQuoteTypeByShortCode($shortCode)
@@ -681,7 +664,6 @@ class RenewalsUploadService
     }
 
     /**
-     * @param $claimHistory
      * @return mixed
      */
     public function getClaimHistory($claimHistory)
@@ -692,7 +674,6 @@ class RenewalsUploadService
     /**
      * create quote for all businesses.
      *
-     * @param  RenewalQuoteProcess  $renewalQuoteProcess
      * @return void
      */
     public function createQuote(RenewalQuoteProcess $renewalQuoteProcess)
@@ -797,7 +778,6 @@ class RenewalsUploadService
     /**
      * run aml for renewal quote process
      *
-     * @param $renewalQuoteProcess
      * @return bool
      */
     public function checkAml($renewalQuoteProcess)
@@ -829,7 +809,6 @@ class RenewalsUploadService
     /**
      * ignore fields having empty/null.
      *
-     * @param $values
      * @return \Illuminate\Support\Collection
      */
     public function getNonEmptyValues($values)
@@ -842,7 +821,6 @@ class RenewalsUploadService
     /**
      * convert date from d/m/Y to Y-m-d.
      *
-     * @param $date
      * @return string
      */
     public function formatDate($date)
@@ -851,7 +829,6 @@ class RenewalsUploadService
     }
 
     /**
-     * @param  RenewalQuoteProcess  $renewalQuoteProcess
      * @return mixed
      */
     public function updateQuote(RenewalQuoteProcess $renewalQuoteProcess)
@@ -992,8 +969,6 @@ class RenewalsUploadService
     /**
      * todo: add conditions if before updating plan info.
      *
-     * @param $data
-     * @param $quote
      * @return void
      */
     public function createPlan($data, $quote, $createdById)
@@ -1194,10 +1169,7 @@ class RenewalsUploadService
     /**
      * //$modelName, $quoteRequestIdName.
      *
-     * @param $quoteId
      * @param $quoteRequestIdName
-     * @param $currentUserId
-     * @param $advisorId
      * @return false|mixed
      */
     public function updateAdvisorAssignedDateTime($quoteType, $quoteId, $currentUserId, $advisorId)
