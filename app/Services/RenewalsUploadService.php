@@ -403,6 +403,13 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
+
+            if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (!$aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first()) ) {
+                info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
+                $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
+                info('FetchPlans FN: fetchRenewalPlans'.' AML check completed for UUID: '.$quote->uuid);
+            }
+
             if (! empty($leadData->provider_name) && ! empty($leadData->plan_name) && ! empty($leadData->plan_type)) {
                 info('FetchPlans FN: fetchRenewalPlans'.' create manual plan for ('.$leadData->provider_name.') for UUID: '.$quote->uuid);
                 $planResponse = $this->createPlan($renewalQuoteProcess->data, $quote, $renewalStatusProcess->user_id);
