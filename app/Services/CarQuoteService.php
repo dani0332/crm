@@ -1213,17 +1213,17 @@ class CarQuoteService extends BaseService
 
     public function updateTierAndCost($lead)
     {
-        if($lead->tier_id == null) {
+        if ($lead->tier_id == null) {
             info('Manual assignment: tier is not assigned, evaluating tier now');
             $selectedTier = $this->leadAllocationService->getTierForValue($lead);
 
-            if($selectedTier){
-                info('Found tier : '. $selectedTier->name. ', with id : '. $selectedTier->id. ' against lead : '. $lead->code);
+            if ($selectedTier) {
+                info('Found tier : '.$selectedTier->name.', with id : '.$selectedTier->id.' against lead : '.$lead->code);
                 $lead->tier_id = $selectedTier->id;
                 info('since tier is now assigned, we will update the cost per lead from tier');
                 $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
-            }else{
-                info('Unable to find tier against lead : '. $lead->code);
+            } else {
+                info('Unable to find tier against lead : '.$lead->code);
             }
         } else {
             info('since tier is assigned, we will update the cost per lead from tier');
@@ -1366,8 +1366,6 @@ class CarQuoteService extends BaseService
     /**
      * generate PDF for car quote plan and return.
      *
-     * @param $quoteType
-     * @param $data
      * @return array|string[]
      */
     public function exportPlansPdf($quoteType, $data)
