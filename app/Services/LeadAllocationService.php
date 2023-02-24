@@ -705,7 +705,7 @@ class LeadAllocationService extends BaseService
     public function getAppStorageValueByKey($keyName)
     {
         $query = ApplicationStorage::select('value')
-        ->where('key_name', '"'.$keyName.'"')
+        ->where('key_name', $keyName)
         ->first();
 
         if (! $query) {
@@ -734,6 +734,7 @@ class LeadAllocationService extends BaseService
 
         if (now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
             // stopping car lead allocation if the end time for allocation is reached and allocation is still ON
+            info('updateAllocationStatusIfNeeded -- Inside reset case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
 
             // reset the max capacity for each user as the allocation is now stopped
@@ -763,9 +764,14 @@ class LeadAllocationService extends BaseService
     public function shouldResetUserAssignmentCountAndAvailability()
     {
         $shouldProcess = false;
+        $totalResetTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET');
 
-        if (now()->toTimeString() >= $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET')) {
+        info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
+        if (now()->toTimeString() >= $totalResetTime) {
+            info('should total reset is true');
             $shouldProcess = true;
+        } else {
+            info('should total reset is false');
         }
 
         return $shouldProcess;
