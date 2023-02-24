@@ -64,6 +64,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\V2\CycleQuoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -258,6 +259,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteId}/payments', [PersonalQuoteController::class, 'createPayment']);
         Route::patch('{quoteId}/payments/{paymentCode}', [PersonalQuoteController::class, 'updatePayment']);
         Route::resource('bike', BikeQuoteController::class);
+        Route::resource('cycle', CycleQuoteController::class);
     });
 
     Route::group(['prefix' => 'generic'], function () {

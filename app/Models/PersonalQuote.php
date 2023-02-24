@@ -73,6 +73,15 @@ class PersonalQuote extends Model
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function cycleQuote()
+    {
+        return $this->hasOne(CycleQuote::class);
+    }
+
+
+    /**
      * @param $date
      * @return string
      */
