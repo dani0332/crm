@@ -1594,8 +1594,8 @@ onMounted(() => {});
       </DataTable>
     </div>
     <div v-else>
-      <p class="text-center text-primary-600">
-        {{ listQuotePlans.toUpperCase() }}
+      <p class="text-center text-primary-600" v-if="typeof listQuotePlans == 'string'">
+        {{ listQuotePlans?.toUpperCase() }}
       </p>
     </div>
 
