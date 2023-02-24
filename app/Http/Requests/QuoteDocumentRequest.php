@@ -45,8 +45,6 @@ class QuoteDocumentRequest extends FormRequest
 
     /**
      * validate quote record and maximum number of alread uploaded files
-     *
-     * @param $validator
      */
     public function withValidator($validator)
     {

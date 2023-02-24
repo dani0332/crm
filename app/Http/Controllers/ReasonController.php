@@ -57,7 +57,6 @@ class ReasonController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -83,7 +82,6 @@ class ReasonController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  Reason  $reason
      * @return \Illuminate\Http\Response
      */
     public function show(Reason $reason)
@@ -94,7 +92,6 @@ class ReasonController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  Reason  $reason
      * @return \Illuminate\Http\Response
      */
     public function edit(Reason $reason)
@@ -105,8 +102,6 @@ class ReasonController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  Reason  $reason
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Reason $reason)
@@ -128,7 +123,6 @@ class ReasonController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  Reason  $reason
      * @return \Illuminate\Http\Response
      */
     public function destroy(Reason $reason)
