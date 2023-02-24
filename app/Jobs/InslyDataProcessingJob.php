@@ -72,7 +72,6 @@ class InslyDataProcessingJob implements ShouldQueue
     /**
      * The job failed to process.
      *
-     * @param  Exception  $exception
      * @return void
      */
     public function failed(Exception $exception)

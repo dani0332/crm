@@ -32,7 +32,6 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
     private $rows = 0;
 
     /**
-     * @param  array  $row
      * @return \Illuminate\Database\Eloquent\Model|null
      */
     public function model(array $row)
