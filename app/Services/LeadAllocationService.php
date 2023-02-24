@@ -766,11 +766,11 @@ class LeadAllocationService extends BaseService
         $shouldProcess = false;
         $totalResetTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET');
 
-        info('time now is : '. now()->toTimeString(). ', total reset time is : '. $totalResetTime);
+        info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
         if (now()->toTimeString() >= $totalResetTime) {
             info('should total reset is true');
             $shouldProcess = true;
-        }else{
+        } else {
             info('should total reset is false');
         }
 
