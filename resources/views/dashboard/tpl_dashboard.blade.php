@@ -6,8 +6,14 @@
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script src="https://unpkg.com/slim-select@latest/dist/slimselect.min.js"></script>
+<link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet">
+</link>
+<style>
+    .ss-main .ss-values .ss-value .ss-value-delete {
+        width: 18px;
+    }
+</style>
 <script>
     var tplDashboardStatsBarChart = {};
     var tplDashboardStats = <?php echo json_encode($tplDashboardStats) ?>;
@@ -74,11 +80,15 @@
             $.ajax({
                 url: "/get-tpl-filter-stats",
                 type: "post",
-                data: { 'tier_filter' : tierFilterValue, 'team_filter' : teamFilterValue , 'source' : sourceFilterValue } ,
+                data: {
+                    'tier_filter': tierFilterValue,
+                    'team_filter': teamFilterValue,
+                    'source': sourceFilterValue
+                },
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
-                success: function (result) {
+                success: function(result) {
                     if (result) {
                         var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
                         var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
@@ -107,35 +117,39 @@
         });
     });
 
-    const selectSettings = {
-        plugins: ['remove_button', 'checkbox_options'],
-        create: true,
-        onItemAdd: function() {
-            this.setTextboxValue('');
-            this.refreshOptions();
-        },
-    }
+    new SlimSelect({
+        select: '#tier-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Tier',
+        }
+    })
 
-    new TomSelect(["#tier-filter"], selectSettings);
-    new TomSelect(["#team-filter"], selectSettings);
+    new SlimSelect({
+        select: '#team-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Team',
+        }
+    })
 </script>
 @endpush
 
 <div>
     <div class="flex gap-4 justify-end mb-4">
-        <div>
+        <div class="md:w-1/4">
             <select multiple name="tiers[]" id="tier-filter">
-                <option value="">Select Tier</option>
+                <option data-placeholder="true"></option>
                 @foreach ($tiers as $tier)
-                    <option value={{$tier->id}}>{{$tier->name}}</option>
+                <option value={{$tier->id}}>{{$tier->name}}</option>
                 @endforeach
             </select>
         </div>
-        <div>
+        <div class="md:w-1/4">
             <select multiple name="teams[]" id="team-filter">
-                <option value="">Select Team</option>
+                <option data-placeholder="true"></option>
                 @foreach ($teams as $team)
-                <option @if($commonTeam == $team->id) selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
+                <option @if($commonTeam==$team->id) selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
                 @endforeach
             </select>
         </div>
@@ -144,12 +158,4 @@
         <div id="tplConversionDiv"></div>
     </div>
 </div>
-
-<style>
-.ts-control {
-    width: 210px !important;
-    padding: 9px 9px !important;
-    border-radius: 6px !important;
-}
-</style>
 @endsection
