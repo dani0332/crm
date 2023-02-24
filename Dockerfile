@@ -15,7 +15,7 @@ RUN chmod +x /usr/local/bin/install-php-extensions && sync
 RUN install-php-extensions mbstring pdo_mysql zip exif pcntl memcached
 #RUN apt-get install php8.1-mbstring php8.1-mysql php8.1-gd 
 RUN pecl install redis \
-    && docker-php-ext-enable redis
+    && docker-php-ext-enable redis gd
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
