@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
+use App\Http\Requests\CycleQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -34,6 +35,33 @@ class CycleQuoteController extends Controller
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses
         ]);
+    }
+
+
+    /**
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function create()
+    {
+        $data = BikeQuoteRepository::getFormOptions();
+
+        return inertia('CycleQuote/Form', $data);
+    }
+
+    /**
+     * @param $quoteTypeCode
+     * @param  BikeQuoteRequest  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function store(CycleQuoteRequest $request)
+    {
+        $response = CycleQuoteRepository::create($request->validated());
+
+        if (! empty($response->errors) || (! empty($response->errorType) && $response->errorType == 'ERROR')) {
+            vAbort($response->msg);
+        }
+
+        return back()->with('message', 'Quote created successfully');
     }
 
 

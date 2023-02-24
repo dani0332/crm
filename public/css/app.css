@@ -1268,6 +1268,9 @@ html.dark{
 .grid-cols-2{
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.grid-cols-4{
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
 .flex-row{
   flex-direction: row;
 }
@@ -3833,6 +3836,11 @@ label{
 
   .lg\:pl-\[var\(--sidebar-width\)\]{
     padding-left: var(--sidebar-width);
+  }
+
+  .lg\:text-base{
+    font-size: 1rem;
+    line-height: 1.5rem;
   }
 
   .lg\:shadow-none{

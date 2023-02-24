@@ -60,7 +60,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-    router.visit('/personal-quotes/bike', {
+    router.visit('/personal-quotes/cycle', {
         method: 'get',
         data: { page: 1 },
         preserveScroll: true,
@@ -105,10 +105,10 @@ const tableHeader = [
 
 <template>
     <div>
-        <Head title="Bike Quotes" />
+        <Head title="Cycle Quotes" />
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Bike Quotes List</h2>
-            <x-button size="sm" color="#ff5e00" href="/personal-quotes/bike/create">
+            <h2 class="text-xl font-semibold">Cycle Quotes List</h2>
+            <x-button size="sm" color="#ff5e00" href="/personal-quotes/cycle/create">
                 Create Lead
             </x-button>
         </div>
@@ -239,7 +239,7 @@ const tableHeader = [
 
             <template #item-uuid="{ code, uuid }">
                 <Link
-                    :href="`/personal-quotes/bike/${uuid}`"
+                    :href="`/personal-quotes/cycle/${uuid}`"
                     class="text-primary-500 hover:underline"
                 >
                     {{ code }}
