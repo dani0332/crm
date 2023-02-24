@@ -8,12 +8,12 @@ ARG IMCRM_TOKEN
 WORKDIR /var/www
 
 # Add docker php ext repo
-#ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
+ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
 # Install php extensions
-#RUN chmod +x /usr/local/bin/install-php-extensions && sync
-#RUN install-php-extensions mbstring pdo_mysql zip exif pcntl gd memcached
-RUN apt-get install php8.1-mbstring php8.1-mysql php8.1-gd 
+RUN chmod +x /usr/local/bin/install-php-extensions && sync
+RUN install-php-extensions mbstring pdo_mysql zip exif pcntl memcached
+#RUN apt-get install php8.1-mbstring php8.1-mysql php8.1-gd 
 RUN pecl install redis \
     && docker-php-ext-enable redis
 
