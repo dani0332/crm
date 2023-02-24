@@ -25,6 +25,8 @@ class QuoteDocumentController extends Controller
     /**
      * return list of quote documents
      *
+     * @param $quoteType
+     * @param $quoteUuid
      * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function index($quoteType, $quoteUuid)
@@ -39,6 +41,8 @@ class QuoteDocumentController extends Controller
     /**
      * get list of active document types can be presented to customer to upload documents
      *
+     * @param $quoteType
+     * @param  ActivitiesService  $activitiesService
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function getQuoteDocumentsToReceive($quoteType, ActivitiesService $activitiesService)
@@ -53,6 +57,7 @@ class QuoteDocumentController extends Controller
      * upload document to azure first and then record in database
      *
      * @param $type
+     * @param  QuoteDocumentRequest  $request
      * @param  QuoteDocumentService  $quoteDocumentService
      * @return \Illuminate\Http\JsonResponse
      */
@@ -68,6 +73,8 @@ class QuoteDocumentController extends Controller
     /**
      * delete quote document
      *
+     * @param $quoteType
+     * @param  DeleteQuoteDocumentRequest  $request
      * @return \Illuminate\Http\JsonResponse|void
      */
     public function destroy($quoteType, DeleteQuoteDocumentRequest $request)

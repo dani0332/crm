@@ -1159,28 +1159,27 @@ class CarQuoteService extends BaseService
 
     public function processManualLeadAssignment($request): array
     {
+        info('called by : '.debug_backtrace()[1]['function']);
         $userId = (int) $request->assigned_to_id_new;
+        $result = [];
 
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-
-            $isReassignment = $lead->advisor_id != null ? true : false; // checking if the advisor is already assigned or not for reassignment email template
-
-            $previousAdvisorId = $lead->advisor_id; // saving previous advisor before updating the new to update the counts
-
+            $isReassignment = $lead->advisor_id != null ? true : false;
+            $previousAdvisorId = $lead->advisor_id;
             $lead->advisor_id = $userId;
-
             $lead->auto_assigned = false;
 
-            $this->updateTierAndCost($lead); // will assign/update tier and update cost per lead from tier
+            if ($lead->tier_id != null) {
+                $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
+            }
 
             info('Manual assignment done for lead : '.$lead->uuid);
-
-            $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
+            $this->updateChildRecord($lead->id);
 
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
 
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId); // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId);
 
             $lead->save();
 
@@ -1188,7 +1187,6 @@ class CarQuoteService extends BaseService
                 info('Inside sending email for manual assignment');
 
                 $currentAdvisor = User::where('id', $userId)->first();
-
                 $emailData = (object) [
                     'customerEmail' => $lead->email,
                     'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
@@ -1203,32 +1201,11 @@ class CarQuoteService extends BaseService
 
                 $emailTemplateIdReassign = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
                 $emailTemplateIIntro = (int) $this->applicationStorageService->getValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
-
                 $this->sendEmailCustomerService->sendLMSIntroEmail($isReassignment ? $emailTemplateIdReassign : $emailTemplateIIntro, $emailData, 'send-lms-reassignment-email');
             }
         }
 
-        return [];
-    }
-
-    public function updateTierAndCost($lead)
-    {
-        if ($lead->tier_id == null) {
-            info('Manual assignment: tier is not assigned, evaluating tier now');
-            $selectedTier = $this->leadAllocationService->getTierForValue($lead);
-
-            if ($selectedTier) {
-                info('Found tier : '.$selectedTier->name.', with id : '.$selectedTier->id.' against lead : '.$lead->code);
-                $lead->tier_id = $selectedTier->id;
-                info('since tier is now assigned, we will update the cost per lead from tier');
-                $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
-            } else {
-                info('Unable to find tier against lead : '.$lead->code);
-            }
-        } else {
-            info('since tier is assigned, we will update the cost per lead from tier');
-            $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
-        }
+        return $result;
     }
 
     public function getLeadIdsToProcessFromRequest($request)
@@ -1366,6 +1343,8 @@ class CarQuoteService extends BaseService
     /**
      * generate PDF for car quote plan and return.
      *
+     * @param $quoteType
+     * @param $data
      * @return array|string[]
      */
     public function exportPlansPdf($quoteType, $data)

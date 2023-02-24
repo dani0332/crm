@@ -52,6 +52,7 @@ class ProcessRenewalsUploadUpdate implements ShouldQueue
     }
 
     /**
+     * @param  Throwable  $exception
      * @return void
      */
     public function failed(Throwable $exception)

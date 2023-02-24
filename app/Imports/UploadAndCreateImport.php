@@ -35,6 +35,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
     /**
      * @param  RenewalsUploadService  $renewalsUploadService
+     * @param $renewalsUploadLead
      */
     public function __construct(RenewalsUploadLeads $renewalsUploadLead)
     {
@@ -59,6 +60,9 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
         ]);
     }
 
+    /**
+     * @return int
+     */
     public function chunkSize(): int
     {
         return 2000;
@@ -66,12 +70,17 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
 
     /**
      * start import from row 2, first row have titles
+     *
+     * @return int
      */
     public function startRow(): int
     {
         return 2;
     }
 
+    /**
+     * @return int
+     */
     public function getValidCount(): int
     {
         return $this->validCount;

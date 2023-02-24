@@ -57,6 +57,7 @@ class PaymentModeController extends Controller
     /**
      * Store a newly created resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -82,6 +83,7 @@ class PaymentModeController extends Controller
     /**
      * Display the specified resource.
      *
+     * @param  PaymentMode  $paymentmode
      * @return \Illuminate\Http\Response
      */
     public function show(PaymentMode $paymentmode)
@@ -92,6 +94,7 @@ class PaymentModeController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
+     * @param  PaymentMode  $paymentmode
      * @return \Illuminate\Http\Response
      */
     public function edit(PaymentMode $paymentmode)
@@ -102,6 +105,8 @@ class PaymentModeController extends Controller
     /**
      * Update the specified resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  PaymentMode  $paymentmode
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, PaymentMode $paymentmode)
@@ -123,6 +128,7 @@ class PaymentModeController extends Controller
     /**
      * Remove the specified resource from storage.
      *
+     * @param  PaymentMode  $paymentmode
      * @return \Illuminate\Http\Response
      */
     public function destroy(PaymentMode $paymentmode)

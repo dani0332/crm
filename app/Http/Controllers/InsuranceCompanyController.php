@@ -57,6 +57,7 @@ class InsuranceCompanyController extends Controller
     /**
      * Store a newly created resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -81,6 +82,7 @@ class InsuranceCompanyController extends Controller
     /**
      * Display the specified resource.
      *
+     * @param  InsuranceCompany  $insurancecompany
      * @return \Illuminate\Http\Response
      */
     public function show(InsuranceCompany $insurancecompany)
@@ -91,6 +93,7 @@ class InsuranceCompanyController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
+     * @param  InsuranceCompany  $insurancecompany
      * @return \Illuminate\Http\Response
      */
     public function edit(InsuranceCompany $insurancecompany)
@@ -101,6 +104,8 @@ class InsuranceCompanyController extends Controller
     /**
      * Update the specified resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  InsuranceCompany  $insurancecompany
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, InsuranceCompany $insurancecompany)
@@ -124,6 +129,7 @@ class InsuranceCompanyController extends Controller
     /**
      * Remove the specified resource from storage.
      *
+     * @param  InsuranceCompany  $insurancecompany
      * @return \Illuminate\Http\Response
      */
     public function destroy(InsuranceCompany $insurancecompany)

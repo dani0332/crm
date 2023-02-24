@@ -35,6 +35,7 @@ class ClaimsAttachmentsController extends Controller
     /**
      * Store a newly created resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request, Claim $claim)
@@ -91,6 +92,7 @@ class ClaimsAttachmentsController extends Controller
     /**
      * Update the specified resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\ClaimsAttachments  $claimsAttachments
      * @return \Illuminate\Http\Response
      */

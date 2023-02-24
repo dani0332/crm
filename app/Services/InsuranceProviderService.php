@@ -184,6 +184,7 @@ class InsuranceProviderService extends BaseService
     /**
      * get insurance provider by code
      *
+     * @param $code
      * @return mixed
      */
     public function getProviderByCode($code)

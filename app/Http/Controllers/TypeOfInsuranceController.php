@@ -71,6 +71,7 @@ class TypeOfInsuranceController extends Controller
     /**
      * Display the specified resource.
      *
+     * @param  \App\Models\TypeOfInsurance  $typeofinsurance
      * @return \Illuminate\Http\Response
      */
     public function show(TypeOfInsurance $typeofinsurance)
@@ -83,6 +84,7 @@ class TypeOfInsuranceController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
+     * @param  \App\Models\TypeOfInsurance  $typeofinsurance
      * @return \Illuminate\Http\Response
      */
     public function edit(TypeOfInsurance $typeofinsurance)
@@ -96,6 +98,7 @@ class TypeOfInsuranceController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\TypeOfInsurance  $typeofinsurance
      * @return \Illuminate\Http\Response
      */
     public function update(TypeInsuranceRequest $request, TypeOfInsurance $typeofinsurance)
@@ -113,6 +116,7 @@ class TypeOfInsuranceController extends Controller
     /**
      * Remove the specified resource from storage.
      *
+     * @param  \App\Models\TypeOfInsurance  $typeofinsurance
      * @return \Illuminate\Http\Response
      */
     public function destroy(TypeOfInsurance $typeofinsurance)
