@@ -248,6 +248,11 @@ class HealthQuoteService extends BaseService
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
         }
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+            $dateFrom = $this->parseDate($request['created_at_start'], true);
+            $dateTo = $this->parseDate($request['created_at_end'], true);
+            $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
+        }
         if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
@@ -298,16 +303,6 @@ class HealthQuoteService extends BaseService
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
             $this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
-        }
-        if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-            $dateFrom = $this->parseDate($request['created_at'], true);
-            $dateTo = $this->parseDate($request['created_at_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
-        }
-        if (isset($request->created_at_start) && $request->created_at_start != '') {
-            $dateFrom = $request['created_at_start'];
-            $dateTo = $request['created_at_end'];
-            $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
         }
         // health_team_type filter
         if (isset($request->sub_team) && $request->sub_team != '') {
