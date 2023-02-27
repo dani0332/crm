@@ -28,6 +28,7 @@ use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LeadSearchController;
+use App\Http\Controllers\LifeController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\MyLeadsController;
 use App\Http\Controllers\PartnerController;
@@ -245,7 +246,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('travel', TravelController::class);
         Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
-        // Route::get('travel-cards', [TravelController::class, 'cardsView']);
+        Route::resource('life', LifeController::class);
+
     });
 
     Route::group(['prefix' => 'generic'], function () {

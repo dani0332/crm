@@ -2,16 +2,25 @@
 
 namespace App\Services;
 
+use App\Models\User;
 use App\Models\GenericModel;
 use App\Enums\QuoteStatusEnum;
 use App\Services\CustomerService;
 use Illuminate\Support\Facades\DB;
+use App\Services\ActivitiesService;
 use App\Services\EmailStatusService;
+use Illuminate\Support\Facades\Auth;
 use App\Services\QuoteDocumentService;
 use App\Services\DropdownSourceService;
 
 class BaseService
 {
+    protected $genericModel;
+
+    public function __construct()
+    {
+        $this->genericModel = $this->getGenericModel();
+    }
 
     /**
      * @param mixed $type
@@ -34,6 +43,7 @@ class BaseService
         $model->properties = $this->fillModelProperties();
         $model->skipProperties = $this->fillModelSkipProperties();
         $model->searchProperties = $this->fillModelSearchProperties();
+        $this->genericModel = $model;
         return $model;
     }
 
@@ -112,31 +122,66 @@ class BaseService
         ->get();
     }
 
-    /**
-     * @param GenericModel $genericModel
-     * @return array
-     */
-    public function getFieldsToUpdate(GenericModel $genericModel): array
+
+    public function getFieldsToUpdate($skipProperties): array
     {
-        return $this->getSkipProperties($genericModel, 'update');
+        return $this->getSkipProperties($skipProperties, 'update');
     }
 
-    public function getFieldsToCreate(GenericModel $genericModel): array
+    public function getFieldsToCreate($skipProperties): array
     {
-        return $this->getSkipProperties($genericModel, 'create');
+        return $this->getSkipProperties($skipProperties, 'create');
     }
 
-    public function getSkipProperties(GenericModel $genericModel, $skipType)
+    public function getSkipProperties(string $fieldName, $skipType = false) : array
     {
-        $skipped = explode(",", data_get($genericModel, 'skipProperties.' . $skipType, ''));
+        if (!$skipType) {
+            return data_get($this->genericModel, $fieldName, []);
+        }
+        $skipped = explode(",", data_get($this->genericModel, $fieldName.'.' . $skipType, ''));
         $skipped = array_map('trim', $skipped);
         $fields = [];
-        $properties = $genericModel->properties;
+        $properties = $this->genericModel->properties;
         foreach ($properties as $key => $property) {
             if (!in_array($key, $skipped)) {
                 $fields[$key] = $property;
             }
         }
         return $fields;
+    }
+
+    public function getFieldsToShow(): array
+    {
+        if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
+            return $this->getSkipProperties('renewalSkipProperties', 'show');
+        } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
+            return $this->getSkipProperties('newBusinessSkipProperties', 'show');
+        }
+
+        return $this->getSkipProperties('skipProperties', 'show');
+    }
+
+    public function getActivityByLeadId($id, $type)
+    {
+        $activitiesData =  (app(ActivitiesService::class))->getActivityByLeadId($id, $type);
+        $activities = [];
+        foreach ($activitiesData as $activity) {
+            $updatedActivity = [
+                'id' => $activity->id,
+                'uuid' => $activity->uuid,
+                'title' => $activity->title,
+                'description' => $activity->description,
+                'quote_request_id' => $activity->quote_request_id,
+                'quote_type_id' => $activity->quote_type_id,
+                'quote_uuid' => $activity->quote_uuid,
+                'client_name' => $activity->client_name,
+                'due_date' => $activity->due_date,
+                'assignee' => User::where('id', $activity->assignee_id)->first()->name,
+                'assignee_id' => $activity->assignee_id,
+                'status' => $activity->status,
+            ];
+            array_push($activities, $updatedActivity);
+        }
+        return $activities;
     }
 }

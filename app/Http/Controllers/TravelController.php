@@ -63,9 +63,11 @@ class TravelController extends Controller
         ]);
     }
 
-
-
-
+    /**
+     * @param $id
+     * @return ResponseFactory|Response
+     * @throws RuntimeException
+     */
     public function show($id)
     {
         $quoteType = strtolower($this->genericModel->modelType);
@@ -100,7 +102,6 @@ class TravelController extends Controller
         $documentTypes = $this->service->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
 
-        $membersDetail = $this->service->getMembersDetail($record->id);
         $activities = $this->service->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->service->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
@@ -160,7 +161,7 @@ class TravelController extends Controller
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
 
-        $fieldsToCreate = $this->service->getFieldsToCreate($this->genericModel);
+        $fieldsToCreate = $this->service->getFieldsToCreate('skipProperties');
         $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $customTitles = [];
         foreach ($fieldsToCreate as $property => $value) {
@@ -251,7 +252,7 @@ class TravelController extends Controller
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $fieldsToUpdate = $this->service->getFieldsToUpdate($this->genericModel);
+        $fieldsToUpdate = $this->service->getFieldsToUpdate('skipProperties');
         $customTitles = [];
         foreach ($fieldsToUpdate as $property => $value) {
             if (str_contains($value, 'title')) {

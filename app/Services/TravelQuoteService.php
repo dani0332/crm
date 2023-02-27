@@ -860,27 +860,4 @@ class TravelQuoteService extends BaseService
         return $listQuotePlans;
     }
 
-    public function getActivityByLeadId($id, $type)
-    {
-        $activitiesData =  (app(ActivitiesService::class))->getActivityByLeadId($id, $type);
-        $activities = [];
-        foreach ($activitiesData as $activity) {
-            $updatedActivity = [
-                'id' => $activity->id,
-                'uuid' => $activity->uuid,
-                'title' => $activity->title,
-                'description' => $activity->description,
-                'quote_request_id' => $activity->quote_request_id,
-                'quote_type_id' => $activity->quote_type_id,
-                'quote_uuid' => $activity->quote_uuid,
-                'client_name' => $activity->client_name,
-                'due_date' => $activity->due_date,
-                'assignee' => User::where('id', $activity->assignee_id)->first()->name,
-                'assignee_id' => $activity->assignee_id,
-                'status' => $activity->status,
-            ];
-            array_push($activities, $updatedActivity);
-        }
-        return $activities;
-    }
 }
