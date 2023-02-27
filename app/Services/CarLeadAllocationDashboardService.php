@@ -7,12 +7,15 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\User;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Log;
 
 class CarLeadAllocationDashboardService extends BaseService
 {
+    use TeamHierarchyTrait;
+
     protected $applicationStorageService;
     public function __construct(ApplicationStorageService $applicationStorageService)
     {
@@ -33,10 +36,18 @@ class CarLeadAllocationDashboardService extends BaseService
                             ->groupBy('users.name', 'users.id', 'la.id')
                             ->select(
                                 'users.id as userId',
-                                'users.name as userName', DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'), DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
-                                DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'), 'la.last_allocated as lastAllocation', 'la.max_capacity as maxCapacity', 'la.is_available as isAvailable',
+                                'users.name as userName', DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
+                                DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
+                                DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'),
+                                'la.last_allocated as lastAllocation',
+                                'la.max_capacity as maxCapacity',
+                                'la.is_available as isAvailable',
                                 'users.last_login as lastLogin', 'la.id as id', 'la.manual_assignment_count as manualAllocationCount', 'la.auto_assignment_count as autoAllocationCount'
                             );
+            if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+                $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
+                $users = $users->whereIn('teams.id', $userTeamIds);
+            }
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $users = $users->where('users.manager_id', auth()->user()->id);
             }

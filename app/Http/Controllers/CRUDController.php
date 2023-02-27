@@ -278,7 +278,6 @@ class CRUDController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -683,7 +682,6 @@ class CRUDController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -1253,7 +1251,6 @@ class CRUDController extends Controller
      * export selected plans to PDF.
      *
      * @param  Request  $request
-     * @param $quoteType
      * @return \Illuminate\Http\RedirectResponse
      */
     public function exportCarPdf($quoteType, ExportPlansPdfRequest $request)

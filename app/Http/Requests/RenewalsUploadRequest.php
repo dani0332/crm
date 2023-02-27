@@ -31,8 +31,6 @@ class RenewalsUploadRequest extends FormRequest
 
     /**
      * check for duplicate file name
-     *
-     * @param $validator
      */
     public function withValidator($validator)
     {

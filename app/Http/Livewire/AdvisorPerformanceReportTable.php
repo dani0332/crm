@@ -4,6 +4,7 @@ namespace App\Http\Livewire;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
@@ -108,33 +109,37 @@ class AdvisorPerformanceReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        $userIds = $this->walkTree(auth()->user()->id);
-        info('user ids for advisor performance report are : '.json_encode($userIds));
+        $query = CarQuote::query()
+        ->select(
+            DB::raw('count(car_quote_request.id) as total_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 40 THEN 1 ELSE 0 END) as new_leads'),
+            DB::raw('la.auto_assignment_count as auto_assigned'),
+            DB::raw('la.manual_assignment_count as manually_assigned'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 8 THEN 1 ELSE 0 END) as not_interested'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (2,24,25) THEN 1 ELSE 0 END) as in_progress'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as manual_created'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
+            DB::raw('SUM(quote_view_count.visit_count) as view_count'),
+        )
+        ->join('users', 'users.id', 'car_quote_request.advisor_id')
+        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+        ->leftJoin('lead_allocation as la', 'la.user_id', 'users.id')
+        ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
+        ->join('user_team', 'user_team.user_id', 'users.id')
+        ->join('teams', 'teams.id', 'user_team.team_id')
+        ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
+        ->whereNull('car_quote_request.renewal_import_code')
+        ->groupBy('car_quote_request.advisor_id')
+        ->orderBy('users.email');
 
-        return CarQuote::query()
-            ->select(
-                DB::raw('count(car_quote_request.id) as total_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 40 THEN 1 ELSE 0 END) as new_leads'),
-                DB::raw('la.auto_assignment_count as auto_assigned'),
-                DB::raw('la.manual_assignment_count as manually_assigned'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 8 THEN 1 ELSE 0 END) as not_interested'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (2,24,25) THEN 1 ELSE 0 END) as in_progress'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as manual_created'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(quote_view_count.visit_count) as view_count'),
-            )
-            ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-            ->leftJoin('lead_allocation as la', 'la.user_id', 'users.id')
-            ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
-            ->join('user_team', 'user_team.user_id', 'users.id')
-            ->join('teams', 'teams.id', 'user_team.team_id')
-            ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
-            ->whereIn('car_quote_request.advisor_id', $userIds)
-            ->whereNull('car_quote_request.renewal_import_code')
-            ->groupBy('car_quote_request.advisor_id')
-            ->orderBy('users.email');
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for advisor performance report are : '.json_encode($userIds));
+            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+        }
+
+        return $query;
     }
 
     public function filters(): array
