@@ -246,7 +246,7 @@ class HealthQuoteService extends BaseService
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
         }
-        if (isset($request->created_at_start) && $request->created_at_start != '') {
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = $this->parseDate($request['created_at_start'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
