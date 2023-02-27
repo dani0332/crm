@@ -14,3 +14,10 @@ final class carTypeInsuranceCode extends Enum
     public const Comprehensive = 'Comprehensive';
     public const ThirdPartyOnly = 'Third Party Only';
 }
+
+
+final class CarTypeOfInsuranceIdEnum extends Enum
+{
+    public const Comprehensive = 1;
+    public const ThirdPartyOnly = 2;
+}
