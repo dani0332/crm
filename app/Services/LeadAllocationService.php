@@ -321,18 +321,14 @@ class LeadAllocationService extends BaseService
             DB::beginTransaction();
             info('setAdvisorsToUnavailable -- started');
             $dateTimeNow = now()->toTimeString();
-            info('Current time is '.$dateTimeNow);
-            if ($dateTimeNow >= '23:55') {
-                info('Current time before unavailable is '.$dateTimeNow);
-                info('Setting advisors to unavailable');
-                LeadAllocation::whereNotNull('is_available')->update([
-                    'is_available' => 0,
-                    'allocation_count' => 0,
-                    'manual_assignment_count' => 0,
-                    'auto_assignment_count' => 0,
-                ]);
-                info('Advisors are now unavailable and allocation count is set to 0');
-            }
+            info('Current time before unavailable is '.$dateTimeNow);
+            LeadAllocation::whereNotNull('is_available')->update([
+                'is_available' => 0,
+                'allocation_count' => 0,
+                'manual_assignment_count' => 0,
+                'auto_assignment_count' => 0,
+            ]);
+            info('Advisors are now unavailable and allocation count is set to 0');
             DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -463,7 +459,7 @@ class LeadAllocationService extends BaseService
                     continue;
                 }
                 info('trying to check tier against the current lead : '.$carLead->code);
-                $selectedTier = $this->getTierForValue($carLead);
+                $selectedTier = $carLead->tier_id == null ? $this->getTierForValue($carLead) : Tier::where('id', $carLead->tier_id)->first();
                 if ($selectedTier) {
                     info('Tier '.$selectedTier->name.' is selected against car lead : '.$carLead->code);
 
@@ -548,6 +544,8 @@ class LeadAllocationService extends BaseService
             'landLine' => $user->landline_no,
             'mobilePhone' => $user->mobile_no,
             'advisorEmail' => $user->email,
+            'carQuoteId' => $carQuote->code,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
         ];
 
         return $emailData;
@@ -619,6 +617,9 @@ class LeadAllocationService extends BaseService
 
     public function checkIfLeadIsRenewal($lead)
     {
+        if ($lead->tier_id != null) {
+            return false;
+        }
         $dateFrom = Carbon::now()->addDays(-30);
         $dateTo = Carbon::now()->addDays(90);
 
@@ -629,6 +630,8 @@ class LeadAllocationService extends BaseService
             $query->where('email', $lead->email)
                 ->orWhere('mobile_no', 'like', '%'.substr($lead->mobile_no, -7));
         })
+        ->where('car_make_id', $lead->car_make_id)
+        ->where('car_model_id', $lead->car_model_id)
         ->get();
         if (count($renewalQuote) > 0) {
             info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid.' for car quote with uuid : '.$lead->uuid);
@@ -723,7 +726,9 @@ class LeadAllocationService extends BaseService
     {
         $currentDay = Carbon::parse(now())->format('l');
 
-        $endTimeForAllocation = Carbon::parse($this->getAppStorageValueByKey($currentDay == DaysNameEnum::SATURDAY ? 'SATURDAY_CAP_RESET_TIME' : 'NORMAL_CAP_RESET_TIME'))->toTimeString();
+        $resetKeyTime = $currentDay == DaysNameEnum::SATURDAY ? 'SATURDAY_CAP_RESET_TIME' : 'NORMAL_CAP_RESET_TIME';
+
+        $endTimeForAllocation = Carbon::parse($this->getAppStorageValueByKey($resetKeyTime))->toTimeString();
 
         $carLeadAllocationSwitch = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
 
@@ -731,6 +736,7 @@ class LeadAllocationService extends BaseService
 
         if (now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
             // stopping car lead allocation if the end time for allocation is reached and allocation is still ON
+            info('updateAllocationStatusIfNeeded -- Inside reset case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
 
             // reset the max capacity for each user as the allocation is now stopped
@@ -753,6 +759,22 @@ class LeadAllocationService extends BaseService
         }
 
         info('shouldCarAllocationProceed -- output is : '.json_encode($shouldProcess));
+
+        return $shouldProcess;
+    }
+
+    public function shouldResetUserAssignmentCountAndAvailability()
+    {
+        $shouldProcess = false;
+        $totalResetTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET');
+
+        info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
+        if (now()->toTimeString() >= $totalResetTime) {
+            info('should total reset is true');
+            $shouldProcess = true;
+        } else {
+            info('should total reset is false');
+        }
 
         return $shouldProcess;
     }

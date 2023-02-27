@@ -143,7 +143,6 @@ class AMLController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\AML  $aml
      * @return \Illuminate\Http\Response
      */
     public function show(AML $aml)

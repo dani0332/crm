@@ -27,7 +27,6 @@ class RenewalQuoteProcess extends Model
      * json encode data.
      * todo: fix later as its not preserving order
      *
-     * @param $value
      * @return void
      */
     public function setDataAttribute($value)
@@ -36,7 +35,6 @@ class RenewalQuoteProcess extends Model
     }
 
     /**
-     * @param $data
      * @return mixed
      */
     public function getDataAttribute($data)
@@ -47,7 +45,6 @@ class RenewalQuoteProcess extends Model
     /**
      * json encode validation_errors.
      *
-     * @param $value
      * @return void
      */
     public function setValidationErrorsAttribute($value)
