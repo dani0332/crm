@@ -2,12 +2,11 @@
 import { computed, ref, reactive, onMounted } from 'vue';
 import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 import { useDateFormat, useClipboard } from '@vueuse/core';
+import { useNotifications } from '@indielayer/ui';
+import axios from 'axios';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import { useNotifications } from '@indielayer/ui';
-import axios from 'axios';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 
 defineProps({

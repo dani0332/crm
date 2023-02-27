@@ -1,9 +1,6 @@
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue';
 import { Head, router, usePage, Link } from '@inertiajs/vue3';
-import Pagination from '@/inertia/Components/Pagination.vue';
-import ExportExcel from '@/inertia/Components/ExportExcel.vue';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 defineProps({
   quotes: Object,
@@ -46,7 +43,7 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
+  created_at: '',
   created_at_end: '',
   sub_team: '',
   quote_status: [],
@@ -129,8 +126,8 @@ function setQueryStringFilters() {
   if (urlParams.has('mobile_no')) {
     filters.mobile_no = urlParams.get('mobile_no');
   }
-  if (urlParams.has('created_at_start')) {
-    filters.created_at_start = urlParams.get('created_at_start');
+  if (urlParams.has('created_at')) {
+    filters.created_at = urlParams.get('created_at');
   }
   if (urlParams.has('created_at_end')) {
     filters.created_at_end = urlParams.get('created_at_end');
@@ -219,19 +216,15 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Mobile Number"
         />
-        <x-input
-          v-model="filters.created_at_start"
-          type="date"
-          name="created_at_start"
-          label="Created Date"
-          class="w-full"
+        <DatePicker
+          v-model="filters.created_at"
+          name="created_at"
+          label="Created Date Start"
         />
-        <x-input
+        <DatePicker
           v-model="filters.created_at_end"
-          type="date"
           name="created_at_end"
           label="Created Date End"
-          class="w-full"
         />
         <x-select
           v-model="filters.sub_team"

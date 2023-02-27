@@ -30,6 +30,11 @@ mix
     output: {
       chunkFilename: 'js/[name].js?id=[chunkhash]',
     },
+    plugins: [
+      require('unplugin-vue-components/webpack')({
+        dirs: ['resources/js/inertia/Components'],
+      }),
+    ],
   })
   .postCss('resources/css/app.css', 'public/css', [require('tailwindcss')])
   .extract()
