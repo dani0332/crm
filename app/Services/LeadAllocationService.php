@@ -441,6 +441,7 @@ class LeadAllocationService extends BaseService
         try {
             if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
                 info('Car lead allocation master switch is off');
+
                 return false;
             }
 
@@ -459,10 +460,11 @@ class LeadAllocationService extends BaseService
                     info('Renewal found against quote Id : '.$carLead->uuid);
 
                     if (! $carLead->is_renewal_tier_email_sent) {
-                        info('About to send Renewal Tier R email for quote Id : '. $carLead->uuid);
+                        info('About to send Renewal Tier R email for quote Id : '.$carLead->uuid);
 
                         CarRenewalEmailJob::dispatch($carLead);
                     }
+
                     continue; // since we found renewal against current lead we will skip advisor assignment
                 }
                 info('trying to check tier against the current lead : '.$carLead->code);
@@ -472,7 +474,6 @@ class LeadAllocationService extends BaseService
                 $selectedTier = $carLead->tier_id == null ? $this->getTierForValue($carLead) : Tier::where('id', $carLead->tier_id)->first();
 
                 if ($selectedTier) {
-
                     info('Found tier '.$selectedTier->name.' against car lead : '.$carLead->code);
 
                     $loginAndAvailableUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id); // now we will try to find users based on selected tier
@@ -513,7 +514,6 @@ class LeadAllocationService extends BaseService
                         $userId = reset($finalAvailableAndLoginAdvisorIds);
                     }
                     if ($userId) {
-
                         info('About to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
 
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
@@ -536,7 +536,6 @@ class LeadAllocationService extends BaseService
 
                         info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                     } else {
-
                         info('login users not found for selected lead so will try to assign only tier');
 
                         $carQuote = CarQuote::where('id', $carLead->id)->first();
@@ -617,7 +616,7 @@ class LeadAllocationService extends BaseService
 
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
 
-        info('Car leads fetch start date is :'.$from.'  and end datetime is : '.$to. ' and pickup limit is : '. $carLeadPickupLimit. ' and Pickup direction FIFO is : '. $isFIFO);
+        info('Car leads fetch start date is :'.$from.'  and end datetime is : '.$to.' and pickup limit is : '.$carLeadPickupLimit.' and Pickup direction FIFO is : '.$isFIFO);
 
         return CarQuote::whereNull('advisor_id')
             ->where('is_renewal_tier_email_sent', 0) // this check make sure that Tier R leads are excluded bcz we only send email for Tier R and not assign advisor
@@ -659,7 +658,6 @@ class LeadAllocationService extends BaseService
          *
          * IF combining all above criteria's we find a lead then its a renewal otherwise not
          */
-
         $dateFrom = Carbon::now()->addDays(-30);
         $dateTo = Carbon::now()->addDays(90);
 
@@ -674,9 +672,11 @@ class LeadAllocationService extends BaseService
 
         if (count($renewalQuote) > 0) {
             info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid.' for car quote with uuid : '.$lead->uuid);
+
             return true;
         } else {
             info('car lead allocation did-not found a renewal for uuid : '.$lead->uuid);
+
             return false;
         }
     }
@@ -690,7 +690,7 @@ class LeadAllocationService extends BaseService
         info('car ecommerce info is : '.json_encode($carLead->is_ecommerce));
 
         if ($carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::ThirdPartyOnly) {
-            info('since the car type of insurance is : '. $carLead->car_type_insurance_id . ' , so select tier which can handle TPL leads ');
+            info('since the car type of insurance is : '.$carLead->car_type_insurance_id.' , so select tier which can handle TPL leads ');
 
             $tiers->where('can_handle_tpl', 1); // filter on tiers to get the tier which can handle TPL
 
@@ -700,29 +700,27 @@ class LeadAllocationService extends BaseService
         // checking all the possible null/empty values from request
         if (($carLead->car_value == null || $carLead->car_value <= 0 || $carLead->car_value == '?' || $carLead->car_value == '')
             && $carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::Comprehensive) {
-
-            info('Car value is : '. $carLead->car_value. ' , so select tier which can handle null value');
+            info('Car value is : '.$carLead->car_value.' , so select tier which can handle null value');
 
             $tiers->where('can_handle_null_value', 1); // filter on tier to get the tier which can handle null value leads.
         }
 
         // if car value is > zero and its comprehensive then a value comparison is must
         if ($carLead->car_value > 0 && $carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::Comprehensive) {
-
             $highestValueTier = Tier::where('is_active', 1)->orderBy('max_price', 'desc')->first(); // getting tier with highest max_price value
 
             if ($carLead->car_value > $highestValueTier->max_price) {
                 info('lead '.$carLead->uuid.' have value higher then all the tiers so selecting tier '.$highestValueTier->name);
+
                 return $highestValueTier;
             } else {
-                info('filtering tiers based on the car value which is : '. $carLead->car_value);
+                info('filtering tiers based on the car value which is : '.$carLead->car_value);
                 $tiers->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
             }
         }
 
         // in case if the source of the lead is TPL_RENEWALS
         if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
-
             $tiers->where('is_tpl_renewals', 1); // filter on tier for is TPL renewal check
 
             $tiers->where('can_handle_ecommerce', $carLead->is_ecommerce); // in case if ecommerce check is also applicable
@@ -752,7 +750,6 @@ class LeadAllocationService extends BaseService
          * User's last login date should be from today
          * User's allocation count should be less then his max_capacity OR his max_capacity should be -1
          */
-
         $query = LeadAllocation::join('users as u', 'u.id', 'lead_allocation.user_id')
         ->select('u.id', 'u.email')
         ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
