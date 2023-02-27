@@ -723,6 +723,60 @@ class CRUDController extends Controller
         //
     }
 
+    public function cardsViewHome(Request $request)
+    {
+        $quotes = [];
+        $quotes[] = [
+            'id' => 8,
+            'title' => 'New Lead',
+            'data' => getDataAgainstStatus('Home', 8),
+        ];
+        $quotes[] = [
+            'id' => 2,
+            'title' => 'Quoted',
+            'data' => getDataAgainstStatus('Home', 2),
+        ];
+        $quotes[] = [
+            'id' => 31,
+            'title' => 'Qualified',
+            'data' => getDataAgainstStatus('Home', 31),
+        ];
+        $quotes[] = [
+            'id' => 25,
+            'title' => 'In Negotiation',
+            'data' => getDataAgainstStatus('Home', 25),
+        ];
+        $quotes[] = [
+            'id' => 26,
+            'title' => 'Application Pending',
+            'data' => getDataAgainstStatus('Home', 26),
+        ];
+        $quotes[] = [
+            'id' => 28,
+            'title' => 'Payment Pending',
+            'data' => getDataAgainstStatus('Home', 28),
+        ];
+        $quotes[] = [
+            'id' => 36,
+            'title' => 'Application Submitted',
+            'data' => getDataAgainstStatus('Home', 36),
+        ];
+        $quotes[] = [
+            'id' => 15,
+            'title' => 'Transaction Approved',
+            'data' => getDataAgainstStatus('Home', 15),
+        ];
+        $quotes[] = [
+            'id' => 29,
+            'title' => 'Policy Documents Pending',
+            'data' => getDataAgainstStatus('Home', 29),
+        ];
+
+        return inertia('HomeQuote/Cards', [
+            'quotes' => $quotes,
+        ]);
+    }
+
     private function setModelType(Request $request)
     {
         $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
@@ -1035,7 +1089,7 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->status) {
             $results = getDataAgainstEveryStatus($request->modelType, $request);
 
-            if ($request->modelType == quoteTypeCode::Health) {
+            if ($request->modelType == quoteTypeCode::Health || $request->modelType == quoteTypeCode::Home) {
                 return $results;
             }
 
@@ -1080,7 +1134,7 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->term && $request->status) {
             $results = getDataAgainstSearchTerm($request->modelType, $request);
 
-            if ($request->modelType == quoteTypeCode::Health) {
+            if ($request->modelType == quoteTypeCode::Health || $request->modelType == quoteTypeCode::Home) {
                 return $results;
             }
 

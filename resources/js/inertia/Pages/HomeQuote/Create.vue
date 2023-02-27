@@ -1,7 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 const props = defineProps({
   dropdownSource: Object,
@@ -37,6 +36,27 @@ const rules = {
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
     'E-mail must be valid',
   isRequired: v => !!v || 'This field is required',
+};
+
+const handleConditionalFields = () => {
+  if (
+    quoteForm.iam_possesion_type_id !== props.homePossessionTypeEnum.LANDLORD
+  ) {
+    quoteForm.has_building = false;
+  }
+  if (!Boolean(quoteForm.has_building)) {
+    quoteForm.building_aed = null;
+  }
+  if (!Boolean(quoteForm.has_contents)) {
+    quoteForm.contents_aed = null;
+    quoteForm.has_personal_belongings = false;
+  }
+  if (!Boolean(quoteForm.has_personal_belongings)) {
+    quoteForm.personal_belongings_aed = null;
+  }
+  if (quoteForm.has_contents || quoteForm.has_building) {
+    hasContentOrBuilding.value = true;
+  }
 };
 
 const isEmptyField = ref(false);

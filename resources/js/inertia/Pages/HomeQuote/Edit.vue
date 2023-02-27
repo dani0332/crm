@@ -157,6 +157,7 @@ function onSubmit(isValid) {
               label: item.text,
             }))
           "
+          @change="handleConditionalFields"
           class="w-full"
         />
 

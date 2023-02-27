@@ -5,9 +5,6 @@ import { useDateFormat } from '@vueuse/shared';
 import axios from 'axios';
 
 const page = usePage();
-const dateFormat = date => {
-  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
-};
 
 const quotes = reactive({
   data: page.props.quotes || [],
@@ -17,6 +14,33 @@ const quotes = reactive({
   queries: {},
 });
 
+const dateFormat = date => {
+  const parts = date.split(/-|\s/);
+
+  const dateParts = [parts[0], parts[1], parts[2]];
+  const timeParts = parts[3].match(/(\d{2}):(\d{2})(\w{2})/);
+
+  const ampm = timeParts[3].toLowerCase();
+
+  const isoDate = new Date(
+    Date.parse(
+      dateParts[1] +
+        ' ' +
+        dateParts[0] +
+        ' ' +
+        dateParts[2] +
+        ' ' +
+        timeParts[1] +
+        ':' +
+        timeParts[2] +
+        ' ' +
+        ampm,
+    ),
+  ).toISOString();
+
+  return useDateFormat(isoDate, 'DD-MM-YYYY HH:mm:ss').value;
+};
+
 const onLoadMore = id => {
   quotes.loader = true;
   quotes.pages = {
@@ -25,7 +49,7 @@ const onLoadMore = id => {
   };
   axios
     .post(
-      `/quotes/records?page=${quotes.pages[id]}&modelType=Health&status=${id}`,
+      `/quotes/records?page=${quotes.pages[id]}&modelType=Home&status=${id}`,
     )
     .then(({ data }) => {
       quotes.data = quotes.data.map(quote => {
@@ -48,13 +72,9 @@ const onLoadMore = id => {
 
 const onSearch = id => {
   quotes.searching = true;
-  if (
-    !quotes.queries[id] ||
-    quotes.queries[id] === '' ||
-    quotes.queries[id] === null
-  ) {
+  if (!quotes.queries[id]) {
     axios
-      .post(`/quotes/records?page=1&modelType=Health&status=${id}`)
+      .post(`/quotes/records?page=1&modelType=Home&status=${id}`)
       .then(({ data }) => {
         quotes.data = quotes.data.map(quote => {
           if (quote.id === id) {
@@ -73,7 +93,7 @@ const onSearch = id => {
   }
   axios
     .post(
-      `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Health`,
+      `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Home`,
     )
     .then(({ data }) => {
       quotes.data = quotes.data.map(quote => {
@@ -98,15 +118,15 @@ const onSearch = id => {
 
 <template>
   <div>
-    <Head title="Health List ~ Card View" />
+    <Head title="Home List ~ Card View" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Health List</h2>
+      <h2 class="text-xl font-semibold">Home List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/health">
+        <Link href="/quotes/home">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
-        <Link href="/quotes/health/create">
+        <Link href="/quotes/home/create">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
@@ -168,10 +188,9 @@ const onSearch = id => {
               last_name,
               premium,
               updated_at,
-              company_name,
             } in quote.data.leads_list.data"
             :key="id"
-            :href="`/quotes/health/${uuid}`"
+            :href="`/quotes/home/${uuid}`"
             target="_blank"
             title="View Lead"
             class="block p-3 mt-2 border border-gray-300 bg-white space-y-2 hover:transition hover:border-primary-500 rounded"
@@ -180,11 +199,6 @@ const onSearch = id => {
             <div class="flex items-center gap-2">
               <x-icon icon="person" size="sm" class="text-primary-400" />
               <p class="text-xs">{{ first_name }} {{ last_name }}</p>
-            </div>
-
-            <div v-if="company_name" class="flex items-center gap-2">
-              <x-icon icon="company" size="sm" class="text-primary-400" />
-              <p class="text-xs">{{ company_name }}</p>
             </div>
 
             <div class="flex items-center gap-2">
