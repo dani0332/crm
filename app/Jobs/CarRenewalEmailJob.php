@@ -42,7 +42,7 @@ class CarRenewalEmailJob implements ShouldQueue
     {
         info('sendRenewalLeadEmail -- start');
 
-        $renewalEmailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
+        $renewalEmailRecipients = $leadAllocationService->getAppStorageValueByKey('RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
 
         $emailData = $emailDataService->generateTierREmailData($this->lead);
 
