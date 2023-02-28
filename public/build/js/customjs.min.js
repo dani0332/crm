@@ -341,6 +341,7 @@ $(document).ready(function () {
       { data: 'discount', name: 'discount' },
       { data: 'start_date', name: 'start_date' },
       { data: 'end_date', name: 'end_date' },
+      { data: 'sort_order', name: 'sort_order' },
       { data: 'is_active', name: 'is_active' },
     ],
   });
@@ -2722,7 +2723,7 @@ $(document).ready(function () {
 
   $('#btn_download_plan_pdf').on('click', function () {
     if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
-      alert('Please select at least three (3) plans.');
+      alert('Please select at least three (3) plans to download pdf.');
       return false;
     }
 
