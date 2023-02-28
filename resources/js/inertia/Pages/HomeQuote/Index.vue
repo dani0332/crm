@@ -1,9 +1,6 @@
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue';
 import { Head, router, usePage, Link } from '@inertiajs/vue3';
-import Pagination from '@/inertia/Components/Pagination.vue';
-import ExportExcel from '@/inertia/Components/ExportExcel.vue';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 defineProps({
   quotes: Object,
@@ -16,7 +13,11 @@ const loader = reactive({
   table: false,
   export: false,
 });
-const quotesSelected = ref([]);
+
+const quotesSelected = ref([]),
+  assignAdvisor = ref(null),
+  assignmentType = ref(null),
+  isDisabled = ref(false);
 
 const tableHeader = [
   { text: 'CDB ID', value: 'code' },
@@ -61,6 +62,40 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const onAdvisorAssign = () => {
+  if (!assignAdvisor.value || !assignmentType.value) {
+    notification.error({
+      title: !assignAdvisor.value
+        ? 'Please select advior'
+        : 'Please select assignment type',
+      position: 'top',
+    });
+    return;
+  }
+  router.post(
+    `/quotes/home/manualLeadAssign`,
+    {
+      modelType: 'Home',
+      assigned_to_id_new: assignAdvisor.value,
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        isDisabled.value = true;
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Lead(s) Assigned',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        isDisabled.value = false;
+      },
+    },
+  );
+};
+
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
@@ -69,7 +104,6 @@ function onSubmit(isValid) {
         (filters[key] === '' || filters[key].length === 0) &&
         delete filters[key],
     );
-    console.log('filters ===>>', filters);
     router.visit('/quotes/home', {
       method: 'get',
       data: filters,
@@ -196,21 +230,16 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Mobile Number"
         />
-        <x-input
+        <DatePicker
           v-model="filters.created_at_start"
-          type="date"
           name="created_at_start"
-          label="Created Date"
-          class="w-full"
+          label="Created Date Start"
         />
-        <x-input
+        <DatePicker
           v-model="filters.created_at_end"
-          type="date"
           name="created_at_end"
           label="Created Date End"
-          class="w-full"
         />
-
         <ComboBox
           v-model="filters.quote_status"
           label="Lead Status"
@@ -243,6 +272,41 @@ onMounted(() => {
         </x-button>
       </div>
     </x-form>
+
+    <div
+      v-if="quotesSelected.length > 0"
+      class="p-4 rounded shadow mb-6 bg-white"
+    >
+      <h3 class="font-semibold text-primary-800">Assign Leads</h3>
+      <x-divider class="mb-4 mt-1" />
+      <div class="flex flex-wrap md:flex-nowrap gap-4 w-full items-end">
+        <x-select
+          v-model="assignAdvisor"
+          label="Assign Advisor"
+          :options="advisorOptions"
+          placeholder="Select Advisor"
+          class="w-auto flex-1"
+        />
+        <x-select
+          v-model="assignmentType"
+          label="Assignment Type"
+          :options="advisorOptions"
+          placeholder="Select"
+          class="w-auto flex-1"
+        />
+        <div>
+          <x-button
+            color="orange"
+            size="sm"
+            @click.prevent="onAdvisorAssign"
+            :loading="isDisabled"
+          >
+            Assign
+          </x-button>
+        </div>
+      </div>
+    </div>
+
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
         <ExportExcel
