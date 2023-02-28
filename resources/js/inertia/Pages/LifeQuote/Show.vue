@@ -2,7 +2,6 @@
 import axios from 'axios';
 import { useNotifications } from '@indielayer/ui';
 import { computed, ref, reactive, onMounted } from 'vue';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
 import { useDateFormat, useClipboard } from '@vueuse/core';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
@@ -58,7 +57,6 @@ const memberActionEdit = ref(false),
   exportLoader = ref(false),
   contactLoader = ref(false),
   historyLoading = ref(false),
-  auditLogLoading = ref(false),
   lostReasonId = ref(
     page.props.lostReasons.find(
       reason => reason.text === page.props.quote.lost_reason,
@@ -477,42 +475,6 @@ const historyDataTable = [
   { text: 'Notes', value: 'NewNotes' },
   { text: 'Lead Status', value: 'NewStatus' },
 ];
-
-const auditLogsData = ref(null);
-
-const onLoadAuditLogData = async () => {
-  try {
-    auditLogLoading.value = true;
-    axios
-      .post('/auditable', {
-        auditableType: 'App\\Models\\LifeQuote',
-        auditableId: page.props.quote.id,
-        jsonData: true,
-      })
-      .then(res => {
-        console.log(res);
-        auditLogsData.value = res.data;
-        auditLogLoading.value = false;
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  } catch (err) {
-    auditLogLoading.value = false;
-  }
-};
-
-const auditLogsDataTable = [
-  { text: 'Id', value: 'id' },
-  { text: 'User', value: 'name' },
-  { text: 'Event', value: 'event' },
-  { text: 'Old Values', value: 'old_values' },
-  { text: 'New Values', value: 'new_values' },
-  { text: 'Ip Address', value: 'ip_address' },
-  { text: 'Logged At', value: 'created_at' },
-];
-
-onMounted(() => {});
 </script>
 <template>
   <div>
@@ -575,573 +537,550 @@ onMounted(() => {});
     </x-modal>
 
     <x-divider class="my-4" />
-  </div>
 
-  <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="text-sm">
-      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div
-          class="grid sm:grid-cols-2"
-          v-for="field in fieldsToDisplay"
-          :key="field"
-        >
-          <dt class="font-medium">{{ field.title }}</dt>
-          <dd>{{ field.value }}</dd>
-        </div>
-      </dl>
-    </div>
-    <x-divider class="mb-4 mt-1" />
-
-    <div class="mt-6">
-      <h3 class="font-semibold text-primary-800">Customer Profile</h3>
-      <x-divider class="mb-4 mt-1" />
-    </div>
-
-    <div class="text-sm">
-      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">FIRST NAME</dt>
-          <dd>{{ quote.first_name }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">LAST NAME</dt>
-          <dd>{{ quote.last_name }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">MOBILE NUMBER</dt>
-          <dd>{{ quote.mobile_no }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">EMAIL</dt>
-          <dd>{{ quote.email }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">GENDER</dt>
-          <dd>{{ genderText(quote.gender).value }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">MARITAL STATUS</dt>
-          <dd>{{ quote.marital_status_id_text }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">NATIONALITY</dt>
-          <dd>{{ quote.nationality_id_text }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">DATE OF BIRTH</dt>
-          <dd>{{ quote.dob }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">EMIRATE OF VISA</dt>
-          <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">MEMBER CATEGORY</dt>
-          <dd>{{ quote.member_category_id_text }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">SALARY BAND</dt>
-          <dd>{{ quote.salary_band_id_text }}</dd>
-        </div>
-      </dl>
-    </div>
-
-    <div class="mt-6">
-      <h3 class="font-semibold text-primary-800">Quote Details</h3>
-      <x-divider class="mb-4 mt-1" />
-    </div>
-
-    <div class="text-sm">
-      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">WHO ARE YOU LOOKING TO COVER?</dt>
-          <dd>{{ quote.cover_for_id_text }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">CURRENTLY INSURED WITH</dt>
-          <dd>{{ quote.currently_insured_with_id_text }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">TYPE OF PLAN</dt>
-          <dd>{{ quote.plan_id }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-          <dd>{{ quote.next_followup_date }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">DETAILS</dt>
-          <dd>{{ quote.details }}</dd>
-        </div>
-      </dl>
-    </div>
-
-    <div class="mt-6">
-      <h3 class="font-semibold text-primary-800">Last Year's Policy Details</h3>
-      <x-divider class="mb-4 mt-1" />
-    </div>
-
-    <div class="text-sm">
-      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
-          <dd>{{ quote.previous_quote_policy_number }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
-          <dd>{{ quote.previous_quote_policy_premium }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
-          <dd>{{ quote.previous_policy_expiry_date }}</dd>
-        </div>
-      </dl>
-    </div>
-
-    <div class="mt-6">
-      <h3 class="font-semibold text-primary-800">Policy Details</h3>
-      <x-divider class="mb-4 mt-1" />
-    </div>
-
-    <div class="text-sm">
-      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">POLICY NUMBER</dt>
-          <dd>{{ quote.policy_number }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">POLICY START DATE</dt>
-          <dd>{{ quote.policy_start_date }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">POLICY END DATE</dt>
-          <dd>{{ quote.policy_issuance_date }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">PREMIUM</dt>
-          <dd>{{ quote.premium }}</dd>
-        </div>
-        <div class="grid sm:grid-cols-2">
-          <dt class="font-medium">TRANSAPP CODE</dt>
-          <dd>{{ quote.transapp_code }}</dd>
-        </div>
-      </dl>
-    </div>
-  </div>
-
-  <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
-    <div>
-      <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-      <x-divider class="mb-4 mt-1" />
-    </div>
-    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-      <div class="w-full md:w-2/3">
-        <x-textarea
-          v-model="leadStatusForm.notes"
-          type="text"
-          label="Notes"
-          placeholder="Lead Notes"
-          class="w-full"
-          :disabled="
-            quote.quote_status_id == enums.quoteStatusEnum.transactionApproved
-          "
-        />
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div
+            class="grid sm:grid-cols-2"
+            v-for="field in fieldsToDisplay"
+            :key="field"
+          >
+            <dt class="font-medium">{{ field.title }}</dt>
+            <dd>{{ field.value }}</dd>
+          </div>
+        </dl>
       </div>
-      <div class="w-full md:w-1/3">
-        <div class="flex flex-col gap-4">
-          <x-select
-            v-model="leadStatusForm.leadStatus"
-            label="Status"
-            :options="leadStatusOptions"
+      <x-divider class="mb-4 mt-1" />
+
+      <div class="mt-6">
+        <h3 class="font-semibold text-primary-800">Customer Profile</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">FIRST NAME</dt>
+            <dd>{{ quote.first_name }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">LAST NAME</dt>
+            <dd>{{ quote.last_name }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">MOBILE NUMBER</dt>
+            <dd>{{ quote.mobile_no }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">EMAIL</dt>
+            <dd>{{ quote.email }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">GENDER</dt>
+            <dd>{{ genderText(quote.gender).value }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">MARITAL STATUS</dt>
+            <dd>{{ quote.marital_status_id_text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">NATIONALITY</dt>
+            <dd>{{ quote.nationality_id_text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">DATE OF BIRTH</dt>
+            <dd>{{ quote.dob }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">EMIRATE OF VISA</dt>
+            <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">MEMBER CATEGORY</dt>
+            <dd>{{ quote.member_category_id_text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">SALARY BAND</dt>
+            <dd>{{ quote.salary_band_id_text }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-semibold text-primary-800">Quote Details</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">WHO ARE YOU LOOKING TO COVER?</dt>
+            <dd>{{ quote.cover_for_id_text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">CURRENTLY INSURED WITH</dt>
+            <dd>{{ quote.currently_insured_with_id_text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TYPE OF PLAN</dt>
+            <dd>{{ quote.plan_id }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
+            <dd>{{ quote.next_followup_date }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">DETAILS</dt>
+            <dd>{{ quote.details }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-semibold text-primary-800">
+          Last Year's Policy Details
+        </h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
+            <dd>{{ quote.previous_quote_policy_number }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dd>{{ quote.previous_quote_policy_premium }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
+            <dd>{{ quote.previous_policy_expiry_date }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-semibold text-primary-800">Policy Details</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">POLICY NUMBER</dt>
+            <dd>{{ quote.policy_number }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">POLICY START DATE</dt>
+            <dd>{{ quote.policy_start_date }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">POLICY END DATE</dt>
+            <dd>{{ quote.policy_issuance_date }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PREMIUM</dt>
+            <dd>{{ quote.premium }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRANSAPP CODE</dt>
+            <dd>{{ quote.transapp_code }}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+        <div class="w-full md:w-2/3">
+          <x-textarea
+            v-model="leadStatusForm.notes"
+            type="text"
+            label="Notes"
+            placeholder="Lead Notes"
+            class="w-full"
             :disabled="
               quote.quote_status_id == enums.quoteStatusEnum.transactionApproved
             "
-            placeholder="Lead Status"
-            class="w-full"
-          />
-          <x-input
-            v-if="
-              leadStatusForm.leadStatus ==
-              enums.quoteStatusEnum.transactionApproved
-            "
-            v-model="leadStatusForm.trans_code"
-            label="TransApp Code"
-            placeholder="TransApp Code is required"
-            class="w-full"
-            :error="leadStatusForm.errors.trans_code"
-          />
-          <x-select
-            v-if="leadStatusForm.leadStatus == 17"
-            v-model="leadStatusForm.lostReason"
-            label="Lost Reason"
-            :options="lostReasonsOptions"
-            placeholder="Lost Reason is required"
-            class="w-full"
-            :error="leadStatusForm.errors.lostReason"
           />
         </div>
+        <div class="w-full md:w-1/3">
+          <div class="flex flex-col gap-4">
+            <x-select
+              v-model="leadStatusForm.leadStatus"
+              label="Status"
+              :options="leadStatusOptions"
+              :disabled="
+                quote.quote_status_id ==
+                enums.quoteStatusEnum.transactionApproved
+              "
+              placeholder="Lead Status"
+              class="w-full"
+            />
+            <x-input
+              v-if="
+                leadStatusForm.leadStatus ==
+                enums.quoteStatusEnum.transactionApproved
+              "
+              v-model="leadStatusForm.trans_code"
+              label="TransApp Code"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+            <x-select
+              v-if="leadStatusForm.leadStatus == 17"
+              v-model="leadStatusForm.lostReason"
+              label="Lost Reason"
+              :options="lostReasonsOptions"
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+          </div>
 
-        <div class="flex justify-end">
-          <x-button
-            class="mt-4"
-            color="emerald"
-            size="sm"
-            :loading="leadStatusForm.processing"
-            @click.prevent="onLeadStatus"
-          >
-            Change Status
-          </x-button>
+          <div class="flex justify-end">
+            <x-button
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="leadStatusForm.processing"
+              @click.prevent="onLeadStatus"
+            >
+              Change Status
+            </x-button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <x-modal v-model="confirmModal.show" show-close backdrop>
-    <template #header> {{ confirmModal.title }} </template>
-    <p>{{ confirmModal.message }}</p>
-    <template #actions>
-      <div class="text-right space-x-4">
-        <x-button size="sm" ghost @click.prevent="confirmModal.show = false">
-          Cancel
+    <x-modal v-model="confirmModal.show" show-close backdrop>
+      <template #header> {{ confirmModal.title }} </template>
+      <p>{{ confirmModal.message }}</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button size="sm" ghost @click.prevent="confirmModal.show = false">
+            Cancel
+          </x-button>
+          <x-button
+            size="sm"
+            color="error"
+            @click.prevent="confirmModal.onConfirm"
+            :loading="confirmModal.processing"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Lead Activities
+          <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+        </h3>
+        <x-button size="sm" color="orange" @click.prevent="addActivity">
+          Add Activity
         </x-button>
+      </div>
+      <x-divider class="my-4" />
+
+      <DataTable
+        table-class-name="compact"
+        :headers="activityTable"
+        :items="activities"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="activities.length < 15"
+      >
+        <template #item-status="{ status, id }">
+          <x-checkbox
+            color="emerald"
+            size="xl"
+            :modelValue="status === 1"
+            :disabled="status === 1"
+            @change="onActivityStatusUpdate(id)"
+          />
+        </template>
+        <template #item-action="item">
+          <div class="space-x-4">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              :disabled="item.status === 1"
+              @click.prevent="activityEdit(item)"
+            >
+              Edit
+            </x-button>
+            <x-button
+              size="xs"
+              color="error"
+              :disabled="item.status === 1"
+              outlined
+              @click.prevent="activityDelete(item.id)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
+      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+        <template #header>
+          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+        </template>
+
+        <x-form @submit="onActivitySubmit" :auto-focus="false">
+          <div class="grid gap-4">
+            <x-input
+              v-model="activityForm.title"
+              label="Title"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+
+            <x-textarea
+              v-model="activityForm.description"
+              label="Description"
+              :adjust-to-text="false"
+              class="w-full"
+            />
+
+            <x-select
+              v-model="activityForm.assignee_id"
+              label="Assignee"
+              :options="leadStatusOptions"
+              :rules="[rules.isRequired]"
+              placeholder="Select Assignee"
+              class="w-full"
+            />
+
+            <x-input
+              v-model="activityForm.due_date"
+              label="Due Date"
+              type="datetime-local"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+          </div>
+
+          <div class="text-right space-x-4 mt-12">
+            <x-button size="sm" @click.prevent="modals.activity = false">
+              Cancel
+            </x-button>
+
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="activityForm.processing"
+              type="submit"
+            >
+              {{ activityActionEdit ? 'Update' : 'Save' }}
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
+      <x-modal v-model="modals.activityConfirm" show-close backdrop>
+        <template #header> Delete Activity </template>
+        <p>Are you sure you want to delete this activity?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.activityConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              :loading="activityForm.processing"
+              @click.prevent="activityDeleteConfirmed"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+    </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Customer Additional Contacts
+          <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
+        </h3>
         <x-button
           size="sm"
-          color="error"
-          @click.prevent="confirmModal.onConfirm"
-          :loading="confirmModal.processing"
+          color="orange"
+          @click.prevent="modals.addContact = true"
         >
-          Delete
+          Add Additional Contacts
         </x-button>
       </div>
-    </template>
-  </x-modal>
 
-  <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Lead Activities
-        <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-      </h3>
-      <x-button size="sm" color="orange" @click.prevent="addActivity">
-        Add Activity
-      </x-button>
-    </div>
-    <x-divider class="my-4" />
-
-    <DataTable
-      table-class-name="compact"
-      :headers="activityTable"
-      :items="activities"
-      border-cell
-      hide-rows-per-page
-      :rows-per-page="15"
-      :hide-footer="activities.length < 15"
-    >
-      <template #item-status="{ status, id }">
-        <x-checkbox
-          color="emerald"
-          size="xl"
-          :modelValue="status === 1"
-          :disabled="status === 1"
-          @change="onActivityStatusUpdate(id)"
-        />
-      </template>
-      <template #item-action="item">
-        <div class="space-x-4">
-          <x-button
-            size="xs"
-            color="primary"
-            outlined
-            :disabled="item.status === 1"
-            @click.prevent="activityEdit(item)"
-          >
-            Edit
-          </x-button>
-          <x-button
-            size="xs"
-            color="error"
-            :disabled="item.status === 1"
-            outlined
-            @click.prevent="activityDelete(item.id)"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </DataTable>
-    <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-      <template #header>
-        {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-      </template>
-
-      <x-form @submit="onActivitySubmit" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-input
-            v-model="activityForm.title"
-            label="Title"
-            :rules="[rules.isRequired]"
-            class="w-full"
-          />
-
-          <x-textarea
-            v-model="activityForm.description"
-            label="Description"
-            :adjust-to-text="false"
-            class="w-full"
-          />
-
-          <x-select
-            v-model="activityForm.assignee_id"
-            label="Assignee"
-            :options="leadStatusOptions"
-            :rules="[rules.isRequired]"
-            placeholder="Select Assignee"
-            class="w-full"
-          />
-
-          <x-input
-            v-model="activityForm.due_date"
-            label="Due Date"
-            type="datetime-local"
-            :rules="[rules.isRequired]"
-            class="w-full"
-          />
-        </div>
-
-        <div class="text-right space-x-4 mt-12">
-          <x-button size="sm" @click.prevent="modals.activity = false">
-            Cancel
-          </x-button>
-
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="activityForm.processing"
-            type="submit"
-          >
-            {{ activityActionEdit ? 'Update' : 'Save' }}
-          </x-button>
-        </div>
-      </x-form>
-    </x-modal>
-    <x-modal v-model="modals.activityConfirm" show-close backdrop>
-      <template #header> Delete Activity </template>
-      <p>Are you sure you want to delete this activity?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.activityConfirm = false"
-          >
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            :loading="activityForm.processing"
-            @click.prevent="activityDeleteConfirmed"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
-  </div>
-
-  <div class="p-4 rounded shadow mb-6 bg-white">
-    <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Customer Additional Contacts
-        <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
-      </h3>
-      <x-button
-        size="sm"
-        color="orange"
-        @click.prevent="modals.addContact = true"
+      <DataTable
+        table-class-name="compact"
+        :headers="additionalContactTable"
+        :items="customerAdditionalContacts || []"
+        border-cell
+        hide-rows-per-page
+        hide-footer
       >
-        Add Additional Contacts
-      </x-button>
+        <template #item-key="{ key }">
+          <span v-if="key === 'email'"> Email Address </span>
+          <span v-else> Mobile Number </span>
+        </template>
+        <template #item-action="item">
+          <div class="space-x-4">
+            <x-button
+              size="xs"
+              color="emerald"
+              outlined
+              @click.prevent="additionalContactPrimary(item)"
+            >
+              Make Primary
+            </x-button>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="additionalContactDelete(item.id)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
+
+      <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
+        <template #header> Add Additional Contacts </template>
+
+        <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+          <div class="grid gap-4">
+            <x-select
+              v-model="additionalContact.additional_contact_type"
+              label="Type"
+              :options="[
+                { value: 'email', label: 'Email' },
+                { value: 'mobile_no', label: 'Mobile Number' },
+              ]"
+              :rules="[rules.isRequired]"
+              placeholder="Select Type"
+              class="w-full"
+            />
+
+            <x-input
+              v-model="additionalContact.additional_contact_val"
+              label="Value"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+          </div>
+
+          <div class="text-right space-x-4 mt-12">
+            <x-button size="sm" @click.prevent="modals.addContact = false">
+              Cancel
+            </x-button>
+
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="additionalContact.processing"
+              type="submit"
+            >
+              Save
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
+
+      <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
+        <template #header> Delete Additional Contact </template>
+        <p>Are you sure you want to delete this?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.contactDeleteConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              @click.prevent="additionalContactDeleteConfirmed"
+              :loading="contactLoader"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+
+      <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
+        <template #header> Primary Additional Contact </template>
+        <p>Are you sure you want to make this information as Primary?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.contactPrimaryConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="emerald"
+              @click.prevent="additionalContactPrimaryConfirmed"
+              :loading="contactLoader"
+            >
+              Confirm
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
     </div>
 
-    <DataTable
-      table-class-name="compact"
-      :headers="additionalContactTable"
-      :items="customerAdditionalContacts || []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #item-key="{ key }">
-        <span v-if="key === 'email'"> Email Address </span>
-        <span v-else> Mobile Number </span>
-      </template>
-      <template #item-action="item">
-        <div class="space-x-4">
-          <x-button
-            size="xs"
-            color="emerald"
-            outlined
-            @click.prevent="additionalContactPrimary(item)"
-          >
-            Make Primary
-          </x-button>
-          <x-button
-            size="xs"
-            color="error"
-            outlined
-            @click.prevent="additionalContactDelete(item.id)"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </DataTable>
-
-    <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-      <template #header> Add Additional Contacts </template>
-
-      <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
-        <div class="grid gap-4">
-          <x-select
-            v-model="additionalContact.additional_contact_type"
-            label="Type"
-            :options="[
-              { value: 'email', label: 'Email' },
-              { value: 'mobile_no', label: 'Mobile Number' },
-            ]"
-            :rules="[rules.isRequired]"
-            placeholder="Select Type"
-            class="w-full"
-          />
-
-          <x-input
-            v-model="additionalContact.additional_contact_val"
-            label="Value"
-            :rules="[rules.isRequired]"
-            class="w-full"
-          />
-        </div>
-
-        <div class="text-right space-x-4 mt-12">
-          <x-button size="sm" @click.prevent="modals.addContact = false">
-            Cancel
-          </x-button>
-
-          <x-button
-            size="sm"
-            color="emerald"
-            :loading="additionalContact.processing"
-            type="submit"
-          >
-            Save
-          </x-button>
-        </div>
-      </x-form>
-    </x-modal>
-
-    <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
-      <template #header> Delete Additional Contact </template>
-      <p>Are you sure you want to delete this?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.contactDeleteConfirm = false"
-          >
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="additionalContactDeleteConfirmed"
-            :loading="contactLoader"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
-
-    <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-      <template #header> Primary Additional Contact </template>
-      <p>Are you sure you want to make this information as Primary?</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button
-            size="sm"
-            ghost
-            @click.prevent="modals.contactPrimaryConfirm = false"
-          >
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="emerald"
-            @click.prevent="additionalContactPrimaryConfirmed"
-            :loading="contactLoader"
-          >
-            Confirm
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
-  </div>
-
-  <div class="p-4 rounded shadow mb-6 bg-white">
-    <div>
-      <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-      <x-divider class="mb-4 mt-1" />
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div v-if="historyData === null" class="text-center py-3">
+        <x-button
+          size="sm"
+          color="primary"
+          outlined
+          @click.prevent="onLoadHistoryData"
+          :loading="historyLoading"
+        >
+          Load History Data
+        </x-button>
+      </div>
+      <DataTable
+        v-else
+        table-class-name="compact"
+        :headers="historyDataTable"
+        :items="historyData || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="historyData.length < 15"
+      />
     </div>
-    <div v-if="historyData === null" class="text-center py-3">
-      <x-button
-        size="sm"
-        color="primary"
-        outlined
-        @click.prevent="onLoadHistoryData"
-        :loading="historyLoading"
-      >
-        Load History Data
-      </x-button>
-    </div>
-    <DataTable
-      v-else
-      table-class-name="compact"
-      :headers="historyDataTable"
-      :items="historyData || []"
-      border-cell
-      hide-rows-per-page
-      :rows-per-page="15"
-      :hide-footer="historyData.length < 15"
-    />
-  </div>
 
-  <div class="p-4 rounded shadow mb-6 bg-white">
-    <div>
-      <h3 class="font-semibold text-primary-800 text-lg">Audit Logs</h3>
-      <x-divider class="mb-4 mt-1" />
-    </div>
-    <div class="text-center py-3" v-if="auditLogsData === null">
-      <x-button
-        size="sm"
-        color="primary"
-        outlined
-        @click.prevent="onLoadAuditLogData"
-        :loading="auditLogLoading"
-      >
-        Load Audit Logs
-      </x-button>
-    </div>
-    <DataTable
-      v-else
-      table-class-name="compact"
-      :headers="auditLogsDataTable"
-      :items="auditLogsData || []"
-      border-cell
-      hide-rows-per-page
-      :rows-per-page="15"
-      :hide-footer="auditLogsData?.length < 15"
-    />
+    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" />
   </div>
 </template>
