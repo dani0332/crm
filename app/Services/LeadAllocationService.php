@@ -656,7 +656,7 @@ class LeadAllocationService extends BaseService
          * Search for a lead where email OR phone number (last 7 digits) matches
          * Search for a lead where car make and model id is same as what we have from current request
          *
-         * IF combine all above criteria's we find a lead then its a renewal otherwise not
+         * On adding all above criteria's we find a lead then its a renewal otherwise not
          */
         $dateFrom = Carbon::now()->addDays(-30);
         $dateTo = Carbon::now()->addDays(90);
