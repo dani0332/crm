@@ -29,6 +29,7 @@ defineProps({
   activities: Array,
   customerAdditionalContacts: Array,
   fieldsToDisplay: Object,
+  customTitles: Object,
 });
 
 const page = usePage();
@@ -141,7 +142,6 @@ const leadStatusOptions = computed(() => {
   }));
 });
 
-
 const onLeadStatus = () => {
   leadStatusForm.post(
     `/quotes/Life/${page.props.quote.id}/update-lead-status`,
@@ -234,7 +234,6 @@ const policyDetails = useForm({
   modelType: page.props.modelType,
   quote_id: page.props.quote.id,
 });
-
 
 //activities
 const activityTable = [
@@ -353,9 +352,6 @@ const activityDeleteConfirmed = () => {
     },
   );
 };
-
-
-
 
 // additional contact
 
@@ -820,8 +816,7 @@ onMounted(() => {});
     </template>
   </x-modal>
 
-
-<div class="p-4 rounded shadow mb-6 bg-white">
+  <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">
         Lead Activities
@@ -953,7 +948,6 @@ onMounted(() => {});
       </template>
     </x-modal>
   </div>
-
 
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">

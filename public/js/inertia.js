@@ -3122,14 +3122,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var expose = _ref.expose;
     expose();
     var props = __props;
-    var genderSelect = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
-      return Object.keys(props.genderOptions).map(function (status) {
-        return {
-          value: status,
-          label: props.genderOptions[status]
-        };
-      });
-    });
     var formFields = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
       return Object.keys(props.fields).map(function (key) {
         return {
@@ -3148,17 +3140,23 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       },
       isRequired: function isRequired(v) {
         return !!v || 'This field is required';
+      },
+      isNumber: function isNumber(v) {
+        return /^\d+$/.test(v) || 'This field must be a number';
+      },
+      allowEmpty: function allowEmpty(v) {
+        return  true || 0;
       }
     };
 
     function onSubmit(isValid) {
       if (isValid) {
-        quoteForm.post("/quotes/travel", {
+        quoteForm.post("/quotes/life", {
           onError: function onError(errors) {
             console.log(errors);
           },
           onSuccess: function onSuccess() {
-            _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.get("/quotes/travel/");
+            _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.get("/quotes/life/");
           }
         });
       }
@@ -3167,7 +3165,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {});
     var __returned__ = {
       props: props,
-      genderSelect: genderSelect,
       formFields: formFields,
       quoteForm: quoteForm,
       rules: rules,
@@ -3277,6 +3274,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       },
       isNumber: function isNumber(v) {
         return /^\d+$/.test(v) || 'This field must be a number';
+      },
+      allowEmpty: function allowEmpty(v) {
+        return  true || 0;
       }
     };
     var isEmptyField = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
@@ -3291,10 +3291,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     }
 
-    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
-      console.log('props', props.quote);
-      console.log('quoteForm', quoteForm);
-    });
+    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {});
     var __returned__ = {
       props: props,
       genderSelect: genderSelect,
@@ -3759,7 +3756,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     isAdmin: Boolean,
     activities: Array,
     customerAdditionalContacts: Array,
-    fieldsToDisplay: Object
+    fieldsToDisplay: Object,
+    customTitles: Object
   },
   setup: function setup(__props, _ref) {
     var _page$props$lostReaso;
@@ -11839,7 +11837,7 @@ var _hoisted_1 = {
 
 var _hoisted_2 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", {
   "class": "text-xl font-semibold"
-}, "Create Travel", -1
+}, "Create Life Quote", -1
 /* HOISTED */
 );
 
@@ -11863,9 +11861,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-form");
 
   return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Head"], {
-    title: "Create Travel"
+    title: "Create Life Quote"
   }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Link"], {
-    href: "/quotes/travel"
+    href: "/quotes/life"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
@@ -11874,7 +11872,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         tag: "div"
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Travel List ")];
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Quote List ")];
         }),
         _: 1
         /* STABLE */
@@ -11899,7 +11897,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             return $setup.quoteForm[index] = $event;
           },
           label: field.label,
-          rules: [field.required === true ? $setup.rules.isRequired : false],
+          rules: [field.required === true ? $setup.rules.isRequired : $setup.rules.allowEmpty],
           disabled: field.disabled,
           error: $setup.quoteForm.errors[index],
           "class": "w-full"
@@ -11913,7 +11911,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           },
           type: "email",
           label: field.label,
-          rules: [field.required === true ? $setup.rules.isRequired : false, $setup.rules.isEmail],
+          rules: [field.required === true ? $setup.rules.isRequired : $setup.rules.allowEmpty, $setup.rules.isEmail],
           disabled: field.disabled,
           "class": "w-full",
           error: $setup.quoteForm.errors[index]
@@ -11921,17 +11919,19 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         /* PROPS */
         , ["modelValue", "onUpdate:modelValue", "label", "rules", "disabled", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'number' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
           key: 2,
+          type: "number",
           modelValue: $setup.quoteForm[index],
           "onUpdate:modelValue": function onUpdateModelValue($event) {
             return $setup.quoteForm[index] = $event;
           },
           label: field.label,
+          rules: [field.required === true ? $setup.rules.isRequired : $setup.rules.allowEmpty],
           disabled: field.disabled,
           "class": "w-full",
           error: $setup.quoteForm.errors[index]
         }, null, 8
         /* PROPS */
-        , ["modelValue", "onUpdate:modelValue", "label", "disabled", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'date' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
+        , ["modelValue", "onUpdate:modelValue", "label", "rules", "disabled", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'date' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
           key: 3,
           modelValue: $setup.quoteForm[index],
           "onUpdate:modelValue": function onUpdateModelValue($event) {
@@ -11951,7 +11951,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             return $setup.quoteForm[index] = $event;
           },
           label: field.label,
-          rules: [field.required === true ? $setup.rules.isRequired : false],
+          rules: [field.required === true ? $setup.rules.isRequired : $setup.rules.allowEmpty],
           disabled: field.disabled,
           options: field.options.map(function (option) {
             return {
@@ -11970,7 +11970,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             return $setup.quoteForm[index] = $event;
           },
           label: field.label,
-          rules: [field.required === true ? $setup.rules.isRequired : false],
+          rules: [field.required === true ? $setup.rules.isRequired : $setup.rules.allowEmpty],
           disabled: field.disabled,
           "class": "w-full",
           error: $setup.quoteForm.errors[index]
@@ -12110,7 +12110,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             return $setup.quoteForm[index] = $event;
           },
           label: field.label,
-          rules: [field.required === true ? $setup.rules.isRequired : false],
+          rules: [field.required === true ? $setup.rules.isRequired : $setup.rules.allowEmpty],
           disabled: field.disabled,
           "class": "w-full"
         }, null, 8
@@ -12123,7 +12123,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           },
           type: "email",
           label: field.label,
-          rules: [field.required === true ? $setup.rules.isRequired : false, $setup.rules.isEmail],
+          rules: [field.required === true ? $setup.rules.isRequired : $setup.rules.allowEmpty, $setup.rules.isEmail],
           disabled: field.disabled,
           "class": "w-full"
         }, null, 8
@@ -12131,6 +12131,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         , ["modelValue", "onUpdate:modelValue", "label", "rules", "disabled"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'number' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
           key: 2,
           type: "number",
+          rules: [field.required === true ? $setup.rules.isRequired : $setup.rules.allowEmpty],
           modelValue: $setup.quoteForm[index],
           "onUpdate:modelValue": function onUpdateModelValue($event) {
             return $setup.quoteForm[index] = $event;
@@ -12140,7 +12141,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           "class": "w-full"
         }, null, 8
         /* PROPS */
-        , ["modelValue", "onUpdate:modelValue", "label", "disabled"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'date' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
+        , ["rules", "modelValue", "onUpdate:modelValue", "label", "disabled"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), field.type == 'date' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
           key: 3,
           modelValue: $setup.quoteForm[index],
           "onUpdate:modelValue": function onUpdateModelValue($event) {
@@ -12159,7 +12160,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             return $setup.quoteForm[index] = $event;
           },
           label: field.label,
-          rules: [field.required === true ? $setup.rules.isRequired : false],
+          rules: [field.required === true ? $setup.rules.isRequired : $setup.rules.allowEmpty],
           disabled: field.disabled,
           options: field.options.map(function (option) {
             return {
@@ -12177,7 +12178,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             return $setup.quoteForm[index] = $event;
           },
           label: field.label,
-          rules: [field.required === true ? $setup.rules.isRequired : false],
+          rules: [field.required === true ? $setup.rules.isRequired : $setup.rules.allowEmpty],
           disabled: field.disabled,
           "class": "w-full",
           size: "lg"

@@ -789,10 +789,17 @@ class LifeQuoteService extends BaseService
                         $fields[$property]['value'] = $option;
                     }
                 }
-            } elseif (str_contains($field, 'title')) {
+            } elseif (str_contains($field, 'select')) {
+                $fields[$property]['title'] = $crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+                $name = $property.'_text';
+                $fields[$property]['value'] = $quote->$name ?? '';
+            }
+            elseif (str_contains($field, 'title')) {
                 $fields[$property]['title'] = $crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
                 $fields[$property]['value'] = $quote->$property ?? '';
-            } else {
+            }
+
+            else {
                 $fields[$property]['title'] = ucwords(str_replace('_', ' ', $property));
                 $fields[$property]['value'] = $quote->$property ?? '';
             }

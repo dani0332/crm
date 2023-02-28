@@ -11,6 +11,7 @@ use Inertia\ResponseFactory;
 use App\Services\CRUDService;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
+use Illuminate\Support\Carbon;
 use App\Services\LookupService;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
@@ -67,7 +68,54 @@ class LifeController extends Controller
      */
     public function create()
     {
-        //
+        $isRenewalUser = Auth::user()->isRenewalUser();
+        if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
+            $isRenewalUser = true;
+            $this->crudService->fillRenewalData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
+        } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
+            $isNewBusinessUser = true;
+            $this->crudService->fillNewBusinessData($this->genericModel);
+            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
+        }
+
+        $fieldsToCreate = $this->service->getFieldsToCreate('skipProperties');
+        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $customTitles = [];
+        foreach ($fieldsToCreate as $property => $value) {
+            if (str_contains($value, 'title')) {
+                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+            } else {
+                $customTitles[$property] = ucwords(str_replace('_', ' ', $property));
+            }
+        }
+
+        $fields = [];
+        foreach ($fieldsToCreate as $property => $value) {
+            $value = array_diff(explode('|', $value), ['title']);
+            $type = $value[0] == 'select' ? 'select' : $value[1] ?? 'text';
+            $fields[$property] = [
+                'type' => $type,
+                'required' => in_array('required', $value),
+                'readonly' => in_array('readonly', $value),
+                'disabled' => in_array('disabled', $value),
+                'value' => '',
+                'label' => $customTitles[$property],
+                'options' => $dropdownSource[$property] ?? [],
+            ];
+        }
+
+        $model = $this->genericModel;
+
+        return inertia('LifeQuote/Create', [
+            'model' => json_encode($model->properties),
+            'customTitles' => $customTitles,
+            'fields' => $fields,
+            'dropdownSource' => $dropdownSource,
+            'renewalAdvisors' => $renewalAdvisors ?? [],
+            'isRenewalUser' => $isRenewalUser,
+            'isNewBusinessUser' => $isNewBusinessUser ?? false,
+        ]);
     }
 
     /**
@@ -78,7 +126,37 @@ class LifeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $modelPropertiesList = $this->genericModel->properties;
+        $modelSkipPropertiesList = $this->genericModel->skipProperties;
+        $modelType = self::TYPE;
+
+        $validateArray = [];
+        foreach ($modelPropertiesList as $property => $value) {
+            if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['create'], $property)) {
+                $validateArray[$property] = 'required';
+            }
+        }
+        $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
+        if ($request->has('email')) {
+            $this->validate($request, [
+                'email' => 'required|email:rfc,dns|max:150',
+            ]);
+        }
+        if ($request->has('mobile_no')) {
+            $this->validate($request, [
+                'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
+            ]);
+        }
+
+        $this->validate($request, $validateArray);
+
+        $record = $this->service->saveLifeQuote($request);
+
+        if (isset($record->message) && str_contains($record->message, 'Error')) {
+            return redirect()->back()->with('message', $record->message)->withInput();
+        }
+
+        redirect('/quotes/life')->with('message', 'Record created successfully');
     }
 
     public function show($uuid)
@@ -105,7 +183,15 @@ class LifeController extends Controller
 
         $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $fields = $this->service->fieldsToDisplay($this->service->getFieldsToShow(), $quote);
-
+        $customTitles = [];
+        foreach ($fields as $property => $value) {
+            if (in_array('title', $value)) {
+                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+            } else {
+                $customTitles[$property] = ucwords(str_replace('_', ' ', $property));
+            }
+        }
+        
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->service->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = $this->service->getQuoteDocuments($this->genericModel->modelType, $quote->id);
@@ -199,7 +285,7 @@ class LifeController extends Controller
         }
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
-        
+
         return inertia('LifeQuote/Edit', [
             'quote' => $record,
             'modelType' => $this->genericModel->modelType,

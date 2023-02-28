@@ -45,12 +45,12 @@ const rules = {
     'E-mail must be valid',
   isRequired: v => !!v || 'This field is required',
   isNumber: v => /^\d+$/.test(v) || 'This field must be a number',
+  allowEmpty: v => true || 'This field is required',
 };
 
 const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
-
   if (isValid) {
     quoteForm.put(`/quotes/life/${props.quote.uuid}`, {
       onSuccess: () => {
@@ -60,10 +60,7 @@ function onSubmit(isValid) {
   }
 }
 
-onMounted(() => {
-    console.log('props', props.quote);
-    console.log('quoteForm', quoteForm);
-});
+onMounted(() => {});
 </script>
 
 <template>
@@ -88,7 +85,9 @@ onMounted(() => {
             v-if="field.type == 'text'"
             v-model="quoteForm[index]"
             :label="field.label"
-            :rules="[field.required === true ? rules.isRequired : false]"
+            :rules="[
+              field.required === true ? rules.isRequired : rules.allowEmpty,
+            ]"
             :disabled="field.disabled"
             class="w-full"
           />
@@ -99,7 +98,7 @@ onMounted(() => {
             type="email"
             :label="field.label"
             :rules="[
-              field.required === true ? rules.isRequired : false,
+              field.required === true ? rules.isRequired : rules.allowEmpty,
               rules.isEmail,
             ]"
             :disabled="field.disabled"
@@ -109,6 +108,9 @@ onMounted(() => {
           <x-input
             v-if="field.type == 'number'"
             type="number"
+            :rules="[
+              field.required === true ? rules.isRequired : rules.allowEmpty,
+            ]"
             v-model="quoteForm[index]"
             :label="field.label"
             :disabled="field.disabled"
@@ -127,7 +129,9 @@ onMounted(() => {
             v-if="field.type == 'select'"
             v-model="quoteForm[index]"
             :label="field.label"
-            :rules="[field.required === true ? rules.isRequired : false]"
+            :rules="[
+              field.required === true ? rules.isRequired : rules.allowEmpty,
+            ]"
             :disabled="field.disabled"
             :options="
               field.options.map(option => ({
@@ -142,7 +146,9 @@ onMounted(() => {
             v-if="field.type == 'textarea'"
             v-model="quoteForm[index]"
             :label="field.label"
-            :rules="[field.required === true ? rules.isRequired : false]"
+            :rules="[
+              field.required === true ? rules.isRequired : rules.allowEmpty,
+            ]"
             :disabled="field.disabled"
             class="w-full"
             size="lg"

@@ -9,13 +9,6 @@ const props = defineProps({
   fields: Object,
 });
 
-const genderSelect = computed(() => {
-  return Object.keys(props.genderOptions).map(status => ({
-    value: status,
-    label: props.genderOptions[status],
-  }));
-});
-
 const formFields = computed(() => {
   return Object.keys(props.fields).map(key => ({
     value: key,
@@ -35,35 +28,34 @@ const rules = {
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
     'E-mail must be valid',
   isRequired: v => !!v || 'This field is required',
+  isNumber: v => /^\d+$/.test(v) || 'This field must be a number',
+  allowEmpty: v => true || 'This field is required',
 };
-
 
 function onSubmit(isValid) {
   if (isValid) {
-    quoteForm.post(`/quotes/travel`, {
+    quoteForm.post(`/quotes/life`, {
       onError: errors => {
         console.log(errors);
       },
       onSuccess: () => {
-        router.get(`/quotes/travel/`);
+        router.get(`/quotes/life/`);
       },
     });
   }
 }
 
-onMounted(() => {
-
-});
+onMounted(() => {});
 </script>
 
 <template>
   <div>
-    <Head title="Create Travel" />
+    <Head title="Create Life Quote" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Create Travel</h2>
+      <h2 class="text-xl font-semibold">Create Life Quote</h2>
       <div>
-        <Link href="/quotes/travel">
-          <x-button size="sm" color="#ff5e00" tag="div"> Travel List </x-button>
+        <Link href="/quotes/life">
+          <x-button size="sm" color="#ff5e00" tag="div"> Quote List </x-button>
         </Link>
       </div>
     </div>
@@ -75,7 +67,9 @@ onMounted(() => {
             v-if="field.type == 'text'"
             v-model="quoteForm[index]"
             :label="field.label"
-            :rules="[field.required === true ? rules.isRequired : false]"
+            :rules="[
+              field.required === true ? rules.isRequired : rules.allowEmpty,
+            ]"
             :disabled="field.disabled"
             :error="quoteForm.errors[index]"
             class="w-full"
@@ -87,7 +81,7 @@ onMounted(() => {
             type="email"
             :label="field.label"
             :rules="[
-              field.required === true ? rules.isRequired : false,
+              field.required === true ? rules.isRequired : rules.allowEmpty,
               rules.isEmail,
             ]"
             :disabled="field.disabled"
@@ -97,8 +91,12 @@ onMounted(() => {
 
           <x-input
             v-if="field.type == 'number'"
+            type="number"
             v-model="quoteForm[index]"
             :label="field.label"
+            :rules="[
+              field.required === true ? rules.isRequired : rules.allowEmpty,
+            ]"
             :disabled="field.disabled"
             class="w-full"
             :error="quoteForm.errors[index]"
@@ -118,7 +116,9 @@ onMounted(() => {
             v-if="field.type == 'select'"
             v-model="quoteForm[index]"
             :label="field.label"
-            :rules="[field.required === true ? rules.isRequired : false]"
+            :rules="[
+              field.required === true ? rules.isRequired : rules.allowEmpty,
+            ]"
             :disabled="field.disabled"
             :options="
               field.options.map(option => ({
@@ -134,7 +134,9 @@ onMounted(() => {
             v-if="field.type == 'textarea'"
             v-model="quoteForm[index]"
             :label="field.label"
-            :rules="[field.required === true ? rules.isRequired : false]"
+            :rules="[
+              field.required === true ? rules.isRequired : rules.allowEmpty,
+            ]"
             :disabled="field.disabled"
             class="w-full"
             :error="quoteForm.errors[index]"
