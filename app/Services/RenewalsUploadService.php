@@ -764,7 +764,7 @@ class RenewalsUploadService
                         ->where('car_model_id', $quoteData['car_model_id'])
                         ->first())) {
                         $quoteData['cylinder'] = $carModelDetail->cylinder;
-                        $quoteData['seat_capacity'] = $carModelDetail->seat_capacity;
+                        $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                         $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
                     }
                 }
