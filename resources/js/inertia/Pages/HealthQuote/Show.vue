@@ -442,6 +442,10 @@ const plansTable = reactive({
       value: 'name',
     },
     {
+      text: 'Network Name',
+      value: 'network',
+    },
+    {
       text: 'Premium with VAT and Basmah',
       value: 'actualPremium',
     },
