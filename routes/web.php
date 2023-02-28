@@ -65,6 +65,7 @@ use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\V2\CycleQuoteController;
+use App\Http\Controllers\V2\PersonalPlanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -252,6 +253,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
     });
 
+    Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
     Route::group(['prefix' => 'personal-quotes'], function () {
         Route::patch('{quoteId}/update-policy-details', [PersonalQuoteController::class, 'updatePolicyDetails']);
         Route::patch('{quoteType}/{quoteId}/update-status', [PersonalQuoteController::class, 'updateStatus']);

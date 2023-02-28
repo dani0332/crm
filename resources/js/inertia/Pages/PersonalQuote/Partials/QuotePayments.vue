@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import {computed, reactive, ref, watch} from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { useNotifications } from '@indielayer/ui';
 import axios from 'axios';
@@ -134,6 +134,8 @@ const addPayment = isValid => {
             },
         });
 
+
+
     // let data = {
     //     captured_amount: paymentMethodsForm.amount,
     //     code: paymentMethodsForm.payment_method,
@@ -175,7 +177,34 @@ const addPayment = isValid => {
 
 };
 
+const planOptions = reactive({
+    data: [],
+    loading: false,
+});
 
+watch(
+    () => paymentForm.insurance_provider_id,
+    value => {
+        if (value) {
+
+            planOptions.loading = true;
+            paymentForm.plan_id = null;
+            planOptions.data = null;
+            axios
+                .get(
+                    `/personal-plans/list?insurance_provider_id=${value}&quote_type=${page.props.quoteType}`,
+                )
+                .then(res => {
+                    if (res.data.length > 0) {
+                        planOptions.data = res.data;
+                    }
+                })
+                .finally(() => {
+                    planOptions.loading = false;
+                });
+        }
+    },
+);
 
 const getPlanName = computed(() => {
     const plan = page.props.quote.plan;
@@ -347,7 +376,7 @@ const generateCCLink = async code => {
                         class="w-full"
                         v-model="paymentForm.insurance_provider_id"
                         :options="insuranceProviderOptions"
-                        label="Insurance Provider*"
+                        label="Insurance Provider**"
                         :rules="[rules.isRequired]"
                         :error="paymentForm.errors.insurance_provider_id"
                     >
@@ -356,7 +385,10 @@ const generateCCLink = async code => {
                     <x-select
                         class="w-full"
                         v-model="paymentForm.plan_id"
-                        :options="personalPlanOptions"
+                        :options="planOptions.data?.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))"
                         label="Plan*"
                         :rules="[rules.isRequired]"
                         :error="paymentForm.errors.plan_id"

@@ -4628,10 +4628,26 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       // }
     };
 
-    var getPlans = function getPlans(event) {
-      console.log('999889');
-    };
-
+    var planOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
+      data: [],
+      loading: false
+    });
+    (0,vue__WEBPACK_IMPORTED_MODULE_0__.watch)(function () {
+      return paymentForm.insurance_provider_id;
+    }, function (value) {
+      if (value) {
+        planOptions.loading = true;
+        paymentForm.plan_id = null;
+        planOptions.data = null;
+        axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/personal-plans/list?insurance_provider_id=".concat(value, "&quote_type=").concat(page.props.quoteType)).then(function (res) {
+          if (res.data.length > 0) {
+            planOptions.data = res.data;
+          }
+        })["finally"](function () {
+          planOptions.loading = false;
+        });
+      }
+    });
     var getPlanName = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
       var plan = page.props.quote.plan;
       return plan ? plan.text : 'Not Available';
@@ -4742,12 +4758,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       addPaymentModal: addPaymentModal,
       editPaymentModal: editPaymentModal,
       addPayment: addPayment,
-      getPlans: getPlans,
+      planOptions: planOptions,
       getPlanName: getPlanName,
       paymentTableHeaders: paymentTableHeaders,
       generateCCLink: generateCCLink,
       computed: vue__WEBPACK_IMPORTED_MODULE_0__.computed,
+      reactive: vue__WEBPACK_IMPORTED_MODULE_0__.reactive,
       ref: vue__WEBPACK_IMPORTED_MODULE_0__.ref,
+      watch: vue__WEBPACK_IMPORTED_MODULE_0__.watch,
 
       get useForm() {
         return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm;
@@ -13545,7 +13563,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["items"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_modal, {
     modelValue: $setup.paymentModal,
-    "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
+    "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
       return $setup.paymentModal = $event;
     }),
     size: "lg",
@@ -13563,6 +13581,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "auto-focus": false
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+          var _$setup$planOptions$d;
+
           return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
             "class": "w-full",
             rules: [$setup.rules.isRequired],
@@ -13606,9 +13626,6 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             }),
             options: $setup.insuranceProviderOptions,
             label: "Insurance Provider**",
-            onChange: _cache[4] || (_cache[4] = function ($event) {
-              return $setup.getPlans();
-            }),
             rules: [$setup.rules.isRequired],
             error: $setup.paymentForm.errors.insurance_provider_id
           }, null, 8
@@ -13616,10 +13633,15 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           , ["modelValue", "options", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
             "class": "w-full",
             modelValue: $setup.paymentForm.plan_id,
-            "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
+            "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
               return $setup.paymentForm.plan_id = $event;
             }),
-            options: $setup.personalPlanOptions,
+            options: (_$setup$planOptions$d = $setup.planOptions.data) === null || _$setup$planOptions$d === void 0 ? void 0 : _$setup$planOptions$d.map(function (item) {
+              return {
+                value: item.id,
+                label: item.text
+              };
+            }),
             label: "Plan*",
             rules: [$setup.rules.isRequired],
             error: $setup.paymentForm.errors.plan_id
@@ -13630,7 +13652,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             label: "Payment Reference*",
             rules: [$setup.rules.isRequired, $setup.rules.reference],
             modelValue: $setup.paymentForm.reference,
-            "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
+            "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
               return $setup.paymentForm.reference = $event;
             }),
             error: $setup.paymentForm.errors.reference
