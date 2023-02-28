@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Jobs\CarRenewalEmailJob;
 use App\Models\CarQuote;
 use App\Models\GenericModel;
 use App\Models\LeadAllocation;
@@ -37,7 +38,6 @@ use App\Services\NotesForCustomerService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SIBService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
@@ -801,18 +801,8 @@ class CRUDController extends Controller
 
                 // MS: Send email
                 if (isset($request->leadId)) {
-                    $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
-                    $tag = config('constants.APP_ENV').'-car-quote-tier-r';
-                    $emailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
-                    $lead = CarQuote::find($request->leadId);
-                    if ($lead) {
-                        $emailData = $this->emailDataService->generateTierREmailData($lead);
-
-                        // Send Email
-                        if ($emailData) {
-                            SIBService::sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailRecipients);
-                        }
-                    }
+                    $lead = $this->carQuoteService->getEntityPlain($request->leadId);
+                    CarRenewalEmailJob::dispatch($lead);
                 }
             }
         }
