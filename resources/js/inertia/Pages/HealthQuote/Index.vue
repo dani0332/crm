@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link } from '@inertiajs/vue3';
+import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
+import { useNotifications } from '@indielayer/ui';
 
 defineProps({
   quotes: Object,
@@ -9,11 +10,24 @@ defineProps({
 });
 
 const page = usePage();
+const notification = useNotifications('toast');
+
 const loader = reactive({
   table: false,
   export: false,
 });
 const quotesSelected = ref([]);
+
+const assignForm = useForm({
+  assign_team: null,
+  assigned_to_id_new: null,
+  assignment_type: '1',
+  modelType: 'Health',
+  selectTmLeadId: '',
+  isManagerOrDeputy: 1,
+  isLeadPool: null,
+  isManualAllocationAllowed: 1,
+});
 
 const tableHeader = [
   { text: 'CDB ID', value: 'code' },
@@ -105,6 +119,32 @@ function onReset() {
     onBefore: () => (loader.table = true),
     onSuccess: () => (loader.table = false),
   });
+}
+
+const rules = {
+  isRequired: v => !!v || 'Please select this option',
+};
+
+function onAssignLead(isValid) {
+  if (isValid) {
+    const selected = quotesSelected.value.map(e => e.id);
+    assignForm
+      .transform(data => ({
+        ...data,
+        selectTmLeadId: `${selected}`,
+      }))
+      .post('/quotes/health/manualLeadAssign', {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          quotesSelected.value = [];
+          notification.success({
+            title: 'Health Leads Assigned',
+            position: 'top',
+          });
+        },
+      });
+  }
 }
 
 function setQueryStringFilters() {
@@ -279,6 +319,56 @@ onMounted(() => {
     </x-form>
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
+        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
+          <x-form @submit="onAssignLead" :auto-focus="false">
+            <div class="w-full flex flex-col md:flex-row gap-4">
+              <x-select
+                v-model="assignForm.assign_team"
+                label="Assign Subteam"
+                :options="[
+                  { value: 'RM-NB', label: 'RM-NB' },
+                  { value: 'RM-Speed', label: 'RM-Speed' },
+                  { value: 'EBP', label: 'EBP' },
+                  { value: 'Wow-Call', label: 'Wow-Call' },
+                  { value: 'No-Type', label: 'No-Type' },
+                ]"
+                placeholder="Select Subteam"
+                class="flex-1 w-auto"
+                :rules="[rules.isRequired]"
+              />
+              <x-select
+                v-model="assignForm.assigned_to_id_new"
+                label="Assign Advisor"
+                :options="advisorOptions"
+                placeholder="Select Advisor"
+                class="flex-1 w-auto"
+                :rules="[rules.isRequired]"
+              />
+              <x-select
+                v-model="assignForm.assignment_type"
+                label="Assignment Type"
+                :options="[
+                  { value: '1', label: 'Without Email' },
+                  { value: '2', label: 'With Email' },
+                ]"
+                placeholder="Select Type"
+                class="flex-1 w-auto"
+                :rules="[rules.isRequired]"
+              />
+              <div class="mb-3 md:pt-6">
+                <x-button
+                  color="orange"
+                  size="sm"
+                  type="submit"
+                  :loading="assignForm.processing"
+                >
+                  Assign
+                </x-button>
+              </div>
+            </div>
+          </x-form>
+        </div>
+
         <ExportExcel
           :data="quotesSelected"
           :columns="tableHeader"

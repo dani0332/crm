@@ -338,6 +338,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/getCarModelDetails', [AjaxController::class, 'getCarModelDetails']);
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
+    Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
