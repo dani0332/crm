@@ -999,5 +999,7 @@ const policyDetails = useForm({
         :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <AuditLogs :type="'App\\Models\\HomeQuote'" :id="$page.props.quote.id" />
   </div>
 </template>
