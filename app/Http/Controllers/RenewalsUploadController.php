@@ -42,7 +42,6 @@ class RenewalsUploadController extends Controller
     /**
      * process upload and create import.
      *
-     * @param  RenewalsUploadRequest  $request
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function renewalsUploadCreate(RenewalsUploadRequest $request)
@@ -102,8 +101,6 @@ class RenewalsUploadController extends Controller
 
     /**
      * renew the quote against the customer.
-     *
-     * @param  \Illuminate\Http\Request  $request
      */
     public function renewalsUploadProcess(Request $request)
     {
@@ -269,7 +266,6 @@ class RenewalsUploadController extends Controller
     /**
      * fetch plans for all pending quotes.
      *
-     * @param $batch
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|never
      */
     public function plansProcesses($batch)
@@ -395,13 +391,11 @@ class RenewalsUploadController extends Controller
             'status' => RenewalProcessStatuses::PROCESSED,
         ])->whereIn('quote_type', QuoteType::where('short_code', '<>', QuoteTypeShortCode::CAR)->get()->pluck('short_code')->toArray())
             ->whereNotNull('quote_id')
+            ->groupBy('quote_id')
             ->chunkById(50, function ($leads) use (&$jobs, &$jobNo) {
                 foreach ($leads as $lead) {
-                    $quoteType = $this->renewalsUploadFileService->getQuoteTypeByShortCode($lead->quote_type);
-                    if (! $aml = AML::where('quote_request_id', $lead->quote_id)->where('quote_type_id', $quoteType->id)->first()) {
-                        $jobs[] = new RenewalsQuoteAmlJob($lead, $jobNo);
-                        $jobNo++;
-                    }
+                    $jobs[] = new RenewalsQuoteAmlJob($lead, $jobNo);
+                    $jobNo++;
                 }
             });
 

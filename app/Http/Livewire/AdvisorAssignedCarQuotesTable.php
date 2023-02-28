@@ -128,11 +128,11 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         }
         if ($this->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
             info('inside lead type SALE_LEAD');
-            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::TransactionApproved);
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued]);
         }
         if ($this->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
             info('inside lead type CREATED_SALE_LEAD');
-            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::TransactionApproved)->where('source', LeadSourceEnum::IMCRM);
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])->where('source', LeadSourceEnum::IMCRM);
         }
 
         if ($this->leadType == ReportsLeadTypeEnum::OTHERS) {

@@ -19,9 +19,6 @@ class GenericLobController extends Controller
     }
 
     /**
-     * @param $quoteType
-     * @param  ExportPlansPdfRequest  $request
-     * @param  CarQuoteService  $carQuoteService
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      *
      * @throws \Illuminate\Validation\ValidationException

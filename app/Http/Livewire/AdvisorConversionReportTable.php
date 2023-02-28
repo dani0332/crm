@@ -31,9 +31,9 @@ class AdvisorConversionReportTable extends DataTableComponent
     public $tiers = [];
     public $batches = [];
     public $leadSources = [];
-    private $maxDays = 92;
-    private $advisors = [];
-    private $teams = [];
+    public $maxDays = 92;
+    public $advisors = [];
+    public $teams = [];
     public $createdAtFilter;
     public $ecommerceFilter;
     public $excludeCreatedLeadsFilter;
@@ -157,6 +157,11 @@ class AdvisorConversionReportTable extends DataTableComponent
             )->html()->footer(function ($rows) {
                 return $rows->sum('sale_leads');
             }),
+            Column::make('Created Sale Leads')->label(
+                fn ($row, Column $column) => '<a '.($row->created_sale_leads > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emit(`tableModal`, '.$row.', `created_sale_leads`)" class="text-sky-700 cursor-pointer">'.$row->created_sale_leads.'</a>'
+            )->html()->footer(function ($rows) {
+                return $rows->sum('created_sale_leads');
+            }),
             Column::make('AFIA Renewals')->label(
                 fn ($row, Column $column) => '<a '.($row->afia_renewals_count > 0 ? 'style="text-decoration:underline;"' : 'style="color:black;"').'  x-on:click="window.livewire.emit(`tableModal`, '.$row.', `afia_renewals_count`)" class="text-sky-700 cursor-pointer">'.$row->afia_renewals_count.'</a>'
             )->html()->footer(function ($rows) {
@@ -197,8 +202,6 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        $userIds = $this->walkTree(auth()->user()->id);
-        info('user ids for advisor conversion report are : '.json_encode($userIds));
         $query = CarQuote::query()
         ->select(
             'users.id as advisorId',
@@ -222,9 +225,14 @@ class AdvisorConversionReportTable extends DataTableComponent
         ->join('user_team', 'user_team.user_id', 'users.id')
         ->join('teams', 'teams.id', 'user_team.team_id')
         ->whereNull('car_quote_request.renewal_import_code')
-        ->whereIn('car_quote_request.advisor_id', $userIds)
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
         ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
+
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for advisor conversion report are : '.json_encode($userIds));
+            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+        }
 
         return $query;
     }

@@ -52,7 +52,6 @@ class RentACarController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -100,7 +99,6 @@ class RentACarController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\RentACar  $rentACar
      * @return \Illuminate\Http\Response
      */
