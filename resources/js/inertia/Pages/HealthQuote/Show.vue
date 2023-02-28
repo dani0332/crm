@@ -46,7 +46,7 @@ const page = usePage();
 
 const notification = useNotifications('toast');
 
-const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
@@ -2067,5 +2067,7 @@ onMounted(() => {
         :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
   </div>
 </template>
