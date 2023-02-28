@@ -30,7 +30,7 @@ class CycleQuoteRequest extends FormRequest
             'mobile_no' => 'required',
             'cycle_make' => 'required',
             'cycle_model' => 'required',
-            'year_of_manufacture' => 'required|exists:year_of_manufacture,text',
+            'year_of_manufacture_id' => 'required|exists:year_of_manufacture,id',
             'asset_value' => 'required|numeric',
             'accessories' => 'required',
             'has_accident' => 'required|boolean',

@@ -258,8 +258,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteId}/documents', [PersonalQuoteController::class, 'uploadDocument']);
         Route::post('{quoteId}/payments', [PersonalQuoteController::class, 'createPayment']);
         Route::patch('{quoteId}/payments/{paymentCode}', [PersonalQuoteController::class, 'updatePayment']);
+
         Route::resource('bike', BikeQuoteController::class);
         Route::resource('cycle', CycleQuoteController::class);
+
     });
 
     Route::group(['prefix' => 'generic'], function () {

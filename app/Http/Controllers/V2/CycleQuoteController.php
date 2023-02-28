@@ -64,5 +64,80 @@ class CycleQuoteController extends Controller
         return back()->with('message', 'Quote created successfully');
     }
 
+    /**
+     * @param $uuid
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function edit($uuid)
+    {
+        $data = CycleQuoteRepository::getFormOptions();
+
+        $quote = CycleQuoteRepository::getBy('uuid', $uuid);
+        return inertia('CycleQuote/Form', array_merge($data, [
+                'quote' => $quote,
+            ])
+        );
+    }
+
+    /**
+     * @param $quoteTypeCode
+     * @param $quoteId
+     * @param  BikeQuoteRequest  $request
+     * @return void
+     */
+    public function update($uuid, CycleQuoteRequest $request)
+    {
+        CycleQuoteRepository::update($uuid, $request->validated());
+        return back()->with('message', 'Quote updated successfully');
+    }
+
+    /**
+     * @param $uuid
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function show($uuid)
+    {
+        $quote = CycleQuoteRepository::getBy('uuid', $uuid);
+
+        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
+
+        $quote->load('documents.createdBy');
+
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
+        $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
+
+        $insuranceProviders = InsuranceProviderRepository::getList();
+        $personalPlans = PersonalPlanRepository::get();
+        $advisors = UserRepository::getPersonalQuoteAdvisors();
+
+        $activities = ActivityRepository::where([
+            'quote_type_id' => QuoteTypes::CYCLE->id(),
+            'quote_request_id' => $quote->id,
+        ])->with('assignee')->orderBy('created_at', 'desc')->get();
+
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
+        return inertia('CycleQuote/Show', [
+            'quoteType' => QuoteTypes::CYCLE,
+            'quote' => $quote,
+            'activities' => $activities,
+            'lostReasons' => $lostReasons,
+            'advisors' => $advisors,
+            'quoteStatusesEnum' => QuoteStatusEnum::asArray(),
+            'documentTypes' => $documentTypes,
+            'quoteStatuses' => $quoteStatuses,
+            'paymentMethods' => $paymentMethods,
+            'insuranceProviders' => $insuranceProviders,
+            'personalPlans' => $personalPlans,
+            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+            'storageUrl' => storageUrl(),
+            'can' => [
+                'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
+                'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
+                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && ! auth()->user()->hasRole(RolesEnum::PA),
+                'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+            ],
+        ]);
+    }
 
 }

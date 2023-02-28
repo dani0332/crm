@@ -59,6 +59,55 @@ class CycleQuoteRepository extends BaseRepository
             ->filter()
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
+    }
 
+    /**
+     * @param $uuid
+     * @param $data
+     * @return mixed
+     */
+    public function fetchUpdate($uuid, $data)
+    {
+        return DB::transaction(function () use ($uuid, $data) {
+            $quote = $this->byQuoteTypeId(QuoteTypes::CYCLE->id())->where('uuid', $uuid)->firstOrFail();
+
+            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'dob',  'asset_value']);
+            $quoteData['updated_by_id'] = Auth::user()->id;
+
+            $quote->update($quoteData);
+
+            $quote->cycleQuote->update(Arr::only($data, ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition']));
+
+            return $quote;
+        });
+    }
+
+    /**
+     * get all dropdown options required for form
+     *
+     * @return array
+     */
+    public function fetchGetFormOptions()
+    {
+        return [
+            'nationalities' => NationalityRepository::withActive()->get(),
+            'uaeLicenses' => UaeLicenseHeldRepository::withActive()->get(),
+            'yearOfManufacture' => YearOfManufactureRepository::get(),
+            'insuranceProviders' => InsuranceProviderRepository::select('id', 'text')->orderBy('text', 'asc')->get(),
+        ];
+    }
+
+    /**
+     * @param $column
+     * @param $value
+     * @return mixed
+     */
+    public function fetchGetBy($column, $value)
+    {
+        return $this->byQuoteTypeId(QuoteTypes::CYCLE->id())
+            ->where($column, $value)
+            ->with(['cycleQuote', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
+                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+            }, 'createdBy', 'updatedBy'])->firstOrFail();
     }
 }

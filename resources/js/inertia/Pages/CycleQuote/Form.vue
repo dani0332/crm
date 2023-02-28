@@ -26,11 +26,11 @@ const quoteForm = useForm({
     last_name: props.quote?.last_name || '',
     email: props.quote?.email || '',
     mobile_no: props.quote?.mobile_no || '',
-    cycle_make: props.cycle_quote?.cycle_make || '',
-    cycle_model: props.cycle_quote?.cycle_model || '',
-    accessories: props.cycle_quote?.accessories || '',
+    cycle_make: props.quote?.cycle_quote?.cycle_make || '',
+    cycle_model: props.quote?.cycle_quote?.cycle_model || '',
+    accessories: props.quote?.cycle_quote?.accessories || '',
     asset_value: props.quote?.asset_value || null,
-    year_of_manufacture: props.quote?.cycle_quote?.year_of_manufacture || null,
+    year_of_manufacture_id: props.quote?.cycle_quote?.year_of_manufacture_id || null,
     has_accident: props.quote?.cycle_quote?.has_accident || null,
     has_good_condition: props.quote?.cycle_quote?.has_good_condition || null,
 });
@@ -45,7 +45,7 @@ const rules = {
 const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
-    
+
     if (isValid) {
 
         let method = 'post';
@@ -151,17 +151,17 @@ function onSubmit(isValid) {
                 />
 
                 <x-select
-                    v-model="quoteForm.year_of_manufacture"
+                    v-model="quoteForm.year_of_manufacture_id"
                     label="Year of manufacture*"
                     :rules="[rules.isRequired]"
                     :options="
                         yearOfManufacture.map(item => ({
-                          value: item.text,
+                          value: item.id,
                           label: item.text,
                         }))
                     "
                     class="w-full"
-                    :error="quoteForm.errors.year_of_manufacture"
+                    :error="quoteForm.errors.year_of_manufacture_id"
                 />
 
                 <x-input
@@ -175,12 +175,13 @@ function onSubmit(isValid) {
 
                 <x-input
                     v-model="quoteForm.accessories"
-                    type="number"
+                    type="text"
                     label="Accessories*"
                     :rules="[rules.isRequired]"
                     class="w-full"
                     :error="quoteForm.errors.accessories"
                 />
+
 
                 <div class="px-2 w-full">
                     <div class="mb-2">
@@ -189,7 +190,7 @@ function onSubmit(isValid) {
                         </label>
                         <div class="w-full">
                             <div class="grid grid-cols-4 gap-1">
-                                <x-radio v-model="quoteForm.has_accident" value="1" label="Yes" :rules="[rules.isRequired]" />
+                                <x-radio v-model="quoteForm.has_accident"  value="1" label="Yes" :rules="[rules.isRequired]" />
                                 <x-radio v-model="quoteForm.has_accident" value="0" label="No"  />
                             </div>
                         </div>
