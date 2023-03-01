@@ -26,4 +26,14 @@ class DocumentType extends Model implements AuditableContract
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    /**
+     * @param $query
+     * @param $quoteTypeId
+     * @return mixed
+     */
+    public function scopeByQuoteTypeId($query, $quoteTypeId)
+    {
+        return $query->where('quote_type_id', $quoteTypeId);
+    }
 }
