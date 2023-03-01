@@ -111,12 +111,6 @@ function filterQuotes(isValid) {
     method: 'get',
     data: {
       ...filters,
-      created_at: filters.created_at
-        ? filters.created_at.split('-').reverse().join('-')
-        : '',
-      created_at_end: filters.created_at_end
-        ? filters.created_at_end.split('-').reverse().join('-')
-        : '',
     },
     preserveState: true,
     preserveScroll: true,
@@ -144,9 +138,7 @@ function setQueryFilters() {
     query.forEach(item => {
       const [key, value] = item.split('=');
 
-      if (key === 'created_at' || key === 'created_at_end') {
-        filters[key] = value.split('-').reverse().join('-');
-      } else if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
+      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
         let id = key.slice(0, -2);
         if (filters[id]) {
           filters[id].push(parseInt(value));
@@ -221,22 +213,18 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Mobile Number"
         />
-        <x-input
-          :rules="[rules.created_at]"
+      <DatePicker
           v-model="filters.created_at"
-          type="date"
-          name="created_at"
-          label="Created Date"
-          class="w-full"
-        />
-        <x-input
-          :rules="[rules.created_at_end]"
+          name="created_at_start"
+          label="Created Date Start"
+            input-class="w-full"
+      />
+      <DatePicker
           v-model="filters.created_at_end"
-          type="date"
           name="created_at_end"
           label="Created Date End"
-          class="w-full"
-        />
+          input-class="w-full"
+      />
 
         <ComboBox
           v-model="filters.quote_status_id"
