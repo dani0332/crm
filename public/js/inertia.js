@@ -5345,7 +5345,7 @@ __webpack_require__.r(__webpack_exports__);
         },
         onSuccess: function onSuccess() {
           notification.success({
-            title: 'Quote Status Updated',
+            title: 'Quote status is updated',
             position: 'top'
           });
         }

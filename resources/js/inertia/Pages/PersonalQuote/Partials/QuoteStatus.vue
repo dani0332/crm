@@ -41,7 +41,7 @@ const onLeadStatus = () => {
             },
             onSuccess: () => {
                 notification.success({
-                    title: 'Quote Status Updated',
+                    title: 'Quote status is updated',
                     position: 'top',
                 });
             },
