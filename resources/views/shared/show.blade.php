@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', $model->modelType . ' Detail')
 @section('content')
-
+@inject('tierService', 'App\Services\TierService')
 @php
 use App\Enums\quoteTypeCode;
 use App\Models\CarQuote;
@@ -42,6 +42,39 @@ use App\Enums\GenericRequestEnum;
     $('#add-activity-btn').on('click', function(){
         $('#activityModal').modal({ show: true });
     });
+    $(function(){
+        $('#manualTierAssignmentBtn').on('click', function (e) {
+            debugger;
+        e.preventDefault();
+        if ($('#new_selected_tier').val() == '') {
+          $('#tierAssignValidation').show().fadeOut(5000);
+        } else {
+          $.ajax({
+            url: '/quotes/manual-tier-assignment',
+            type: 'POST',
+            data: {
+              selectedLeadId: $('#entityId').val(),
+              selectedTierId: $('#new_selected_tier').val(),
+              modelType: $('#modelType').val(),
+              entityCode: $('#entityCode').val(),
+              _token: config._token,
+            },
+            success: function (response) {
+              $('#teamassignmentSuccess')
+                .html('Tier Assigned Successfully')
+                .show()
+                .fadeOut(5000);
+              setTimeout(() => {
+                window.location.reload(true);
+              }, 2000);
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+              console.log(jqXHR, textStatus, errorThrown);
+            },
+          });
+        }
+      });
+    });
 </script>
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
@@ -73,6 +106,44 @@ use App\Enums\GenericRequestEnum;
                     <div class="clearfix"></div>
                 </div>
                 @cannot(PermissionsEnum::ApprovePayments)
+                @php
+                    $tiersExceptTierR = $tierService->getTiersExceptTierR();
+                    if(strtolower($model->modelType) == strtolower(quoteTypeCode::Car)){
+                        $isTierRAssigned = $tierService->isTierRAssigned($record->tier_id);
+                    }
+                @endphp
+                @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Car) && Auth::user()->hasAnyRole(RolesEnum::LeadPool) && $isTierRAssigned)
+                    <form method="post" action="manual-tier-assignment" class="form-horizontal form-label-left"
+                            autocomplete="off">
+                            {{ csrf_field() }}
+                            @method('POST')
+                            <input type="hidden" value="{{ strtolower($model->modelType) }}" name="modelType" id="modelType">
+                            <input type="hidden" value="{{ strtolower($record->id) }}" name="entityId" id="entityId">
+                            <input type="hidden" value="{{ strtolower($record->uuid) }}" name="entityCode" id="entityCode">
+                            <div class="col-md-6">
+                                <div class="col-md-4">
+                                    <h2><b>Assign Tier</b></h2>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-control" id="new_selected_tier" name="new_selected_tier">
+                                        <option value="">Select Tier</option>
+                                        @foreach ($tiersExceptTierR as $tier)
+                                            <option value="{{ $tier->id }}">{{ $tier->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <label id='tierAssignValidation' style="display: none;color:red;">Please select tier for assignment.</label>
+                                </div>
+                                <div class="col-md-4">
+                                    <button id="manualTierAssignmentBtn" name="manualTierAssignmentBtn"
+                                        class="btn btn-warning btn-sm">Assign</button>
+                                </div>
+                            </div>
+                            <div class="clearfix">
+                            </div>
+                    </form>
+                @endif
+
+
                 @if(Auth::user()->hasAnyRole([RolesEnum::Admin, RolesEnum::HealthManager, RolesEnum::HealthWCUAdvisor, RolesEnum::HealthDeputyManager]))
                     @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Health) && $record->quote_status_id != QuoteStatusEnum::TransactionApproved)
                         <form method="post" id="healthTeamAssignForm" action="healthTeamAssign"

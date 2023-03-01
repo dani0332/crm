@@ -11,6 +11,14 @@
 <script src="{{ asset('js/bootstrap-toggle.min.js') }}"></script>
 
 <script>
+    const dateOptions = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    };
     let columns = [{
         data: 'userId',
         name: 'userId',
@@ -62,7 +70,7 @@
                 if (data == null) {
                     return '-';
                 } else {
-                    return new Date(data * 1000).toLocaleString();
+                    return new Date(data * 1000).toLocaleString('en-US', dateOptions).replace(',', '').replace(/ /, ' '); // add leading zero to hour;
                 }
             }
         },
@@ -115,6 +123,13 @@
         name: 'lastLogin',
         orderable: true,
         searchable: false,
+        render: function(data, type, row) {
+            if (data == null) {
+                return '-';
+            } else {
+                return new Date(data).toLocaleString('en-US', dateOptions).replace(',', '').replace(/ /, ' ');;
+            }
+        }
     })
     @endif
 
@@ -327,7 +342,7 @@
                 @endif
                 <div class="col-md-12" style="margin-left:8px;">
                     <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #A1C86B;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;">
+                        style="border-radius: 10px;float: left;border-left: 3px solid #A1C86B;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
                         <span style="font-size: 21px">Team </span>
                         <br />
                         <b><span style="color: black;">Car</span></b>
@@ -361,7 +376,7 @@
                     </div>
                     <div class="col-md-3"
                         style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 350px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
-                        <span style="font-size: 21px">Total UnAssigned Leads Today </span>
+                        <span style="font-size: 21px">Total UnAssigned Leads </span>
                         <br />
                         <b><span style="color: black;">{{ $todayTotalUnAssignedLeadCount}}</span></b>
                     </div>

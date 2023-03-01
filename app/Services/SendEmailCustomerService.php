@@ -269,7 +269,7 @@ class SendEmailCustomerService extends BaseService
 
         return $emailSubject;
     }
-    
+
     public function sendMyAlfredWelcomeEmail($emailData, $tag, $source = '')
     {
         try {
@@ -300,9 +300,9 @@ class SendEmailCustomerService extends BaseService
                 'TemplateModel' => [
                     'params' => [
                         'firstName' => $emailData->customerFirstName,
-                        'lastName'=> $emailData->customerLastName,
-                        'inviteCode'=> isset($emailData->inviteCode) ? $emailData->inviteCode : null,
-                        'email'=> $emailData->customerEmail,
+                        'lastName' => $emailData->customerLastName,
+                        'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
+                        'email' => $emailData->customerEmail,
                     ],
                     'subject' => config('constants.MA_WELCOME_SUBJECT'),
                 ],
@@ -338,7 +338,7 @@ class SendEmailCustomerService extends BaseService
 
         return $responseCode;
     }
-    
+
     public function sendLMSIntroEmail($emailTemplateId, $emailData, $tag)
     {
         try {
@@ -377,6 +377,8 @@ class SendEmailCustomerService extends BaseService
                     'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
                     'landLine' => isset($emailData->landLine) ? $emailData->landLine : null,
                     'mobilePhone' => isset($emailData->mobilePhone) ? $emailData->mobilePhone : null,
+                    'carQuoteId' => isset($emailData->carQuoteId) ? $emailData->carQuoteId : null,
+                    'quoteLink' => isset($emailData->quoteLink) ? $emailData->quoteLink : null,
                 ],
                 'tags' => [
                     $tag,
@@ -409,5 +411,4 @@ class SendEmailCustomerService extends BaseService
 
         return $responseCode;
     }
-
 }

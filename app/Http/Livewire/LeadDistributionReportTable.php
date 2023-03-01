@@ -4,9 +4,12 @@ namespace App\Http\Livewire;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
+use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +20,8 @@ use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class LeadDistributionReportTable extends DataTableComponent
 {
+    use GetUserTreeTrait;
+
     public $url;
     public $tiers = [];
     private $maxDays = 92;
@@ -79,18 +84,26 @@ class LeadDistributionReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        return CarQuote::query()
-            ->select(
-                DB::raw('SUM(CASE WHEN car_quote_request.source not in ("'.LeadSourceEnum::RENEWAL_UPLOAD.'","'.LeadSourceEnum::IMCRM.'","'.LeadSourceEnum::TPL_RENEWALS.'") THEN 1 ELSE 0 END) as received_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as lead_created'),
-                DB::raw('SUM(car_quote_request.id) as total_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 1 THEN 1 ELSE 0 END) as auto_assigned'),
-                DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 0 THEN 1 ELSE 0 END) as manually_assigned'),
-            )
-            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-            ->groupBy('tiers.name');
+        $query = CarQuote::query()
+        ->select(
+            DB::raw('SUM(CASE WHEN car_quote_request.source not in ("'.LeadSourceEnum::RENEWAL_UPLOAD.'","'.LeadSourceEnum::IMCRM.'","'.LeadSourceEnum::TPL_RENEWALS.'") THEN 1 ELSE 0 END) as received_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as lead_created'),
+            DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null THEN 1 ELSE 0 END) as unassigned_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 1 THEN 1 ELSE 0 END) as auto_assigned'),
+            DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 0 THEN 1 ELSE 0 END) as manually_assigned'),
+            DB::raw('count(car_quote_request.id) as total_leads'),
+        )
+        ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
+        ->groupBy('tiers.name');
+
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for lead distribution report are : '.json_encode($userIds));
+            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+        }
+
+        return $query;
     }
 
     public function filters(): array
@@ -104,8 +117,8 @@ class LeadDistributionReportTable extends DataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) {
                     $dates = explode('~', $value);
-                    $dates[0] = Carbon::parse($dates[0])->format('Y-m-d');
-                    $dates[1] = Carbon::parse($dates[1])->format('Y-m-d');
+                    $dates[0] = Carbon::parse($dates[0])->startOfDay()->format('Y-m-d H:i:s');
+                    $dates[1] = Carbon::parse($dates[1])->endOfDay()->format('Y-m-d H:i:s');
                     $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
             MultiSelectFilter::make('Tiers')

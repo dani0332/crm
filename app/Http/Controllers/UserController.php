@@ -12,8 +12,8 @@ use App\Services\UserService;
 use App\Traits\TeamHierarchyTrait;
 use Auth;
 use DataTables;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -111,7 +111,6 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -169,13 +168,14 @@ class UserController extends Controller
     {
         $roles = Role::pluck('name', 'name')->all();
         $userRole = $user->roles->pluck('name', 'name')->all();
-        $teams = $this->getAllTeams();
+        $userProductIds = $this->getUserProducts($user->id)->pluck('id')->toArray();
+        $teams = $this->getTeamsByProductIds($userProductIds);
         $subTeams = $this->getSubTeamsByTeamIds($teams->pluck('id'));
         $selectedAdditionalTeams = $user->additional_team_ids;
         $products = $this->getAllProducts();
-        $userProductIds = $this->getUserProducts($user->id)->pluck('id')->toArray();
+
         $userTeamIds = $this->getUserTeams($user->id)->pluck('id')->toArray();
-        $managers = $this->getManagersBasedOnTeamId($userProductIds, $user->id);
+        $managers = $this->getManagersBasedOnTeamId($userTeamIds, $user->id);
         $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
 
         return view('user.edit', compact(
@@ -196,7 +196,6 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  \App\User  $user
      * @return \Illuminate\Http\Response
      */

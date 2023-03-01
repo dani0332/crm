@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Jobs\CarRenewalEmailJob;
 use App\Models\CarQuote;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -40,7 +41,6 @@ use App\Services\NotesForCustomerService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SIBService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
@@ -255,7 +255,6 @@ class CRUDController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -617,7 +616,6 @@ class CRUDController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -928,18 +926,8 @@ class CRUDController extends Controller
 
                 // MS: Send email
                 if (isset($request->leadId)) {
-                    $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
-                    $tag = config('constants.APP_ENV').'-car-quote-tier-r';
-                    $emailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
-                    $lead = CarQuote::find($request->leadId);
-                    if ($lead) {
-                        $emailData = $this->emailDataService->generateTierREmailData($lead);
-
-                        // Send Email
-                        if ($emailData) {
-                            SIBService::sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailRecipients);
-                        }
-                    }
+                    $lead = $this->carQuoteService->getEntityPlain($request->leadId);
+                    CarRenewalEmailJob::dispatch($lead);
                 }
             }
         }
@@ -1131,7 +1119,6 @@ class CRUDController extends Controller
      * export selected plans to PDF.
      *
      * @param  Request  $request
-     * @param $quoteType
      * @return \Illuminate\Http\RedirectResponse
      */
     public function exportCarPdf($quoteType, ExportPlansPdfRequest $request)
@@ -1279,5 +1266,22 @@ class CRUDController extends Controller
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }
+    }
+
+    public function manualTierAssignment(Request $request)
+    {
+        $selectedLeadId = $request->selectedLeadId;
+        $selectedTierId = $request->selectedTierId;
+        $entityCode = $request->entityCode;
+        info('manualTierAssignment  -- selected Tier Id : '.$selectedLeadId.' , selected Lead is : '.$entityCode.', requested by '.auth()->user()->email);
+        CarQuote::where('id', $selectedLeadId)->update([
+            'tier_id' => $selectedTierId,
+            'cost_per_lead' => Tier::where('id', $selectedTierId)->get()->first()->cost_per_lead,
+            'updated_at' => now(),
+            'updated_by' => auth()->user()->email,
+            'advisor_id' => null,
+            'quote_status_id' => QuoteStatusEnum::NewLead,
+            'is_renewal_tier_email_sent' => 0,
+        ]);
     }
 }

@@ -7,9 +7,9 @@ use Illuminate\Support\Facades\Log;
 
 class BerlinService extends BaseService
 {
-    private $berlinEndpoint,
-    $berlinUserName,
-    $berlinAuthPassword;
+    private $berlinEndpoint;
+    private $berlinUserName;
+    private $berlinAuthPassword;
 
     public function __construct()
     {

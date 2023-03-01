@@ -2,12 +2,11 @@
 import { computed, ref, reactive, onMounted } from 'vue';
 import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 import { useDateFormat, useClipboard } from '@vueuse/core';
+import { useNotifications } from '@indielayer/ui';
+import axios from 'axios';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import { useNotifications } from '@indielayer/ui';
-import axios from 'axios';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 
 defineProps({
@@ -47,7 +46,7 @@ const page = usePage();
 
 const notification = useNotifications('toast');
 
-const dateFormat = date => useDateFormat(date, 'DD/MM/YYYY');
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
@@ -441,6 +440,10 @@ const plansTable = reactive({
     {
       text: 'Plan Name',
       value: 'name',
+    },
+    {
+      text: 'Network Name',
+      value: 'network',
     },
     {
       text: 'Premium with VAT and Basmah',
@@ -1105,6 +1108,10 @@ onMounted(() => {
             <dd>{{ quote.lost_reason }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRANSAPP CODE</dt>
+            <dd>{{ quote.transapp_code }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">DEVICE</dt>
             <dd>{{ quote.device }}</dd>
           </div>
@@ -1173,7 +1180,9 @@ onMounted(() => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">WHO ARE YOU LOOKING TO COVER?</dt>
+            <dt class="font-medium">
+              FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?
+            </dt>
             <dd>{{ quote.cover_for_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1215,36 +1224,6 @@ onMounted(() => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
             <dd>{{ quote.previous_policy_expiry_date }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY NUMBER</dt>
-            <dd>{{ quote.policy_number }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY START DATE</dt>
-            <dd>{{ quote.policy_start_date }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY END DATE</dt>
-            <dd>{{ quote.policy_issuance_date }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
-            <dd>{{ quote.premium }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.transapp_code }}</dd>
           </div>
         </dl>
       </div>
@@ -1689,7 +1668,7 @@ onMounted(() => {
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>
-        <LazyAvailablePlan :plan="selectedPlan" />
+        <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
       </x-modal>
 
       <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
@@ -2088,5 +2067,7 @@ onMounted(() => {
         :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
   </div>
 </template>

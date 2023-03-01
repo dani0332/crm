@@ -341,11 +341,6 @@ function get_dob_date_format()
 
 /**
  * Add search clause to any model's built-in query
- *
- * @param $model
- * @param $request
- * @param $query
- * @param $searchPrefix
  */
 function addSearchClauses($model, $request, $query, $searchPrefix)
 {
@@ -380,10 +375,6 @@ function addSearchClauses($model, $request, $query, $searchPrefix)
 
 /**
  * Add orderBy clause to any model's built-in query
- *
- * @param $request
- * @param $query
- * @param $searchPrefix
  */
 function addOrderByClauses($request, $query, $searchPrefix)
 {

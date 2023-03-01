@@ -58,11 +58,9 @@ class LeadSearchController extends Controller
         return view('leadsearch.view', compact('leadType', 'isManager', 'managerRole'));
     }
 
-
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\
      * Response
      */
@@ -96,7 +94,6 @@ class LeadSearchController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */

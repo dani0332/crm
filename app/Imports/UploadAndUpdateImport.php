@@ -36,10 +36,6 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
     private $uploadType;
     private $renewalsUploadLead;
 
-    /**
-     * @param  RenewalsUploadService  $renewalsUploadService
-     * @param $renewalsUploadLead
-     */
     public function __construct(RenewalsUploadService $renewalsUploadService, RenewalsUploadLeads $renewalsUploadLead)
     {
         $this->renewalsUploadService = $renewalsUploadService;
@@ -57,7 +53,6 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
     }
 
     /**
-     * @param  array  $row
      * @return RenewalQuoteProcess
      */
     public function model(array $row)
@@ -78,9 +73,6 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
         ]);
     }
 
-    /**
-     * @return int
-     */
     public function batchSize(): int
     {
         return 500;
@@ -88,33 +80,22 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
 
     /**
      * start import from row 2, first row have titles
-     *
-     * @return int
      */
     public function startRow(): int
     {
         return 2;
     }
 
-    /**
-     * @return int
-     */
     public function chunkSize(): int
     {
         return 2000;
     }
 
-    /**
-     * @return int
-     */
     public function getValidCount(): int
     {
         return $this->validCount;
     }
 
-    /**
-     * @return int
-     */
     public function getFailedCount(): int
     {
         return $this->failedCount;

@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\Tier;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
@@ -1158,22 +1159,28 @@ class CarQuoteService extends BaseService
 
     public function processManualLeadAssignment($request): array
     {
-        info('called by : '. debug_backtrace()[1]['function']);
         $userId = (int) $request->assigned_to_id_new;
-        $result = [];
 
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            $previousAdvisorId = $lead->advisor_id;
+
+            $isReassignment = $lead->advisor_id != null ? true : false; // checking if the advisor is already assigned or not for reassignment email template
+
+            $previousAdvisorId = $lead->advisor_id; // saving previous advisor before updating the new to update the counts
+
             $lead->advisor_id = $userId;
+
             $lead->auto_assigned = false;
 
+            $this->updateTierAndCost($lead); // will assign/update tier and update cost per lead from tier
+
             info('Manual assignment done for lead : '.$lead->uuid);
-            $this->updateChildRecord($lead->id);
+
+            $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
 
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
-            
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId);
+
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId); // update new and previous (if applicable) advisor counts in lead allocation table
 
             $lead->save();
 
@@ -1181,6 +1188,7 @@ class CarQuoteService extends BaseService
                 info('Inside sending email for manual assignment');
 
                 $currentAdvisor = User::where('id', $userId)->first();
+
                 $emailData = (object) [
                     'customerEmail' => $lead->email,
                     'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
@@ -1189,15 +1197,38 @@ class CarQuoteService extends BaseService
                     'landLine' => $currentAdvisor->landline_no,
                     'mobilePhone' => $currentAdvisor->mobile_no,
                     'advisorEmail' => $currentAdvisor->email,
+                    'carQuoteId' => $lead->code,
+                    'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
                 ];
 
-                $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
+                $emailTemplateIdReassign = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
+                $emailTemplateIIntro = (int) $this->applicationStorageService->getValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
 
-                $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-reassignment-email');
+                $this->sendEmailCustomerService->sendLMSIntroEmail($isReassignment ? $emailTemplateIdReassign : $emailTemplateIIntro, $emailData, 'send-lms-reassignment-email');
             }
         }
 
-        return $result;
+        return [];
+    }
+
+    public function updateTierAndCost($lead)
+    {
+        if ($lead->tier_id == null) {
+            info('Manual assignment: tier is not assigned, evaluating tier now');
+            $selectedTier = $this->leadAllocationService->getTierForValue($lead);
+
+            if ($selectedTier) {
+                info('Found tier : '.$selectedTier->name.', with id : '.$selectedTier->id.' against lead : '.$lead->code);
+                $lead->tier_id = $selectedTier->id;
+                info('since tier is now assigned, we will update the cost per lead from tier');
+                $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
+            } else {
+                info('Unable to find tier against lead : '.$lead->code);
+            }
+        } else {
+            info('since tier is assigned, we will update the cost per lead from tier');
+            $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
+        }
     }
 
     public function getLeadIdsToProcessFromRequest($request)
@@ -1216,6 +1247,7 @@ class CarQuoteService extends BaseService
     {
         info('lead current advisor_id is : '.json_encode($previousAdvisorId).' and lead created date is : '.$lead->created_at);
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($userId);
+        $previousAdvisorAllocationRecord = null;
         if ($lead->advisor_id != null) {
             $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
         }
@@ -1227,23 +1259,23 @@ class CarQuoteService extends BaseService
         info('new advisor after update is : '.json_encode($newAdvisorAllocationRecord));
         if ($lead->advisor_id != null && Carbon::parse($lead->created_at)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
             if ($lead->auto_assigned) {
-                if($previousAdvisorAllocationRecord->auto_assignment_count > 0){
+                if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
                     $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
                 }
             } else {
-                if($previousAdvisorAllocationRecord->manual_assignment_count > 0){
+                if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  manual count before update is : '.$previousAdvisorAllocationRecord->manual_assignment_count);
                     $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
                 }
             }
-            if ($previousAdvisorAllocationRecord->allocation_count > 0) { // will reduce count for previous advisor if the count is greater than 0 to avoid going in -1
+            if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->allocation_count > 0) { // will reduce count for previous advisor if the count is greater than 0 to avoid going in -1
                 info('previous advisor ('.$userId.')  allocation_count count before update is : '.$previousAdvisorAllocationRecord->allocation_count);
                 $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
+                $previousAdvisorAllocationRecord->updated_at = now();
+                $previousAdvisorAllocationRecord->save();
+                info('previous advisor after update is : '.json_encode($previousAdvisorAllocationRecord));
             }
-            $previousAdvisorAllocationRecord->updated_at = now();
-            $previousAdvisorAllocationRecord->save();
-            info('previous advisor after update is : '.json_encode($previousAdvisorAllocationRecord));
         }
         if ($lead->auto_assigned) {
             $lead->auto_assigned = false;
@@ -1334,8 +1366,6 @@ class CarQuoteService extends BaseService
     /**
      * generate PDF for car quote plan and return.
      *
-     * @param $quoteType
-     * @param $data
      * @return array|string[]
      */
     public function exportPlansPdf($quoteType, $data)

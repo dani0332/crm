@@ -16,7 +16,6 @@ class QuoteDocumentService extends BaseService
     /**
      * get list of active document types can be presented to customer to upload documents.
      *
-     * @param $quoteTypeId
      * @return mixed
      */
     public function getQuoteDocumentsToReceive($quoteTypeId)
@@ -48,7 +47,6 @@ class QuoteDocumentService extends BaseService
     }
 
     /**
-     * @param $quoteType
      * @param $data doc_name, doc_uuid
      * @return \Illuminate\Http\JsonResponse
      */
@@ -78,10 +76,8 @@ class QuoteDocumentService extends BaseService
     /**
      * upload quote document and store document record in db.
      *
-     * @param $file
      * @param $documentTypeCode
      * @param $uuid
-     * @param $quote
      * @return \Illuminate\Http\JsonResponse
      */
     public function uploadQuoteDocument($file, $data, $quote)

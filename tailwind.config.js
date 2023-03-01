@@ -6,6 +6,7 @@ module.exports = {
     './resources/**/*.blade.php',
     './resources/js/inertia/**/*.{vue,js}',
     'node_modules/@indielayer/ui/**/*',
+    './node_modules/vue-tailwind-datepicker/**/*.js',
   ],
   darkMode: 'class',
   theme: {
