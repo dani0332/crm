@@ -54,7 +54,7 @@ class BikeQuoteController extends Controller
     {
         $response = BikeQuoteRepository::create($request->validated());
 
-        if (! empty($response->errors) || (! empty($response->errorType) && $response->errorType == 'ERROR')) {
+        if (! empty($response->errors) || !empty($response->msg) ) {
             vAbort($response->msg);
         }
 

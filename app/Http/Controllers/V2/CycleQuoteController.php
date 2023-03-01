@@ -57,7 +57,7 @@ class CycleQuoteController extends Controller
     {
         $response = CycleQuoteRepository::create($request->validated());
 
-        if (! empty($response->errors) || (! empty($response->errorType) && $response->errorType == 'ERROR')) {
+        if (! empty($response->errors) || !empty($response->msg) ) {
             vAbort($response->msg);
         }
 
