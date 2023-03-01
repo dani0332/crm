@@ -123,7 +123,7 @@ function setQueryFilters() {
     query = query.split('&');
     query.forEach(item => {
       const [key, value] = item.split('=');
-        if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
+      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
         let id = key.slice(0, -2);
         if (filters[id]) {
           filters[id].push(parseInt(value));
@@ -194,19 +194,19 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Mobile Number"
         />
-          <DatePicker
-              v-model="filters.created_at"
-              name="created_at_start"
-              label="Created Date Start"
-              input-class="w-full"
-          />
+        <DatePicker
+          v-model="filters.created_at"
+          name="created_at_start"
+          label="Created Date Start"
+          input-class="w-full"
+        />
 
-          <DatePicker
-              v-model="filters.created_at_end"
-              name="created_at_end"
-              label="Created Date End"
-              input-class="w-full"
-          />
+        <DatePicker
+          v-model="filters.created_at_end"
+          name="created_at_end"
+          label="Created Date End"
+          input-class="w-full"
+        />
         <ComboBox
           v-model="filters.quote_status_id"
           label="Lead Status"
@@ -224,12 +224,11 @@ onMounted(() => {
         <x-select
           v-model="filters.is_renewal"
           label="Renewal"
-
           placeholder="Renewal"
           :options="[
             { value: 'Yes', label: 'Yes' },
             { value: 'No', label: 'No' },
-            { value: '', label: 'All'}
+            { value: '', label: 'All' },
           ]"
         />
       </div>
