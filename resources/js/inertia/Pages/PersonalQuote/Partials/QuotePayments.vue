@@ -133,48 +133,6 @@ const addPayment = isValid => {
                 });
             },
         });
-
-
-
-    // let data = {
-    //     captured_amount: paymentMethodsForm.amount,
-    //     code: paymentMethodsForm.payment_method,
-    //     modelType: page.props.modelType,
-    //     quote_id: page.props.quote.id,
-    //     plan_id: null,
-    //     insurance_provider_id: providerId.value,
-    //     collection_type: paymentMethodsForm.collection_type,
-    //     payment_methods: paymentMethodsForm.payment_method,
-    //     reference: paymentMethodsForm.payment_reference,
-    //     isInertia: true,
-    // };
-
-    // if (paymentForm.status === 'edit') {
-    //     let editData = {
-    //         ...data,
-    //         paymentCode: paymentForm.paymentCode,
-    //     };
-    //     paymentForm
-    //         .transform(data => editData)
-    //         .post('/payments/Health/update', {
-    //             preserveScroll: true,
-    //             onSuccess: () => {
-    //                 notification.success({
-    //                     title: 'Payment Updated',
-    //                     position: 'top',
-    //                 });
-    //                 paymentModal.value = false;
-    //             },
-    //             onError: () => {
-    //                 notification.error({
-    //                     title: 'Payment Update Failed',
-    //                     position: 'top',
-    //                 });
-    //             },
-    //         });
-    //     return;
-    // }
-
 };
 
 const planOptions = reactive({
