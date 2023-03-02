@@ -43,16 +43,16 @@ use App\Enums\PermissionsEnum;
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            @can(PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW)
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::LeadPool]))
                             <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
-                            @endcan
-                            @can(PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW)
+                            @endif
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin, RolesEnum::LeadPool]))
                             <li><a href="{{ url('reports/advisor-performance') }}">Advisor Performance</a></li>
                             @endif
-                            @can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW)
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::LeadPool]))
                             <li><a href="{{ url('reports/advisor-distribution') }}">Advisor Distribution</a></li>
                             @endif
-                            @can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW)
+                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin, RolesEnum::LeadPool]))
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
                             @endif
                         </ul>
