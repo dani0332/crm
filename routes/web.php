@@ -59,10 +59,15 @@ use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\V2\CycleQuoteController;
+use App\Http\Controllers\V2\PersonalPlanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -119,6 +124,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'update' => 'leadassignment.update',
         'destroy' => 'leadassignment.destroy',
     ]);
+
+    Route::post('activities/v2', [ActivityController::class, 'store']);
+    Route::patch('activities/v2/{id}', [ActivityController::class, 'update']);
+    Route::patch('activities/v2/{id}/update-status', [ActivityController::class, 'updateStatus']);
+    Route::delete('activities/v2/{id}/', [ActivityController::class, 'destroy']);
+
     Route::get('activities', [ActivitesController::class, 'index'])->name('activities.index');
     Route::post('/activities/create-activity', [ActivitesController::class, 'store']);
     Route::post('activities/{id}/update', [ActivitesController::class, 'update']);
@@ -247,6 +258,19 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
         Route::resource('life', LifeController::class);
+
+    });
+
+    Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
+    Route::group(['prefix' => 'personal-quotes'], function () {
+        Route::patch('{quoteId}/update-policy-details', [PersonalQuoteController::class, 'updatePolicyDetails']);
+        Route::patch('{quoteType}/{quoteId}/update-status', [PersonalQuoteController::class, 'updateStatus']);
+        Route::post('{quoteId}/documents', [PersonalQuoteController::class, 'uploadDocument']);
+        Route::post('{quoteId}/payments', [PersonalQuoteController::class, 'createPayment']);
+        Route::patch('{quoteId}/payments/{paymentCode}', [PersonalQuoteController::class, 'updatePayment']);
+
+        Route::resource('bike', BikeQuoteController::class);
+        Route::resource('cycle', CycleQuoteController::class);
 
     });
 

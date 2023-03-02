@@ -40,8 +40,10 @@ class ActivitesController extends Controller
         $subOrdinates = $this->walkTree(Auth::user()->id);
         foreach ($subOrdinates as $subOrdinate) {
             $user = User::where('id', $subOrdinate)->first();
-            if ($user->hasAnyRole(['CAR_ADVISOR', 'HEALTH_ADVISOR', 'TRAVEL_ADVISOR', 'HOME_ADVISOR', 'LIFE_ADVISOR', 'PET_ADVISOR',
-                'BUSINESS_ADVISOR', 'CORPLINE_ADVISOR', 'RM_ADVISOR', 'GM_ADVISOR', 'EBP_ADVISOR', ])) {
+            if ($user->hasAnyRole([
+                'CAR_ADVISOR', 'HEALTH_ADVISOR', 'TRAVEL_ADVISOR', 'HOME_ADVISOR', 'LIFE_ADVISOR', 'PET_ADVISOR',
+                'BUSINESS_ADVISOR', 'CORPLINE_ADVISOR', 'RM_ADVISOR', 'GM_ADVISOR', 'EBP_ADVISOR',
+            ])) {
                 array_push($advisors, $user);
             }
         }
@@ -82,7 +84,7 @@ class ActivitesController extends Controller
         if (isset($request->isActivityView)) {
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
         } else {
-            return redirect()->to('/quotes/'.strtolower($request->parentType).'/'.$request->entityUId)->with('success', ' Activity has been Created');
+            return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Activity has been Created');
         }
     }
 
@@ -139,7 +141,7 @@ class ActivitesController extends Controller
         $record->due_date = Carbon::parse($request->due_date)->format('Y-m-d H:i:s');
         $record->save();
         if (isset($request->fromLeadView) && $request->fromLeadView == 1) {
-            return redirect('/quotes/'.$this->getQuoteTypeNameFromId($request->quoteType).'/'.$request->quote_uuid)->with('success', 'Activity updated successfully');
+            return redirect('/quotes/' . $this->getQuoteTypeNameFromId($request->quoteType) . '/' . $request->quote_uuid)->with('success', 'Activity updated successfully');
         }
 
         if (isset($request->quoteType) && $request->quoteType == QuoteTypeId::Health) {
@@ -159,7 +161,7 @@ class ActivitesController extends Controller
     {
         Activities::where('id', $id)->delete();
         if (isset($request->isLeadView) && $request->isLeadView == 1) {
-            return redirect('/quotes/'.$request->quoteType.'/'.$request->quote_uuid)->with('success', 'Activity deleted successfully');
+            return redirect('/quotes/' . $request->quoteType . '/' . $request->quote_uuid)->with('success', 'Activity deleted successfully');
         }
 
         if (isset($request->isInertia) && $request->isInertia) {

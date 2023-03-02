@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive, computed } from 'vue';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
 import { useDateFormat } from '@vueuse/shared';
 
@@ -12,17 +12,34 @@ const genderText = v => {
   return props.genders[v];
 };
 
+const ipmiBenefits = reactive({
+  region: '',
+  insurance: '',
+  payment: '',
+  network: '',
+  healthCare: false,
+  motherBaby: false,
+});
+
+const hidePlan = ref(false),
+  isManual = ref(false);
+
+const canUpdate = computed(() => {
+  return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
+});
+
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
   { index: 0, label: 'General Info' },
-  { index: 1, label: 'Members' },
-  { index: 2, label: 'In Patient' },
-  { index: 3, label: 'Out Patient' },
-  { index: 4, label: 'Co-pay/Co-insurance' },
-  { index: 5, label: 'Region coverage & Network list' },
-  { index: 6, label: 'Maternity cover' },
-  { index: 7, label: 'Exclusions' },
-  { index: 8, label: 'Policy Detail' },
+  { index: 1, label: 'IPMI Benefits' },
+  { index: 2, label: 'Members' },
+  { index: 3, label: 'In Patient' },
+  { index: 4, label: 'Out Patient' },
+  { index: 5, label: 'Co-pay/Co-insurance' },
+  { index: 6, label: 'Region coverage & Network list' },
+  { index: 7, label: 'Maternity cover' },
+  { index: 8, label: 'Exclusions' },
+  { index: 9, label: 'Policy Detail' },
 ]);
 </script>
 
@@ -40,7 +57,7 @@ const tabs = ref([
         >
           <button
             :class="[
-              'rounded-lg px-3 py-2 text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
+              'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
               'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
               selected
                 ? 'bg-white shadow text-primary-600'
@@ -55,23 +72,122 @@ const tabs = ref([
       <TabPanels class="mt-2 text-sm min-h-[70vh]">
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
+            <div class="md:col-span-2 text-right select-none border-b pb-2">
+              <x-toggle v-model="hidePlan" color="error" label="Hide Plan" />
+            </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Code</dt>
-              <dd>{{ props.plan.code }}</dd>
+              <dd>{{ props.plan.providerCode }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Name</dt>
               <dd>{{ props.plan.providerName }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Actual Premium</dt>
+              <dt class="font-medium">Network Provider</dt>
+              <dd>{{ props.plan.planCode }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Base Premium</dt>
               <dd>{{ props.plan.actualPremium }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Discount Premium</dt>
-              <dd>{{ props.plan.discountPremium }}</dd>
+              <dt class="font-medium">Basmah</dt>
+              <dd>{{ props.plan.basmah }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Policy Fee</dt>
+              <dd>{{ props.plan.fee }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Total (with VAT)</dt>
+              <dd>{{ props.plan.actualPremium + (props.plan.basmah || 0) }}</dd>
             </div>
           </dl>
+        </TabPanel>
+
+        <TabPanel>
+          <div class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
+            <div class="md:col-span-2 text-right select-none border-b pb-2">
+              <x-toggle
+                v-model="isManual"
+                color="success"
+                label="Manual"
+                :disabled="!canUpdate"
+              />
+            </div>
+            <x-select
+              v-model="ipmiBenefits.region"
+              label="Region Coverage"
+              placeholder="Select Option"
+              :disabled="!isManual"
+              :options="[
+                { value: '0', label: 'Regional Middle East' },
+                { value: '1', label: 'Worldwide excluding US' },
+                { value: '2', label: 'Worldwide' },
+              ]"
+              class="w-full"
+            />
+            <x-select
+              v-model="ipmiBenefits.insurance"
+              label="OP Co-insurance"
+              placeholder="Select Option"
+              :disabled="!isManual"
+              :options="[
+                { value: '0', label: '0%' },
+                { value: '1', label: '20%' },
+                { value: '2', label: '10% up to AED 50/OP visit' },
+                { value: '3', label: '20% up to AED 100/OP visit' },
+              ]"
+              class="w-full"
+            />
+            <x-select
+              v-model="ipmiBenefits.payment"
+              label="Payment Terms"
+              placeholder="Select Option"
+              :disabled="!isManual"
+              :options="[
+                { value: '0', label: 'Annual' },
+                { value: '1', label: 'Quarterly' },
+                { value: '2', label: 'Monthly' },
+              ]"
+              class="w-full"
+            />
+            <x-select
+              v-model="ipmiBenefits.network"
+              label="Network"
+              placeholder="Select Option"
+              :disabled="!isManual"
+              :options="[
+                { value: '0', label: 'General' },
+                { value: '1', label: 'General Plus' },
+                { value: '2', label: 'Comprehensive Excluding AH' },
+                { value: '3', label: 'Comprehensive' },
+              ]"
+              class="w-full"
+            />
+            <x-checkbox
+              v-model="ipmiBenefits.healthCare"
+              label="Healthy Connect"
+              :disabled="!isManual"
+            />
+            <x-checkbox
+              v-model="ipmiBenefits.motherBaby"
+              label="Mother and Baby Care"
+              :disabled="!isManual"
+            />
+            <div v-if="isManual">
+              <x-button color="emerald">Update</x-button>
+            </div>
+            <div class="md:col-span-2 text-right border-t pt-3 font-bold">
+              Total Indicative Premium (with VAT):
+              {{
+                props.plan.actualPremium +
+                (props.plan.vat || 0) +
+                (props.plan.basmah || 0)
+              }}
+            </div>
+          </div>
         </TabPanel>
 
         <TabPanel>
