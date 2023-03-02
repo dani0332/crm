@@ -134,7 +134,7 @@ class LeadAllocationJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         if ($exception) {
-            Log::error('Exception in lead allocation : '. $exception->getMessage());
+            Log::error('Exception in lead allocation : '.$exception->getMessage());
             Mail::send(new MailLeadAllocationFailedNotification($exception));
         }
     }
