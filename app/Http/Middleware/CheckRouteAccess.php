@@ -17,11 +17,7 @@ class CheckRouteAccess
     {
         $routeName = $request->route()->getName();
 
-        if (str_contains($routeName, '.') || ! $routeName) {
-            return $next($request); // we are skipping the routes without name for now but we will restrict it later
-        }
-
-        if (str_contains($routeName, '-') && auth()->user()->can($routeName)) {
+        if (auth()->user()->can($routeName)) {
             return $next($request);
         }
 
