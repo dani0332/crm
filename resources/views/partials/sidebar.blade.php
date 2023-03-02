@@ -43,16 +43,16 @@ use App\Enums\PermissionsEnum;
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::LeadPool]))
+                            @can(PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW)
                             <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
-                            @endif
-                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin, RolesEnum::LeadPool]))
+                            @endcan
+                            @can(PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW)
                             <li><a href="{{ url('reports/advisor-performance') }}">Advisor Performance</a></li>
                             @endif
-                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::Admin, RolesEnum::LeadPool]))
+                            @can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW)
                             <li><a href="{{ url('reports/advisor-distribution') }}">Advisor Distribution</a></li>
                             @endif
-                            @if(Auth::user()->hasAnyRole([RolesEnum::CarDeputyManager, RolesEnum::CarManager, RolesEnum::Admin, RolesEnum::LeadPool]))
+                            @can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW)
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
                             @endif
                         </ul>
@@ -354,9 +354,6 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::ApplicationStorageList)
                             <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li>
                             @endcan
-                            @hasrole(RolesEnum::Admin)
-                            <li><a href="{{ route('failed-jobs.index') }}">Failed Jobs</a></li>
-                            @endhasrole
                         </ul>
                     </li>
                 </ul>
