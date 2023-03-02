@@ -4,7 +4,6 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-
 final class CarTypeOfInsuranceIdEnum extends Enum
 {
     public const Comprehensive = 1;

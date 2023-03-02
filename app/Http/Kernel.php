@@ -69,6 +69,6 @@ class Kernel extends HttpKernel
         'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
         'CheckRole' => \App\Http\Middleware\CheckRole::class,
         'basicAuth' => \App\Http\Middleware\BasicAuth::class,
-        'check_route_access' =>  \App\Http\Middleware\CheckRouteAccess::class,
+        'check_route_access' => \App\Http\Middleware\CheckRouteAccess::class,
     ];
 }
