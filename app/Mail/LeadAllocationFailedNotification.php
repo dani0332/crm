@@ -13,7 +13,7 @@ class LeadAllocationFailedNotification extends Mailable
 
     private $exception;
 
-    public function __construct(Exception $exception)
+    public function __construct($exception)
     {
         $this->exception = $exception;
     }

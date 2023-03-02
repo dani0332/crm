@@ -130,7 +130,7 @@ class LeadAllocationJob implements ShouldQueue
         }
     }
 
-    public function failed(Exception $exception)
+    public function failed($exception)
     {
         if ($exception) {
             Mail::send(new MailLeadAllocationFailedNotification($exception));
