@@ -6,7 +6,6 @@ use App\Mail\LeadAllocationFailedNotification as MailLeadAllocationFailedNotific
 use App\Models\LeadAllocation;
 use App\Services\LeadAllocationService;
 use App\Traits\GetUserTreeTrait;
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
