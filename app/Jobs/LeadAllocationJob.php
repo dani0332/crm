@@ -11,8 +11,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpClient\Exception\TimeoutException as ExceptionTimeoutException;
+use Throwable;
 
 class LeadAllocationJob implements ShouldQueue
 {
@@ -129,9 +131,10 @@ class LeadAllocationJob implements ShouldQueue
         }
     }
 
-    public function failed($exception)
+    public function failed(Throwable $exception)
     {
         if ($exception) {
+            Log::error('Exception in lead allocation : '. $exception->getMessage());
             Mail::send(new MailLeadAllocationFailedNotification($exception));
         }
     }

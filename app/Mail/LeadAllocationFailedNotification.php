@@ -5,6 +5,7 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class LeadAllocationFailedNotification extends Mailable
 {
@@ -12,7 +13,7 @@ class LeadAllocationFailedNotification extends Mailable
 
     private $exception;
 
-    public function __construct($exception)
+    public function __construct(Throwable $exception)
     {
         $this->exception = $exception;
     }
