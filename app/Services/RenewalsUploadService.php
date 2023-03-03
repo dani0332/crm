@@ -949,13 +949,11 @@ class RenewalsUploadService
                     ->where('car_model_id', $carModel->id)
                     ->first()))
             {
-                info('car model detail : ');
                 $quoteData['cylinder'] = $carModelDetail->cylinder;
                 $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                 $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
             }
 
-            info('quoteData: ' . json_encode($quoteData));
             if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
                 $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];
             } elseif ($quoteType->code == quoteTypeCode::Car && ! empty($data['year'])) {
