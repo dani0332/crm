@@ -257,7 +257,6 @@ class User extends Authenticatable implements AuditableContract
 
     public function hasPermission($permission)
     {
-
         $userPermissions = $this->getAllPermissions()->pluck('name')->toArray();
 
         return in_array($permission, $userPermissions);

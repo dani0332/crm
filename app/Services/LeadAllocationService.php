@@ -362,7 +362,7 @@ class LeadAllocationService extends BaseService
                                 'la.id as id'
                             )->get();
 
-        info('max_capacity for reset for users : '. json_encode($users));
+        info('max_capacity for reset for users : '.json_encode($users));
         foreach ($users as $user) {
             $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
 

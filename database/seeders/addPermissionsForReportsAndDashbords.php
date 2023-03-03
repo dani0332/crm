@@ -35,13 +35,13 @@ class addPermissionsForReportsAndDashbords extends Seeder
                 [
                     'role_id' => $adminRoleId,
                     'permission_id' => $leadDistributionId,
-                ],[
+                ], [
                     'role_id' => $carManagerRoleId,
                     'permission_id' => $leadDistributionId,
-                ],[
+                ], [
                     'role_id' => $carDeputyManagerRoleId,
                     'permission_id' => $leadDistributionId,
-                ],[
+                ], [
                     'role_id' => $leadPoolRoleId,
                     'permission_id' => $leadDistributionId,
                 ]);
@@ -60,16 +60,16 @@ class addPermissionsForReportsAndDashbords extends Seeder
                 [
                     'role_id' => $adminRoleId,
                     'permission_id' => $advisorConversionId,
-                ],[
+                ], [
                     'role_id' => $carManagerRoleId,
                     'permission_id' => $advisorConversionId,
-                ],[
+                ], [
                     'role_id' => $carDeputyManagerRoleId,
                     'permission_id' => $advisorConversionId,
-                ],[
+                ], [
                     'role_id' => $leadPoolRoleId,
                     'permission_id' => $advisorConversionId,
-                ],[
+                ], [
                     'role_id' => $carAdvisorRoleId,
                     'permission_id' => $advisorConversionId,
                 ]);
@@ -88,13 +88,13 @@ class addPermissionsForReportsAndDashbords extends Seeder
                 [
                     'role_id' => $adminRoleId,
                     'permission_id' => $advisorPerformanceId,
-                ],[
+                ], [
                     'role_id' => $carManagerRoleId,
                     'permission_id' => $advisorPerformanceId,
-                ],[
+                ], [
                     'role_id' => $carDeputyManagerRoleId,
                     'permission_id' => $advisorPerformanceId,
-                ],[
+                ], [
                     'role_id' => $leadPoolRoleId,
                     'permission_id' => $advisorPerformanceId,
                 ]);
@@ -113,21 +113,19 @@ class addPermissionsForReportsAndDashbords extends Seeder
                 [
                     'role_id' => $adminRoleId,
                     'permission_id' => $advisorDistributionId,
-                ],[
+                ], [
                     'role_id' => $carManagerRoleId,
                     'permission_id' => $advisorDistributionId,
-                ],[
+                ], [
                     'role_id' => $carDeputyManagerRoleId,
                     'permission_id' => $advisorDistributionId,
-                ],[
+                ], [
                     'role_id' => $leadPoolRoleId,
                     'permission_id' => $advisorDistributionId,
-                ],[
+                ], [
                     'role_id' => $carAdvisorRoleId,
                     'permission_id' => $advisorDistributionId,
                 ]);
         }
-
-
     }
 }
