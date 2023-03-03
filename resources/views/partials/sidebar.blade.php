@@ -43,13 +43,13 @@ use App\Enums\PermissionsEnum;
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            @if(auth()->user()->hasPermission(PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW))
+                            @can(PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW)
                             <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
                             @endif
                             @can(PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW)
                             <li><a href="{{ url('reports/advisor-performance') }}">Advisor Performance</a></li>
                             @endcan
-                            @can('ahsan')
+                            @can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW)
                             <li><a href="{{ url('reports/advisor-distribution') }}">Advisor Distribution</a></li>
                             @endcan
                             @can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW)
