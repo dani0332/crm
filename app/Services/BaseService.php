@@ -29,7 +29,8 @@ class BaseService
     public function getGenericModel($type = null) : GenericModel
     {
         $type = $type ?? 'GenericModel';
-        return $this->fillModel(new GenericModel(), $type);
+        $this->genericModel = $this->fillModel(new GenericModel(), $type);
+        return $this->genericModel;
     }
 
     /**

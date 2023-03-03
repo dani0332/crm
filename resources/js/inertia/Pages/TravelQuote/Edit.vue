@@ -50,7 +50,7 @@ const rules = {
 const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
-  
+
   if (isValid) {
     quoteForm.put(`/quotes/travel/${props.quote.uuid}`, {
       onSuccess: () => {
@@ -86,6 +86,7 @@ function onSubmit(isValid) {
             :rules="[field.required === true ? rules.isRequired : false]"
             :disabled="field.disabled"
             class="w-full"
+            :errors="quoteForm.errors[index]"
           />
 
           <x-input
@@ -99,6 +100,7 @@ function onSubmit(isValid) {
             ]"
             :disabled="field.disabled"
             class="w-full"
+            :errors="quoteForm.errors[index]"
           />
 
           <x-input
@@ -131,6 +133,7 @@ function onSubmit(isValid) {
               }))
             "
             class="w-full"
+            :errors="quoteForm.errors[index]"
           />
 
           <x-textarea
@@ -140,6 +143,7 @@ function onSubmit(isValid) {
             :rules="[field.required === true ? rules.isRequired : false]"
             :disabled="field.disabled"
             class="w-full"
+            :errors="quoteForm.errors[index]"
           />
         </template>
       </div>

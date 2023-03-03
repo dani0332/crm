@@ -34,7 +34,8 @@ const rules = {
   isEmail: v =>
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
     'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
+    isRequired: v => !!v || 'This field is required',
+  allowEmpty: v => true || 'This field is required',
 };
 
 
@@ -75,7 +76,7 @@ onMounted(() => {
             v-if="field.type == 'text'"
             v-model="quoteForm[index]"
             :label="field.label"
-            :rules="[field.required === true ? rules.isRequired : false]"
+            :rules="[field.required === true ? rules.isRequired : rules.allowEmpty]"
             :disabled="field.disabled"
             :error="quoteForm.errors[index]"
             class="w-full"
@@ -87,7 +88,7 @@ onMounted(() => {
             type="email"
             :label="field.label"
             :rules="[
-              field.required === true ? rules.isRequired : false,
+              field.required === true ? rules.isRequired : rules.allowEmpty,
               rules.isEmail,
             ]"
             :disabled="field.disabled"
@@ -98,6 +99,7 @@ onMounted(() => {
           <x-input
             v-if="field.type == 'number'"
             v-model="quoteForm[index]"
+            :rules="[field.required === true ? rules.isRequired : rules.allowEmpty]"
             :label="field.label"
             :disabled="field.disabled"
             class="w-full"
@@ -118,7 +120,7 @@ onMounted(() => {
             v-if="field.type == 'select'"
             v-model="quoteForm[index]"
             :label="field.label"
-            :rules="[field.required === true ? rules.isRequired : false]"
+            :rules="[field.required === true ? rules.isRequired : rules.allowEmpty]"
             :disabled="field.disabled"
             :options="
               field.options.map(option => ({
@@ -134,7 +136,7 @@ onMounted(() => {
             v-if="field.type == 'textarea'"
             v-model="quoteForm[index]"
             :label="field.label"
-            :rules="[field.required === true ? rules.isRequired : false]"
+            :rules="[field.required === true ? rules.isRequired : rules.allowEmpty]"
             :disabled="field.disabled"
             class="w-full"
             :error="quoteForm.errors[index]"

@@ -19,6 +19,8 @@ use Illuminate\Support\Carbon;
 use App\Services\LookupService;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
+use App\Http\Requests\StoreTravelRequest;
+use App\Http\Requests\UpdateTravelRequest;
 use App\Services\TravelQuoteService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
@@ -206,33 +208,10 @@ class TravelController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreTravelRequest $request)
     {
-        $modelPropertiesList = $this->genericModel->properties;
-        $modelSkipPropertiesList = $this->genericModel->skipProperties;
-        $modelType = self::TYPE;
-
-        $validateArray = [];
-        foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['create'], $property)) {
-                $validateArray[$property] = 'required';
-            }
-        }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-        if ($request->has('email')) {
-            $this->validate($request, [
-                'email' => 'required|email:rfc,dns|max:150',
-            ]);
-        }
-        if ($request->has('mobile_no')) {
-            $this->validate($request, [
-                'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
-            ]);
-        }
-
-        $this->validate($request, $validateArray);
-
-        $record = $this->crudService->saveModelByType($modelType, $request);
+        $record = $this->service->saveTravelQuote($request);
 
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
@@ -296,21 +275,11 @@ class TravelController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UpdateTravelRequest $request, $id)
     {
-        $modelPropertiesList = json_decode($request->all()['model'], true);
-
-        $validateArray = [];
-
-        $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
-        foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && !strpos($modelSkipPropertiesList['update'], $property)) {
-                $validateArray[$property] = 'required';
-            }
-        }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-        $this->validate($request, $validateArray);
-        $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+
+        $this->service->updateTravelQuote($request, $id);
 
         return redirect('/quotes/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
     }
