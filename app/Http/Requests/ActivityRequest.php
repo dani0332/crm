@@ -26,7 +26,7 @@ class ActivityRequest extends FormRequest
         return [
             'title' => 'required',
             'due_date' => 'required',
-            'description' => 'nullable',
+            'description' => 'required',
             'assignee_id' => 'required',
             'quote_id' => 'required|exists:personal_quotes,id',
         ];

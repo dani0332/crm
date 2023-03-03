@@ -213,21 +213,22 @@ const onDeleteConfirmation = () => {
                 <div class="grid gap-4">
                     <x-input
                         v-model="activityForm.title"
-                        label="Title"
+                        label="Title*"
                         :rules="[rules.isRequired]"
                         class="w-full"
                     />
 
                     <x-textarea
                         v-model="activityForm.description"
-                        label="Description"
+                        label="Description*"
+                        :rules="[rules.isRequired]"
                         :adjust-to-text="false"
                         class="w-full"
                     />
 
                     <x-select
                         v-model="activityForm.assignee_id"
-                        label="Assignee"
+                        label="Assignee*"
                         :options="advisorOptions"
                         :rules="[rules.isRequired]"
                         placeholder="Select Assignee"
@@ -236,7 +237,7 @@ const onDeleteConfirmation = () => {
 
                     <x-input
                         v-model="activityForm.due_date"
-                        label="Due Date"
+                        label="Due Date*"
                         type="datetime-local"
                         :rules="[rules.isRequired]"
                         class="w-full"

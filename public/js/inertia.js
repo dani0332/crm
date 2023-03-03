@@ -13553,7 +13553,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
               return $setup.activityForm.title = $event;
             }),
-            label: "Title",
+            label: "Title*",
             rules: [$setup.rules.isRequired],
             "class": "w-full"
           }, null, 8
@@ -13563,17 +13563,18 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
               return $setup.activityForm.description = $event;
             }),
-            label: "Description",
+            label: "Description*",
+            rules: [$setup.rules.isRequired],
             "adjust-to-text": false,
             "class": "w-full"
           }, null, 8
           /* PROPS */
-          , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+          , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
             modelValue: $setup.activityForm.assignee_id,
             "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
               return $setup.activityForm.assignee_id = $event;
             }),
-            label: "Assignee",
+            label: "Assignee*",
             options: $setup.advisorOptions,
             rules: [$setup.rules.isRequired],
             placeholder: "Select Assignee",
@@ -13585,7 +13586,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
               return $setup.activityForm.due_date = $event;
             }),
-            label: "Due Date",
+            label: "Due Date*",
             type: "datetime-local",
             rules: [$setup.rules.isRequired],
             "class": "w-full"
