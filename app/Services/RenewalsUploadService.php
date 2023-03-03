@@ -24,6 +24,7 @@ use App\Jobs\Renewals\UpdateRenewalQuotesJob;
 use App\Models\AML;
 use App\Models\CarMake;
 use App\Models\CarModel;
+use App\Models\CarModelDetail;
 use App\Models\CarPlan;
 use App\Models\CarQuote;
 use App\Models\CarQuoteValuation;
@@ -738,6 +739,7 @@ class RenewalsUploadService
             ];
 
             if ($quoteType->code == quoteTypeCode::Car) {
+
                 $make = CarMake::where('text', $data['make'])->first();
                 $model = CarModel::where('text', $data['model'])->first();
 
@@ -750,11 +752,21 @@ class RenewalsUploadService
                 $quoteData['car_model_id'] = $model->id ?? null;
                 $quoteData['year_of_manufacture'] = $data['year'];
                 $quoteData['year_of_first_registration'] = $data['year'];
-                $quoteData['cylinder'] = $model->cylinder ?? null;
                 $quoteData['vehicle_category'] = $vehicleType->category ?? null;
 
                 if (! empty($data['product_type']) && ($carTypeOfInsuranceInstance = $this->renewalsAddonService->getCarTypeOfInsurance($data['product_type']))) {
                     $quoteData['car_type_insurance_id'] = $carTypeOfInsuranceInstance->id;
+                }
+
+                if(!empty($quoteData['car_model_id'])) {
+                    if(($carModelDetail = CarModelDetail::active()
+                        ->where('is_default', 1)
+                        ->where('car_model_id', $quoteData['car_model_id'])
+                        ->first())) {
+                        $quoteData['cylinder'] = $carModelDetail->cylinder;
+                        $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
+                        $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
+                    }
                 }
             }
 
@@ -925,13 +937,22 @@ class RenewalsUploadService
                 'additional_notes' => $data['notes'],
                 'car_make_id' => $carMake->id ?? null,
                 'car_model_id' => $carModel->id ?? null,
-                'cylinder' => $carModel->cylinder ?? null,
                 'vehicle_category' => $vehicleType->category ?? null,
                 'year_of_manufacture' => $data['year'] ?? null,
                 'previous_advisor_id' => $previousAdvisorId,
                 'quote_updated_at' => Carbon::now(),
                 'has_ncd_supporting_documents' => $data['nc_letter'],
             ]);
+
+            if(!empty($carModel) && ($carModelDetail = CarModelDetail::active()
+                    ->where('is_default', 1)
+                    ->where('car_model_id', $carModel->id)
+                    ->first()))
+            {
+                $quoteData['cylinder'] = $carModelDetail->cylinder;
+                $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
+                $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
+            }
 
             if ($quoteType->code == quoteTypeCode::Car && ! empty($data['year_of_first_registration'])) {
                 $quoteData['year_of_first_registration'] = $data['year_of_first_registration'];
