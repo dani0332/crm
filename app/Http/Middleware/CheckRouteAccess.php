@@ -16,6 +16,7 @@ class CheckRouteAccess
     public function handle(Request $request, Closure $next)
     {
         $routeName = $request->route()->getName();
+
         if (auth()->user()->can($routeName)) {
             return $next($request);
         }
