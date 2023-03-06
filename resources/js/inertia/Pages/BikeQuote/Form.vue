@@ -33,6 +33,7 @@ const quoteForm = useForm({
     asset_value: props.quote?.asset_value || null,
     currently_insured_with_id: props.quote?.currently_insured_with_id || null,
     year_of_manufacture: props.quote?.bike_quote?.year_of_manufacture || null,
+    processing: false,
 });
 
 const rules = {
@@ -52,6 +53,7 @@ function onSubmit(isValid) {
 
     if (isValid) {
 
+        quoteForm.processing = true;
         let method = 'post';
         let url = `/personal-quotes/bike/`;
         if(props.quote)
@@ -75,6 +77,9 @@ function onSubmit(isValid) {
                     router.get(`/personal-quotes/bike`);
                 }, 500);
             },
+            onFinish: () => {
+                quoteForm.processing = false;
+            }
         });
 
     }

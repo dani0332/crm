@@ -801,7 +801,8 @@ __webpack_require__.r(__webpack_exports__);
       bike_company_to_insure: ((_props$quote8 = props.quote) === null || _props$quote8 === void 0 ? void 0 : (_props$quote8$bike_qu = _props$quote8.bike_quote) === null || _props$quote8$bike_qu === void 0 ? void 0 : _props$quote8$bike_qu.bike_company_to_insure) || null,
       asset_value: ((_props$quote9 = props.quote) === null || _props$quote9 === void 0 ? void 0 : _props$quote9.asset_value) || null,
       currently_insured_with_id: ((_props$quote10 = props.quote) === null || _props$quote10 === void 0 ? void 0 : _props$quote10.currently_insured_with_id) || null,
-      year_of_manufacture: ((_props$quote11 = props.quote) === null || _props$quote11 === void 0 ? void 0 : (_props$quote11$bike_q = _props$quote11.bike_quote) === null || _props$quote11$bike_q === void 0 ? void 0 : _props$quote11$bike_q.year_of_manufacture) || null
+      year_of_manufacture: ((_props$quote11 = props.quote) === null || _props$quote11 === void 0 ? void 0 : (_props$quote11$bike_q = _props$quote11.bike_quote) === null || _props$quote11$bike_q === void 0 ? void 0 : _props$quote11$bike_q.year_of_manufacture) || null,
+      processing: false
     });
     var rules = {
       isEmail: function isEmail(v) {
@@ -821,6 +822,7 @@ __webpack_require__.r(__webpack_exports__);
       }
 
       if (isValid) {
+        quoteForm.processing = true;
         var method = 'post';
         var url = "/personal-quotes/bike/";
 
@@ -841,6 +843,9 @@ __webpack_require__.r(__webpack_exports__);
             setTimeout(function () {
               _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.get("/personal-quotes/bike");
             }, 500);
+          },
+          onFinish: function onFinish() {
+            quoteForm.processing = false;
           }
         });
       }
@@ -1287,7 +1292,8 @@ __webpack_require__.r(__webpack_exports__);
       asset_value: ((_props$quote8 = props.quote) === null || _props$quote8 === void 0 ? void 0 : _props$quote8.asset_value) || null,
       year_of_manufacture_id: ((_props$quote9 = props.quote) === null || _props$quote9 === void 0 ? void 0 : (_props$quote9$cycle_q = _props$quote9.cycle_quote) === null || _props$quote9$cycle_q === void 0 ? void 0 : _props$quote9$cycle_q.year_of_manufacture_id) || null,
       has_accident: ((_props$quote10 = props.quote) === null || _props$quote10 === void 0 ? void 0 : (_props$quote10$cycle_ = _props$quote10.cycle_quote) === null || _props$quote10$cycle_ === void 0 ? void 0 : _props$quote10$cycle_.has_accident) || null,
-      has_good_condition: ((_props$quote11 = props.quote) === null || _props$quote11 === void 0 ? void 0 : (_props$quote11$cycle_ = _props$quote11.cycle_quote) === null || _props$quote11$cycle_ === void 0 ? void 0 : _props$quote11$cycle_.has_good_condition) || null
+      has_good_condition: ((_props$quote11 = props.quote) === null || _props$quote11 === void 0 ? void 0 : (_props$quote11$cycle_ = _props$quote11.cycle_quote) === null || _props$quote11$cycle_ === void 0 ? void 0 : _props$quote11$cycle_.has_good_condition) || null,
+      processing: false
     });
     var rules = {
       isEmail: function isEmail(v) {
@@ -1309,9 +1315,13 @@ __webpack_require__.r(__webpack_exports__);
           url = url + props.quote.uuid;
         }
 
+        quoteForm.processing = true;
         quoteForm.submit(method, url, {
           onError: function onError(errors) {
             console.log(quoteForm.setError(errors));
+          },
+          onFinish: function onFinish() {
+            quoteForm.processing = false;
           },
           onSuccess: function onSuccess() {
             notification.success({

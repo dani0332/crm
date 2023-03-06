@@ -33,6 +33,7 @@ const quoteForm = useForm({
     year_of_manufacture_id: props.quote?.cycle_quote?.year_of_manufacture_id || null,
     has_accident: props.quote?.cycle_quote?.has_accident || null,
     has_good_condition: props.quote?.cycle_quote?.has_good_condition || null,
+    processing: false
 });
 
 const rules = {
@@ -56,9 +57,13 @@ function onSubmit(isValid) {
             url = url + props.quote.uuid
         }
 
+        quoteForm.processing = true;
         quoteForm.submit(method, url, {
             onError: errors => {
                 console.log(quoteForm.setError(errors));
+            },
+            onFinish: () => {
+                quoteForm.processing = false;
             },
             onSuccess: () => {
 
