@@ -356,9 +356,6 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::ApplicationStorageList)
                             <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li>
                             @endcan
-                            @hasrole(RolesEnum::Admin)
-                            <li><a href="{{ route('failed-jobs.index') }}">Failed Jobs</a></li>
-                            @endhasrole
                         </ul>
                     </li>
                 </ul>
