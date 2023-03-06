@@ -519,6 +519,7 @@
                         @endif
                         @php
                             $searchProperties = $model->searchProperties;
+
                             if (
                                 !auth()
                                     ->user()
@@ -529,7 +530,6 @@
                             }else{
                                 unset( $searchProperties['advisor_id']);
                             }
-
                             $sourcePropertiesArry = $crudService->sortMetaArray($model->properties, 'ss:');
                             $skipProperties = $model->skipProperties;
                             if ($model->modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarAdvisor)) {

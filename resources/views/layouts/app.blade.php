@@ -199,7 +199,6 @@
                 reward_sliders_datatable_route: "{{ route('reward-sliders.index') }}",
                 searchLeadsDataTable: "{{ route('leadsearch.index') }}",
                 leadassignmentDataTable: "{{ route('leadassignment.index') }}",
-                myleadsDataTable: "{{ route('myleads.index') }}",
                 amtDataTable: "{{ route('amt.index') }}",
                 activitiesDataTable: "{{ route('activities.index') }}",
                 renewals_batches_datatable_route: "{{ url('renewals/batches') }}",
