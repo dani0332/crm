@@ -110,7 +110,7 @@ use App\Enums\LeadSourceEnum;
         } else {
             $('#quote-next-followup-date').hide();
         }
-        if (lead_status_code == <?php echo QuoteStatusEnum::AfiaRenewal; ?>) {
+        if (lead_status_code == <?php echo QuoteStatusEnum::IMRenewal; ?>) {
             $('#quote-tier').show();
         } else {
             $('#quote-tier').hide();

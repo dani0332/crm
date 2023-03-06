@@ -70,9 +70,10 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             $query->where('quote_batch_id', $batch->id);
         }
         if ($this->createdAtFilter != '') {
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
             info('createdAtFilter are : '.json_encode($this->createdAtFilter));
-            $startDate = Carbon::parse(explode('|', $this->createdAtFilter)[0]);
-            $endDate = Carbon::parse(explode('|', $this->createdAtFilter)[1]);
+            $startDate = Carbon::parse(explode('|', $this->createdAtFilter)[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse(explode('|', $this->createdAtFilter)[1])->endOfDay()->format($dateFormat);
             $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
         }
         if ($this->ecommerceFilter != '') {
@@ -108,11 +109,11 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         }
         if ($this->leadType == ReportsLeadTypeEnum::NOT_INTERESTED) {
             info('inside lead type not interested');
-            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec]);
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec, QuoteStatusEnum::AMLScreeningFailed]);
         }
         if ($this->leadType == ReportsLeadTypeEnum::IN_PROGRESS) {
             info('inside lead type in progress');
-            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted]);
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::PaymentPending, QuoteStatusEnum::AMLScreeningCleared]);
         }
         if ($this->leadType == ReportsLeadTypeEnum::MANUAL_CREATED) {
             info('inside lead type MANUAL_CREATED');
@@ -124,7 +125,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         }
         if ($this->leadType == ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT) {
             info('inside lead type AFIA_RENEWALS_COUNT');
-            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::AfiaRenewal);
+            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::IMRenewal);
         }
         if ($this->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
             info('inside lead type SALE_LEAD');
@@ -133,16 +134,6 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         if ($this->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
             info('inside lead type CREATED_SALE_LEAD');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])->where('source', LeadSourceEnum::IMCRM);
-        }
-
-        if ($this->leadType == ReportsLeadTypeEnum::OTHERS) {
-            info('inside lead type in OTHERS');
-
-            $query->whereNotIn('car_quote_request.quote_status_id', [
-                QuoteStatusEnum::NewLead, QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested,
-                QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec, QuoteStatusEnum::NotContactablePe,
-                QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::Duplicate,
-                QuoteStatusEnum::Fake, QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::AfiaRenewal]);
         }
 
         return $query;
