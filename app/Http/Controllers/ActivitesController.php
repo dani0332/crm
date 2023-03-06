@@ -84,7 +84,7 @@ class ActivitesController extends Controller
         if (isset($request->isActivityView)) {
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
         } else {
-            return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Activity has been Created');
+            return redirect()->to('/quotes/'.strtolower($request->parentType).'/'.$request->entityUId)->with('success', ' Activity has been Created');
         }
     }
 
@@ -141,7 +141,7 @@ class ActivitesController extends Controller
         $record->due_date = Carbon::parse($request->due_date)->format('Y-m-d H:i:s');
         $record->save();
         if (isset($request->fromLeadView) && $request->fromLeadView == 1) {
-            return redirect('/quotes/' . $this->getQuoteTypeNameFromId($request->quoteType) . '/' . $request->quote_uuid)->with('success', 'Activity updated successfully');
+            return redirect('/quotes/'.$this->getQuoteTypeNameFromId($request->quoteType).'/'.$request->quote_uuid)->with('success', 'Activity updated successfully');
         }
 
         if (isset($request->quoteType) && $request->quoteType == QuoteTypeId::Health) {
@@ -161,7 +161,7 @@ class ActivitesController extends Controller
     {
         Activities::where('id', $id)->delete();
         if (isset($request->isLeadView) && $request->isLeadView == 1) {
-            return redirect('/quotes/' . $request->quoteType . '/' . $request->quote_uuid)->with('success', 'Activity deleted successfully');
+            return redirect('/quotes/'.$request->quoteType.'/'.$request->quote_uuid)->with('success', 'Activity deleted successfully');
         }
 
         if (isset($request->isInertia) && $request->isInertia) {

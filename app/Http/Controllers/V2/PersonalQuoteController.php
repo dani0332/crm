@@ -63,6 +63,7 @@ class PersonalQuoteController extends Controller
     public function updatePolicyDetails($id, PersonalQuotePolicyRequest $request)
     {
         $response = PersonalQuoteRepository::updatePolicyDetails($id, $request->validated());
+
         return back();
     }
 

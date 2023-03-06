@@ -5,7 +5,6 @@ namespace App\Http\Controllers\V2;
 use App\Http\Controllers\Controller;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteTypeRepository;
-use Illuminate\Http\Request;
 
 class PersonalPlanController extends Controller
 {
@@ -13,11 +12,12 @@ class PersonalPlanController extends Controller
     {
         $query = PersonalPlanRepository::filter();
 
-        if(!empty(request()->quote_type) && ($quoteType = QuoteTypeRepository::where('code', request()->quote_type)->first() ) ) {
+        if (! empty(request()->quote_type) && ($quoteType = QuoteTypeRepository::where('code', request()->quote_type)->first())) {
             $query->where('quote_type_id', $quoteType->id);
         }
 
         $plans = $query->get();
+
         return response()->json($plans);
     }
 }

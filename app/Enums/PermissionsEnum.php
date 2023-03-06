@@ -182,4 +182,8 @@ final class PermissionsEnum extends Enum
     const TPL_DASHBOARD_VIEW = 'tpl-dashboard-view';
     const COMPREHENSIVE_DASHBOARD_VIEW = 'comprehensive-dashboard-view';
     const MAIN_DASHBOARD_VIEW = 'main-dashboard-view';
+    const ADVISOR_CONVERSION_REPORT_VIEW = 'advisor-conversion-report-view';
+    const ADVISOR_DISTRIBUTION_REPORT_VIEW = 'advisor-distribution-report-view';
+    const ADVISOR_PERFORMANCE_REPORT_VIEW = 'advisor-performance-report-view';
+    const LEAD_DISTRIBUTION_REPORT_VIEW = 'lead-distribution-report-view';
 }

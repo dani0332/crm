@@ -103,7 +103,6 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchCreatePayment($quoteId, $data)
     {
         return DB::transaction(function () use ($quoteId, $data) {
-
             $quote = $this->where('id', $quoteId)->firstOrFail();
 
             $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'reference', 'payment_methods_code', 'insurance_provider_id', 'plan_id']);
@@ -157,6 +156,7 @@ class PersonalQuoteRepository extends BaseRepository
     {
         $quote = $this->findOrFail($id);
         $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'renewal_expiry_date', 'premium']));
+
         return $quote;
     }
 

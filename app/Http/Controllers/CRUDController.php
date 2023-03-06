@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -51,8 +52,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Gate;
-use App\Enums\PermissionsEnum;
 
 class CRUDController extends Controller
 {
@@ -309,7 +308,6 @@ class CRUDController extends Controller
      *
      * @param  int  $id
      * @param  \Illuminate\Http\Request  $request
-     *
      * @return \Illuminate\Http\Response
      * @return \Inertia\Response
      */
@@ -497,16 +495,16 @@ class CRUDController extends Controller
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
 
-            $notProductionApproval = !auth()->user()->hasRole(RolesEnum::PA);
+            $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
             $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod']);
             $paymentEntityModel->load(['plan.insuranceProvider']);
 
             $payments->each(function ($payment) {
-                $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && !auth()->user()->hasRole(RolesEnum::PA);
+                $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
                 $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
                 $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
                 $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
-                && !auth()->user()->hasRole(RolesEnum::PA);
+                && ! auth()->user()->hasRole(RolesEnum::PA);
 
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
@@ -514,7 +512,7 @@ class CRUDController extends Controller
             $paymentMethods = $paymentMethods->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name
+                    'label' => $paymentMethod->name,
                 ];
             });
 
@@ -555,7 +553,7 @@ class CRUDController extends Controller
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
-                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
+                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
                 ],
             ]);
@@ -885,6 +883,9 @@ class CRUDController extends Controller
     {
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
+            if (! $lead) {
+                return redirect()->back()->with('message', 'Lead not found please try again.');
+            }
             if (($lead->health_team_type == null || $lead->health_team_type == quoteTypeCode::WCU) && $request->leadStatus == QuoteStatusEnum::Qualified) {
                 return redirect()->back()->with('message', 'Please select team type before moving to QUALIFIED status');
             }

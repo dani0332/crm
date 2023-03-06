@@ -43,10 +43,11 @@ class BikeQuoteRepository extends BaseRepository
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
-            'createdById' => Auth::user()->id
+            'createdById' => Auth::user()->id,
         ];
 
-        info( 'bikeQuote:' . json_encode($quoteData));
+        info('bikeQuote:'.json_encode($quoteData));
+
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
     }
 
@@ -97,8 +98,8 @@ class BikeQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeId(QuoteTypes::BIKE->id())
             ->where($column, $value)
-            ->with(['bikeQuote' => function($q){
-                    $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);
+            ->with(['bikeQuote' => function ($q) {
+                $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);
             }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
             }, 'createdBy', 'updatedBy'])->firstOrFail();
@@ -113,6 +114,5 @@ class BikeQuoteRepository extends BaseRepository
             ->filter()
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
-
     }
 }
