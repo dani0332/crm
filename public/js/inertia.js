@@ -4565,13 +4565,13 @@ __webpack_require__.r(__webpack_exports__);
       uuid: page.props.quote.uuid,
       quote_id: page.props.quote.id,
       quote_type: page.props.quoteType,
-      quote_type_id: 8,
       title: null,
       description: null,
       due_date: null,
       assignee_id: null,
       status: null,
-      activity_id: null
+      activity_id: null,
+      processing: false
     });
 
     var addActivity = function addActivity() {
@@ -4582,8 +4582,12 @@ __webpack_require__.r(__webpack_exports__);
 
     var onStatusUpdate = function onStatusUpdate(id) {
       activityForm.activity_id = id;
+      activityForm.processing = true;
       activityForm.patch("/activities/v2/".concat(id, "/update-status"), {
         preserveScroll: true,
+        onFinish: function onFinish() {
+          activityForm.processing = false;
+        },
         onSuccess: function onSuccess() {
           notification.success({
             title: 'Lead Activity Done',
@@ -4613,9 +4617,11 @@ __webpack_require__.r(__webpack_exports__);
         method = 'patch';
       }
 
+      activityForm.processing = true;
       activityForm.submit(method, url, {
         preserveScroll: true,
         onSuccess: function onSuccess() {
+          activityForm.reset();
           notification.success({
             title: 'Activity saved',
             position: 'top'
@@ -4623,6 +4629,7 @@ __webpack_require__.r(__webpack_exports__);
         },
         onFinish: function onFinish() {
           modals.activity = false;
+          activityForm.processing = false;
         }
       });
     };
@@ -4637,9 +4644,9 @@ __webpack_require__.r(__webpack_exports__);
     });
 
     var onDeleteConfirmation = function onDeleteConfirmation() {
+      activityForm.processing = true;
       _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router["delete"]("/activities/v2/".concat(deleteData.activity_id, "/"), {
-        quote_uuid: page.props.quote.uuid
-      }, {
+        quote_uuid: page.props.quote.uuid,
         preserveScroll: true,
         onSuccess: function onSuccess() {
           modals.activityConfirm = false;
@@ -4649,6 +4656,7 @@ __webpack_require__.r(__webpack_exports__);
           });
         },
         onFinish: function onFinish() {
+          activityForm.processing = false;
           modals.activityConfirm = false;
         }
       });
@@ -4987,7 +4995,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       reference: '',
       paymentCode: '',
       status: 'create',
-      paymentId: ''
+      paymentId: '',
+      processing: false
     });
 
     var addPaymentModal = function addPaymentModal() {
@@ -5016,6 +5025,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
     var addPayment = function addPayment(isValid) {
       if (!isValid) return;
+      paymentForm.clearErrors();
       var url = '/personal-quotes/' + page.props.quote.id + '/payments';
       var method = 'post';
 
@@ -5024,8 +5034,13 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         method = 'patch';
       }
 
+      paymentForm.processing = true;
       paymentForm.submit(method, url, {
         preserveScroll: true,
+        onFinish: function onFinish() {
+          paymentForm.processing = false;
+          paymentForm.reset();
+        },
         onSuccess: function onSuccess() {
           notification.success({
             title: 'Payment Added',
@@ -5415,12 +5430,17 @@ __webpack_require__.r(__webpack_exports__);
       quote_status_id: page.props.quote.quote_status_id || null,
       notes: page.props.quote.notes || null,
       transapp_code: ((_page$props$quote = page.props.quote) === null || _page$props$quote === void 0 ? void 0 : (_page$props$quote$quo = _page$props$quote.quote_detail) === null || _page$props$quote$quo === void 0 ? void 0 : _page$props$quote$quo.transapp_code) || null,
-      lost_reason_id: ((_page$props$quote2 = page.props.quote) === null || _page$props$quote2 === void 0 ? void 0 : (_page$props$quote2$qu = _page$props$quote2.quote_detail) === null || _page$props$quote2$qu === void 0 ? void 0 : _page$props$quote2$qu.lost_reason_id) || null
+      lost_reason_id: ((_page$props$quote2 = page.props.quote) === null || _page$props$quote2 === void 0 ? void 0 : (_page$props$quote2$qu = _page$props$quote2.quote_detail) === null || _page$props$quote2$qu === void 0 ? void 0 : _page$props$quote2$qu.lost_reason_id) || null,
+      processing: false
     });
 
     var onLeadStatus = function onLeadStatus() {
+      quoteStatusForm.processing = true;
       quoteStatusForm.patch("/personal-quotes/bike/".concat(page.props.quote.id, "/update-status"), {
         preserveScroll: true,
+        onFinish: function onFinish() {
+          quoteStatusForm.processing = false;
+        },
         onError: function onError(errors) {
           console.log(errors);
         },
@@ -7186,20 +7206,6 @@ var _hoisted_80 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElement
 /* HOISTED */
 );
 
-var _hoisted_81 = {
-  "class": "p-4 rounded shadow mb-6 bg-white"
-};
-
-var _hoisted_82 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("h3", {
-  "class": "font-semibold text-primary-800 text-lg"
-}, "Lead History", -1
-/* HOISTED */
-);
-
-var _hoisted_83 = {
-  key: 0,
-  "class": "text-center py-3"
-};
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _$props$quote$advisor, _$props$quote, _$props$quote$created, _$props$quote2, _$props$quote2$update, _$props$quote$quote_d, _$props$quote$quote_d2, _$props$quote3, _$props$quote3$bike_q, _$props$quote4, _$props$quote4$bike_q, _$props$quote5, _$props$quote5$bike_q, _$props$quote6, _$props$quote6$bike_q, _$props$quote6$bike_q2, _$props$quote$nationa, _$props$quote7, _$props$quote7$quote_;
 
@@ -7358,24 +7364,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     quoteStatusesEnum: _ctx.quoteStatusesEnum
   }, null, 8
   /* PROPS */
-  , ["quote", "can", "quoteStatusesEnum"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("  show lead history data "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_81, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", null, [_hoisted_82, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_divider, {
-    "class": "mb-4 mt-1"
-  })]), _ctx.historyData === null ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", _hoisted_83, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
-    size: "sm",
-    color: "primary",
-    outlined: "",
-    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(_ctx.onLoadHistoryData, ["prevent"]),
-    loading: _ctx.historyLoading
-  }, {
-    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Load History Data ")];
-    }),
-    _: 1
-    /* STABLE */
-
-  }, 8
-  /* PROPS */
-  , ["onClick", "loading"])])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true), $props.isBetaUser ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)($setup["QuotePayments"], {
+  , ["quote", "can", "quoteStatusesEnum"]), $props.isBetaUser ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)($setup["QuotePayments"], {
     key: 1,
     can: $props.can,
     payments: $props.quote.payments,
@@ -7415,12 +7404,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     quote: _ctx.$page.props.quote
   }, null, 8
   /* PROPS */
-  , ["quote"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_AuditLogs, {
-    type: 'App\\Models\\BikeQuote',
-    id: _ctx.$page.props.quote.id
-  }, null, 8
-  /* PROPS */
-  , ["id"])]);
+  , ["quote"])]);
 }
 
 /***/ }),
@@ -14541,6 +14525,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           }, null, 8
           /* PROPS */
           , ["rules", "modelValue", "error"]), [[vue__WEBPACK_IMPORTED_MODULE_0__.vShow, $setup.paymentForm.payment_method != 'CC']]), $setup.paymentForm.status == 'create' || $setup.paymentForm.status == 'edit' ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_7, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+            loading: $setup.paymentForm.processing,
             color: "primary",
             type: "submit"
           }, {
@@ -14552,7 +14537,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             _: 1
             /* STABLE */
 
-          })])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)])];
+          }, 8
+          /* PROPS */
+          , ["loading"])])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)])];
         }),
         _: 1
         /* STABLE */

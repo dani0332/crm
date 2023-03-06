@@ -46,13 +46,13 @@ const activityForm = useForm({
     uuid: page.props.quote.uuid,
     quote_id: page.props.quote.id,
     quote_type: page.props.quoteType,
-    quote_type_id: 8,
     title: null,
     description: null,
     due_date: null,
     assignee_id: null,
     status: null,
     activity_id: null,
+    processing: false
 });
 
 const addActivity = () => {
@@ -63,8 +63,12 @@ const addActivity = () => {
 
 const onStatusUpdate = id => {
     activityForm.activity_id = id;
+    activityForm.processing = true;
     activityForm.patch(`/activities/v2/${id}/update-status`, {
         preserveScroll: true,
+        onFinish: () => {
+            activityForm.processing = false;
+        },
         onSuccess: () => {
             notification.success({
                 title: 'Lead Activity Done',
@@ -100,9 +104,11 @@ const onSubmit = isValid => {
         method = 'patch';
     }
 
+    activityForm.processing = true;
     activityForm.submit(method, url, {
         preserveScroll: true,
         onSuccess: () => {
+            activityForm.reset();
             notification.success({
                 title: 'Activity saved',
                 position: 'top',
@@ -110,6 +116,7 @@ const onSubmit = isValid => {
         },
         onFinish: () => {
             modals.activity = false;
+            activityForm.processing = false;
         },
     });
 };
@@ -124,12 +131,11 @@ const deleteData = reactive({
 });
 
 const onDeleteConfirmation = () => {
+    activityForm.processing = true;
     router.delete(
         `/activities/v2/${deleteData.activity_id}/`,
         {
             quote_uuid: page.props.quote.uuid,
-        },
-        {
             preserveScroll: true,
             onSuccess: () => {
                 modals.activityConfirm = false;
@@ -139,9 +145,10 @@ const onDeleteConfirmation = () => {
                 });
             },
             onFinish: () => {
+                activityForm.processing = false;
                 modals.activityConfirm = false;
             },
-        },
+        }
     );
 };
 

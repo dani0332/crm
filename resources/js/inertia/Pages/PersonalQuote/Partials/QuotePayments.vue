@@ -77,6 +77,7 @@ const paymentForm = useForm({
     paymentCode: '',
     status: 'create',
     paymentId: '',
+    processing: false
 });
 
 const addPaymentModal = () => {
@@ -107,6 +108,7 @@ const addPayment = isValid => {
 
     if (!isValid) return;
 
+    paymentForm.clearErrors();
     let url = '/personal-quotes/' + page.props.quote.id + '/payments';
     let method = 'post';
 
@@ -115,9 +117,14 @@ const addPayment = isValid => {
         method = 'patch';
     }
 
+    paymentForm.processing = true;
     paymentForm
         .submit(method, url, {
             preserveScroll: true,
+            onFinish: () => {
+                paymentForm.processing = false;
+                paymentForm.reset();
+            },
             onSuccess: () => {
                 notification.success({
                     title: 'Payment Added',
@@ -369,7 +376,7 @@ const generateCCLink = async code => {
                           paymentForm.status == 'edit'
                         "
                     >
-                        <x-button color="primary" type="submit">
+                        <x-button :loading="paymentForm.processing" color="primary" type="submit">
                             {{ paymentForm.status == 'create' ? 'Create' : 'Update' }}
                             Payment
                         </x-button>

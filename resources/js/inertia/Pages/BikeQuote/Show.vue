@@ -273,62 +273,41 @@ const page = usePage();
       :quoteStatusesEnum="quoteStatusesEnum"
     />
 
-    <!--  show lead history data -->
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
 
-      <div v-if="historyData === null" class="text-center py-3">
-        <x-button
-          size="sm"
-          color="primary"
-          outlined
-          @click.prevent="onLoadHistoryData"
-          :loading="historyLoading"
-        >
-          Load History Data
-        </x-button>
-      </div>
+    <QuotePayments
+        v-if="isBetaUser"
+        :can="can"
+        :payments="quote.payments"
+        :quote-type="quoteType"
+        :payment-methods="paymentMethods"
+        :insurance-providers="insuranceProviders"
+        :is-beta-user="isBetaUser"
+        :personal-plans="personalPlans"
+    />
 
-        <QuotePayments
-            v-if="isBetaUser"
-            :can="can"
-            :payments="quote.payments"
-            :quote-type="quoteType"
-            :payment-methods="paymentMethods"
-            :insurance-providers="insuranceProviders"
-            :is-beta-user="isBetaUser"
-            :personal-plans="personalPlans"
-        />
+    <QuoteStatus
+        :quote="quote"
+        :quote-type="quoteType"
+        :quote-statuses="quoteStatuses"
+        :lost-reasons="lostReasons"
+    />
 
-        <QuoteStatus
-            :quote="quote"
-            :quote-type="quoteType"
-            :quote-statuses="quoteStatuses"
-            :lost-reasons="lostReasons"
-        />
+    <QuoteDocuments
+        :document-types="documentTypes"
+        :quote-documents="quote.documents || []"
+        :storageUrl="storageUrl"
+        :quote="quote"
+    />
 
-        <QuoteDocuments
-            :document-types="documentTypes"
-            :quote-documents="quote.documents || []"
-            :storageUrl="storageUrl"
-            :quote="quote"
-        />
+    <QuotePolicy
+        :quote="quote"
+        :can="can"
+        :quoteStatusesEnum="quoteStatusesEnum"
+    />
 
-        <QuotePolicy
-            :quote="quote"
-            :can="can"
-            :quoteStatusesEnum="quoteStatusesEnum"
-        />
+    <AuditLogs :type="'App\\Models\\PersonalQuote'" :id="$page.props.quote.id" />
 
-        <AuditLogs :type="'App\\Models\\PersonalQuote'" :id="$page.props.quote.id" />
+    <LeadHistory :quote="$page.props.quote" />
 
-        <LeadHistory :quote="$page.props.quote" />
-
-</div>
-
-    <AuditLogs :type="'App\\Models\\BikeQuote'" :id="$page.props.quote.id" />
   </div>
 </template>

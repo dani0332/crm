@@ -29,13 +29,18 @@ const quoteStatusForm = useForm({
     notes: page.props.quote.notes || null,
     transapp_code: page.props.quote?.quote_detail?.transapp_code || null,
     lost_reason_id: page.props.quote?.quote_detail?.lost_reason_id || null,
+    processing: false,
 });
 
 const onLeadStatus = () => {
+    quoteStatusForm.processing = true;
     quoteStatusForm.patch(
         `/personal-quotes/bike/${page.props.quote.id}/update-status`,
         {
             preserveScroll: true,
+            onFinish: () => {
+                quoteStatusForm.processing = false;
+            },
             onError: errors => {
                 console.log(errors);
             },
