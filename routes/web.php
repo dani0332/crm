@@ -256,6 +256,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
     Route::group(['prefix' => 'personal-quotes'], function () {
+        Route::get('{quoteId}/audit-history', [PersonalQuoteController::class, 'getAuditHistory']);
         Route::patch('{quoteId}/update-policy-details', [PersonalQuoteController::class, 'updatePolicyDetails']);
         Route::patch('{quoteType}/{quoteId}/update-status', [PersonalQuoteController::class, 'updateStatus']);
         Route::post('{quoteId}/documents', [PersonalQuoteController::class, 'uploadDocument']);

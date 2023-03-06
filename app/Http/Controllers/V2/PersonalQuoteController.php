@@ -55,10 +55,23 @@ class PersonalQuoteController extends Controller
         return back()->with('message', 'Payment updated successfully');
     }
 
-
+    /**
+     * @param $id
+     * @param PersonalQuotePolicyRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function updatePolicyDetails($id, PersonalQuotePolicyRequest $request)
     {
         $response = PersonalQuoteRepository::updatePolicyDetails($id, $request->validated());
         return back();
+    }
+
+    /**
+     * @param $quoteId
+     * @return mixed
+     */
+    public function getAuditHistory($quoteId)
+    {
+        return PersonalQuoteRepository::getAuditHistory($quoteId);
     }
 }
