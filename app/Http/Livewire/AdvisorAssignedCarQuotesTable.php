@@ -71,8 +71,8 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         }
         if ($this->createdAtFilter != '') {
             info('createdAtFilter are : '.json_encode($this->createdAtFilter));
-            $startDate = Carbon::parse(explode('|', $this->createdAtFilter)[0]);
-            $endDate = Carbon::parse(explode('|', $this->createdAtFilter)[1]);
+            $startDate = Carbon::parse(explode('|', $this->createdAtFilter)[0])->startOfDay()->format('Y-m-d H:i:s');
+            $endDate = Carbon::parse(explode('|', $this->createdAtFilter)[1])->endOfDay()->format('Y-m-d H:i:s');
             $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
         }
         if ($this->ecommerceFilter != '') {
