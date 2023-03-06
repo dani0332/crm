@@ -126,30 +126,7 @@ class LifeController extends Controller
      */
     public function store(Request $request)
     {
-        $modelPropertiesList = $this->genericModel->properties;
-        $modelSkipPropertiesList = $this->genericModel->skipProperties;
-        $modelType = self::TYPE;
-
-        $validateArray = [];
-        foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['create'], $property)) {
-                $validateArray[$property] = 'required';
-            }
-        }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-        if ($request->has('email')) {
-            $this->validate($request, [
-                'email' => 'required|email:rfc,dns|max:150',
-            ]);
-        }
-        if ($request->has('mobile_no')) {
-            $this->validate($request, [
-                'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
-            ]);
-        }
-
-        $this->validate($request, $validateArray);
-
         $record = $this->service->saveLifeQuote($request);
 
         if (isset($record->message) && str_contains($record->message, 'Error')) {
@@ -191,7 +168,7 @@ class LifeController extends Controller
                 $customTitles[$property] = ucwords(str_replace('_', ' ', $property));
             }
         }
-        
+
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->service->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = $this->service->getQuoteDocuments($this->genericModel->modelType, $quote->id);
