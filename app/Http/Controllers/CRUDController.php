@@ -760,9 +760,12 @@ class CRUDController extends Controller
 
     public function updateLeadStatus(Request $request)
     {
+        if (!$request->leadStatus) {
+            return redirect()->back()->with('message', 'Please select lead status and try again.');
+        }
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
-            if (! $lead) {
+            if (!$request->leadStatus) {
                 return redirect()->back()->with('message', 'Lead not found please try again.');
             }
             if (($lead->health_team_type == null || $lead->health_team_type == quoteTypeCode::WCU) && $request->leadStatus == QuoteStatusEnum::Qualified) {
@@ -795,7 +798,7 @@ class CRUDController extends Controller
                     $this->activityService->createActivity($request, $record);
                 }
             }
-            if ($request->leadStatus == QuoteStatusEnum::AfiaRenewal) {
+            if ($request->leadStatus == QuoteStatusEnum::IMRenewal) {
                 if (! isset($request->tier_id)) {
                     $this->validate($request, [
                         'tier_id' => 'required',

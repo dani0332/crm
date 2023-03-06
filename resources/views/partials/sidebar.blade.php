@@ -73,13 +73,6 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @if (auth()->check() && auth()->user()->hasMyLeadAccess())
-                <ul class="nav side-menu">
-                    <li>
-                        <a href="{{ url('/myleads') }}"><i class="fa fa-inbox"></i> My Leads</a>
-                    </li>
-                </ul>
-                @endif
                 @can(PermissionsEnum::RewardList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-gift"></i> Rewards <span class="fa fa-chevron-down"></span></a>
