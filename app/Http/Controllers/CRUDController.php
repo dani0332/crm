@@ -765,7 +765,7 @@ class CRUDController extends Controller
         }
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
-            if (! $request->leadStatus) {
+            if (! $lead) {
                 return redirect()->back()->with('message', 'Lead not found please try again.');
             }
             if (($lead->health_team_type == null || $lead->health_team_type == quoteTypeCode::WCU) && $request->leadStatus == QuoteStatusEnum::Qualified) {
