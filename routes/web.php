@@ -59,13 +59,13 @@ use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\CycleQuoteController;
+use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\V2\CycleQuoteController;
-use App\Http\Controllers\V2\PersonalPlanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -268,7 +268,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::resource('bike', BikeQuoteController::class);
         Route::resource('cycle', CycleQuoteController::class);
-
     });
 
     Route::group(['prefix' => 'generic'], function () {

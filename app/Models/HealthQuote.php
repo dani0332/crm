@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use OwenIt\Auditing\Auditable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HealthQuote extends Model implements AuditableContract

@@ -35,9 +35,8 @@ class BikeQuote extends Model implements AuditableContract
      */
     public function currentlyInsuredWith()
     {
-        return $this->belongsTo(InsuranceProvider::class, 'currently_insured_with','id');
+        return $this->belongsTo(InsuranceProvider::class, 'currently_insured_with', 'id');
     }
-
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
