@@ -94,6 +94,11 @@ Route::middleware(['auth', 'last_login_check'])->get('/home', function () {
 });
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+    Route::group(['middleware' => ['check_route_access']], function () {
+        Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
+        Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard'])->name('tpl-dashboard-view');
+        Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
+    });
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
         Artisan::call('view:cache');
@@ -180,22 +185,21 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
-    Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard']);
-    Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard']);
+
     Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
     Route::post('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
     Route::post('/get-advisor-conversion-stats', [DashboardController::class, 'getAdvisorConversionStats']);
     Route::post('/get-users-by-team', [DashboardController::class, 'getUsersByTeam']);
     Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
-    Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard']);
+
     Route::get('/reports/advisor-conversion', [ReportsController::class, 'renderAdvisorConversionReport']);
     Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport']);
     Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport']);
     Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport']);
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
-    Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
+    Route::get('failed-jobs', [FailedJobsController::class, 'index']);
     Route::group(['prefix' => 'rewards'], function () {
         Route::resource('partner', PartnerController::class);
         Route::resource('reward', RewardController::class);
