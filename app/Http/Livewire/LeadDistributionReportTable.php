@@ -109,6 +109,7 @@ class LeadDistributionReportTable extends DataTableComponent
     public function filters(): array
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+
         return [
             TextFilter::make('Created Date', 'created_at')
                 ->config([

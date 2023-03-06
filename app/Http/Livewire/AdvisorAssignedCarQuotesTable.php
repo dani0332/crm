@@ -135,6 +135,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             info('inside lead type CREATED_SALE_LEAD');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])->where('source', LeadSourceEnum::IMCRM);
         }
+
         return $query;
     }
 }
