@@ -11,7 +11,6 @@ class HealthPlan extends Model
 
     protected $table = 'health_plan';
 
-
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'provider_id');

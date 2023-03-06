@@ -723,7 +723,6 @@ class RenewalsUploadService
             ];
 
             if ($quoteType->code == quoteTypeCode::Car) {
-
                 $make = CarMake::where('text', $data['make'])->first();
                 $model = CarModel::where('text', $data['model'])->first();
 
@@ -742,8 +741,8 @@ class RenewalsUploadService
                     $quoteData['car_type_insurance_id'] = $carTypeOfInsuranceInstance->id;
                 }
 
-                if(!empty($quoteData['car_model_id'])) {
-                    if(($carModelDetail = CarModelDetail::active()
+                if (! empty($quoteData['car_model_id'])) {
+                    if (($carModelDetail = CarModelDetail::active()
                         ->where('is_default', 1)
                         ->where('car_model_id', $quoteData['car_model_id'])
                         ->first())) {
@@ -943,11 +942,10 @@ class RenewalsUploadService
                 'has_ncd_supporting_documents' => $data['nc_letter'],
             ]);
 
-            if(!empty($carModel) && ($carModelDetail = CarModelDetail::active()
+            if (! empty($carModel) && ($carModelDetail = CarModelDetail::active()
                     ->where('is_default', 1)
                     ->where('car_model_id', $carModel->id)
-                    ->first()))
-            {
+                    ->first())) {
                 $quoteData['cylinder'] = $carModelDetail->cylinder;
                 $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                 $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
@@ -1029,7 +1027,7 @@ class RenewalsUploadService
             'update' => false,
         ];
 
-        $planData['plans'][] =  [
+        $planData['plans'][] = [
             'planId' => $healthPlan->id,
             'actualPremium' => $data['premium'],
             'discountPremium' => 0,
@@ -1038,7 +1036,7 @@ class RenewalsUploadService
         ];
 
         info($logPrefix.' setup create plan data is completed.');
-        
+
         info($logPrefix.' PlanData: '.json_encode($planData));
 
         return $this->healthQuoteService->renewalCreatePlan($planData);

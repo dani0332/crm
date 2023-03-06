@@ -43,10 +43,11 @@ class CycleQuoteRepository extends BaseRepository
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
-            'createdById' => Auth::user()->id
+            'createdById' => Auth::user()->id,
         ];
 
-        info( 'bikeQuote:' . json_encode($quoteData));
+        info('bikeQuote:'.json_encode($quoteData));
+
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
     }
 

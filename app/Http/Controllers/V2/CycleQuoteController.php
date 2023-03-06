@@ -33,10 +33,9 @@ class CycleQuoteController extends Controller
 
         return inertia('CycleQuote/Index', [
             'quotes' => $personalQuotes,
-            'quoteStatuses' => $quoteStatuses
+            'quoteStatuses' => $quoteStatuses,
         ]);
     }
-
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
@@ -57,7 +56,7 @@ class CycleQuoteController extends Controller
     {
         $response = CycleQuoteRepository::create($request->validated());
 
-        if (! empty($response->errors) || !empty($response->msg) ) {
+        if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 
@@ -73,9 +72,10 @@ class CycleQuoteController extends Controller
         $data = CycleQuoteRepository::getFormOptions();
 
         $quote = CycleQuoteRepository::getBy('uuid', $uuid);
+
         return inertia('CycleQuote/Form', array_merge($data, [
-                'quote' => $quote,
-            ])
+            'quote' => $quote,
+        ])
         );
     }
 
@@ -88,6 +88,7 @@ class CycleQuoteController extends Controller
     public function update($uuid, CycleQuoteRequest $request)
     {
         CycleQuoteRepository::update($uuid, $request->validated());
+
         return back()->with('message', 'Quote updated successfully');
     }
 
@@ -139,5 +140,4 @@ class CycleQuoteController extends Controller
             ],
         ]);
     }
-
 }

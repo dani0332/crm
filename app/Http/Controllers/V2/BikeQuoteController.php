@@ -31,7 +31,7 @@ class BikeQuoteController extends Controller
 
         return inertia('BikeQuote/Index', [
             'quotes' => $personalQuotes,
-            'quoteStatuses' => $quoteStatuses
+            'quoteStatuses' => $quoteStatuses,
         ]);
     }
 
@@ -54,7 +54,7 @@ class BikeQuoteController extends Controller
     {
         $response = BikeQuoteRepository::create($request->validated());
 
-        if (! empty($response->errors) || !empty($response->msg) ) {
+        if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 
@@ -102,7 +102,6 @@ class BikeQuoteController extends Controller
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,

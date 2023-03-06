@@ -14,7 +14,6 @@ class PersonalQuote extends Model
     use HasFactory, FilterCriteria;
 
     protected $appends = ['dob_formatted'];
-
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
@@ -27,7 +26,7 @@ class PersonalQuote extends Model
         'renewal_batch' => FilterTypes::EXACT,
         'quote_status_id' => FilterTypes::IN,
         'is_ecommerce' => FilterTypes::EXACT,
-        'previous_quote_policy_number' => FilterTypes::NULL_CHECK
+        'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
     ];
 
     /**
@@ -80,14 +79,15 @@ class PersonalQuote extends Model
         return $this->hasOne(CycleQuote::class);
     }
 
-
     /**
      * @param $date
      * @return string
      */
     public function getCreatedAtAttribute($date)
     {
-        if(!empty($date)) return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        if (! empty($date)) {
+            return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        }
     }
 
     /**
@@ -96,7 +96,9 @@ class PersonalQuote extends Model
      */
     public function getUpdatedAtAttribute($date)
     {
-        if(!empty($date)) return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        if (! empty($date)) {
+            return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
+        }
     }
 
     /**
@@ -111,15 +113,16 @@ class PersonalQuote extends Model
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function createdBy() {
+    public function createdBy()
+    {
         return $this->belongsTo(User::class)->select(['id', 'name', 'email']);
     }
-
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function updatedBy() {
+    public function updatedBy()
+    {
         return $this->belongsTo(User::class)->select(['id', 'name', 'email']);
     }
 

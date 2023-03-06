@@ -28,7 +28,7 @@ class PersonalQuotePolicyRequest extends FormRequest
             'policy_issuance_date' => 'required',
             'policy_start_date' => 'required',
             'renewal_expiry_date' => 'required',
-            'premium' => 'required|numeric'
+            'premium' => 'required|numeric',
         ];
     }
 }
