@@ -1403,8 +1403,10 @@ class CarQuoteService extends BaseService
 
             if ($quoteViewCount) {
                 // If the record exists, increment its visit_count
+                info('Quote view count record found for lead : '. $record->code);
                 $quoteViewCount->increment('visit_count');
             } else {
+                info('Quote view count record not found for lead : '. $record->code);
                 // If the record does not exist, create a new one
                 QuoteViewCount::create([
                     'quote_id' => $record->id,
