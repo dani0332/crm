@@ -2,10 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\LeadAllocationJob;
 use App\Mail\LeadAllocationFailedNotification;
 use App\Services\LeadAllocationService;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class LeadAllocation extends Command
