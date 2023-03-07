@@ -69,15 +69,8 @@ class LifeController extends Controller
     public function create()
     {
         $isRenewalUser = Auth::user()->isRenewalUser();
-        if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
-            $isRenewalUser = true;
-            $this->crudService->fillRenewalData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
-        } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
-            $isNewBusinessUser = true;
-            $this->crudService->fillNewBusinessData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
-        }
+        $renewalAdvisors = $this->service->getRenewalAdvisors();
+        $this->service->fillData();
 
         $fieldsToCreate = $this->service->getFieldsToCreate('skipProperties');
         $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
@@ -114,7 +107,6 @@ class LifeController extends Controller
             'dropdownSource' => $dropdownSource,
             'renewalAdvisors' => $renewalAdvisors ?? [],
             'isRenewalUser' => $isRenewalUser,
-            'isNewBusinessUser' => $isNewBusinessUser ?? false,
         ]);
     }
 
@@ -147,16 +139,8 @@ class LifeController extends Controller
 
 
         $isRenewalUser = false;
-        $renewalAdvisors = [];
-        if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
-            $isRenewalUser = true;
-            $this->crudService->fillRenewalData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
-        } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
-            $isNewBusinessUser = true;
-            $this->crudService->fillNewBusinessData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
-        }
+        $renewalAdvisors = $this->service->getRenewalAdvisors();
+        $this->service->fillData();
 
         $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $fields = $this->service->fieldsToDisplay($this->service->getFieldsToShow(), $quote);

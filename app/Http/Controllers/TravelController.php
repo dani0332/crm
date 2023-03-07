@@ -80,16 +80,8 @@ class TravelController extends Controller
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
         $isRenewalUser = Auth::user()->isRenewalUser();
-        $renewalAdvisors = [];
-        if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
-            $isRenewalUser = true;
-            $this->crudService->fillRenewalData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
-        } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
-            $isNewBusinessUser = true;
-            $this->crudService->fillNewBusinessData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
-        }
+        $renewalAdvisors = $this->service->getRenewalAdvisors();
+        $this->service->fillData();
 
         $ecomDetails = [
             'premium' => $record->premium,
@@ -153,15 +145,10 @@ class TravelController extends Controller
     public function create(Request $request)
     {
         $isRenewalUser = Auth::user()->isRenewalUser();
-        if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
-            $isRenewalUser = true;
-            $this->crudService->fillRenewalData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
-        } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
-            $isNewBusinessUser = true;
-            $this->crudService->fillNewBusinessData($this->genericModel);
-            $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
-        }
+
+        $renewalAdvisors = $this->service->getRenewalAdvisors();
+
+        $this->service->fillData();
 
         $fieldsToCreate = $this->service->getFieldsToCreate('skipProperties');
         $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
@@ -198,7 +185,6 @@ class TravelController extends Controller
             'dropdownSource' => $dropdownSource,
             'renewalAdvisors' => $renewalAdvisors ?? [],
             'isRenewalUser' => $isRenewalUser,
-            'isNewBusinessUser' => $isNewBusinessUser ?? false,
         ]);
     }
 

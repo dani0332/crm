@@ -185,4 +185,29 @@ class BaseService
         }
         return $activities;
     }
+
+    public function getRenewalAdvisors() : array
+    {
+        $crudService = app()->make(CRUDService::class);
+        $renewalAdvisors = [];
+        if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
+            $renewalAdvisors = $crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
+        } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
+            $renewalAdvisors = $crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
+        }
+        return $renewalAdvisors;
+    }
+
+    public function fillData()
+    {
+        $crudService = app()->make(CRUDService::class);
+        if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
+            return $crudService->fillRenewalData($this->genericModel);
+        }
+
+        if (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
+            return $crudService->fillNewBusinessData($this->genericModel);
+        }
+
+    }
 }
