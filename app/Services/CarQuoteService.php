@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\QuoteViewCount;
 use App\Models\Tier;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
@@ -1390,5 +1391,28 @@ class CarQuoteService extends BaseService
         $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
+    }
+
+    public function addOrUpdateQuoteViewCount($record)
+    {
+        if ($record->advisor_id != null && $record->advisor_id == Auth::user()->id) {
+            // Search for an existing record with the same quote_id and user_id
+            $quoteViewCount = QuoteViewCount::where('quote_id', $record->id)
+            ->where('user_id', Auth::user()->id)
+            ->first();
+
+            if ($quoteViewCount) {
+                // If the record exists, increment its visit_count
+                $quoteViewCount->increment('visit_count');
+            } else {
+                // If the record does not exist, create a new one
+                QuoteViewCount::create([
+                    'quote_id' => $record->id,
+                    'quote_type_id' => 1,
+                    'user_id' => Auth::user()->id,
+                    'visit_count' => 1,
+                ]);
+            }
+        }
     }
 }

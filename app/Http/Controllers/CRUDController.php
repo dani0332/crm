@@ -293,19 +293,7 @@ class CRUDController extends Controller
             abort(403, 'Unauthorized action.');
         }
         if ($quoteType == strtolower(quoteTypeCode::Car)) {
-            if ($record->advisor_id != null) {
-                if ($record->advisor_id == Auth::user()->id) {
-                    QuoteViewCount::firstOrCreate([
-                        'quote_id' => $record->id, 'user_id' => Auth::user()->id,
-                    ], [
-                        'quote_id' => $record->id,
-                        'quote_type_id' => 1,
-                        'user_id' => Auth::user()->id,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ])->increment('visit_count');
-                }
-            }
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record);
         }
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
