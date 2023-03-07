@@ -17,7 +17,6 @@ use App\Models\LeadAllocation;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\QuoteViewCount;
 use App\Models\Tier;
 use App\Models\User;
 use App\Services\ActivitiesService;
