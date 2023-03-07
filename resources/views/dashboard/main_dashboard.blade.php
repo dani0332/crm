@@ -270,9 +270,8 @@
     <div class="row">
         <div class="col-md-3 relative flex justify-end">
             <select
-                class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                id="advisor-filter" style="margin-left: 10px;width:350px;" multiple="multiple">
-                <option value="">Select Advisor</option>
+                class="inline-flex w-full max-w-xs justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+                id="advisor-filter" multiple="multiple">
                 @foreach ($carAdvisors as $team)
                 <option value="{{$team->id}}">{{$team->name}}</option>
                 @endforeach
@@ -291,9 +290,8 @@
     <div class="row" style="margin-top: 40px;">
         <div class="col-md-3 relative flex justify-end">
             <select
-                class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                id="team-filter" multiple="multiple" style="margin-left: 10px;width:350px;">
-                <option value="">Select Team</option>
+                class="inline-flex w-full max-w-xs justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
+                id="team-filter" multiple="multiple">
                 @foreach ($teams as $team)
                 <option value="{{$team->id}}">{{$team->name}}</option>
                 @endforeach
@@ -316,8 +314,13 @@
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@easepick/bundle@1.2.0/dist/index.umd.min.js"></script>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script src="https://unpkg.com/slim-select@latest/dist/slimselect.min.js"></script>
+<link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet"></link>
+<style>
+    .ss-main .ss-values .ss-value .ss-value-delete {
+        width: 18px;
+    }
+</style>
 
 
 <script type="text/javascript" defer>
@@ -756,16 +759,20 @@
 
     }
 
-    const selectSettings = {
-        plugins: ['remove_button', 'checkbox_options'],
-        create: true,
-        onItemAdd: function() {
-            this.setTextboxValue('');
-            this.refreshOptions();
-        },
-    }
+    new SlimSelect({
+        select: '#team-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Team',
+        }
+    })
 
-    new TomSelect(["#team-filter"], selectSettings);
-    new TomSelect(["#advisor-filter"], selectSettings);
+    new SlimSelect({
+        select: '#advisor-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Advisor',
+        }
+    })
 </script>
 @endsection
