@@ -5242,7 +5242,7 @@ __webpack_require__.r(__webpack_exports__);
   __name: 'QuotePolicy',
   props: {
     quote: Object,
-    quoteStatusesEnum: Object,
+    quoteStatusEnum: Object,
     can: Object
   },
   setup: function setup(__props, _ref) {
@@ -5270,7 +5270,7 @@ __webpack_require__.r(__webpack_exports__);
       renewal_expiry_date: dateToYMD(page.props.quote.renewal_expiry_date) || '',
       policy_issuance_date: dateToYMD(page.props.quote.policy_issuance_date) || '',
       quote_status_id: page.props.quote.quote_status_id,
-      canEdit: page.props.quote.quote_status_id == page.props.quoteStatusesEnum.TransactionApproved && !page.props.can.isPA,
+      canEdit: page.props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved && !page.props.can.isPA,
       editMode: false,
       quote_id: page.props.quote.id
     }); //todo: better validation way to remove duplicate code
@@ -5408,7 +5408,8 @@ __webpack_require__.r(__webpack_exports__);
     documentTypes: Object,
     quoteStatuses: Object,
     lostReasons: Object,
-    storageUrl: String
+    storageUrl: String,
+    quoteStatusEnum: Object
   },
   setup: function setup(__props, _ref) {
     var _page$props$quote, _page$props$quote$quo, _page$props$quote2, _page$props$quote2$qu;
@@ -5453,7 +5454,7 @@ __webpack_require__.r(__webpack_exports__);
       });
     };
 
-    var allowStatusUpdate = page.props.quote.quote_status_id == 15;
+    var allowStatusUpdate = page.props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved;
     var __returned__ = {
       notification: notification,
       page: page,
@@ -7348,10 +7349,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     quote: $props.quote,
     "quote-type": $props.quoteType,
     "quote-statuses": $props.quoteStatuses,
-    "lost-reasons": $props.lostReasons
+    "lost-reasons": $props.lostReasons,
+    "quote-status-enum": $props.quoteStatusEnum
   }, null, 8
   /* PROPS */
-  , ["quote", "quote-type", "quote-statuses", "lost-reasons"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuoteDocuments"], {
+  , ["quote", "quote-type", "quote-statuses", "lost-reasons", "quote-status-enum"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuoteDocuments"], {
     "document-types": $props.documentTypes,
     "quote-documents": $props.quote.documents || [],
     storageUrl: $props.storageUrl,
@@ -7361,10 +7363,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   , ["document-types", "quote-documents", "storageUrl", "quote"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuotePolicy"], {
     quote: $props.quote,
     can: $props.can,
-    quoteStatusesEnum: _ctx.quoteStatusesEnum
+    quoteStatusEnum: _ctx.quoteStatusesEnum
   }, null, 8
   /* PROPS */
-  , ["quote", "can", "quoteStatusesEnum"]), $props.isBetaUser ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)($setup["QuotePayments"], {
+  , ["quote", "can", "quoteStatusEnum"]), $props.isBetaUser ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)($setup["QuotePayments"], {
     key: 1,
     can: $props.can,
     payments: $props.quote.payments,
@@ -7375,27 +7377,14 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "personal-plans": $props.personalPlans
   }, null, 8
   /* PROPS */
-  , ["can", "payments", "quote-type", "payment-methods", "insurance-providers", "is-beta-user", "personal-plans"])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuoteStatus"], {
-    quote: $props.quote,
-    "quote-type": $props.quoteType,
-    "quote-statuses": $props.quoteStatuses,
-    "lost-reasons": $props.lostReasons
-  }, null, 8
-  /* PROPS */
-  , ["quote", "quote-type", "quote-statuses", "lost-reasons"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuoteDocuments"], {
+  , ["can", "payments", "quote-type", "payment-methods", "insurance-providers", "is-beta-user", "personal-plans"])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuoteDocuments"], {
     "document-types": $props.documentTypes,
     "quote-documents": $props.quote.documents || [],
     storageUrl: $props.storageUrl,
     quote: $props.quote
   }, null, 8
   /* PROPS */
-  , ["document-types", "quote-documents", "storageUrl", "quote"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuotePolicy"], {
-    quote: $props.quote,
-    can: $props.can,
-    quoteStatusesEnum: _ctx.quoteStatusesEnum
-  }, null, 8
-  /* PROPS */
-  , ["quote", "can", "quoteStatusesEnum"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_AuditLogs, {
+  , ["document-types", "quote-documents", "storageUrl", "quote"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_AuditLogs, {
     type: 'App\\Models\\PersonalQuote',
     id: _ctx.$page.props.quote.id
   }, null, 8
@@ -8592,10 +8581,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     quote: $props.quote,
     "quote-type": $props.quoteType,
     "quote-statuses": $props.quoteStatuses,
-    "lost-reasons": $props.lostReasons
+    "lost-reasons": $props.lostReasons,
+    "quote-status-enum": $props.quoteStatusEnum
   }, null, 8
   /* PROPS */
-  , ["quote", "quote-type", "quote-statuses", "lost-reasons"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuoteDocuments"], {
+  , ["quote", "quote-type", "quote-statuses", "lost-reasons", "quote-status-enum"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuoteDocuments"], {
     "document-types": $props.documentTypes,
     "quote-documents": $props.quote.documents || [],
     storageUrl: $props.storageUrl,
@@ -14822,7 +14812,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "w-full"
   }, null, 8
   /* PROPS */
-  , ["modelValue", "error", "options", "disabled"]), $setup.quoteStatusForm.quote_status_id == 15 ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
+  , ["modelValue", "error", "options", "disabled"]), $setup.quoteStatusForm.quote_status_id == $setup.page.props.quoteStatusEnum.TransactionApproved ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
     key: 0,
     modelValue: $setup.quoteStatusForm.transapp_code,
     "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
@@ -14835,7 +14825,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     error: $setup.quoteStatusForm.errors.transapp_code
   }, null, 8
   /* PROPS */
-  , ["modelValue", "disabled", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), $setup.quoteStatusForm.quote_status_id == 17 ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_select, {
+  , ["modelValue", "disabled", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true), $setup.quoteStatusForm.quote_status_id == $setup.page.props.quoteStatusEnum.Lost ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_select, {
     key: 1,
     modelValue: $setup.quoteStatusForm.lost_reason_id,
     "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {

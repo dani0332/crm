@@ -4,7 +4,7 @@
 
     defineProps({
         quote: Object,
-        quoteStatusesEnum: Object,
+        quoteStatusEnum: Object,
         can:Object
     });
 
@@ -31,7 +31,7 @@
         quote_status_id: page.props.quote.quote_status_id,
         canEdit:
             page.props.quote.quote_status_id ==
-            page.props.quoteStatusesEnum.TransactionApproved &&
+            page.props.quoteStatusEnum.TransactionApproved &&
             !page.props.can.isPA,
         editMode: false,
         quote_id: page.props.quote.id,

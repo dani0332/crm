@@ -9,7 +9,8 @@ defineProps({
     documentTypes: Object,
     quoteStatuses: Object,
     lostReasons: Object,
-    storageUrl: String
+    storageUrl: String,
+    quoteStatusEnum: Object,
 })
 
 const notification = useNotifications('toast');
@@ -54,7 +55,7 @@ const onLeadStatus = () => {
     );
 };
 
-let allowStatusUpdate = page.props.quote.quote_status_id == 15;
+let allowStatusUpdate = page.props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved;
 
 </script>
 <!-- todo: remove hardcode status ids -->
@@ -88,7 +89,7 @@ let allowStatusUpdate = page.props.quote.quote_status_id == 15;
                         class="w-full"
                     />
                     <x-input
-                        v-if="quoteStatusForm.quote_status_id == 15"
+                        v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.TransactionApproved"
                         v-model="quoteStatusForm.transapp_code"
                         label="TransApp Code"
                         placeholder="TransApp Code is required"
@@ -97,7 +98,7 @@ let allowStatusUpdate = page.props.quote.quote_status_id == 15;
                         :error="quoteStatusForm.errors.transapp_code"
                     />
                     <x-select
-                        v-if="quoteStatusForm.quote_status_id == 17"
+                        v-if="quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost"
                         v-model="quoteStatusForm.lost_reason_id"
                         label="Lost Reason"
                         :options="

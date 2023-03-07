@@ -291,6 +291,7 @@ const historyDataTable = [
             :quote-type="quoteType"
             :quote-statuses="quoteStatuses"
             :lost-reasons="lostReasons"
+            :quote-status-enum="quoteStatusEnum"
         />
 
         <QuoteDocuments

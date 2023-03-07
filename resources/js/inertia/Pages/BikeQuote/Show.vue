@@ -258,6 +258,7 @@ const page = usePage();
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
+      :quote-status-enum="quoteStatusEnum"
     />
 
     <QuoteDocuments
@@ -270,7 +271,7 @@ const page = usePage();
     <QuotePolicy
       :quote="quote"
       :can="can"
-      :quoteStatusesEnum="quoteStatusesEnum"
+      :quoteStatusEnum="quoteStatusesEnum"
     />
 
 
@@ -285,24 +286,11 @@ const page = usePage();
         :personal-plans="personalPlans"
     />
 
-    <QuoteStatus
-        :quote="quote"
-        :quote-type="quoteType"
-        :quote-statuses="quoteStatuses"
-        :lost-reasons="lostReasons"
-    />
-
     <QuoteDocuments
         :document-types="documentTypes"
         :quote-documents="quote.documents || []"
         :storageUrl="storageUrl"
         :quote="quote"
-    />
-
-    <QuotePolicy
-        :quote="quote"
-        :can="can"
-        :quoteStatusesEnum="quoteStatusesEnum"
     />
 
     <AuditLogs :type="'App\\Models\\PersonalQuote'" :id="$page.props.quote.id" />
