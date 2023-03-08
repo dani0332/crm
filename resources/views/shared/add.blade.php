@@ -229,6 +229,7 @@
 					@else
 					@php
 					$skipPropertiesArray = array_filter(explode(",", $skipProperties['create']));
+//                    dd($model->properties);
 					@endphp
 					@if(!in_array($property, $skipPropertiesArray))
 					@if(strpos($value, 'input') !== false )
@@ -258,7 +259,11 @@
 									@endif type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}}
 									value="{{ old($property) }}" @if($property=='seat_capacity' || $property=='cylinder'
 									) data-toggle="tooltip" data-placement="top" title="{{$title}}" @endif
-									class="form-control">
+									class="form-control"
+                                       @if(strpos($value, 'max') !== false)
+                                           maxlength="{{explode(":", $value)[1]}}"
+                                    @endif
+                                >
 								@if ($errors->has($property))
 								<span class="text-danger">{{ $errors->first($property) }}</span>
 								@endif
