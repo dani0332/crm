@@ -6,12 +6,14 @@ use App\Enums\QuoteTypeId;
 use App\Models\Activities;
 use App\Models\QuoteStatus;
 use App\Models\User;
+use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ActivitiesService extends BaseService
 {
+    use GetUserTreeTrait;
     protected $helperService;
 
     public function __construct(HelperService $helperService)
@@ -36,7 +38,7 @@ class ActivitiesService extends BaseService
 
     public function getGridData(Request $request)
     {
-        $activities = $this->getAllActivitesBasedOnUser();
+        $activities = $this->getAllActivitiesBasedOnUser();
 
         if ($request->period == null) {
             $request->period = 'today';
@@ -175,12 +177,12 @@ class ActivitiesService extends BaseService
         }
     }
 
-    public function getAllActivitesBasedOnUser()
+    public function getAllActivitiesBasedOnUser()
     {
-        $subOrdinateIds = $this->helperService->walkTree(Auth::user()->id);
+        $subOrdinateIds = $this->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
-        $activites = Activities::whereIn('assignee_id', $subOrdinateIds);
+        $activities = Activities::whereIn('assignee_id', $subOrdinateIds);
 
-        return $activites;
+        return $activities;
     }
 }
