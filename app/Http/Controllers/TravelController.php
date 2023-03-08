@@ -23,7 +23,7 @@ use RuntimeException;
 
 class TravelController extends Controller
 {
-    protected $service;
+    protected $travelQuoteService;
     protected $lookupService;
     protected $crudService;
     protected $genericModel;
@@ -38,8 +38,8 @@ class TravelController extends Controller
      */
     public function __construct(TravelQuoteService $travelQuoteService, LookupService $lookupService, CRUDService $crudService)
     {
-        $this->service = $travelQuoteService;
-        $this->genericModel = $this->service->getGenericModel(self::TYPE);
+        $this->travelQuoteService = $travelQuoteService;
+        $this->genericModel = $this->travelQuoteService->getGenericModel(self::TYPE);
         $this->lookupService = $lookupService;
         $this->crudService = $crudService;
     }
@@ -51,8 +51,8 @@ class TravelController extends Controller
      */
     public function index(Request $request)
     {
-        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $gridData = $this->service->getGridData($this->genericModel, $request);
+        $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
 
         return inertia('TravelQuote/Index', [
@@ -73,12 +73,12 @@ class TravelController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
 
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
-        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
         $isRenewalUser = Auth::user()->isRenewalUser();
-        $renewalAdvisors = $this->service->getRenewalAdvisors();
-        $this->service->fillData();
+        $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
+        $this->travelQuoteService->fillData();
 
         $ecomDetails = [
             'premium' => $record->premium,
@@ -87,14 +87,14 @@ class TravelController extends Controller
             'planName' => $record->plan_id_text,
         ];
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
-        $isQuoteDocumentEnabled = $this->service->quoteDocumentEnabled($this->genericModel->modelType);
-        $quoteDocuments = $this->service->getQuoteDocuments($this->genericModel->modelType, $record->id);
-        $displaySendPolicyButton = $this->service->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
-        $documentTypes = $this->service->getQuoteDocumentsForUpload(self::TYPE_ID);
+        $isQuoteDocumentEnabled = $this->travelQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
+        $quoteDocuments = $this->travelQuoteService->getQuoteDocuments($this->genericModel->modelType, $record->id);
+        $displaySendPolicyButton = $this->travelQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
+        $documentTypes = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
 
-        $activities = $this->service->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
-        $customerAdditionalContacts = $this->service->getAdditionalContacts($record->customer_id, $record->mobile_no);
+        $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
+        $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
@@ -109,14 +109,14 @@ class TravelController extends Controller
             'assignmentTypes' => $assignmentTypes,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
-            'travelers' => $this->service->getMembersDetail($record->id),
+            'travelers' => $this->travelQuoteService->getMembersDetail($record->id),
             'ecomDetails' => $ecomDetails,
             'quoteDocuments' => $quoteDocuments,
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
-            'emailStatuses' => $this->service->getEmailStatus(self::TYPE_ID, $record->id),
-            'listQuotePlans' => $this->service->listQuotePlans($id),
+            'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
+            'listQuotePlans' => $this->travelQuoteService->listQuotePlans($id),
             'activities' => $activities,
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
@@ -144,12 +144,12 @@ class TravelController extends Controller
     {
         $isRenewalUser = Auth::user()->isRenewalUser();
 
-        $renewalAdvisors = $this->service->getRenewalAdvisors();
+        $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
 
-        $this->service->fillData();
+        $this->travelQuoteService->fillData();
 
-        $fieldsToCreate = $this->service->getFieldsToCreate('skipProperties');
-        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $fieldsToCreate = $this->travelQuoteService->getFieldsToCreate('skipProperties');
+        $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $customTitles = [];
         foreach ($fieldsToCreate as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -195,7 +195,7 @@ class TravelController extends Controller
     public function store(StoreTravelRequest $request)
     {
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-        $record = $this->service->saveTravelQuote($request);
+        $record = $this->travelQuoteService->saveTravelQuote($request);
 
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
@@ -214,8 +214,8 @@ class TravelController extends Controller
     public function edit($id)
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $fieldsToUpdate = $this->service->getFieldsToUpdate('skipProperties');
+        $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $fieldsToUpdate = $this->travelQuoteService->getFieldsToUpdate('skipProperties');
         $customTitles = [];
         foreach ($fieldsToUpdate as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -263,14 +263,14 @@ class TravelController extends Controller
     {
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
-        $this->service->updateTravelQuote($request, $id);
+        $this->travelQuoteService->updateTravelQuote($request, $id);
 
         return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
     }
 
     public function planDetails($quoteId, $planId)
     {
-        $quotePlans = $this->service->getQuotePlans($quoteId);
+        $quotePlans = $this->travelQuoteService->getQuotePlans($quoteId);
 
         if (gettype($quotePlans) == 'string') {
             return response()->json([
@@ -333,8 +333,8 @@ class TravelController extends Controller
     public function cardsView(Request $request)
     {
         $quotes = [];
-        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $allowedStatusIds = $this->service->getQuoteStatuses();
+        $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $allowedStatusIds = $this->travelQuoteService->getQuoteStatuses();
 
         foreach ($dropdownSource['quote_status_id'] as $key => $status) {
             if (! in_array($status['id'], $allowedStatusIds)) {
