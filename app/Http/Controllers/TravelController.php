@@ -323,33 +323,4 @@ class TravelController extends Controller
 
         return response()->json($data, 200);
     }
-
-    /**
-     * @param  Request  $request
-     * @return ResponseFactory|Response
-     *
-     * @throws RuntimeException
-     */
-    public function cardsView(Request $request)
-    {
-        $quotes = [];
-        $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $allowedStatusIds = $this->travelQuoteService->getQuoteStatuses();
-
-        foreach ($dropdownSource['quote_status_id'] as $key => $status) {
-            if (! in_array($status['id'], $allowedStatusIds)) {
-                continue;
-            }
-
-            $quotes[] = [
-                'id' => $status['id'],
-                'title' => $status['text'],
-                'data' => getDataAgainstStatus('Travel', $status['id']),
-            ];
-        }
-
-        return inertia('TravelQuote/Cards', [
-            'quotes' => $quotes,
-        ]);
-    }
 }
