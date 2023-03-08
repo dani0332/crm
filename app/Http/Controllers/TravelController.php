@@ -76,7 +76,7 @@ class TravelController extends Controller
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
-        $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalUser = auth()->user()->isRenewalUser();
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
         $this->travelQuoteService->fillData();
 
@@ -142,7 +142,7 @@ class TravelController extends Controller
 
     public function create(Request $request)
     {
-        $isRenewalUser = Auth::user()->isRenewalUser();
+        $isRenewalUser = auth()->user()->isRenewalUser();
 
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
 
