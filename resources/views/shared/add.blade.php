@@ -259,10 +259,7 @@
 									@endif type={{ explode("|", $value)[1] }} id={{$property}} name={{$property}}
 									value="{{ old($property) }}" @if($property=='seat_capacity' || $property=='cylinder'
 									) data-toggle="tooltip" data-placement="top" title="{{$title}}" @endif
-									class="form-control"
-                                       @if(strpos($value, 'max') !== false)
-                                           maxlength="{{explode(":", $value)[1]}}"
-                                    @endif
+									class="form-control" @if(strpos($value, 'max') !== false) maxlength="{{explode(":", $value)[1]}}" @endif
                                 >
 								@if ($errors->has($property))
 								<span class="text-danger">{{ $errors->first($property) }}</span>
