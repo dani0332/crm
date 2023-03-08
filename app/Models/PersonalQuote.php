@@ -82,6 +82,14 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function yachtQuote()
+    {
+        return $this->hasOne(YachtQuote::class);
+    }
+
+    /**
      * @param $date
      * @return string
      */

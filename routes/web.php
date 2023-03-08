@@ -66,6 +66,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\V2\YachtQuoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -269,6 +270,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::resource('bike', BikeQuoteController::class);
         Route::resource('cycle', CycleQuoteController::class);
+        Route::resource('yacht', YachtQuoteController::class);
     });
 
     Route::group(['prefix' => 'generic'], function () {
