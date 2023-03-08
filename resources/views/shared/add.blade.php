@@ -229,7 +229,6 @@
 					@else
 					@php
 					$skipPropertiesArray = array_filter(explode(",", $skipProperties['create']));
-//                    dd($model->properties);
 					@endphp
 					@if(!in_array($property, $skipPropertiesArray))
 					@if(strpos($value, 'input') !== false )
