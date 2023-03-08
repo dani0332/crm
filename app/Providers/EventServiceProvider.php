@@ -31,7 +31,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         CarQuoteUpdated::class => [
             UpdateCarQuote::class,
-        ]
+        ],
     ];
 
     /**

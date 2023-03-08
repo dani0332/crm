@@ -4,7 +4,6 @@ namespace App\Listeners;
 
 class UpdateCarQuote
 {
-
     /**
      * Handle the event.
      *
