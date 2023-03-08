@@ -19,7 +19,7 @@ use Inertia\ResponseFactory;
 
 class LifeController extends Controller
 {
-    protected $service;
+    protected $lifeQuoteService;
     protected $lookupService;
     protected $crudService;
     protected $genericModel;
@@ -34,10 +34,10 @@ class LifeController extends Controller
      * @param  LookupService  $lookupService
      * @param  CRUDService  $crudService
      */
-    public function __construct(LifeQuoteService $service, LookupService $lookupService, CRUDService $crudService)
+    public function __construct(LifeQuoteService $lifeQuoteService, LookupService $lookupService, CRUDService $crudService)
     {
-        $this->service = $service;
-        $this->genericModel = $this->service->getGenericModel(self::TYPE);
+        $this->lifeQuoteService = $lifeQuoteService;
+        $this->genericModel = $this->lifeQuoteService->getGenericModel(self::TYPE);
         $this->lookupService = $lookupService;
         $this->crudService = $crudService;
     }
@@ -49,8 +49,8 @@ class LifeController extends Controller
      */
     public function index(Request $request)
     {
-        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $gridData = $this->service->getGridData($this->genericModel, $request);
+        $dropdownSource = $this->lifeQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $gridData = $this->lifeQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
 
         return inertia('LifeQuote/Index', [
@@ -66,12 +66,12 @@ class LifeController extends Controller
      */
     public function create()
     {
-        $isRenewalUser = Auth::user()->isRenewalUser();
-        $renewalAdvisors = $this->service->getRenewalAdvisors();
-        $this->service->fillData();
+        $isRenewalUser = auth()->user()->isRenewalUser();
+        $renewalAdvisors = $this->lifeQuoteService->getRenewalAdvisors();
+        $this->lifeQuoteService->fillData();
 
-        $fieldsToCreate = $this->service->getFieldsToCreate('skipProperties');
-        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $fieldsToCreate = $this->lifeQuoteService->getFieldsToCreate('skipProperties');
+        $dropdownSource = $this->lifeQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $customTitles = [];
         foreach ($fieldsToCreate as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -117,7 +117,7 @@ class LifeController extends Controller
     public function store(Request $request)
     {
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-        $record = $this->service->saveLifeQuote($request);
+        $record = $this->lifeQuoteService->saveLifeQuote($request);
 
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
@@ -128,19 +128,19 @@ class LifeController extends Controller
 
     public function show($uuid)
     {
-        $quote = $this->service->getEntity($uuid);
+        $quote = $this->lifeQuoteService->getEntity($uuid);
         abort_if(! $quote, 404);
         $quoteType = strtolower($this->genericModel->modelType);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $quote->code);
-        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $dropdownSource = $this->lifeQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
         $isRenewalUser = false;
-        $renewalAdvisors = $this->service->getRenewalAdvisors();
-        $this->service->fillData();
+        $renewalAdvisors = $this->lifeQuoteService->getRenewalAdvisors();
+        $this->lifeQuoteService->fillData();
 
-        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $fields = $this->service->fieldsToDisplay($this->service->getFieldsToShow(), $quote);
+        $dropdownSource = $this->lifeQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $fields = $this->lifeQuoteService->fieldsToDisplay($this->lifeQuoteService->getFieldsToShow(), $quote);
         $customTitles = [];
         foreach ($fields as $property => $value) {
             if (in_array('title', $value)) {
@@ -151,14 +151,14 @@ class LifeController extends Controller
         }
 
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
-        $isQuoteDocumentEnabled = $this->service->quoteDocumentEnabled($this->genericModel->modelType);
-        $quoteDocuments = $this->service->getQuoteDocuments($this->genericModel->modelType, $quote->id);
-        $displaySendPolicyButton = $this->service->displaySendPolicyButton($quote, $quoteDocuments, self::TYPE_ID);
-        $documentTypes = $this->service->getQuoteDocumentsForUpload(self::TYPE_ID);
+        $isQuoteDocumentEnabled = $this->lifeQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
+        $quoteDocuments = $this->lifeQuoteService->getQuoteDocuments($this->genericModel->modelType, $quote->id);
+        $displaySendPolicyButton = $this->lifeQuoteService->displaySendPolicyButton($quote, $quoteDocuments, self::TYPE_ID);
+        $documentTypes = $this->lifeQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
 
-        $customerAdditionalContacts = $this->service->getAdditionalContacts($quote->customer_id, $quote->mobile_no);
-        $activities = $this->service->getActivityByLeadId($quote->id, strtolower($this->genericModel->modelType));
+        $customerAdditionalContacts = $this->lifeQuoteService->getAdditionalContacts($quote->customer_id, $quote->mobile_no);
+        $activities = $this->lifeQuoteService->getActivityByLeadId($quote->id, strtolower($this->genericModel->modelType));
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
@@ -179,7 +179,7 @@ class LifeController extends Controller
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
-            'emailStatuses' => $this->service->getEmailStatus(self::TYPE_ID, $quote->id),
+            'emailStatuses' => $this->lifeQuoteService->getEmailStatus(self::TYPE_ID, $quote->id),
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'permissions' => [
@@ -209,8 +209,8 @@ class LifeController extends Controller
     public function edit($id)
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $fieldsToUpdate = $this->service->getFieldsToUpdate('skipProperties');
+        $dropdownSource = $this->lifeQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $fieldsToUpdate = $this->lifeQuoteService->getFieldsToUpdate('skipProperties');
         $customTitles = [];
         foreach ($fieldsToUpdate as $property => $value) {
             if (str_contains($value, 'title')) {
@@ -227,7 +227,7 @@ class LifeController extends Controller
             $typeOfField = array_shift($typeOfField);
 
             if (in_array('static', $value)) {
-                $options = $this->service->getStaticFields($value);
+                $options = $this->lifeQuoteService->getStaticFields($value);
                 $dropdownSource[$property] = $options;
                 $typeOfField = 'select';
             }
@@ -281,14 +281,4 @@ class LifeController extends Controller
         return redirect('/quotes/life'.'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
 }
