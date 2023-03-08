@@ -108,7 +108,7 @@ class AMTController extends Controller
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         $model = 'Business';
-        if ($request->ajax()) {
+        // if ($request->ajax()) {
             if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
                     empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
                 $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
@@ -171,14 +171,18 @@ class AMTController extends Controller
                 $data->orderBy('bqr.created_at', 'DESC');
             }
 
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->make(true);
 
-            return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
-        }
+        //     return DataTables::of($data)
+        //         ->addIndexColumn()
+        //         ->make(true);
 
-        return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
+        //     return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
+        // }
+
+        // return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
+
+        $quotes = $data->simplePaginate(15)->withQueryString();
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes'));
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -196,7 +200,7 @@ class AMTController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illumin ate\Http\Response
      */
     public function create()
     {
