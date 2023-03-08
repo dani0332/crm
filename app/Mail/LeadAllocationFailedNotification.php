@@ -26,7 +26,7 @@ class LeadAllocationFailedNotification extends Mailable
     public function build()
     {
         return $this->subject(env('APP_ENV').' - Lead Allocation Job Failed')
-                ->to(['ahsan.ashfaq@insurancemarket.ae', 'hussain.fakhruddin@insurancemarket.ae'])
+                ->to(['ahsan.ashfaq@insurancemarket.ae', 'hussain.fakhruddin@insurancemarket.ae', 'daniyal.shahid@insurancemarket.ae'])
                 ->view('email.lead-allocation-job-failed', [
                     'exception' => $this->exception,
                 ]);
