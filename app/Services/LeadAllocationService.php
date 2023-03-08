@@ -364,9 +364,8 @@ class LeadAllocationService extends BaseService
                                 'la.id as id'
                             )->get();
 
+        info('max_capacity for reset for users : '.json_encode($users));
         foreach ($users as $user) {
-            info('max_capacity for user : '.$user->userEmail.' is about to get reset ');
-
             $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
 
             if ($leadAllocationRecord) {
@@ -449,7 +448,7 @@ class LeadAllocationService extends BaseService
 
             $currentIterationTime = now();
 
-            info('----------------------- CAR LEAD ALLOCATION STARTED FOR '.$currentIterationTime.' -----------------------');
+            info('----------------------- CAR LEAD ALLOCATION STARTED AT '.$currentIterationTime.' -----------------------');
 
             $carUnAllocatedLead = $this->getCarUnallocatedLeads();
 
@@ -553,7 +552,7 @@ class LeadAllocationService extends BaseService
                 }
                 info('----------------------- CAR LEAD ALLOCATION ENDED FOR LEAD '.$carLead->uuid.' -----------------------');
             }
-            info('----------------------- CAR LEAD ALLOCATION ENDED FOR '.$currentIterationTime.' -----------------------');
+            info('----------------------- CAR LEAD ALLOCATION ENDED AT '.$currentIterationTime.' -----------------------');
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -656,7 +655,7 @@ class LeadAllocationService extends BaseService
          * Search for a lead where source is Renewal_upload
          * Search for a lead where renewal expiry date should be in between last 30 days and future 90 days
          * Search for a lead where email OR phone number (last 7 digits) matches
-         * Search for a lead where car make and model id is same as what we have from current request
+         * Search for a lead where car make and model id is same as what we have from current request.
          *
          * On adding all above criteria's we find a lead then its a renewal otherwise not
          */
@@ -750,7 +749,7 @@ class LeadAllocationService extends BaseService
         /**
          * User must be available
          * User's last login date should be from today
-         * User's allocation count should be less then his max_capacity OR his max_capacity should be -1
+         * User's allocation count should be less then his max_capacity OR his max_capacity should be -1.
          */
         $query = LeadAllocation::join('users as u', 'u.id', 'lead_allocation.user_id')
         ->select('u.id', 'u.email')
