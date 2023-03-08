@@ -28,6 +28,7 @@ use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LeadSearchController;
+use App\Http\Controllers\LifeController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\MyLeadsController;
 use App\Http\Controllers\PartnerController;
@@ -53,6 +54,7 @@ use App\Http\Controllers\TmLeadController;
 use App\Http\Controllers\TmLeadStatusController;
 use App\Http\Controllers\TmUploadLeadController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TravelController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
@@ -197,7 +199,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport']);
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
-    Route::get('failed-jobs', [FailedJobsController::class, 'index']);
+    Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
     Route::group(['prefix' => 'rewards'], function () {
         Route::resource('partner', PartnerController::class);
         Route::resource('reward', RewardController::class);
@@ -239,7 +241,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('health/healthTeamAssign', [CRUDController::class, 'healthTeamAssign'])->name('healthTeamAssign');
         Route::get('car/{quoteUuId}/updateDiscountedPremium', [CRUDController::class, 'updateDiscountedPremium']);
         Route::get('car/{quoteUuId}/create-quote', [CRUDController::class, 'addCarQuotePlan']);
-        Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
         Route::get('health/{quoteId}/plan_details/{planId}', [CRUDController::class, 'health_plan_details'])->name('health_plan_detail');
         Route::post('car/SaveCarPlan', [CRUDController::class, 'SaveCarPlan'])->name('SaveCarPlan');
         Route::get('{leadId}/lead_details', [CRUDController::class, 'leadDetails'])->name('lead_details');
@@ -256,6 +257,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-car-pdf', [CRUDController::class, 'exportCarPdf'])->name('exportCarPdf');
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
+
+        Route::resource('travel', TravelController::class);
+        Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
+
+        Route::resource('life', LifeController::class);
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);

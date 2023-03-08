@@ -280,6 +280,7 @@ use App\Enums\GenericRequestEnum;
                     @endphp
                     @foreach ($model->properties as $property => $value)
                         @if (!in_array($property, $skipPropertiesArray))
+
                             @if ($count % 2 != 0)
                                 <div class="item form-group">
                             @endif
