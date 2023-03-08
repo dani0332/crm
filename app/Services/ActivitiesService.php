@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 class ActivitiesService extends BaseService
 {
     use GetUserTreeTrait;
+
     protected $helperService;
 
     public function __construct(HelperService $helperService)
