@@ -15,6 +15,7 @@ class AuditableController extends Controller
 
         if ($request->jsonData) {
             $service = app()->make(BaseService::class);
+
             return response()->json($service->audits($auditableId, $auditableType));
         }
 

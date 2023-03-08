@@ -2,29 +2,24 @@
 
 namespace App\Http\Controllers;
 
-
-use Inertia\Response;
-use RuntimeException;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypeId;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use App\Enums\quoteTypeCode;
-use Illuminate\Http\Request;
-use Inertia\ResponseFactory;
-use App\Services\CRUDService;
+use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use Illuminate\Support\Carbon;
-use App\Services\LookupService;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\GenericRequestEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Services\CRUDService;
+use App\Services\LookupService;
 use App\Services\TravelQuoteService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Redirect;
-
+use Inertia\Response;
+use Inertia\ResponseFactory;
+use RuntimeException;
 
 class TravelController extends Controller
 {
@@ -34,12 +29,12 @@ class TravelController extends Controller
     protected $genericModel;
 
     const TYPE = quoteTypeCode::Travel;
-
     const TYPE_ID = QuoteTypeId::Travel;
 
     /**
      * TravelController constructor.
-     * @param TravelQuoteService $travelQuoteService
+     *
+     * @param  TravelQuoteService  $travelQuoteService
      */
     public function __construct(TravelQuoteService $travelQuoteService, LookupService $lookupService, CRUDService $crudService)
     {
@@ -49,9 +44,9 @@ class TravelController extends Controller
         $this->crudService = $crudService;
     }
 
-
     /**
      * @return ResponseFactory|Response
+     *
      * @throws RuntimeException
      */
     public function index(Request $request)
@@ -59,6 +54,7 @@ class TravelController extends Controller
         $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $gridData = $this->service->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
+
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
             'dropdownSource' => $dropdownSource,
@@ -68,6 +64,7 @@ class TravelController extends Controller
     /**
      * @param $id
      * @return ResponseFactory|Response
+     *
      * @throws RuntimeException
      */
     public function show($id)
@@ -99,7 +96,8 @@ class TravelController extends Controller
         $activities = $this->service->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->service->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'modelType' => $this->genericModel->modelType,
@@ -126,7 +124,7 @@ class TravelController extends Controller
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
-                'notProductionApproval' => !auth()->user()->hasRole(RolesEnum::PA),
+                'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 'displaySendPolicyButton' => $displaySendPolicyButton,
                 'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
@@ -207,10 +205,10 @@ class TravelController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param  Request  $request
      * @param $id
-     *
      * @return ResponseFactory|Response
+     *
      * @throws RuntimeException
      */
     public function edit($id)
@@ -267,9 +265,8 @@ class TravelController extends Controller
 
         $this->service->updateTravelQuote($request, $id);
 
-        return redirect('/quotes/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
+        return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
     }
-
 
     public function planDetails($quoteId, $planId)
     {
@@ -305,7 +302,7 @@ class TravelController extends Controller
             }
         }
 
-        $data =  [
+        $data = [
             'listQuotePlanName' => $listQuotePlanName,
             'providerCode' => $providerCode,
             'providerName' => $providerName,
@@ -328,9 +325,9 @@ class TravelController extends Controller
     }
 
     /**
-     * @param Request $request
-     *
+     * @param  Request  $request
      * @return ResponseFactory|Response
+     *
      * @throws RuntimeException
      */
     public function cardsView(Request $request)
@@ -340,14 +337,14 @@ class TravelController extends Controller
         $allowedStatusIds = $this->service->getQuoteStatuses();
 
         foreach ($dropdownSource['quote_status_id'] as $key => $status) {
-            if (!in_array($status['id'], $allowedStatusIds)) {
+            if (! in_array($status['id'], $allowedStatusIds)) {
                 continue;
             }
 
             $quotes[] = [
                 'id' => $status['id'],
                 'title' => $status['text'],
-                'data' => getDataAgainstStatus('Travel', $status['id'])
+                'data' => getDataAgainstStatus('Travel', $status['id']),
             ];
         }
 

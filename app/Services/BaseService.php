@@ -2,16 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\GenericModel;
-use App\Enums\QuoteStatusEnum;
-use App\Services\CustomerService;
-use Illuminate\Support\Facades\DB;
-use App\Services\ActivitiesService;
-use App\Services\EmailStatusService;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
-use App\Services\QuoteDocumentService;
-use App\Services\DropdownSourceService;
+use Illuminate\Support\Facades\DB;
 
 class BaseService
 {
@@ -23,19 +17,20 @@ class BaseService
     }
 
     /**
-     * @param mixed $type
+     * @param  mixed  $type
      * @return GenericModel
      */
-    public function getGenericModel($type = null) : GenericModel
+    public function getGenericModel($type = null): GenericModel
     {
         $type = $type ?? 'GenericModel';
         $this->genericModel = $this->fillModel(new GenericModel(), $type);
+
         return $this->genericModel;
     }
 
     /**
-     * @param GenericModel $model
-     * @param mixed $type
+     * @param  GenericModel  $model
+     * @param  mixed  $type
      * @return GenericModel
      */
     public function fillModel($model, $type)
@@ -45,9 +40,9 @@ class BaseService
         $model->skipProperties = $this->fillModelSkipProperties();
         $model->searchProperties = $this->fillModelSearchProperties();
         $this->genericModel = $model;
+
         return $model;
     }
-
 
     public function fillModelProperties()
     {
@@ -64,7 +59,6 @@ class BaseService
         return [];
     }
 
-
     public function dropdownSource($properties, $quoteTypeId)
     {
         $dropdownSource = [];
@@ -74,6 +68,7 @@ class BaseService
                 $dropdownSource[$key] = $data->toArray();
             }
         }
+
         return $dropdownSource;
     }
 
@@ -109,9 +104,8 @@ class BaseService
 
     public function getAdditionalContacts($customerId, $mobileNo)
     {
-     return (new CustomerService())->getAdditionalContacts($customerId, $mobileNo);
+        return (new CustomerService())->getAdditionalContacts($customerId, $mobileNo);
     }
-
 
     public function audits($auditableId, $auditableType)
     {
@@ -123,7 +117,6 @@ class BaseService
         ->get();
     }
 
-
     public function getFieldsToUpdate($skipProperties): array
     {
         return $this->getSkipProperties($skipProperties, 'update');
@@ -134,20 +127,21 @@ class BaseService
         return $this->getSkipProperties($skipProperties, 'create');
     }
 
-    public function getSkipProperties(string $fieldName, $skipType = false) : array
+    public function getSkipProperties(string $fieldName, $skipType = false): array
     {
-        if (!$skipType) {
+        if (! $skipType) {
             return data_get($this->genericModel, $fieldName, []);
         }
-        $skipped = explode(",", data_get($this->genericModel, $fieldName.'.' . $skipType, ''));
+        $skipped = explode(',', data_get($this->genericModel, $fieldName.'.'.$skipType, ''));
         $skipped = array_map('trim', $skipped);
         $fields = [];
         $properties = $this->genericModel->properties;
         foreach ($properties as $key => $property) {
-            if (!in_array($key, $skipped)) {
+            if (! in_array($key, $skipped)) {
                 $fields[$key] = $property;
             }
         }
+
         return $fields;
     }
 
@@ -164,7 +158,7 @@ class BaseService
 
     public function getActivityByLeadId($id, $type)
     {
-        $activitiesData =  (app(ActivitiesService::class))->getActivityByLeadId($id, $type);
+        $activitiesData = (app(ActivitiesService::class))->getActivityByLeadId($id, $type);
         $activities = [];
         foreach ($activitiesData as $activity) {
             $updatedActivity = [
@@ -183,10 +177,11 @@ class BaseService
             ];
             array_push($activities, $updatedActivity);
         }
+
         return $activities;
     }
 
-    public function getRenewalAdvisors() : array
+    public function getRenewalAdvisors(): array
     {
         $crudService = app()->make(CRUDService::class);
         $renewalAdvisors = [];
@@ -195,6 +190,7 @@ class BaseService
         } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
             $renewalAdvisors = $crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
+
         return $renewalAdvisors;
     }
 
@@ -208,6 +204,5 @@ class BaseService
         if (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
             return $crudService->fillNewBusinessData($this->genericModel);
         }
-
     }
 }

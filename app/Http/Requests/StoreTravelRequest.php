@@ -35,10 +35,10 @@ class StoreTravelRequest extends FormRequest
         $rules = [];
         foreach ($requireProperties as $key => $value) {
             $rule = ['required'];
-            if($key == 'email'){
+            if ($key == 'email') {
                 $rule[] = 'email:rfc,dns';
             }
-            if($key == 'phone'){
+            if ($key == 'phone') {
                 $rule[] = 'regex:regex:/(0)[0-9]/';
                 $rule[] = 'not_regex:/[a-z]/';
                 $rule[] = 'min:7';
@@ -46,6 +46,7 @@ class StoreTravelRequest extends FormRequest
             }
             $rules[$key] = $rule;
         }
+
         return $rules;
     }
 }

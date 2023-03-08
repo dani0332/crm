@@ -2,40 +2,37 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypeId;
-use Illuminate\Support\Arr;
-use App\Enums\quoteTypeCode;
-use Illuminate\Http\Request;
-use Inertia\ResponseFactory;
-use App\Services\CRUDService;
+use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
-use Illuminate\Support\Carbon;
-use App\Services\LookupService;
-use App\Enums\PaymentStatusEnum;
-use App\Enums\GenericRequestEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use App\Services\CRUDService;
 use App\Services\LifeQuoteService;
+use App\Services\LookupService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Inertia\ResponseFactory;
 
 class LifeController extends Controller
 {
-
     protected $service;
     protected $lookupService;
     protected $crudService;
     protected $genericModel;
 
     const TYPE = quoteTypeCode::Life;
-
     const TYPE_ID = QuoteTypeId::Life;
 
     /**
      * TravelController constructor.
-     * @param LifeQuoteService $service
-     * @param LookupService $lookupService
-     * @param CRUDService $crudService
      *
+     * @param  LifeQuoteService  $service
+     * @param  LookupService  $lookupService
+     * @param  CRUDService  $crudService
      */
     public function __construct(LifeQuoteService $service, LookupService $lookupService, CRUDService $crudService)
     {
@@ -45,9 +42,9 @@ class LifeController extends Controller
         $this->crudService = $crudService;
     }
 
-
     /**
      * @return ResponseFactory|Response
+     *
      * @throws RuntimeException
      */
     public function index(Request $request)
@@ -55,6 +52,7 @@ class LifeController extends Controller
         $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $gridData = $this->service->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
+
         return inertia('LifeQuote/Index', [
             'quotes' => $quotes,
             'dropdownSource' => $dropdownSource,
@@ -131,12 +129,11 @@ class LifeController extends Controller
     public function show($uuid)
     {
         $quote = $this->service->getEntity($uuid);
-        abort_if(!$quote, 404);
+        abort_if(! $quote, 404);
         $quoteType = strtolower($this->genericModel->modelType);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $quote->code);
         $dropdownSource = $this->service->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-
 
         $isRenewalUser = false;
         $renewalAdvisors = $this->service->getRenewalAdvisors();
@@ -163,7 +160,8 @@ class LifeController extends Controller
         $customerAdditionalContacts = $this->service->getAdditionalContacts($quote->customer_id, $quote->mobile_no);
         $activities = $this->service->getActivityByLeadId($quote->id, strtolower($this->genericModel->modelType));
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+
         return inertia('LifeQuote/Show', [
             'quote' => $quote,
             'fieldsToDisplay' => $fields,
@@ -187,7 +185,7 @@ class LifeController extends Controller
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
-                'notProductionApproval' => !auth()->user()->hasRole(RolesEnum::PA),
+                'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 'displaySendPolicyButton' => $displaySendPolicyButton,
                 'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
@@ -272,7 +270,7 @@ class LifeController extends Controller
 
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && !strpos($modelSkipPropertiesList['update'], $property)) {
+            if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && ! strpos($modelSkipPropertiesList['update'], $property)) {
                 $validateArray[$property] = 'required';
             }
         }
@@ -280,7 +278,7 @@ class LifeController extends Controller
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
-        return redirect('/quotes/life'. '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
+        return redirect('/quotes/life'.'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
     }
 
     /**
