@@ -242,6 +242,12 @@ class CRUDService extends BaseService
         if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
             $entity->wcu_id = null;
         }
+        if($entity->quote_status_id == QuoteStatusEnum::IMRenewal && $request->leadStatus == QuoteStatusEnum::NewLead)
+        {
+            $entity->quote_status_id = $request->leadStatus;
+            $entity->tier_id = null;
+            $entity->advisor_id = null;
+        }
         if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
             $entity->tier_id = $request->tier_id;
         }

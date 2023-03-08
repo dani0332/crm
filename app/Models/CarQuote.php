@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\CarQuoteUpdated;
 use App\Jobs\FTCMailServiceJob;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -460,5 +461,12 @@ class CarQuote extends BaseModel
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            event(new CarQuoteUpdated(now(), auth()->user()->email));
+        });
     }
 }
