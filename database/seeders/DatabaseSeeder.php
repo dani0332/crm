@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
             addReportsMaxDays::class,
             addCostPerLeadForExistingLeads::class,
             addLMSIntroEmailTemplateId::class,
+            addPermissionsForReportsAndDashbords::class,
         ]);
     }
 }

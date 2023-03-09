@@ -147,8 +147,8 @@ class DashboardController extends Controller
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
-            $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
-            $data[] = number_format((float) $percentage, 2, '.', '');
+            $total = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
+            $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
 
@@ -203,7 +203,7 @@ class DashboardController extends Controller
         ->join('teams', 'teams.id', 'user_team.team_id')
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
         $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'null';
-        $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
+        $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
             $records = $this->applyFilter($records, 'teams.id', $request->team_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
@@ -221,8 +221,8 @@ class DashboardController extends Controller
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
-            $percentage = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
-            $data[] = number_format((float) $percentage, 2, '.', '');
+            $total = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
+            $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
 
