@@ -201,13 +201,15 @@ class AMTController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illumin ate\Http\Response
+     * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function create()
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
-
-        return view('amt.add', compact('businessInsuranceType'));
+        return inertia('GroupMedicalQuote/Create', [
+            'businessInsuranceType' => $businessInsuranceType,
+            'quote' => new BusinessQuote(),
+        ]);
     }
 
     /**

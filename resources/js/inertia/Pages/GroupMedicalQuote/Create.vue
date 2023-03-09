@@ -4,10 +4,8 @@ import { Head, router, useForm, Link } from '@inertiajs/vue3';
 import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 const props = defineProps({
-  quote: Object,
   businessInsuranceType: Object,
-  gmTypes: Object,
-  selectedGmType: Object,
+  quote: Object,
 });
 
 const genderSelect = computed(() => {
@@ -34,7 +32,6 @@ const quoteForm = useForm({
   company_name: props.quote.company_name,
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
-    group_medical_type_id: props.selectedGmType,
   brief_details: props.quote.brief_details,
 });
 
@@ -43,17 +40,17 @@ const rules = {
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
     'E-mail must be valid',
   isRequired: v => !!v || 'This field is required',
-    isNumber: v => /^\d+$/.test(v) || 'This field must be a number',
-   isDecimal: v => /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal',
+  isNumber: v => /^\d+$/.test(v) || 'This field must be a number',
+  isDecimal: v => /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal',
 };
 
 const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
   if (isValid) {
-    quoteForm.put(`/medical/amt/${props.quote.uuid}`, {
+    quoteForm.post('/medical/amt', {
       onSuccess: () => {
-        router.get(`/medical/amt/${props.quote.uuid}`);
+        router.get('/medical/amt');
       },
     });
   }
@@ -100,7 +97,6 @@ function onSubmit(isValid) {
           type="email"
           label="EMAIL"
           :rules="[rules.isRequired, rules.isEmail]"
-          :disabled="true"
           class="w-full"
           :errors="quoteForm.errors.email"
         />
@@ -110,9 +106,8 @@ function onSubmit(isValid) {
           type="tel"
           label="MOBILE NUMBER"
           :rules="[rules.isRequired]"
-          :disabled="true"
           class="w-full"
-            :errors="quoteForm.errors.mobile_no"
+          :errors="quoteForm.errors.mobile_no"
         />
 
         <x-input
@@ -130,7 +125,7 @@ function onSubmit(isValid) {
           label="Number Of Employees"
           :rules="[rules.isRequired, rules.isNumber]"
           class="w-full"
-            :errors="quoteForm.errors.number_of_employees"
+          :errors="quoteForm.errors.number_of_employees"
         />
 
         <x-select
@@ -146,19 +141,6 @@ function onSubmit(isValid) {
           class="w-full"
           :errors="quoteForm.errors.business_type_of_insurance_id"
         />
-        <x-select
-          v-model="quoteForm.group_medical_type_id"
-          label="Group Medical Type"
-          :options="
-            gmTypes.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          :rules="[rules.isRequired]"
-          class="w-full"
-          :errors="quoteForm.errors.group_medical_type_id"
-        />
 
         <x-input
           v-model="quoteForm.premium"
@@ -166,7 +148,7 @@ function onSubmit(isValid) {
           label="PREMIUM"
           :rules="[rules.isRequired, rules.isDecimal]"
           class="w-full"
-            :errors="quoteForm.errors.premium"
+          :errors="quoteForm.errors.premium"
         />
 
         <x-textarea
@@ -174,7 +156,7 @@ function onSubmit(isValid) {
           label="Brief Details"
           :rules="[rules.isRequired]"
           class="w-full"
-            :errors="quoteForm.errors.brief_details"
+          :errors="quoteForm.errors.brief_details"
         />
       </div>
       <x-divider class="my-4" />
@@ -185,7 +167,7 @@ function onSubmit(isValid) {
           type="submit"
           :loading="quoteForm.processing"
         >
-          Update
+          Create
         </x-button>
       </div>
     </x-form>
