@@ -21,7 +21,6 @@ use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\QuoteViewCount;
 use App\Models\Tier;
 use App\Models\User;
 use App\Services\ActivitiesService;
@@ -326,21 +325,6 @@ class CRUDController extends Controller
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
         }
-        if ($quoteType == strtolower(quoteTypeCode::Car)) {
-            if ($record->advisor_id != null) {
-                if ($record->advisor_id == Auth::user()->id) {
-                    QuoteViewCount::firstOrCreate([
-                        'quote_id' => $record->id, 'user_id' => Auth::user()->id,
-                    ], [
-                        'quote_id' => $record->id,
-                        'quote_type_id' => 1,
-                        'user_id' => Auth::user()->id,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ])->increment('visit_count');
-                }
-            }
-        }
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
@@ -423,6 +407,7 @@ class CRUDController extends Controller
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $carMakeText = $record->car_make_id_text ? $record->car_make_id_text : '';
             $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
@@ -880,6 +865,9 @@ class CRUDController extends Controller
 
     public function updateLeadStatus(Request $request)
     {
+        if (! $request->leadStatus) {
+            return redirect()->back()->with('message', 'Please select lead status and try again.');
+        }
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
             if (! $lead) {
@@ -917,7 +905,7 @@ class CRUDController extends Controller
                     $this->activityService->createActivity($request, $record);
                 }
             }
-            if ($request->leadStatus == QuoteStatusEnum::AfiaRenewal) {
+            if ($request->leadStatus == QuoteStatusEnum::IMRenewal) {
                 if (! isset($request->tier_id)) {
                     $this->validate($request, [
                         'tier_id' => 'required',

@@ -37,20 +37,11 @@ class ActivitesController extends Controller
     public function index(Request $request)
     {
         $advisors = [];
-        $subOrdinates = $this->walkTree(Auth::user()->id);
-        foreach ($subOrdinates as $subOrdinate) {
-            $user = User::where('id', $subOrdinate)->first();
-            if ($user->hasAnyRole([
-                'CAR_ADVISOR', 'HEALTH_ADVISOR', 'TRAVEL_ADVISOR', 'HOME_ADVISOR', 'LIFE_ADVISOR', 'PET_ADVISOR',
-                'BUSINESS_ADVISOR', 'CORPLINE_ADVISOR', 'RM_ADVISOR', 'GM_ADVISOR', 'EBP_ADVISOR',
-            ])) {
-                array_push($advisors, $user);
-            }
-        }
+        $advisors = User::whereIn('id', $this->walkTree(Auth::user()->id))->get();
         if ($request->ajax()) {
-            $activites = $this->activitiesService->getGridData($request);
+            $activities = $this->activitiesService->getGridData($request);
 
-            return DataTables::of($activites)
+            return DataTables::of($activities)
                 ->addIndexColumn()
                 ->make(true);
         }
