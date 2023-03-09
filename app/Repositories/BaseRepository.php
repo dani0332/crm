@@ -20,8 +20,6 @@ abstract class BaseRepository
     abstract public function model();
 
     /**
-     * @param $method
-     * @param $parameters
      * @return mixed
      */
     public static function __callStatic($method, $parameters)
@@ -59,8 +57,6 @@ abstract class BaseRepository
     }
 
     /**
-     * @param $method
-     * @param $parameters
      * @return mixed
      */
     public function forwardScopeCall($method, $parameters)
@@ -72,8 +68,6 @@ abstract class BaseRepository
     /**
      * forward call to connected model
      *
-     * @param $method
-     * @param $parameters
      * @return mixed
      */
     public function __call($method, $parameters)

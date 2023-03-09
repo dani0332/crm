@@ -46,6 +46,7 @@ class StoreLifeRequest extends FormRequest
             }
             $rules[$key] = $rule;
         }
+
         return $rules;
     }
 }

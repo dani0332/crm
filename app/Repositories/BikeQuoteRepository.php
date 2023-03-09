@@ -21,7 +21,6 @@ class BikeQuoteRepository extends BaseRepository
      * create new personal quote
      *
      * @param $quoteTypeCode
-     * @param $data
      * @return mixed
      */
     public function fetchCreate($data)
@@ -52,8 +51,6 @@ class BikeQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $uuid
-     * @param $data
      * @return mixed
      */
     public function fetchUpdate($uuid, $data)
@@ -90,8 +87,6 @@ class BikeQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $column
-     * @param $value
      * @return mixed
      */
     public function fetchGetBy($column, $value)

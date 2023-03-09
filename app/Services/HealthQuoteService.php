@@ -1313,8 +1313,6 @@ class HealthQuoteService extends BaseService
     /**
      * generate PDF for car quote plan and return.
      *
-     * @param $quoteType
-     * @param $data
      * @return array|string[]
      */
     public function exportPlansPdf($quoteType, $data)

@@ -27,9 +27,6 @@ class CapiService
     /**
      * send request to ken
      *
-     * @param $path
-     * @param $method
-     * @param $data
      * @return \GuzzleHttp\Promise\PromiseInterface|\Illuminate\Http\Client\Response
      *
      * @throws \Exception

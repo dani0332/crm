@@ -47,7 +47,6 @@ class BikeQuoteController extends Controller
 
     /**
      * @param $quoteTypeCode
-     * @param  BikeQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(BikeQuoteRequest $request)
@@ -62,7 +61,6 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function edit($uuid)
@@ -78,7 +76,6 @@ class BikeQuoteController extends Controller
     }
 
     /**
-     * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($uuid)
@@ -129,7 +126,6 @@ class BikeQuoteController extends Controller
     /**
      * @param $quoteTypeCode
      * @param $quoteId
-     * @param  BikeQuoteRequest  $request
      * @return void
      */
     public function update($uuid, BikeQuoteRequest $request)

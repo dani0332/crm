@@ -80,7 +80,6 @@ class PersonalQuote extends Model
     }
 
     /**
-     * @param $date
      * @return string
      */
     public function getCreatedAtAttribute($date)
@@ -91,7 +90,6 @@ class PersonalQuote extends Model
     }
 
     /**
-     * @param $date
      * @return string
      */
     public function getUpdatedAtAttribute($date)
@@ -127,7 +125,6 @@ class PersonalQuote extends Model
     }
 
     /**
-     * @param $date
      * @return string
      */
 //    public function getPolicyStartDateAttribute($date)
@@ -136,7 +133,6 @@ class PersonalQuote extends Model
 //    }
 
     /**
-     * @param $date
      * @return string
      */
 //    public function getPolicyIssuanceDateAttribute($date)
@@ -145,7 +141,6 @@ class PersonalQuote extends Model
 //    }
 
     /**
-     * @param $date
      * @return string
      */
     public function getPreviousPolicyExpiryDateAttribute($date)
@@ -164,7 +159,6 @@ class PersonalQuote extends Model
     /**
      * get data by personal quote type
      *
-     * @param $query
      * @return mixed
      */
     public function scopeByQuoteTypeCode($query, $quoteTypeCode)
@@ -175,8 +169,6 @@ class PersonalQuote extends Model
     }
 
     /**
-     * @param $query
-     * @param $quoteTypeId
      * @return mixed
      */
     public function scopeByQuoteTypeId($query, $quoteTypeId)

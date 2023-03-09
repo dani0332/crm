@@ -1007,7 +1007,6 @@ class RenewalsUploadService
     }
 
     /**
-     * @param $data
      * @return void
      */
     public function createHealthPlan($data, $quote)

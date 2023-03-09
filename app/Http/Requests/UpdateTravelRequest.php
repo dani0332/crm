@@ -46,6 +46,7 @@ class UpdateTravelRequest extends FormRequest
             }
             $rules[$key] = $rule;
         }
+
         return $rules;
     }
 }

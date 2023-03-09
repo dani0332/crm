@@ -307,7 +307,6 @@ class CRUDController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      * @return \Inertia\Response
      */
@@ -1139,7 +1138,6 @@ class CRUDController extends Controller
      * export selected plans to PDF.
      *
      * @param  Request  $request
-     * @param $quoteType
      * @return \Illuminate\Http\RedirectResponse
      */
     public function exportHealthPdf($quoteType, ExportPlansPdfRequest $request)

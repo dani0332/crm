@@ -262,7 +262,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
         Route::resource('life', LifeController::class);
-
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);

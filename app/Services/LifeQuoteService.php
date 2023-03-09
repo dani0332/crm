@@ -793,13 +793,10 @@ class LifeQuoteService extends BaseService
                 $fields[$property]['title'] = $crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
                 $name = $property.'_text';
                 $fields[$property]['value'] = $quote->$name ?? '';
-            }
-            elseif (str_contains($field, 'title')) {
+            } elseif (str_contains($field, 'title')) {
                 $fields[$property]['title'] = $crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
                 $fields[$property]['value'] = $quote->$property ?? '';
-            }
-
-            else {
+            } else {
                 $fields[$property]['title'] = ucwords(str_replace('_', ' ', $property));
                 $fields[$property]['value'] = $quote->$property ?? '';
             }
@@ -810,7 +807,7 @@ class LifeQuoteService extends BaseService
 
     public function getStaticFields($field)
     {
-        if (!is_array($field)) {
+        if (! is_array($field)) {
             $field = explode('|', $field);
         }
 
@@ -824,6 +821,7 @@ class LifeQuoteService extends BaseService
         $options = array_map(function ($item) {
             return ['id' => $item, 'text' => $item];
         }, $options);
+
         return $options;
     }
 }

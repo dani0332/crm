@@ -2,28 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use DB;
-use Auth;
-use DataTables;
-use Carbon\Carbon;
-use App\Models\User;
-use App\Enums\QuoteTypeId;
-use App\Models\QuoteStatus;
-use App\Enums\quoteTypeCode;
-use Illuminate\Http\Request;
-use App\Models\BusinessQuote;
-use App\Services\CRUDService;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
-use App\Services\LookupService;
-use App\Enums\PaymentStatusEnum;
-use App\Models\GroupMedicalType;
-use App\Services\CustomerService;
-use App\Services\ActivitiesService;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
+use App\Models\BusinessQuote;
+use App\Models\GroupMedicalType;
+use App\Models\QuoteStatus;
+use App\Models\User;
+use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
+use App\Services\CRUDService;
+use App\Services\CustomerService;
 use App\Services\DropdownSourceService;
+use App\Services\LookupService;
 use App\Traits\RolePermissionConditions;
+use Auth;
+use Carbon\Carbon;
+use DataTables;
+use DB;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 
 class AMTController extends Controller
@@ -110,68 +110,67 @@ class AMTController extends Controller
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         $model = 'Business';
         // if ($request->ajax()) {
-            if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                    empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
-                $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
-            }
-            if (isset($request->first_name) && $request->first_name != '') {
-                $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
-            }
-            if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
-                $dateFrom = $this->parseDate($request['created_at_start'], true);
-                $dateTo = $this->parseDate($request['created_at_end'], false);
-                $data->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
-            }
-            if (isset($request->last_name) && $request->last_name != '') {
-                $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
-            }
-            if (isset($request->email) && $request->email != '') {
-                $data->where('bqr.email', 'like', '%'.$request->email.'%');
-            }
-            if (isset($request->code) && $request->code != '') {
-                $data->where('bqr.code', '=', $request->code);
-            }
-            if (isset($request->mobile_no) && $request->mobile_no != '') {
-                $data->where('bqr.mobile_no', '=', $request->mobile_no);
-            }
-            if (isset($request->leadStatus) && $request->leadStatus != '') {
-                $data->where('qs.id', '=', $request->leadStatus);
-            }
-            if (isset($request->advisor_id) && $request->advisor_id != '') {
-                $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
-            }
-            if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && isset($request->previous_policy_expiry_date_end) && $request->previous_policy_expiry_date_end != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date)->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date_end)->endOfDay()->toDateTimeString();
-                $data->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-            }
-            if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-                $data->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-            }
-            if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
-                $data->where('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
-            }
-            if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-                $data->where('bqr.renewal_batch', $request->renewal_batch);
-            }
+        if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
+                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+            $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
+        }
+        if (isset($request->first_name) && $request->first_name != '') {
+            $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
+        }
+        if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
+            $dateFrom = $this->parseDate($request['created_at_start'], true);
+            $dateTo = $this->parseDate($request['created_at_end'], false);
+            $data->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
+        }
+        if (isset($request->last_name) && $request->last_name != '') {
+            $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
+        }
+        if (isset($request->email) && $request->email != '') {
+            $data->where('bqr.email', 'like', '%'.$request->email.'%');
+        }
+        if (isset($request->code) && $request->code != '') {
+            $data->where('bqr.code', '=', $request->code);
+        }
+        if (isset($request->mobile_no) && $request->mobile_no != '') {
+            $data->where('bqr.mobile_no', '=', $request->mobile_no);
+        }
+        if (isset($request->leadStatus) && $request->leadStatus != '') {
+            $data->where('qs.id', '=', $request->leadStatus);
+        }
+        if (isset($request->advisor_id) && $request->advisor_id != '') {
+            $request->advisor_id == '-1' ? $data->whereNull('bqr.advisor_id') : $data->where('bqr.advisor_id', '=', $request->advisor_id);
+        }
+        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && isset($request->previous_policy_expiry_date_end) && $request->previous_policy_expiry_date_end != '') {
+            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date)->startOfDay()->toDateTimeString();
+            $dateTo = Carbon::createFromFormat('Y-m-d', $request->previous_policy_expiry_date_end)->endOfDay()->toDateTimeString();
+            $data->whereBetween('bqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
+        }
+        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
+            $data->where('bqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
+        }
+        if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
+            $data->where('bqr.previous_quote_policy_number', $request->previous_quote_policy_number);
+        }
+        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
+            $data->where('bqr.renewal_batch', $request->renewal_batch);
+        }
 
-            $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-            $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-            if ($column != '' && $column != 0 && $direction != '') {
-                if ($column == 11) {
-                    $column = 'bqr.created_at';
-                }
-                if ($column == 12) {
-                    $column = 'bqr.updated_at';
-                }
-                if ($column == 8) {
-                    $column = 'bqrd.next_followup_date';
-                }
-                $data->orderBy($column, $direction);
-            } else {
-                $data->orderBy('bqr.created_at', 'DESC');
+        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
+        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
+        if ($column != '' && $column != 0 && $direction != '') {
+            if ($column == 11) {
+                $column = 'bqr.created_at';
             }
-
+            if ($column == 12) {
+                $column = 'bqr.updated_at';
+            }
+            if ($column == 8) {
+                $column = 'bqrd.next_followup_date';
+            }
+            $data->orderBy($column, $direction);
+        } else {
+            $data->orderBy('bqr.created_at', 'DESC');
+        }
 
         //     return DataTables::of($data)
         //         ->addIndexColumn()
@@ -183,6 +182,7 @@ class AMTController extends Controller
         // return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
 
         $quotes = $data->simplePaginate(15)->withQueryString();
+
         return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes'));
     }
 
@@ -206,6 +206,7 @@ class AMTController extends Controller
     public function create()
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
+
         return inertia('GroupMedicalQuote/Create', [
             'businessInsuranceType' => $businessInsuranceType,
             'quote' => new BusinessQuote(),
@@ -286,7 +287,6 @@ class AMTController extends Controller
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $tiers = $this->lookupService->getTierR();
 
-
         return inertia('GroupMedicalQuote/Show', [
             'genderOptions' => $this->crudService->getGenderOptions(),
             'quote' => $record,
@@ -325,12 +325,13 @@ class AMTController extends Controller
         $GMType = DB::table('business_quote_request')
             ->join('group_medical_types as gmt', 'business_quote_request.group_medical_type_id', '=', 'gmt.id')
             ->where('business_quote_request.uuid', $id)
-            ->select('gmt.text as text', 'gmt.id as id' )
+            ->select('gmt.text as text', 'gmt.id as id')
             ->first();
         $selectedGmType = '';
         if (! is_null($GMType)) {
             $selectedGmType = $GMType->id;
         }
+
         return inertia('GroupMedicalQuote/Edit', [
             'businessInsuranceType' => $businessInsuranceType,
             'quote' => $record,
