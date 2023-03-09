@@ -24,16 +24,16 @@ class YachtQuoteRequest extends FormRequest
     public function rules()
     {
         return [
-            'first_name' => 'required',
-            'last_name' => 'required',
+            'first_name' => 'required|max:50',
+            'last_name' => 'required|max:50',
             'email' => 'required|email:rfc,dns',
             'mobile_no' => 'required',
-            'boat_details' => 'required',
-            'engine_details' => 'required',
-            'claim_experience' => 'required',
+            'boat_details' => 'required|max:1000',
+            'engine_details' => 'required|max:2000',
+            'claim_experience' => 'required|max:1000',
             'asset_value' => 'required|numeric',
-            'use' => 'required',
-            'operator_experience' => 'required',
+            'use' => 'required|max:1000',
+            'operator_experience' => 'required|max:1000',
         ];
     }
 }
