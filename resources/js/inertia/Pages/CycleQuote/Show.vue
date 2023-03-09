@@ -286,6 +286,8 @@ const historyDataTable = [
             :personal-plans="personalPlans"
         />
 
+        <AdditionalContacts :quote="quote" />
+
         <QuoteStatus
             :quote="quote"
             :quote-type="quoteType"

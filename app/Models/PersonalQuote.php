@@ -217,4 +217,12 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(InsuranceProvider::class);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }
