@@ -462,11 +462,4 @@ class CarQuote extends BaseModel
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
     }
-
-    protected static function booted()
-    {
-        static::updating(function ($model) {
-            event(new CarQuoteUpdated(now(), auth()->user()->email));
-        });
-    }
 }

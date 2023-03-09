@@ -2,10 +2,8 @@
 
 namespace App\Providers;
 
-use App\Events\CarQuoteUpdated;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
-use App\Listeners\UpdateCarQuote;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
@@ -28,9 +26,6 @@ class EventServiceProvider extends ServiceProvider
         ],
         Logout::class => [
             LogoutListener::class,
-        ],
-        CarQuoteUpdated::class => [
-            UpdateCarQuote::class,
         ],
     ];
 
