@@ -32,8 +32,6 @@ class TravelController extends Controller
 
     /**
      * TravelController constructor.
-     *
-     * @param  TravelQuoteService  $travelQuoteService
      */
     public function __construct(TravelQuoteService $travelQuoteService, LookupService $lookupService, CRUDService $crudService)
     {
@@ -204,7 +202,6 @@ class TravelController extends Controller
 
     /**
      * @param  Request  $request
-     * @param $id
      * @return ResponseFactory|Response
      *
      * @throws RuntimeException

@@ -18,7 +18,6 @@ class BaseService
 
     /**
      * @param  mixed  $type
-     * @return GenericModel
      */
     public function getGenericModel($type = null): GenericModel
     {

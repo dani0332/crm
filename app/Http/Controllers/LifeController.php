@@ -30,8 +30,6 @@ class LifeController extends Controller
      * TravelController constructor.
      *
      * @param  LifeQuoteService  $service
-     * @param  LookupService  $lookupService
-     * @param  CRUDService  $crudService
      */
     public function __construct(LifeQuoteService $lifeQuoteService, LookupService $lookupService, CRUDService $crudService)
     {
