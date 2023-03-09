@@ -109,7 +109,7 @@ class AMTController extends Controller
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
         $isManagerORDeputy = Auth::user()->isManagerORDeputy();
         $model = 'Business';
-        // if ($request->ajax()) {
+
         if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
                 empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
             $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
@@ -171,15 +171,6 @@ class AMTController extends Controller
         } else {
             $data->orderBy('bqr.created_at', 'DESC');
         }
-
-        //     return DataTables::of($data)
-        //         ->addIndexColumn()
-        //         ->make(true);
-
-        //     return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
-        // }
-
-        // return view('amt.view', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy'));
 
         $quotes = $data->simplePaginate(15)->withQueryString();
 
