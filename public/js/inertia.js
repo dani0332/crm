@@ -26283,6 +26283,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("x-divider");
 
+  var _component_AdditionalContacts = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("AdditionalContacts");
+
   var _component_AuditLogs = _Users_faisalabbas_Sites_blanka_dev_resources_js_inertia_Components_AuditLogs_vue__WEBPACK_IMPORTED_MODULE_0__["default"];
 
   return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["Head"], {
@@ -26416,7 +26418,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "personal-plans": $props.personalPlans
   }, null, 8
   /* PROPS */
-  , ["can", "payments", "quote-type", "payment-methods", "insurance-providers", "is-beta-user", "personal-plans"])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuoteStatus"], {
+  , ["can", "payments", "quote-type", "payment-methods", "insurance-providers", "is-beta-user", "personal-plans"])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_AdditionalContacts, {
+    quote: $props.quote
+  }, null, 8
+  /* PROPS */
+  , ["quote"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["QuoteStatus"], {
     quote: $props.quote,
     "quote-type": $props.quoteType,
     "quote-statuses": $props.quoteStatuses,

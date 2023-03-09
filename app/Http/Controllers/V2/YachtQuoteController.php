@@ -10,7 +10,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\YachtQuoteRequest;
 use App\Repositories\ActivityRepository;
-use App\Repositories\BikeQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
@@ -68,6 +67,7 @@ class YachtQuoteController extends Controller
     public function edit($uuid)
     {
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
+
         return inertia('YachtQuote/Form', ['quote' => $quote]);
     }
 
@@ -129,6 +129,7 @@ class YachtQuoteController extends Controller
     public function update($uuid, YachtQuoteRequest $request)
     {
         YachtQuoteRepository::update($uuid, $request->validated());
+
         return back()->with('message', 'Quote updated successfully');
     }
 }

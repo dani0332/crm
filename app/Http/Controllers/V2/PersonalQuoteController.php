@@ -57,7 +57,7 @@ class PersonalQuoteController extends Controller
 
     /**
      * @param $id
-     * @param PersonalQuotePolicyRequest $request
+     * @param  PersonalQuotePolicyRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updatePolicyDetails($id, PersonalQuotePolicyRequest $request)

@@ -260,6 +260,8 @@ const page = usePage();
       :personal-plans="personalPlans"
     />
 
+    <AdditionalContacts :quote="quote" />
+
     <QuoteStatus
       :quote="quote"
       :quote-type="quoteType"

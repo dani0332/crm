@@ -71,7 +71,6 @@ class YachtQuoteRepository extends BaseRepository
         });
     }
 
-
     /**
      * @param $column
      * @param $value

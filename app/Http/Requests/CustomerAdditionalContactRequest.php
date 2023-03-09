@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PersonalQuoteRepository;
 use Illuminate\Foundation\Http\FormRequest;
-use Psy\Util\Str;
 
 class CustomerAdditionalContactRequest extends FormRequest
 {
@@ -29,7 +28,7 @@ class CustomerAdditionalContactRequest extends FormRequest
         return [
             'key' => 'required',
             'value' => 'required',
-            'quote_id' => 'required'
+            'quote_id' => 'required',
         ];
     }
 
@@ -39,8 +38,7 @@ class CustomerAdditionalContactRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-
-            $customer = CustomerRepository::where('id', request()->customer_id)->with(['additionalContactInfo' => function($q){
+            $customer = CustomerRepository::where('id', request()->customer_id)->with(['additionalContactInfo' => function ($q) {
                 $q->where('key', request()->key)->where('value', request()->value);
             }])->first();
 
@@ -49,13 +47,12 @@ class CustomerAdditionalContactRequest extends FormRequest
             /**
              * check if email/mobile already exists in customer, quote or additional contact info
              */
-            if($customer->{request()->key} == request()->value
+            if ($customer->{request()->key} == request()->value
                 || count($customer->additionalContactInfo) > 0
                 || $quote->{request()->key} == request()->value
             ) {
-                $validator->errors()->add('value', ucfirst(str_replace('_', ' ', request()->key)) . ' is already in use for a customer. Please try another.' );
+                $validator->errors()->add('value', ucfirst(str_replace('_', ' ', request()->key)).' is already in use for a customer. Please try another.');
             }
-
         });
     }
 }

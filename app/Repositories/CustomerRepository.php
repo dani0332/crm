@@ -23,6 +23,7 @@ class CustomerRepository extends BaseRepository
     {
         $customer = $this->findOrFail($customerId);
         $customer->additionalContactInfo()->create($data);
+
         return $customer;
     }
 }
