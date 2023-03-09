@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\QuoteViewCount;
 use App\Models\Tier;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
@@ -922,7 +923,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'advisor_id'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id'];
 
         return $searchProperties;
     }
@@ -1390,5 +1391,30 @@ class CarQuoteService extends BaseService
         $pdfName = 'InsuranceMarket.ae™ Motor Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
+    }
+
+    public function addOrUpdateQuoteViewCount($record)
+    {
+        if ($record->advisor_id != null && $record->advisor_id == Auth::user()->id) {
+            // Search for an existing record with the same quote_id and user_id
+            $quoteViewCount = QuoteViewCount::where('quote_id', $record->id)
+            ->where('user_id', Auth::user()->id)
+            ->first();
+
+            if ($quoteViewCount) {
+                // If the record exists, increment its visit_count
+                info('Quote view count record found for lead : '.$record->code);
+                $quoteViewCount->increment('visit_count');
+            } else {
+                info('Quote view count record not found for lead : '.$record->code);
+                // If the record does not exist, create a new one
+                QuoteViewCount::create([
+                    'quote_id' => $record->id,
+                    'quote_type_id' => 1,
+                    'user_id' => Auth::user()->id,
+                    'visit_count' => 1,
+                ]);
+            }
+        }
     }
 }

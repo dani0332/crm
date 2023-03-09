@@ -133,12 +133,7 @@ class DashboardService extends BaseService
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')  THEN 1 ELSE 0 END) as created_sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::AfiaRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id not in (
-                '.QuoteStatusEnum::NewLead.','.QuoteStatusEnum::PriceTooHigh.','.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.','.QuoteStatusEnum::NotInterested.',
-                '.QuoteStatusEnum::NotEligibleForInsurance.','.QuoteStatusEnum::NotLookingForMotorInsurance.','.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::NotContactablePe.',
-                '.QuoteStatusEnum::FollowupCall.','.QuoteStatusEnum::Interested.','.QuoteStatusEnum::NoAnswer.','.QuoteStatusEnum::Quoted.','.QuoteStatusEnum::Duplicate.',
-                '.QuoteStatusEnum::Fake.','.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::AfiaRenewal.') THEN 1 ELSE 0 END) as others'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
             'quote_batches.name as name',
             'quote_batches.start_date as start_date',
             'quote_batches.start_date as end_date'

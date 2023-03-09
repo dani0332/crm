@@ -28,7 +28,8 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('LeadAllocation:cron')
             ->everyMinute()
-            ->onOneServer();
+            ->onOneServer()
+            ->withoutOverlapping(1);
 
         $schedule
             ->command('AddBatchNumber:cron')
