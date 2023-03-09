@@ -4,14 +4,14 @@ import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 import { useDateFormat, useClipboard } from '@vueuse/core';
 
 import { useNotifications } from '@indielayer/ui';
-import QuoteDocuments from "../PersonalQuote/Partials/QuoteDocuments";
-import LeadStatus from "../PersonalQuote/Partials/QuoteStatus";
-import QuoteStatus from "../PersonalQuote/Partials/QuoteStatus";
-import QuotePayments from "../PersonalQuote/Partials/QuotePayments";
-import QuoteActivities from "../PersonalQuote/Partials/QuoteActivities";
-import QuotePolicy from "../PersonalQuote/Partials/QuotePolicy";
-import LeadHistory from "../PersonalQuote/Partials/LeadHistory";
-import AdditionalContacts from "../PersonalQuote/Partials/AdditionalContacts";
+import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 
 defineProps({
   quote: Object,
@@ -31,7 +31,6 @@ defineProps({
 });
 
 const page = usePage();
-
 </script>
 
 <template>
@@ -277,9 +276,11 @@ const page = usePage();
       :quoteStatusEnum="quoteStatusesEnum"
     />
 
-    <AuditLogs :type="'App\\Models\\PersonalQuote'" :id="$page.props.quote.id" />
+    <AuditLogs
+      :type="'App\\Models\\PersonalQuote'"
+      :id="$page.props.quote.id"
+    />
 
     <LeadHistory :quote="$page.props.quote" />
-
   </div>
 </template>
