@@ -216,7 +216,7 @@ onMounted(() => {
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <Link :href="`/quotes/health/${uuid}`" class="text-primary-500 hover:underline">
+        <Link :href="`/medical/amt/${uuid}`" class="text-primary-500 hover:underline">
           {{ code }}
         </Link>
       </template>

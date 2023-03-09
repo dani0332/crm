@@ -2,27 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use DB;
+use Auth;
+use DataTables;
+use Carbon\Carbon;
+use App\Models\User;
+use App\Enums\QuoteTypeId;
+use App\Models\QuoteStatus;
+use App\Enums\quoteTypeCode;
+use Illuminate\Http\Request;
+use App\Models\BusinessQuote;
+use App\Services\CRUDService;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Models\BusinessInsuranceType;
-use App\Models\BusinessQuote;
-use App\Models\GroupMedicalType;
-use App\Models\QuoteStatus;
-use App\Models\User;
-use App\Services\ActivitiesService;
-use App\Services\BusinessQuoteService;
-use App\Services\CRUDService;
-use App\Services\CustomerService;
-use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Enums\PaymentStatusEnum;
+use App\Models\GroupMedicalType;
+use App\Services\CustomerService;
+use App\Services\ActivitiesService;
+use App\Models\BusinessInsuranceType;
+use App\Services\BusinessQuoteService;
+use App\Services\DropdownSourceService;
 use App\Traits\RolePermissionConditions;
-use Auth;
-use Carbon\Carbon;
-use DataTables;
-use DB;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
 
 class AMTController extends Controller
@@ -239,16 +240,15 @@ class AMTController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param $uuid
+     * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($id)
     {
         $quoteType = 'business';
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
         $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
+        $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
         $leadStatuses = $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
         $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
         $lostReasons = DB::table('lost_reasons')
@@ -284,29 +284,36 @@ class AMTController extends Controller
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $tiers = $this->lookupService->getTierR();
 
-        return view('amt.show', compact(
-            'businessInsuranceType',
-            'record',
-            'selectedLeadStatus',
-            'advisors',
-            'assignedUserName',
-            'assignedGMType',
-            'leadStatuses',
-            'lostReasons',
-            'selectedLostReasonId',
-            'quoteType',
-            'allowedDuplicateLOB',
-            'customerAdditionalContacts',
-            'quoteTypeId',
-            'tiers'
-        ));
+
+        return inertia('GroupMedicalQuote/Show', [
+            'genderOptions' => $this->crudService->getGenderOptions(),
+            'quote' => $record,
+            'quoteDetails' => $quoteDetails,
+            'selectedLeadStatus' => $selectedLeadStatus,
+            'businessInsuranceType' => $businessInsuranceType,
+            'advisors' => $advisors,
+            'assignedUserName' => $assignedUserName,
+            'assignedGMType' => $assignedGMType,
+            'leadStatuses' => $leadStatuses,
+            'lostReasons' => $lostReasons,
+            'selectedLostReasonId' => $selectedLostReasonId,
+            'quoteType' => $quoteType,
+            'allowedDuplicateLOB' => $allowedDuplicateLOB,
+            'customerAdditionalContacts' => $customerAdditionalContacts,
+            'quoteTypeId' => $quoteTypeId,
+            'tiers' => $tiers,
+            'enums' => [
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            ],
+        ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \\Inertia\Response|\Inertia\ResponseFactory
      */
     public function edit($id)
     {
@@ -316,12 +323,18 @@ class AMTController extends Controller
         $GMType = DB::table('business_quote_request')
             ->join('group_medical_types as gmt', 'business_quote_request.group_medical_type_id', '=', 'gmt.id')
             ->where('business_quote_request.uuid', $id)
-            ->select('gmt.text as text')
+            ->select('gmt.text as text', 'gmt.id as id' )
             ->first();
         $selectedGmType = '';
         if (! is_null($GMType)) {
-            $selectedGmType = $GMType->text;
+            $selectedGmType = $GMType->id;
         }
+        return inertia('GroupMedicalQuote/Edit', [
+            'businessInsuranceType' => $businessInsuranceType,
+            'quote' => $record,
+            'gmTypes' => $gmTypes,
+            'selectedGmType' => $selectedGmType,
+        ]);
 
         return view('amt.edit', compact('businessInsuranceType', 'record', 'gmTypes', 'selectedGmType'));
     }
