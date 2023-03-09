@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Events\CarQuoteUpdated;
 use App\Jobs\FTCMailServiceJob;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

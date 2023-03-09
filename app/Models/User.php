@@ -257,9 +257,10 @@ class User extends Authenticatable implements AuditableContract
 
     public function getUserEmailOrDefault()
     {
-        if(auth()->user() && auth()->user()->email)
+        if (auth()->user() && auth()->user()->email) {
             return auth()->user()->email;
-        else
+        } else {
             return User::where('name', 'System User')->first()->email;
+        }
     }
 }
