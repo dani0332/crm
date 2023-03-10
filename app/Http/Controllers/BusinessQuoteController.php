@@ -21,6 +21,8 @@ use App\Services\LookupService;
 use App\Enums\PaymentStatusEnum;
 use App\Models\GroupMedicalType;
 use App\Enums\GenericRequestEnum;
+use App\Http\Requests\StoreBusinessQuoteRequest;
+use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Services\CustomerService;
 use App\Services\ActivitiesService;
 use App\Models\BusinessInsuranceType;
@@ -78,17 +80,25 @@ class BusinessQuoteController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Display a listing of the resource.
      *
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
-    public function create()
+    public function create(Request $request)
     {
-        $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
+        $isRenewalUser = auth()->user()->isRenewalUser();
 
-        return inertia('GroupMedicalQuote/Create', [
-            'businessInsuranceType' => $businessInsuranceType,
+        $renewalAdvisors = $this->businessQuoteService->getRenewalAdvisors();
+        $this->businessQuoteService->fillData();
+        $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+
+        $model = $this->genericModel;
+
+        return inertia('CorpLineQuote/Create', [
             'quote' => new BusinessQuote(),
+            'dropdownSource' => $dropdownSource,
+            'renewalAdvisors' => $renewalAdvisors ?? [],
+            'isRenewalUser' => $isRenewalUser,
         ]);
     }
 
@@ -97,28 +107,11 @@ class BusinessQuoteController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreBusinessQuoteRequest $request)
     {
-        $this->validate($request, [
-            'first_name' => 'required|max:150',
-            'last_name' => 'required|max:150',
-            'email' => 'required|email:rfc,dns|max:150',
-            'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
-            'business_type_of_insurance_id' => 'required',
-            'company_name' => 'required|max:150',
-            'number_of_employees' => 'required',
-            'brief_details' => 'required',
-        ]);
         $record = $this->businessQuoteService->saveBusinessQuote($request);
-        if (isset($record->message) && str_contains($record->message, 'Error')) {
-            return Redirect::back()->with('message', $record->message)->withInput();
-        } else {
-            if (! isset($record->quoteUID)) {
-                return redirect('medical/amt')->with('success', 'Lead has been stored');
-            } else {
-                return redirect('medical/amt/'.$record->quoteUID)->with('success', 'Lead has been stored');
-            }
-        }
+
+        redirect('/quotes/business')->with('message', 'Record created successfully');
     }
 
     /**
@@ -199,36 +192,9 @@ class BusinessQuoteController extends Controller
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-        $fieldsToUpdate = $this->businessQuoteService->getFieldsToUpdate('skipProperties');
-        $customTitles = [];
-        foreach ($fieldsToUpdate as $property => $value) {
-            if (str_contains($value, 'title')) {
-                $customTitles[$property] = $this->crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
-            } else {
-                $customTitles[$property] = ucwords(str_replace('_', ' ', $property));
-            }
-        }
 
-        $fields = [];
-        foreach ($fieldsToUpdate as $property => $value) {
-            $value = array_diff(explode('|', $value), ['title']);
-            $type = $value[0] == 'select' ? 'select' : $value[1] ?? 'text';
-            $fields[$property] = [
-                'type' => $type,
-                'required' => in_array('required', $value),
-                'readonly' => in_array('readonly', $value),
-                'disabled' => in_array('disabled', $value),
-                'value' => $record->$property ?? '',
-                'label' => $customTitles[$property],
-                'options' => $dropdownSource[$property] ?? [],
-            ];
-        }
-        $fields['email']['disabled'] = true;
-        $fields['mobile_no']['disabled'] = true;
-        
         return inertia('CorpLineQuote/Edit', [
             'quote' => $record,
-            'fields' => $fields,
             'modelType' => $this->genericModel->modelType,
             'dropdownSource' => $dropdownSource,
             'leadStatuses' => $dropdownSource['quote_status_id'],
@@ -246,40 +212,23 @@ class BusinessQuoteController extends Controller
             ],
         ]);
 
-        // return view('amt.edit', compact('businessInsuranceType', 'record', 'gmTypes', 'selectedGmType'));
     }
 
     /**
      * Update the specified resource in storage.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+
+    public function update(UpdateBusinessQuoteRequest $request, $id)
     {
-        $this->validate($request, [
-            'first_name' => 'required|max:150',
-            'last_name' => 'required|max:150',
-            'business_type_of_insurance_id' => 'required',
-            'company_name' => 'required|max:150',
-            'number_of_employees' => 'required',
-            'brief_details' => 'required',
-            'group_medical_type_id' => 'required',
-            'premium' => 'required',
-        ]);
+        $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
+
         $this->crudService->updateModelByType('business', $request, $id);
 
-        return redirect('medical/amt/'.$id)->with('success', 'Lead has been updated');
+        return redirect('/quotes/business/' . $id)->with('success',  'Business quote has been updated');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
 }

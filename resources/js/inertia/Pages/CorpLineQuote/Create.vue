@@ -4,26 +4,14 @@ import { Head, router, useForm, Link } from '@inertiajs/vue3';
 import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 const props = defineProps({
-  businessInsuranceType: Object,
   quote: Object,
-});
-
-const genderSelect = computed(() => {
-  return Object.keys(props.genderOptions).map(status => ({
-    value: status,
-    label: props.genderOptions[status],
-  }));
-});
-
-const formFields = computed(() => {
-  return Object.keys(props.fields).map(field => ({
-    value: field,
-    label: props.fields[field].label,
-  }));
+  dropdownSource: Object,
+  model: String,
 });
 
 const quoteForm = useForm({
   modelType: '"Business"',
+  gender: '',
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
   email: props.quote.email,
@@ -32,6 +20,7 @@ const quoteForm = useForm({
   company_name: props.quote.company_name,
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
+  group_medical_type_id: props.selectedGmType,
   brief_details: props.quote.brief_details,
 });
 
@@ -46,11 +35,39 @@ const rules = {
 
 const isEmptyField = ref(false);
 
+//businessInsuranceTypeOptions
+
+const businessInsuranceTypeOptions = computed(() => {
+  return Object.keys(props.dropdownSource.business_type_of_insurance_id).map(
+    status => ({
+      value: props.dropdownSource.business_type_of_insurance_id[status].id,
+      label: props.dropdownSource.business_type_of_insurance_id[status].text,
+    }),
+  );
+});
+
+// genderOptions
+
+const genderOptions = [
+  {
+    value: 'Male',
+    label: 'Male',
+  },
+  {
+    value: 'FS',
+    label: 'Female-Single',
+  },
+  {
+    value: 'FM',
+    label: 'Female-Married',
+  },
+];
+
 function onSubmit(isValid) {
   if (isValid) {
-    quoteForm.post('/medical/amt', {
+    quoteForm.post(`/quotes/business/`, {
       onSuccess: () => {
-        router.get('/medical/amt');
+        router.get(`/quotes/business/`);
       },
     });
   }
@@ -59,14 +76,11 @@ function onSubmit(isValid) {
 
 <template>
   <div>
-    <Head title="Edit Group Medical" />
+    <Head title="Edit Quote" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Edit Group Medical Lead</h2>
+      <h2 class="text-xl font-semibold">Create Business Quote Lead</h2>
       <div class="space-x-4">
-        <Link :href="`/medical/amt/${props.quote.uuid}`">
-          <x-button size="sm" tag="div"> View </x-button>
-        </Link>
-        <Link href="/medical/amt">
+        <Link href="/quotes/business">
           <x-button size="sm" color="#ff5e00" tag="div"> Quotes List </x-button>
         </Link>
       </div>
@@ -131,15 +145,19 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.business_type_of_insurance_id"
           label="Business Insurance Type"
-          :options="
-            businessInsuranceType.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
+          :options="businessInsuranceTypeOptions"
           :rules="[rules.isRequired]"
           class="w-full"
           :errors="quoteForm.errors.business_type_of_insurance_id"
+        />
+
+        <x-select
+          v-model="quoteForm.gender"
+          label="Gender"
+          :options="genderOptions"
+          :rules="[rules.isRequired]"
+          class="w-full"
+          :errors="quoteForm.errors.gender"
         />
 
         <x-input
