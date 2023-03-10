@@ -8,10 +8,12 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class PersonalQuote extends Model
+class PersonalQuote extends Model implements AuditableContract
 {
-    use HasFactory, FilterCriteria;
+    use HasFactory, FilterCriteria, Auditable;
 
     protected $appends = ['dob_formatted'];
     protected $guarded = [];
@@ -62,7 +64,7 @@ class PersonalQuote extends Model
     }
 
     /**
-     * bike quote request relation
+     * bike quote request relation.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
@@ -80,6 +82,15 @@ class PersonalQuote extends Model
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function yachtQuote()
+    {
+        return $this->hasOne(YachtQuote::class);
+    }
+
+    /**
+     * @param $date
      * @return string
      */
     public function getCreatedAtAttribute($date)
@@ -157,7 +168,7 @@ class PersonalQuote extends Model
     }
 
     /**
-     * get data by personal quote type
+     * get data by personal quote type.
      *
      * @return mixed
      */
@@ -198,5 +209,13 @@ class PersonalQuote extends Model
     public function currentlyInsuredWith()
     {
         return $this->belongsTo(InsuranceProvider::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 }

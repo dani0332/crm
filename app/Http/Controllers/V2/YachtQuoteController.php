@@ -8,10 +8,8 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
-use App\Http\Requests\CycleQuoteRequest;
+use App\Http\Requests\YachtQuoteRequest;
 use App\Repositories\ActivityRepository;
-use App\Repositories\BikeQuoteRepository;
-use App\Repositories\CycleQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
@@ -19,19 +17,20 @@ use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Repositories\YachtQuoteRepository;
 
-class CycleQuoteController extends Controller
+class YachtQuoteController extends Controller
 {
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function index()
     {
-        $personalQuotes = CycleQuoteRepository::getData();
+        $personalQuotes = YachtQuoteRepository::getData();
 
-        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
+        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
 
-        return inertia('CycleQuote/Index', [
+        return inertia('YachtQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
         ]);
@@ -42,9 +41,7 @@ class CycleQuoteController extends Controller
      */
     public function create()
     {
-        $data = BikeQuoteRepository::getFormOptions();
-
-        return inertia('CycleQuote/Form', $data);
+        return inertia('YachtQuote/Form');
     }
 
     /**
@@ -52,57 +49,41 @@ class CycleQuoteController extends Controller
      * @param  BikeQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(CycleQuoteRequest $request)
+    public function store(YachtQuoteRequest $request)
     {
-        $response = CycleQuoteRepository::create($request->validated());
+        $response = YachtQuoteRepository::create($request->validated());
 
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Quote created successfully');
+        return back()->with('message', 'Yacht quote created successfully');
     }
 
     /**
+     * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function edit($uuid)
     {
-        $data = CycleQuoteRepository::getFormOptions();
+        $quote = YachtQuoteRepository::getBy('uuid', $uuid);
 
-        $quote = CycleQuoteRepository::getBy('uuid', $uuid);
-
-        return inertia('CycleQuote/Form', array_merge($data, [
-            'quote' => $quote,
-        ])
-        );
+        return inertia('YachtQuote/Form', ['quote' => $quote]);
     }
 
     /**
-     * @param $quoteTypeCode
-     * @param $quoteId
-     * @param  BikeQuoteRequest  $request
-     * @return void
-     */
-    public function update($uuid, CycleQuoteRequest $request)
-    {
-        CycleQuoteRepository::update($uuid, $request->validated());
-
-        return back()->with('message', 'Quote updated successfully');
-    }
-
-    /**
+     * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($uuid)
     {
-        $quote = CycleQuoteRepository::getBy('uuid', $uuid);
+        $quote = YachtQuoteRepository::getBy('uuid', $uuid);
 
-        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
+        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
 
         $quote->load('documents.createdBy');
 
-        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
         $insuranceProviders = InsuranceProviderRepository::getList();
@@ -110,14 +91,14 @@ class CycleQuoteController extends Controller
         $advisors = UserRepository::getPersonalQuoteAdvisors();
 
         $activities = ActivityRepository::where([
-            'quote_type_id' => QuoteTypes::CYCLE->id(),
+            'quote_type_id' => QuoteTypes::YACHT->id(),
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        return inertia('CycleQuote/Show', [
-            'quoteType' => QuoteTypes::CYCLE,
+        return inertia('YachtQuote/Show', [
+            'quoteType' => QuoteTypes::YACHT,
             'quote' => $quote,
             'activities' => $activities,
             'lostReasons' => $lostReasons,
@@ -137,5 +118,18 @@ class CycleQuoteController extends Controller
                 'isPA' => auth()->user()->hasRole(RolesEnum::PA),
             ],
         ]);
+    }
+
+    /**
+     * @param $quoteTypeCode
+     * @param $quoteId
+     * @param  BikeQuoteRequest  $request
+     * @return void
+     */
+    public function update($uuid, YachtQuoteRequest $request)
+    {
+        YachtQuoteRepository::update($uuid, $request->validated());
+
+        return back()->with('message', 'Quote updated successfully');
     }
 }
