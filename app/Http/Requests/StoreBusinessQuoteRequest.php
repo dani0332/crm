@@ -46,7 +46,7 @@ class StoreBusinessQuoteRequest extends FormRequest
             }
             $rules[$key] = $rule;
         }
-        
+
         return $rules;
     }
 }

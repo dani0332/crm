@@ -21,7 +21,6 @@ use App\Services\LookupService;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
-use DataTables;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;

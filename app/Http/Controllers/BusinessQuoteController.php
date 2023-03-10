@@ -2,34 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use DB;
-use Auth;
-use DataTables;
-use Carbon\Carbon;
-use App\Models\User;
-use App\Enums\RolesEnum;
-use App\Enums\QuoteTypeId;
-use App\Models\QuoteStatus;
-use App\Enums\quoteTypeCode;
-use Illuminate\Http\Request;
-use App\Models\BusinessQuote;
-use App\Services\CRUDService;
-use App\Enums\PermissionsEnum;
-use App\Enums\quoteStatusCode;
-use App\Enums\QuoteStatusEnum;
-use App\Services\LookupService;
-use App\Enums\PaymentStatusEnum;
-use App\Models\GroupMedicalType;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
-use App\Services\CustomerService;
-use App\Services\ActivitiesService;
-use App\Models\BusinessInsuranceType;
+use App\Models\BusinessQuote;
 use App\Services\BusinessQuoteService;
-use App\Services\DropdownSourceService;
+use App\Services\CRUDService;
+use App\Services\LookupService;
 use App\Traits\RolePermissionConditions;
-use Illuminate\Support\Facades\Redirect;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class BusinessQuoteController extends Controller
 {
@@ -64,6 +52,7 @@ class BusinessQuoteController extends Controller
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $gridData = $this->businessQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
+
         return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource'));
     }
 
@@ -130,7 +119,6 @@ class BusinessQuoteController extends Controller
         $renewalAdvisors = $this->businessQuoteService->getRenewalAdvisors();
         $this->businessQuoteService->fillData();
 
-
         $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
         $isQuoteDocumentEnabled = $this->businessQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
         $quoteDocuments = $this->businessQuoteService->getQuoteDocuments($this->genericModel->modelType, $record->id);
@@ -141,7 +129,7 @@ class BusinessQuoteController extends Controller
         $activities = $this->businessQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->businessQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         return inertia('CorpLineQuote/Show', [
             'quote' => $record,
@@ -166,7 +154,7 @@ class BusinessQuoteController extends Controller
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
-                'notProductionApproval' => !auth()->user()->hasRole(RolesEnum::PA),
+                'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 'displaySendPolicyButton' => $displaySendPolicyButton,
                 'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
@@ -203,7 +191,7 @@ class BusinessQuoteController extends Controller
             'isAdmin' => auth()->user()->isAdmin(),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
-                'notProductionApproval' => !auth()->user()->hasRole(RolesEnum::PA),
+                'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
             ],
             'enums' => [
@@ -211,7 +199,6 @@ class BusinessQuoteController extends Controller
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
         ]);
-
     }
 
     /**
@@ -221,14 +208,12 @@ class BusinessQuoteController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-
     public function update(UpdateBusinessQuoteRequest $request, $id)
     {
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
         $this->crudService->updateModelByType('business', $request, $id);
 
-        return redirect('/quotes/business/' . $id)->with('success',  'Business quote has been updated');
+        return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
     }
-
 }
