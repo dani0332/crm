@@ -97,7 +97,7 @@ class BikeQuoteRepository extends BaseRepository
                 $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);
             }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-            }, 'createdBy', 'updatedBy'])->firstOrFail();
+            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo'])->firstOrFail();
     }
 
     /**

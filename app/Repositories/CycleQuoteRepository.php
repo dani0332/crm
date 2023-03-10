@@ -37,7 +37,7 @@ class CycleQuoteRepository extends BaseRepository
             'hasAccident' => boolval($data['has_accident']),
             'hasGoodCondition' => boolval($data['has_good_condition']),
             'assetValue' => $data['asset_value'],
-            'yearOfManufactureId' => strval($data['year_of_manufacture']),
+            'yearOfManufactureId' => strval($data['year_of_manufacture_id']),
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
