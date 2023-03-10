@@ -12,7 +12,6 @@ use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
-use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -239,7 +238,7 @@ class CRUDService extends BaseService
         } else {
             $entity->quote_status_id = $request->leadStatus;
         }
-        if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
+        if ($request->leadStatus == QuoteStatusEnum::Qualified && auth()->user()->isHealthWcuAdvisor()) {
             $entity->wcu_id = null;
         }
         if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
