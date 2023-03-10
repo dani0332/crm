@@ -78,6 +78,10 @@ class PersonalQuote extends Model
     {
         return $this->hasOne(CycleQuote::class);
     }
+    public function petQuote()
+    {
+        return $this->hasOne(PetQuote::class);
+    }
 
     /**
      * @param $date

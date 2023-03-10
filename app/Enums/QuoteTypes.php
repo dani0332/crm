@@ -6,6 +6,7 @@ enum QuoteTypes: string
 {
     case BIKE = 'Bike';
     case CYCLE = 'Cycle';
+    case PET = 'Pet';
 
     /**
      * @return string
@@ -23,7 +24,8 @@ enum QuoteTypes: string
     {
         return match ($value) {
             QuoteTypes::BIKE => 6,
-            QuoteTypes::CYCLE => 10
+            QuoteTypes::CYCLE => 10,
+            QuoteTypes::PET => 9
         };
     }
 }
