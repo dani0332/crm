@@ -64,6 +64,7 @@ use App\Http\Controllers\V2\BikeQuoteController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
+use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
@@ -263,7 +264,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
+    Route::post('customers/{id}/additional-contacts', [\App\Http\Controllers\V2\CustomerController::class, 'storeAdditionalContact']);
+
     Route::group(['prefix' => 'personal-quotes'], function () {
+        Route::get('{quoteId}/audit-history', [PersonalQuoteController::class, 'getAuditHistory']);
         Route::patch('{quoteId}/update-policy-details', [PersonalQuoteController::class, 'updatePolicyDetails']);
         Route::patch('{quoteType}/{quoteId}/update-status', [PersonalQuoteController::class, 'updateStatus']);
         Route::post('{quoteId}/documents', [PersonalQuoteController::class, 'uploadDocument']);
@@ -272,6 +276,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::resource('bike', BikeQuoteController::class);
         Route::resource('cycle', CycleQuoteController::class);
+        Route::resource('yacht', YachtQuoteController::class);
     });
 
     Route::group(['prefix' => 'generic'], function () {

@@ -14,7 +14,6 @@ use App\Services\LifeQuoteService;
 use App\Services\LookupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Inertia\ResponseFactory;
 
 class LifeController extends Controller
@@ -280,5 +279,4 @@ class LifeController extends Controller
 
         return redirect('/quotes/life'.'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
     }
-
 }

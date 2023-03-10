@@ -7,30 +7,20 @@ import { useNotifications } from '@indielayer/ui';
 const notification = useNotifications('toast');
 
 const props = defineProps({
-  genderOptions: Object,
-  nationalities: Object,
-  uaeLicenses: Object,
-  insuranceProviders: Object,
-  yearOfManufacture: Object,
-  dropdownSource: Object,
-  model: String,
   quote: { type: Object, default: null },
 });
 
 const quoteForm = useForm({
-  model: props.model,
   first_name: props.quote?.first_name || '',
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
-  cycle_make: props.quote?.cycle_quote?.cycle_make || '',
-  cycle_model: props.quote?.cycle_quote?.cycle_model || '',
-  accessories: props.quote?.cycle_quote?.accessories || '',
+  boat_details: props.quote?.yacht_quote?.boat_details || '',
+  engine_details: props.quote?.yacht_quote?.engine_details || '',
+  claim_experience: props.quote?.yacht_quote?.claim_experience || '',
   asset_value: props.quote?.asset_value || null,
-  year_of_manufacture_id:
-    props.quote?.cycle_quote?.year_of_manufacture_id || null,
-  has_accident: String(props.quote?.cycle_quote?.has_accident) || null,
-  has_good_condition: String(props.quote?.cycle_quote?.has_good_condition) || null,
+  use: props.quote?.yacht_quote?.use || '',
+  operator_experience: props.quote?.yacht_quote?.operator_experience || '',
 });
 
 const rules = {
@@ -44,8 +34,9 @@ const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
   if (isValid) {
+    quoteForm.clearErrors();
     let method = 'post';
-    let url = `/personal-quotes/cycle/`;
+    let url = `/personal-quotes/yacht/`;
     if (props.quote) {
       method = 'put';
       url = url + props.quote.uuid;
@@ -55,7 +46,6 @@ function onSubmit(isValid) {
       onError: errors => {
         console.log(quoteForm.setError(errors));
       },
-
       onSuccess: () => {
         notification.success({
           title: 'Quote saved successfully',
@@ -63,7 +53,7 @@ function onSubmit(isValid) {
         });
 
         setTimeout(function () {
-          router.get(`/personal-quotes/cycle`);
+          router.get(`/personal-quotes/yacht`);
         }, 500);
       },
     });
@@ -73,14 +63,14 @@ function onSubmit(isValid) {
 
 <template>
   <div>
-    <Head title="Cycle Quote" />
+    <Head title="Yacht Quote" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
-        Cycle Quote <span v-if="quote">{{ quote?.uuid }}</span>
+        Yacht Quote <span v-if="quote">{{ quote?.uuid }}</span>
       </h2>
       <div>
-        <Link href="/personal-quotes/cycle">
-          <x-button size="sm" color="#ff5e00"> Cycle Quotes List </x-button>
+        <Link href="/personal-quotes/bike">
+          <x-button size="sm" color="#ff5e00"> Yacht Quotes List </x-button>
         </Link>
       </div>
     </div>
@@ -128,108 +118,58 @@ function onSubmit(isValid) {
         />
 
         <x-input
-          v-model="quoteForm.cycle_make"
+          v-model="quoteForm.boat_details"
           type="text"
-          label="Cycle Make*"
+          label="Boat Details*"
           :rules="[rules.isRequired]"
           class="w-full"
-          :error="quoteForm.errors.cycle_make"
+          :error="quoteForm.errors.boat_details"
         />
 
         <x-input
-          v-model="quoteForm.cycle_model"
+          v-model="quoteForm.engine_details"
           type="text"
-          label="Cycle Model*"
+          label="Engine Details*"
           :rules="[rules.isRequired]"
           class="w-full"
-          :error="quoteForm.errors.cycle_model"
+          :error="quoteForm.errors.engine_details"
         />
 
-        <x-select
-          v-model="quoteForm.year_of_manufacture_id"
-          label="Year of manufacture*"
+        <x-input
+          v-model="quoteForm.claim_experience"
+          type="text"
+          label="Claim Experience*"
           :rules="[rules.isRequired]"
-          :options="
-            yearOfManufacture.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
           class="w-full"
-          :error="quoteForm.errors.year_of_manufacture_id"
+          :error="quoteForm.errors.claim_experience"
         />
 
         <x-input
           v-model="quoteForm.asset_value"
           type="number"
-          label="Purchased value(AED)*"
+          label="Bike value(AED)*"
           :rules="[rules.isRequired]"
           class="w-full"
           :error="quoteForm.errors.asset_value"
         />
 
         <x-input
-          v-model="quoteForm.accessories"
+          v-model="quoteForm.use"
           type="text"
-          label="Accessories*"
+          label="Use*"
           :rules="[rules.isRequired]"
           class="w-full"
-          :error="quoteForm.errors.accessories"
+          :error="quoteForm.errors.use"
         />
 
-        <div class="px-2 w-full">
-          <div class="mb-2">
-            <label
-              for="entry"
-              class="block text-gray-700 text-sm font-semibold mb-3"
-            >
-              Have you had any accidents or injuries whilst cycling in the past
-              3 years in the UAE*
-            </label>
-            <div class="w-full">
-              <div class="grid grid-cols-4 gap-1">
-                <x-radio
-                  v-model="quoteForm.has_accident"
-                  value="1"
-                  label="Yes"
-                  :rules="[rules.isRequired]"
-                />
-                <x-radio
-                  v-model="quoteForm.has_accident"
-                  value="0"
-                  label="No"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="px-2 w-full">
-          <div class="mb-2">
-            <label
-              for="entry"
-              class="block text-gray-700 text-sm font-semibold mb-3"
-            >
-              Confirm that your bicycle is currently in good condition and there
-              is no existing damage*
-            </label>
-            <div class="w-full">
-              <div class="grid grid-cols-4 gap-1">
-                <x-radio
-                  v-model="quoteForm.has_good_condition"
-                  value="1"
-                  label="Yes"
-                  :rules="[rules.isRequired]"
-                />
-                <x-radio
-                  v-model="quoteForm.has_good_condition"
-                  value="0"
-                  label="No"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <x-input
+          v-model="quoteForm.operator_experience"
+          type="text"
+          label="Operator Experience*"
+          :rules="[rules.isRequired]"
+          class="w-full"
+          :error="quoteForm.errors.operator_experience"
+        />
       </div>
 
       <x-divider class="my-4" />

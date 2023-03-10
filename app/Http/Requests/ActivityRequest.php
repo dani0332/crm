@@ -24,9 +24,9 @@ class ActivityRequest extends FormRequest
     public function rules()
     {
         return [
-            'title' => 'required',
+            'title' => 'required|max:500',
             'due_date' => 'required',
-            'description' => 'nullable',
+            'description' => 'required',
             'assignee_id' => 'required',
             'quote_id' => 'required|exists:personal_quotes,id',
         ];
