@@ -89,7 +89,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         }
         if ($this->tiersFilter != '' && count($this->tiersFilter) > 0) {
             info('tiersFilter are : '.json_encode($this->tiersFilter));
-            $query->whereIn('car_quote_request.tier_is', $this->tiersFilter);
+            $query->whereIn('car_quote_request.tier_id', $this->tiersFilter);
         }
         if ($this->leadSourceFilter != '' && count($this->leadSourceFilter) > 0) {
             info('leadSourceFilter are : '.json_encode($this->leadSourceFilter));
