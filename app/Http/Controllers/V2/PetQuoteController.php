@@ -9,7 +9,6 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Repositories\ActivityRepository;
-use App\Repositories\CycleQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
@@ -18,7 +17,6 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
-use Illuminate\Http\Request;
 
 class PetQuoteController extends Controller
 {
@@ -45,7 +43,6 @@ class PetQuoteController extends Controller
      */
     public function create()
     {
-
         return inertia('PetQuote/Form');
     }
 
@@ -57,7 +54,6 @@ class PetQuoteController extends Controller
      */
     public function store(PetQuoteRequest $request)
     {
-
         $response = PetQuoteRepository::create($request);
 
         if (! empty($response->errors) || ! empty($response->msg)) {
@@ -75,7 +71,6 @@ class PetQuoteController extends Controller
      */
     public function show($uuid)
     {
-
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
@@ -89,7 +84,6 @@ class PetQuoteController extends Controller
         $insuranceProviders = InsuranceProviderRepository::getList();
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors();
-
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::PET->id(),
@@ -132,7 +126,7 @@ class PetQuoteController extends Controller
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
 //
 //        dd( $quote->toArray());
-        return inertia('PetQuote/Form',[ 'quote' => $quote]);
+        return inertia('PetQuote/Form', ['quote' => $quote]);
     }
 
     /**

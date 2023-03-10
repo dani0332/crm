@@ -1,33 +1,27 @@
 <?php
 
 namespace App\Repositories;
+
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
-use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Services\CapiRequestService;
 use App\Traits\AddPremiumAllLobs;
+use Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\URL;
-use Config;
-
 
 class PetQuoteRepository extends BaseRepository
 {
-
     use AddPremiumAllLobs;
     public function model()
     {
         return PersonalQuote::class;
     }
 
-
-
     public function fetchCreate($request)
     {
-
         $sourceName = Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
         $dataArr = [
@@ -80,15 +74,14 @@ class PetQuoteRepository extends BaseRepository
             $quoteData['updated_by_id'] = Auth::user()->id;
             $quote->update($quoteData);
 
-            $quote->petQuote->update(Arr::only($data, ['premium', 'policy_number', 'type_of_pet1','breed_of_pet1','age_of_pet1','is_neutered','is_microchipped','microchip_no','is_mixed_breed','has_injury','gender','ilivein_accommodation_type_id','iam_possesion_type_id']));
+            $quote->petQuote->update(Arr::only($data, ['premium', 'policy_number', 'type_of_pet1', 'breed_of_pet1', 'age_of_pet1', 'is_neutered', 'is_microchipped', 'microchip_no', 'is_mixed_breed', 'has_injury', 'gender', 'ilivein_accommodation_type_id', 'iam_possesion_type_id']));
 
             return $quote;
         });
     }
     public function fetchGetData()
     {
-
-        return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text','petQuote.possessionType:id,text','currentlyInsuredWith', 'advisor'])
+        return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'currentlyInsuredWith', 'advisor'])
             ->filter()
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
@@ -98,7 +91,7 @@ class PetQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeId(QuoteTypes::PET->id())
             ->where($column, $value)
-            ->with(['petQuote.accomodationType:id,text','petQuote.possessionType:id,text' ,'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
+            ->with(['petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
             }, 'createdBy', 'updatedBy'])->firstOrFail();
     }

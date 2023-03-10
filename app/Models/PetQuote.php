@@ -39,11 +39,13 @@ class PetQuote extends Model implements AuditableContract
         return $this->hasOne(PetQuoteRequestDetail::class, 'pet_quote_request_id', 'id');
     }
 
-    public function accomodationType(){
+    public function accomodationType()
+    {
         return $this->belongsTo(HomeAccomodationType::class, 'ilivein_accommodation_type_id', 'id');
     }
 
-    public function possessionType(){
+    public function possessionType()
+    {
         return $this->belongsTo(HomePossessionType::class, 'iam_possesion_type_id', 'id');
     }
 }

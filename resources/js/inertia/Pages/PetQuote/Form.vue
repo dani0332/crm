@@ -21,17 +21,18 @@ const quoteForm = useForm({
   type_of_pet1: props.quote?.pet_quote?.type_of_pet1 || '',
   breed_of_pet1: props.quote?.pet_quote?.breed_of_pet1 || '',
   age_of_pet1: props.quote?.pet_quote?.age_of_pet1 || '',
-  is_neutered: props.quote?.pet_quote?.is_neutered ? '1' : '0' || '',
-  is_microchipped: props.quote?.pet_quote?.is_microchipped ? '1' : '0' || '',
+  is_neutered: props.quote ? props.quote?.pet_quote?.is_neutered : null,
+  is_microchipped: props.quote ? props.quote?.pet_quote?.is_microchipped : null,
   microchip_no: props.quote?.pet_quote?.microchip_no || '',
-  is_mixed_breed: props.quote?.pet_quote?.is_mixed_breed ? '1' : '0' || '',
-  has_injury: props.quote?.pet_quote?.has_injury ? '1' : '0' || '',
+  is_mixed_breed: props.quote ? props.quote?.pet_quote?.is_mixed_breed : null,
+  has_injury: props.quote ? props.quote?.pet_quote?.has_injury : null,
   gender: props.quote?.pet_quote?.gender || '',
   ilivein_accommodation_type_id:
     props.quote?.pet_quote?.ilivein_accommodation_type_id || '',
   iam_possesion_type_id: props.quote?.pet_quote?.iam_possesion_type_id || '',
 });
 
+console.log('++++' + quoteForm.is_mixed_breed);
 const rules = {
   isEmail: v =>
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
@@ -169,8 +170,8 @@ function onSubmit(isValid) {
           v-model="quoteForm.is_neutered"
           label="IS NEUTERED"
           :options="[
-            { value: '1', label: 'Yes' },
-            { value: '0', label: 'No' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
           ]"
           class="w-full"
           :error="quoteForm.errors.is_neutered"
@@ -179,8 +180,8 @@ function onSubmit(isValid) {
           v-model="quoteForm.is_microchipped"
           label="IS MICROCHIPPED"
           :options="[
-            { value: '1', label: 'Yes' },
-            { value: '0', label: 'No' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
           ]"
           class="w-full"
           :error="quoteForm.errors.is_microchipped"
@@ -196,8 +197,8 @@ function onSubmit(isValid) {
           v-model="quoteForm.is_mixed_breed"
           label="IS MIXED BREED"
           :options="[
-            { value: '1', label: 'Yes' },
-            { value: '0', label: 'No' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
           ]"
           class="w-full"
           :error="quoteForm.errors.is_mixed_breed"
@@ -206,8 +207,8 @@ function onSubmit(isValid) {
           v-model="quoteForm.has_injury"
           label="HAS INJURY"
           :options="[
-            { value: '1', label: 'Yes' },
-            { value: '0', label: 'No' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
           ]"
           class="w-full"
           :error="quoteForm.errors.has_injury"
