@@ -128,6 +128,7 @@ use App\Enums\PermissionsEnum;
                             @endcan
                             <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
                             <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>
+                            <li><a href="{{ url('personal-quotes/yacht') }}">Yacht Quotes</a></li>
                         </ul>
                     </li>
                 </ul>
