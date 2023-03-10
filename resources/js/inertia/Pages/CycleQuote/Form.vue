@@ -29,8 +29,8 @@ const quoteForm = useForm({
   asset_value: props.quote?.asset_value || null,
   year_of_manufacture_id:
     props.quote?.cycle_quote?.year_of_manufacture_id || null,
-  has_accident: props.quote?.cycle_quote?.has_accident || null,
-  has_good_condition: props.quote?.cycle_quote?.has_good_condition || null,
+  has_accident: String(props.quote?.cycle_quote?.has_accident) || null,
+  has_good_condition: String(props.quote?.cycle_quote?.has_good_condition) || null,
 });
 
 const rules = {
