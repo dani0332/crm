@@ -9,10 +9,12 @@ defineProps({
   quote: Object,
   genderOptions: Object,
   assignedGMType: String,
-  allowedDuplicateLOB: Boolean,
+  allowedDuplicateLOB: Array,
   quoteDetails: Object,
   customerAdditionalContacts: Array,
   enums: Object,
+  activities: Array,
+  advisors: Array,
 });
 
 const page = usePage();
@@ -80,7 +82,7 @@ const onCreateDuplicate = isValid => {
     .then(res => {
       modals.duplicate = false;
       notification.success('Lead duplicated successfully');
-      router.visit('/medical/amt');
+      router.visit('/quotes/business');
     })
     .catch(err => {
       notification.error('Something went wrong');
@@ -138,6 +140,9 @@ const onLeadStatus = () => {
 // Lead History
 
 const historyData = ref(null),
+    activityActionEdit = ref(false),
+    assignLead = ref(null),
+  isDisabled = ref(false),
   historyLoading = ref(false);
 
 const onLoadHistoryData = async () => {
@@ -157,6 +162,131 @@ const historyDataTable = [
   { text: 'Lead Status', value: 'NewStatus' },
 ];
 
+//activities
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
+const activityTable = [
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Title', value: 'title' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Action', value: 'action' },
+];
+
+const activityForm = useForm({
+  entityUId: page.props.quote.uuid,
+  entityId: page.props.quote.id,
+  modelType: 'Business',
+  parentType: 'Business',
+  quoteType: 5,
+  title: null,
+  description: null,
+  due_date: null,
+  assignee_id: null,
+  status: null,
+  activity_id: null,
+  uuid: null,
+});
+
+const addActivity = () => {
+  activityForm.reset();
+  activityActionEdit.value = false;
+  modals.activity = true;
+};
+
+const onActivityStatusUpdate = id => {
+  activityForm.activity_id = id;
+  activityForm.post(`/activities/updateStatus`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Lead Activity Done',
+        position: 'top',
+      });
+    },
+  });
+};
+
+const activityEdit = data => {
+  activityActionEdit.value = true;
+  modals.activity = true;
+  activityForm.activity_id = data.id;
+  activityForm.uuid = data.uuid;
+  activityForm.title = data.title;
+  activityForm.description = data.description;
+  activityForm.due_date = data.due_date
+    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
+      'T' +
+      data.due_date.split(' ')[1]
+    : null;
+  activityForm.assignee_id = data.assignee_id;
+  activityForm.status = data.status;
+};
+
+const onActivitySubmit = isValid => {
+  if (!isValid) return;
+  if (activityActionEdit.value) {
+    activityForm.post(`/activities/${activityForm.uuid}/update`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Activity Updated',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.activity = false;
+      },
+    });
+  } else {
+    activityForm.post(`/activities/create-activity`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Activity Added',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.activity = false;
+      },
+    });
+  }
+};
+
+const activityDelete = id => {
+  modals.activityConfirm = true;
+  confirmDeleteData.activity = id;
+};
+
+const activityDeleteConfirmed = () => {
+  router.post(
+    `/activities/${confirmDeleteData.activity}/delete`,
+    {
+      isInertia: true,
+      quote_uuid: page.props.quote.uuid,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.error({
+          title: 'Activity Deleted',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.activityConfirm = false;
+      },
+    },
+  );
+};
 
 // additional contact
 
@@ -243,7 +373,7 @@ const additionalContactPrimaryConfirmed = () => {
       quote_id: page.props.quote.id,
       key: confirmData.contactPrimary.key,
       value: confirmData.contactPrimary.value,
-      quote_type: 'travel',
+      quote_type: 'Business',
     },
     {
       preserveScroll: true,
@@ -264,15 +394,47 @@ const additionalContactPrimaryConfirmed = () => {
   );
 };
 
-onMounted(() => {
-  console.log(page.props.quote);
-});
+
+const onAssignLead = () => {
+  if (!assignLead.value) {
+    notification.error({
+      title: 'Please select a lead',
+      position: 'top',
+    });
+    return;
+  }
+  router.post(
+    `/quotes/business/manualLeadAssign`,
+    {
+      modelType: 'Business',
+      entityId: page.props.quote.id,
+      assigned_to_id_new: assignLead.value,
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        isDisabled.value = true;
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Lead Assigned',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        isDisabled.value = false;
+      },
+    },
+  );
+};
+
+onMounted(() => {});
 </script>
 <template>
   <div>
-    <Head title="Group Medical Lead Detail" />
+    <Head title="Business Quote Detail" />
     <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+      <h2 class="text-xl font-semibold">Business Quote Detail</h2>
       <div class="flex gap-2">
         <x-button
           v-if="allowedDuplicateLOB"
@@ -283,9 +445,9 @@ onMounted(() => {
           Duplicate Lead
         </x-button>
 
-        <Link href="/medical/amt" preserve-scroll>
+        <Link href="/quotes/business" preserve-scroll>
           <x-button size="sm" color="primary" tag="div">
-            Group Medical List
+            Business Quote List
           </x-button>
         </Link>
 
@@ -324,6 +486,32 @@ onMounted(() => {
         </div>
       </x-form>
     </x-modal>
+
+    <x-divider class="my-4" />
+
+    <div class="p-4 rounded shadow mb-6 bg-primary-50/50">
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+        <div class="w-full md:w-1/2 flex gap-2 items-end">
+          <x-select
+            v-model="assignLead"
+            label="Assign Lead"
+            :options="advisorOptions"
+            placeholder="Select Lead"
+            class="w-auto flex-1"
+          />
+          <div>
+            <x-button
+              color="orange"
+              size="sm"
+              @click.prevent="onAssignLead"
+              :loading="isDisabled"
+            >
+              Assign
+            </x-button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <x-divider class="my-4" />
 
@@ -470,18 +658,8 @@ onMounted(() => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
-            <dd>Group Medical</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">BRIEF DETAILS</dt>
             <dd>{{ quote.brief_details }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">GROUP MEDICAL TYPE</dt>
-            <dd>{{ assignedGMType }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -503,7 +681,7 @@ onMounted(() => {
         <x-divider class="mb-4 mt-1" />
       </div>
 
-      <div class="mt-6 text-sm">
+      <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
@@ -519,8 +697,8 @@ onMounted(() => {
           </div>
         </dl>
       </div>
-      <x-divider class="mb-4 mt-1" />
-      <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+
+      <div class="mt-6 p-4 rounded shadow mb-6 bg-primary-50/25">
         <div>
           <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
           <x-divider class="mb-4 mt-1" />
@@ -587,6 +765,139 @@ onMounted(() => {
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="p-4 rounded shadow mb-6 bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Lead Activities
+            <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+          </h3>
+          <x-button size="sm" color="orange" @click.prevent="addActivity">
+            Add Activity
+          </x-button>
+        </div>
+        <x-divider class="my-4" />
+
+        <DataTable
+          table-class-name="compact"
+          :headers="activityTable"
+          :items="activities"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="activities.length < 15"
+        >
+          <template #item-status="{ status, id }">
+            <x-checkbox
+              color="emerald"
+              size="xl"
+              :modelValue="status === 1"
+              :disabled="status === 1"
+              @change="onActivityStatusUpdate(id)"
+            />
+          </template>
+          <template #item-action="item">
+            <div class="space-x-4">
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                :disabled="item.status === 1"
+                @click.prevent="activityEdit(item)"
+              >
+                Edit
+              </x-button>
+              <x-button
+                size="xs"
+                color="error"
+                :disabled="item.status === 1"
+                outlined
+                @click.prevent="activityDelete(item.id)"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
+        <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+          <template #header>
+            {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+          </template>
+
+          <x-form @submit="onActivitySubmit" :auto-focus="false">
+            <div class="grid gap-4">
+              <x-input
+                v-model="activityForm.title"
+                label="Title"
+                :rules="[rules.isRequired]"
+                class="w-full"
+              />
+
+              <x-textarea
+                v-model="activityForm.description"
+                label="Description"
+                :adjust-to-text="false"
+                class="w-full"
+              />
+
+              <x-select
+                v-model="activityForm.assignee_id"
+                label="Assignee"
+                :options="advisorOptions"
+                :rules="[rules.isRequired]"
+                placeholder="Select Assignee"
+                class="w-full"
+              />
+
+              <x-input
+                v-model="activityForm.due_date"
+                label="Due Date"
+                type="datetime-local"
+                :rules="[rules.isRequired]"
+                class="w-full"
+              />
+            </div>
+
+            <div class="text-right space-x-4 mt-12">
+              <x-button size="sm" @click.prevent="modals.activity = false">
+                Cancel
+              </x-button>
+
+              <x-button
+                size="sm"
+                color="emerald"
+                :loading="activityForm.processing"
+                type="submit"
+              >
+                {{ activityActionEdit ? 'Update' : 'Save' }}
+              </x-button>
+            </div>
+          </x-form>
+        </x-modal>
+        <x-modal v-model="modals.activityConfirm" show-close backdrop>
+          <template #header> Delete Activity </template>
+          <p>Are you sure you want to delete this activity?</p>
+          <template #actions>
+            <div class="text-right space-x-4">
+              <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.activityConfirm = false"
+              >
+                Cancel
+              </x-button>
+              <x-button
+                size="sm"
+                color="error"
+                :loading="activityForm.processing"
+                @click.prevent="activityDeleteConfirmed"
+              >
+                Delete
+              </x-button>
+            </div>
+          </template>
+        </x-modal>
       </div>
 
       <div class="p-4 rounded shadow mb-6 bg-white">
@@ -758,6 +1069,11 @@ onMounted(() => {
           :hide-footer="historyData.length < 15"
         />
       </div>
+
+      <AuditLogs
+        :type="'App\\Models\\BusinessQuote'"
+        :id="$page.props.quote.id"
+      />
     </div>
   </div>
 </template>

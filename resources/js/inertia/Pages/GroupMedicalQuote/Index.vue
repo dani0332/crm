@@ -13,6 +13,8 @@ defineProps({
 
 const page = usePage();
 
+const selectedItems = ref([])
+
 const loader = reactive({
   table: false,
   export: false,
@@ -113,7 +115,6 @@ function setQueryFilters() {
 
 onMounted(() => {
   setQueryFilters();
-  console.log(page.props.quotes.data);
 });
 </script>
 
@@ -205,7 +206,26 @@ onMounted(() => {
       </div>
     </x-form>
 
+    <Transition name="fade">
+      <div v-if="selectedItems.length > 0" class="mb-4">
+        <ExportExcel
+          :data="selectedItems"
+          :columns="tableHeader"
+          :filename="'Business-List'"
+          :sheetname="'Leads'"
+        >
+          <x-button size="sm" color="emerald">
+            Export -
+            <span class="lining-nums">
+              Selected: {{ selectedItems.length }}
+            </span>
+          </x-button>
+        </ExportExcel>
+      </div>
+    </Transition>
+
     <DataTable
+      v-model:items-selected="selectedItems"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"

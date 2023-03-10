@@ -1,34 +1,22 @@
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link } from '@inertiajs/vue3';
-import Pagination from '@/inertia/Components/Pagination.vue';
-import ExportExcel from '@/inertia/Components/ExportExcel.vue';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
+import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
+import { useNotifications } from '@indielayer/ui';
 
 defineProps({
   quotes: Object,
-  dropdownSource: Object,
+  dropdownSource: Array,
 });
 
-const rules = {
-  isRequired: v => !!v || 'This field is required',
-  created_at_end: v => {
-    if (filters.created_at && !v) {
-      return 'This field is required';
-    }
-    return true;
-  },
-  created_at: v => {
-    if (filters.created_at_end && !v) {
-      return 'This field is required';
-    }
-    return true;
-  },
-};
-
-const selectedItems = ref([]);
-
 const page = usePage();
+
+
+const selectedItems = ref([])
+
+const loader = reactive({
+  table: false,
+  export: false,
+});
 
 const filters = reactive({
   code: '',
@@ -36,18 +24,35 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at: '',
+  created_at_start: '',
   created_at_end: '',
-  quote_status_id: [],
-  advisor_id: [],
-  is_ecommerce: '',
-  payment_status_id: '',
+  quote_status_id: '',
+  advisor_id: '',
+  insurance_type: '',
   page: 1,
 });
 
-const loader = reactive({
-  table: false,
-  export: false,
+const leadStatusOptions = computed(() => {
+  return page.props.dropdownSource.quote_status_id.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
+});
+
+const advisorOptions = computed(() => {
+  return page.props.dropdownSource.advisor_id.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
+const insuranceTypeOptions = computed(() => {
+  return page.props.dropdownSource.business_type_of_insurance_id.map(
+    advisor => ({
+      value: advisor.id,
+      label: advisor.text,
+    }),
+  );
 });
 
 const tableHeader = [
@@ -56,46 +61,26 @@ const tableHeader = [
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
-  { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'SOURCE', value: 'source' },
   { text: 'PREMIUM', value: 'premium' },
+  { text: 'Company Name', value: 'company_name' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'DESTINATION', value: 'destination' },
-  { text: 'CURRENTLY LOCATED IN', value: '' },
-  { text: 'EXPIRY DATE', value: 'expiry_date' },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
+  { text: 'LOST REASON', value: 'lost_reason' },
+  {
+    text: 'BUSINESS INSURANCE TYPE',
+    value: 'business_type_of_insurance_id_text',
+  },
+  { text: 'NUMBER OF EMPLOYEES', value: 'number_of_employees' },
+  { text: 'SOURCE', value: 'source' },
+  { text: 'CREATED DATE', value: 'created_at' },
+  { text: 'Updated Date', value: 'updated_at' },
 ];
 
-const paymentStatusOptions = computed(() => {
-  return page.props.dropdownSource.payment_status_id.map(item => {
-    return {
-      value: item.id,
-      label: item.text,
-    };
-  });
-});
-
-const advisorsOptions = computed(() => {
-  return page.props.dropdownSource.advisor_id.map(item => {
-    return {
-      value: item.id,
-      label: item.name,
-    };
-  });
-});
-
-const leadsStatusOptions = computed(() => {
-  return page.props.dropdownSource.quote_status_id.map(item => {
-    return {
-      value: item.id,
-      label: item.text,
-    };
-  });
-});
+function resetFilters() {
+  for (const key in filters) {
+    filters[key] = '';
+  }
+  filterQuotes(true);
+}
 
 function filterQuotes(isValid) {
   if (!isValid) {
@@ -106,8 +91,7 @@ function filterQuotes(isValid) {
       delete filters[key];
     }
   }
-
-  router.visit('/quotes/travel', {
+  router.visit('/quotes/business', {
     method: 'get',
     data: {
       ...filters,
@@ -122,13 +106,6 @@ function filterQuotes(isValid) {
       loader.table = true;
     },
   });
-}
-
-function resetFilters() {
-  for (const key in filters) {
-    filters[key] = '';
-  }
-  filterQuotes(true);
 }
 
 function setQueryFilters() {
@@ -157,11 +134,11 @@ onMounted(() => {
 
 <template>
   <div>
-    <Head title="Travel List" />
+    <Head title="Business Quote List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/travel/create">
+        <Link href="/quotes/business/create">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
@@ -210,49 +187,36 @@ onMounted(() => {
           placeholder="Search by Mobile Number"
         />
         <DatePicker
-          v-model="filters.created_at"
+          v-model="filters.created_at_start"
           name="created_at_start"
           label="Created Date Start"
-          input-class="w-full"
         />
         <DatePicker
           v-model="filters.created_at_end"
           name="created_at_end"
           label="Created Date End"
-          input-class="w-full"
         />
 
-        <ComboBox
+        <x-select
           v-model="filters.quote_status_id"
           label="Lead Status"
           name="quote_status_id"
           placeholder="Search by Lead Status"
-          :options="leadsStatusOptions"
+          :options="leadStatusOptions"
         />
-        <ComboBox
+
+        <x-select
+          v-model="filters.insurance_type"
+          label="BUSINESS INSURANCE TYPE"
+          placeholder="INSURANCE TYPE"
+          :options="insuranceTypeOptions"
+        />
+
+        <x-select
           v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="advisorsOptions"
-        />
-        <x-select
-          v-model="filters.is_ecommerce"
-          label="Ecommerce"
-          placeholder="Search by Ecommerce"
-          :options="[
-            { value: '', label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          class="w-full"
-        />
-        <x-select
-          name="payment_status_id"
-          v-model="filters.payment_status_id"
-          label="PAYMENT STATUS"
-          placeholder="Search by Payment Status"
-          :options="paymentStatusOptions"
-          class="w-full"
+          :options="advisorOptions"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
@@ -268,7 +232,7 @@ onMounted(() => {
         <ExportExcel
           :data="selectedItems"
           :columns="tableHeader"
-          :filename="'Travel-List'"
+          :filename="'Business-List'"
           :sheetname="'Leads'"
         >
           <x-button size="sm" color="emerald">
@@ -283,7 +247,6 @@ onMounted(() => {
 
     <DataTable
       v-model:items-selected="selectedItems"
-      table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
       :items="quotes.data || []"
@@ -294,18 +257,21 @@ onMounted(() => {
     >
       <template #item-code="{ code, uuid }">
         <Link
-          :href="`/quotes/travel/${uuid}`"
+          :href="`/quotes/business/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
         </Link>
       </template>
-      <template #item-is_ecommerce="{ is_ecommerce }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
-            {{ is_ecommerce ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
+
+      <template #item-source="{ source }">
+        <a
+          :href="source && source.includes('http') ? source : '#'"
+          :target="source && source.includes('http') ? '_blank' : '_self'"
+          class="text-primary-500 hover:underline"
+        >
+          {{ source }}
+        </a>
       </template>
     </DataTable>
 

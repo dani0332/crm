@@ -5,22 +5,15 @@ import ComboBox from '@/inertia/Components/ComboBox.vue';
 
 const props = defineProps({
   quote: Object,
-  businessInsuranceType: Object,
-  gmTypes: Object,
-  selectedGmType: Object,
-});
-
-const genderSelect = computed(() => {
-  return Object.keys(props.genderOptions).map(status => ({
-    value: status,
-    label: props.genderOptions[status],
-  }));
+  dropdownSource: Object,
+  model: String,
 });
 
 
 
 const quoteForm = useForm({
   modelType: '"Business"',
+  gender: '',
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
   email: props.quote.email,
@@ -29,7 +22,7 @@ const quoteForm = useForm({
   company_name: props.quote.company_name,
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
-    group_medical_type_id: props.selectedGmType,
+  group_medical_type_id: props.selectedGmType,
   brief_details: props.quote.brief_details,
 });
 
@@ -38,17 +31,45 @@ const rules = {
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
     'E-mail must be valid',
   isRequired: v => !!v || 'This field is required',
-    isNumber: v => /^\d+$/.test(v) || 'This field must be a number',
-   isDecimal: v => /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal',
+  isNumber: v => /^\d+$/.test(v) || 'This field must be a number',
+  isDecimal: v => /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal',
 };
 
 const isEmptyField = ref(false);
 
+//businessInsuranceTypeOptions
+
+const businessInsuranceTypeOptions = computed(() => {
+  return Object.keys(props.dropdownSource.business_type_of_insurance_id).map(
+    status => ({
+      value: props.dropdownSource.business_type_of_insurance_id[status].id,
+      label: props.dropdownSource.business_type_of_insurance_id[status].text,
+    }),
+  );
+});
+
+// genderOptions
+
+const genderOptions = [
+    {
+        value: 'Male',
+        label: 'Male'
+    },
+    {
+        value: 'FS',
+        label: 'Female-Single'
+    },
+    {
+        value: 'FM',
+        label: 'Female-Married'
+    }
+];
+
 function onSubmit(isValid) {
   if (isValid) {
-    quoteForm.put(`/medical/amt/${props.quote.uuid}`, {
+    quoteForm.put(`/quotes/business/${props.quote.uuid}`, {
       onSuccess: () => {
-        router.get(`/medical/amt/${props.quote.uuid}`);
+        router.get(`/quotes/business/${props.quote.uuid}`);
       },
     });
   }
@@ -57,14 +78,14 @@ function onSubmit(isValid) {
 
 <template>
   <div>
-    <Head title="Edit Group Medical" />
+    <Head title="Edit Quote" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Edit Group Medical Lead</h2>
+      <h2 class="text-xl font-semibold">Edit Business Quote Lead</h2>
       <div class="space-x-4">
-        <Link :href="`/medical/amt/${props.quote.uuid}`">
+        <Link :href="`/quotes/business/${props.quote.uuid}`">
           <x-button size="sm" tag="div"> View </x-button>
         </Link>
-        <Link href="/medical/amt">
+        <Link href="/quotes/business">
           <x-button size="sm" color="#ff5e00" tag="div"> Quotes List </x-button>
         </Link>
       </div>
@@ -107,7 +128,7 @@ function onSubmit(isValid) {
           :rules="[rules.isRequired]"
           :disabled="true"
           class="w-full"
-            :errors="quoteForm.errors.mobile_no"
+          :errors="quoteForm.errors.mobile_no"
         />
 
         <x-input
@@ -125,34 +146,25 @@ function onSubmit(isValid) {
           label="Number Of Employees"
           :rules="[rules.isRequired, rules.isNumber]"
           class="w-full"
-            :errors="quoteForm.errors.number_of_employees"
+          :errors="quoteForm.errors.number_of_employees"
         />
 
         <x-select
           v-model="quoteForm.business_type_of_insurance_id"
           label="Business Insurance Type"
-          :options="
-            businessInsuranceType.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
+          :options="businessInsuranceTypeOptions"
           :rules="[rules.isRequired]"
           class="w-full"
           :errors="quoteForm.errors.business_type_of_insurance_id"
         />
+
         <x-select
-          v-model="quoteForm.group_medical_type_id"
-          label="Group Medical Type"
-          :options="
-            gmTypes.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
+          v-model="quoteForm.gender"
+          label="Gender"
+          :options="genderOptions"
           :rules="[rules.isRequired]"
           class="w-full"
-          :errors="quoteForm.errors.group_medical_type_id"
+          :errors="quoteForm.errors.gender"
         />
 
         <x-input
@@ -161,7 +173,7 @@ function onSubmit(isValid) {
           label="PREMIUM"
           :rules="[rules.isRequired, rules.isDecimal]"
           class="w-full"
-            :errors="quoteForm.errors.premium"
+          :errors="quoteForm.errors.premium"
         />
 
         <x-textarea
@@ -169,7 +181,7 @@ function onSubmit(isValid) {
           label="Brief Details"
           :rules="[rules.isRequired]"
           class="w-full"
-            :errors="quoteForm.errors.brief_details"
+          :errors="quoteForm.errors.brief_details"
         />
       </div>
       <x-divider class="my-4" />

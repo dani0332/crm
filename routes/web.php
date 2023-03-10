@@ -68,6 +68,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\BusinessQuoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -223,7 +224,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
-        Route::resource('business', CRUDController::class);
+        // Route::resource('business', CRUDController::class);
+        Route::resource('business', BusinessQuoteController::class);
         Route::resource('travel', CRUDController::class);
         Route::resource('pet', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
