@@ -45,7 +45,7 @@ class YachtQuoteRepository extends BaseRepository
             'createdById' => Auth::user()->id,
         ];
 
-        info('PetQuote data : '.json_encode($quoteData));
+        info('YachtQuote create data : '.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
     }
