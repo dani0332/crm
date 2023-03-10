@@ -11,6 +11,7 @@ class Activities extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
 
+    protected $guarded = [];
     protected $table = 'activities';
 
     public function getCreatedAtAttribute($date)

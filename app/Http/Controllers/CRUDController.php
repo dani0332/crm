@@ -7,11 +7,13 @@ use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Jobs\CarRenewalEmailJob;
 use App\Models\CarQuote;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -20,7 +22,6 @@ use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
-use App\Models\QuoteViewCount;
 use App\Models\Tier;
 use App\Models\User;
 use App\Services\ActivitiesService;
@@ -41,7 +42,6 @@ use App\Services\NotesForCustomerService;
 use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
-use App\Services\SIBService;
 use App\Services\TeamService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
@@ -52,8 +52,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\Support\Facades\Gate;
-use App\Enums\PermissionsEnum;
 
 class CRUDController extends Controller
 {
@@ -332,7 +330,6 @@ class CRUDController extends Controller
      *
      * @param  int  $id
      * @param  \Illuminate\Http\Request  $request
-     *
      * @return \Illuminate\Http\Response
      * @return \Inertia\Response
      */
@@ -352,22 +349,7 @@ class CRUDController extends Controller
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
         }
-        if ($quoteType == strtolower(quoteTypeCode::Car)) {
-            if ($record->advisor_id != null) {
-                if ($record->advisor_id == Auth::user()->id) {
-                    QuoteViewCount::firstOrCreate([
-                        'quote_id' => $record->id, 'user_id' => Auth::user()->id,
-                    ], [
-                        'quote_id' => $record->id,
-                        'quote_type_id' => 1,
-                        'user_id' => Auth::user()->id,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ])->increment('visit_count');
-                }
-            }
-        }
-        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType) . 'QuoteService'}->getEntityPlain($record->id);
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
         $isRenewalUser = false;
@@ -449,6 +431,7 @@ class CRUDController extends Controller
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
             $carMakeText = $record->car_make_id_text ? $record->car_make_id_text : '';
             $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
+            $this->carQuoteService->addOrUpdateQuoteViewCount($record);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
@@ -553,16 +536,16 @@ class CRUDController extends Controller
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
 
-            $notProductionApproval = !auth()->user()->hasRole(RolesEnum::PA);
+            $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
             $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod']);
             $paymentEntityModel->load(['plan.insuranceProvider']);
 
             $payments->each(function ($payment) {
-                $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && !auth()->user()->hasRole(RolesEnum::PA);
+                $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
                 $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
                 $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
                 $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
-                    && !auth()->user()->hasRole(RolesEnum::PA);
+                && ! auth()->user()->hasRole(RolesEnum::PA);
 
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
@@ -570,7 +553,7 @@ class CRUDController extends Controller
             $paymentMethods = $paymentMethods->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name
+                    'label' => $paymentMethod->name,
                 ];
             });
 
@@ -611,7 +594,7 @@ class CRUDController extends Controller
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
-                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
+                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
                 ],
             ]);
@@ -1005,8 +988,14 @@ class CRUDController extends Controller
 
     public function updateLeadStatus(Request $request)
     {
+        if (! $request->leadStatus) {
+            return redirect()->back()->with('message', 'Please select lead status and try again.');
+        }
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
+            if (! $lead) {
+                return redirect()->back()->with('message', 'Lead not found please try again.');
+            }
             if (($lead->health_team_type == null || $lead->health_team_type == quoteTypeCode::WCU) && $request->leadStatus == QuoteStatusEnum::Qualified) {
                 return redirect()->back()->with('message', 'Please select team type before moving to QUALIFIED status');
             }
@@ -1039,8 +1028,8 @@ class CRUDController extends Controller
                     $this->activityService->createActivity($request, $record);
                 }
             }
-            if ($request->leadStatus == QuoteStatusEnum::AfiaRenewal) {
-                if (!isset($request->tier_id)) {
+            if ($request->leadStatus == QuoteStatusEnum::IMRenewal) {
+                if (! isset($request->tier_id)) {
                     $this->validate($request, [
                         'tier_id' => 'required',
                     ]);
@@ -1048,18 +1037,8 @@ class CRUDController extends Controller
 
                 // MS: Send email
                 if (isset($request->leadId)) {
-                    $emailTemplateId = (int) $this->applicationStorageService->getValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
-                    $tag = config('constants.APP_ENV') . '-car-quote-tier-r';
-                    $emailRecipients = config('constants.RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
-                    $lead = CarQuote::find($request->leadId);
-                    if ($lead) {
-                        $emailData = $this->emailDataService->generateTierREmailData($lead);
-
-                        // Send Email
-                        if ($emailData) {
-                            SIBService::sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailRecipients);
-                        }
-                    }
+                    $lead = $this->carQuoteService->getEntityPlain($request->leadId);
+                    CarRenewalEmailJob::dispatch($lead);
                 }
             }
         }

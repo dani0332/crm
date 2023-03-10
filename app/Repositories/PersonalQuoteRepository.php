@@ -1,0 +1,190 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Models\PersonalQuote;
+use App\Models\QuoteDocument;
+use App\Models\QuoteStatusLog;
+use Carbon\Carbon;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class PersonalQuoteRepository extends BaseRepository
+{
+    public function model()
+    {
+        return PersonalQuote::class;
+    }
+
+    /**
+     * @param $quoteId
+     * @param $data
+     * @return mixed
+     */
+    public function fetchUpdateStatus($quoteType, $quoteId, $data)
+    {
+        return DB::transaction(function () use ($quoteId, $data) {
+            $quote = $this->where('id', $quoteId)->firstOrFail();
+
+            $previousStatusId = $quote->quote_status_id;
+
+            $quoteData['quote_status_id'] = $data['quote_status_id'];
+
+            if (! empty($data['notes'])) {
+                $quoteData['notes'] = $data['notes'];
+            }
+
+            $quote->update($quoteData);
+
+            $detailData = array_filter(Arr::only($data, ['lost_reason_id', 'transapp_code']));
+            if (count($detailData)) {
+                $quote->quoteDetail()->updateOrCreate($detailData);
+            }
+
+            QuoteStatusLog::create([
+                'quote_type_id' => $quote->quote_type_id,
+                'quote_request_id' => $quote->id,
+                'current_quote_status_id' => $quote->quote_status_id,
+                'previous_quote_status_id' => $previousStatusId,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+
+            return $quote;
+        });
+    }
+
+    /**
+     * @param $file
+     * @param $data
+     * @return mixed
+     */
+    public function fetchUploadDocument($id, $file, $data)
+    {
+        $documentType = DocumentTypeRepository::where('code', $data['document_type_code'])->first();
+        $quote = $this->whereId($id)->first();
+
+        $originalName = $file->getClientOriginalName();
+        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $fileMimeType = $file->getClientMimeType();
+
+        //upload file to azure
+        $fileNameAzure = uniqid().'_'.$quote->uuid.'_'.$docName;
+        $filePathAzure = $file->storeAs('documents/'.$documentType->folder_path, $fileNameAzure, 'azureIM');
+
+        //generate unique uuid
+        $docUuid = uniqid();
+        while (QuoteDocument::where('doc_uuid', $docUuid)->first()) {
+            $docUuid = uniqid().rand(1, 100);
+        }
+
+        return $quote->documents()->create([
+            'doc_name' => $docName,
+            'original_name' => $originalName,
+            'doc_url' => $filePathAzure,
+            'doc_mime_type' => $fileMimeType,
+            'document_type_code' => $documentType->code,
+            'document_type_text' => $documentType->text,
+            'doc_uuid' => $docUuid,
+            'created_by_id' => auth()->id(),
+        ]);
+    }
+
+    /**
+     * @param $quoteType
+     * @param $quoteId
+     * @param $data
+     * @return mixed
+     */
+    public function fetchCreatePayment($quoteId, $data)
+    {
+        return DB::transaction(function () use ($quoteId, $data) {
+            $quote = $this->where('id', $quoteId)->firstOrFail();
+
+            $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'reference', 'payment_methods_code', 'insurance_provider_id', 'plan_id']);
+
+            if ($data['payment_methods_code'] != PaymentMethodsEnum::CreditCard) {
+                $paymentData['authorized_at'] = now();
+            }
+
+            $paymentData['code'] = 'P-'.strtoupper(substr(uniqid(''), 0, 8));
+            $paymentData['payment_status_id'] = PaymentStatusEnum::PENDING;
+            $quote->payments()->create($paymentData);
+
+            PaymentStatusLogRepository::create([
+                'current_payment_status_id' => PaymentStatusEnum::PENDING,
+                'payment_code' => $paymentData['code'],
+            ]);
+
+            $quote->update(['quote_status_id' => QuoteStatusEnum::PaymentPending]);
+
+            return $quote;
+        });
+    }
+
+    /**
+     * @param $quoteId
+     * @param $paymentCode
+     * @param $data
+     * @return mixed
+     */
+    public function fetchUpdatePayment($quoteId, $paymentCode, $data)
+    {
+        $payment = PaymentRepository::where('code', $paymentCode)->firstOrFail();
+        $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'payment_methods_code']);
+
+        if (! empty($data['reference'])) {
+            $paymentData['reference'] = $data['reference'];
+        }
+        $paymentData['updated_by'] = Auth::user()->id;
+
+        $payment->update($paymentData);
+
+        return $payment;
+    }
+
+    /**
+     * @param $id
+     * @param $data
+     * @return mixed
+     */
+    public function fetchUpdatePolicyDetails($id, $data)
+    {
+        $quote = $this->findOrFail($id);
+        $quote->update(Arr::only($data, ['policy_number', 'policy_issuance_date', 'policy_start_date', 'renewal_expiry_date', 'premium']));
+
+        return $quote;
+    }
+
+    /**
+     * @param $leadId
+     * @return \Illuminate\Support\Collection
+     */
+    public function fetchGetAuditHistory($leadId)
+    {
+        $audits = DB::table('audits as a')
+            ->select(
+                DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
+                DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+                DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+                DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+                DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+            )
+            ->where(function ($query) {
+                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+                    ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+            })
+            ->where(function ($query) use ($leadId) {
+                $query->where('a.auditable_type', 'App\Models\\PersonalQuote')
+                    ->where('a.auditable_id', $leadId);
+            })
+            ->orderBy('a.created_at', 'DESC')->get();
+
+        return $audits;
+    }
+}

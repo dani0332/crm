@@ -128,7 +128,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
         ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
         ->join('user_team', 'user_team.user_id', 'users.id')
         ->join('teams', 'teams.id', 'user_team.team_id')
-        ->where('car_quote_request.quote_status_id', '!=', QuoteStatusEnum::Fake)
+        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
         ->whereNull('car_quote_request.renewal_import_code')
         ->groupBy('car_quote_request.advisor_id')
         ->orderBy('users.email');
@@ -144,6 +144,8 @@ class AdvisorPerformanceReportTable extends DataTableComponent
 
     public function filters(): array
     {
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+
         return [
             TextFilter::make('Created Date', 'created_at')
                 ->config([
@@ -151,10 +153,10 @@ class AdvisorPerformanceReportTable extends DataTableComponent
                     'range' => true,
                     'max_days' => $this->maxDays,
                 ])
-                ->filter(function (Builder $builder, string $value) {
+                ->filter(function (Builder $builder, string $value) use ($dateFormat) {
                     $dates = explode('~', $value);
-                    $dates[0] = Carbon::parse($dates[0])->startOfDay()->format('Y-m-d H:i:s');
-                    $dates[1] = Carbon::parse($dates[1])->endOfDay()->format('Y-m-d H:i:s');
+                    $dates[0] = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
+                    $dates[1] = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
                     $builder->whereBetween('car_quote_request.created_at', $dates);
                 }),
             MultiSelectFilter::make('Teams')->config([

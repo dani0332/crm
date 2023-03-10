@@ -7,8 +7,13 @@
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" />
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script src="https://unpkg.com/slim-select@latest/dist/slimselect.min.js"></script>
+<link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet"></link>
+<style>
+    .ss-main .ss-values .ss-value .ss-value-delete {
+        width: 18px;
+    }
+</style>
 <script>
     var comprehensiveDashboardStatChart = {};
     var comprehensiveDashboardStats = <?php echo json_encode($comprehensiveDashboardStats) ?>;
@@ -71,21 +76,23 @@
             var tierFilterValue = $('#tier-filter').val();
             var userFilterValue = $('#user-filter').val();
             var teamFilterValue = $('#team-filter').val();
-            if(e.target.id == 'team-filter') {
+            if (e.target.id == 'team-filter') {
                 $.ajax({
                     url: "/get-users-by-team",
                     type: "post",
-                    data: {'team_filter' : teamFilterValue } ,
+                    data: {
+                        'team_filter': teamFilterValue
+                    },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
-                    success: function (users) {
+                    success: function(users) {
                         if (users) {
                             $('#user-filter').empty();
                             users.forEach(user => {
                                 $('#user-filter').append($('<option>', {
                                     value: user.id,
-                                    text : user.name
+                                    text: user.name
                                 }));
                             });
                         }
@@ -100,11 +107,16 @@
             $.ajax({
                 url: "/get-comp-filter-stats",
                 type: "post",
-                data: { 'tier_filter' : tierFilterValue, 'team_filter' : teamFilterValue , 'userFilter' : userFilterValue, 'excludeFilter' : excludeFilterValue } ,
+                data: {
+                    'tier_filter': tierFilterValue,
+                    'team_filter': teamFilterValue,
+                    'userFilter': userFilterValue,
+                    'excludeFilter': excludeFilterValue
+                },
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
-                success: function (result) {
+                success: function(result) {
                     if (result) {
                         var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
                         var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
@@ -133,47 +145,58 @@
         });
     });
 
-    const selectSettings = {
-        plugins: ['remove_button', 'checkbox_options'],
-        create: true,
-        onItemAdd: function() {
-            this.setTextboxValue('');
-            this.refreshOptions();
-        },
-    }
-
-    new TomSelect(["#user-filter"], selectSettings);
-    new TomSelect(["#tier-filter"], selectSettings);
-    new TomSelect(["#team-filter"], selectSettings);
+    new SlimSelect({
+        select: '#user-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Users',
+        }
+    })
+    new SlimSelect({
+        select: '#tier-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Tiers',
+        }
+    })
+    new SlimSelect({
+        select: '#team-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Teams',
+        }
+    })
 </script>
 @endpush
 
 <div>
     <div class="flex gap-4 justify-end mb-4">
-        <div>
-        <label>Advisor Filter</label>
-        <select multiple name="users[]" id="user-filter">
-                <option value="">Select Users</option>
-                @foreach ($carUsers as $carUser)
-                <option value="{{$carUser->id}}"> {{ $carUser->name }} </option>
-                @endforeach
+        <div class="md:w-1/4">
+            <label>Advisor Filter</label>
+            <select multiple name="users[]" id="user-filter">
+                <option data-placeholder="true"></option>
+                <optgroup data-selectall="true">
+                    @foreach ($carUsers as $carUser)
+                    <option value="{{$carUser->id}}"> {{ $carUser->name }} </option>
+                    @endforeach
+                </optgroup>
             </select>
         </div>
-        <div>
-        <label>Tiers Filter</label>
+        <div class="md:w-1/4">
+            <label>Tiers Filter</label>
             <select multiple name="tiers[]" id="tier-filter">
-                <option value="">Select Tier</option>
+                <option data-placeholder="true"></option>
                 @foreach ($tiers as $tier)
                 <option value="{{$tier->id}}"> {{ $tier->name }} </option>
                 @endforeach
             </select>
         </div>
-        <div>
-        <label>Teams Filter</label>
+        <div class="md:w-1/4">
+            <label>Teams Filter</label>
             <select multiple name="teams[]" id="team-filter">
-                <option value="">Select Team</option>
+                <option data-placeholder="true"></option>
                 @foreach ($teams as $team)
-                <option @if($commonTeam == $team->id) selected="selected" @endif  value="{{$team->id}}">{{$team->name}}</option>
+                <option @if($commonTeam==$team->id) selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
                 @endforeach
             </select>
         </div>
@@ -182,12 +205,4 @@
         <div id="comprehensiveConversion"></div>
     </div>
 </div>
-
-<style>
-.ts-control {
-    width: 210px !important;
-    padding: 9px 9px !important;
-    border-radius: 6px !important;
-}
-</style>
 @endsection

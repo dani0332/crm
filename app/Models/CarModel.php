@@ -41,11 +41,17 @@ class CarModel extends BaseModel
         return self::processGetBaseDSL($filters, false);
     }
 
+    /**
+     * @return void
+     */
     public function scopeActive($query)
     {
         $query->where('is_active', 1);
     }
 
+    /**
+     * @return void
+     */
     public function scopeActiveWithCode($query, $code)
     {
         $query->where('is_active', 1)->where('car_make_code', $code);

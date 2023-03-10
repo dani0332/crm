@@ -15,6 +15,17 @@ class UAELicenseHeldFor extends BaseModel
         return self::processGetBaseDSL($filters, 'uae_license_held_for', ['code', 'id', 'text', 'text_ar']);
     }
 
+    /**
+     * scope to get active records
+     *
+     * @param $query
+     * @return mixed
+     */
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
     public function scopeIsBackHomeActive($query)
     {
         $query->where('is_back_home_license_active', 1);

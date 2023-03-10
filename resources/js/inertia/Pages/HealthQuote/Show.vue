@@ -442,12 +442,24 @@ const plansTable = reactive({
       value: 'name',
     },
     {
-      text: 'Network Name',
-      value: 'network',
+      text: 'Network Provider',
+      value: 'planCode',
     },
     {
-      text: 'Premium with VAT and Basmah',
+      text: 'Base Premium',
       value: 'actualPremium',
+    },
+    {
+      text: 'Basmah',
+      value: 'basmah',
+    },
+    {
+      text: 'Policy Fee (if applicable)',
+      value: 'policyFee',
+    },
+    {
+      text: 'Total Indicative Premium (with VAT)',
+      value: 'total',
     },
     {
       text: 'Action',
@@ -1633,8 +1645,8 @@ onMounted(() => {
         :rows-per-page="15"
         :hide-footer="listQuotePlans.length < 15"
       >
-        <template #item-actualPremium="{ actualPremium }">
-          {{ fixedValue(actualPremium) }}
+        <template #item-total="{ actualPremium, vat, basmah }">
+          {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">

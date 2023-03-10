@@ -120,7 +120,7 @@ class LookupService extends BaseService
 
     public function paymentMethodsWithSubMethods()
     {
-        $paymentMethods =  PaymentMethod::whereNull('parent_code')->with('childPaymentMethods')->get();
+        $paymentMethods = PaymentMethod::whereNull('parent_code')->with('childPaymentMethods')->get();
         $paymentOptions = [];
         $paymentOptions['methods'] = $paymentMethods->filter(function ($paymentMethod) {
             return $paymentMethod->childPaymentMethods->count() > 0;
