@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link } from '@inertiajs/vue3';
+import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
+import { useNotifications } from '@indielayer/ui';
 
 defineProps({
   quotes: Object,
@@ -9,6 +10,8 @@ defineProps({
 });
 
 const page = usePage();
+const notification = useNotifications('toast');
+
 const loader = reactive({
   table: false,
   export: false,
@@ -61,40 +64,6 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
-
-const onAdvisorAssign = () => {
-  if (!assignAdvisor.value || !assignmentType.value) {
-    notification.error({
-      title: !assignAdvisor.value
-        ? 'Please select advior'
-        : 'Please select assignment type',
-      position: 'top',
-    });
-    return;
-  }
-  router.post(
-    `/quotes/home/manualLeadAssign`,
-    {
-      modelType: 'Home',
-      assigned_to_id_new: assignAdvisor.value,
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        isDisabled.value = true;
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead(s) Assigned',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        isDisabled.value = false;
-      },
-    },
-  );
-};
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -164,6 +133,39 @@ function setQueryStringFilters() {
   }
   if (urlParams.has('is_renewal')) {
     filters.is_renewal = urlParams.get('is_renewal');
+  }
+}
+
+const rules = {
+  isRequired: v => !!v || 'Please select this option',
+};
+
+const assignForm = useForm({
+  assigned_to_id_new: null,
+  manual_assignment_email_flag: '1',
+  modelType: 'Home',
+  selectTmLeadId: '',
+});
+
+function onAssignLead(isValid) {
+  if (isValid) {
+    const selected = quotesSelected.value.map(e => e.id);
+    assignForm
+      .transform(data => ({
+        ...data,
+        selectTmLeadId: `${selected}`,
+      }))
+      .post('/quotes/home/manualLeadAssign', {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          quotesSelected.value = [];
+          notification.success({
+            title: 'Home Leads Assigned',
+            position: 'top',
+          });
+        },
+      });
   }
 }
 
@@ -273,39 +275,45 @@ onMounted(() => {
       </div>
     </x-form>
 
-    <div
-      v-if="quotesSelected.length > 0"
-      class="p-4 rounded shadow mb-6 bg-white"
-    >
-      <h3 class="font-semibold text-primary-800">Assign Leads</h3>
-      <x-divider class="mb-4 mt-1" />
-      <div class="flex flex-wrap md:flex-nowrap gap-4 w-full items-end">
-        <x-select
-          v-model="assignAdvisor"
-          label="Assign Advisor"
-          :options="advisorOptions"
-          placeholder="Select Advisor"
-          class="w-auto flex-1"
-        />
-        <x-select
-          v-model="assignmentType"
-          label="Assignment Type"
-          :options="advisorOptions"
-          placeholder="Select"
-          class="w-auto flex-1"
-        />
-        <div>
-          <x-button
-            color="orange"
-            size="sm"
-            @click.prevent="onAdvisorAssign"
-            :loading="isDisabled"
-          >
-            Assign
-          </x-button>
-        </div>
+    <section v-if="quotesSelected.length > 0" class="mb-4">
+      <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
+        <h3 class="font-semibold text-primary-800">Assign Leads</h3>
+        <x-divider class="mb-4 mt-1" />
+        <x-form @submit="onAssignLead" :auto-focus="false">
+          <div class="w-full flex flex-col md:flex-row gap-4">
+            <x-select
+              v-model="assignForm.assigned_to_id_new"
+              label="Assign Advisor"
+              :options="advisorOptions"
+              placeholder="Select Advisor"
+              class="flex-1 w-auto"
+              :rules="[rules.isRequired]"
+            />
+            <x-select
+              v-model="assignForm.manual_assignment_email_flag"
+              label="Assignment Type"
+              :options="[
+                { value: '1', label: 'Without Email' },
+                { value: '2', label: 'With Email' },
+              ]"
+              placeholder="Select Type"
+              class="flex-1 w-auto"
+              :rules="[rules.isRequired]"
+            />
+            <div class="mb-3 md:pt-6">
+              <x-button
+                color="orange"
+                size="sm"
+                type="submit"
+                :loading="assignForm.processing"
+              >
+                Assign
+              </x-button>
+            </div>
+          </div>
+        </x-form>
       </div>
-    </div>
+    </section>
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
