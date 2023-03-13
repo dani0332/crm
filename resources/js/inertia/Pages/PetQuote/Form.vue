@@ -144,6 +144,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.type_of_pet1"
           type="text"
+          maxlength="3"
           label="TYPE OF PET*"
           :rules="[rules.isRequired]"
           class="w-full"

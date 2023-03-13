@@ -80,6 +80,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(CycleQuote::class);
     }
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
     public function petQuote()
     {
         return $this->hasOne(PetQuote::class);

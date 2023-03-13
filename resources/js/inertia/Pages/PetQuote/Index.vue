@@ -208,17 +208,6 @@ const tableHeader = [
           ]"
           class="w-full"
         />
-        <x-select
-          v-model="filters.is_renewal"
-          label="Is Renewal"
-          placeholder="Search by Renewal"
-          :options="[
-            { value: '', label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          class="w-full"
-        />
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

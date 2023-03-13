@@ -125,6 +125,7 @@ use App\Enums\PermissionsEnum;
                             @endcan
                             @can(PermissionsEnum::PetQuotesList)
                             <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
+                            <li><a href="{{ url('personal-quotes/pet') }}">Pet </a></li>
                             @endcan
                             <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
                             <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>

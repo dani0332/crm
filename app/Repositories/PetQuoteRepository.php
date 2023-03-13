@@ -93,6 +93,6 @@ class PetQuoteRepository extends BaseRepository
             ->where($column, $value)
             ->with(['petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-            }, 'createdBy', 'updatedBy'])->firstOrFail();
+            }, 'createdBy', 'updatedBy','customer.additionalContactInfo'])->firstOrFail();
     }
 }
