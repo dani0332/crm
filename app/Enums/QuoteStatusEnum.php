@@ -47,7 +47,7 @@ final class QuoteStatusEnum extends Enum
     const NoAnswer = 45;
     const NotInterested = 46;
     const NotEligibleForInsurance = 47;
-    const AfiaRenewal = 48;
+    const IMRenewal = 48;
     const NotLookingForMotorInsurance = 49;
     const NonGccSpec = 50;
 }
