@@ -364,6 +364,7 @@ class CarQuoteService extends BaseService
             'previous_quote_policy_number' => 'input|text|title|ss:16',
             'policy_start_date' => 'input|text',
             'previous_policy_expiry_date' => 'input|date|title|range',
+            'quote_batch_id' => 'select|title||multiple|ss:40',
         ];
     }
 
@@ -520,6 +521,9 @@ class CarQuoteService extends BaseService
                 break;
             case 'cost_per_lead':
                 $title = 'Lead Cost';
+                break;
+            case 'quote_batch_id':
+                $title = 'Quote Batch';
                 break;
             default:
                 break;
@@ -758,7 +762,9 @@ class CarQuoteService extends BaseService
                         $this->query->whereIn('cqr.quote_status_id', $request[$item]);
                     } elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
                         $this->query->whereIn('cqr.tier_id', $request[$item]);
-                    } else {
+                    } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                        $this->query->whereIn('qb.id', $request[$item]);
+                    }else {
                         $searchedValue = preg_match("/\b".'Yes'."\b/i", $request[$item]) || preg_match("/\b".'No'."\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                         if ($item == 'policy_number') {
                             $this->query->where('cqr.previous_quote_policy_number', $searchedValue);
@@ -923,7 +929,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id'];
 
         return $searchProperties;
     }
