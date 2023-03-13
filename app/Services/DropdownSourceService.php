@@ -286,7 +286,7 @@ class DropdownSourceService extends BaseService
                 $data = $lookUpService->getActiveInsuranceProviders();
                 break;
             case 'quote_batch_id':
-                $data =  DB::table('quote_batches')->select('id', 'name')->get();
+                $data = DB::table('quote_batches')->select('id', 'name')->get();
             default:
                 break;
         }

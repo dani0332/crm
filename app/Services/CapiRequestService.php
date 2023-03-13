@@ -53,7 +53,7 @@ class CapiRequestService
                         CarQuoteRequestDetail::create([
                             'car_quote_request_id' => $$carQuote->id,
                             'advisor_assigned_date' => now(),
-                            'advisor_assigned_by_id' =>  auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
+                            'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);

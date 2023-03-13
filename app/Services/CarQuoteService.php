@@ -764,7 +764,7 @@ class CarQuoteService extends BaseService
                         $this->query->whereIn('cqr.tier_id', $request[$item]);
                     } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && ! empty($request[$item])) {
                         $this->query->whereIn('qb.id', $request[$item]);
-                    }else {
+                    } else {
                         $searchedValue = preg_match("/\b".'Yes'."\b/i", $request[$item]) || preg_match("/\b".'No'."\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                         if ($item == 'policy_number') {
                             $this->query->where('cqr.previous_quote_policy_number', $searchedValue);
