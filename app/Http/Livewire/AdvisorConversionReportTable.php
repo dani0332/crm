@@ -182,11 +182,11 @@ class AdvisorConversionReportTable extends DataTableComponent
 
                 return number_format($total * 100, 2, '.', '').' %';
             }),
-            Column::make('Net Conversion')->label(fn ($row) => ($row->total_leads - $row->bad_leads - $row->manual_created) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created))) * 100, 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
+            Column::make('Net Conversion')->label(fn ($row) => ($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0 ? number_format(($row->total_leads - ($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads))) * 100, 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
                 $total = 0;
                 foreach ($rows as $row) {
-                    if (($row->total_leads - $row->bad_leads - $row->manual_created) > 0) {
-                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created)));
+                    if (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0) {
+                        $total = $total + ($row->total_leads - ($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads)));
                     }
                 }
 
@@ -209,6 +209,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id  in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as created_sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
