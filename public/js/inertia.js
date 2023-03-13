@@ -7103,7 +7103,6 @@ __webpack_require__.r(__webpack_exports__);
       ilivein_accommodation_type_id: ((_props$quote16 = props.quote) === null || _props$quote16 === void 0 ? void 0 : (_props$quote16$pet_qu = _props$quote16.pet_quote) === null || _props$quote16$pet_qu === void 0 ? void 0 : _props$quote16$pet_qu.ilivein_accommodation_type_id) || '',
       iam_possesion_type_id: ((_props$quote17 = props.quote) === null || _props$quote17 === void 0 ? void 0 : (_props$quote17$pet_qu = _props$quote17.pet_quote) === null || _props$quote17$pet_qu === void 0 ? void 0 : _props$quote17$pet_qu.iam_possesion_type_id) || ''
     });
-    console.log('++++' + quoteForm.is_mixed_breed);
     var rules = {
       isEmail: function isEmail(v) {
         return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) || 'E-mail must be valid';
@@ -7274,20 +7273,9 @@ __webpack_require__.r(__webpack_exports__);
           return loader.table = false;
         }
       });
-    } // function setQueryStringFilters() {
-    //   let queryString = window.location.search;
-    //   let urlParams = new URLSearchParams(queryString);
-    //
-    //   for (const [key] of Object.entries(availableFilters)) {
-    //     if (urlParams.has(key)) {
-    //       filters[key] = urlParams.get(key);
-    //     }
-    //   }
-    // }
+    }
 
-
-    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {// setQueryStringFilters();
-    });
+    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {});
     var tableHeader = [{
       text: 'CDB ID',
       value: 'uuid'

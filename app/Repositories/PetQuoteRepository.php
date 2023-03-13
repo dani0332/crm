@@ -2,10 +2,10 @@
 
 namespace App\Repositories;
 
-use App\Enums\quoteTypeCode;
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
+use App\Facades\Capi;
 use App\Models\PersonalQuote;
-use App\Services\CapiRequestService;
 use App\Traits\AddPremiumAllLobs;
 use Config;
 use Illuminate\Support\Arr;
@@ -33,10 +33,10 @@ class PetQuoteRepository extends BaseRepository
             'microchipNo' => $request->microchip_no,
             'typeOfPet1' => $request->type_of_pet1,
             'breedOfPet1' => $request->breed_of_pet1,
-            'isMicrochipped' => $request->is_microchipped == 'Yes' ? true : false,
-            'isNeutered' => $request->is_neutered == 'Yes' ? true : false,
-            'isMixedBreed' => $request->is_mixed_breed == 'Yes' ? true : false,
-            'anyInjury' => $request->any_injury == 'Yes' ? true : false,
+            'isMicrochipped' => $request->is_microchipped == GenericRequestEnum::Yes ? true : false,
+            'isNeutered' => $request->is_neutered == GenericRequestEnum::Yes  ? true : false,
+            'isMixedBreed' => $request->is_mixed_breed == GenericRequestEnum::Yes  ? true : false,
+            'anyInjury' => $request->any_injury == GenericRequestEnum::Yes  ? true : false,
             'ageOfPet1' => $request->age_of_pet1,
             'lang' => 'EN',
             'device' => 'DESKTOP',
@@ -53,10 +53,12 @@ class PetQuoteRepository extends BaseRepository
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-pet-quote', $dataArr);
+        $response = Capi::request('/api/v1-save-pet-quote', 'post', $dataArr);
 
         if (isset($response->quoteUID)) {
-            $this->savePremium(quoteTypeCode::PetQuote, $request, $response);
+            $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $response->quoteUID)->firstOrFail();
+
+            $quote->update(['premium' => $request->premium]);
         }
 
         return $response;
@@ -86,7 +88,6 @@ class PetQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
     }
-//possessionType
     public function fetchGetBy($column, $value)
     {
         return $this->byQuoteTypeId(QuoteTypes::PET->id())

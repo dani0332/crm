@@ -54,13 +54,13 @@ class PetQuoteController extends Controller
      */
     public function store(PetQuoteRequest $request)
     {
-        $response = PetQuoteRepository::create($request);
+        $response = PetQuoteRepository::create($request->validated());
 
         if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Quote created successfully');
+        return back()->with('message', 'Quote is created successfully.');
     }
 
     /**
@@ -124,8 +124,7 @@ class PetQuoteController extends Controller
     public function edit($uuid)
     {
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
-//
-//        dd( $quote->toArray());
+
         return inertia('PetQuote/Form', ['quote' => $quote]);
     }
 
@@ -138,19 +137,8 @@ class PetQuoteController extends Controller
      */
     public function update(PetQuoteRequest $request, $uuid)
     {
-        PetQuoteRepository::update($uuid, $request->toArray());
+        PetQuoteRepository::update($uuid, $request->validated());
 
-        return back()->with('message', 'Quote updated successfully');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+        return back()->with('message', 'Quote is updated successfully.');
     }
 }

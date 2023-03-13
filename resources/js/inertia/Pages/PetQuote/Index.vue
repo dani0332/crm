@@ -67,20 +67,7 @@ function onReset() {
   });
 }
 
-// function setQueryStringFilters() {
-//   let queryString = window.location.search;
-//   let urlParams = new URLSearchParams(queryString);
-//
-//   for (const [key] of Object.entries(availableFilters)) {
-//     if (urlParams.has(key)) {
-//       filters[key] = urlParams.get(key);
-//     }
-//   }
-// }
-
-onMounted(() => {
-  // setQueryStringFilters();
-});
+onMounted(() => {});
 
 const tableHeader = [
   { text: 'CDB ID', value: 'uuid' },

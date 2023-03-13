@@ -32,7 +32,6 @@ const quoteForm = useForm({
   iam_possesion_type_id: props.quote?.pet_quote?.iam_possesion_type_id || '',
 });
 
-console.log('++++' + quoteForm.is_mixed_breed);
 const rules = {
   isEmail: v =>
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||

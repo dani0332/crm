@@ -24,15 +24,23 @@ class PetQuoteRequest extends FormRequest
     public function rules()
     {
         return [
-            'first_name' => 'required',
-            'last_name' => 'required',
+            'first_name' => 'required|max:50',
+            'last_name' => 'required|max:50',
             'email' => 'required|email:rfc,dns',
             'mobile_no' => 'required',
-            'type_of_pet1' => 'required',
-            'breed_of_pet1' => 'required',
-            'age_of_pet1' => 'required',
-            'ilivein_accommodation_type_id' => 'required',
-            'iam_possesion_type_id' => 'required',
+            'premium' => 'nullable|numeric',
+            'policy_number' => 'nullable|max:200',
+            'type_of_pet1' => 'required|max:3',
+            'breed_of_pet1' => 'required|max:200',
+            'age_of_pet1' => 'required|numeric',
+            'is_neutered' => 'nullable',
+            'is_microchipped' => 'nullable',
+            'microchip_no' => 'nullable',
+            'is_mixed_breed' => 'nullable',
+            'has_injury' => 'nullable',
+            'gender' => 'nullable',
+            'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
+            'iam_possesion_type_id' => 'required|exists:home_possession_type,id',
         ];
     }
 }
