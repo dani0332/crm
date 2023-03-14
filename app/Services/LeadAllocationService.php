@@ -153,7 +153,9 @@ class LeadAllocationService extends BaseService
                 }
                 $lead->auto_assigned = $isManualAssignment ? false : true;
                 $lead->advisor_id = $advisorId;
-                if ($lead->quote_batch_id == null ) $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
+                if ($lead->quote_batch_id == null) {
+                    $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
+                }
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
@@ -521,7 +523,9 @@ class LeadAllocationService extends BaseService
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
-                        if ($carQuote->quote_batch_id == null ) $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                        if ($carQuote->quote_batch_id == null) {
+                            $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                        }
                         $carQuote->save();
 
                         info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);

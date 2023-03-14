@@ -1180,7 +1180,9 @@ class CarQuoteService extends BaseService
 
             $lead->auto_assigned = false;
 
-            if ($lead->quote_batch_id == null ) $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
+            if ($lead->quote_batch_id == null) {
+                $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
+            }
 
             $this->updateTierAndCost($lead); // will assign/update tier and update cost per lead from tier
 
