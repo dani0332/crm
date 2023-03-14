@@ -84,7 +84,6 @@ class PersonalQuoteController extends Controller
      */
     public function makeAdditionalContactPrimary($quoteId, MakeAdditionalContactPrimaryRequest $request)
     {
-        return PersonalQuoteRepository::updateCustomerAdditionalContact($quoteId,$request->validated());
+        return PersonalQuoteRepository::updateCustomerAdditionalContact($quoteId, $request->validated());
     }
-
 }

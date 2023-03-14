@@ -39,16 +39,14 @@ class CustomerAdditionalContactRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-
-            $customer =CustomerRepository::where(request()->key,request()->value)->first();
-            $additionalContacts =AdditionalContactRepository::where([['key',request()->key],['value', request()->value]])->first();
+            $customer = CustomerRepository::where(request()->key, request()->value)->first();
+            $additionalContacts = AdditionalContactRepository::where([['key', request()->key], ['value', request()->value]])->first();
 
             $quote = PersonalQuoteRepository::where('id', request()->quote_id)->first();
             /**
              * check if email/mobile already exists in customer, quote or additional contact info
              */
-            if ($customer || $additionalContacts || $quote->{request()->key} == request()->value)
-            {
+            if ($customer || $additionalContacts || $quote->{request()->key} == request()->value) {
                 $validator->errors()->add('value', ucfirst(str_replace('_', ' ', request()->key)).' is already in use for a customer. Please try another.');
             }
         });

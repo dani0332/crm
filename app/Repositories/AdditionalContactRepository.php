@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\CustomerAdditionalContact;
-use App\Models\User;
 
 class AdditionalContactRepository extends BaseRepository
 {
