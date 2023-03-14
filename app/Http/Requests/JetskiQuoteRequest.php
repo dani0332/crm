@@ -26,8 +26,8 @@ class JetskiQuoteRequest extends FormRequest
         return [
             'first_name' => 'required|max:50',
             'last_name' => 'required|max:50',
-            'email' => 'required|email:rfc,dns',
-            'mobile_no' => 'required',
+            'email' => 'required|email:rfc,dns|max:150',
+            'mobile_no' => 'required|max:20',
             'jetski_make' => 'required|max:50',
             'jetski_model' => 'required|max:50',
             'year_of_manufacture_id' => 'required',
