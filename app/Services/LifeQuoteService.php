@@ -695,7 +695,7 @@ class LifeQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'is_renewal', 'advisor_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'is_renewal'];
     }
 
     public function fillRenewalProperties($model)

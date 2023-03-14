@@ -743,9 +743,13 @@ class CarQuoteService extends BaseService
                 $dateTo = $this->parseDate($request['created_at_end'], true);
                 $this->query->whereBetween(DB::raw('DATE(cqr.created_at)'), [$dateFrom, $dateTo]);
             }
-            if (Auth::user()->hasRole('ADMIN')) {
+            if (auth()->user()->hasRole(RolesEnum::Admin)) {
                 array_push($searchProperties, 'is_ecommerce');
                 array_push($searchProperties, 'payment_status_id');
+            }
+
+            if (! auth()->user()->hasRole(RolesEnum::CarAdvisor) && ! in_array('advisor_id', $searchProperties)) {
+                array_push($searchProperties, 'advisor_id');
             }
 
             foreach ($searchProperties as $item) {
@@ -929,7 +933,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id'];
 
         return $searchProperties;
     }
