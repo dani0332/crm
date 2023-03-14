@@ -241,6 +241,7 @@ class AMTController extends Controller
         $quoteType = 'business';
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
         $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
+        abort_if(! $record, 404);
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
         $leadStatuses = $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
         $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
@@ -355,14 +356,22 @@ class AMTController extends Controller
         return redirect('medical/amt/'.$id)->with('success', 'Lead has been updated');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+    public function cardsView(Request $request)
     {
-        //
+        $quotes = [];
+        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
+
+        $leadStatuses = $leadStatuses->filter(function ($item) {
+            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
+        })->toArray();
+
+        $leadStatuses = array_map(function ($item) {
+            $item['data'] = getDataAgainstStatus('Business', $item['id']);
+            return $item;
+        }, $leadStatuses);
+
+        return inertia('GroupMedicalQuote/Cards', [
+            'quotes' => array_values($leadStatuses),
+        ]);
     }
 }

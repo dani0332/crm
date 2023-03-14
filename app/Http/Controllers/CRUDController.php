@@ -943,7 +943,7 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->status) {
             $results = getDataAgainstEveryStatus($request->modelType, $request);
 
-            if ($request->modelType == quoteTypeCode::Health) {
+            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business])) {
                 return $results;
             }
 
@@ -988,7 +988,7 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->term && $request->status) {
             $results = getDataAgainstSearchTerm($request->modelType, $request);
 
-            if ($request->modelType == quoteTypeCode::Health) {
+            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business])) {
                 return $results;
             }
 

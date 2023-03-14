@@ -226,6 +226,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
         // Route::resource('business', CRUDController::class);
+        Route::get('business/cards', [BusinessQuoteController::class, 'cardsView']);
         Route::resource('business', BusinessQuoteController::class);
         Route::resource('travel', CRUDController::class);
         Route::resource('pet', CRUDController::class);
@@ -344,6 +345,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'medical'], function () {
+        Route::get('amt/cards', [AMTController::class, 'cardsView']);
         Route::resource('amt', AMTController::class);
     });
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -14,6 +15,7 @@ use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\BusinessQuote;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Traits\RolePermissionConditions;
 use Carbon\Carbon;
@@ -26,6 +28,9 @@ class BusinessQuoteController extends Controller
     protected $lookupService;
     protected $genericModel;
 
+    protected $dropdownSourceService;
+
+
     public const TYPE = quoteTypeCode::Business;
     public const TYPE_ID = QuoteTypeId::Business;
 
@@ -35,11 +40,13 @@ class BusinessQuoteController extends Controller
         BusinessQuoteService $businessQuoteService,
         CRUDService $crudService,
         LookupService $lookupService,
+        DropdownSourceService $dropdownSourceService
     ) {
         $this->businessQuoteService = $businessQuoteService;
         $this->genericModel = $this->businessQuoteService->getGenericModel(self::TYPE);
         $this->crudService = $crudService;
         $this->lookupService = $lookupService;
+        $this->dropdownSourceService = $dropdownSourceService;
     }
 
     /**
@@ -215,5 +222,23 @@ class BusinessQuoteController extends Controller
         $this->crudService->updateModelByType('business', $request, $id);
 
         return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
+    }
+
+    public function cardsView(Request $request)
+    {
+        $quotes = [];
+        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
+        $leadStatuses = $leadStatuses->filter(function ($item) {
+            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::QUALIFIED || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::MISSING_DOCUMENTS || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING;
+        })->toArray();
+
+        $leadStatuses = array_map(function ($item) {
+            $item['data'] = getDataAgainstStatus('Business', $item['id']);
+            return $item;
+        }, $leadStatuses);
+
+        return inertia('CorpLineQuote/Cards', [
+            'quotes' => array_values($leadStatuses),
+        ]);
     }
 }
