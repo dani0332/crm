@@ -688,7 +688,7 @@ class HealthQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'health_team_type', 'is_renewal', 'is_ecommerce', 'advisor_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'health_team_type', 'is_renewal', 'is_ecommerce'];
     }
 
     public function getCustomTitleByProperty($propertyName)
