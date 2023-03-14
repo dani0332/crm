@@ -22322,7 +22322,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "onUpdate:modelValue": _cache[14] || (_cache[14] = function ($event) {
           return $setup.quoteForm.gender = $event;
         }),
-        label: "GENDER",
+        label: "GENDER*",
+        rules: [$setup.rules.isRequired],
         options: [{
           value: 'Male',
           label: 'Male'
@@ -22334,7 +22335,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         error: $setup.quoteForm.errors.gender
       }, null, 8
       /* PROPS */
-      , ["modelValue", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.ilivein_accommodation_type_id,
         "onUpdate:modelValue": _cache[15] || (_cache[15] = function ($event) {
           return $setup.quoteForm.ilivein_accommodation_type_id = $event;

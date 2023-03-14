@@ -6,7 +6,6 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
-use App\Traits\AddPremiumAllLobs;
 use Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +13,6 @@ use Illuminate\Support\Facades\DB;
 
 class PetQuoteRepository extends BaseRepository
 {
-    use AddPremiumAllLobs;
     public function model()
     {
         return PersonalQuote::class;
@@ -25,26 +23,26 @@ class PetQuoteRepository extends BaseRepository
         $sourceName = Config::get('constants.SOURCE_NAME');
         $appUrl = Config::get('constants.APP_URL');
         $dataArr = [
-            'firstName' => $request->first_name,
-            'lastName' => $request->last_name,
-            'email' => $request->email,
-            'mobileNo' => $request->mobile_no,
-            'gender' => $request->gender,
-            'microchipNo' => $request->microchip_no,
-            'typeOfPet1' => $request->type_of_pet1,
-            'breedOfPet1' => $request->breed_of_pet1,
-            'isMicrochipped' => $request->is_microchipped == GenericRequestEnum::Yes ? true : false,
-            'isNeutered' => $request->is_neutered == GenericRequestEnum::Yes ? true : false,
-            'isMixedBreed' => $request->is_mixed_breed == GenericRequestEnum::Yes ? true : false,
-            'anyInjury' => $request->any_injury == GenericRequestEnum::Yes ? true : false,
-            'ageOfPet1' => $request->age_of_pet1,
+            'firstName' => $request['first_name'],
+            'lastName' => $request['last_name'],
+            'email' => $request['email'],
+            'mobileNo' => $request['mobile_no'],
+            'gender' => $request['gender'],
+            'microchipNo' => $request['microchip_no'],
+            'typeOfPet1' => $request['type_of_pet1'],
+            'breedOfPet1' => $request['breed_of_pet1'],
+            'isMicrochipped' => $request['is_microchipped'] == GenericRequestEnum::Yes ? true : false,
+            'isNeutered' => $request['is_neutered'] == GenericRequestEnum::Yes ? true : false,
+            'isMixedBreed' => $request['is_mixed_breed'] == GenericRequestEnum::Yes ? true : false,
+            'anyInjury' => $request['has_injury'] == GenericRequestEnum::Yes ? true : false,
+            'ageOfPet1' => $request['age_of_pet1'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'utmSource' => '',
             'utmMedium' => '',
             'utmCampaign' => '',
-            'iliveinAccommodationTypeId' => $request->ilivein_accommodation_type_id,
-            'iamPossesionTypeId' => $request->iam_possesion_type_id,
+            'iliveinAccommodationTypeId' => $request['ilivein_accommodation_type_id'],
+            'iamPossesionTypeId' => $request['iam_possesion_type_id'],
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
         ];

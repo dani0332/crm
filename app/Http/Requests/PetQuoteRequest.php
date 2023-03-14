@@ -35,10 +35,10 @@ class PetQuoteRequest extends FormRequest
             'age_of_pet1' => 'required|numeric',
             'is_neutered' => 'nullable',
             'is_microchipped' => 'nullable',
-            'microchip_no' => 'nullable',
+            'microchip_no' => 'required_if:is_microchipped,=,1',
             'is_mixed_breed' => 'nullable',
             'has_injury' => 'nullable',
-            'gender' => 'nullable',
+            'gender' => 'required|string|in:Male,Female',
             'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
             'iam_possesion_type_id' => 'required|exists:home_possession_type,id',
         ];

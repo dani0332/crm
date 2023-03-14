@@ -215,7 +215,8 @@ function onSubmit(isValid) {
         />
         <x-select
           v-model="quoteForm.gender"
-          label="GENDER"
+          label="GENDER*"
+          :rules="[rules.isRequired]"
           :options="[
             { value: 'Male', label: 'Male' },
             { value: 'Female', label: 'Female' },
