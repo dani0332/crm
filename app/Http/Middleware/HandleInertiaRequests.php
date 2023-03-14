@@ -212,7 +212,8 @@ class HandleInertiaRequests extends Middleware
                     )
                     ->add('Bike Quotes', '/personal-quotes/bike', fn ($s) => $s->attributes(['icon' => 'bike']))
                     ->add('Cycle Quotes', '/personal-quotes/cycle', fn ($s) => $s->attributes(['icon' => 'cycle']))
-                    ->add('Yacht Quotes', '/personal-quotes/yacht', fn ($s) => $s->attributes(['icon' => 'cycle']));
+                    ->add('Yacht Quotes', '/personal-quotes/yacht', fn ($s) => $s->attributes(['icon' => 'yacht']))
+                    ->add('Jetski Quotes', '/personal-quotes/jetski', fn ($s) => $s->attributes(['icon' => 'jetski']));
             });
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\Lookups;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
-class BikeQuoteRepository extends BaseRepository
+class JetskiQuoteRepository extends BaseRepository
 {
     public function model()
     {
@@ -27,18 +28,20 @@ class BikeQuoteRepository extends BaseRepository
     public function fetchCreate($data)
     {
         $quoteData = [
-            'quoteTypeId' => intval(QuoteTypes::BIKE->id()),
-            'nationalityId' => strval($data['nationality_id']),
-            'mobileNo' => $data['mobile_no'],
-            'email' => $data['email'],
+            'quoteTypeId' => intval(QuoteTypes::JETSKI->id()),
             'firstName' => $data['first_name'],
             'lastName' => $data['last_name'],
-            'dob' => $data['dob'],
-            'bikeCompanyToInsure' => $data['bike_company_to_insure'],
-            'assetValue' => $data['asset_value'],
-            'currentlyInsuredWithId' => strval($data['currently_insured_with_id']),
-            'uaeLicenseHeldForId' => strval($data['uae_license_held_for_id']),
-            'yearOfManufactureId' => strval($data['year_of_manufacture']),
+            'email' => $data['email'],
+            'mobileNo' => $data['mobile_no'],
+            'jetskiMake' => $data['jetski_make'],
+            'jetskiModel' => $data['jetski_model'],
+            "maxSpeed" => $data['max_speed'],
+            "seatCapacity" => $data['seat_capacity'],
+            "enginePower" => $data['engine_power'],
+            'yearOfManufactureId' => strval($data['year_of_manufacture_id']),
+            'jetskiMaterialId' => strval($data['jetski_material_id']),
+            'jetskiUseId' => $data['jetski_use_id'],
+            "claimHistory" => $data["claim_history"],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
@@ -46,7 +49,7 @@ class BikeQuoteRepository extends BaseRepository
             'createdById' => Auth::user()->id,
         ];
 
-        info('bikeQuote:'.json_encode($quoteData));
+        info('JetSki Quote Create :'.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
     }
@@ -59,16 +62,18 @@ class BikeQuoteRepository extends BaseRepository
     public function fetchUpdate($uuid, $data)
     {
         return DB::transaction(function () use ($uuid, $data) {
-            $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())->where('uuid', $uuid)->firstOrFail();
+
+            $quote = $this->byQuoteTypeId(QuoteTypes::JETSKI->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'nationality_id',  'asset_value', 'currently_insured_with_id',
+                'first_name', 'last_name', 'email', 'mobile_no'
             ]);
 
             $quoteData['updated_by_id'] = Auth::user()->id;
             $quote->update($quoteData);
 
-            $quote->bikeQuote->update(Arr::only($data, ['bike_company_to_insure', 'year_of_manufacture', 'uae_license_held_for_id']));
+            $quote->jetskiQuote->update(Arr::only($data, ['jetski_make', 'jetski_model', 'year_of_manufacture_id', 'max_speed', 'seat_capacity',
+                'engine_power', 'jetski_material_id', 'jetski_use_id', 'claim_history']));
 
             return $quote;
         });
@@ -82,10 +87,9 @@ class BikeQuoteRepository extends BaseRepository
     public function fetchGetFormOptions()
     {
         return [
-            'nationalities' => NationalityRepository::withActive()->get(),
-            'uaeLicenses' => UaeLicenseHeldRepository::withActive()->get(),
+            'jetski_materials' => LookupRepository::where('key', Lookups::JETSKI_MATERIALS)->get(),
+            'jetski_uses' => LookupRepository::where('key', Lookups::JETSKI_USES)->get(),
             'yearOfManufacture' => YearOfManufactureRepository::get(),
-            'insuranceProviders' => InsuranceProviderRepository::select('id', 'text')->orderBy('text', 'asc')->get(),
         ];
     }
 
@@ -96,17 +100,11 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        $quote =  $this->byQuoteTypeId(QuoteTypes::BIKE->id())
+        return $this->byQuoteTypeId(QuoteTypes::JETSKI->id())
             ->where($column, $value)
-            ->with(['bikeQuote' => function ($q) {
-                $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);
-            }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
+            ->with(['jetskiQuote', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo'])->firstOrFail();
-
-        $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
-
-        return $quote;
     }
 
     /**
@@ -114,7 +112,7 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchGetData()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+        return $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
             ->filter()
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
