@@ -631,7 +631,7 @@ class BusinessQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'company_name', 'business_type_of_insurance_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'company_name', 'business_type_of_insurance_id', 'advisor_id'];
     }
 
     public function fillRenewalProperties($model)
