@@ -42,21 +42,23 @@ class CapiRequestService
                     $carQuote->car_value_tier = $data['carValueTier'];
                     $carQuote->save();
 
-                    $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
-                    if ($carQuoteDetail != null) {
-                        $carQuoteDetail->advisor_assigned_date = now();
-                        $carQuoteDetail->advisor_assigned_by_id = auth()->id();
-                        $carQuoteDetail->save();
-                        info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
-                    } else {
-                        info('---- updateCarLeadDetailRecord - record not found creating new entry');
-                        CarQuoteRequestDetail::create([
-                            'car_quote_request_id' => $$carQuote->id,
-                            'advisor_assigned_date' => now(),
-                            'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                    if ($carQuote->advisor_id != null) {
+                        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
+                        if ($carQuoteDetail != null) {
+                            $carQuoteDetail->advisor_assigned_date = now();
+                            $carQuoteDetail->advisor_assigned_by_id = auth()->id();
+                            $carQuoteDetail->save();
+                            info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
+                        } else {
+                            info('---- updateCarLeadDetailRecord - record not found creating new entry');
+                            CarQuoteRequestDetail::create([
+                                'car_quote_request_id' => $carQuote->id,
+                                'advisor_assigned_date' => now(),
+                                'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
                     }
                 }
             }

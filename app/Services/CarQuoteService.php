@@ -1253,16 +1253,19 @@ class CarQuoteService extends BaseService
     public function addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId)
     {
         info('lead current advisor_id is : '.json_encode($previousAdvisorId).' and lead created date is : '.$lead->created_at);
+        $shouldUpdateAllocationRecord = $userId != $previousAdvisorId;
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($userId);
         $previousAdvisorAllocationRecord = null;
         if ($lead->advisor_id != null) {
             $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
         }
-        info('new advisor ('.$userId.')  manual count before update is : '.$newAdvisorAllocationRecord->manual_assignment_count.' and auto assignment count is : '.$newAdvisorAllocationRecord->auto_assignment_count);
-        $newAdvisorAllocationRecord->manual_assignment_count = $newAdvisorAllocationRecord->manual_assignment_count + 1;
-        $newAdvisorAllocationRecord->allocation_count = $newAdvisorAllocationRecord->allocation_count + 1;
-        $newAdvisorAllocationRecord->updated_at = now();
-        $newAdvisorAllocationRecord->save();
+        if ($shouldUpdateAllocationRecord) {
+            info('new advisor ('.$userId.')  manual count before update is : '.$newAdvisorAllocationRecord->manual_assignment_count.' and auto assignment count is : '.$newAdvisorAllocationRecord->auto_assignment_count);
+            $newAdvisorAllocationRecord->manual_assignment_count = $newAdvisorAllocationRecord->manual_assignment_count + 1;
+            $newAdvisorAllocationRecord->allocation_count = $newAdvisorAllocationRecord->allocation_count + 1;
+            $newAdvisorAllocationRecord->updated_at = now();
+            $newAdvisorAllocationRecord->save();
+        }
         info('new advisor after update is : '.json_encode($newAdvisorAllocationRecord));
         if ($lead->advisor_id != null && Carbon::parse($lead->created_at)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
             if ($lead->auto_assigned) {
