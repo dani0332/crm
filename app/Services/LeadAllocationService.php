@@ -151,7 +151,7 @@ class LeadAllocationService extends BaseService
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
 
-                if(str_contains(strtolower($lead->code), strtolower(quoteTypeCode::Car) )) {
+                if (str_contains(strtolower($lead->code), strtolower(quoteTypeCode::Car))) {
                     $lead->auto_assigned = $isManualAssignment ? false : true;
                 }
 
