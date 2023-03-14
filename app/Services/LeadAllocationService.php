@@ -19,6 +19,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
+use App\Models\QuoteBatches;
 use App\Models\RuleLeadSource;
 use App\Models\Team;
 use App\Models\Tier;
@@ -152,6 +153,7 @@ class LeadAllocationService extends BaseService
                 }
                 $lead->auto_assigned = $isManualAssignment ? false : true;
                 $lead->advisor_id = $advisorId;
+                if ($lead->quote_batch_id == null ) $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
@@ -519,6 +521,7 @@ class LeadAllocationService extends BaseService
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+                        if ($carQuote->quote_batch_id == null ) $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
                         $carQuote->save();
 
                         info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
