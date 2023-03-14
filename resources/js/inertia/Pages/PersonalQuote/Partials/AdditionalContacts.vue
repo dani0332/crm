@@ -109,11 +109,10 @@ const additionalContactDeleteConfirmed = () => {
   );
 };
 const additionalContactPrimaryConfirmed = () => {
-  const isEmail = confirmData.contactPrimary.key === 'email';
-  router.post(
-    `/customer-additional-contact/${
-      isEmail ? confirmData.contactPrimary.id : 0
-    }/make-primary`,
+  const url = `/personal-quotes/${page.props.quote.id}/customers/${page.props.quote.customer_id}`;
+
+  router.patch(
+    url,
     {
       isInertia: true,
       quote_id: page.props.quote.id,

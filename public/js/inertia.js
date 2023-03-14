@@ -5889,8 +5889,8 @@ __webpack_require__.r(__webpack_exports__);
     };
 
     var additionalContactPrimaryConfirmed = function additionalContactPrimaryConfirmed() {
-      var isEmail = confirmData.contactPrimary.key === 'email';
-      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.post("/customer-additional-contact/".concat(isEmail ? confirmData.contactPrimary.id : 0, "/make-primary"), {
+      var url = "/personal-quotes/".concat(page.props.quote.id, "/customers/").concat(page.props.quote.customer_id);
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.patch(url, {
         isInertia: true,
         quote_id: page.props.quote.id,
         key: confirmData.contactPrimary.key,

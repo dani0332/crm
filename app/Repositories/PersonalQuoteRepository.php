@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -186,5 +187,21 @@ class PersonalQuoteRepository extends BaseRepository
             ->orderBy('a.created_at', 'DESC')->get();
 
         return $audits;
+    }
+
+
+    public function fetchUpdateCustomerAdditionalContact($quoteId,$data){
+
+        $quote = $this->findOrFail($quoteId);
+        if ($data['key'] == GenericRequestEnum::EMAIL) {
+            $quote->email =$data['value'];
+            $customerData=['email' =>$data['value']];
+        }elseif ($data['key'] == GenericRequestEnum::MOBILE_NO) {
+            $quote->mobile_no =$data['value'];
+            $customerData=['mobile_no' =>$data['value']];
+            $quote->customer()->update(['mobile_no' =>$data['value']]);
+        }
+        $quote->customer()->update($customerData);
+        $quote->save();
     }
 }
