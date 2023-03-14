@@ -151,7 +151,11 @@ class LeadAllocationService extends BaseService
                     info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
-                $lead->auto_assigned = $isManualAssignment ? false : true;
+
+                if (str_contains(strtolower($lead->code), strtolower(quoteTypeCode::Car))) {
+                    $lead->auto_assigned = $isManualAssignment ? false : true;
+                }
+
                 $lead->advisor_id = $advisorId;
                 if ($lead->quote_batch_id == null) {
                     $lead->quote_batch_id = QuoteBatches::latest()->first()->id;

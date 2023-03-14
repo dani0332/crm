@@ -204,6 +204,11 @@
                         carProps.forEach(element => {
                             d[element] = $('#' + element).val();
                         });
+                        if(model.modelType == '{{ quoteTypeCode::Car }}' &&
+                        '{{ !Auth::user()->hasRole(RolesEnum::CarAdvisor) }}'){
+                            d.advisor_id = $('#advisor_id').val();
+                        }
+
                         d.advisor_assigned_date = $('#advisor_assigned_date').val();
                         d.advisor_assigned_date_end = $('#advisor_assigned_date_end').val();
                         d.renewal_expiry_date = $('#renewal_expiry_date').val();
