@@ -134,7 +134,7 @@ class HealthQuoteService extends BaseService
     {
         $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
         $lostId = 0;
-        if (!is_null($entity) && $entity->lost_reason_id) {
+        if (! is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
 
@@ -144,7 +144,7 @@ class HealthQuoteService extends BaseService
     public function getDetailEntity($id)
     {
         $entity = HealthQuoteRequestDetail::where('health_quote_request_id', $id)->first();
-        if (!$entity) {
+        if (! $entity) {
             $entity = $this->createDetailEntity($id);
         }
 
@@ -193,7 +193,7 @@ class HealthQuoteService extends BaseService
             'memberCategoryId' => $request->member_category_id,
             'currentlyInsuredWithId' => $request->currently_insured_with_id,
         ];
-        if (!Auth::user()->hasRole('ADMIN')) {
+        if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
@@ -291,7 +291,7 @@ class HealthQuoteService extends BaseService
         }
         $this->whereBasedOnRole($this->query, 'hqr');
 
-        if (!isset($request->email) && $request->email == '') {
+        if (! isset($request->email) && $request->email == '') {
             $this->query->where('hqr.quote_status_id', '!=', 9);
         }
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
@@ -376,23 +376,23 @@ class HealthQuoteService extends BaseService
             $this->query->where('hqr.is_ecommerce', $isEcommerce);
         }
         foreach ($searchProperties as $item) {
-            if (!empty($request[$item]) && $item != 'created_at') {
+            if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
-                } elseif ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
+                } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     if ($request[$item][0] == 'null') {
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item])->orWhereIn('wcu_id', $request[$item]);
                     }
-                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
+                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_ecommerce', 'is_renewal', 'previous_policy_expiry_date', 'next_followup_date'];
                     if (in_array($item, $skipped)) {
                         continue;
                     }
-                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
+                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
                 }
             }
         }
@@ -509,7 +509,7 @@ class HealthQuoteService extends BaseService
         $healthQuote->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('quote/health/' . $id)->with('success', 'Health Quote has been updated');
+            return redirect('quote/health/'.$id)->with('success', 'Health Quote has been updated');
         }
     }
 
@@ -663,13 +663,13 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->orderBy('advisor_id', 'ASC');
-        if (!empty($CDBID)) {
+        if (! empty($CDBID)) {
             $query->where('hqr.id', '=', $CDBID);
         }
-        if (!empty($email)) {
+        if (! empty($email)) {
             $query->where('hqr.email', '=', $email);
         }
-        if (!empty($mobile_no)) {
+        if (! empty($mobile_no)) {
             $query->where('hqr.mobile_no', '=', $mobile_no);
         }
 
@@ -724,10 +724,10 @@ class HealthQuoteService extends BaseService
             'emirate_of_your_visa_id' => 'select|title|required',
             'previous_quote_id' => 'readonly|title',
             'renewal_expiry_date' => 'input|date|title|range',
-            'is_renewal' => '|static|' . GenericRequestEnum::Yes . ',' . GenericRequestEnum::No . '',
+            'is_renewal' => '|static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'salary_band_id' => 'select|title',
             'member_category_id' => 'select|title',
-            'gender' => '|static|' . GenericRequestEnum::MALE_SINGLE . ',' . GenericRequestEnum::FEMALE_SINGLE . ',' . GenericRequestEnum::FEMALE_MARRIED . '',
+            'gender' => '|static|'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE_SINGLE.','.GenericRequestEnum::FEMALE_MARRIED.'',
             'renewal_batch' => 'input|none',
             'renewal_import_code' => 'input|text',
             'previous_quote_policy_number' => 'input|title',
@@ -736,7 +736,7 @@ class HealthQuoteService extends BaseService
             'parent_duplicate_quote_id' => 'input|title',
             'currently_insured_with_id' => 'select|title',
             'device' => 'input|title',
-            'is_ecommerce' => '|static|' . GenericRequestEnum::Yes . ',' . GenericRequestEnum::No . '',
+            'is_ecommerce' => '|static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
             'policy_start_date' => 'input|date',
         ];
     }
@@ -895,7 +895,7 @@ class HealthQuoteService extends BaseService
         $businessLead->source = $lead->source;
         $uuid = strtoupper($this->generateUUID());
         $businessLead->uuid = $uuid;
-        $businessLead->code = 'BUS-' . $uuid;
+        $businessLead->code = 'BUS-'.$uuid;
         $businessLead->customer_id = $lead->customer_id;
         $healthQuotePlan = HealthQuotePlan::where('health_quote_request_id', $lead->id)->first();
         if (isset($healthQuotePlan)) {
@@ -930,12 +930,12 @@ class HealthQuoteService extends BaseService
     public function getQuotePlans($id)
     {
         $quoteUuId = HealthQuote::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-health-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
         $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
@@ -951,7 +951,7 @@ class HealthQuoteService extends BaseService
                     'headers' => [
                         'Content-Type' => 'application/json', 'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic ' . $authBasic,
+                        'Authorization' => 'Basic '.$authBasic,
                     ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
@@ -988,12 +988,12 @@ class HealthQuoteService extends BaseService
     public function getQuotePlansPriority($id)
     {
         $quoteUuId = HealthQuote::where('uuid', '=', $id)->value('uuid');
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-health-quote-plans-order-priority';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans-order-priority';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
         $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
@@ -1009,7 +1009,7 @@ class HealthQuoteService extends BaseService
                     'headers' => [
                         'Content-Type' => 'application/json', 'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic ' . $authBasic,
+                        'Authorization' => 'Basic '.$authBasic,
                     ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
@@ -1088,13 +1088,13 @@ class HealthQuoteService extends BaseService
     public function assignWCU($request): array
     {
         $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
-        info('Leads ids to assign: ' . json_encode($leadsIds));
+        info('Leads ids to assign: '.json_encode($leadsIds));
         $userId = $request->assigned_to_id_new;
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
             if ($this->isLeadTransactionApproved($lead)) {
-                info('Cannot assign WCU as lead is in Transaction Approved state , lead id: ' . $leadId);
+                info('Cannot assign WCU as lead is in Transaction Approved state , lead id: '.$leadId);
                 array_push($result, ['leadId' => $lead->code, 'msg' => 'Cannot assign WCU as lead is in Transaction Approved state']);
 
                 continue;
@@ -1104,7 +1104,7 @@ class HealthQuoteService extends BaseService
                 $lead->wcu_id = $userId;
                 $lead->health_team_type = $request->assign_team;
                 $lead->save();
-                info('WCU advisor : ' . $userId . ' assigned to lead: ' . $leadId);
+                info('WCU advisor : '.$userId.' assigned to lead: '.$leadId);
             }
         }
 
@@ -1128,7 +1128,7 @@ class HealthQuoteService extends BaseService
             $this->convertLeadToGM($lead);
             $lead->health_team_type = quoteTypeCode::GM;
         } else {
-            info('Assigning lead to ' . $selectedTeam . ' team');
+            info('Assigning lead to '.$selectedTeam.' team');
             $lead->health_team_type = $selectedTeam;
             if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
                 $lead->wcu_id = null;
@@ -1161,7 +1161,7 @@ class HealthQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        info('Leads ids to assign: ' . json_encode($leadsIds));
+        info('Leads ids to assign: '.json_encode($leadsIds));
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
@@ -1174,18 +1174,18 @@ class HealthQuoteService extends BaseService
             }
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
                 if ($lead->health_team_type == null || $lead->health_team_type == '') {
-                    info('Lead with id: ' . $leadId . ' is not assigned to any health team');
+                    info('Lead with id: '.$leadId.' is not assigned to any health team');
                     $msg = 'Health team is missing please select health team first';
                     array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
 
                     continue;
                 }
                 if ($this->leadAllocationService->checkIfAdvisorCanTakeLead($userId)) {
-                    info('Advisor : ' . $userId . ' can take lead: ' . $leadId);
+                    info('Advisor : '.$userId.' can take lead: '.$leadId);
                     $user = User::where('id', $userId)->first();
                     $subTeam = Team::where('id', $user->sub_team_id)->first();
                     if (strtolower($subTeam->name) != strtolower($lead->health_team_type)) {
-                        info('Advisor : ' . $userId . ' can take lead: ' . $leadId . ' but he is not assigned to the correct health team');
+                        info('Advisor : '.$userId.' can take lead: '.$leadId.' but he is not assigned to the correct health team');
                         $msg = 'User sub team mismatch with lead health team';
                         array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
 
@@ -1193,10 +1193,10 @@ class HealthQuoteService extends BaseService
                     }
                     $this->leadAllocationService->assignLead($lead, $userId, true);
                     $this->updateChildRecord($lead->id);
-                    info('Lead: ' . $leadId . ' assigned to advisor: ' . $userId);
+                    info('Lead: '.$leadId.' assigned to advisor: '.$userId);
                 } else {
-                    info('Advisor : ' . $userId . ' cannot take lead: ' . $leadId);
-                    $msg = 'Advisor is not allowed to take lead with CDBID : ' . $lead->code;
+                    info('Advisor : '.$userId.' cannot take lead: '.$leadId);
+                    $msg = 'Advisor is not allowed to take lead with CDBID : '.$lead->code;
                     array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
 
                     continue;
@@ -1250,12 +1250,12 @@ class HealthQuoteService extends BaseService
 
     public function healthPlanModify($request)
     {
-        $apiEndPoint = config('constants.KEN_API_ENDPOINT') . '/save-manual-health-quote-plans';
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plans';
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
-        if ($request->planId && !empty($request->planDetails)) {
+        if ($request->planId && ! empty($request->planDetails)) {
             $membersBreakDown = [];
             $plansArray = [
                 'planId' => (int) $request->planId,
@@ -1302,7 +1302,7 @@ class HealthQuoteService extends BaseService
     public function renewalCreatePlan($planData)
     {
         $apiCreds = [
-            'apiEndPoint' => config('constants.KEN_API_ENDPOINT') . '/save-manual-health-quote-plans',
+            'apiEndPoint' => config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plans',
             'apiToken' => config('constants.KEN_API_TOKEN'),
             'apiTimeout' => config('constants.KEN_API_TIMEOUT'),
             'apiUserName' => config('constants.KEN_API_USER'),
@@ -1328,7 +1328,7 @@ class HealthQuoteService extends BaseService
 
         $quotePlans = $this->getQuotePlans($data['quote_uuid']);
 
-        if (!isset($quotePlans->quote->plans)) {
+        if (! isset($quotePlans->quote->plans)) {
             return ['error' => 'Quote plans not available'];
         }
 
@@ -1344,7 +1344,7 @@ class HealthQuoteService extends BaseService
             ->loadView('pdf.health_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
 
         // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-        $pdfName = 'InsuranceMarket.ae™ Health Insurance Comparison for ' . $quote->first_name . ' ' . $quote->last_name . '.pdf';
+        $pdfName = 'InsuranceMarket.ae™ Health Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
 
         return ['pdf' => $pdf, 'name' => $pdfName];
     }
