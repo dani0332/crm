@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class JetskiQuote extends Model
 {
     use HasFactory;
+
     protected $table = 'jetski_quote_request';
     protected $guarded = [];
 }

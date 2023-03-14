@@ -55,15 +55,15 @@ class Payment extends Model
      */
     public function getEditButtonAttribute()
     {
-        return $this->attributes['edit_button'] = ( $this->allow && $this->payment_status_id != PaymentStatusEnum::PAID );
+        return $this->attributes['edit_button'] = ($this->allow && $this->payment_status_id != PaymentStatusEnum::PAID);
     }
 
-
-    public function scopeWithPermissions($q) {
+    public function scopeWithPermissions($q)
+    {
         $this->attributes['allow_approve'] = 1;
+
         return $q;
     }
-
 
     public function paymentable()
     {

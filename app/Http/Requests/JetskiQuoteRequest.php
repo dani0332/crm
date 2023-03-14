@@ -36,7 +36,7 @@ class JetskiQuoteRequest extends FormRequest
             'engine_power' => 'required|max:50',
             'jetski_material_id' => 'required|exists:lookups,id',
             'jetski_use_id' => 'required|exists:lookups,id',
-            'claim_history' => 'required|max:50'
+            'claim_history' => 'required|max:50',
         ];
     }
 }

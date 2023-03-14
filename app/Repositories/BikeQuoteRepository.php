@@ -96,7 +96,7 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        $quote =  $this->byQuoteTypeId(QuoteTypes::BIKE->id())
+        $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())
             ->where($column, $value)
             ->with(['bikeQuote' => function ($q) {
                 $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);

@@ -41,13 +41,14 @@ class JetskiQuoteController extends Controller
     public function create()
     {
         $data = JetskiQuoteRepository::getFormOptions();
+
         return inertia('JetskiQuote/Form', $data);
     }
 
-
     /**
-     * @param JetskiQuoteRequest $request
+     * @param  JetskiQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
+     *
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(JetskiQuoteRequest $request)
@@ -130,12 +131,13 @@ class JetskiQuoteController extends Controller
 
     /**
      * @param $uuid
-     * @param JetskiQuoteRequest $request
+     * @param  JetskiQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function update($uuid, JetskiQuoteRequest $request)
     {
         JetskiQuoteRepository::update($uuid, $request->validated());
+
         return back();
     }
 }

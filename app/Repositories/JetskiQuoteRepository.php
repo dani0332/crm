@@ -35,13 +35,13 @@ class JetskiQuoteRepository extends BaseRepository
             'mobileNo' => $data['mobile_no'],
             'jetskiMake' => $data['jetski_make'],
             'jetskiModel' => $data['jetski_model'],
-            "maxSpeed" => $data['max_speed'],
-            "seatCapacity" => $data['seat_capacity'],
-            "enginePower" => $data['engine_power'],
+            'maxSpeed' => $data['max_speed'],
+            'seatCapacity' => $data['seat_capacity'],
+            'enginePower' => $data['engine_power'],
             'yearOfManufactureId' => strval($data['year_of_manufacture_id']),
             'jetskiMaterialId' => strval($data['jetski_material_id']),
             'jetskiUseId' => $data['jetski_use_id'],
-            "claimHistory" => $data["claim_history"],
+            'claimHistory' => $data['claim_history'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
@@ -62,11 +62,10 @@ class JetskiQuoteRepository extends BaseRepository
     public function fetchUpdate($uuid, $data)
     {
         return DB::transaction(function () use ($uuid, $data) {
-
             $quote = $this->byQuoteTypeId(QuoteTypes::JETSKI->id())->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no'
+                'first_name', 'last_name', 'email', 'mobile_no',
             ]);
 
             $quoteData['updated_by_id'] = Auth::user()->id;
