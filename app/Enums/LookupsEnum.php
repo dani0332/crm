@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum Lookups: string
+enum LookupsEnum: string
 {
     case JETSKI_MATERIALS = 'jetski-materials';
     case JETSKI_USES = 'jetski-uses';
