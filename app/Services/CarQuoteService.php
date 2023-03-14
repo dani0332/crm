@@ -748,7 +748,7 @@ class CarQuoteService extends BaseService
                 array_push($searchProperties, 'payment_status_id');
             }
 
-            if (!auth()->user()->hasRole(RolesEnum::CarAdvisor) && !in_array('advisor_id', $searchProperties)) {
+            if (! auth()->user()->hasRole(RolesEnum::CarAdvisor) && ! in_array('advisor_id', $searchProperties)) {
                 array_push($searchProperties, 'advisor_id');
             }
 
