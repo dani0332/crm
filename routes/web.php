@@ -62,6 +62,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\BikeQuoteController;
 use App\Http\Controllers\V2\CycleQuoteController;
+use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\YachtQuoteController;
@@ -278,6 +279,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('bike', BikeQuoteController::class);
         Route::resource('cycle', CycleQuoteController::class);
         Route::resource('yacht', YachtQuoteController::class);
+        Route::resource('jetski', JetskiQuoteController::class);
     });
 
     Route::group(['prefix' => 'generic'], function () {

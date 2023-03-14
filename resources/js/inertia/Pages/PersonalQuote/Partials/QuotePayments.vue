@@ -6,6 +6,7 @@ import axios from 'axios';
 
 const notification = useNotifications('toast');
 const page = usePage();
+const paymentLoader = ref(``);
 
 defineProps({
   payments: Object,
@@ -180,14 +181,18 @@ const paymentTableHeaders = [
   { text: 'Actions', value: 'actions', sortable: false },
 ];
 
-const generateCCLink = async code => {
+const generateCCLink = async payment => {
   try {
+      paymentLoader.value = payment.code;
+
     const response = await axios.post('/generate-payment-link', {
       quoteId: page.props.quote.id,
       modelType: 'personal',
-      paymentCode: code,
+      paymentCode: payment.code,
       isInertia: true,
     });
+
+    paymentLoader.value = ``;
 
     if (response.data.success) {
       const el = document.createElement('textarea');
@@ -201,6 +206,7 @@ const generateCCLink = async code => {
         title: 'Payment Link Generated',
         position: 'top',
       });
+
     } else {
       notification.error({
         title: 'Payment Link Generation Failed',
@@ -256,7 +262,8 @@ const generateCCLink = async code => {
               size="xs"
               color="orange"
               v-if="item.copy_link_button"
-              @click="generateCCLink(item.code)"
+              @click="generateCCLink(item)"
+              :loading="paymentLoader == item.code"
             >
               Copy Link
             </x-button>
