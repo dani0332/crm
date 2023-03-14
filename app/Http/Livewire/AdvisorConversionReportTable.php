@@ -182,11 +182,11 @@ class AdvisorConversionReportTable extends DataTableComponent
 
                 return number_format($total * 100, 2, '.', '').' %';
             }),
-            Column::make('Net Conversion')->label(fn ($row) => ($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0 ? number_format(($row->total_leads - ($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads))) * 100, 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
+            Column::make('Net Conversion')->label(fn ($row) => ($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads))) * 100, 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
                 $total = 0;
                 foreach ($rows as $row) {
                     if (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0) {
-                        $total = $total + ($row->total_leads - ($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads)));
+                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads)));
                     }
                 }
 
