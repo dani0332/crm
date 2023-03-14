@@ -42,8 +42,7 @@ class CapiRequestService
                     $carQuote->car_value_tier = $data['carValueTier'];
                     $carQuote->save();
 
-                    if($carQuote->advisor_id != null)
-                    {
+                    if ($carQuote->advisor_id != null) {
                         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
                         if ($carQuoteDetail != null) {
                             $carQuoteDetail->advisor_assigned_date = now();
