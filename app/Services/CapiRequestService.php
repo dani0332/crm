@@ -52,7 +52,7 @@ class CapiRequestService
                         } else {
                             info('---- updateCarLeadDetailRecord - record not found creating new entry');
                             CarQuoteRequestDetail::create([
-                                'car_quote_request_id' => $$carQuote->id,
+                                'car_quote_request_id' => $carQuote->id,
                                 'advisor_assigned_date' => now(),
                                 'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
                                 'created_at' => now(),
