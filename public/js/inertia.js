@@ -8740,7 +8740,7 @@ __webpack_require__.r(__webpack_exports__);
     });
     var quoteStatusForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
       quote_uuid: page.props.quote.uuid,
-      quote_status_id: page.props.quote.quote_status_id || null,
+      quote_status_id: null,
       notes: page.props.quote.notes || null,
       transapp_code: ((_page$props$quote = page.props.quote) === null || _page$props$quote === void 0 ? void 0 : (_page$props$quote$quo = _page$props$quote.quote_detail) === null || _page$props$quote$quo === void 0 ? void 0 : _page$props$quote$quo.transapp_code) || null,
       lost_reason_id: ((_page$props$quote2 = page.props.quote) === null || _page$props$quote2 === void 0 ? void 0 : (_page$props$quote2$qu = _page$props$quote2.quote_detail) === null || _page$props$quote2$qu === void 0 ? void 0 : _page$props$quote2$qu.lost_reason_id) || null
@@ -8761,6 +8761,11 @@ __webpack_require__.r(__webpack_exports__);
       });
     };
 
+    var rules = {
+      isRequired: function isRequired(v) {
+        return !!v || 'This field is required';
+      }
+    };
     var allowStatusUpdate = (0,vue__WEBPACK_IMPORTED_MODULE_1__.computed)(function () {
       return page.props.quote.quote_status_id == page.props.quoteStatusEnum.TransactionApproved;
     });
@@ -8770,6 +8775,7 @@ __webpack_require__.r(__webpack_exports__);
       quoteStatusOptions: quoteStatusOptions,
       quoteStatusForm: quoteStatusForm,
       onLeadStatus: onLeadStatus,
+      rules: rules,
       allowStatusUpdate: allowStatusUpdate,
 
       get useForm() {
@@ -27058,11 +27064,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     error: $setup.quoteStatusForm.errors.quote_status_id,
     options: $setup.quoteStatusOptions,
     disabled: $setup.allowStatusUpdate,
+    rules: [$setup.rules.isRequired],
     placeholder: "Lead Status",
     "class": "w-full"
   }, null, 8
   /* PROPS */
-  , ["modelValue", "error", "options", "disabled"]), $setup.quoteStatusForm.quote_status_id == $setup.page.props.quoteStatusEnum.TransactionApproved ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
+  , ["modelValue", "error", "options", "disabled", "rules"]), $setup.quoteStatusForm.quote_status_id == $setup.page.props.quoteStatusEnum.TransactionApproved ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)(_component_x_input, {
     key: 0,
     modelValue: $setup.quoteStatusForm.transapp_code,
     "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
