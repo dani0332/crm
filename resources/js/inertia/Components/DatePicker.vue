@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 
@@ -28,12 +28,12 @@ const props = defineProps({
   },
 });
 
-const format = date => {
+const format = (date, isServer = false) => {
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
 
-  return `${day}-${month}-${year}`;
+  return isServer ? `${year}-${month}-${day}` : `${day}-${month}-${year}`;
 };
 
 const selectedData = computed({
@@ -41,7 +41,7 @@ const selectedData = computed({
     return props.modelValue;
   },
   set(newValue) {
-    emit('update:modelValue', newValue);
+    emit('update:modelValue', format(newValue, true));
     return;
   },
 });
