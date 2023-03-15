@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\GenericModel;
 use App\Models\User;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -109,11 +110,11 @@ class BaseService
     public function audits($auditableId, $auditableType)
     {
         return DB::table('audits')
-        ->select('audits.*', 'users.name')
-        ->join('users', 'audits.user_id', 'users.id')
-        ->where('auditable_id', $auditableId)
-        ->where('auditable_type', $auditableType)
-        ->get();
+            ->select('audits.*', 'users.name')
+            ->join('users', 'audits.user_id', 'users.id')
+            ->where('auditable_id', $auditableId)
+            ->where('auditable_type', $auditableType)
+            ->get();
     }
 
     public function getFieldsToUpdate($skipProperties): array
@@ -142,6 +143,56 @@ class BaseService
         }
 
         return $fields;
+    }
+
+    public function fieldsToDisplay($fieldsToDisplay, $quote)
+    {
+        $crudService = app(CrudService::class);
+        $fields = [];
+        foreach ($fieldsToDisplay as $property => $field) {
+            if (str_contains($field, 'static')) {
+                $options = $this->getStaticFields($field);
+                $fields[$property]['title'] = ucwords(str_replace('_', ' ', $property));
+                $fields[$property]['value'] = '';
+                foreach ($options as $option) {
+                    if ($option == $quote->$property) {
+                        $fields[$property]['value'] = $option;
+                    }
+                }
+            } elseif (str_contains($field, 'select')) {
+                $fields[$property]['title'] = $crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+                $name = $property.'_text';
+                $fields[$property]['value'] = $quote->$name ?? '';
+            } elseif (str_contains($field, 'title')) {
+                $fields[$property]['title'] = $crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
+                $fields[$property]['value'] = $quote->$property ?? '';
+            } else {
+                $fields[$property]['title'] = ucwords(str_replace('_', ' ', $property));
+                $fields[$property]['value'] = $quote->$property ?? '';
+            }
+        }
+
+        return $fields;
+    }
+
+    public function getStaticFields($field)
+    {
+        if (! is_array($field)) {
+            $field = explode('|', $field);
+        }
+
+        $options = array_filter($field, function ($item) {
+            return str_contains($item, ',');
+        });
+        $options = array_map(function ($item) {
+            return explode(',', $item);
+        }, $options);
+        $options = Arr::first($options);
+        $options = array_map(function ($item) {
+            return ['id' => $item, 'text' => $item];
+        }, $options);
+
+        return $options;
     }
 
     public function getFieldsToShow(): array

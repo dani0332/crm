@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -12,6 +13,7 @@ use App\Enums\RolesEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
 use App\Services\LookupService;
 use App\Services\TravelQuoteService;
 use Illuminate\Http\Request;
@@ -51,10 +53,19 @@ class TravelController extends Controller
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
+        $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
             'dropdownSource' => $dropdownSource,
+            'advisors' => $advisors,
+            'permissions' => [
+                'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
+                'travelAdvisor' => auth()->user()->hasRole(RolesEnum::TravelAdvisor),
+                'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
+                'isLeadPool' => auth()->user()->isLeadPool(),
+                'isManagerORDeputy' => auth()->user()->isManagerOrDeputy(),
+            ],
         ]);
     }
 
@@ -94,8 +105,11 @@ class TravelController extends Controller
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
+        $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
+
         return inertia('TravelQuote/Show', [
             'quote' => $record,
+            'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
             'dropdownSource' => $dropdownSource,
             'leadStatuses' => $dropdownSource['quote_status_id'],
@@ -121,6 +135,7 @@ class TravelController extends Controller
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
                 'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
+                'travelAdvisor' => auth()->user()->hasRole(RolesEnum::TravelAdvisor),
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 'displaySendPolicyButton' => $displaySendPolicyButton,
                 'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
@@ -317,5 +332,25 @@ class TravelController extends Controller
         ];
 
         return response()->json($data, 200);
+    }
+
+    public function cardsView(Request $request)
+    {
+        $dropdownSourceService = app(DropdownSourceService::class);
+        $leadStatuses = $dropdownSourceService->getDropdownSource('quote_status_id', self::TYPE_ID);
+
+        $leadStatuses = $leadStatuses->filter(function ($item) {
+            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING;
+        })->toArray();
+
+        $leadStatuses = array_map(function ($item) {
+            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id']);
+
+            return $item;
+        }, $leadStatuses);
+
+        return inertia('TravelQuote/Cards', [
+            'quotes' => array_values($leadStatuses),
+        ]);
     }
 }

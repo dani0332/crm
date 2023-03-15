@@ -111,10 +111,13 @@ function filterQuotes(isValid) {
 }
 
 function resetFilters() {
-  for (const key in filters) {
-    filters[key] = '';
-  }
-  filterQuotes(true);
+  router.visit("/quotes/life", {
+    method: "get",
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
 }
 
 function setQueryFilters() {

@@ -1,13 +1,16 @@
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link } from '@inertiajs/vue3';
+import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
 import Pagination from '@/inertia/Components/Pagination.vue';
 import ExportExcel from '@/inertia/Components/ExportExcel.vue';
 import ComboBox from '@/inertia/Components/ComboBox.vue';
+import { useNotifications } from '@indielayer/ui';
 
 defineProps({
   quotes: Object,
   dropdownSource: Object,
+  permissions: Object,
+  advisors: Object,
 });
 
 const rules = {
@@ -26,9 +29,10 @@ const rules = {
   },
 };
 
-const selectedItems = ref([]);
+const quotesSelected = ref([]);
 
 const page = usePage();
+const notification = useNotifications("toast");
 
 const filters = reactive({
   code: '',
@@ -125,10 +129,52 @@ function filterQuotes(isValid) {
 }
 
 function resetFilters() {
-  for (const key in filters) {
-    filters[key] = '';
+  router.visit('/quotes/travel', {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
+}
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
+const assignForm = useForm({
+  assigned_to_id_new: null,
+  assignment_type: '1',
+  modelType: 'Travel',
+  selectTmLeadId: '',
+  isManagerOrDeputy: page.props.permissions.isManagerOrDeputy,
+  isLeadPool: page.props.permissions.isLeadPool,
+  isManualAllocationAllowed: page.props.permissions.isManualAllocationAllowed,
+});
+
+function onAssignLead(isValid) {
+  if (isValid) {
+    const selected = quotesSelected.value.map(e => e.id);
+    assignForm
+      .transform(data => ({
+        ...data,
+        selectTmLeadId: `${selected}`,
+      }))
+      .post('/quotes/travel/manualLeadAssign', {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          quotesSelected.value = [];
+          notification.success({
+            title: 'Travel Leads Assigned',
+            position: 'top',
+          });
+        },
+      });
   }
-  filterQuotes(true);
 }
 
 function setQueryFilters() {
@@ -161,6 +207,9 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
+        <Link href="/quotes/travel-cards">
+          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+        </Link>
         <Link href="/quotes/travel/create">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
@@ -230,6 +279,7 @@ onMounted(() => {
           :options="leadsStatusOptions"
         />
         <ComboBox
+          v-if="!permissions.travelAdvisor"
           v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -249,7 +299,7 @@ onMounted(() => {
         <x-select
           name="payment_status_id"
           v-model="filters.payment_status_id"
-          label="PAYMENT STATUS"
+          label="Payment Status"
           placeholder="Search by Payment Status"
           :options="paymentStatusOptions"
           class="w-full"
@@ -264,9 +314,45 @@ onMounted(() => {
     </x-form>
 
     <Transition name="fade">
-      <div v-if="selectedItems.length > 0" class="mb-4">
+      <div v-if="quotesSelected.length > 0" class="mb-4">
+        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50" v-if="permissions.isManualAllocationAllowed">
+          <x-form @submit="onAssignLead" :auto-focus="false">
+            <div class="w-full flex flex-col md:flex-row gap-4">
+              <x-select
+                v-model="assignForm.assigned_to_id_new"
+                label="Assign Advisor"
+                :options="advisorOptions"
+                placeholder="Select Advisor"
+                class="flex-1 w-auto"
+                :rules="[rules.isRequired]"
+              />
+              <x-select
+                v-model="assignForm.assignment_type"
+                label="Assignment Type"
+                :options="[
+                  { value: '1', label: 'Without Email' },
+                  { value: '2', label: 'With Email' },
+                ]"
+                placeholder="Select Type"
+                class="flex-1 w-auto"
+                :rules="[rules.isRequired]"
+              />
+              <div class="mb-3 md:pt-6">
+                <x-button
+                  color="orange"
+                  size="sm"
+                  type="submit"
+                  :loading="assignForm.processing"
+                >
+                  Assign
+                </x-button>
+              </div>
+            </div>
+          </x-form>
+        </div>
+
         <ExportExcel
-          :data="selectedItems"
+          :data="quotesSelected"
           :columns="tableHeader"
           :filename="'Travel-List'"
           :sheetname="'Leads'"
@@ -274,7 +360,7 @@ onMounted(() => {
           <x-button size="sm" color="emerald">
             Export -
             <span class="lining-nums">
-              Selected: {{ selectedItems.length }}
+              Selected: {{ quotesSelected.length }}
             </span>
           </x-button>
         </ExportExcel>
@@ -282,7 +368,7 @@ onMounted(() => {
     </Transition>
 
     <DataTable
-      v-model:items-selected="selectedItems"
+      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
