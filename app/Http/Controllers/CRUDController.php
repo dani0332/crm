@@ -283,14 +283,11 @@ class CRUDController extends Controller
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $modelType = json_decode($request->get('modelType'), true);
         $validateArray = [];
-        if ($modelType == 'Home') {
-            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['create']);
-        } else {
-            if ($modelType !== quoteTypeCode::Health) {
-                foreach ($modelPropertiesList as $property => $value) {
-                    if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
-                        $validateArray[$property] = 'required';
-                    }
+
+        if ($modelType !== quoteTypeCode::Health && $modelType !== quoteTypeCode::Home) {
+            foreach ($modelPropertiesList as $property => $value) {
+                if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
+                    $validateArray[$property] = 'required';
                 }
             }
         }
@@ -543,7 +540,7 @@ class CRUDController extends Controller
                 $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
                 $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
                 $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
-                && ! auth()->user()->hasRole(RolesEnum::PA);
+                    && ! auth()->user()->hasRole(RolesEnum::PA);
 
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });

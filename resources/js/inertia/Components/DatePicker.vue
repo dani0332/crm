@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
-import VueTailwindDatepicker from 'vue-tailwind-datepicker';
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
 
 const emit = defineEmits(['update:modelValue']);
 
@@ -10,19 +11,30 @@ const props = defineProps({
     type: String,
   },
   modelValue: {
-    type: [String, Array, Object],
+    type: [String, Date],
     default: '',
+  },
+  placeholder: {
+    type: String,
+    default: 'Select Date',
   },
   single: {
     type: Boolean,
     default: true,
   },
+  hasError: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const formatter = ref({
-  date: 'DD-MM-YYYY',
-  month: 'MMM',
-});
+const format = date => {
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
+};
 
 const selectedData = computed({
   get() {
@@ -35,17 +47,65 @@ const selectedData = computed({
 });
 </script>
 <template>
-  <label
-    class="relative x-input inline-block align-bottom text-left mb-3 w-full"
+  <VueDatePicker
+    v-model="selectedData"
+    auto-apply
+    :format="format"
+    :teleport="true"
+    :enable-time-picker="false"
+    :month-change-on-scroll="false"
+    :clearable="false"
   >
-    <p class="font-medium text-gray-800 dark:text-gray-200 mb-1">
-      {{ props.label }}
-    </p>
-    <VueTailwindDatepicker
-      v-model="selectedData"
-      input-classes="appearance-none block w-full placeholder-gray-400 dark:placeholder-gray-500 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 dark:border-gray-700 border shadow-sm rounded-md hover:border-gray-400 dark:hover:border-gray-500 px-3 py-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-sky-400"
-      :as-single="single"
-      :formatter="formatter"
-    ></VueTailwindDatepicker>
-  </label>
+    <template #dp-input="{ value, onClear }">
+      <x-input
+        type="text"
+        :value="value"
+        :label="props.label"
+        :placeholder="placeholder"
+        :error="props.hasError ? 'This field is required' : ''"
+        class="w-full"
+        readonly
+      />
+      <div class="absolute right-2.5 top-[34px] hover:text-secondary-500">
+        <svg
+          v-if="!value"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-4 h-4"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+          />
+        </svg>
+
+        <svg
+          v-else
+          @click="onClear"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="w-4 h-4"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </div>
+    </template>
+  </VueDatePicker>
 </template>
+
+<style>
+.dp__clear_icon {
+  top: 40%;
+}
+</style>
