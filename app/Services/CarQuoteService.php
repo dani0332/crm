@@ -1196,8 +1196,6 @@ class CarQuoteService extends BaseService
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId); // update new and previous (if applicable) advisor counts in lead allocation table
 
-            $lead->auto_assigned = false;
-
             $lead->save();
 
             if (isset($request->assignment_type) && $request->assignment_type == GenericRequestEnum::ASSIGN_WITH_EMAIL) {
