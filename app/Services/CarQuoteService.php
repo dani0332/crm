@@ -1182,8 +1182,6 @@ class CarQuoteService extends BaseService
 
             $lead->advisor_id = $userId;
 
-            $lead->auto_assigned = false;
-
             if ($lead->quote_batch_id == null) {
                 $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
             }
@@ -1197,6 +1195,8 @@ class CarQuoteService extends BaseService
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId); // update new and previous (if applicable) advisor counts in lead allocation table
+
+            $lead->auto_assigned = false;
 
             $lead->save();
 
@@ -1276,7 +1276,7 @@ class CarQuoteService extends BaseService
             $newAdvisorAllocationRecord->save();
         }
         info('new advisor after update is : '.json_encode($newAdvisorAllocationRecord));
-        if ($lead->advisor_id != null && Carbon::parse($lead->created_at)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
+        if ($previousAdvisorId != null && Carbon::parse($lead->created_at)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
             if ($lead->auto_assigned) {
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
