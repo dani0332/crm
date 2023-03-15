@@ -198,14 +198,11 @@ onMounted(() => {
           v-model="filters.created_at_start"
           name="created_at_start"
           label="Created Date Start"
-          input-class="w-full"
         />
-
         <DatePicker
           v-model="filters.created_at_end"
           name="created_at_end"
           label="Created Date End"
-          input-class="w-full"
         />
         <ComboBox
           v-model="filters.quote_status_id"
