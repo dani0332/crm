@@ -183,8 +183,8 @@ class HomeQuoteService extends BaseService
             $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
-            $dateFrom = $this->parseDate($request['created_at_start'], true);
-            $dateTo = $this->parseDate($request['created_at_end'], true);
+            $dateFrom = $request['created_at_start'];
+            $dateTo = $request['created_at_end'];
             $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
