@@ -200,7 +200,7 @@ class LifeQuoteService extends BaseService
                 $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
                 $this->query->whereBetween(DB::raw('DATE(lqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
             }
-            if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
+            if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
                 $dateFrom = $request['created_at_start'];
                 $dateTo = $request['created_at_end'];
                 $this->query->whereBetween(DB::raw('DATE(lqr.created_at)'), [$dateFrom, $dateTo]);
