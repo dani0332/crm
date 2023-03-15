@@ -10,6 +10,7 @@ use App\Enums\RolesEnum;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\QuoteBatches;
 use App\Models\QuoteViewCount;
 use App\Models\Tier;
 use App\Models\User;
@@ -1182,6 +1183,10 @@ class CarQuoteService extends BaseService
             $lead->advisor_id = $userId;
 
             $lead->auto_assigned = false;
+
+            if ($lead->quote_batch_id == null) {
+                $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
+            }
 
             $this->updateTierAndCost($lead); // will assign/update tier and update cost per lead from tier
 

@@ -141,6 +141,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->groupBy('users.email')
             ->orderBy('users.name');
@@ -161,7 +162,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $filters = [
-            TextFilter::make('Created Date', 'created_at')
+            TextFilter::make('Advisor Assigned Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
@@ -171,7 +172,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                     $dates = explode('~', $value);
                     $dates[0] = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
                     $dates[1] = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
-                    $builder->whereBetween('car_quote_request.created_at', $dates);
+                    $builder->whereBetween('car_quote_request_detail.advisor_assigned_date', $dates);
                 }),
         ];
         if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager, RolesEnum::Admin, RolesEnum::Engineering])) {

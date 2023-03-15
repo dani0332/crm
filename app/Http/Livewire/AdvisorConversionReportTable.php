@@ -215,6 +215,7 @@ class AdvisorConversionReportTable extends DataTableComponent
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->join('user_team', 'user_team.user_id', 'users.id')
         ->join('teams', 'teams.id', 'user_team.team_id')
+        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
         ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
@@ -232,7 +233,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $filters = [
-            TextFilter::make('Created Date', 'created_at')
+            TextFilter::make('Advisor Assigned Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
@@ -242,7 +243,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                     $dates = explode('~', $value);
                     $dates[0] = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
                     $dates[1] = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
-                    $builder->whereBetween('car_quote_request.created_at', $dates);
+                    $builder->whereBetween('car_quote_request_detail.advisor_assigned_date', $dates);
                 }),
             SelectFilter::make('Ecommerce')
                 ->options([
