@@ -180,7 +180,7 @@ class TierService extends BaseService
                 $title = 'Is Active ?';
                 break;
             case 'is_tpl_renewals':
-                $title = 'Renewal?';
+                $title = 'Renewal (TPL_RENEWALS)?';
                 break;
             case 'created_at':
                 $title = 'Created Date';
