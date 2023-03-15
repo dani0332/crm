@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             addCostPerLeadForExistingLeads::class,
             addLMSIntroEmailTemplateId::class,
             addPermissionsForReportsAndDashbords::class,
+            addSystemUser::class,
         ]);
     }
 }

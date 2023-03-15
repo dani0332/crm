@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\UserNameEnum;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
+use App\Models\User;
 
 class CapiRequestService
 {
@@ -29,16 +32,34 @@ class CapiRequestService
             $getdecodeContents = json_decode($getContents);
 
             if (isset($data['carTypeInsuranceId']) && $data['carTypeInsuranceId'] != '') {
-                $carQuoteId = CarQuote::where('uuid', $getdecodeContents->quoteUID)->value('id');
-                $carQuoteUpdate = CarQuote::find($carQuoteId);
-                if ($carQuoteUpdate) {
-                    $carQuoteUpdate->cylinder = $data['cylinder'];
-                    $carQuoteUpdate->seat_capacity = $data['seatCapacity'];
-                    $carQuoteUpdate->vehicle_type_id = $data['vehicleTypeId'];
-                    $carQuoteUpdate->is_quote_locked = true;
-                    $carQuoteUpdate->car_model_detail_id = $data['trim'];
-                    $carQuoteUpdate->car_value_tier = $data['carValueTier'];
-                    $carQuoteUpdate->save();
+                $carQuote = CarQuote::where('uuid', $getdecodeContents->quoteUID)->first();
+                if ($carQuote) {
+                    $carQuote->cylinder = $data['cylinder'];
+                    $carQuote->seat_capacity = $data['seatCapacity'];
+                    $carQuote->vehicle_type_id = $data['vehicleTypeId'];
+                    $carQuote->is_quote_locked = true;
+                    $carQuote->car_model_detail_id = $data['trim'];
+                    $carQuote->car_value_tier = $data['carValueTier'];
+                    $carQuote->save();
+
+                    if ($carQuote->advisor_id != null) {
+                        $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
+                        if ($carQuoteDetail != null) {
+                            $carQuoteDetail->advisor_assigned_date = now();
+                            $carQuoteDetail->advisor_assigned_by_id = auth()->id();
+                            $carQuoteDetail->save();
+                            info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
+                        } else {
+                            info('---- updateCarLeadDetailRecord - record not found creating new entry');
+                            CarQuoteRequestDetail::create([
+                                'car_quote_request_id' => $carQuote->id,
+                                'advisor_assigned_date' => now(),
+                                'advisor_assigned_by_id' => auth()->user()->id ?? User::where('name', UserNameEnum::System)->first(),
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                        }
+                    }
                 }
             }
 

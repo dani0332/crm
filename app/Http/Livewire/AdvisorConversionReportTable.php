@@ -182,11 +182,11 @@ class AdvisorConversionReportTable extends DataTableComponent
 
                 return number_format($total * 100, 2, '.', '').' %';
             }),
-            Column::make('Net Conversion')->label(fn ($row) => ($row->total_leads - $row->bad_leads - $row->manual_created) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created))) * 100, 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
+            Column::make('Net Conversion')->label(fn ($row) => ($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads))) * 100, 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
                 $total = 0;
                 foreach ($rows as $row) {
-                    if (($row->total_leads - $row->bad_leads - $row->manual_created) > 0) {
-                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->bad_leads - $row->manual_created)));
+                    if (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0) {
+                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads)));
                     }
                 }
 
@@ -209,11 +209,13 @@ class AdvisorConversionReportTable extends DataTableComponent
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id  in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as created_sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->join('user_team', 'user_team.user_id', 'users.id')
         ->join('teams', 'teams.id', 'user_team.team_id')
+        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
         ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
@@ -231,7 +233,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $filters = [
-            TextFilter::make('Created Date', 'created_at')
+            TextFilter::make('Advisor Assigned Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
@@ -241,7 +243,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                     $dates = explode('~', $value);
                     $dates[0] = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
                     $dates[1] = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
-                    $builder->whereBetween('car_quote_request.created_at', $dates);
+                    $builder->whereBetween('car_quote_request_detail.advisor_assigned_date', $dates);
                 }),
             SelectFilter::make('Ecommerce')
                 ->options([
