@@ -297,6 +297,11 @@ class CRUDController extends Controller
                 'email' => 'required|email:rfc,dns|max:150',
             ]);
         }
+        if ($request->has('type_of_pet1')) {
+            $this->validate($request, [
+                'type_of_pet1' => 'required|max:3',
+            ]);
+        }
         if ($request->has('mobile_no')) {
             $this->validate($request, [
                 'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',

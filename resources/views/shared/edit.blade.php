@@ -265,15 +265,16 @@
                                             </span>
                                             <input
                                                 @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
-                                                @if(explode("|", $value)[1] != 'date') type={{ explode("|", $value)[1] }} @endif 
+                                                @if(explode("|", $value)[1] != 'date') type={{ explode("|", $value)[1] }} @endif
                                                 id={{$property}} name={{$property}}
                                                 @if($property == DatabaseColumnsString::EMAIL || $property == DatabaseColumnsString::MOBILE || $property == DatabaseColumnsString::CAR_VALUE_TIER) style="background-color: #e9ecef !important;" disabled="disabled" @endif
-                                                value="{{ old($property, $record->$property) }}" class="form-control" 
+                                                value="{{ old($property, $record->$property) }}" class="form-control"
+                                                @if(strpos($value, 'max') !== false) maxlength="{{explode(":", $value)[1]}}" @endif
                                                 @if(!Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::Admin]))
-                                                    @if($property == DatabaseColumnsString::RENEWAL_BATCH || $property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER || $property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE) 
+                                                    @if($property == DatabaseColumnsString::RENEWAL_BATCH || $property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER || $property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE)
                                                         readonly="readonly" style="background-color: #e9ecef !important;pointer-events: none;"
                                                     @endif
-                                                @else 
+                                                @else
                                                     @if($property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER && $record->$property)
                                                         readonly="readonly" style="background-color: #e9ecef !important;"
                                                     @endif

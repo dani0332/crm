@@ -142,7 +142,6 @@ use App\Enums\LeadSourceEnum;
                                     disabled
                                     @endif
                                     class="form-control" id="leadStatus" name="leadStatus">
-                                    <option value="">Select Lead Status</option>
                                     @foreach ($statuses as $item)
                                     @if($item->id == QuoteStatusEnum::PolicyIssued && isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
                                     <option @if($status==$item->id) selected="selected" @endif
