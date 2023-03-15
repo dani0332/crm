@@ -802,6 +802,7 @@ class LeadAllocationService extends BaseService
 
         $carLeadAllocationSwitch = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
 
+        $carLeadAllocationStartTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME');
         info('updateAllocationStatusIfNeeded -- current time is : '.now()->toTimeString().' , endTime is : '.$endTimeForAllocation.' , Switch is : '.$carLeadAllocationSwitch);
 
         if (now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
@@ -812,13 +813,18 @@ class LeadAllocationService extends BaseService
             // reset the max capacity for each user as the allocation is now stopped
             $this->updateUserMaxCapacity();
         }
+
+        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() >= $carLeadAllocationStartTime) {
+            info('updateAllocationStatusIfNeeded -- Inside start case');
+            $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
+        }
     }
 
     public function shouldCarAllocationProceed()
     {
         $shouldProcess = true;
 
-        if (config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
+        if ($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
             // if car lead allocation master switch is OFF then we shouldn't proceed further
             $shouldProcess = false;
         }

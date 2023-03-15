@@ -365,7 +365,7 @@ class CarQuoteService extends BaseService
             'previous_quote_policy_number' => 'input|text|title|ss:16',
             'policy_start_date' => 'input|text',
             'previous_policy_expiry_date' => 'input|date|title|range',
-            'quote_batch_id' => 'select|title||multiple|ss:40',
+            'quote_batch_id' => 'select|title||multiple|ss:0',
         ];
     }
 
