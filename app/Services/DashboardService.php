@@ -142,8 +142,9 @@ class DashboardService extends BaseService
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->join('user_team', 'user_team.user_id', 'users.id')
         ->join('teams', 'teams.id', 'user_team.team_id')
+        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
         ->whereNull('car_quote_request.renewal_import_code')
-        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->whereBetween('car_quote_request_detail.advisor_assigned_date', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
         ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email')->take(10);
         if (isset($advisorId)) {
@@ -167,9 +168,10 @@ class DashboardService extends BaseService
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('user_team', 'users.id', 'user_team.user_id')
         ->join('teams', 'teams.id', 'user_team.team_id')
+        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
         ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
 
-        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+        ->whereBetween('car_quote_request_detail.advisor_assigned_date', [now()->startOfDay(), now()->endOfDay()])
         ->groupBy('users.name');
         if (isset($teamIds)) {
             $query->whereIn('teams.id', $teamIds);
