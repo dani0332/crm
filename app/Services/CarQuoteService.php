@@ -1235,7 +1235,7 @@ class CarQuoteService extends BaseService
                 info('Found tier : '.$selectedTier->name.', with id : '.$selectedTier->id.' against lead : '.$lead->code);
                 $lead->tier_id = $selectedTier->id;
                 info('since tier is now assigned, we will update the cost per lead from tier');
-                $lead->cost_per_lead =  $selectedTier->cost_per_lead;
+                $lead->cost_per_lead = $selectedTier->cost_per_lead;
             } else {
                 info('Unable to find tier against lead : '.$lead->code);
             }
