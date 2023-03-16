@@ -157,10 +157,10 @@ class AdvisorPerformanceReportTable extends DataTableComponent
                     $dates = explode('~', $value);
                     $dates[0] = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
                     $dates[1] = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
-                    $builder->where(function($query) use ($dates){
+                    $builder->where(function ($query) use ($dates) {
                         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', $dates)
                               ->orWhereBetween('car_quote_request.created_at', $dates);
-                      });
+                    });
                 }),
             MultiSelectFilter::make('Teams')->config([
                 'placeholder' => 'SELECT ALL TEAMS',
