@@ -297,7 +297,8 @@ class AdvisorConversionReportTable extends DataTableComponent
         }
         $enumerator = $sale_leads - $created_sale_leads;
         $denominator = $total_leads - $manual_created;
-        info('Gross conversion : enumerator = '. $enumerator . ' , denominator = '. $denominator);
+        info('Gross conversion : enumerator = '.$enumerator.' , denominator = '.$denominator);
+
         return ($total_leads - $manual_created) > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NAN';
     }
 
@@ -331,7 +332,8 @@ class AdvisorConversionReportTable extends DataTableComponent
         }
         $enumerator = $sale_leads - $created_sale_leads;
         $denominator = ($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads);
-        info('Net conversion : enumerator = '. $enumerator . ' , denominator = '. $denominator);
+        info('Net conversion : enumerator = '.$enumerator.' , denominator = '.$denominator);
+
         return $denominator > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 
