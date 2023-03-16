@@ -70,8 +70,9 @@ class DashboardController extends Controller
 
     public function getRecentDailyStats(Request $request)
     {
-        $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format('Y-m-d');
-        $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format('Y-m-d');
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
+        $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
         $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
 
