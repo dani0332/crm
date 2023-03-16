@@ -672,6 +672,15 @@ html.dark{
 .top-full{
   top: 100%;
 }
+.right-2{
+  right: 0.5rem;
+}
+.right-2\.5{
+  right: 0.625rem;
+}
+.top-\[34px\]{
+  top: 34px;
+}
 .z-10{
   z-index: 10;
 }
@@ -3380,6 +3389,11 @@ label{
 .hover\:text-sky-800:hover{
   --tw-text-opacity: 1;
   color: rgb(7 89 133 / var(--tw-text-opacity));
+}
+
+.hover\:text-secondary-500:hover{
+  --tw-text-opacity: 1;
+  color: rgb(255 94 0 / var(--tw-text-opacity));
 }
 
 .hover\:underline:hover{
