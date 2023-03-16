@@ -694,7 +694,7 @@ class TravelQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'is_ecommerce', 'payment_status_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'is_ecommerce', 'payment_status_id', 'advisor_id'];
     }
 
     public function fillRenewalProperties($model)
