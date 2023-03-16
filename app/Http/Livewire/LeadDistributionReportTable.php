@@ -120,7 +120,7 @@ class LeadDistributionReportTable extends DataTableComponent
                 ])
                 ->filter(function (Builder $builder, string $value) use ($dateFormat) {
                     $dates = explode('~', $value);
-                    info( 'lead dates : '. json_encode($dates));
+                    info('lead dates : '.json_encode($dates));
                     $dates[0] = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
                     $dates[1] = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
                     $builder->whereBetween('car_quote_request.created_at', $dates);
