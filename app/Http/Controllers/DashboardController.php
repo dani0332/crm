@@ -150,7 +150,7 @@ class DashboardController extends Controller
         foreach ($records->get() as $record) {
             $numerator = $record->sale_leads - $record->created_sale_leads;
             $denominator = ($record->total_leads - $record->created_sale_leads) - ($record->bad_leads - $record->manual_created_bad_leads);
-            $total = ( $numerator / $denominator > 0 ? $denominator : 1);
+            $total = ($numerator / $denominator > 0 ? $denominator : 1);
             $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
@@ -227,7 +227,7 @@ class DashboardController extends Controller
         foreach ($records->get() as $record) {
             $numerator = $record->sale_leads - $record->created_sale_leads;
             $denominator = ($record->total_leads - $record->created_sale_leads) - ($record->bad_leads - $record->manual_created_bad_leads);
-            $total = ( $numerator / $denominator > 0 ? $denominator : 1);
+            $total = ($numerator / $denominator > 0 ? $denominator : 1);
             $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
