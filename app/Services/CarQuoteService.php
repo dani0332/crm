@@ -749,8 +749,8 @@ class CarQuoteService extends BaseService
                 array_push($searchProperties, 'payment_status_id');
             }
 
-            if (! auth()->user()->hasRole(RolesEnum::CarAdvisor) && ! in_array('advisor_id', $searchProperties)) {
-                array_push($searchProperties, 'advisor_id');
+            if (auth()->user()->hasRole(RolesEnum::CarAdvisor) && in_array('advisor_id', $searchProperties)) {
+                unset($searchProperties['advisor_id']);
             }
 
             foreach ($searchProperties as $item) {
@@ -934,7 +934,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id'];
 
         return $searchProperties;
     }
@@ -1235,7 +1235,7 @@ class CarQuoteService extends BaseService
                 info('Found tier : '.$selectedTier->name.', with id : '.$selectedTier->id.' against lead : '.$lead->code);
                 $lead->tier_id = $selectedTier->id;
                 info('since tier is now assigned, we will update the cost per lead from tier');
-                $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
+                $lead->cost_per_lead =  $selectedTier->cost_per_lead;
             } else {
                 info('Unable to find tier against lead : '.$lead->code);
             }
@@ -1263,7 +1263,7 @@ class CarQuoteService extends BaseService
         $shouldUpdateAllocationRecord = $userId != $previousAdvisorId;
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($userId);
         $previousAdvisorAllocationRecord = null;
-        if ($lead->advisor_id != null) {
+        if ($previousAdvisorId != null) {
             $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
         }
         if ($shouldUpdateAllocationRecord) {
@@ -1301,7 +1301,7 @@ class CarQuoteService extends BaseService
         if ($previousAdvisorAllocationRecord != null) {
             info('previous advisor alloc. count :'.$previousAdvisorAllocationRecord->allocation_count.', manual count :'.$previousAdvisorAllocationRecord->manual_assignment_count.', auto count :'.$previousAdvisorAllocationRecord->auto_assignment_count);
         }
-        info('assignment count update for userId : '.$userId.', and leadId :  '.$lead->uuid);
+        info('assignment count update for userId : '.$userId.', and lead code :  '.$lead->code);
     }
 
     public function getEntityPlainByUUID($uuid)

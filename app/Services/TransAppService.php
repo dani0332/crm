@@ -51,8 +51,8 @@ class TransAppService extends BaseService
         $transaction->insurance_company_id = $request->insurance_company;
         $transaction->customer_id = $customerId;
         $transaction->assigned_to_id = $request->assigned_to_id;
-        $transaction->created_by_id = Auth::user()->id;
-        $transaction->modified_by_id = Auth::user()->id;
+        $transaction->created_by_id = auth()->user()->id;
+        $transaction->modified_by_id = auth()->user()->id;
         $transaction->payment_mode_id = $request->paymentmode;
         $transaction->risk_details = $request->risk_detail;
         $transaction->amount_paid = $request->amount_paid;
