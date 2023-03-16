@@ -70,8 +70,8 @@ class DashboardController extends Controller
 
     public function getRecentDailyStats(Request $request)
     {
-        $startDate = Carbon::parse(explode(',', $request->range)[0])->format('Y-m-d');
-        $endDate = Carbon::parse(explode(',', $request->range)[1])->format('Y-m-d');
+        $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format('Y-m-d');
+        $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format('Y-m-d');
         $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
 
@@ -125,6 +125,7 @@ class DashboardController extends Controller
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
         )
         ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
@@ -147,7 +148,9 @@ class DashboardController extends Controller
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
-            $total = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
+            $numerator = $record->sale_leads - $record->created_sale_leads;
+            $denominator = ($record->total_leads - $record->created_sale_leads) - ($record->bad_leads - $record->manual_created_bad_leads);
+            $total = ( $numerator / $denominator > 0 ? $denominator : 1);
             $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
@@ -196,6 +199,7 @@ class DashboardController extends Controller
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
         )
         ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
@@ -221,7 +225,9 @@ class DashboardController extends Controller
         $labels = [];
         $data = [];
         foreach ($records->get() as $record) {
-            $total = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
+            $numerator = $record->sale_leads - $record->created_sale_leads;
+            $denominator = ($record->total_leads - $record->created_sale_leads) - ($record->bad_leads - $record->manual_created_bad_leads);
+            $total = ( $numerator / $denominator > 0 ? $denominator : 1);
             $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
