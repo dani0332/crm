@@ -331,7 +331,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             }
         }
         $enumerator = $sale_leads - $created_sale_leads;
-        $denominator = ($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads);
+        $denominator = ($total_leads - $created_sale_leads) - ($bad_leads - $manual_created_bad_leads);
         info('Net conversion : enumerator = '.$enumerator.' , denominator = '.$denominator);
 
         return $denominator > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
@@ -348,7 +348,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
         if (($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads) > 0) {
             $enumerator = $sale_leads - $created_sale_leads;
-            $denominator = ($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads);
+            $denominator = ($total_leads - $created_sale_leads) - ($bad_leads - $manual_created_bad_leads);
 
             return number_format(($enumerator / $denominator) * 100, 2, '.', '').' %';
         } else {
