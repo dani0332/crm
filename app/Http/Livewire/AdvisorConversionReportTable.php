@@ -79,7 +79,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
-        $this->teams = $this->getCurrentUserTeamsAndSubTeams($loginUserId)->keyBy('id')
+        $this->teams = $this->getUserTeams($loginUserId)->keyBy('id')
             ->map(fn ($Teams) => $Teams->name)
             ->toArray();
         $this->tiers = Tier::query()
@@ -172,25 +172,11 @@ class AdvisorConversionReportTable extends DataTableComponent
             )->html()->footer(function ($rows) {
                 return $rows->sum('manual_created');
             }),
-            Column::make('Gross Conversion')->label(fn ($row) => ($row->total_leads - $row->manual_created) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created))) * 100, 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
-                $total = 0;
-                foreach ($rows as $row) {
-                    if (($row->total_leads - $row->manual_created) > 0) {
-                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created)));
-                    }
-                }
-
-                return number_format($total * 100, 2, '.', '').' %';
+            Column::make('Gross Conversion')->label(fn ($row) => $this->calculateGrossConversion($row))->footer(function ($rows) {
+                return $this->calculateTotalGrossConversion($rows);
             }),
-            Column::make('Net Conversion')->label(fn ($row) => ($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads))) * 100, 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
-                $total = 0;
-                foreach ($rows as $row) {
-                    if (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0) {
-                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads)));
-                    }
-                }
-
-                return number_format($total * 100, 2, '.', '').' %';
+            Column::make('Net Conversion')->label(fn ($row) => $this->calculateNetConversion($row))->footer(function ($rows) {
+                return $this->calculateTotalNetConversion($rows);
             }),
         ];
     }
@@ -291,5 +277,80 @@ class AdvisorConversionReportTable extends DataTableComponent
         }
 
         return $filters;
+    }
+
+    private function calculateTotalGrossConversion($rows)
+    {
+        $total_leads = 0;
+        $manual_created = 0;
+        $sale_leads = 0;
+        $created_sale_leads = 0;
+        $manual_created = 0;
+        foreach ($rows as $row) {
+            if (($row->total_leads - $row->manual_created) > 0) {
+                $total_leads = $total_leads + $row->total_leads;
+                $manual_created = $manual_created + $row->manual_created;
+                $sale_leads = $sale_leads + $row->sale_leads;
+                $created_sale_leads = $created_sale_leads + $row->created_sale_leads;
+                $manual_created = $manual_created + $row->manual_created;
+            }
+        }
+        $enumerator = $sale_leads - $created_sale_leads;
+        $denominator = $total_leads - $manual_created;
+
+        return ($total_leads - $manual_created) > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NAN';
+    }
+
+    private function calculateGrossConversion($row)
+    {
+        if ($row->total_leads - $row->manual_created > 0) {
+            return number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created))) * 100, 2, '.', '').' %';
+        } else {
+            return 'Nan';
+        }
+    }
+
+    private function calculateTotalNetConversion($rows)
+    {
+        $total_leads = 0;
+        $manual_created = 0;
+        $bad_leads = 0;
+        $manual_created_bad_leads = 0;
+        $sale_leads = 0;
+        $created_sale_leads = 0;
+        foreach ($rows as $row) {
+            if (($row->total_leads - $row->manual_created - $row->bad_leads - $row->manual_created_bad_leads) > 0) {
+                $total_leads = $total_leads + $row->total_leads;
+                $manual_created = $manual_created + $row->manual_created;
+                $sale_leads = $sale_leads + $row->sale_leads;
+                $created_sale_leads = $created_sale_leads + $row->created_sale_leads;
+                $manual_created = $manual_created + $row->manual_created;
+                $bad_leads = $bad_leads + $row->bad_leads;
+                $manual_created_bad_leads = $manual_created_bad_leads + $row->manual_created_bad_leads;
+            }
+        }
+        $enumerator = $sale_leads - $created_sale_leads;
+        $denominator = $total_leads - $manual_created - $bad_leads - $manual_created_bad_leads;
+
+        return $denominator > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
+    }
+
+    private function calculateNetConversion($row)
+    {
+        $total_leads = (int) $row->total_leads;
+        $manual_created = (int) $row->manual_created;
+        $bad_leads = (int) $row->bad_leads;
+        $manual_created_bad_leads = (int) $row->manual_created_bad_leads;
+        $sale_leads = (int) $row->sale_leads;
+        $created_sale_leads = (int) $row->created_sale_leads;
+
+        if (($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads) > 0) {
+            $enumerator = $sale_leads - $created_sale_leads;
+            $denominator = $total_leads - $manual_created - $bad_leads - $manual_created_bad_leads;
+
+            return number_format(($enumerator / $denominator) * 100, 2, '.', '').' %';
+        } else {
+            return 'Nan';
+        }
     }
 }
