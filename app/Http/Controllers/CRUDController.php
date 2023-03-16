@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\HomePossessionType;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -197,6 +198,19 @@ class CRUDController extends Controller
             ]);
         }
 
+        // inertia rendering for home quote
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
+            $gridData = $gridData->simplePaginate(10)->withQueryString();
+
+            $quote_status = $dropdownSource['quote_status_id'];
+
+            return inertia('HomeQuote/Index', [
+                'quotes' => $gridData,
+                'leadStatuses' => $quote_status,
+                'advisors' => $advisors,
+            ]);
+        }
+
         if ($request->ajax()) {
             return DataTables::of($gridData)
                 ->addIndexColumn()
@@ -244,6 +258,14 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
+            ]);
+        }
+
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
+            return inertia('HomeQuote/Create', [
+                'dropdownSource' => $dropdownSource,
+                'model' => json_encode($model->properties),
+                'homePossessionTypeEnum' => HomePossessionType::asArray(),
             ]);
         }
 
@@ -419,7 +441,9 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
                 'carMakeText', 'carModelText', 'advisor', 'tiers',
             ]));
-        } elseif ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
+        }
+
+        if ($this->genericModel->modelType == quoteTypeCode::Travel) { // Travel plans to display on detail view
             $ecomTravelInsuranceQuoteUrl = config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL');
             $listQuotePlans = '';
             $quotePlans = $this->travelQuoteService->getQuotePlans($id);
@@ -444,7 +468,37 @@ class CRUDController extends Controller
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
                 'quoteTypeId', 'tiers',
             ]));
-        } elseif ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
+        }
+
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
+            $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+            $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
+            $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
+
+            return inertia('HomeQuote/Show', [
+                'quote' => $record,
+                'allowedDuplicateLOB' => $allowedDuplicateLOB,
+                'leadStatuses' => array_values($leadStatuses->toArray()),
+                'advisors' => $advisors,
+                'cdnPath' => $cdnPath,
+                'domainPath' => $domainPath,
+                'activities' => $activities,
+                'customerAdditionalContacts' => $customerAdditionalContacts,
+                'lostReasons' => $lostReasons,
+                'permissions' => [
+                    'pa' => auth()->user()->hasRole(RolesEnum::PA),
+                ],
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'modelType' => $quoteType,
+                'notProductionApproval' => $notProductionApproval,
+                'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+                'quoteRequest' => $paymentEntityModel,
+            ]);
+        }
+
+        if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
             $listQuotePlans = [];
             $quotePlans = $this->healthQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
@@ -593,6 +647,16 @@ class CRUDController extends Controller
             ]);
         }
 
+        if ($this->genericModel->modelType == quoteTypeCode::Home) {
+            return inertia('HomeQuote/Edit', [
+                'quote' => $record,
+                'homePossessionTypeEnum' => HomePossessionType::asArray(),
+                'dropdownSource' => $dropdownSource,
+                'isRenewalUser' => $isRenewalUser,
+                'model' => json_encode($model->properties),
+            ]);
+        }
+
         return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));
     }
 
@@ -619,7 +683,8 @@ class CRUDController extends Controller
             }
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-        $this->validate($request, $validateArray);
+        // dd($request->all(), $validateArray);
+        // $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
         return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
@@ -634,6 +699,60 @@ class CRUDController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    public function cardsViewHome(Request $request)
+    {
+        $quotes = [];
+        $quotes[] = [
+            'id' => 8,
+            'title' => 'New Lead',
+            'data' => getDataAgainstStatus('Home', 8),
+        ];
+        $quotes[] = [
+            'id' => 2,
+            'title' => 'Quoted',
+            'data' => getDataAgainstStatus('Home', 2),
+        ];
+        $quotes[] = [
+            'id' => 31,
+            'title' => 'Qualified',
+            'data' => getDataAgainstStatus('Home', 31),
+        ];
+        $quotes[] = [
+            'id' => 25,
+            'title' => 'In Negotiation',
+            'data' => getDataAgainstStatus('Home', 25),
+        ];
+        $quotes[] = [
+            'id' => 26,
+            'title' => 'Application Pending',
+            'data' => getDataAgainstStatus('Home', 26),
+        ];
+        $quotes[] = [
+            'id' => 28,
+            'title' => 'Payment Pending',
+            'data' => getDataAgainstStatus('Home', 28),
+        ];
+        $quotes[] = [
+            'id' => 36,
+            'title' => 'Application Submitted',
+            'data' => getDataAgainstStatus('Home', 36),
+        ];
+        $quotes[] = [
+            'id' => 15,
+            'title' => 'Transaction Approved',
+            'data' => getDataAgainstStatus('Home', 15),
+        ];
+        $quotes[] = [
+            'id' => 29,
+            'title' => 'Policy Documents Pending',
+            'data' => getDataAgainstStatus('Home', 29),
+        ];
+
+        return inertia('HomeQuote/Cards', [
+            'quotes' => $quotes,
+        ]);
     }
 
     private function setModelType(Request $request)
@@ -944,7 +1063,7 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->status) {
             $results = getDataAgainstEveryStatus($request->modelType, $request);
 
-            if ($request->modelType == quoteTypeCode::Health) {
+            if ($request->modelType == quoteTypeCode::Health || $request->modelType == quoteTypeCode::Home) {
                 return $results;
             }
 
@@ -989,7 +1108,7 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->term && $request->status) {
             $results = getDataAgainstSearchTerm($request->modelType, $request);
 
-            if ($request->modelType == quoteTypeCode::Health) {
+            if ($request->modelType == quoteTypeCode::Health || $request->modelType == quoteTypeCode::Home) {
                 return $results;
             }
 

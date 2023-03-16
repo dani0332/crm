@@ -35,7 +35,7 @@ class HealthQuoteService extends BaseService
     protected $leadAllocationService;
     protected $httpService;
 
-    use AddPremiumAllLobs,RolePermissionConditions, GetUserTreeTrait, GenericQueriesAllLobs;
+    use AddPremiumAllLobs, RolePermissionConditions, GetUserTreeTrait, GenericQueriesAllLobs;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {
@@ -227,8 +227,10 @@ class HealthQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
 
-        if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+        if (
+            empty($request->email) && empty($request->code) && empty($request->first_name) &&
+            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
+        ) {
             $this->query->where('hqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
@@ -252,7 +254,7 @@ class HealthQuoteService extends BaseService
             $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
         }
         if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
-                // if user has advisor Role then fetch leads assigned to the user only
+            // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
         if (isset($request->code) && $request->code != '') {
@@ -324,7 +326,7 @@ class HealthQuoteService extends BaseService
         }
 
         if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
-                // if user has advisor Role then fetch leads assigned to the user only
+            // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
         if (isset($request->code) && $request->code != '') {
@@ -491,8 +493,10 @@ class HealthQuoteService extends BaseService
         if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id || $healthQuote->dob != $request->dob) {
             $healthQuote->quote_updated_at = Carbon::now();
             if ($healthQuote->primary_member_id) {
-                $healthQuote->memberDetails()->update(['member_category_id' => $request->member_category_id,
-                    'salary_band_id' => $request->salary_band_id, 'gender' => $request->gender, 'dob' => $request->dob, ]);
+                $healthQuote->memberDetails()->update([
+                    'member_category_id' => $request->member_category_id,
+                    'salary_band_id' => $request->salary_band_id, 'gender' => $request->gender, 'dob' => $request->dob,
+                ]);
             }
         }
         $healthQuote->salary_band_id = $request->salary_band_id;
@@ -575,7 +579,7 @@ class HealthQuoteService extends BaseService
         if (auth()->user()->isHealthWCUAdvisor()) {
             $query->where(function ($query) {
                 $query->where('hqr.wcu_id', auth()->id())
-                        ->orWhere('hqr.advisor_id', auth()->id());
+                    ->orWhere('hqr.advisor_id', auth()->id());
             });
         } else {
             $query->where('hqr.advisor_id', auth()->id());
