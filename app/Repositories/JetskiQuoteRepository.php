@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Enums\Lookups;
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
@@ -86,8 +86,8 @@ class JetskiQuoteRepository extends BaseRepository
     public function fetchGetFormOptions()
     {
         return [
-            'jetski_materials' => LookupRepository::where('key', Lookups::JETSKI_MATERIALS)->get(),
-            'jetski_uses' => LookupRepository::where('key', Lookups::JETSKI_USES)->get(),
+            'jetski_materials' => LookupRepository::where('key', LookupsEnum::JETSKI_MATERIALS)->get(),
+            'jetski_uses' => LookupRepository::where('key', LookupsEnum::JETSKI_USES)->get(),
             'yearOfManufacture' => YearOfManufactureRepository::get(),
         ];
     }

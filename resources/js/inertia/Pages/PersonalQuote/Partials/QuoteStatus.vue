@@ -25,7 +25,7 @@ const quoteStatusOptions = computed(() => {
 
 const quoteStatusForm = useForm({
   quote_uuid: page.props.quote.uuid,
-  quote_status_id: page.props.quote.quote_status_id || null,
+  quote_status_id: null,
   notes: page.props.quote.notes || null,
   transapp_code: page.props.quote?.quote_detail?.transapp_code || null,
   lost_reason_id: page.props.quote?.quote_detail?.lost_reason_id || null,
@@ -50,14 +50,19 @@ const onLeadStatus = () => {
   );
 };
 
+const rules = {
+    isRequired: v => !!v || 'This field is required',
+};
+
 const allowStatusUpdate = computed(() => {
   return (
     page.props.quote.quote_status_id ==
     page.props.quoteStatusEnum.TransactionApproved
   );
 });
+
 </script>
-<!-- todo: remove hardcode status ids -->
+
 <template>
   <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
     <div>
@@ -84,6 +89,7 @@ const allowStatusUpdate = computed(() => {
             :error="quoteStatusForm.errors.quote_status_id"
             :options="quoteStatusOptions"
             :disabled="allowStatusUpdate"
+            :rules="[rules.isRequired]"
             placeholder="Lead Status"
             class="w-full"
           />
@@ -99,6 +105,7 @@ const allowStatusUpdate = computed(() => {
             :disabled="allowStatusUpdate"
             :error="quoteStatusForm.errors.transapp_code"
           />
+
           <x-select
             v-if="
               quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost

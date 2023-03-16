@@ -104,6 +104,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport'])->name('lead-distribution-report-view');
         Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
         Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport'])->name('advisor-performance-report-view');
+
+        Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
+        Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
+        Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
+        Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
     });
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
@@ -275,11 +280,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteId}/documents', [PersonalQuoteController::class, 'uploadDocument']);
         Route::post('{quoteId}/payments', [PersonalQuoteController::class, 'createPayment']);
         Route::patch('{quoteId}/payments/{paymentCode}', [PersonalQuoteController::class, 'updatePayment']);
-
-        Route::resource('bike', BikeQuoteController::class);
-        Route::resource('cycle', CycleQuoteController::class);
-        Route::resource('yacht', YachtQuoteController::class);
-        Route::resource('jetski', JetskiQuoteController::class);
     });
 
     Route::group(['prefix' => 'generic'], function () {
