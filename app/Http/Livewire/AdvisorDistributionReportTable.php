@@ -135,12 +135,13 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_r_lead_count"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier TR (Ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_tr_lead_count_e"),
                 DB::raw("SUM(CASE WHEN tiers.name = 'Tier TR (Non ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) as tier_tr_lead_count"),
-                DB::raw('SUM(car_quote_request.cost_per_lead) as total_lead_cost'),
+                DB::raw('SUM(tiers.cost_per_lead) as total_lead_cost'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->groupBy('users.email')
             ->orderBy('users.name');
@@ -161,7 +162,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
     {
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $filters = [
-            TextFilter::make('Created Date', 'created_at')
+            TextFilter::make('Advisor Assigned Date', 'created_at')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
@@ -171,7 +172,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
                     $dates = explode('~', $value);
                     $dates[0] = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
                     $dates[1] = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
-                    $builder->whereBetween('car_quote_request.created_at', $dates);
+                    $builder->whereBetween('car_quote_request_detail.advisor_assigned_date', $dates);
                 }),
         ];
         if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager, RolesEnum::Admin, RolesEnum::Engineering])) {

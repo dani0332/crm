@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             addPermissionsForReportsAndDashbords::class,
             JetskiLookupsSeeder::class,
             PersonalQuoteRolesPermissionSeeder::class
+            addSystemUser::class,
         ]);
     }
 }

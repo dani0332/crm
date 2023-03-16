@@ -122,6 +122,7 @@ function onSubmit(isValid) {
           label="MOBILE NUMBER"
           :rules="[rules.isRequired]"
           class="w-full"
+          :error="quoteForm?.errors?.mobile_no"
         />
 
         <x-input

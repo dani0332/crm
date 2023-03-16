@@ -19,6 +19,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
+use App\Models\QuoteBatches;
 use App\Models\RuleLeadSource;
 use App\Models\Team;
 use App\Models\Tier;
@@ -150,8 +151,15 @@ class LeadAllocationService extends BaseService
                     info('Manual Lead and Advisor Null Check '.$lead->uuid);
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
-                $lead->auto_assigned = $isManualAssignment ? false : true;
+
+                if (str_contains(strtolower($lead->code), strtolower(quoteTypeCode::Car))) {
+                    $lead->auto_assigned = $isManualAssignment ? false : true;
+                }
+
                 $lead->advisor_id = $advisorId;
+                if ($lead->quote_batch_id == null) {
+                    $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
+                }
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
@@ -521,6 +529,9 @@ class LeadAllocationService extends BaseService
                         $carQuote->advisor_id = $userId;
                         $carQuote->tier_id = $selectedTier->id;
                         $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+                        if ($carQuote->quote_batch_id == null) {
+                            $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                        }
                         $carQuote->save();
 
                         info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
@@ -793,6 +804,7 @@ class LeadAllocationService extends BaseService
 
         $carLeadAllocationSwitch = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
 
+        $carLeadAllocationStartTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME');
         info('updateAllocationStatusIfNeeded -- current time is : '.now()->toTimeString().' , endTime is : '.$endTimeForAllocation.' , Switch is : '.$carLeadAllocationSwitch);
 
         if (now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
@@ -803,13 +815,18 @@ class LeadAllocationService extends BaseService
             // reset the max capacity for each user as the allocation is now stopped
             $this->updateUserMaxCapacity();
         }
+
+        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() >= $carLeadAllocationStartTime) {
+            info('updateAllocationStatusIfNeeded -- Inside start case');
+            $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
+        }
     }
 
     public function shouldCarAllocationProceed()
     {
         $shouldProcess = true;
 
-        if (config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
+        if ($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
             // if car lead allocation master switch is OFF then we shouldn't proceed further
             $shouldProcess = false;
         }
