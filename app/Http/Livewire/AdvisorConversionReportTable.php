@@ -296,7 +296,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             }
         }
         $enumerator = $sale_leads - $created_sale_leads;
-        $denominator = $total_leads - $manual_created;
+        $denominator = $total_leads - $created_sale_leads;
         info('Gross conversion : enumerator = '.$enumerator.' , denominator = '.$denominator);
 
         return ($total_leads - $manual_created) > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NAN';
@@ -305,7 +305,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     private function calculateGrossConversion($row)
     {
         if ($row->total_leads - $row->manual_created > 0) {
-            return number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created))) * 100, 2, '.', '').' %';
+            return number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->created_sale_leads))) * 100, 2, '.', '').' %';
         } else {
             return 'Nan';
         }
@@ -331,7 +331,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             }
         }
         $enumerator = $sale_leads - $created_sale_leads;
-        $denominator = ($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads);
+        $denominator = ($total_leads - $created_sale_leads) - ($bad_leads - $manual_created_bad_leads);
         info('Net conversion : enumerator = '.$enumerator.' , denominator = '.$denominator);
 
         return $denominator > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
@@ -348,7 +348,7 @@ class AdvisorConversionReportTable extends DataTableComponent
 
         if (($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads) > 0) {
             $enumerator = $sale_leads - $created_sale_leads;
-            $denominator = ($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads);
+            $denominator = ($total_leads - $created_sale_leads) - ($bad_leads - $manual_created_bad_leads);
 
             return number_format(($enumerator / $denominator) * 100, 2, '.', '').' %';
         } else {
