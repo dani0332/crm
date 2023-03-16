@@ -40,7 +40,8 @@ class DatabaseSeeder extends Seeder
             addCostPerLeadForExistingLeads::class,
             addLMSIntroEmailTemplateId::class,
             addPermissionsForReportsAndDashbords::class,
-            JetskiLookupsSeeder::class
+            JetskiLookupsSeeder::class,
+            PersonalQuoteRolesPermissionSeeder::class
         ]);
     }
 }

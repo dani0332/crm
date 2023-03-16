@@ -16,7 +16,7 @@ class JetskiLookupsSeeder extends Seeder
      */
     public function run()
     {
-        if( (!$exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_MATERIALS)->first() ) ) {
+        if ((! $exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_MATERIALS)->first())) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_MATERIALS, 'code' => 'matFrp', 'text' => 'FRP', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_MATERIALS, 'code' => 'matGrp', 'text' => 'GRP', 'created_at' => now(), 'updated_at' => now()],
@@ -24,7 +24,7 @@ class JetskiLookupsSeeder extends Seeder
             ]);
         }
 
-        if( (!$exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_USES)->first() ) ) {
+        if ((! $exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_USES)->first())) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_USES, 'code' => 'commercialUse', 'text' => 'Commercial use (Rental business)', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_USES, 'code' => 'privateUse', 'text' => 'Private use', 'created_at' => now(), 'updated_at' => now()],
