@@ -281,25 +281,25 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     private function calculateTotalGrossConversion($rows)
     {
-        $total_leads = 0;
-        $manual_created = 0;
-        $sale_leads = 0;
-        $created_sale_leads = 0;
-        $manual_created = 0;
+        $totalLeads = 0;
+        $manualCreated = 0;
+        $saleLeads = 0;
+        $createdSaleLeads = 0;
+        $manualCreated = 0;
         foreach ($rows as $row) {
             if (($row->total_leads - $row->manual_created) > 0) {
-                $total_leads = $total_leads + $row->total_leads;
-                $manual_created = $total_leads + $manual_created + $row->manual_created;
-                $sale_leads = $total_leads + $sale_leads + $row->sale_leads;
-                $created_sale_leads = $total_leads + $created_sale_leads + $row->created_sale_leads;
-                $manual_created = $total_leads + $manual_created + $row->manual_created;
+                $totalLeads = $totalLeads + $row->total_leads;
+                $manualCreated = $manualCreated + $row->manual_created;
+                $saleLeads = $saleLeads + $row->sale_leads;
+                $createdSaleLeads = $createdSaleLeads + $row->created_sale_leads;
+                $manualCreated = $manualCreated + $row->manual_created;
             }
         }
-        $enumerator = $sale_leads - $created_sale_leads;
-        $denominator = $total_leads - $manual_created;
+        $enumerator = $saleLeads - $createdSaleLeads;
+        $denominator = $totalLeads - $manualCreated;
         info('Gross conversion : enumerator = '.$enumerator.' , denominator = '.$denominator);
 
-        return ($total_leads - $manual_created) > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NAN';
+        return $denominator > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 
     private function calculateGrossConversion($row)
@@ -307,31 +307,31 @@ class AdvisorConversionReportTable extends DataTableComponent
         if ($row->total_leads - $row->manual_created > 0) {
             return number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created))) * 100, 2, '.', '').' %';
         } else {
-            return 'Nan';
+            return 'NaN';
         }
     }
 
     private function calculateTotalNetConversion($rows)
     {
-        $total_leads = 0;
-        $manual_created = 0;
-        $bad_leads = 0;
-        $manual_created_bad_leads = 0;
-        $sale_leads = 0;
-        $created_sale_leads = 0;
+        $totalLeads = 0;
+        $manualCreated = 0;
+        $badLeads = 0;
+        $manualCreatedBadLeads = 0;
+        $saleLeads = 0;
+        $createdSaleLeads = 0;
         foreach ($rows as $row) {
-            if (($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads) > 0) {
-                $total_leads = $total_leads + $row->total_leads;
-                $manual_created = $total_leads + $manual_created + $row->manual_created;
-                $sale_leads = $total_leads + $sale_leads + $row->sale_leads;
-                $created_sale_leads = $total_leads + $created_sale_leads + $row->created_sale_leads;
-                $manual_created = $total_leads + $manual_created + $row->manual_created;
-                $bad_leads = $total_leads + $bad_leads + $row->bad_leads;
-                $manual_created_bad_leads = $total_leads + $manual_created_bad_leads + $row->manual_created_bad_leads;
+            if (($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads) > 0) {
+                $totalLeads = $totalLeads + $row->total_leads;
+                $manualCreated = $manualCreated + $row->manual_created;
+                $saleLeads = $saleLeads + $row->sale_leads;
+                $createdSaleLeads = $createdSaleLeads + $row->created_sale_leads;
+                $manualCreated = $manualCreated + $row->manual_created;
+                $badLeads = $badLeads + $row->bad_leads;
+                $manualCreatedBadLeads = $manualCreatedBadLeads + $row->manual_created_bad_leads;
             }
         }
-        $enumerator = $sale_leads - $created_sale_leads;
-        $denominator = ($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads);
+        $enumerator = $saleLeads - $createdSaleLeads;
+        $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
         info('Net conversion : enumerator = '.$enumerator.' , denominator = '.$denominator);
 
         return $denominator > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
@@ -339,20 +339,20 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     private function calculateNetConversion($row)
     {
-        $total_leads = (int) $row->total_leads;
-        $manual_created = (int) $row->manual_created;
-        $bad_leads = (int) $row->bad_leads;
-        $manual_created_bad_leads = (int) $row->manual_created_bad_leads;
-        $sale_leads = (int) $row->sale_leads;
-        $created_sale_leads = (int) $row->created_sale_leads;
+        $totalLeads = (int) $row->total_leads;
+        $manualCreated = (int) $row->manual_created;
+        $badLeads = (int) $row->bad_leads;
+        $manualCreated_bad_leads = (int) $row->manual_created_bad_leads;
+        $saleLeads = (int) $row->sale_leads;
+        $createdSaleLeads = (int) $row->created_sale_leads;
 
-        if (($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads) > 0) {
-            $enumerator = $sale_leads - $created_sale_leads;
-            $denominator = ($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads);
+        if (($totalLeads - $manualCreated) - ($badLeads - $manualCreated_bad_leads) > 0) {
+            $enumerator = $saleLeads - $createdSaleLeads;
+            $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreated_bad_leads);
 
             return number_format(($enumerator / $denominator) * 100, 2, '.', '').' %';
         } else {
-            return 'Nan';
+            return 'NaN';
         }
     }
 }
