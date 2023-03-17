@@ -328,13 +328,13 @@ class AdvisorConversionReportTable extends DataTableComponent
             $badLeads += $row->bad_leads;
             $manualCreatedBadLeads += $row->manual_created_bad_leads;
         }
-        $enumerator = $saleLeads - $createdSaleLeads;
+        $numerator = $saleLeads - $createdSaleLeads;
         $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
         info('Total Net numerator : sale leads =  '.$saleLeads.' , createdSaleLeads = '.$createdSaleLeads);
         info('Total Net denominator : total leads =  '.$totalLeads.' , manualCreated = '.$manualCreated.', badLeads'.$badLeads.' , manualCreatedBadLeads = '.$manualCreatedBadLeads);
-        info('Net conversion : enumerator = '.$enumerator.' , denominator = '.$denominator);
+        info('Net conversion : numerator = '.$numerator.' , denominator = '.$denominator);
 
-        return $denominator > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
+        return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 
     private function calculateNetConversion($row)
