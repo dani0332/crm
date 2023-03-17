@@ -363,12 +363,20 @@ const onAddMemberModal = () => {
   modals.member = true;
 };
 
-const memberFieldReq = ref(false);
+const memberFieldReq = reactive({
+  nationality: false,
+  dob: false,
+});
 const onMemberSubmit = isValid => {
   if (memberForm.nationality_id == null) {
-    memberFieldReq.value = true;
+    memberFieldReq.nationality = true;
   } else {
-    memberFieldReq.value = false;
+    memberFieldReq.nationality = false;
+  }
+  if (memberForm.dob == null) {
+    memberFieldReq.dob = true;
+  } else {
+    memberFieldReq.dob = false;
   }
   if (!isValid) return;
   if (memberActionEdit.value) {
@@ -1316,7 +1324,7 @@ onMounted(() => {
               :options="nationalityOptions"
               placeholder="Select Nationality"
               :single="true"
-              :hasError="memberFieldReq"
+              :hasError="memberFieldReq.nationality"
             />
 
             <x-select
@@ -1337,12 +1345,10 @@ onMounted(() => {
               class="w-full"
             />
 
-            <x-input
+            <DatePicker
               v-model="memberForm.dob"
               label="DOB"
-              type="date"
-              :rules="[rules.isRequired]"
-              class="w-full"
+              :hasError="memberFieldReq.dob"
             />
 
             <x-select

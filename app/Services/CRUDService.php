@@ -14,7 +14,6 @@ use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
-use Auth;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -197,7 +196,7 @@ class CRUDService extends BaseService
                 $entityDetail = $this->{strtolower($leadType).'QuoteService'}->getDetailEntity($leadId);
                 if ($entityDetail) {
                     $query->where('a.auditable_id', $entityDetail->id)
-                    ->where('a.auditable_type', 'App\Models\\'.$leadType.'QuoteRequestDetail');
+                        ->where('a.auditable_type', 'App\Models\\'.$leadType.'QuoteRequestDetail');
                 }
             })
             ->orderBy('a.created_at', 'DESC')->get();
@@ -241,7 +240,7 @@ class CRUDService extends BaseService
         } else {
             $entity->quote_status_id = $request->leadStatus;
         }
-        if ($request->leadStatus == QuoteStatusEnum::Qualified && Auth::user()->isHealthWcuAdvisor()) {
+        if ($request->leadStatus == QuoteStatusEnum::Qualified && auth()->user()->isHealthWcuAdvisor()) {
             $entity->wcu_id = null;
         }
         if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
@@ -249,16 +248,20 @@ class CRUDService extends BaseService
         }
         $entity->save();
         //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
-        && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
+        if (
+            strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
+            && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+        ) {
             if ($request->leadStatus == QuoteStatusEnum::Quoted) {
                 CammyJob::dispatch($entity, 'intro');
             } else {
                 SyncSIBContactJob::dispatch($entity);
             }
 
-            if ($previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
-            || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending) {
+            if (
+                $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
+                || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
+            ) {
                 CammyJob::dispatch($entity, 'unsub');
             }
         }

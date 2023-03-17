@@ -91,13 +91,17 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::BIKE->id())
+        $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())
             ->where($column, $value)
             ->with(['bikeQuote' => function ($q) {
                 $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);
             }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo'])->firstOrFail();
+
+        $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+
+        return $quote;
     }
 
     /**

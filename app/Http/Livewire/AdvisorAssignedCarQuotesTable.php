@@ -43,7 +43,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make('Lead Code', 'uuid'),
+            Column::make('CDB ID', 'uuid'),
             Column::make('Customer Name')->label(fn ($row) => $row->fullName),
             Column::make('Lead Status', 'quote_status_id.text'),
         ];
@@ -61,9 +61,10 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->join('user_team', 'user_team.user_id', 'users.id')
         ->join('teams', 'teams.id', 'user_team.team_id')
+        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->where('car_quote_request.advisor_id', $this->advisorId)
-        ->orderBy('car_quote_request.created_at', 'desc');
+        ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
 
         if ($batch != null) {
             info('batch : '.json_encode($batch->id));
@@ -74,7 +75,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             info('createdAtFilter are : '.json_encode($this->createdAtFilter));
             $startDate = Carbon::parse(explode('|', $this->createdAtFilter)[0])->startOfDay()->format($dateFormat);
             $endDate = Carbon::parse(explode('|', $this->createdAtFilter)[1])->endOfDay()->format($dateFormat);
-            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
+            $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
         }
         if ($this->ecommerceFilter != '') {
             info('ecommerceFilter are : '.json_encode($this->ecommerceFilter));
@@ -89,7 +90,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         }
         if ($this->tiersFilter != '' && count($this->tiersFilter) > 0) {
             info('tiersFilter are : '.json_encode($this->tiersFilter));
-            $query->whereIn('car_quote_request.tier_is', $this->tiersFilter);
+            $query->whereIn('car_quote_request.tier_id', $this->tiersFilter);
         }
         if ($this->leadSourceFilter != '' && count($this->leadSourceFilter) > 0) {
             info('leadSourceFilter are : '.json_encode($this->leadSourceFilter));

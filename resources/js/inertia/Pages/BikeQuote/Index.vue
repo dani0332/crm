@@ -102,6 +102,7 @@ const tableHeader = [
 <template>
   <div>
     <Head title="Bike Quotes" />
+
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Bike Quotes List</h2>
       <x-button size="sm" color="#ff5e00" href="/personal-quotes/bike/create">
@@ -153,16 +154,14 @@ const tableHeader = [
           class="w-full"
           placeholder="Search by Mobile Number"
         />
-        <x-input
+        <DatePicker
           v-model="filters.created_at_start"
-          type="date"
           name="created_at_start"
           label="Created Date Start"
           class="w-full"
         />
-        <x-input
+        <DatePicker
           v-model="filters.created_at_end"
-          type="date"
           name="created_at_end"
           label="Created Date End"
           class="w-full"

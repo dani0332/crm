@@ -16,12 +16,12 @@ defineProps({
 const rules = {
   isRequired: v => !!v || 'This field is required',
   created_at_end: v => {
-    if (filters.created_at && !v) {
+    if (filters.created_at_start && !v) {
       return 'This field is required';
     }
     return true;
   },
-  created_at: v => {
+  created_at_start: v => {
     if (filters.created_at_end && !v) {
       return 'This field is required';
     }
@@ -40,7 +40,7 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at: '',
+  created_at_start: '',
   created_at_end: '',
   quote_status_id: [],
   advisor_id: [],
@@ -259,18 +259,15 @@ onMounted(() => {
           placeholder="Search by Mobile Number"
         />
         <DatePicker
-          v-model="filters.created_at"
+          v-model="filters.created_at_start"
           name="created_at_start"
           label="Created Date Start"
-          input-class="w-full"
         />
         <DatePicker
           v-model="filters.created_at_end"
           name="created_at_end"
           label="Created Date End"
-          input-class="w-full"
         />
-
         <ComboBox
           v-model="filters.quote_status_id"
           label="Lead Status"

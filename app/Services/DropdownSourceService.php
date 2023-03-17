@@ -35,8 +35,8 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
-use DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DropdownSourceService extends BaseService
 {
@@ -285,6 +285,8 @@ class DropdownSourceService extends BaseService
             case 'currently_insured_with_id':
                 $data = $lookUpService->getActiveInsuranceProviders();
                 break;
+            case 'quote_batch_id':
+                $data = DB::table('quote_batches')->select('id', 'name')->get();
             default:
                 break;
         }

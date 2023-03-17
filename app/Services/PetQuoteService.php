@@ -564,7 +564,7 @@ class PetQuoteService extends BaseService
             'lost_reason' => 'input|text',
             'premium' => 'input|number',
             'policy_number' => 'input|text',
-            'type_of_pet1' => 'input|text|title|required',
+            'type_of_pet1' => 'input|text|title|required|max:3',
             'breed_of_pet1' => 'input|text|title|required',
             'age_of_pet1' => 'input|number|title|required',
             'is_neutered' => 'static|Yes,No',
