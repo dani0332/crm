@@ -128,7 +128,6 @@ class AdvisorPerformanceReportTable extends DataTableComponent
         ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
         ->join('user_team', 'user_team.user_id', 'users.id')
         ->join('teams', 'teams.id', 'user_team.team_id')
-        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
         ->whereNull('car_quote_request.renewal_import_code')
         ->groupBy('car_quote_request.advisor_id')
         ->orderBy('users.email');

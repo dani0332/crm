@@ -133,7 +133,7 @@ class DashboardController extends Controller
         ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
         ->join('teams', 'teams.id', 'user_team.team_id')
         ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-        ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
+        ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'asc');
 
         $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'undefined';
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $tiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
@@ -150,7 +150,7 @@ class DashboardController extends Controller
         $data = [];
         foreach ($records->get() as $record) {
             $numerator = $record->sale_leads - $record->created_sale_leads;
-            $denominator = ($record->total_leads - $record->created_sale_leads) - ($record->bad_leads - $record->manual_created_bad_leads);
+            $denominator = ($record->total_leads - $record->manual_created) - ($record->bad_leads - $record->manual_created_bad_leads);
             $total = ($numerator / $denominator > 0 ? $denominator : 1);
             $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
@@ -206,7 +206,7 @@ class DashboardController extends Controller
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
         ->join('teams', 'teams.id', 'user_team.team_id')
-        ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
+        ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'asc');
         $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'null';
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
 
@@ -227,7 +227,7 @@ class DashboardController extends Controller
         $data = [];
         foreach ($records->get() as $record) {
             $numerator = $record->sale_leads - $record->created_sale_leads;
-            $denominator = ($record->total_leads - $record->created_sale_leads) - ($record->bad_leads - $record->manual_created_bad_leads);
+            $denominator = ($record->total_leads - $record->manual_created) - ($record->bad_leads - $record->manual_created_bad_leads);
             $total = ($numerator / $denominator > 0 ? $denominator : 1);
             $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
