@@ -744,14 +744,6 @@ class CarQuoteService extends BaseService
                 $dateTo = $this->parseDate($request['created_at_end'], true);
                 $this->query->whereBetween(DB::raw('DATE(cqr.created_at)'), [$dateFrom, $dateTo]);
             }
-            if (auth()->user()->hasRole(RolesEnum::Admin)) {
-                array_push($searchProperties, 'is_ecommerce');
-                array_push($searchProperties, 'payment_status_id');
-            }
-
-            if (auth()->user()->hasRole(RolesEnum::CarAdvisor) && in_array('advisor_id', $searchProperties)) {
-                unset($searchProperties['advisor_id']);
-            }
 
             foreach ($searchProperties as $item) {
                 if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
