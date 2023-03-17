@@ -290,7 +290,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             if (($row->total_leads - $row->manual_created) > 0) {
                 $total_leads = $total_leads + $row->total_leads;
                 $manual_created = $total_leads + $manual_created + $row->manual_created;
-                $sale_leads =$total_leads +  $sale_leads + $row->sale_leads;
+                $sale_leads = $total_leads + $sale_leads + $row->sale_leads;
                 $created_sale_leads = $total_leads + $created_sale_leads + $row->created_sale_leads;
                 $manual_created = $total_leads + $manual_created + $row->manual_created;
             }
@@ -322,12 +322,12 @@ class AdvisorConversionReportTable extends DataTableComponent
         foreach ($rows as $row) {
             if (($total_leads - $manual_created) - ($bad_leads - $manual_created_bad_leads) > 0) {
                 $total_leads = $total_leads + $row->total_leads;
-                $manual_created = $total_leads +  $manual_created + $row->manual_created;
-                $sale_leads = $total_leads +  $sale_leads + $row->sale_leads;
-                $created_sale_leads =  $total_leads +  $created_sale_leads + $row->created_sale_leads;
-                $manual_created =  $total_leads + $manual_created + $row->manual_created;
-                $bad_leads =  $total_leads + $bad_leads + $row->bad_leads;
-                $manual_created_bad_leads = $total_leads +  $manual_created_bad_leads + $row->manual_created_bad_leads;
+                $manual_created = $total_leads + $manual_created + $row->manual_created;
+                $sale_leads = $total_leads + $sale_leads + $row->sale_leads;
+                $created_sale_leads = $total_leads + $created_sale_leads + $row->created_sale_leads;
+                $manual_created = $total_leads + $manual_created + $row->manual_created;
+                $bad_leads = $total_leads + $bad_leads + $row->bad_leads;
+                $manual_created_bad_leads = $total_leads + $manual_created_bad_leads + $row->manual_created_bad_leads;
             }
         }
         $enumerator = $sale_leads - $created_sale_leads;
