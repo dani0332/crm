@@ -523,13 +523,12 @@
                         @endif
                         @php
                             $searchProperties = $model->searchProperties;
-
                             if (
                                 auth()
                                     ->user()
-                                    ->hasRole(RolesEnum::CarAdvisor)
+                                    ->hasRole(RolesEnum::CarAdvisor) && array_search('advisor_id', $searchProperties)
                             ) {
-                                unset( $searchProperties['advisor_id']);
+                                unset( $searchProperties[array_search('advisor_id', $searchProperties)]);
                             }
                             $sourcePropertiesArry = $crudService->sortMetaArray($model->properties, 'ss:');
                             $skipProperties = $model->skipProperties;
