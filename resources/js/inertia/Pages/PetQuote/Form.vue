@@ -8,6 +8,10 @@ const notification = useNotifications('toast');
 
 const props = defineProps({
   quote: { type: Object, default: null },
+  pet_ages: Object,
+  pet_types: Object,
+  accomodation_types: Object,
+  possession_types: Object,
 });
 
 const quoteForm = useForm({
@@ -18,9 +22,9 @@ const quoteForm = useForm({
   mobile_no: props.quote?.mobile_no || '',
   premium: props.quote?.pet_quote?.premium || '',
   policy_number: props.quote?.pet_quote?.policy_number || '',
-  type_of_pet1: props.quote?.pet_quote?.type_of_pet1 || '',
+  pet_type_id: props.quote?.pet_quote?.pet_type_id || '',
   breed_of_pet1: props.quote?.pet_quote?.breed_of_pet1 || '',
-  age_of_pet1: props.quote?.pet_quote?.age_of_pet1 || '',
+  pet_age_id: props.quote?.pet_quote?.pet_age_id || '',
   is_neutered: props.quote ? props.quote?.pet_quote?.is_neutered : null,
   is_microchipped: props.quote ? props.quote?.pet_quote?.is_microchipped : null,
   microchip_no: props.quote?.pet_quote?.microchip_no || '',
@@ -140,14 +144,20 @@ function onSubmit(isValid) {
           class="w-full"
           :error="quoteForm.errors.policy_number"
         />
-        <x-input
-          v-model="quoteForm.type_of_pet1"
+        <x-select
+          v-model="quoteForm.pet_type_id"
           type="text"
           maxlength="3"
           label="TYPE OF PET*"
           :rules="[rules.isRequired]"
+          :options="
+            pet_types.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
           class="w-full"
-          :error="quoteForm.errors.type_of_pet1"
+          :error="quoteForm.errors.pet_type_id"
         />
         <x-input
           v-model="quoteForm.breed_of_pet1"
@@ -158,13 +168,19 @@ function onSubmit(isValid) {
           :error="quoteForm.errors.breed_of_pet1"
         />
 
-        <x-input
-          v-model="quoteForm.age_of_pet1"
+        <x-select
+          v-model="quoteForm.pet_age_id"
           type="number"
           label="AGE OF PET*"
           :rules="[rules.isRequired]"
+          :options="
+            pet_ages.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
           class="w-full"
-          :error="quoteForm.errors.age_of_pet1"
+          :error="quoteForm.errors.pet_age_id"
         />
         <x-select
           v-model="quoteForm.is_neutered"
@@ -228,12 +244,12 @@ function onSubmit(isValid) {
           v-model="quoteForm.ilivein_accommodation_type_id"
           label="ACCOMMODATION TYPE*"
           :rules="[rules.isRequired]"
-          :options="[
-            { value: '', label: 'Please confirm Accommodation Type' },
-            { value: 1, label: 'An apartment' },
-            { value: 2, label: 'A villa' },
-            { value: 3, label: 'Shared accommodation' },
-          ]"
+          :options="
+            accomodation_types.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
           class="w-full"
           :error="quoteForm.errors.ilivein_accommodation_type_id"
         />
@@ -241,11 +257,12 @@ function onSubmit(isValid) {
           v-model="quoteForm.iam_possesion_type_id"
           label="POSSESION TYPE *"
           :rules="[rules.isRequired]"
-          :options="[
-            { value: '', label: 'Please confirm Possesion Type' },
-            { value: 1, label: 'A landlord' },
-            { value: 2, label: 'A tenant' },
-          ]"
+          :options="
+            possession_types.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
           class="w-full"
           :error="quoteForm.errors.iam_possesion_type_id"
         />

@@ -43,7 +43,9 @@ class PetQuoteController extends Controller
      */
     public function create()
     {
-        return inertia('PetQuote/Form');
+        $data = PetQuoteRepository::getFormOptions();
+
+        return inertia('PetQuote/Form', $data);
     }
 
     /**
@@ -73,6 +75,7 @@ class PetQuoteController extends Controller
     {
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
 
+        // dd( $quote->toArray());
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
 
         $quote->load('documents.createdBy');
@@ -123,9 +126,12 @@ class PetQuoteController extends Controller
      */
     public function edit($uuid)
     {
+        $data = PetQuoteRepository::getFormOptions();
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('PetQuote/Form', ['quote' => $quote]);
+        return inertia('PetQuote/Form', array_merge($data, [
+            'quote' => $quote,
+        ]));
     }
 
     /**

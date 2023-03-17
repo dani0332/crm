@@ -3,8 +3,11 @@
 namespace App\Repositories;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
+use App\Models\HomeAccomodationType;
+use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use Config;
 use Illuminate\Support\Arr;
@@ -29,13 +32,13 @@ class PetQuoteRepository extends BaseRepository
             'mobileNo' => $request['mobile_no'],
             'gender' => $request['gender'],
             'microchipNo' => $request['microchip_no'],
-            'typeOfPet1' => $request['type_of_pet1'],
+            'petTypeId' => $request['pet_type_id'],
+            'petAgeId' => $request['pet_age_id'],
             'breedOfPet1' => $request['breed_of_pet1'],
             'isMicrochipped' => $request['is_microchipped'] == GenericRequestEnum::Yes ? true : false,
             'isNeutered' => $request['is_neutered'] == GenericRequestEnum::Yes ? true : false,
             'isMixedBreed' => $request['is_mixed_breed'] == GenericRequestEnum::Yes ? true : false,
             'anyInjury' => $request['has_injury'] == GenericRequestEnum::Yes ? true : false,
-            'ageOfPet1' => $request['age_of_pet1'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'utmSource' => '',
@@ -74,14 +77,14 @@ class PetQuoteRepository extends BaseRepository
             $quoteData['updated_by_id'] = Auth::user()->id;
             $quote->update($quoteData);
 
-            $quote->petQuote->update(Arr::only($data, ['premium', 'policy_number', 'type_of_pet1', 'breed_of_pet1', 'age_of_pet1', 'is_neutered', 'is_microchipped', 'microchip_no', 'is_mixed_breed', 'has_injury', 'gender', 'ilivein_accommodation_type_id', 'iam_possesion_type_id']));
+            $quote->petQuote->update(Arr::only($data, ['premium', 'policy_number', 'breed_of_pet1', 'pet_type_id', 'pet_age_id', 'is_neutered', 'is_microchipped', 'microchip_no', 'is_mixed_breed', 'has_injury', 'gender', 'ilivein_accommodation_type_id', 'iam_possesion_type_id']));
 
             return $quote;
         });
     }
     public function fetchGetData()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'currentlyInsuredWith', 'advisor'])
+        return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.ageOfPet:id,text', 'petQuote.typeOfPet:id,text', 'currentlyInsuredWith', 'advisor'])
             ->filter()
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
@@ -90,8 +93,23 @@ class PetQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeId(QuoteTypes::PET->id())
             ->where($column, $value)
-            ->with(['petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
+            ->with(['petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.ageOfPet:id,text', 'petQuote.typeOfPet:id,text', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo'])->firstOrFail();
+    }
+
+    /**
+     * get all dropdown options required for form
+     *
+     * @return array
+     */
+    public function fetchGetFormOptions()
+    {
+        return [
+            'pet_ages' => LookupRepository::where('key', LookupsEnum::PET_AGES)->get(),
+            'pet_types' => LookupRepository::where('key', LookupsEnum::PET_TYPES)->get(),
+            'accomodation_types' => HomeAccomodationType::all(),
+            'possession_types' => HomePossessionType::all(),
+        ];
     }
 }
