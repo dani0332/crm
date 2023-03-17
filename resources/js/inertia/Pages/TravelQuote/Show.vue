@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { useNotifications } from '@indielayer/ui';
 import { computed, ref, reactive, onMounted } from 'vue';
-import { useClipboard } from '@vueuse/core';
+import { useDateFormat, useClipboard } from '@vueuse/core';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 
@@ -37,6 +37,8 @@ defineProps({
 });
 
 const page = usePage();
+
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
 
 const notification = useNotifications('toast');
 
@@ -227,6 +229,11 @@ const addTravelMember = isValid => {
   });
 };
 
+const onAddTraveler = () => {
+  travelerForm.reset();
+  travelerTable.addTraveler = true;
+};
+
 const onEditTraveler = traveler => {
   travelerForm.dob = traveler.dob;
   travelerForm.id = traveler.id;
@@ -250,7 +257,7 @@ const editTraveler = isValid => {
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerTable.processing = false;
-      travelerForm.reset();
+      travelerForm.dob = '';
     },
   });
 };
@@ -1030,11 +1037,7 @@ onMounted(() => {});
           <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
-          <x-button
-            size="sm"
-            color="primary"
-            @click.prevent="travelerTable.addTraveler = true"
-          >
+          <x-button size="sm" color="primary" @click.prevent="onAddTraveler">
             Add Member
           </x-button>
         </div>
@@ -1048,6 +1051,15 @@ onMounted(() => {});
         :rows-per-page="15"
       >
         <template #item-name="item"> Traveler {{ item.key + 1 }} </template>
+
+        <template #item-created_at="{ created_at }">
+          {{ dateFormat(created_at).value }}
+        </template>
+
+        <template #item-updated_at="{ updated_at }">
+          {{ dateFormat(updated_at).value }}
+        </template>
+
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
             <x-button
@@ -1091,7 +1103,7 @@ onMounted(() => {});
           <DatePicker
             v-model="travelerForm.dob"
             label="Date of Birth"
-            input-class="w-full teleport"
+            input-classes="w-full "
             :rules="[rules.isRequired]"
           />
           <div class="flex justify-end">
@@ -1146,7 +1158,7 @@ onMounted(() => {});
             />
           </div>
           <div class="w-full md:w-1/2">
-            <x-input
+            <DatePicker
               v-model="policyDetails.policy_issuance_date"
               :disabled="!policyDetails.editMode"
               type="date"
@@ -1158,7 +1170,7 @@ onMounted(() => {});
         </div>
         <div class="flex gap-6 w-full">
           <div class="w-full md:w-1/2">
-            <x-input
+            <DatePicker
               v-model="policyDetails.policy_start_date"
               :disabled="!policyDetails.editMode"
               type="date"
@@ -1168,7 +1180,7 @@ onMounted(() => {});
             />
           </div>
           <div class="w-full md:w-1/2">
-            <x-input
+            <DatePicker
               v-model="policyDetails.renewal_expiry_date"
               :disabled="!policyDetails.editMode"
               type="date"

@@ -10134,10 +10134,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
-/* harmony import */ var _indielayer_ui__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @indielayer/ui */ "./node_modules/@indielayer/ui/lib/index.es.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
+/* harmony import */ var _indielayer_ui__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @indielayer/ui */ "./node_modules/@indielayer/ui/lib/index.es.js");
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
-/* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/core/index.mjs");
+/* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/shared/index.mjs");
+/* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/core/index.mjs");
 /* harmony import */ var _Partials_DocumentUploader_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Partials/DocumentUploader.vue */ "./resources/js/inertia/Pages/TravelQuote/Partials/DocumentUploader.vue");
 /* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
 /* unplugin-vue-components disabled */function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
@@ -10197,7 +10198,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var expose = _ref.expose;
     expose();
     var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__.usePage)();
-    var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_3__.useNotifications)('toast');
+
+    var dateFormat = function dateFormat(date) {
+      return (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_3__.useDateFormat)(date, 'DD-MM-YYYY');
+    };
+
+    var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_4__.useNotifications)('toast');
     var rules = {
       isRequired: function isRequired(v) {
         return !!v || 'This field is required';
@@ -10373,6 +10379,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     };
 
+    var onAddTraveler = function onAddTraveler() {
+      travelerForm.reset();
+      travelerTable.addTraveler = true;
+    };
+
     var onEditTraveler = function onEditTraveler(traveler) {
       travelerForm.dob = traveler.dob;
       travelerForm.id = traveler.id;
@@ -10395,7 +10406,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         onFinish: function onFinish() {
           travelerTable.addTraveler = false;
           travelerTable.processing = false;
-          travelerForm.reset();
+          travelerForm.dob = '';
         }
       });
     };
@@ -10575,7 +10586,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         var quoteType = page.props.modelType;
         var quoteUuId = page.props.quote.uuid;
         var url = '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
-        axios__WEBPACK_IMPORTED_MODULE_4__["default"].post(url).then(function (response) {
+        axios__WEBPACK_IMPORTED_MODULE_5__["default"].post(url).then(function (response) {
           if (response.status == 200) {
             notification.success({
               title: 'Documents Sent',
@@ -10961,7 +10972,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
     var getPlanDetails = function getPlanDetails(id) {
       try {
-        axios__WEBPACK_IMPORTED_MODULE_4__["default"].get("/quotes/travel/".concat(page.props.quote.uuid, "/plan_details/").concat(id)).then(function (res) {
+        axios__WEBPACK_IMPORTED_MODULE_5__["default"].get("/quotes/travel/".concat(page.props.quote.uuid, "/plan_details/").concat(id)).then(function (res) {
           planDetails.value = res.data;
           modals.planDetails = true;
         })["catch"](function (err) {
@@ -10982,7 +10993,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     };
 
-    var _useClipboard = (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_5__.useClipboard)(),
+    var _useClipboard = (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_6__.useClipboard)(),
         copy = _useClipboard.copy,
         copied = _useClipboard.copied;
 
@@ -10997,6 +11008,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {});
     var __returned__ = {
       page: page,
+      dateFormat: dateFormat,
       notification: notification,
       rules: rules,
       confirmDeleteData: confirmDeleteData,
@@ -11022,6 +11034,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       travelerTable: travelerTable,
       submitTraveler: submitTraveler,
       addTravelMember: addTravelMember,
+      onAddTraveler: onAddTraveler,
       onEditTraveler: onEditTraveler,
       editTraveler: editTraveler,
       deleteTraveler: deleteTraveler,
@@ -11067,11 +11080,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       onCopyText: onCopyText,
 
       get axios() {
-        return axios__WEBPACK_IMPORTED_MODULE_4__["default"];
+        return axios__WEBPACK_IMPORTED_MODULE_5__["default"];
       },
 
       get useNotifications() {
-        return _indielayer_ui__WEBPACK_IMPORTED_MODULE_3__.useNotifications;
+        return _indielayer_ui__WEBPACK_IMPORTED_MODULE_4__.useNotifications;
       },
 
       computed: vue__WEBPACK_IMPORTED_MODULE_0__.computed,
@@ -11079,8 +11092,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       reactive: vue__WEBPACK_IMPORTED_MODULE_0__.reactive,
       onMounted: vue__WEBPACK_IMPORTED_MODULE_0__.onMounted,
 
+      get useDateFormat() {
+        return _vueuse_core__WEBPACK_IMPORTED_MODULE_3__.useDateFormat;
+      },
+
       get useClipboard() {
-        return _vueuse_core__WEBPACK_IMPORTED_MODULE_5__.useClipboard;
+        return _vueuse_core__WEBPACK_IMPORTED_MODULE_6__.useClipboard;
       },
 
       LazyDocumentUploader: _Partials_DocumentUploader_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
@@ -30202,9 +30219,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_31, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
     size: "sm",
     color: "primary",
-    onClick: _cache[7] || (_cache[7] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
-      return $setup.travelerTable.addTraveler = true;
-    }, ["prevent"]))
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)($setup.onAddTraveler, ["prevent"])
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)(" Add Member ")];
@@ -30212,7 +30227,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
     /* STABLE */
 
-  })])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_DataTable, {
+  }, 8
+  /* PROPS */
+  , ["onClick"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_DataTable, {
     "table-class-name": "tablefixed compact",
     headers: $setup.travelerTable.columns,
     items: $props.travelers || [],
@@ -30222,6 +30239,18 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, {
     "item-name": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (item) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)(" Traveler " + (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(item.key + 1), 1
+      /* TEXT */
+      )];
+    }),
+    "item-created_at": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref) {
+      var created_at = _ref.created_at;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($setup.dateFormat(created_at).value), 1
+      /* TEXT */
+      )];
+    }),
+    "item-updated_at": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref2) {
+      var updated_at = _ref2.updated_at;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($setup.dateFormat(updated_at).value), 1
       /* TEXT */
       )];
     }),
@@ -30271,7 +30300,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["headers", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.travelerTable.addTraveler,
-    "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
+    "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
       return $setup.travelerTable.addTraveler = $event;
     }),
     size: "lg",
@@ -30296,11 +30325,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "class": "w-full"
           }), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_DatePicker, {
             modelValue: $setup.travelerForm.dob,
-            "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
+            "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
               return $setup.travelerForm.dob = $event;
             }),
             label: "Date of Birth",
-            "input-class": "w-full teleport",
+            "input-classes": "w-full ",
             rules: [$setup.rules.isRequired]
           }, null, 8
           /* PROPS */
@@ -30335,7 +30364,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.confirmModal.show,
-    "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
+    "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
       return $setup.confirmModal.show = $event;
     }),
     "show-close": "",
@@ -30350,7 +30379,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_35, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
-        onClick: _cache[10] || (_cache[10] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+        onClick: _cache[9] || (_cache[9] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
           return $setup.confirmModal.show = false;
         }, ["prevent"]))
       }, {
@@ -30395,7 +30424,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_38, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_39, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
         modelValue: $setup.policyDetails.policy_number,
-        "onUpdate:modelValue": _cache[12] || (_cache[12] = function ($event) {
+        "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
           return $setup.policyDetails.policy_number = $event;
         }),
         disabled: !$setup.policyDetails.editMode,
@@ -30404,9 +30433,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "class": "w-full"
       }, null, 8
       /* PROPS */
-      , ["modelValue", "disabled", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_40, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
+      , ["modelValue", "disabled", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_40, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_DatePicker, {
         modelValue: $setup.policyDetails.policy_issuance_date,
-        "onUpdate:modelValue": _cache[13] || (_cache[13] = function ($event) {
+        "onUpdate:modelValue": _cache[12] || (_cache[12] = function ($event) {
           return $setup.policyDetails.policy_issuance_date = $event;
         }),
         disabled: !$setup.policyDetails.editMode,
@@ -30416,9 +30445,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "class": "w-full"
       }, null, 8
       /* PROPS */
-      , ["modelValue", "disabled", "rules"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_41, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_42, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
+      , ["modelValue", "disabled", "rules"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_41, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_42, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_DatePicker, {
         modelValue: $setup.policyDetails.policy_start_date,
-        "onUpdate:modelValue": _cache[14] || (_cache[14] = function ($event) {
+        "onUpdate:modelValue": _cache[13] || (_cache[13] = function ($event) {
           return $setup.policyDetails.policy_start_date = $event;
         }),
         disabled: !$setup.policyDetails.editMode,
@@ -30428,9 +30457,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "class": "w-full"
       }, null, 8
       /* PROPS */
-      , ["modelValue", "disabled", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_43, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
+      , ["modelValue", "disabled", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_43, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_DatePicker, {
         modelValue: $setup.policyDetails.renewal_expiry_date,
-        "onUpdate:modelValue": _cache[15] || (_cache[15] = function ($event) {
+        "onUpdate:modelValue": _cache[14] || (_cache[14] = function ($event) {
           return $setup.policyDetails.renewal_expiry_date = $event;
         }),
         disabled: !$setup.policyDetails.editMode,
@@ -30442,7 +30471,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       /* PROPS */
       , ["modelValue", "disabled", "rules"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_44, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_45, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
         modelValue: $setup.policyDetails.premium,
-        "onUpdate:modelValue": _cache[16] || (_cache[16] = function ($event) {
+        "onUpdate:modelValue": _cache[15] || (_cache[15] = function ($event) {
           return $setup.policyDetails.premium = $event;
         }),
         disabled: !$setup.policyDetails.editMode,
@@ -30481,7 +30510,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         color: "#007bff",
         size: "sm",
         type: "submit",
-        onClick: _cache[17] || (_cache[17] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+        onClick: _cache[16] || (_cache[16] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
           return $setup.policyDetails.editMode = true;
         }, ["prevent"]))
       }, {
@@ -30511,7 +30540,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_51, [$props.permissions.canNotEditPayments && $props.permissions.notProductionApproval ? ((0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createBlock)(_component_x_button, {
     key: 0,
-    onClick: _cache[18] || (_cache[18] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+    onClick: _cache[17] || (_cache[17] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
       return $setup.modals.doc = true;
     }, ["prevent"])),
     size: "sm",
@@ -30564,8 +30593,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       /* TEXT, PROPS */
       , _hoisted_52)];
     }),
-    "item-action": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref) {
-      var doc_name = _ref.doc_name;
+    "item-action": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref3) {
+      var doc_name = _ref3.doc_name;
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
         size: "xs",
         color: "error",
@@ -30591,7 +30620,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["headers", "items", "hide-footer"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.doc,
-    "onUpdate:modelValue": _cache[19] || (_cache[19] = function ($event) {
+    "onUpdate:modelValue": _cache[18] || (_cache[18] = function ($event) {
       return $setup.modals.doc = $event;
     }),
     size: "xl",
@@ -30618,7 +30647,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.docConfirm,
-    "onUpdate:modelValue": _cache[21] || (_cache[21] = function ($event) {
+    "onUpdate:modelValue": _cache[20] || (_cache[20] = function ($event) {
       return $setup.modals.docConfirm = $event;
     }),
     "show-close": "",
@@ -30631,7 +30660,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_54, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
-        onClick: _cache[20] || (_cache[20] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+        onClick: _cache[19] || (_cache[19] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
           return $setup.modals.docConfirm = false;
         }, ["prevent"]))
       }, {
@@ -30692,7 +30721,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     key: 0,
     size: "sm",
     color: "orange",
-    onClick: _cache[22] || (_cache[22] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+    onClick: _cache[21] || (_cache[21] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
       return $setup.onCopyText($props.ecomTravelInsuranceQuoteUrl + $props.quote.uuid);
     }, ["prevent"]))
   }, {
@@ -30757,7 +30786,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* TEXT */
   )) : (0,vue__WEBPACK_IMPORTED_MODULE_2__.createCommentVNode)("v-if", true)])), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.planDetails,
-    "onUpdate:modelValue": _cache[24] || (_cache[24] = function ($event) {
+    "onUpdate:modelValue": _cache[23] || (_cache[23] = function ($event) {
       return $setup.modals.planDetails = $event;
     }),
     size: "xl",
@@ -30770,7 +30799,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_68, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_tab_group, {
         modelValue: $setup.selectedTab,
-        "onUpdate:modelValue": _cache[23] || (_cache[23] = function ($event) {
+        "onUpdate:modelValue": _cache[22] || (_cache[22] = function ($event) {
           return $setup.selectedTab = $event;
         }),
         "class": "w-full",
@@ -30979,9 +31008,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "rows-per-page": 15,
     "hide-footer": $props.activities.length < 15
   }, {
-    "item-status": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref2) {
-      var status = _ref2.status,
-          id = _ref2.id;
+    "item-status": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref4) {
+      var status = _ref4.status,
+          id = _ref4.id;
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_checkbox, {
         color: "emerald",
         size: "xl",
@@ -31038,7 +31067,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["items", "hide-footer"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.activity,
-    "onUpdate:modelValue": _cache[30] || (_cache[30] = function ($event) {
+    "onUpdate:modelValue": _cache[29] || (_cache[29] = function ($event) {
       return $setup.modals.activity = $event;
     }),
     size: "lg",
@@ -31058,7 +31087,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_116, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
             modelValue: $setup.activityForm.title,
-            "onUpdate:modelValue": _cache[25] || (_cache[25] = function ($event) {
+            "onUpdate:modelValue": _cache[24] || (_cache[24] = function ($event) {
               return $setup.activityForm.title = $event;
             }),
             label: "Title",
@@ -31068,7 +31097,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           /* PROPS */
           , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_textarea, {
             modelValue: $setup.activityForm.description,
-            "onUpdate:modelValue": _cache[26] || (_cache[26] = function ($event) {
+            "onUpdate:modelValue": _cache[25] || (_cache[25] = function ($event) {
               return $setup.activityForm.description = $event;
             }),
             label: "Description",
@@ -31078,7 +31107,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           /* PROPS */
           , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_select, {
             modelValue: $setup.activityForm.assignee_id,
-            "onUpdate:modelValue": _cache[27] || (_cache[27] = function ($event) {
+            "onUpdate:modelValue": _cache[26] || (_cache[26] = function ($event) {
               return $setup.activityForm.assignee_id = $event;
             }),
             label: "Assignee",
@@ -31090,7 +31119,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           /* PROPS */
           , ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
             modelValue: $setup.activityForm.due_date,
-            "onUpdate:modelValue": _cache[28] || (_cache[28] = function ($event) {
+            "onUpdate:modelValue": _cache[27] || (_cache[27] = function ($event) {
               return $setup.activityForm.due_date = $event;
             }),
             label: "Due Date",
@@ -31101,7 +31130,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           /* PROPS */
           , ["modelValue", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_117, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
             size: "sm",
-            onClick: _cache[29] || (_cache[29] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+            onClick: _cache[28] || (_cache[28] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
               return $setup.modals.activity = false;
             }, ["prevent"]))
           }, {
@@ -31141,7 +31170,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.activityConfirm,
-    "onUpdate:modelValue": _cache[32] || (_cache[32] = function ($event) {
+    "onUpdate:modelValue": _cache[31] || (_cache[31] = function ($event) {
       return $setup.modals.activityConfirm = $event;
     }),
     "show-close": "",
@@ -31154,7 +31183,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_119, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
-        onClick: _cache[31] || (_cache[31] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+        onClick: _cache[30] || (_cache[30] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
           return $setup.modals.activityConfirm = false;
         }, ["prevent"]))
       }, {
@@ -31202,7 +31231,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
     size: "sm",
     color: "orange",
-    onClick: _cache[33] || (_cache[33] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+    onClick: _cache[32] || (_cache[32] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
       return $setup.modals.addContact = true;
     }, ["prevent"]))
   }, {
@@ -31220,8 +31249,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "hide-rows-per-page": "",
     "hide-footer": ""
   }, {
-    "item-key": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref3) {
-      var key = _ref3.key;
+    "item-key": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref5) {
+      var key = _ref5.key;
       return [key === 'email' ? ((0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementBlock)("span", _hoisted_123, " Email Address ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementBlock)("span", _hoisted_124, " Mobile Number "))];
     }),
     "item-action": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (item) {
@@ -31266,7 +31295,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["items"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.addContact,
-    "onUpdate:modelValue": _cache[37] || (_cache[37] = function ($event) {
+    "onUpdate:modelValue": _cache[36] || (_cache[36] = function ($event) {
       return $setup.modals.addContact = $event;
     }),
     size: "lg",
@@ -31284,7 +31313,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_126, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_select, {
             modelValue: $setup.additionalContact.additional_contact_type,
-            "onUpdate:modelValue": _cache[34] || (_cache[34] = function ($event) {
+            "onUpdate:modelValue": _cache[33] || (_cache[33] = function ($event) {
               return $setup.additionalContact.additional_contact_type = $event;
             }),
             label: "Type",
@@ -31302,7 +31331,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           /* PROPS */
           , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
             modelValue: $setup.additionalContact.additional_contact_val,
-            "onUpdate:modelValue": _cache[35] || (_cache[35] = function ($event) {
+            "onUpdate:modelValue": _cache[34] || (_cache[34] = function ($event) {
               return $setup.additionalContact.additional_contact_val = $event;
             }),
             label: "Value",
@@ -31312,7 +31341,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           /* PROPS */
           , ["modelValue", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_127, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
             size: "sm",
-            onClick: _cache[36] || (_cache[36] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+            onClick: _cache[35] || (_cache[35] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
               return $setup.modals.addContact = false;
             }, ["prevent"]))
           }, {
@@ -31350,7 +31379,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.contactDeleteConfirm,
-    "onUpdate:modelValue": _cache[39] || (_cache[39] = function ($event) {
+    "onUpdate:modelValue": _cache[38] || (_cache[38] = function ($event) {
       return $setup.modals.contactDeleteConfirm = $event;
     }),
     "show-close": "",
@@ -31363,7 +31392,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_129, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
-        onClick: _cache[38] || (_cache[38] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+        onClick: _cache[37] || (_cache[37] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
           return $setup.modals.contactDeleteConfirm = false;
         }, ["prevent"]))
       }, {
@@ -31399,7 +31428,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   /* PROPS */
   , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.contactPrimaryConfirm,
-    "onUpdate:modelValue": _cache[41] || (_cache[41] = function ($event) {
+    "onUpdate:modelValue": _cache[40] || (_cache[40] = function ($event) {
       return $setup.modals.contactPrimaryConfirm = $event;
     }),
     "show-close": "",
@@ -31412,7 +31441,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_131, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
-        onClick: _cache[40] || (_cache[40] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
+        onClick: _cache[39] || (_cache[39] = (0,vue__WEBPACK_IMPORTED_MODULE_2__.withModifiers)(function ($event) {
           return $setup.modals.contactPrimaryConfirm = false;
         }, ["prevent"]))
       }, {
