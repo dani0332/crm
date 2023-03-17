@@ -186,4 +186,7 @@ final class PermissionsEnum extends Enum
     const ADVISOR_DISTRIBUTION_REPORT_VIEW = 'advisor-distribution-report-view';
     const ADVISOR_PERFORMANCE_REPORT_VIEW = 'advisor-performance-report-view';
     const LEAD_DISTRIBUTION_REPORT_VIEW = 'lead-distribution-report-view';
+    const BikeQuotesList = 'bike-quotes-list';
+    const BikeQuotesCreate = 'bike-quotes-create';
+    const BikeQuotesEdit = 'bike-quotes-edit';
 }

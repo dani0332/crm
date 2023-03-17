@@ -97,6 +97,10 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
+
+const permissionsEnum = computed(() => page.props.permissionsEnum);
+const permissions = computed(() => page.props.permissions);
+
 </script>
 
 <template>
@@ -105,7 +109,7 @@ const tableHeader = [
 
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Bike Quotes List</h2>
-      <x-button size="sm" color="#ff5e00" href="/personal-quotes/bike/create">
+      <x-button v-if="permissions.includes(permissionsEnum.BikeQuotesCreate)" size="sm" color="#ff5e00" href="/personal-quotes/bike/create">
         Create Lead
       </x-button>
     </div>

@@ -400,12 +400,12 @@ function formatAmount($value, $decimals = 2, $appendPrefix = true)
 function generateRouteNames($prefix)
 {
     return [
-        'index' => $prefix.'-index',
+        'index' => $prefix.'-list',
         'create' => $prefix.'-create',
         'store' => $prefix.'-store',
-        'show' => $prefix.'-view',
+        'show' => $prefix.'-show',
         'edit' => $prefix.'-edit',
-        'update' => $prefix.'-edit',
+        'update' => $prefix.'-update',
         'destroy' => $prefix.'-delete',
     ];
 }
