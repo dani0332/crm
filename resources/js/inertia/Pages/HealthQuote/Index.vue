@@ -2,6 +2,7 @@
 import { reactive, computed, onMounted, ref } from 'vue';
 import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
 import { useNotifications } from '@indielayer/ui';
+import { useCan } from '../../Composables/can';
 
 defineProps({
   quotes: Object,
@@ -11,6 +12,8 @@ defineProps({
 
 const page = usePage();
 const notification = useNotifications('toast');
+
+const canAny = permissions => useCan(permissions);
 
 const loader = reactive({
   table: false,
@@ -204,7 +207,7 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/health-cards">
+        <Link v-if="canAny(['AgeDiscountDelete'])" href="/quotes/health-cards">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
 

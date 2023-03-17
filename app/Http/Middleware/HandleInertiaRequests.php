@@ -44,7 +44,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $permissions = [];
-        if(auth()->user()) {
+        if (auth()->user()) {
             $permissions = auth()->user()->getAllPermissions()->pluck('name')->toArray();
         }
 
@@ -52,9 +52,9 @@ class HandleInertiaRequests extends Middleware
             'auth.user' => fn () => $request->user()
                 ? $request->user()->only('id', 'name', 'email')
                 : null,
+            'auth.permissions' => fn () => $permissions,
             'sidebar' => fn () => $this->buildNavigation()->tree(),
             'permissionsEnum' => PermissionsEnum::asArray(),
-            'permissions' => $permissions
         ]);
     }
 
