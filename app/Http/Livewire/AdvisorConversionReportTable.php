@@ -285,7 +285,7 @@ class AdvisorConversionReportTable extends DataTableComponent
         $manualCreated = 0;
         $saleLeads = 0;
         $createdSaleLeads = 0;
-        info('gross rows : '. json_encode($rows));
+        info('gross rows : '.json_encode($rows));
         foreach ($rows as $row) {
             $totalLeads += $row->total_leads;
             $manualCreated += $row->manual_created;
@@ -333,7 +333,7 @@ class AdvisorConversionReportTable extends DataTableComponent
         $manualCreatedBadLeads = 0;
         $saleLeads = 0;
         $createdSaleLeads = 0;
-        info('net rows : '. json_encode($rows));
+        info('net rows : '.json_encode($rows));
         foreach ($rows as $row) {
             $totalLeads += $row->total_leads;
             $manualCreated += $row->manual_created;
