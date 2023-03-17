@@ -304,8 +304,20 @@ class AdvisorConversionReportTable extends DataTableComponent
 
     private function calculateGrossConversion($row)
     {
-        if ($row->total_leads - $row->manual_created > 0) {
-            return number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created))) * 100, 2, '.', '').' %';
+        $totalLeads = (int) $row->total_leads;
+        $manualCreated = (int) $row->manual_created;
+        $saleLeads = (int) $row->sale_leads;
+        $createdSaleLeads = (int) $row->created_sale_leads;
+
+        $numerator = $saleLeads - $createdSaleLeads;
+        $denominator = $totalLeads - $manualCreated;
+
+        info('Gross numerator : sale leads =  '.$saleLeads.' , createdSaleLeads = '.$createdSaleLeads);
+        info('Gross denominator : total leads =  '.$totalLeads.' , manualCreated = '.$manualCreated);
+        info('Gross conversion : numerator = '.$numerator.' , denominator = '.$denominator);
+
+        if ($denominator > 0) {
+            return number_format(($numerator / $denominator) * 100, 2, '.', '').' %';
         } else {
             return 'NaN';
         }
@@ -330,9 +342,9 @@ class AdvisorConversionReportTable extends DataTableComponent
         }
         $numerator = $saleLeads - $createdSaleLeads;
         $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
-        info('Total Net numerator : sale leads =  '.$saleLeads.' , createdSaleLeads = '.$createdSaleLeads);
-        info('Total Net denominator : total leads =  '.$totalLeads.' , manualCreated = '.$manualCreated.', badLeads'.$badLeads.' , manualCreatedBadLeads = '.$manualCreatedBadLeads);
-        info('Net conversion : numerator = '.$numerator.' , denominator = '.$denominator);
+        info('Gross numerator : sale leads =  '.$saleLeads.' , createdSaleLeads = '.$createdSaleLeads);
+        info('Gross denominator : total leads =  '.$totalLeads.' , manualCreated = '.$manualCreated.', badLeads'.$badLeads.' , manualCreatedBadLeads = '.$manualCreatedBadLeads);
+        info('Gross conversion : numerator = '.$numerator.' , denominator = '.$denominator);
 
         return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
@@ -346,13 +358,13 @@ class AdvisorConversionReportTable extends DataTableComponent
         $saleLeads = (int) $row->sale_leads;
         $createdSaleLeads = (int) $row->created_sale_leads;
 
-        if (($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads) > 0) {
-            $enumerator = $saleLeads - $createdSaleLeads;
-            $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
+        $numerator = $saleLeads - $createdSaleLeads;
+        $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
 
-            return number_format(($enumerator / $denominator) * 100, 2, '.', '').' %';
-        } else {
-            return 'NaN';
-        }
+        info('Net numerator : sale leads =  '.$saleLeads.' , createdSaleLeads = '.$createdSaleLeads);
+        info('Net denominator : total leads =  '.$totalLeads.' , manualCreated = '.$manualCreated);
+        info('Net conversion : numerator = '.$numerator.' , denominator = '.$denominator);
+
+        $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 }
