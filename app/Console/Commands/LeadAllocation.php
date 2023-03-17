@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Jobs\LeadAllocationJob;
 use App\Mail\LeadAllocationFailedNotification;
+use App\Models\LeadAllocation as LeadAllocationModel;
 use App\Services\LeadAllocationService;
 use Exception;
 use Illuminate\Console\Command;
@@ -117,7 +118,7 @@ class LeadAllocation extends Command
                             }
 
                             foreach ($filteredUsersByHealthTeam as $user) {
-                                self::where('user_id', $user->id)->update(['last_allocated' => (float) $user->last_allocated]);
+                                LeadAllocationModel::where('user_id', $user->id)->update(['last_allocated' => (float) $user->last_allocated]);
                             }
                         } else {
                             info($healthTeam.' Leads count is '.$filteredLeadsByHealthTeam->count().' and available users count is '.$filteredUsersByHealthTeam->count());

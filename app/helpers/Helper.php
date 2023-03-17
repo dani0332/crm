@@ -396,3 +396,16 @@ function formatAmount($value, $decimals = 2, $appendPrefix = true)
 
     return ($appendPrefix) ? 'AED '.$value : $value;
 }
+
+function generateRouteNames($prefix)
+{
+    return [
+        'index' => $prefix.'-index',
+        'create' => $prefix.'-create',
+        'store' => $prefix.'-store',
+        'show' => $prefix.'-view',
+        'edit' => $prefix.'-edit',
+        'update' => $prefix.'-edit',
+        'destroy' => $prefix.'-delete',
+    ];
+}

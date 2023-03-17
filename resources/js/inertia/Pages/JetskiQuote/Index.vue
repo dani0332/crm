@@ -44,7 +44,7 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    router.visit('/personal-quotes/yacht', {
+    router.visit('/personal-quotes/jetski', {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -58,7 +58,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit('/personal-quotes/yacht', {
+  router.visit('/personal-quotes/jetski', {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -101,10 +101,10 @@ const tableHeader = [
 
 <template>
   <div>
-    <Head title="Yacht Quotes" />
+    <Head title="JetSki Quotes" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Yacht Quotes List</h2>
-      <x-button size="sm" color="#ff5e00" href="/personal-quotes/yacht/create">
+      <h2 class="text-xl font-semibold">JetSki Quotes List</h2>
+      <x-button size="sm" color="#ff5e00" href="/personal-quotes/jetski/create">
         Create Lead
       </x-button>
     </div>
@@ -155,14 +155,12 @@ const tableHeader = [
         />
         <DatePicker
           v-model="filters.created_at_start"
-          type="date"
           name="created_at_start"
           label="Created Date Start"
           class="w-full"
         />
         <DatePicker
           v-model="filters.created_at_end"
-          type="date"
           name="created_at_end"
           label="Created Date End"
           class="w-full"
@@ -234,7 +232,7 @@ const tableHeader = [
     >
       <template #item-uuid="{ code, uuid }">
         <Link
-          :href="`/personal-quotes/yacht/${uuid}`"
+          :href="`/personal-quotes/jetski/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}

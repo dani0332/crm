@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentMethodsEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\RolesEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,6 +16,54 @@ class Payment extends Model
     protected $keyType = 'string';
     protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount', 'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by', 'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link'];
     protected $forceDeleting = true;
+
+    /**
+     * @return bool
+     */
+    public function getAllowAttribute()
+    {
+        return $this->attributes['allow'] = ($this->payment_status_id != PaymentStatusEnum::CAPTURED && $this->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA));
+    }
+
+    /**
+     * @return bool
+     */
+    public function getCopyLinkButtonAttribute()
+    {
+        return $this->attributes['copy_link_button'] = ($this->allow && optional($this->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $this->payment_status_id != PaymentStatusEnum::PAID);
+    }
+
+    /**
+     * @return bool
+     */
+    public function getApproveButtonAttribute()
+    {
+        return $this->attributes['approve_button'] = (optional($this->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $this->payment_status_id != PaymentStatusEnum::PAID && $this->payment_status_id != PaymentStatusEnum::CAPTURED
+            && ! auth()->user()->hasRole(RolesEnum::PA));
+    }
+
+    /**
+     * @return bool
+     */
+    public function getApprovedButtonAttribute()
+    {
+        return $this->attributes['approved_button'] = ($this->payment_status_id == PaymentStatusEnum::PAID);
+    }
+
+    /**
+     * @return bool
+     */
+    public function getEditButtonAttribute()
+    {
+        return $this->attributes['edit_button'] = ($this->allow && $this->payment_status_id != PaymentStatusEnum::PAID);
+    }
+
+    public function scopeWithPermissions($q)
+    {
+        $this->attributes['allow_approve'] = 1;
+
+        return $q;
+    }
 
     public function paymentable()
     {

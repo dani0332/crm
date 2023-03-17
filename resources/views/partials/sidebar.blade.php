@@ -23,8 +23,10 @@ use App\Enums\PermissionsEnum;
                     <li><a><i class="fa fa-tachometer"
                         aria-hidden="true"></i>Dashboard <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
+                            @can(PermissionsEnum::DashboardView)
                             <li><a href="{{ url('dashboard/car-conversion') }}">Car Conversion</a></li>
                             <li><a href="{{ url('dashboard/travel-conversion') }}">Travel Conversion</a></li>
+                            @endcan
                             @can(PermissionsEnum::TPL_DASHBOARD_VIEW)
                             <li><a href="{{ url('/tpl-conversion-dashboard') }}">TPL Conversion</a></li>
                             @endcan
@@ -130,6 +132,7 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
                             <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>
                             <li><a href="{{ url('personal-quotes/yacht') }}">Yacht Quotes</a></li>
+                            <li><a href="{{ url('personal-quotes/jetski') }}">JetSki Quotes</a></li>
                         </ul>
                     </li>
                 </ul>

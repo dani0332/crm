@@ -76,6 +76,14 @@ class PersonalQuote extends Model implements AuditableContract
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
+    public function jetskiQuote()
+    {
+        return $this->hasOne(JetskiQuote::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
     public function cycleQuote()
     {
         return $this->hasOne(CycleQuote::class);

@@ -8,6 +8,7 @@ enum QuoteTypes: string
     case CYCLE = 'Cycle';
     case PET = 'Pet';
     case YACHT = 'Yacht';
+    case JETSKI = 'Jetski';
 
     /**
      * @return string
@@ -27,7 +28,8 @@ enum QuoteTypes: string
             QuoteTypes::BIKE => 6,
             QuoteTypes::CYCLE => 10,
             QuoteTypes::PET => 9,
-            QuoteTypes::YACHT => 7
+            QuoteTypes::YACHT => 7,
+            QuoteTypes::JETSKI => 11,
         };
     }
 }
