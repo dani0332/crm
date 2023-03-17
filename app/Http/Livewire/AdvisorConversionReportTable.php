@@ -287,13 +287,11 @@ class AdvisorConversionReportTable extends DataTableComponent
         $createdSaleLeads = 0;
         $manualCreated = 0;
         foreach ($rows as $row) {
-            if (($row->total_leads - $row->manual_created) > 0) {
-                $totalLeads += $row->total_leads;
-                $manualCreated += $row->manual_created;
-                $saleLeads += $row->sale_leads;
-                $createdSaleLeads += $row->created_sale_leads;
-                $manualCreated += $row->manual_created;
-            }
+            $totalLeads += $row->total_leads;
+            $manualCreated += $row->manual_created;
+            $saleLeads += $row->sale_leads;
+            $createdSaleLeads += $row->created_sale_leads;
+            $manualCreated += $row->manual_created;
         }
         $numerator = $saleLeads - $createdSaleLeads;
         $denominator = $totalLeads - $manualCreated;
@@ -322,23 +320,21 @@ class AdvisorConversionReportTable extends DataTableComponent
         $saleLeads = 0;
         $createdSaleLeads = 0;
         foreach ($rows as $row) {
-            if (($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads) > 0) {
-                $totalLeads += $row->total_leads;
-                $manualCreated += $row->manual_created;
-                $saleLeads += $row->sale_leads;
-                $createdSaleLeads += $row->created_sale_leads;
-                $manualCreated += $row->manual_created;
-                $badLeads += $row->bad_leads;
-                $manualCreatedBadLeads += $row->manual_created_bad_leads;
-            }
+            $totalLeads += $row->total_leads;
+            $manualCreated += $row->manual_created;
+            $saleLeads += $row->sale_leads;
+            $createdSaleLeads += $row->created_sale_leads;
+            $manualCreated += $row->manual_created;
+            $badLeads += $row->bad_leads;
+            $manualCreatedBadLeads += $row->manual_created_bad_leads;
         }
-        $enumerator = $saleLeads - $createdSaleLeads;
+        $numerator = $saleLeads - $createdSaleLeads;
         $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
         info('Total Net numerator : sale leads =  '.$saleLeads.' , createdSaleLeads = '.$createdSaleLeads);
         info('Total Net denominator : total leads =  '.$totalLeads.' , manualCreated = '.$manualCreated.', badLeads'.$badLeads.' , manualCreatedBadLeads = '.$manualCreatedBadLeads);
-        info('Net conversion : enumerator = '.$enumerator.' , denominator = '.$denominator);
+        info('Net conversion : numerator = '.$numerator.' , denominator = '.$denominator);
 
-        return $denominator > 0 ? number_format($enumerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
+        return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 
     private function calculateNetConversion($row)
