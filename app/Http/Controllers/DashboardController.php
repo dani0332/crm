@@ -135,7 +135,6 @@ class DashboardController extends Controller
         ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
         ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
 
-
         $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'undefined';
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $tiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
 
@@ -149,8 +148,7 @@ class DashboardController extends Controller
         }
         $labels = [];
         $data = [];
-        $records = $records->get()->sortBy(function($record)
-        {
+        $records = $records->get()->sortBy(function ($record) {
             return $record->id;
         });
         foreach ($records as $record) {

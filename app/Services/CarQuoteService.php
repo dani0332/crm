@@ -250,7 +250,7 @@ class CarQuoteService extends BaseService
     {
         $childRecord = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
 
-        if (!$childRecord) {
+        if (! $childRecord) {
             $childRecord = $this->createDetailEntity($id);
         }
 

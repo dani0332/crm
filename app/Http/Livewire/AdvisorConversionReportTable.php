@@ -293,6 +293,7 @@ class AdvisorConversionReportTable extends DataTableComponent
         }
         $numerator = $saleLeads - $createdSaleLeads;
         $denominator = $totalLeads - $manualCreated;
+
         return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 
@@ -329,6 +330,7 @@ class AdvisorConversionReportTable extends DataTableComponent
         }
         $numerator = $saleLeads - $createdSaleLeads;
         $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
+
         return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 
@@ -342,6 +344,7 @@ class AdvisorConversionReportTable extends DataTableComponent
         $createdSaleLeads = (int) $row->created_sale_leads;
         $numerator = $saleLeads - $createdSaleLeads;
         $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
+
         return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 }
