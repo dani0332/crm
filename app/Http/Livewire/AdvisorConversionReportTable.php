@@ -285,7 +285,6 @@ class AdvisorConversionReportTable extends DataTableComponent
         $manualCreated = 0;
         $saleLeads = 0;
         $createdSaleLeads = 0;
-        info('gross rows : '.json_encode($rows));
         foreach ($rows as $row) {
             $totalLeads += $row->total_leads;
             $manualCreated += $row->manual_created;
@@ -294,12 +293,6 @@ class AdvisorConversionReportTable extends DataTableComponent
         }
         $numerator = $saleLeads - $createdSaleLeads;
         $denominator = $totalLeads - $manualCreated;
-        // info('------------ Total Gross Conversion ------------');
-        // info('Total Gross numerator : sale leads =  '.$saleLeads.' , createdSaleLeads = '.$createdSaleLeads);
-        // info('Total Gross denominator : total leads =  '.$totalLeads.' , manualCreated = '.$manualCreated);
-        // info('Total Gross conversion : numerator = '.$numerator.' , denominator = '.$denominator);
-        // info('------------ Total Gross Conversion END------------');
-
         return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 
@@ -309,15 +302,8 @@ class AdvisorConversionReportTable extends DataTableComponent
         $manualCreated = (int) $row->manual_created;
         $saleLeads = (int) $row->sale_leads;
         $createdSaleLeads = (int) $row->created_sale_leads;
-
         $numerator = $saleLeads - $createdSaleLeads;
         $denominator = $totalLeads - $manualCreated;
-
-        // info('------------ Single Gross Conversion ------------');
-        // info('Gross numerator : sale leads =  '.$saleLeads.' , createdSaleLeads = '.$createdSaleLeads);
-        // info('Gross denominator : total leads =  '.$totalLeads.' , manualCreated = '.$manualCreated);
-        // info('Gross conversion : numerator = '.$numerator.' , denominator = '.$denominator);
-        // info('------------ Single Gross Conversion END ------------');
         if ($denominator > 0) {
             return number_format(($numerator / $denominator) * 100, 2, '.', '').' %';
         } else {
@@ -333,7 +319,6 @@ class AdvisorConversionReportTable extends DataTableComponent
         $manualCreatedBadLeads = 0;
         $saleLeads = 0;
         $createdSaleLeads = 0;
-        info('net rows : '.json_encode($rows));
         foreach ($rows as $row) {
             $totalLeads += $row->total_leads;
             $manualCreated += $row->manual_created;
@@ -344,11 +329,6 @@ class AdvisorConversionReportTable extends DataTableComponent
         }
         $numerator = $saleLeads - $createdSaleLeads;
         $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
-        // info('------------ Total Net Conversion ------------');
-        // info('Total Net numerator : sale leads =  '.$saleLeads.' , createdSaleLeads = '.$createdSaleLeads);
-        // info('Total Net denominator : total leads =  '.$totalLeads.' , manualCreated = '.$manualCreated.', badLeads'.$badLeads.' , manualCreatedBadLeads = '.$manualCreatedBadLeads);
-        // info('Total Net conversion : numerator = '.$numerator.' , denominator = '.$denominator);
-        // info('------------ Total Net Conversion END ------------');
         return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 
@@ -360,15 +340,8 @@ class AdvisorConversionReportTable extends DataTableComponent
         $manualCreatedBadLeads = (int) $row->manual_created_bad_leads;
         $saleLeads = (int) $row->sale_leads;
         $createdSaleLeads = (int) $row->created_sale_leads;
-
         $numerator = $saleLeads - $createdSaleLeads;
         $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
-        // info('------------ Single Net Conversion ------------');
-        // info('Net numerator : sale leads =  '.$saleLeads.' , createdSaleLeads = '.$createdSaleLeads);
-        // info('Net denominator : total leads =  '.$totalLeads.' , manualCreated = '.$manualCreated);
-        // info('Net conversion : numerator = '.$numerator.' , denominator = '.$denominator);
-        // info('------------ Single Net Conversion END------------');
-
         return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 }

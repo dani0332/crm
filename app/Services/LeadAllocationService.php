@@ -369,8 +369,6 @@ class LeadAllocationService extends BaseService
                                 'users.last_login as lastLogin',
                                 'la.id as id'
                             )->get();
-
-        info('max_capacity for reset for users : '.json_encode($users));
         foreach ($users as $user) {
             $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
 
@@ -599,7 +597,7 @@ class LeadAllocationService extends BaseService
     {
         info('---- Inside updateCarLeadDetailRecord');
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
-        if ($carQuoteDetail != null) {
+        if ($carQuoteDetail) {
             $carQuoteDetail->advisor_assigned_date = now();
             $carQuoteDetail->advisor_assigned_by_id = auth()->id();
             $carQuoteDetail->save();
