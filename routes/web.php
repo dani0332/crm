@@ -271,6 +271,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('travel', TravelController::class);
         Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
+        Route::get('life-cards', [LifeController::class, 'cardsView'])->name('life.cards');
         Route::resource('life', LifeController::class);
     });
 

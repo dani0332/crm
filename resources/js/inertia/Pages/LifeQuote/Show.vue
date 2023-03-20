@@ -259,7 +259,14 @@ const activityForm = useForm({
 });
 
 const addActivity = () => {
-  activityForm.reset();
+  activityForm.title = null;
+  activityForm.description = null;
+  activityForm.due_date = ref(new Date());
+  activityForm.assignee_id = null;
+  activityForm.status = null;
+  activityForm.activity_id = null;
+  activityForm.uuid = null;
+
   activityActionEdit.value = false;
   modals.activity = true;
 };
@@ -552,7 +559,6 @@ const historyDataTable = [
         </dl>
       </div>
       <x-divider class="mb-4 mt-1" />
-
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
@@ -561,19 +567,7 @@ const historyDataTable = [
         <x-divider class="mb-4 mt-1" />
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-2/3">
-          <x-textarea
-            v-model="leadStatusForm.notes"
-            type="text"
-            label="Notes"
-            placeholder="Lead Notes"
-            class="w-full"
-            :disabled="
-              quote.quote_status_id == enums.quoteStatusEnum.transactionApproved
-            "
-          />
-        </div>
-        <div class="w-full md:w-1/3">
+        <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
             <x-select
               v-model="leadStatusForm.leadStatus"
@@ -586,25 +580,16 @@ const historyDataTable = [
               placeholder="Lead Status"
               class="w-full"
             />
-            <x-input
-              v-if="
-                leadStatusForm.leadStatus ==
+            <x-textarea
+              v-model="leadStatusForm.notes"
+              type="text"
+              label="Notes"
+              placeholder="Lead Notes"
+              class="w-full"
+              :disabled="
+                quote.quote_status_id ==
                 enums.quoteStatusEnum.transactionApproved
               "
-              v-model="leadStatusForm.trans_code"
-              label="TransApp Code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
-            <x-select
-              v-if="leadStatusForm.leadStatus == 17"
-              v-model="leadStatusForm.lostReason"
-              label="Lost Reason"
-              :options="lostReasonsOptions"
-              placeholder="Lost Reason is required"
-              class="w-full"
-              :error="leadStatusForm.errors.lostReason"
             />
           </div>
 
@@ -619,6 +604,28 @@ const historyDataTable = [
               Change Status
             </x-button>
           </div>
+        </div>
+        <div class="w-full md:w-2/3">
+          <x-input
+            v-if="
+              leadStatusForm.leadStatus ==
+              enums.quoteStatusEnum.transactionApproved
+            "
+            v-model="leadStatusForm.trans_code"
+            label="TransApp Code"
+            placeholder="TransApp Code is required"
+            class="w-full"
+            :error="leadStatusForm.errors.trans_code"
+          />
+          <x-select
+            v-if="leadStatusForm.leadStatus == 17"
+            v-model="leadStatusForm.lostReason"
+            label="Lost Reason"
+            :options="lostReasonsOptions"
+            placeholder="Lost Reason is required"
+            class="w-full"
+            :error="leadStatusForm.errors.lostReason"
+          />
         </div>
       </div>
     </div>

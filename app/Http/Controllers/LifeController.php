@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
 use App\Services\LifeQuoteService;
 use App\Services\LookupService;
 use Illuminate\Http\Request;
@@ -50,9 +52,19 @@ class LifeController extends Controller
         $gridData = $this->lifeQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
 
+        $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+
         return inertia('LifeQuote/Index', [
             'quotes' => $quotes,
             'dropdownSource' => $dropdownSource,
+            'advisors' => $advisors,
+            'permissions' => [
+                'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
+                'lifeAdvisor' => auth()->user()->hasRole(RolesEnum::LifeAdvisor),
+                'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
+                'isLeadPool' => auth()->user()->isLeadPool(),
+                'isManagerORDeputy' => auth()->user()->isManagerOrDeputy(),
+            ],
         ]);
     }
 
@@ -274,5 +286,24 @@ class LifeController extends Controller
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
         return redirect('/quotes/life'.'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
+    }
+
+    public function cardsView(Request $request)
+    {
+        $dropdownSourceService = app(DropdownSourceService::class);
+        $leadStatuses = $dropdownSourceService->getDropdownSource('quote_status_id', self::TYPE_ID);
+        $leadStatuses = $leadStatuses->filter(function ($item) {
+            return ($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION);
+        })->toArray();
+
+        $leadStatuses = array_map(function ($item) {
+            $item['data'] = getDataAgainstStatus(self::TYPE, $item['id']);
+
+            return $item;
+        }, $leadStatuses);
+
+        return inertia('LifeQuote/Cards', [
+            'quotes' => array_values($leadStatuses),
+        ]);
     }
 }

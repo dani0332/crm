@@ -8433,7 +8433,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.usePage)();
 
     var dateFormat = function dateFormat(date) {
-      return (0,_vueuse_shared__WEBPACK_IMPORTED_MODULE_2__.useDateFormat)(date, "DD-MM-YYYY HH:mm:ss").value;
+      return (0,_vueuse_shared__WEBPACK_IMPORTED_MODULE_2__.useDateFormat)(date, 'DD-MM-YYYY HH:mm:ss').value;
     };
 
     var quotes = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
@@ -8447,7 +8447,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var onLoadMore = function onLoadMore(id) {
       quotes.loader = true;
       quotes.pages = _objectSpread(_objectSpread({}, quotes.pages), {}, _defineProperty({}, id, quotes.pages[id] ? Number(quotes.pages[id]) + 1 : 2));
-      axios__WEBPACK_IMPORTED_MODULE_3__["default"].post("/quotes/records?page=".concat(quotes.pages[id], "&modelType=Health&status=").concat(id)).then(function (_ref2) {
+      axios__WEBPACK_IMPORTED_MODULE_3__["default"].post("/quotes/records?page=".concat(quotes.pages[id], "&modelType=Life&status=").concat(id)).then(function (_ref2) {
         var data = _ref2.data;
         quotes.data = quotes.data.map(function (quote) {
           if (quote.id === id) {
@@ -8468,8 +8468,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var onSearch = function onSearch(id) {
       quotes.searching = true;
 
-      if (!quotes.queries[id] || quotes.queries[id] === "" || quotes.queries[id] === null) {
-        axios__WEBPACK_IMPORTED_MODULE_3__["default"].post("/quotes/records?page=1&modelType=Health&status=".concat(id)).then(function (_ref3) {
+      if (!quotes.queries[id] || quotes.queries[id] === '' || quotes.queries[id] === null) {
+        axios__WEBPACK_IMPORTED_MODULE_3__["default"].post("/quotes/records?page=1&modelType=Life&status=".concat(id)).then(function (_ref3) {
           var data = _ref3.data;
           quotes.data = quotes.data.map(function (quote) {
             if (quote.id === id) {
@@ -8486,7 +8486,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         return;
       }
 
-      axios__WEBPACK_IMPORTED_MODULE_3__["default"].post("/quotes/records/search?term=".concat(quotes.queries[id], "&status=").concat(id, "&modelType=Health")).then(function (_ref4) {
+      axios__WEBPACK_IMPORTED_MODULE_3__["default"].post("/quotes/records/search?term=".concat(quotes.queries[id], "&status=").concat(id, "&modelType=Life")).then(function (_ref4) {
         var data = _ref4.data;
         quotes.data = quotes.data.map(function (quote) {
           if (quote.id === id) {
@@ -8804,6 +8804,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _inertia_Components_Pagination_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @/inertia/Components/Pagination.vue */ "./resources/js/inertia/Components/Pagination.vue");
 /* harmony import */ var _inertia_Components_ExportExcel_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @/inertia/Components/ExportExcel.vue */ "./resources/js/inertia/Components/ExportExcel.vue");
 /* harmony import */ var _inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @/inertia/Components/ComboBox.vue */ "./resources/js/inertia/Components/ComboBox.vue");
+/* harmony import */ var _indielayer_ui__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @indielayer/ui */ "./node_modules/@indielayer/ui/lib/index.es.js");
 /* unplugin-vue-components disabled */function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -8827,11 +8828,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   __name: 'Index',
   props: {
     quotes: Object,
-    dropdownSource: Object
+    dropdownSource: Object,
+    permissions: Object,
+    advisors: Object
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -8855,7 +8859,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         return true;
       }
     };
-    var selectedItems = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)([]);
+    var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_5__.useNotifications)("toast");
     var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.usePage)();
     var filters = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
       code: '',
@@ -8995,12 +8999,54 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     }
 
+    var quotesSelected = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)([]);
+    var advisorOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      return page.props.advisors.map(function (advisor) {
+        return {
+          value: advisor.id,
+          label: advisor.name
+        };
+      });
+    });
+    var assignForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
+      assigned_to_id_new: null,
+      assignment_type: '1',
+      modelType: 'life',
+      selectTmLeadId: '',
+      isManagerOrDeputy: page.props.permissions.isManagerOrDeputy,
+      isLeadPool: page.props.permissions.isLeadPool,
+      isManualAllocationAllowed: page.props.permissions.isManualAllocationAllowed
+    });
+
+    function onAssignLead(isValid) {
+      if (isValid) {
+        var selected = quotesSelected.value.map(function (e) {
+          return e.id;
+        });
+        assignForm.transform(function (data) {
+          return _objectSpread(_objectSpread({}, data), {}, {
+            selectTmLeadId: "".concat(selected)
+          });
+        }).post('/quotes/life/manualLeadAssign', {
+          preserveScroll: true,
+          preserveState: true,
+          onSuccess: function onSuccess() {
+            quotesSelected.value = [];
+            notification.success({
+              title: 'Life Leads Assigned',
+              position: 'top'
+            });
+          }
+        });
+      }
+    }
+
     (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
       setQueryFilters();
     });
     var __returned__ = {
       rules: rules,
-      selectedItems: selectedItems,
+      notification: notification,
       page: page,
       filters: filters,
       loader: loader,
@@ -9010,6 +9056,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       filterQuotes: filterQuotes,
       resetFilters: resetFilters,
       setQueryFilters: setQueryFilters,
+      quotesSelected: quotesSelected,
+      advisorOptions: advisorOptions,
+      assignForm: assignForm,
+      onAssignLead: onAssignLead,
       reactive: vue__WEBPACK_IMPORTED_MODULE_0__.reactive,
       computed: vue__WEBPACK_IMPORTED_MODULE_0__.computed,
       onMounted: vue__WEBPACK_IMPORTED_MODULE_0__.onMounted,
@@ -9031,9 +9081,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Link;
       },
 
+      get useForm() {
+        return _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm;
+      },
+
       Pagination: _inertia_Components_Pagination_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
       ExportExcel: _inertia_Components_ExportExcel_vue__WEBPACK_IMPORTED_MODULE_3__["default"],
-      ComboBox: _inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_4__["default"]
+      ComboBox: _inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_4__["default"],
+
+      get useNotifications() {
+        return _indielayer_ui__WEBPACK_IMPORTED_MODULE_5__.useNotifications;
+      }
+
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
       enumerable: false,
@@ -9457,7 +9516,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     });
 
     var addActivity = function addActivity() {
-      activityForm.reset();
+      activityForm.title = null;
+      activityForm.description = null;
+      activityForm.due_date = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(new Date());
+      activityForm.assignee_id = null;
+      activityForm.status = null;
+      activityForm.activity_id = null;
+      activityForm.uuid = null;
       activityActionEdit.value = false;
       modals.activity = true;
     };
@@ -12535,7 +12600,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     });
 
     var addActivity = function addActivity() {
-      activityForm.reset('title', 'description', 'due_date', 'assignee_id', 'status', 'activity_id', 'uuid');
+      activityForm.title = null;
+      activityForm.description = null;
+      activityForm.due_date = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(new Date());
+      activityForm.assignee_id = null;
+      activityForm.status = null;
+      activityForm.activity_id = null;
+      activityForm.uuid = null;
       activityActionEdit.value = false;
       modals.activity = true;
     };
@@ -30170,7 +30241,7 @@ var _hoisted_1 = {
 
 var _hoisted_2 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h2", {
   "class": "text-xl font-semibold"
-}, "Travel List", -1
+}, "Life List", -1
 /* HOISTED */
 );
 
@@ -30264,9 +30335,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_x_icon = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-icon");
 
   return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Head"], {
-    title: "Travel List ~ Card View"
+    title: "Life List ~ Card View"
   }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Link"], {
-    href: "/quotes/travel"
+    href: "/quotes/life"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
@@ -30285,7 +30356,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     /* STABLE */
 
   }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Link"], {
-    href: "#"
+    href: "/quotes/life/create"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
@@ -30310,7 +30381,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", {
       key: quote.id,
       "class": "flex flex-col flex-shrink-0 w-64 bg-gray-200 border border-gray-300"
-    }, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h4", _hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(quote.title), 1
+    }, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h4", _hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(quote.text), 1
     /* TEXT */
     ), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_7, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("span", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(quote.data.total_leads), 1
     /* TEXT */
@@ -30347,7 +30418,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           company_name = _ref.company_name;
       return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("a", {
         key: id,
-        href: "/quotes/health/".concat(uuid),
+        href: "/quotes/Life/".concat(uuid),
         target: "_blank",
         title: "View Lead",
         "class": "block p-3 mt-2 border border-gray-300 bg-white space-y-2 hover:transition hover:border-primary-500 rounded"
@@ -30375,7 +30446,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         icon: "calendar",
         size: "sm",
         "class": "text-primary-400"
-      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", _hoisted_24, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($setup.dateFormat(updated_at)), 1
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", _hoisted_24, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(updated_at), 1
       /* TEXT */
       )])], 8
       /* PROPS */
@@ -30845,9 +30916,19 @@ var _hoisted_6 = {
   "class": "mb-4"
 };
 var _hoisted_7 = {
-  "class": "lining-nums"
+  key: 0,
+  "class": "px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
 };
 var _hoisted_8 = {
+  "class": "w-full flex flex-col md:flex-row gap-4"
+};
+var _hoisted_9 = {
+  "class": "mb-3 md:pt-6"
+};
+var _hoisted_10 = {
+  "class": "lining-nums"
+};
+var _hoisted_11 = {
   "class": "text-center"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
@@ -30870,6 +30951,26 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["Head"], {
     title: "Life List"
   }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["Link"], {
+    href: "/quotes/life-cards"
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+        size: "sm",
+        color: "#1d83bc",
+        tag: "div"
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Cards View ")];
+        }),
+        _: 1
+        /* STABLE */
+
+      })];
+    }),
+    _: 1
+    /* STABLE */
+
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["Link"], {
     href: "/quotes/life/create"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
@@ -30985,7 +31086,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         options: $setup.leadsStatusOptions
       }, null, 8
       /* PROPS */
-      , ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["ComboBox"], {
+      , ["modelValue", "options"]), !$props.permissions.travelAdvisor ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)($setup["ComboBox"], {
+        key: 0,
         modelValue: $setup.filters.advisor_id,
         "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
           return $setup.filters.advisor_id = $event;
@@ -30995,7 +31097,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         options: $setup.advisorsOptions
       }, null, 8
       /* PROPS */
-      , ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
+      , ["modelValue", "options"])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
         modelValue: $setup.filters.is_renewal,
         "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
           return $setup.filters.is_renewal = $event;
@@ -31047,8 +31149,62 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     name: "fade"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
-      return [$setup.selectedItems.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["ExportExcel"], {
-        data: $setup.selectedItems,
+      return [$setup.quotesSelected.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", _hoisted_6, [$props.permissions.isManualAllocationAllowed ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", _hoisted_7, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_form, {
+        onSubmit: $setup.onAssignLead,
+        "auto-focus": false
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_8, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
+            modelValue: $setup.assignForm.assigned_to_id_new,
+            "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
+              return $setup.assignForm.assigned_to_id_new = $event;
+            }),
+            label: "Assign Advisor",
+            options: $setup.advisorOptions,
+            placeholder: "Select Advisor",
+            "class": "flex-1 w-auto",
+            rules: [$setup.rules.isRequired]
+          }, null, 8
+          /* PROPS */
+          , ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
+            modelValue: $setup.assignForm.assignment_type,
+            "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
+              return $setup.assignForm.assignment_type = $event;
+            }),
+            label: "Assignment Type",
+            options: [{
+              value: '1',
+              label: 'Without Email'
+            }, {
+              value: '2',
+              label: 'With Email'
+            }],
+            placeholder: "Select Type",
+            "class": "flex-1 w-auto",
+            rules: [$setup.rules.isRequired]
+          }, null, 8
+          /* PROPS */
+          , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_9, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+            color: "orange",
+            size: "sm",
+            type: "submit",
+            loading: $setup.assignForm.processing
+          }, {
+            "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Assign ")];
+            }),
+            _: 1
+            /* STABLE */
+
+          }, 8
+          /* PROPS */
+          , ["loading"])])])];
+        }),
+        _: 1
+        /* STABLE */
+
+      })])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["ExportExcel"], {
+        data: $setup.quotesSelected,
         columns: $setup.tableHeader,
         filename: 'Health-List',
         sheetname: 'Leads'
@@ -31059,7 +31215,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             color: "emerald"
           }, {
             "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
-              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Export - "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("span", _hoisted_7, " Selected: " + (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.selectedItems.length), 1
+              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Export - "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("span", _hoisted_10, " Selected: " + (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.quotesSelected.length), 1
               /* TEXT */
               )];
             }),
@@ -31079,9 +31235,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     /* STABLE */
 
   }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_DataTable, {
-    "items-selected": $setup.selectedItems,
-    "onUpdate:items-selected": _cache[10] || (_cache[10] = function ($event) {
-      return $setup.selectedItems = $event;
+    "items-selected": $setup.quotesSelected,
+    "onUpdate:items-selected": _cache[12] || (_cache[12] = function ($event) {
+      return $setup.quotesSelected = $event;
     }),
     "table-class-name": "tablefixed",
     loading: $setup.loader.table,
@@ -31113,7 +31269,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     "item-is_ecommerce": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function (_ref2) {
       var is_ecommerce = _ref2.is_ecommerce;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_8, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_tag, {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_11, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_tag, {
         size: "sm",
         color: is_ecommerce ? 'success' : 'error'
       }, {
@@ -31388,16 +31544,16 @@ var _hoisted_11 = {
   "class": "flex flex-wrap md:flex-nowrap gap-6 w-full"
 };
 var _hoisted_12 = {
-  "class": "w-full md:w-2/3"
+  "class": "w-full md:w-1/2"
 };
 var _hoisted_13 = {
-  "class": "w-full md:w-1/3"
-};
-var _hoisted_14 = {
   "class": "flex flex-col gap-4"
 };
-var _hoisted_15 = {
+var _hoisted_14 = {
   "class": "flex justify-end"
+};
+var _hoisted_15 = {
+  "class": "w-full md:w-2/3"
 };
 var _hoisted_16 = {
   "class": "text-right space-x-4"
@@ -31657,21 +31813,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "mb-4 mt-1"
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_9, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", null, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_11, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_12, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_textarea, {
-    modelValue: $setup.leadStatusForm.notes,
-    "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
-      return $setup.leadStatusForm.notes = $event;
-    }),
-    type: "text",
-    label: "Notes",
-    placeholder: "Lead Notes",
-    "class": "w-full",
-    disabled: $props.quote.quote_status_id == $props.enums.quoteStatusEnum.transactionApproved
-  }, null, 8
-  /* PROPS */
-  , ["modelValue", "disabled"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_13, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_14, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_11, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_12, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_13, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
     modelValue: $setup.leadStatusForm.leadStatus,
-    "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
+    "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
       return $setup.leadStatusForm.leadStatus = $event;
     }),
     label: "Status",
@@ -31681,7 +31825,34 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "w-full"
   }, null, 8
   /* PROPS */
-  , ["modelValue", "options", "disabled"]), $setup.leadStatusForm.leadStatus == $props.enums.quoteStatusEnum.transactionApproved ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)(_component_x_input, {
+  , ["modelValue", "options", "disabled"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_textarea, {
+    modelValue: $setup.leadStatusForm.notes,
+    "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
+      return $setup.leadStatusForm.notes = $event;
+    }),
+    type: "text",
+    label: "Notes",
+    placeholder: "Lead Notes",
+    "class": "w-full",
+    disabled: $props.quote.quote_status_id == $props.enums.quoteStatusEnum.transactionApproved
+  }, null, 8
+  /* PROPS */
+  , ["modelValue", "disabled"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_14, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+    "class": "mt-4",
+    color: "emerald",
+    size: "sm",
+    loading: $setup.leadStatusForm.processing,
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)($setup.onLeadStatus, ["prevent"])
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Change Status ")];
+    }),
+    _: 1
+    /* STABLE */
+
+  }, 8
+  /* PROPS */
+  , ["loading", "onClick"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_15, [$setup.leadStatusForm.leadStatus == $props.enums.quoteStatusEnum.transactionApproved ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)(_component_x_input, {
     key: 0,
     modelValue: $setup.leadStatusForm.trans_code,
     "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
@@ -31706,22 +31877,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     error: $setup.leadStatusForm.errors.lostReason
   }, null, 8
   /* PROPS */
-  , ["modelValue", "options", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_15, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
-    "class": "mt-4",
-    color: "emerald",
-    size: "sm",
-    loading: $setup.leadStatusForm.processing,
-    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)($setup.onLeadStatus, ["prevent"])
-  }, {
-    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Change Status ")];
-    }),
-    _: 1
-    /* STABLE */
-
-  }, 8
-  /* PROPS */
-  , ["loading", "onClick"])])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_modal, {
+  , ["modelValue", "options", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_modal, {
     modelValue: $setup.confirmModal.show,
     "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
       return $setup.confirmModal.show = $event;

@@ -1,12 +1,12 @@
 <script setup>
-import { reactive } from "vue";
-import { Head, usePage, Link } from "@inertiajs/vue3";
-import { useDateFormat } from "@vueuse/shared";
-import axios from "axios";
+import { reactive } from 'vue';
+import { Head, usePage, Link } from '@inertiajs/vue3';
+import { useDateFormat } from '@vueuse/shared';
+import axios from 'axios';
 
 const page = usePage();
-const dateFormat = (date) => {
-  return useDateFormat(date, "DD-MM-YYYY HH:mm:ss").value;
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
 
 const quotes = reactive({
@@ -17,16 +17,18 @@ const quotes = reactive({
   queries: {},
 });
 
-const onLoadMore = (id) => {
+const onLoadMore = id => {
   quotes.loader = true;
   quotes.pages = {
     ...quotes.pages,
     [id]: quotes.pages[id] ? Number(quotes.pages[id]) + 1 : 2,
   };
   axios
-    .post(`/quotes/records?page=${quotes.pages[id]}&modelType=Health&status=${id}`)
+    .post(
+      `/quotes/records?page=${quotes.pages[id]}&modelType=Life&status=${id}`,
+    )
     .then(({ data }) => {
-      quotes.data = quotes.data.map((quote) => {
+      quotes.data = quotes.data.map(quote => {
         if (quote.id === id) {
           quote.data.leads_list = {
             ...data.leads_list,
@@ -36,7 +38,7 @@ const onLoadMore = (id) => {
         return quote;
       });
     })
-    .catch((err) => {
+    .catch(err => {
       console.log(err);
     })
     .finally(() => {
@@ -44,20 +46,24 @@ const onLoadMore = (id) => {
     });
 };
 
-const onSearch = (id) => {
+const onSearch = id => {
   quotes.searching = true;
-  if (!quotes.queries[id] || quotes.queries[id] === "" || quotes.queries[id] === null) {
+  if (
+    !quotes.queries[id] ||
+    quotes.queries[id] === '' ||
+    quotes.queries[id] === null
+  ) {
     axios
-      .post(`/quotes/records?page=1&modelType=Health&status=${id}`)
+      .post(`/quotes/records?page=1&modelType=Life&status=${id}`)
       .then(({ data }) => {
-        quotes.data = quotes.data.map((quote) => {
+        quotes.data = quotes.data.map(quote => {
           if (quote.id === id) {
             quote.data.leads_list = data.leads_list;
           }
           return quote;
         });
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
       })
       .finally(() => {
@@ -67,10 +73,10 @@ const onSearch = (id) => {
   }
   axios
     .post(
-      `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Health`
+      `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Life`,
     )
     .then(({ data }) => {
-      quotes.data = quotes.data.map((quote) => {
+      quotes.data = quotes.data.map(quote => {
         if (quote.id === id) {
           quote.data.leads_list = {
             ...data.leads_list,
@@ -81,7 +87,7 @@ const onSearch = (id) => {
         return quote;
       });
     })
-    .catch((err) => {
+    .catch(err => {
       console.log(err);
     })
     .finally(() => {
@@ -92,15 +98,15 @@ const onSearch = (id) => {
 
 <template>
   <div>
-    <Head title="Travel List ~ Card View" />
+    <Head title="Life List ~ Card View" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Travel List</h2>
+      <h2 class="text-xl font-semibold">Life List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/travel">
+        <Link href="/quotes/life">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
-        <Link href="#">
+        <Link href="/quotes/life/create">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
@@ -118,7 +124,7 @@ const onSearch = (id) => {
         <div
           class="flex flex-col flex-shrink-0 gap-1.5 p-3 border-b border-gray-300 bg-white text-xs"
         >
-          <h4 class="font-semibold text-sm">{{ quote.title }}</h4>
+          <h4 class="font-semibold text-sm">{{ quote.text }}</h4>
           <div class="flex justify-between gap-1">
             <span>Total Leads</span>
             <span>{{ quote.data.total_leads }}</span>
@@ -165,7 +171,7 @@ const onSearch = (id) => {
               company_name,
             } in quote.data.leads_list.data"
             :key="id"
-            :href="`/quotes/health/${uuid}`"
+            :href="`/quotes/Life/${uuid}`"
             target="_blank"
             title="View Lead"
             class="block p-3 mt-2 border border-gray-300 bg-white space-y-2 hover:transition hover:border-primary-500 rounded"
@@ -188,14 +194,15 @@ const onSearch = (id) => {
 
             <div class="flex items-center gap-2">
               <x-icon icon="calendar" size="sm" class="text-primary-400" />
-              <p class="text-xs">{{ dateFormat(updated_at) }}</p>
+              <p class="text-xs">{{ updated_at }}</p>
             </div>
           </a>
 
           <div
             class="mt-3"
             v-if="
-              quote.data.total_leads > 0 && quote.data.leads_list.next_page_url !== null
+              quote.data.total_leads > 0 &&
+              quote.data.leads_list.next_page_url !== null
             "
           >
             <x-button

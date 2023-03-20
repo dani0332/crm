@@ -591,15 +591,14 @@ const activityForm = useForm({
 });
 
 const addActivity = () => {
-  activityForm.reset(
-    'title',
-    'description',
-    'due_date',
-    'assignee_id',
-    'status',
-    'activity_id',
-    'uuid',
-  );
+  activityForm.title = null;
+  activityForm.description = null;
+  activityForm.due_date = ref(new Date());
+  activityForm.assignee_id = null;
+  activityForm.status = null;
+  activityForm.activity_id = null;
+  activityForm.uuid = null;
+
   activityActionEdit.value = false;
   modals.activity = true;
 };
