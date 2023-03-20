@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
+use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
 use App\Models\GenericModel;
 use App\Models\LeadAllocation;
@@ -774,6 +775,11 @@ class CRUDController extends Controller
         }
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
+            $lead = $this->carQuoteService->getEntityPlain($request->leadId);
+            if ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued) {
+                // MS: dispatch sib work flow
+                SyncSIBContactJob::dispatch($lead);
+            }
             if ($request->leadStatus == QuoteStatusEnum::FollowupCall ||
             $request->leadStatus == QuoteStatusEnum::Interested ||
             $request->leadStatus == QuoteStatusEnum::NoAnswer) {
@@ -797,7 +803,6 @@ class CRUDController extends Controller
 
                 // MS: Send email
                 if (isset($request->leadId)) {
-                    $lead = $this->carQuoteService->getEntityPlain($request->leadId);
                     CarRenewalEmailJob::dispatch($lead);
                 }
             }

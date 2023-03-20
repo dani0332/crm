@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
             addLMSIntroEmailTemplateId::class,
             addPermissionsForReportsAndDashbords::class,
             addSystemUser::class,
+            addCarDripListKey::class,
         ]);
     }
 }
