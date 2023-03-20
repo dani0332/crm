@@ -53,13 +53,13 @@ class SyncSIBContactJob implements ShouldQueue
             'link' => config('constants.ECOM_'.($isCarQuote ? 'CAR' : 'HEALTH').'_INSURANCE_QUOTE_URL').$this->entity->uuid,
             'advisorLandline' => isset($this->entity->advisor) ? $this->entity->advisor->landline_no : null,
         ];
-        $listId = $isCarQuote ? $this->getApplicationStorageValueByKey('SIB_CAR_DRIP_LIST_ID') : $this->getApplicationStorageValueByKey('SIB_HEALTH_EBP_LIST_ID');
+        $listId = $isCarQuote ? $this->getValueByKey('SIB_CAR_DRIP_LIST_ID') : $this->getValueByKey('SIB_HEALTH_EBP_LIST_ID');
         info('going to create or update contact on sib for list id : '.$listId);
 
         return SIBService::contactCreateUpdate($listId, $this->entity->first_name, $this->entity->last_name, $this->entity->email, null, $data);
     }
 
-    private function getApplicationStorageValueByKey($keyName)
+    private function getValueByKey($keyName)
     {
         $appStorageRecord = ApplicationStorage::where('key_name', $keyName)->first();
         if ($appStorageRecord) {

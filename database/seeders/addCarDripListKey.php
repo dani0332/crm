@@ -14,9 +14,9 @@ class addCarDripListKey extends Seeder
      */
     public function run()
     {
-        $sibDripListId = ApplicationStorage::where('key_name', 'SIB_CAR_DRIP_LIST_ID')->count();
-        if ($sibDripListId == 0) {
-            $sibDripListId = ApplicationStorage::create([
+        $sibCarDripListId = ApplicationStorage::where('key_name', 'SIB_CAR_DRIP_LIST_ID')->count();
+        if ($sibCarDripListId == 0) {
+            $sibCarDripListId = ApplicationStorage::create([
                 'key_name' => 'SIB_CAR_DRIP_LIST_ID',
                 'value' => '50',
                 'is_active' => 1,
@@ -24,9 +24,9 @@ class addCarDripListKey extends Seeder
                 'updated_at' => now(),
             ]);
         }
-        $sibDripListId = ApplicationStorage::where('key_name', 'SIB_HEALTH_EBP_LIST_ID')->count();
-        if ($sibDripListId == 0) {
-            $sibDripListId = ApplicationStorage::create([
+        $sibHealthListId = ApplicationStorage::where('key_name', 'SIB_HEALTH_EBP_LIST_ID')->count();
+        if ($sibHealthListId == 0) {
+            $sibHealthListId = ApplicationStorage::create([
                 'key_name' => 'SIB_HEALTH_EBP_LIST_ID',
                 'value' => '128',
                 'is_active' => 1,
