@@ -56,7 +56,7 @@ const historyDataTable = [
 
 <template>
   <div>
-    <Head title="Bike Quotes" />
+    <Head title="Pet Quotes" />
 
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Pet Detail</h2>

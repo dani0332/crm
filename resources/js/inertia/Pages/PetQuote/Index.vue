@@ -99,7 +99,7 @@ const tableHeader = [
 
 <template>
   <div>
-    <Head title="Cycle Quotes" />
+    <Head title="Pet Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Pet Quotes List</h2>
       <x-button size="sm" color="#ff5e00" href="/personal-quotes/pet/create">

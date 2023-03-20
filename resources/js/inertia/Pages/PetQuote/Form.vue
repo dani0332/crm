@@ -75,7 +75,7 @@ function onSubmit(isValid) {
 
 <template>
   <div>
-    <Head title="Cycle Quote" />
+    <Head title="Pet Quote" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
         Pet Quote <span v-if="quote">{{ quote?.uuid }}</span>
