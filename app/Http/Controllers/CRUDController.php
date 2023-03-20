@@ -776,8 +776,8 @@ class CRUDController extends Controller
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
             $lead = $this->carQuoteService->getEntityPlain($request->leadId);
-            if($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
-            // MS: dispatch sib work flow
+            if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                // MS: dispatch sib work flow
                 SyncSIBContactJob::dispatch($lead);
             }
             if ($request->leadStatus == QuoteStatusEnum::FollowupCall ||
@@ -806,7 +806,6 @@ class CRUDController extends Controller
                     CarRenewalEmailJob::dispatch($lead);
                 }
             }
-
         }
         $entity = $this->crudService->updateQuoteStatus($request);
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {

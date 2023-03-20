@@ -34,7 +34,5 @@ class addCarDripListKey extends Seeder
                 'updated_at' => now(),
             ]);
         }
-
-
     }
 }
