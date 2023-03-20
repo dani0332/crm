@@ -2,12 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuoteTypes;
+use App\Models\BikeQuote;
+use App\Models\CycleQuote;
+use App\Models\JetskiQuote;
+use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
+use App\Models\YachtQuote;
+use App\Repositories\AuditRepository;
 use App\Services\BaseService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AuditableController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     public function loadAuditableComponent(Request $request)
     {
         $auditableType = $request->auditableType;
@@ -33,5 +44,14 @@ class AuditableController extends Controller
        ->get();
 
         return $audits;
+    }
+
+    /**
+     * @param Request $request
+     * @return mixed
+     */
+    public function getQuoteAudits(Request $request)
+    {
+        return AuditRepository::getQuoteAudits();
     }
 }

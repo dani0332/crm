@@ -291,12 +291,16 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
   __name: 'AuditLogs',
   props: {
     type: {
-      required: true,
+      required: false,
       type: String
     },
     id: {
       required: true,
       type: [String, Number]
+    },
+    quoteType: {
+      required: false,
+      type: String
     }
   },
   setup: function setup(__props, _ref) {
@@ -337,16 +341,30 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
 
     var onLoadAuditLogData = /*#__PURE__*/function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+        var data, url;
         return _regeneratorRuntime().wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 auditLogs.loading = true;
-                axios__WEBPACK_IMPORTED_MODULE_2__["default"].post('/auditlogs', {
+                data = {
                   auditableType: props.type,
                   auditableId: props.id,
                   jsonData: true
-                }).then(function (res) {
+                };
+                url = "/auditlogs";
+                console.log(props.quoteType);
+
+                if (props.quoteType != null) {
+                  data = {
+                    auditable_id: props.id,
+                    quote_type: props.quoteType,
+                    jsonData: true
+                  };
+                  url = '/audits/get-quote-audits';
+                }
+
+                axios__WEBPACK_IMPORTED_MODULE_2__["default"].post(url, data).then(function (res) {
                   auditLogs.data = res.data;
                 })["catch"](function (err) {
                   console.log(err);
@@ -354,7 +372,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
                   auditLogs.loading = false;
                 });
 
-              case 2:
+              case 6:
               case "end":
                 return _context.stop();
             }

@@ -28,4 +28,18 @@ class YachtQuote extends Model implements AuditableContract
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    /**
+     * @return array
+     */
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => YachtQuote::class, 'key' => 'personal_quote_id'],
+            ]
+        ];
+    }
 }
