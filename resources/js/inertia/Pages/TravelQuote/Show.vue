@@ -2039,6 +2039,6 @@ onMounted(() => {});
       />
     </div>
 
-    <AuditLogs :quote-type="'Travel'" :id="$page.props.quote.id" />
+      <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" />
   </div>
 </template>

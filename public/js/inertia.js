@@ -353,9 +353,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
                   jsonData: true
                 };
                 url = "/auditlogs";
-                console.log(props.quoteType);
 
-                if (props.quoteType != null) {
+                if (props.quoteType != undefined) {
                   data = {
                     auditable_id: props.id,
                     quote_type: props.quoteType,
@@ -372,7 +371,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
                   auditLogs.loading = false;
                 });
 
-              case 6:
+              case 5:
               case "end":
                 return _context.stop();
             }
@@ -30539,7 +30538,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, null, 8
   /* PROPS */
   , ["items", "hide-footer"]))]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_AuditLogs, {
-    "quote-type": 'Travel',
+    type: 'App\\Models\\TravelQuote',
     id: _ctx.$page.props.quote.id
   }, null, 8
   /* PROPS */
