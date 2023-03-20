@@ -189,4 +189,17 @@ final class PermissionsEnum extends Enum
     const BikeQuotesList = 'bike-quotes-list';
     const BikeQuotesCreate = 'bike-quotes-create';
     const BikeQuotesEdit = 'bike-quotes-edit';
+    const BikeQuotesShow = 'bike-quotes-show';
+    const CycleQuotesList = 'cycle-quotes-list';
+    const CycleQuotesCreate = 'cycle-quotes-create';
+    const CycleQuotesEdit = 'cycle-quotes-edit';
+    const CycleQuotesShow = 'cycle-quotes-show';
+    const YachtQuotesList = 'yacht-quotes-list';
+    const YachtQuotesCreate = 'yacht-quotes-create';
+    const YachtQuotesEdit = 'yacht-quotes-edit';
+    const YachtQuotesShow = 'yacht-quotes-show';
+    const JetskiQuotesList = 'jetski-quotes-list';
+    const JetskiQuotesCreate = 'jetski-quotes-create';
+    const JetskiQuotesEdit = 'jetski-quotes-edit';
+    const JetskiQuotesShow = 'jetski-quotes-show';
 }

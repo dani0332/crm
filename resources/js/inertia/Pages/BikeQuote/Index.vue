@@ -4,6 +4,7 @@ import { Head, router, usePage, Link } from '@inertiajs/vue3';
 import Pagination from '@/inertia/Components/Pagination.vue';
 import ExportExcel from '@/inertia/Components/ExportExcel.vue';
 import ComboBox from '@/inertia/Components/ComboBox.vue';
+import { useCan } from '../../Composables/can';
 
 defineProps({
   quotes: Object,
@@ -98,8 +99,8 @@ const tableHeader = [
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
-const permissionsEnum = computed(() => page.props.permissionsEnum);
-const permissions = computed(() => page.props.permissions);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 </script>
 
@@ -109,7 +110,7 @@ const permissions = computed(() => page.props.permissions);
 
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Bike Quotes List</h2>
-      <x-button v-if="permissions.includes(permissionsEnum.BikeQuotesCreate)" size="sm" color="#ff5e00" href="/personal-quotes/bike/create">
+      <x-button v-if="can(permissionsEnum.BikeQuotesCreate)" size="sm" color="#ff5e00" href="/personal-quotes/bike/create">
         Create Lead
       </x-button>
     </div>
@@ -236,12 +237,13 @@ const permissions = computed(() => page.props.permissions);
       fixed-checkbox
     >
       <template #item-uuid="{ code, uuid }">
-        <Link
+        <Link v-if="can(permissionsEnum.BikeQuotesShow)"
           :href="`/personal-quotes/bike/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
         </Link>
+          <span v-else>{{code}}</span>
       </template>
 
       <template #item-advisor="{ advisor }">

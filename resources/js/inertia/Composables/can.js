@@ -1,18 +1,23 @@
 import { usePage } from '@inertiajs/vue3';
 
-export const useCan = permissions => {
-  const all = usePage().props.auth.permissions;
-  const enums = usePage().props.permissionsEnum;
+export const useCan = permission => {
+  const permissions = usePage().props.auth.permissions;
+  return permissions.includes(permission);
+};
 
-  let hasPermission = false;
 
-  if (permissions.length > 0) {
-    permissions.forEach(permission => {
-      if (all.includes(enums[permission])) {
-        hasPermission = true;
-      }
-    });
-  }
+export const useCanAny = permissions => {
+    const all = usePage().props.auth.permissions;
 
-  return hasPermission;
+    let hasPermission = false;
+
+    if (permissions.length > 0) {
+        permissions.forEach(permission => {
+            if (all.includes(permission)) {
+                hasPermission = true;
+            }
+        });
+    }
+
+    return hasPermission;
 };
