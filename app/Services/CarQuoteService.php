@@ -195,6 +195,7 @@ class CarQuoteService extends BaseService
 
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
+            $dataArr['auto_assigned'] = false;
         }
         info('Create triggered from IMCRM for Car Quote request with email : '.$request->email.' and sending request to CAPI');
 
@@ -249,7 +250,7 @@ class CarQuoteService extends BaseService
     {
         $childRecord = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
 
-        if (empty($childRecord)) {
+        if (! $childRecord) {
             $childRecord = $this->createDetailEntity($id);
         }
 

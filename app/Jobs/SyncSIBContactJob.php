@@ -38,7 +38,7 @@ class SyncSIBContactJob implements ShouldQueue
         if (! $this->entity) {
             return false;
         }
-
+        $isCarQuote = str_contains($this->entity->code, 'CAR');
         $data = [
             'customerName' => isset($this->entity->full_name) ? $this->entity->full_name : null,
             'advisorName' => isset($this->entity->advisor) ? $this->entity->advisor->name : null,
@@ -51,6 +51,8 @@ class SyncSIBContactJob implements ShouldQueue
             'link' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$this->entity->uuid,
             'advisorLandline' => isset($this->entity->advisor) ? $this->entity->advisor->landline_no : null,
         ];
+        // commenting this change only for this commit since the car drip changes are ongoing
+        // $listId = $isCarQuote ? config('constants.SIB_CAR_DRIP_LIST_ID') : config('constants.SIB_HEALTH_EBP_LIST_ID');
 
         return SIBService::contactCreateUpdate(config('constants.SIB_HEALTH_EBP_LIST_ID'), $this->entity->first_name, $this->entity->last_name, $this->entity->email, null, $data);
     }

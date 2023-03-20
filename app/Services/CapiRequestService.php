@@ -44,7 +44,7 @@ class CapiRequestService
 
                     if ($carQuote->advisor_id != null) {
                         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
-                        if ($carQuoteDetail != null) {
+                        if ($carQuoteDetail) {
                             $carQuoteDetail->advisor_assigned_date = now();
                             $carQuoteDetail->advisor_assigned_by_id = auth()->id();
                             $carQuoteDetail->save();
