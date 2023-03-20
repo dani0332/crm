@@ -28487,14 +28487,18 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       )];
     }),
     "item-accommodation_type": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (_ref14) {
-      var accomodation_type = _ref14.pet_quote.accomodation_type;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(accomodation_type === null || accomodation_type === void 0 ? void 0 : accomodation_type.text), 1
+      var _pet_quote$accomodati;
+
+      var pet_quote = _ref14.pet_quote;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(pet_quote === null || pet_quote === void 0 ? void 0 : (_pet_quote$accomodati = pet_quote.accomodation_type) === null || _pet_quote$accomodati === void 0 ? void 0 : _pet_quote$accomodati.text), 1
       /* TEXT */
       )];
     }),
     "item-possesion_type": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (_ref15) {
-      var possession_type = _ref15.pet_quote.possession_type;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(possession_type === null || possession_type === void 0 ? void 0 : possession_type.text), 1
+      var _pet_quote$possession;
+
+      var pet_quote = _ref15.pet_quote;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(pet_quote === null || pet_quote === void 0 ? void 0 : (_pet_quote$possession = pet_quote.possession_type) === null || _pet_quote$possession === void 0 ? void 0 : _pet_quote$possession.text), 1
       /* TEXT */
       )];
     }),

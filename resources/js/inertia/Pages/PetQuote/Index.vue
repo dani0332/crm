@@ -267,11 +267,11 @@ const tableHeader = [
       <template #item-has_injury="{ pet_quote }">
         {{ pet_quote?.has_injury ? 'Yes' : 'No' }}
       </template>
-      <template #item-accommodation_type="{ pet_quote: { accomodation_type } }">
-        {{ accomodation_type?.text }}
+      <template #item-accommodation_type="{ pet_quote }">
+        {{ pet_quote?.accomodation_type?.text }}
       </template>
-      <template #item-possesion_type="{ pet_quote: { possession_type } }">
-        {{ possession_type?.text }}
+      <template #item-possesion_type="{ pet_quote }">
+        {{ pet_quote?.possession_type?.text }}
       </template>
     </DataTable>
 
