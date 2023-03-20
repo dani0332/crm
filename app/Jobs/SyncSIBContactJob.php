@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\quoteTypeCode;
-use App\Models\ApplicationStorage;
 use App\Services\ApplicationStorageService;
 use App\Services\SIBService;
 use Illuminate\Bus\Queueable;
