@@ -1,14 +1,4 @@
 <script setup>
-import { computed, ref } from 'vue';
-import {
-  Combobox,
-  ComboboxInput,
-  ComboboxButton,
-  ComboboxOptions,
-  ComboboxOption,
-  TransitionRoot,
-} from '@headlessui/vue';
-
 const props = defineProps({
   label: {
     required: true,

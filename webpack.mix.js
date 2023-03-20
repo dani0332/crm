@@ -1,6 +1,10 @@
 const mix = require('laravel-mix');
 const path = require('path');
 
+const Components = require('unplugin-vue-components/webpack');
+const AutoImport = require('unplugin-auto-import/webpack');
+const { HeadlessUiResolver } = require('unplugin-vue-components/resolvers');
+
 mix.options({
   terser: {
     extractComments: false,
@@ -31,8 +35,43 @@ mix
       chunkFilename: 'js/[name].js?id=[chunkhash]',
     },
     plugins: [
-      require('unplugin-vue-components/webpack')({
-        dirs: ['resources/js/inertia/Components'],
+      AutoImport({
+        imports: [
+          'vue',
+          '@vueuse/core',
+          {
+            '@inertiajs/vue3': ['router', 'usePage', 'useForm'],
+            '@indielayer/ui': ['useNotifications'],
+            axios: [['default', 'axios']],
+          },
+        ],
+        dirs: ['resources/js/inertia/Composables'],
+      }),
+      Components({
+        dirs: [
+          'resources/js/inertia/Components',
+          'resources/js/inertia/Layouts',
+        ],
+        extensions: ['vue'],
+        resolvers: [
+          HeadlessUiResolver(),
+          name => {
+            if (name === 'Head') {
+              return {
+                importName: 'Head',
+                path: '@inertiajs/vue3',
+              };
+            }
+
+            if (name === 'Link') {
+              return {
+                importName: 'Link',
+                path: '@inertiajs/vue3',
+              };
+            }
+          },
+        ],
+        directoryAsNamespace: true,
       }),
     ],
   })

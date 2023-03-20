@@ -1,7 +1,4 @@
 <script setup>
-import { useNotifications } from '@indielayer/ui';
-import { useForm, usePage } from '@inertiajs/vue3';
-
 defineProps({
   quote: Object,
   quoteStatusEnum: Object,

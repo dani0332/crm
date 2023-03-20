@@ -1,11 +1,4 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link } from '@inertiajs/vue3';
-import Pagination from '@/inertia/Components/Pagination.vue';
-import ExportExcel from '@/inertia/Components/ExportExcel.vue';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-import {useCan} from "../../Composables/can";
-
 defineProps({
   quotes: Object,
   quoteStatuses: Array,

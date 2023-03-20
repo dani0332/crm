@@ -1,9 +1,4 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-import { useNotifications } from '@indielayer/ui';
-
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -30,15 +25,11 @@ const quoteForm = useForm({
   year_of_manufacture_id:
     props.quote?.cycle_quote?.year_of_manufacture_id || null,
   has_accident: String(props.quote?.cycle_quote?.has_accident) || null,
-  has_good_condition: String(props.quote?.cycle_quote?.has_good_condition) || null,
+  has_good_condition:
+    String(props.quote?.cycle_quote?.has_good_condition) || null,
 });
 
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired, isEmail } = useRules();
 
 const isEmptyField = ref(false);
 
@@ -95,7 +86,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.first_name"
           type="text"
           label="First Name*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.first_name"
         />
@@ -104,7 +95,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.last_name"
           type="text"
           label="Last Name*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.last_name"
         />
@@ -113,7 +104,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.email"
           type="email"
           label="Email*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired, isEmail]"
           class="w-full"
           :error="quoteForm.errors.email"
         />
@@ -122,7 +113,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.mobile_no"
           type="tel"
           label="Phone Number*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
         />
@@ -131,7 +122,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.cycle_make"
           type="text"
           label="Cycle Make*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.cycle_make"
         />
@@ -140,7 +131,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.cycle_model"
           type="text"
           label="Cycle Model*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.cycle_model"
         />
@@ -148,7 +139,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.year_of_manufacture_id"
           label="Year of manufacture*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             yearOfManufacture.map(item => ({
               value: item.id,
@@ -163,7 +154,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.asset_value"
           type="number"
           label="Purchased value(AED)*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.asset_value"
         />
@@ -172,7 +163,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.accessories"
           type="text"
           label="Accessories*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.accessories"
         />
@@ -192,7 +183,7 @@ function onSubmit(isValid) {
                   v-model="quoteForm.has_accident"
                   value="1"
                   label="Yes"
-                  :rules="[rules.isRequired]"
+                  :rules="[isRequired]"
                 />
                 <x-radio
                   v-model="quoteForm.has_accident"
@@ -219,7 +210,7 @@ function onSubmit(isValid) {
                   v-model="quoteForm.has_good_condition"
                   value="1"
                   label="Yes"
-                  :rules="[rules.isRequired]"
+                  :rules="[isRequired]"
                 />
                 <x-radio
                   v-model="quoteForm.has_good_condition"

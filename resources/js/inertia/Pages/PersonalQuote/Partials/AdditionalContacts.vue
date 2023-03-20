@@ -1,7 +1,4 @@
 <script setup>
-import { reactive, ref } from 'vue';
-import { router, useForm, usePage } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
 const page = usePage();
 const notification = useNotifications('toast');
 

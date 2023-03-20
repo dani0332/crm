@@ -1,7 +1,4 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
-
 const props = defineProps({
   dropdownSource: Object,
   model: String,
@@ -44,12 +41,7 @@ const quoteForm = useForm({
   has_home: null,
 });
 
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired, isEmail } = useRules();
 
 const isEmptyField = ref(false);
 function onSubmit(isValid) {
@@ -89,7 +81,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.first_name"
           type="text"
           label="FIRST NAME"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
         />
 
@@ -97,7 +89,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.last_name"
           type="text"
           label="LAST NAME"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
         />
 
@@ -105,7 +97,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.email"
           type="email"
           label="EMAIL"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired, isEmail]"
           class="w-full"
         />
 
@@ -113,7 +105,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.mobile_no"
           type="tel"
           label="MOBILE NUMBER"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
         />
@@ -122,7 +114,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.dob"
           type="date"
           label="DATE OF BIRTH"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
         />
 
@@ -143,7 +135,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.cover_for_id"
           label="WHO WOULD YOU LIKE COVER FOR?"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             dropdownSource.cover_for_id.map(item => ({
               value: item.id,
@@ -219,7 +211,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.emirate_of_your_visa_id"
           label="EMIRATE OF YOUR VISA"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             dropdownSource.emirate_of_your_visa_id.map(item => ({
               value: item.id,
