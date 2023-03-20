@@ -1,9 +1,4 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-import axios from 'axios';
-
 const notification = useNotifications('toast');
 const page = usePage();
 const paymentLoader = ref(``);
@@ -183,7 +178,7 @@ const paymentTableHeaders = [
 
 const generateCCLink = async payment => {
   try {
-      paymentLoader.value = payment.code;
+    paymentLoader.value = payment.code;
 
     const response = await axios.post('/generate-payment-link', {
       quoteId: page.props.quote.id,
@@ -206,7 +201,6 @@ const generateCCLink = async payment => {
         title: 'Payment Link Generated',
         position: 'top',
       });
-
     } else {
       notification.error({
         title: 'Payment Link Generation Failed',

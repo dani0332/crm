@@ -1,9 +1,4 @@
 <script setup>
-import { computed, ref, reactive, onMounted } from 'vue';
-import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
-import { useDateFormat, useClipboard } from '@vueuse/core';
-import { useNotifications } from '@indielayer/ui';
-import axios from 'axios';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -126,9 +121,7 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
 
 const { copy, copied } = useClipboard();
 
-const rules = {
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired } = useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -1008,7 +1001,7 @@ onMounted(() => {
                 label: lob,
               }))
             "
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             placeholder="Select LOB For Duplication"
             class="w-full"
             multiple
@@ -1016,7 +1009,7 @@ onMounted(() => {
           <x-select
             v-model="leadDuplicateForm.lob_team_sub_selection"
             label="Reason"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
             :options="[
               { value: 'new_enquiry', label: 'New enquiry' },
@@ -1331,7 +1324,7 @@ onMounted(() => {
               v-model="memberForm.emirate_of_your_visa_id"
               label="Emirate of Visa"
               :options="emiratesOptions"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               placeholder="Select Emirate of Visa"
               class="w-full"
             />
@@ -1340,7 +1333,7 @@ onMounted(() => {
               v-model="memberForm.gender"
               label="Gender"
               :options="genderSelect"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               placeholder="Select Gender"
               class="w-full"
             />
@@ -1355,7 +1348,7 @@ onMounted(() => {
               v-model="memberForm.member_category_id"
               label="Relationship"
               :options="memberCategoriesOptions"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               placeholder="Select Relationship"
               class="w-full"
             />
@@ -1529,7 +1522,7 @@ onMounted(() => {
               v-model="policyDetails.policy_number"
               :disabled="!policyDetails.editMode"
               label="Policy Number"
-              :rules="[rules.isRequired, policyDetailRules.policy_number]"
+              :rules="[isRequired, policyDetailRules.policy_number]"
               class="w-full"
             />
           </div>
@@ -1539,7 +1532,7 @@ onMounted(() => {
               :disabled="!policyDetails.editMode"
               type="date"
               label="Issuance Date"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
           </div>
@@ -1551,7 +1544,7 @@ onMounted(() => {
               :disabled="!policyDetails.editMode"
               type="date"
               label="Start Date"
-              :rules="[rules.isRequired, policyDetailRules.policy_start_date]"
+              :rules="[isRequired, policyDetailRules.policy_start_date]"
               class="w-full"
             />
           </div>
@@ -1561,7 +1554,7 @@ onMounted(() => {
               :disabled="!policyDetails.editMode"
               type="date"
               label="Expiry Date"
-              :rules="[rules.isRequired, policyDetailRules.renewal_expiry_date]"
+              :rules="[isRequired, policyDetailRules.renewal_expiry_date]"
               class="w-full"
             />
           </div>
@@ -1572,7 +1565,7 @@ onMounted(() => {
               v-model="policyDetails.premium"
               :disabled="!policyDetails.editMode"
               label="Premium"
-              :rules="[rules.isRequired, policyDetailRules.premium]"
+              :rules="[isRequired, policyDetailRules.premium]"
               class="w-full"
             />
           </div>
@@ -1848,7 +1841,7 @@ onMounted(() => {
             <x-input
               v-model="activityForm.title"
               label="Title"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
 
@@ -1863,7 +1856,7 @@ onMounted(() => {
               v-model="activityForm.assignee_id"
               label="Assignee"
               :options="advisorOptions"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               placeholder="Select Assignee"
               class="w-full"
             />
@@ -1872,7 +1865,7 @@ onMounted(() => {
               v-model="activityForm.due_date"
               label="Due Date"
               type="datetime-local"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
           </div>
@@ -1979,7 +1972,7 @@ onMounted(() => {
                 { value: 'email', label: 'Email' },
                 { value: 'mobile_no', label: 'Mobile Number' },
               ]"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               placeholder="Select Type"
               class="w-full"
             />
@@ -1987,7 +1980,7 @@ onMounted(() => {
             <x-input
               v-model="additionalContact.additional_contact_val"
               label="Value"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
           </div>

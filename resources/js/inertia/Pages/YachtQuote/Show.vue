@@ -1,16 +1,11 @@
 <script setup>
-import { computed, ref, reactive, onMounted } from 'vue';
-import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
-import { useDateFormat, useClipboard } from '@vueuse/core';
-
-import { useNotifications } from '@indielayer/ui';
-import QuoteDocuments from "../PersonalQuote/Partials/QuoteDocuments";
-import LeadStatus from "../PersonalQuote/Partials/QuoteStatus";
-import QuoteStatus from "../PersonalQuote/Partials/QuoteStatus";
-import QuotePayments from "../PersonalQuote/Partials/QuotePayments";
-import QuoteActivities from "../PersonalQuote/Partials/QuoteActivities";
-import QuotePolicy from "../PersonalQuote/Partials/QuotePolicy";
-import LeadHistory from "../PersonalQuote/Partials/LeadHistory";
+import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
+import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
+import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 
 defineProps({
   quote: Object,
@@ -28,9 +23,6 @@ defineProps({
   lostReasons: Object,
   quoteStatusEnum: Object,
 });
-
-const page = usePage();
-
 </script>
 
 <template>
@@ -45,7 +37,9 @@ const page = usePage();
         </Link>
 
         <Link href="/personal-quotes/yacht" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Yacht Quotes </x-button>
+          <x-button size="sm" color="primary" tag="div">
+            Yacht Quotes
+          </x-button>
         </Link>
       </div>
     </div>
@@ -107,37 +101,35 @@ const page = usePage();
 
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Boat Details</dt>
+            <dd>{{ quote?.yacht_quote?.boat_details }}</dd>
+          </div>
 
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Boat Details</dt>
-                <dd>{{ quote?.yacht_quote?.boat_details }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Engine Details</dt>
+            <dd>{{ quote?.yacht_quote?.engine_details }}</dd>
+          </div>
 
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Engine Details</dt>
-                <dd>{{ quote?.yacht_quote?.engine_details }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Claim Experience</dt>
+            <dd>{{ quote?.yacht_quote?.claim_experience }}</dd>
+          </div>
 
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Claim Experience</dt>
-                <dd>{{ quote?.yacht_quote?.claim_experience }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Sum Insured</dt>
+            <dd>{{ quote.asset_value }}</dd>
+          </div>
 
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Sum Insured</dt>
-                <dd>{{ quote.asset_value }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Use</dt>
+            <dd>{{ quote?.yacht_quote?.use }}</dd>
+          </div>
 
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Use</dt>
-                <dd>{{ quote?.yacht_quote?.use }}</dd>
-            </div>
-
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Operator Experience</dt>
-                <dd>{{ quote?.yacht_quote?.operator_experience }}</dd>
-            </div>
-
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Operator Experience</dt>
+            <dd>{{ quote?.yacht_quote?.operator_experience }}</dd>
+          </div>
         </dl>
       </div>
 
@@ -283,9 +275,11 @@ const page = usePage();
       :quoteStatusEnum="quoteStatusesEnum"
     />
 
-    <AuditLogs :type="'App\\Models\\PersonalQuote'" :id="$page.props.quote.id" />
+    <AuditLogs
+      :type="'App\\Models\\PersonalQuote'"
+      :id="$page.props.quote.id"
+    />
 
     <LeadHistory :quote="$page.props.quote" />
-
   </div>
 </template>

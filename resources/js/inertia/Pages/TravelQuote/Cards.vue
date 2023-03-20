@@ -1,12 +1,7 @@
 <script setup>
-import { reactive } from "vue";
-import { Head, usePage, Link } from "@inertiajs/vue3";
-import { useDateFormat } from "@vueuse/shared";
-import axios from "axios";
-
 const page = usePage();
-const dateFormat = (date) => {
-  return useDateFormat(date, "DD-MM-YYYY HH:mm:ss").value;
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
 };
 
 const quotes = reactive({
@@ -17,16 +12,18 @@ const quotes = reactive({
   queries: {},
 });
 
-const onLoadMore = (id) => {
+const onLoadMore = id => {
   quotes.loader = true;
   quotes.pages = {
     ...quotes.pages,
     [id]: quotes.pages[id] ? Number(quotes.pages[id]) + 1 : 2,
   };
   axios
-    .post(`/quotes/records?page=${quotes.pages[id]}&modelType=Health&status=${id}`)
+    .post(
+      `/quotes/records?page=${quotes.pages[id]}&modelType=Health&status=${id}`,
+    )
     .then(({ data }) => {
-      quotes.data = quotes.data.map((quote) => {
+      quotes.data = quotes.data.map(quote => {
         if (quote.id === id) {
           quote.data.leads_list = {
             ...data.leads_list,
@@ -36,7 +33,7 @@ const onLoadMore = (id) => {
         return quote;
       });
     })
-    .catch((err) => {
+    .catch(err => {
       console.log(err);
     })
     .finally(() => {
@@ -44,20 +41,24 @@ const onLoadMore = (id) => {
     });
 };
 
-const onSearch = (id) => {
+const onSearch = id => {
   quotes.searching = true;
-  if (!quotes.queries[id] || quotes.queries[id] === "" || quotes.queries[id] === null) {
+  if (
+    !quotes.queries[id] ||
+    quotes.queries[id] === '' ||
+    quotes.queries[id] === null
+  ) {
     axios
       .post(`/quotes/records?page=1&modelType=Health&status=${id}`)
       .then(({ data }) => {
-        quotes.data = quotes.data.map((quote) => {
+        quotes.data = quotes.data.map(quote => {
           if (quote.id === id) {
             quote.data.leads_list = data.leads_list;
           }
           return quote;
         });
       })
-      .catch((err) => {
+      .catch(err => {
         console.log(err);
       })
       .finally(() => {
@@ -67,10 +68,10 @@ const onSearch = (id) => {
   }
   axios
     .post(
-      `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Health`
+      `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Health`,
     )
     .then(({ data }) => {
-      quotes.data = quotes.data.map((quote) => {
+      quotes.data = quotes.data.map(quote => {
         if (quote.id === id) {
           quote.data.leads_list = {
             ...data.leads_list,
@@ -81,7 +82,7 @@ const onSearch = (id) => {
         return quote;
       });
     })
-    .catch((err) => {
+    .catch(err => {
       console.log(err);
     })
     .finally(() => {
@@ -195,7 +196,8 @@ const onSearch = (id) => {
           <div
             class="mt-3"
             v-if="
-              quote.data.total_leads > 0 && quote.data.leads_list.next_page_url !== null
+              quote.data.total_leads > 0 &&
+              quote.data.leads_list.next_page_url !== null
             "
           >
             <x-button
