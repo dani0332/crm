@@ -38,8 +38,8 @@ class StoreLifeRequest extends FormRequest
             if ($key == 'email') {
                 $rule[] = 'email:rfc,dns';
             }
-            if ($key == 'phone') {
-                $rule[] = 'regex:regex:/(0)[0-9]/';
+            if ($key == 'mobile_no') {
+                $rule[] = 'regex:/(0)[0-9]/';
                 $rule[] = 'not_regex:/[a-z]/';
                 $rule[] = 'min:7';
                 $rule[] = 'max:20';

@@ -35,14 +35,8 @@ class UpdateTravelRequest extends FormRequest
         $rules = [];
         foreach ($requireProperties as $key => $value) {
             $rule = ['required'];
-            if ($key == 'email') {
-                $rule[] = 'email:rfc,dns';
-            }
-            if ($key == 'phone') {
-                $rule[] = 'regex:regex:/(0)[0-9]/';
-                $rule[] = 'not_regex:/[a-z]/';
-                $rule[] = 'min:7';
-                $rule[] = 'max:20';
+            if ($key == 'email' || $key == 'mobile_no') {
+                continue;
             }
             $rules[$key] = $rule;
         }

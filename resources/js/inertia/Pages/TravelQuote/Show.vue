@@ -224,6 +224,8 @@ const addTravelMember = isValid => {
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerTable.processing = false;
+      travelerForm.dob = '';
+      travelerForm.id = null;
       travelerForm.reset();
     },
   });
@@ -231,6 +233,8 @@ const addTravelMember = isValid => {
 
 const onAddTraveler = () => {
   travelerForm.reset();
+  travelerForm.dob = '';
+  travelerForm.id = null;
   travelerTable.addTraveler = true;
 };
 
@@ -258,6 +262,8 @@ const editTraveler = isValid => {
       travelerTable.addTraveler = false;
       travelerTable.processing = false;
       travelerForm.dob = '';
+      travelerForm.id = null;
+      travelerForm.reset();
     },
   });
 };
@@ -577,7 +583,7 @@ const activityForm = useForm({
   quoteType: 3,
   title: null,
   description: null,
-  due_date: null,
+  due_date: ref(new Date()),
   assignee_id: null,
   status: null,
   activity_id: null,
@@ -585,7 +591,15 @@ const activityForm = useForm({
 });
 
 const addActivity = () => {
-  activityForm.reset();
+  activityForm.reset(
+    'title',
+    'description',
+    'due_date',
+    'assignee_id',
+    'status',
+    'activity_id',
+    'uuid',
+  );
   activityActionEdit.value = false;
   modals.activity = true;
 };
@@ -702,6 +716,12 @@ const additionalContact = useForm({
   quote_type: 'travel',
 });
 
+const addAdditionalContact = () => {
+  additionalContact.additional_contact_type = null;
+  additionalContact.additional_contact_val = null;
+  modals.addContact = true;
+};
+
 const onAdditionalContactSubmit = isValid => {
   if (!isValid) return;
   additionalContact
@@ -719,6 +739,13 @@ const onAdditionalContactSubmit = isValid => {
       },
       onFinish: () => {
         modals.addContact = false;
+      },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
       },
     });
 };
@@ -1016,7 +1043,7 @@ onMounted(() => {});
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ ecomDetails.paidAt }}</dd>
+            <dd>{{ dateFormat(ecomDetails.paidAt).value }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -1049,8 +1076,10 @@ onMounted(() => {});
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        show-index
       >
-        <template #item-name="item"> Traveler {{ item.key + 1 }} </template>
+        <template #item-name="item"> Traveler {{ item.index }} </template>
+        <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
 
         <template #item-created_at="{ created_at }">
           {{ dateFormat(created_at).value }}
@@ -1090,7 +1119,10 @@ onMounted(() => {});
         show-close
         backdrop
       >
-        <template #header> <i class="fa fa-user"></i> New Members </template>
+        <template #header>
+          <i class="fa fa-user"></i>
+          {{ travelerForm.id ? 'Edit Member' : 'New Member' }}
+        </template>
         <x-form @submit="submitTraveler" :auto-focus="false">
           <x-input
             label="Name"
@@ -1114,7 +1146,7 @@ onMounted(() => {});
               type="submit"
               :loading="travelerTable.processing"
             >
-              {{ travelerForm.id ? 'Update Traveler' : 'Add Traveler' }}
+              Save
             </x-button>
           </div>
         </x-form>
@@ -1335,29 +1367,6 @@ onMounted(() => {});
           </div>
         </template>
       </x-modal>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
-      </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="emailStatusesTableColumns"
-        :items="emailStatuses || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-      >
-        <template #item-email_status="item">
-          <span class="text-primary-600">{{
-            item.email_status.toUpperCase()
-          }}</span>
-        </template>
-        <template #item-reason="item">
-          <span class="text-primary-600">{{ item.reason.toUpperCase() }}</span>
-        </template>
-      </DataTable>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -1701,11 +1710,12 @@ onMounted(() => {});
               class="w-full"
             />
 
-            <x-input
+            <DatePicker
               v-model="activityForm.due_date"
               label="Due Date"
-              type="datetime-local"
               :rules="[rules.isRequired]"
+              :enable-time-picker="true"
+              :is-24="true"
               class="w-full"
             />
           </div>
@@ -1760,7 +1770,7 @@ onMounted(() => {});
         <x-button
           size="sm"
           color="orange"
-          @click.prevent="modals.addContact = true"
+          @click.prevent="addAdditionalContact"
         >
           Add Additional Contacts
         </x-button>
@@ -1917,6 +1927,29 @@ onMounted(() => {});
         :rows-per-page="15"
         :hide-footer="historyData.length < 15"
       />
+    </div>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
+      </div>
+      <DataTable
+        table-class-name="tablefixed compact"
+        :headers="emailStatusesTableColumns"
+        :items="emailStatuses || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+      >
+        <template #item-email_status="item">
+          <span class="text-primary-600">{{
+            item.email_status.toUpperCase()
+          }}</span>
+        </template>
+        <template #item-reason="item">
+          <span class="text-primary-600">{{ item.reason.toUpperCase() }}</span>
+        </template>
+      </DataTable>
     </div>
 
     <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" />

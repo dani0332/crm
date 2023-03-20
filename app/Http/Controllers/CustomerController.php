@@ -225,6 +225,11 @@ class CustomerController extends Controller
             'additional_contact_type' => 'required',
             'additional_contact_val' => 'required',
         ]);
+
+        if($request->isInertia == true && $validator->fails()){
+            return redirect()->back()->withErrors($validator->errors());
+        }
+
         if ($validator->fails()) {
             return response()->json(['error' => [
                 'message' => $validator->errors(),
@@ -239,6 +244,11 @@ class CustomerController extends Controller
             $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
 
             if ($isAdditionalEmailExist) {
+                //TODO: refactor this to use inertia
+                if($request->isInertia == true){
+                    return redirect()->back()->withErrors(['Email Address already in use for a customer. Please try another.']);
+                }
+
                 return response()->json(['error' => [
                     'message' => 'Email Address already in use for a customer. Please try another.',
                 ]]);
@@ -249,6 +259,11 @@ class CustomerController extends Controller
             $isAdditionalMobileNoExist = $this->customerService->checkAdditionalMobileNoExist($quoteObject, $value);
 
             if ($isAdditionalMobileNoExist) {
+
+                if($request->isInertia == true){
+                    return redirect()->back()->withErrors(['Mobile Number already in use for a customer. Please try another.']);
+                }
+
                 return response()->json(['error' => [
                     'message' => 'Mobile Number already in use for a customer. Please try another.',
                 ]]);
