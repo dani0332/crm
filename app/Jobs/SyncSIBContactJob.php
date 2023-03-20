@@ -2,8 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\quoteTypeCode;
 use App\Models\ApplicationStorage;
+use App\Services\ApplicationStorageService;
 use App\Services\SIBService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -35,7 +37,7 @@ class SyncSIBContactJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(ApplicationStorageService $appStorageService)
     {
         if (! $this->entity) {
             return false;
@@ -53,19 +55,9 @@ class SyncSIBContactJob implements ShouldQueue
             'link' => config('constants.ECOM_'.($isCarQuote ? 'CAR' : 'HEALTH').'_INSURANCE_QUOTE_URL').$this->entity->uuid,
             'advisorLandline' => isset($this->entity->advisor) ? $this->entity->advisor->landline_no : null,
         ];
-        $listId = $isCarQuote ? $this->getValueByKey('SIB_CAR_DRIP_LIST_ID') : $this->getValueByKey('SIB_HEALTH_EBP_LIST_ID');
+        $listId = $isCarQuote ? $appStorageService->getValueByKey(ApplicationStorageEnums::SIB_CAR_DRIP_LIST_ID) : $appStorageService->getValueByKey(ApplicationStorageEnums::SIB_HEALTH_EBP_LIST_ID);
         info('going to create or update contact on sib for list id : '.$listId);
 
         return SIBService::contactCreateUpdate($listId, $this->entity->first_name, $this->entity->last_name, $this->entity->email, null, $data);
-    }
-
-    private function getValueByKey($keyName)
-    {
-        $appStorageRecord = ApplicationStorage::where('key_name', $keyName)->first();
-        if ($appStorageRecord) {
-            return $appStorageRecord->value;
-        } else {
-            return false;
-        }
     }
 }
