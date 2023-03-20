@@ -2,13 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\QuoteTypes;
-use App\Models\BikeQuote;
-use App\Models\CycleQuote;
-use App\Models\JetskiQuote;
-use App\Models\PersonalQuote;
-use App\Models\PersonalQuoteDetail;
-use App\Models\YachtQuote;
 use App\Repositories\AuditRepository;
 use App\Services\BaseService;
 use App\Traits\GenericQueriesAllLobs;
@@ -47,7 +40,7 @@ class AuditableController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param  Request  $request
      * @return mixed
      */
     public function getQuoteAudits(Request $request)

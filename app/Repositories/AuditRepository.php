@@ -2,8 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Models\Activities;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Models\Audit;
 
@@ -16,22 +14,22 @@ class AuditRepository extends BaseRepository
 
     public function fetchGetQuoteAudits()
     {
-        $quoteObject = app('\\App\\Models\\'. ucfirst(strtolower(request()->quote_type)) . 'Quote');
+        $quoteObject = app('\\App\\Models\\'.ucfirst(strtolower(request()->quote_type)).'Quote');
 
         $auditables = $quoteObject->getAuditables();
 
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
             ->join('users', 'audits.user_id', 'users.id')
-            ->where(function($q) use( $auditables) {
+            ->where(function ($q) use ($auditables) {
                 $q->where('auditable_id', request()->auditable_id)->where('auditable_type', $auditables['auditable_type']);
             });
 
-        if(!empty($auditables['relations'])) {
+        if (! empty($auditables['relations'])) {
             foreach ($auditables['relations'] as $relation) {
                 $model = $relation['auditable_type'];
-                if( ($childRecord = $model::where($relation['key'], request()->auditable_id)->first() ) ) {
-                    $query->orWhere(function($q) use($relation, $childRecord) {
+                if (($childRecord = $model::where($relation['key'], request()->auditable_id)->first())) {
+                    $query->orWhere(function ($q) use ($relation, $childRecord) {
                         $q->where('auditable_type', $relation['auditable_type'])->where('auditable_id', $childRecord->id);
                     });
                 }

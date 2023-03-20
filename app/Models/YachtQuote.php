@@ -39,7 +39,7 @@ class YachtQuote extends Model implements AuditableContract
             'relations' => [
                 ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
                 ['auditable_type' => YachtQuote::class, 'key' => 'personal_quote_id'],
-            ]
+            ],
         ];
     }
 }

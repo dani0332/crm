@@ -22,7 +22,7 @@ class JetskiQuote extends Model
             'relations' => [
                 ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
                 ['auditable_type' => JetskiQuote::class, 'key' => 'personal_quote_id'],
-            ]
+            ],
         ];
     }
 }

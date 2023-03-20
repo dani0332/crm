@@ -22,7 +22,7 @@ class CycleQuote extends Model
             'relations' => [
                 ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
                 ['auditable_type' => CycleQuote::class, 'key' => 'personal_quote_id'],
-            ]
+            ],
         ];
     }
 }

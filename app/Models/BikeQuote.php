@@ -79,7 +79,7 @@ class BikeQuote extends Model implements AuditableContract
             'relations' => [
                 ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
                 ['auditable_type' => BikeQuote::class, 'key' => 'personal_quote_id'],
-            ]
+            ],
         ];
     }
 }

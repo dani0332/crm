@@ -96,7 +96,6 @@ Route::middleware(['auth', 'last_login_check'])->get('/home', function () {
 });
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
-
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
         Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard'])->name('tpl-dashboard-view');
@@ -110,7 +109,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
         Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
-
     });
 
     Route::get('/clear-cache', function () {
