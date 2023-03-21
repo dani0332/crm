@@ -27,6 +27,7 @@ use App\Models\TierUser;
 use App\Models\User;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -585,14 +586,16 @@ class LeadAllocationService extends BaseService
 
     public function updateLeadAllocationOnCarAutoAssignment($userId)
     {
-        $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-        info('Lead allocation total count for userId : '.$userId.' is '.$leadAllocation->allocation_count.' and auto count = '.$leadAllocation->auto_assignment_count);
-        $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
-        $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count + 1;
-        $leadAllocation->last_allocated = Carbon::now()->timestamp;
-        $leadAllocation->updated_at = now();
-        $leadAllocation->save();
-        info('Lead allocation total count after update for userId : '.$userId.' is '.$leadAllocation->allocation_count.' and auto count = '.$leadAllocation->auto_assignment_count);
+        Cache::lock('lead_allocation')->block(1, function () use ($userId) {
+            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+            info('Lead allocation total count for userId : '.$userId.' is '.$leadAllocation->allocation_count.' and auto count = '.$leadAllocation->auto_assignment_count);
+            $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
+            $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count + 1;
+            $leadAllocation->last_allocated = Carbon::now()->timestamp;
+            $leadAllocation->updated_at = now();
+            $leadAllocation->save();
+            info('Lead allocation total count after update for userId : '.$userId.' is '.$leadAllocation->allocation_count.' and auto count = '.$leadAllocation->auto_assignment_count);
+        });
     }
 
     public function updateCarLeadDetailRecord($leadId)
