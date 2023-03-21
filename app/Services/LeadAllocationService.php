@@ -519,7 +519,7 @@ class LeadAllocationService extends BaseService
                         $userId = reset($finalAvailableAndLoginAdvisorIds);
                     }
                     if ($userId) {
-                       try {
+                        try {
                             DB::beginTransaction();
                             info('About to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
 
@@ -546,9 +546,9 @@ class LeadAllocationService extends BaseService
 
                             info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                             DB::commit();
-                       } catch (\Throwable $th) {
+                        } catch (\Throwable $th) {
                             DB::rollBack();
-                       }
+                        }
                     } else {
                         info('login users not found for selected lead so will try to assign only tier');
 
@@ -592,7 +592,7 @@ class LeadAllocationService extends BaseService
     public function updateLeadAllocationOnCarAutoAssignment($userId)
     {
         DB::statement("UPDATE lead_allocation SET allocation_count = allocation_count + 1 , auto_assignment_count = auto_assignment_count + 1 ,
-             last_allocated = '" . Carbon::now()->timestamp . "' , updated_at = now() where user_id = " .$userId);
+             last_allocated = '".Carbon::now()->timestamp."' , updated_at = now() where user_id = ".$userId);
     }
 
     public function updateCarLeadDetailRecord($leadId)
