@@ -140,7 +140,7 @@ class DashboardService extends BaseService
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
         ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
         ->join('teams', 'teams.id', 'user_team.team_id')
-        ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');;
+        ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
 
         if (isset($advisorId)) {
             $query->where('car_quote_request.advisor_id', $advisorId);
@@ -150,6 +150,7 @@ class DashboardService extends BaseService
             info('user ids for advisor conversion report are : '.json_encode($userIds));
             $query = $query->whereIn('teams.id', $userIds);
         }
+
         return $query->get();
     }
 
