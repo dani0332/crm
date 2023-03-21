@@ -376,6 +376,12 @@ const additionalContact = useForm({
   quote_type: 'life',
 });
 
+const addAdditionalContact = () => {
+  additionalContact.additional_contact_type = null;
+  additionalContact.additional_contact_val = null;
+  modals.addContact = true;
+};
+
 const onAdditionalContactSubmit = isValid => {
   if (!isValid) return;
   additionalContact
@@ -394,6 +400,13 @@ const onAdditionalContactSubmit = isValid => {
       onFinish: () => {
         modals.addContact = false;
       },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
+      }
     });
 };
 
@@ -732,12 +745,12 @@ const historyDataTable = [
               placeholder="Select Assignee"
               class="w-full"
             />
-
-            <x-input
+            <DatePicker
               v-model="activityForm.due_date"
               label="Due Date"
-              type="datetime-local"
               :rules="[rules.isRequired]"
+              :enable-time-picker="true"
+              :is-24="true"
               class="w-full"
             />
           </div>
@@ -792,7 +805,7 @@ const historyDataTable = [
         <x-button
           size="sm"
           color="orange"
-          @click.prevent="modals.addContact = true"
+          @click.prevent="addAdditionalContact"
         >
           Add Additional Contacts
         </x-button>

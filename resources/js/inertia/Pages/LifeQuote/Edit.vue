@@ -56,6 +56,9 @@ function onSubmit(isValid) {
       onSuccess: () => {
         router.get(`/quotes/life/${props.quote.uuid}`);
       },
+      onStart: () => {
+        quoteForm.clearErrors();
+      },
     });
   }
 }
@@ -70,7 +73,7 @@ onMounted(() => {});
       <h2 class="text-xl font-semibold">Edit Life Quote</h2>
       <div class="space-x-4">
         <Link :href="`/quotes/life/${props.quote.uuid}`">
-          <x-button size="sm" tag="div"> View </x-button>
+          <x-button size="sm" tag="div"> Cancel </x-button>
         </Link>
         <Link href="/quotes/life">
           <x-button size="sm" color="#ff5e00" tag="div"> Quote List </x-button>
@@ -81,78 +84,103 @@ onMounted(() => {});
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
         <template v-for="(field, index) in props.fields">
-          <x-input
-            v-if="field.type == 'text'"
-            v-model="quoteForm[index]"
-            :label="field.label"
-            :rules="[
-              field.required === true ? rules.isRequired : rules.allowEmpty,
-            ]"
-            :disabled="field.disabled"
-            class="w-full"
-          />
+          <label v-if="field.type == 'text'">
+            <p>
+              {{ field.label }}
+              <sup v-if="field.required" class="text-red-500">*</sup>
+            </p>
 
-          <x-input
-            v-if="field.type == 'email'"
-            v-model="quoteForm[index]"
-            type="email"
-            :label="field.label"
-            :rules="[
-              field.required === true ? rules.isRequired : rules.allowEmpty,
-              rules.isEmail,
-            ]"
-            :disabled="field.disabled"
-            class="w-full"
-          />
+            <x-input
+              v-model="quoteForm[index]"
+              :rules="[
+                field.required === true ? rules.isRequired : rules.allowEmpty,
+              ]"
+              :disabled="field.disabled"
+              class="w-full"
+            />
+          </label>
 
-          <x-input
-            v-if="field.type == 'number'"
-            type="number"
-            :rules="[
-              field.required === true ? rules.isRequired : rules.allowEmpty,
-            ]"
-            v-model="quoteForm[index]"
-            :label="field.label"
-            :disabled="field.disabled"
-            class="w-full"
-          />
+          <label v-if="field.type == 'email'">
+            <p>
+              {{ field.label }}
+              <sup v-if="field.required" class="text-red-500">*</sup>
+            </p>
+            <x-input
+              v-model="quoteForm[index]"
+              type="email"
+              :rules="[
+                field.required === true ? rules.isRequired : rules.allowEmpty,
+                rules.isEmail,
+              ]"
+              :disabled="field.disabled"
+              class="w-full"
+            />
+          </label>
 
-          <x-input
+          <label v-if="field.type == 'number'">
+            <p>
+              {{ field.label }}
+              <sup v-if="field.required" class="text-red-500">*</sup>
+            </p>
+            <x-input
+              v-if="field.type == 'number'"
+              type="number"
+              :rules="[
+                field.required === true ? rules.isRequired : rules.allowEmpty,
+              ]"
+              v-model="quoteForm[index]"
+              :disabled="field.disabled"
+              class="w-full"
+            />
+          </label>
+
+          <DatePicker
             v-if="field.type == 'date'"
-            v-model="quoteForm[index]"
-            type="date"
             :label="field.label"
+            v-model="quoteForm[index]"
             :disabled="field.disabled"
             class="w-full"
-          />
-          <x-select
-            v-if="field.type == 'select'"
-            v-model="quoteForm[index]"
-            :label="field.label"
-            :rules="[
-              field.required === true ? rules.isRequired : rules.allowEmpty,
-            ]"
-            :disabled="field.disabled"
-            :options="
-              field.options.map(option => ({
-                value: option.id,
-                label: option.text,
-              }))
-            "
-            class="w-full"
+            :hasError="quoteForm.errors[index]"
           />
 
-          <x-textarea
-            v-if="field.type == 'textarea'"
-            v-model="quoteForm[index]"
-            :label="field.label"
-            :rules="[
-              field.required === true ? rules.isRequired : rules.allowEmpty,
-            ]"
-            :disabled="field.disabled"
-            class="w-full"
-            size="lg"
-          />
+          <label v-if="field.type == 'select'">
+            <p>
+              {{ field.label }}
+              <sup v-if="field.required" class="text-red-500">*</sup>
+            </p>
+            <x-select
+              v-model="quoteForm[index]"
+              :rules="[
+                field.required === true ? rules.isRequired : rules.allowEmpty,
+              ]"
+              :disabled="field.disabled"
+              :options="
+                field.options.map(option => ({
+                  value: option.id,
+                  label: option.text,
+                }))
+              "
+              class="w-full"
+            />
+          </label>
+
+          <label v-if="field.type == 'textarea'">
+            <p>
+              {{ field.label }}
+              <sup v-if="field.required" class="text-red-500">*</sup>
+            </p>
+
+            <x-textarea
+              v-if="field.type == 'textarea'"
+              v-model="quoteForm[index]"
+              :rules="[
+                field.required === true ? rules.isRequired : rules.allowEmpty,
+              ]"
+              :disabled="field.disabled"
+              class="w-full"
+              size="lg"
+            />
+          </label>
         </template>
       </div>
       <x-divider class="my-4" />

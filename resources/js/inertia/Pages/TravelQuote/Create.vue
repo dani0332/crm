@@ -120,14 +120,14 @@ onMounted(() => {});
             />
           </label>
 
-            <DatePicker
+          <DatePicker
             v-if="field.type == 'date'"
-              v-model="quoteForm[index]"
-              :label="field.label"
-              :disabled="field.disabled"
-              class="w-full"
-              :hasError="quoteForm.errors[index]"
-            />
+            v-model="quoteForm[index]"
+            :label="field.label"
+            :disabled="field.disabled"
+            class="w-full"
+            :hasError="quoteForm.errors[index]"
+          />
 
           <label v-if="field.type == 'select'">
             <p>

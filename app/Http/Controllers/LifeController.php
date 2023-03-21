@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Http\Requests\StoreLifeRequest;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LifeQuoteService;
@@ -122,7 +123,7 @@ class LifeController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreLifeRequest $request)
     {
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         $record = $this->lifeQuoteService->saveLifeQuote($request);
@@ -293,7 +294,7 @@ class LifeController extends Controller
         $dropdownSourceService = app(DropdownSourceService::class);
         $leadStatuses = $dropdownSourceService->getDropdownSource('quote_status_id', self::TYPE_ID);
         $leadStatuses = $leadStatuses->filter(function ($item) {
-            return ($item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION);
+            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION;
         })->toArray();
 
         $leadStatuses = array_map(function ($item) {
