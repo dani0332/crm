@@ -11,8 +11,6 @@ defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 
-const canAny = permissions => useCan(permissions);
-
 const loader = reactive({
   table: false,
   export: false,
@@ -205,7 +203,7 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
       <div class="space-x-3">
-        <Link v-if="canAny(['AgeDiscountDelete'])" href="/quotes/health-cards">
+        <Link href="/quotes/health-cards">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
 

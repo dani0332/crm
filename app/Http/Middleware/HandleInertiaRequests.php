@@ -57,7 +57,7 @@ class HandleInertiaRequests extends Middleware
             'auth.roles' => fn () => $roles,
             'sidebar' => fn () => $this->buildNavigation()->tree(),
             'permissionsEnum' => PermissionsEnum::asArray(),
-            'rolesEnum' => RolesEnum::asArray()
+            'rolesEnum' => RolesEnum::asArray(),
         ]);
     }
 

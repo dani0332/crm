@@ -24,7 +24,7 @@ class PersonalQuotePolicyRequest extends FormRequest
     public function rules()
     {
         return [
-            'policy_number' => 'nullable',
+            'policy_number' => 'required',
             'policy_issuance_date' => 'required',
             'policy_start_date' => 'required',
             'renewal_expiry_date' => 'required',
