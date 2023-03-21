@@ -5,6 +5,10 @@ export const useCan = permission => {
   return permissions.includes(permission);
 };
 
+export const useHasRole = role => {
+    const roles = usePage().props.auth.roles;
+    return roles.includes(role);
+};
 
 export const useCanAny = permissions => {
     const all = usePage().props.auth.permissions;
