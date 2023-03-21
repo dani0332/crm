@@ -15,6 +15,7 @@ defineProps({
   enums: Object,
   activities: Array,
   advisors: Array,
+  permissions: Object,
 });
 
 const page = usePage();
@@ -140,8 +141,8 @@ const onLeadStatus = () => {
 // Lead History
 
 const historyData = ref(null),
-    activityActionEdit = ref(false),
-    assignLead = ref(null),
+  activityActionEdit = ref(false),
+  assignLead = ref(null),
   isDisabled = ref(false),
   historyLoading = ref(false);
 
@@ -394,7 +395,6 @@ const additionalContactPrimaryConfirmed = () => {
   );
 };
 
-
 const onAssignLead = () => {
   if (!assignLead.value) {
     notification.error({
@@ -451,7 +451,10 @@ onMounted(() => {});
           </x-button>
         </Link>
 
-        <Link :href="`${quote.uuid}/edit`">
+        <Link
+          v-if="permissions.canEditQuote == true"
+          :href="`${quote.uuid}/edit`"
+        >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>

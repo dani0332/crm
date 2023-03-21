@@ -406,7 +406,7 @@ const onAdditionalContactSubmit = isValid => {
           title: firstError,
           position: 'top',
         });
-      }
+      },
     });
 };
 
@@ -510,7 +510,10 @@ const historyDataTable = [
           <x-button size="sm" color="primary" tag="div">Life List </x-button>
         </Link>
 
-        <Link :href="`${quote.uuid}/edit`">
+        <Link
+          v-if="permissions.canEditQuote == true"
+          :href="`${quote.uuid}/edit`"
+        >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>

@@ -143,6 +143,7 @@ class TravelController extends Controller
                 'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
                 'canNotApprovePayments' => auth()->user()->cannot(PermissionsEnum::ApprovePayments),
+                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType) . '-quotes-edit'),
             ],
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),

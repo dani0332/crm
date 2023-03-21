@@ -13,6 +13,7 @@ defineProps({
   quoteDetails: Object,
   customerAdditionalContacts: Array,
   enums: Object,
+  permissions: Object,
 });
 
 const page = usePage();
@@ -157,7 +158,6 @@ const historyDataTable = [
   { text: 'Lead Status', value: 'NewStatus' },
 ];
 
-
 // additional contact
 
 const additionalContactTable = [
@@ -289,7 +289,10 @@ onMounted(() => {
           </x-button>
         </Link>
 
-        <Link :href="`${quote.uuid}/edit`">
+        <Link
+          v-if="permissions.canEditQuote == true"
+          :href="`${quote.uuid}/edit`"
+        >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>

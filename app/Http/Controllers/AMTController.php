@@ -299,6 +299,9 @@ class AMTController extends Controller
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
+            'permissions' => [
+                'canEditQuote' => auth()->user()->can('corpline-quotes-edit'),
+            ],
         ]);
     }
 
