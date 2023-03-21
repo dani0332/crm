@@ -2177,11 +2177,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     expose();
     var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.usePage)();
     var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_3__.useNotifications)('toast');
-
-    var canAny = function canAny(permissions) {
-      return (0,_Composables_can__WEBPACK_IMPORTED_MODULE_0__.useCan)(permissions);
-    };
-
     var loader = (0,vue__WEBPACK_IMPORTED_MODULE_2__.reactive)({
       table: false,
       "export": false
@@ -2437,7 +2432,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var __returned__ = {
       page: page,
       notification: notification,
-      canAny: canAny,
       loader: loader,
       quotesSelected: quotesSelected,
       assignForm: assignForm,
@@ -14966,8 +14960,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   return (0,vue__WEBPACK_IMPORTED_MODULE_5__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_Head, {
     title: "Health List"
-  }), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementVNode)("div", _hoisted_3, [$setup.canAny(['AgeDiscountDelete']) ? ((0,vue__WEBPACK_IMPORTED_MODULE_5__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createBlock)(_component_Link, {
-    key: 0,
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_Link, {
     href: "/quotes/health-cards"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_5__.withCtx)(function () {
@@ -14987,7 +14980,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
     /* STABLE */
 
-  })) : (0,vue__WEBPACK_IMPORTED_MODULE_5__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_Link, {
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_Link, {
     href: "/quotes/health/create"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_5__.withCtx)(function () {
