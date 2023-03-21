@@ -519,30 +519,36 @@ class LeadAllocationService extends BaseService
                         $userId = reset($finalAvailableAndLoginAdvisorIds);
                     }
                     if ($userId) {
-                        info('About to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
+                        try {
+                            DB::beginTransaction();
+                            info('About to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
 
-                        $carQuote = CarQuote::where('id', $carLead->id)->first();
-                        $carQuote->advisor_id = $userId;
-                        $carQuote->tier_id = $selectedTier->id;
-                        $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
-                        if ($carQuote->quote_batch_id == null) {
-                            $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                            $carQuote = CarQuote::where('id', $carLead->id)->first();
+                            $carQuote->advisor_id = $userId;
+                            $carQuote->tier_id = $selectedTier->id;
+                            $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+                            if ($carQuote->quote_batch_id == null) {
+                                $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                            }
+                            $carQuote->save();
+
+                            info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
+                            $this->updateCarLeadDetailRecord($carLead->id); // updating detail table about assignment
+
+                            info('updating user record in lead allocation table with count increment userId: '.$userId);
+                            $this->updateLeadAllocationOnCarAutoAssignment($userId); // updating lead allocation record for user
+
+                            $emailData = $this->buildEmailDateForLMSIntroEmail($userId, $carQuote); // create email body for intro email
+
+                            $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
+
+                            $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
+
+                            info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
+                            DB::commit();
+                        } catch (\Throwable $th) {
+                            DB::rollBack();
                         }
-                        $carQuote->save();
-
-                        info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
-                        $this->updateCarLeadDetailRecord($carLead->id); // updating detail table about assignment
-
-                        info('updating user record in lead allocation table with count increment userId: '.$userId);
-                        $this->updateLeadAllocationOnCarAutoAssignment($userId); // updating lead allocation record for user
-
-                        $emailData = $this->buildEmailDateForLMSIntroEmail($userId, $carQuote); // create email body for intro email
-
-                        $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
-
-                        $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
-
-                        info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                     } else {
                         info('login users not found for selected lead so will try to assign only tier');
 
@@ -585,9 +591,10 @@ class LeadAllocationService extends BaseService
 
     public function updateLeadAllocationOnCarAutoAssignment($userId)
     {
-        DB::transaction(function () use ($userId) {
-            DB::statement("UPDATE lead_allocation SET allocation_count = allocation_count + 1 , auto_assignment_count = auto_assignment_count + 1 , last_allocated = '".Carbon::now()->timestamp."' , updated_at = now() where user_id = ".$userId);
-        });
+        $leadAllocationRecord = LeadAllocation::where('user_id', $userId)->first();
+        info('Count before update for user Id : '.$userId.' , total count = '.$leadAllocationRecord->allocation_count.' and auto count = '.$leadAllocationRecord->auto_assignment_count);
+        DB::statement("UPDATE lead_allocation SET allocation_count = allocation_count + 1 , auto_assignment_count = auto_assignment_count + 1 ,
+             last_allocated = '".Carbon::now()->timestamp."' , updated_at = now() where user_id = ".$userId);
     }
 
     public function updateCarLeadDetailRecord($leadId)
@@ -821,8 +828,16 @@ class LeadAllocationService extends BaseService
     {
         $shouldProcess = true;
 
-        if ($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
+        if (config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
             // if car lead allocation master switch is OFF then we shouldn't proceed further
+            $shouldProcess = false;
+            info('shouldCarAllocationProceed -- Doppler -- output is : '.json_encode($shouldProcess));
+
+            return false;
+        }
+
+        if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
+            // if car lead allocation normal switch is OFF then we shouldn't proceed further
             $shouldProcess = false;
         }
 
