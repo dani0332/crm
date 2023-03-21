@@ -2,6 +2,7 @@
 
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
 class Removemasterswitch extends Migration
 {
@@ -12,7 +13,7 @@ class Removemasterswitch extends Migration
      */
     public function up()
     {
-        ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_MASTER_SWITCH')->delete();
+        DB::statement("delete from application_storage where key_name = 'CAR_LEAD_ALLOCATION_MASTER_SWITCH'");
     }
 
     /**
