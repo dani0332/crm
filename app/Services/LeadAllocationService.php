@@ -591,6 +591,8 @@ class LeadAllocationService extends BaseService
 
     public function updateLeadAllocationOnCarAutoAssignment($userId)
     {
+        $leadAllocationRecord = LeadAllocation::where('user_id', $userId)->first();
+        info('Count before update for user Id : '. $userId . ' , total count = '. $leadAllocationRecord->allocation_count . ' and auto count = '. $leadAllocationRecord->auto_assignment_count);
         DB::statement("UPDATE lead_allocation SET allocation_count = allocation_count + 1 , auto_assignment_count = auto_assignment_count + 1 ,
              last_allocated = '".Carbon::now()->timestamp."' , updated_at = now() where user_id = ".$userId);
     }
