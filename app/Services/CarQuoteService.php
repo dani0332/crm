@@ -680,9 +680,9 @@ class CarQuoteService extends BaseService
         if ($date != '') {
             $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
             if ($isStartOfDay) {
-                return Carbon::createFromFormat($dateFormat, $date)->startOfDay()->toDateString();
+                return Carbon::createFromFormat($dateFormat, $date)->startOfDay();
             } else {
-                return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
+                return Carbon::createFromFormat($dateFormat, $date)->endOfDay();
             }
         }
     }
