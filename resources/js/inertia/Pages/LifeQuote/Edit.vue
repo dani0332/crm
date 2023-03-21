@@ -1,8 +1,4 @@
 <script setup>
-import { computed, ref, onMounted } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-
 const props = defineProps({
   quote: Object,
   dropdownSource: Object,

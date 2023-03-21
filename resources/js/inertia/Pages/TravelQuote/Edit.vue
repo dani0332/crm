@@ -1,8 +1,4 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-
 const props = defineProps({
   quote: Object,
   dropdownSource: Object,
@@ -50,7 +46,6 @@ const rules = {
 const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
-
   if (isValid) {
     quoteForm.put(`/quotes/travel/${props.quote.uuid}`, {
       onSuccess: () => {

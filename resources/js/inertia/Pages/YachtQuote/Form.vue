@@ -1,9 +1,4 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-import { useNotifications } from '@indielayer/ui';
-
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -23,12 +18,7 @@ const quoteForm = useForm({
   operator_experience: props.quote?.yacht_quote?.operator_experience || '',
 });
 
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired, isEmail } = useRules();
 
 const isEmptyField = ref(false);
 
@@ -85,7 +75,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.first_name"
           type="text"
           label="First Name*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.first_name"
         />
@@ -94,7 +84,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.last_name"
           type="text"
           label="Last Name*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.last_name"
         />
@@ -103,7 +93,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.email"
           type="email"
           label="Email*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.email"
         />
@@ -112,7 +102,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.mobile_no"
           type="tel"
           label="Phone Number*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
         />
@@ -121,7 +111,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.boat_details"
           type="text"
           label="Boat Details*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.boat_details"
         />
@@ -130,7 +120,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.engine_details"
           type="text"
           label="Engine Details*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.engine_details"
         />
@@ -139,7 +129,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.claim_experience"
           type="text"
           label="Claim Experience*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.claim_experience"
         />
@@ -148,7 +138,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.asset_value"
           type="number"
           label="Bike value(AED)*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.asset_value"
         />
@@ -157,7 +147,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.use"
           type="text"
           label="Use*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.use"
         />
@@ -166,7 +156,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.operator_experience"
           type="text"
           label="Operator Experience*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.operator_experience"
         />

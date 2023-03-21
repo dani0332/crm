@@ -1,8 +1,4 @@
 <script setup>
-import { useForm, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import { useNotifications } from '@indielayer/ui';
-
 defineProps({
   quote: Object,
   documentTypes: Object,
@@ -51,7 +47,7 @@ const onLeadStatus = () => {
 };
 
 const rules = {
-    isRequired: v => !!v || 'This field is required',
+  isRequired: v => !!v || 'This field is required',
 };
 
 const allowStatusUpdate = computed(() => {
@@ -60,7 +56,6 @@ const allowStatusUpdate = computed(() => {
     page.props.quoteStatusEnum.TransactionApproved
   );
 });
-
 </script>
 
 <template>

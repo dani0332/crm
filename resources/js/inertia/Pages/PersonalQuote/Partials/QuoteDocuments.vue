@@ -1,9 +1,4 @@
 <script setup>
-import { reactive, ref } from 'vue';
-import { router, useForm, usePage } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-import Dropzone from '@/inertia/Components/Dropzone.vue';
-
 defineProps({
   quote: Object,
   documentTypes: Object,
