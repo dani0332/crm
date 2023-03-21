@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
@@ -35,10 +34,10 @@ class PetQuoteRepository extends BaseRepository
             'petTypeId' => $request['pet_type_id'],
             'petAgeId' => $request['pet_age_id'],
             'breedOfPet1' => $request['breed_of_pet1'],
-            'isMicrochipped' => $request['is_microchipped'] == GenericRequestEnum::Yes ? true : false,
-            'isNeutered' => $request['is_neutered'] == GenericRequestEnum::Yes ? true : false,
-            'isMixedBreed' => $request['is_mixed_breed'] == GenericRequestEnum::Yes ? true : false,
-            'anyInjury' => $request['has_injury'] == GenericRequestEnum::Yes ? true : false,
+            'isMicrochipped' => $request['is_microchipped'],
+            'isNeutered' => $request['is_neutered'],
+            'isMixedBreed' => $request['is_mixed_breed'],
+            'hasInjury' => $request['has_injury'],
             'lang' => 'EN',
             'device' => 'DESKTOP',
             'utmSource' => '',
@@ -48,18 +47,18 @@ class PetQuoteRepository extends BaseRepository
             'iamPossesionTypeId' => $request['iam_possesion_type_id'],
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
+            'quoteTypeId' => intval(QuoteTypes::PET->id()),
         ];
 
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
-
-        $response = Capi::request('/api/v1-save-pet-quote', 'post', $dataArr);
+        $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
 
         if (isset($response->quoteUID)) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $response->quoteUID)->firstOrFail();
 
-            $quote->update(['premium' => $request->premium]);
+            $quote->update(['premium' => $request['premium']]);
         }
 
         return $response;
