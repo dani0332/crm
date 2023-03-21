@@ -109,6 +109,8 @@ class CycleQuoteRepository extends BaseRepository
             ->where($column, $value)
             ->with(['cycleQuote', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-            }, 'createdBy', 'updatedBy'])->firstOrFail();
+            }, 'createdBy', 'updatedBy', 'documents' => function($q) {
+                $q->with('createdBy')->orderBy('created_at', 'desc');
+            }])->firstOrFail();
     }
 }

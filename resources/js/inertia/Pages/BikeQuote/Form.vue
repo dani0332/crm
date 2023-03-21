@@ -18,7 +18,7 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
-  dob: props.quote?.dob || '',
+  dob: props.quote?.dob || null,
   nationality_id: props.quote?.nationality_id || null,
   uae_license_held_for_id:
     props.quote?.bike_quote?.uae_license_held_for_id || null,
@@ -31,13 +31,23 @@ const quoteForm = useForm({
 
 const { isRequired, isEmail } = useRules();
 
+const formFieldReq = reactive({
+    nationality: false,
+    dob: false,
+});
+
 const isEmptyField = ref(false);
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
-    isEmptyField.value = true;
+      formFieldReq.nationality_id = true;
   } else {
-    isEmptyField.value = false;
+      formFieldReq.nationality_id = false;
   }
+    if (quoteForm.dob == null || quoteForm.dob == "") {
+        formFieldReq.dob = true;
+    } else {
+        formFieldReq.dob = false;
+    }
 
   if (isValid) {
     let method = 'post';
@@ -122,14 +132,13 @@ function onSubmit(isValid) {
           :error="quoteForm.errors.mobile_no"
         />
 
-        <x-input
-          v-model="quoteForm.dob"
-          type="date"
-          label="Date of Birth"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.dob"
-        />
+          <DatePicker
+              v-model="quoteForm.dob"
+              name="created_at_start"
+              label="Date of Birth"
+              :hasError="quoteForm.errors.dob || formFieldReq.dob"
+          />
+
 
         <ComboBox
           v-model="quoteForm.nationality_id"
@@ -141,7 +150,7 @@ function onSubmit(isValid) {
               label: item.text,
             }))
           "
-          :hasError="isEmptyField"
+          :hasError="isEmptyField || formFieldReq.nationality_id"
           :error="quoteForm.errors.nationality_id"
         />
 

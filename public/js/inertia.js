@@ -924,7 +924,7 @@ __webpack_require__.r(__webpack_exports__);
       last_name: ((_props$quote2 = props.quote) === null || _props$quote2 === void 0 ? void 0 : _props$quote2.last_name) || '',
       email: ((_props$quote3 = props.quote) === null || _props$quote3 === void 0 ? void 0 : _props$quote3.email) || '',
       mobile_no: ((_props$quote4 = props.quote) === null || _props$quote4 === void 0 ? void 0 : _props$quote4.mobile_no) || '',
-      dob: ((_props$quote5 = props.quote) === null || _props$quote5 === void 0 ? void 0 : _props$quote5.dob) || '',
+      dob: ((_props$quote5 = props.quote) === null || _props$quote5 === void 0 ? void 0 : _props$quote5.dob) || null,
       nationality_id: ((_props$quote6 = props.quote) === null || _props$quote6 === void 0 ? void 0 : _props$quote6.nationality_id) || null,
       uae_license_held_for_id: ((_props$quote7 = props.quote) === null || _props$quote7 === void 0 ? void 0 : (_props$quote7$bike_qu = _props$quote7.bike_quote) === null || _props$quote7$bike_qu === void 0 ? void 0 : _props$quote7$bike_qu.uae_license_held_for_id) || null,
       bike_company_to_insure: ((_props$quote8 = props.quote) === null || _props$quote8 === void 0 ? void 0 : (_props$quote8$bike_qu = _props$quote8.bike_quote) === null || _props$quote8$bike_qu === void 0 ? void 0 : _props$quote8$bike_qu.bike_company_to_insure) || null,
@@ -937,13 +937,23 @@ __webpack_require__.r(__webpack_exports__);
         isRequired = _useRules.isRequired,
         isEmail = _useRules.isEmail;
 
+    var formFieldReq = (0,vue__WEBPACK_IMPORTED_MODULE_2__.reactive)({
+      nationality: false,
+      dob: false
+    });
     var isEmptyField = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)(false);
 
     function onSubmit(isValid) {
       if (quoteForm.nationality_id == null) {
-        isEmptyField.value = true;
+        formFieldReq.nationality_id = true;
       } else {
-        isEmptyField.value = false;
+        formFieldReq.nationality_id = false;
+      }
+
+      if (quoteForm.dob == null || quoteForm.dob == "") {
+        formFieldReq.dob = true;
+      } else {
+        formFieldReq.dob = false;
       }
 
       if (isValid) {
@@ -978,6 +988,7 @@ __webpack_require__.r(__webpack_exports__);
       quoteForm: quoteForm,
       isRequired: isRequired,
       isEmail: isEmail,
+      formFieldReq: formFieldReq,
       isEmptyField: isEmptyField,
       onSubmit: onSubmit
     };
@@ -11155,9 +11166,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "render": () => (/* binding */ render)
 /* harmony export */ });
 /* harmony import */ var _Users_faisalabbas_Sites_blanka_dev_resources_js_inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./resources/js/inertia/Components/ComboBox.vue */ "./resources/js/inertia/Components/ComboBox.vue");
-/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var _Users_faisalabbas_Sites_blanka_dev_resources_js_inertia_Components_DatePicker_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./resources/js/inertia/Components/DatePicker.vue */ "./resources/js/inertia/Components/DatePicker.vue");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
 /* unplugin-vue-components disabled */
+
 
 
 
@@ -11179,38 +11192,40 @@ var _hoisted_5 = {
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _$props$quote;
 
-  var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Head;
+  var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__.Head;
 
-  var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-button");
+  var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-button");
 
-  var _component_Link = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Link;
+  var _component_Link = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__.Link;
 
-  var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-divider");
+  var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-divider");
 
-  var _component_x_alert = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-alert");
+  var _component_x_alert = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-alert");
 
-  var _component_x_input = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-input");
+  var _component_x_input = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-input");
+
+  var _component_DatePicker = _Users_faisalabbas_Sites_blanka_dev_resources_js_inertia_Components_DatePicker_vue__WEBPACK_IMPORTED_MODULE_1__["default"];
 
   var _component_ComboBox = _Users_faisalabbas_Sites_blanka_dev_resources_js_inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_0__["default"];
 
-  var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-select");
+  var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-select");
 
-  var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-form");
+  var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-form");
 
-  return (0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_Head, {
+  return (0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_Head, {
     title: "Bike Quote"
-  }), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_1, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h2", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)(" Bike Quote "), $props.quote ? ((0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementBlock)("span", _hoisted_3, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote = $props.quote) === null || _$props$quote === void 0 ? void 0 : _$props$quote.uuid), 1
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_1, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("h2", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" Bike Quote "), $props.quote ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("span", _hoisted_3, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((_$props$quote = $props.quote) === null || _$props$quote === void 0 ? void 0 : _$props$quote.uuid), 1
   /* TEXT */
-  )) : (0,vue__WEBPACK_IMPORTED_MODULE_2__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_Link, {
+  )) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_Link, {
     href: "/personal-quotes/bike"
   }, {
-    "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_button, {
         size: "sm",
         color: "#ff5e00"
       }, {
-        "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)(" Bike Quotes List ")];
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" Bike Quotes List ")];
         }),
         _: 1
         /* STABLE */
@@ -11220,29 +11235,29 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
     /* STABLE */
 
-  })])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
+  })])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_divider, {
     "class": "my-4"
-  }), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_form, {
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_form, {
     onSubmit: $setup.onSubmit,
     "auto-focus": false
   }, {
-    "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
-      return [$setup.quoteForm.errors.error ? ((0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createBlock)(_component_x_alert, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function () {
+      return [$setup.quoteForm.errors.error ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createBlock)(_component_x_alert, {
         key: 0,
         color: "error",
         "class": "mb-5"
       }, {
-        "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function () {
           var _$setup$quoteForm, _$setup$quoteForm$err;
 
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$setup$quoteForm = $setup.quoteForm) === null || _$setup$quoteForm === void 0 ? void 0 : (_$setup$quoteForm$err = _$setup$quoteForm.errors) === null || _$setup$quoteForm$err === void 0 ? void 0 : _$setup$quoteForm$err.error), 1
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((_$setup$quoteForm = $setup.quoteForm) === null || _$setup$quoteForm === void 0 ? void 0 : (_$setup$quoteForm$err = _$setup$quoteForm.errors) === null || _$setup$quoteForm$err === void 0 ? void 0 : _$setup$quoteForm$err.error), 1
           /* TEXT */
           )];
         }),
         _: 1
         /* STABLE */
 
-      })) : (0,vue__WEBPACK_IMPORTED_MODULE_2__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
+      })) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.first_name,
         "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
           return $setup.quoteForm.first_name = $event;
@@ -11254,7 +11269,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         error: $setup.quoteForm.errors.first_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.last_name,
         "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
           return $setup.quoteForm.last_name = $event;
@@ -11266,7 +11281,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         error: $setup.quoteForm.errors.last_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.email,
         "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
           return $setup.quoteForm.email = $event;
@@ -11278,7 +11293,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         error: $setup.quoteForm.errors.email
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.mobile_no,
         "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
           return $setup.quoteForm.mobile_no = $event;
@@ -11290,19 +11305,17 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         error: $setup.quoteForm.errors.mobile_no
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_DatePicker, {
         modelValue: $setup.quoteForm.dob,
         "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
           return $setup.quoteForm.dob = $event;
         }),
-        type: "date",
+        name: "created_at_start",
         label: "Date of Birth",
-        rules: [$setup.isRequired],
-        "class": "w-full",
-        error: $setup.quoteForm.errors.dob
+        hasError: $setup.quoteForm.errors.dob || $setup.formFieldReq.dob
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_ComboBox, {
+      , ["modelValue", "hasError"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_ComboBox, {
         modelValue: $setup.quoteForm.nationality_id,
         "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
           return $setup.quoteForm.nationality_id = $event;
@@ -11315,11 +11328,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             label: item.text
           };
         }),
-        hasError: $setup.isEmptyField,
+        hasError: $setup.isEmptyField || $setup.formFieldReq.nationality_id,
         error: $setup.quoteForm.errors.nationality_id
       }, null, 8
       /* PROPS */
-      , ["modelValue", "options", "hasError", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_select, {
+      , ["modelValue", "options", "hasError", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.uae_license_held_for_id,
         "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
           return $setup.quoteForm.uae_license_held_for_id = $event;
@@ -11336,7 +11349,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         error: $setup.quoteForm.errors.uae_license_held_for_id
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "options", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "options", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.bike_company_to_insure,
         "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
           return $setup.quoteForm.bike_company_to_insure = $event;
@@ -11348,7 +11361,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         error: $setup.quoteForm.errors.bike_company_to_insure
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.asset_value,
         "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
           return $setup.quoteForm.asset_value = $event;
@@ -11360,7 +11373,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         error: $setup.quoteForm.errors.asset_value
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_select, {
+      , ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.year_of_manufacture,
         "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
           return $setup.quoteForm.year_of_manufacture = $event;
@@ -11377,7 +11390,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         error: $setup.quoteForm.errors.year_of_manufacture
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "options", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_select, {
+      , ["modelValue", "rules", "options", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.currently_insured_with_id,
         "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
           return $setup.quoteForm.currently_insured_with_id = $event;
@@ -11394,16 +11407,16 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         error: $setup.quoteForm.errors.currently_insured_with_id
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "options", "error"])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
+      , ["modelValue", "rules", "options", "error"])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_divider, {
         "class": "my-4"
-      }), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_button, {
         size: "md",
         color: "emerald",
         type: "submit",
         loading: $setup.quoteForm.processing
       }, {
-        "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)(" Save ")];
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" Save ")];
         }),
         _: 1
         /* STABLE */

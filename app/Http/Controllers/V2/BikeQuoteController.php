@@ -87,8 +87,6 @@ class BikeQuoteController extends Controller
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
 
-        $quote->load('documents.createdBy');
-
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
