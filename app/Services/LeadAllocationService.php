@@ -444,7 +444,6 @@ class LeadAllocationService extends BaseService
     public function processCarLeads()
     {
         try {
-
             $currentIterationTime = now();
 
             info('----------------------- CAR LEAD ALLOCATION STARTED AT '.$currentIterationTime.' -----------------------');
