@@ -586,7 +586,7 @@ class LeadAllocationService extends BaseService
 
     public function updateLeadAllocationOnCarAutoAssignment($userId)
     {
-        Cache::lock('lead_allocation')->block(1, function () use ($userId) {
+        DB::transaction(function () use ($userId) {
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
             info('Lead allocation total count for userId : '.$userId.' is '.$leadAllocation->allocation_count.' and auto count = '.$leadAllocation->auto_assignment_count);
             $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;

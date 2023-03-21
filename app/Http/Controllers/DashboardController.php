@@ -6,6 +6,7 @@ use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
@@ -192,7 +193,7 @@ class DashboardController extends Controller
 
     public function getComprehensiveDashboardStats(Request $request): array
     {
-        $compTiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('is_active', 1)->get()->pluck('id');
+        $compTiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name' , '!=', TiersEnum::TIER_R)->where('is_active', 1)->get()->pluck('id');
         $records = QuoteBatches::query()
         ->select(
             'quote_batches.id',
@@ -255,7 +256,7 @@ class DashboardController extends Controller
     public function renderComprehensiveDashboard(Request $request)
     {
         $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
-        $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('is_active', 1)->get();
+        $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name' , '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
