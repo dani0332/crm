@@ -103,7 +103,9 @@ class JetskiQuoteRepository extends BaseRepository
             ->where($column, $value)
             ->with(['jetskiQuote', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo'])->firstOrFail();
+            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
+                $q->with('createdBy')->orderBy('created_at', 'desc');
+            }])->firstOrFail();
     }
 
     /**

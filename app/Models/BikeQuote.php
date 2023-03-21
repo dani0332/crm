@@ -68,4 +68,18 @@ class BikeQuote extends Model implements AuditableContract
     {
         return $this->hasOne(BikeQuoteRequestDetail::class, 'bike_quote_request_id', 'id');
     }
+
+    /**
+     * @return array
+     */
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => BikeQuote::class, 'key' => 'personal_quote_id'],
+            ],
+        ];
+    }
 }

@@ -6,6 +6,7 @@ import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
+import {useCan} from "../../Composables/can";
 
 defineProps({
   quote: Object,
@@ -47,6 +48,10 @@ const historyDataTable = [
   { text: 'Notes', value: 'NewNotes' },
   { text: 'Lead Status', value: 'NewStatus' },
 ];
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 </script>
 
 <template>
@@ -56,11 +61,11 @@ const historyDataTable = [
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Cycle Detail</h2>
       <div class="flex gap-2">
-        <Link :href="`/personal-quotes/cycle/${quote.uuid}/edit`">
+        <Link v-if="can(permissionsEnum.CycleQuotesEdit)" :href="`/personal-quotes/cycle/${quote.uuid}/edit`">
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
-        <Link href="/personal-quotes/cycle" preserve-scroll>
+        <Link v-if="can(permissionsEnum.CycleQuotesList)" href="/personal-quotes/cycle" preserve-scroll>
           <x-button size="sm" color="primary" tag="div">
             Cycle Quotes
           </x-button>
@@ -300,7 +305,7 @@ const historyDataTable = [
     />
 
     <AuditLogs
-      :type="'App\\Models\\PersonalQuote'"
+      :quote-type="quoteType"
       :id="$page.props.quote.id"
     />
 

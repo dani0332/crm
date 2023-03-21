@@ -1,5 +1,6 @@
 <script setup>
 import { useNotifications } from '@indielayer/ui';
+import { useCan } from '../../Composables/can';
 
 defineProps({
   quotes: Object,
