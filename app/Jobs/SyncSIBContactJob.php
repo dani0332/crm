@@ -2,6 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\quoteTypeCode;
+use App\Services\ApplicationStorageService;
 use App\Services\SIBService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,12 +36,12 @@ class SyncSIBContactJob implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(ApplicationStorageService $appStorageService)
     {
         if (! $this->entity) {
             return false;
         }
-
+        $isCarQuote = str_contains($this->entity->code, strtoupper(quoteTypeCode::Car));
         $data = [
             'customerName' => isset($this->entity->full_name) ? $this->entity->full_name : null,
             'advisorName' => isset($this->entity->advisor) ? $this->entity->advisor->name : null,
@@ -48,10 +51,12 @@ class SyncSIBContactJob implements ShouldQueue
             'customerFirstName' => isset($this->entity->first_name) ? $this->entity->first_name : null,
             'leadStatus' => isset($this->entity->quoteStatus) ? $this->entity->quoteStatus->text : null,
             'cdbid' => isset($this->entity->code) ? $this->entity->code : null,
-            'link' => config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL').$this->entity->uuid,
+            'link' => config('constants.ECOM_'.($isCarQuote ? 'CAR' : 'HEALTH').'_INSURANCE_QUOTE_URL').$this->entity->uuid,
             'advisorLandline' => isset($this->entity->advisor) ? $this->entity->advisor->landline_no : null,
         ];
+        $listId = $isCarQuote ? $appStorageService->getValueByKey(ApplicationStorageEnums::SIB_CAR_DRIP_LIST_ID) : $appStorageService->getValueByKey(ApplicationStorageEnums::SIB_HEALTH_EBP_LIST_ID);
+        info('going to create or update contact on sib for list id : '.$listId);
 
-        return SIBService::contactCreateUpdate(config('constants.SIB_HEALTH_EBP_LIST_ID'), $this->entity->first_name, $this->entity->last_name, $this->entity->email, null, $data);
+        return SIBService::contactCreateUpdate($listId, $this->entity->first_name, $this->entity->last_name, $this->entity->email, null, $data);
     }
 }

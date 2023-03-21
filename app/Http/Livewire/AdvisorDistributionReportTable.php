@@ -53,7 +53,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->map(fn ($tier) => $tier->name)
             ->toArray();
 
-        $this->teams = $this->getCurrentUserTeamsAndSubTeams($loginUserId)->keyBy('id')
+        $this->teams = $this->getUserTeams($loginUserId)->keyBy('id')
         ->map(fn ($team) => $team->name)
         ->toArray();
 

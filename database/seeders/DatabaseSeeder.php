@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
             JetskiLookupsSeeder::class,
             PersonalQuoteRolesPermissionSeeder::class,
             addSystemUser::class,
+            addCarDripListKey::class,
         ]);
     }
 }

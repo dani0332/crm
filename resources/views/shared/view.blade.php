@@ -39,6 +39,7 @@
             var isLeadPool = $("#isLeadPool").val();
             var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
             var isManualAllocationAllowed = JSON.parse('<?php echo json_encode($isManualAllocationAllowed); ?>');
+            var isCarAdvisor = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('CAR_ADVISOR')); ?>');
             // Adding custom search fields for admin role
             if (isAdmin) {
                 model.searchProperties.push('is_ecommerce');
@@ -204,11 +205,9 @@
                         carProps.forEach(element => {
                             d[element] = $('#' + element).val();
                         });
-                        if(model.modelType == '{{ quoteTypeCode::Car }}' &&
-                        '{{ !Auth::user()->hasRole(RolesEnum::CarAdvisor) }}'){
+                        if(!isCarAdvisor ){
                             d.advisor_id = $('#advisor_id').val();
                         }
-
                         d.advisor_assigned_date = $('#advisor_assigned_date').val();
                         d.advisor_assigned_date_end = $('#advisor_assigned_date_end').val();
                         d.renewal_expiry_date = $('#renewal_expiry_date').val();
@@ -524,16 +523,12 @@
                         @endif
                         @php
                             $searchProperties = $model->searchProperties;
-
                             if (
-                                !auth()
+                                auth()
                                     ->user()
-                                    ->hasRole(RolesEnum::CarAdvisor)
+                                    ->hasRole(RolesEnum::CarAdvisor) && array_search('advisor_id', $searchProperties)
                             ) {
-                                $searchProperties[] = 'advisor_id';
-                                $searchProperties = array_unique($searchProperties);
-                            }else{
-                                unset( $searchProperties['advisor_id']);
+                                unset( $searchProperties[array_search('advisor_id', $searchProperties)]);
                             }
                             $sourcePropertiesArry = $crudService->sortMetaArray($model->properties, 'ss:');
                             $skipProperties = $model->skipProperties;
