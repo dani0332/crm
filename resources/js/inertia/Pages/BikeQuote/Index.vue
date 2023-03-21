@@ -1,4 +1,7 @@
 <script setup>
+import {ref} from "vue";
+import LeadAssignment from "../PersonalQuote/Partials/LeadAssignment";
+
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
@@ -94,6 +97,11 @@ const tableHeader = [
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+
+const quotesSelected = ref([]),
+    assignAdvisor = ref(null),
+    assignmentType = ref(null),
+    isDisabled = ref(false);
 
 </script>
 
@@ -219,7 +227,29 @@ const permissionsEnum = page.props.permissionsEnum;
       </div>
     </x-form>
 
+      <Transition name="fade">
+          <div v-if="quotesSelected.length > 0" class="mb-4">
+              <ExportExcel
+                  :data="quotesSelected"
+                  :columns="tableHeader"
+                  :filename="'Home-List'"
+                  :sheetname="'Leads'"
+              >
+                  <x-button size="sm" color="emerald">
+                      Export -
+                      <span class="lining-nums">
+              Selected: {{ quotesSelected.length }}
+            </span>
+                  </x-button>
+              </ExportExcel>
+
+
+          </div>
+
+      </Transition>
+
     <DataTable
+        v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
