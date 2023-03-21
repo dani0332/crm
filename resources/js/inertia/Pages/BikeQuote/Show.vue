@@ -7,6 +7,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
+import {useCan} from "../../Composables/can";
 
 defineProps({
   quote: Object,
@@ -26,6 +27,9 @@ defineProps({
 });
 
 const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 </script>
 
 <template>
@@ -35,11 +39,11 @@ const page = usePage();
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Bike Detail</h2>
       <div class="flex gap-2">
-        <Link :href="`/personal-quotes/bike/${quote.uuid}/edit`">
+        <Link v-if="can(permissionsEnum.BikeQuotesEdit)" :href="`/personal-quotes/bike/${quote.uuid}/edit`">
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
-        <Link href="/personal-quotes/bike" preserve-scroll>
+        <Link v-if="can(permissionsEnum.BikeQuotesList)" href="/personal-quotes/bike" preserve-scroll>
           <x-button size="sm" color="primary" tag="div"> Bike Quotes </x-button>
         </Link>
       </div>
@@ -272,8 +276,8 @@ const page = usePage();
     />
 
     <AuditLogs
-      :type="'App\\Models\\PersonalQuote'"
       :id="$page.props.quote.id"
+      :quote-type="quoteType"
     />
 
     <LeadHistory :quote="$page.props.quote" />

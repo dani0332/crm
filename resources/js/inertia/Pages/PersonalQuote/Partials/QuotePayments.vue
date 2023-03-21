@@ -1,4 +1,6 @@
 <script setup>
+import {useCan} from "../../../Composables/can";
+
 const notification = useNotifications('toast');
 const page = usePage();
 const paymentLoader = ref(``);
@@ -214,6 +216,13 @@ const generateCCLink = async payment => {
     });
   }
 };
+
+const can = permission => useCan(permission);
+const hasRole = role => useHasRole(role);
+const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
+
+
 </script>
 
 <template>
@@ -221,7 +230,7 @@ const generateCCLink = async payment => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="can.create_payments && !can.approve_payments"
+        v-if="can(permissionsEnum.PaymentsCreate) && !can(permissionsEnum.ApprovePayments) && !hasRole(rolesEnum.PA)"
         size="sm"
         color="orange"
         @click="addPaymentModal"
@@ -244,7 +253,7 @@ const generateCCLink = async payment => {
 
       <template #item-actions="item">
         <div class="flex gap-2">
-          <template v-if="can.approve_payments">
+          <template v-if="can(permissionsEnum.ApprovePayments)">
             <x-button size="xs" color="error" @click="approvePayment(item)">
               Approve
             </x-button>
@@ -264,7 +273,7 @@ const generateCCLink = async payment => {
             <x-button
               size="xs"
               color="emerald"
-              v-if="can.edit_payments && item.edit_button"
+              v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button"
               @click="editPaymentModal(item)"
             >
               Edit

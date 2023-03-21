@@ -23,6 +23,12 @@ defineProps({
   lostReasons: Object,
   quoteStatusEnum: Object,
 });
+
+const page = usePage();
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 </script>
 
 <template>
@@ -32,14 +38,12 @@ defineProps({
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Yacht Detail</h2>
       <div class="flex gap-2">
-        <Link :href="`/personal-quotes/yacht/${quote.uuid}/edit`">
+        <Link v-if="can(permissionsEnum.YachtQuotesEdit)" :href="`/personal-quotes/yacht/${quote.uuid}/edit`">
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
-        <Link href="/personal-quotes/yacht" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div">
-            Yacht Quotes
-          </x-button>
+        <Link v-if="can(permissionsEnum.YachtQuotesList)" href="/personal-quotes/yacht" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div"> Yacht Quotes </x-button>
         </Link>
       </div>
     </div>
@@ -275,10 +279,7 @@ defineProps({
       :quoteStatusEnum="quoteStatusesEnum"
     />
 
-    <AuditLogs
-      :type="'App\\Models\\PersonalQuote'"
-      :id="$page.props.quote.id"
-    />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
 
     <LeadHistory :quote="$page.props.quote" />
   </div>

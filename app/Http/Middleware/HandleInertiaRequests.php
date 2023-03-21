@@ -43,12 +43,21 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        return array_merge(parent::share($request), [
+        $permissions = $roles = [];
+        if (auth()->user()) {
+            $permissions = auth()->user()->getAllPermissions()->pluck('name')->toArray();
+            $roles = auth()->user()->getRoleNames()->toArray();
+        }
 
+        return array_merge(parent::share($request), [
             'auth.user' => fn () => $request->user()
                 ? $request->user()->only('id', 'name', 'email')
                 : null,
+            'auth.permissions' => fn () => $permissions,
+            'auth.roles' => fn () => $roles,
             'sidebar' => fn () => $this->buildNavigation()->tree(),
+            'permissionsEnum' => PermissionsEnum::asArray(),
+            'rolesEnum' => RolesEnum::asArray(),
         ]);
     }
 
@@ -211,10 +220,10 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'pet'])
                     )
                     ->add('Pet', '/personal-quotes/pet', fn ($s) => $s->attributes(['icon' => 'pet']))
-                    ->add('Bike Quotes', '/personal-quotes/bike', fn ($s) => $s->attributes(['icon' => 'bike']))
-                    ->add('Cycle Quotes', '/personal-quotes/cycle', fn ($s) => $s->attributes(['icon' => 'cycle']))
-                    ->add('Yacht Quotes', '/personal-quotes/yacht', fn ($s) => $s->attributes(['icon' => 'yacht']))
-                    ->add('Jetski Quotes', '/personal-quotes/jetski', fn ($s) => $s->attributes(['icon' => 'jetski']));
+                    ->addIf(auth()->user()->can(PermissionsEnum::BikeQuotesList), 'Bike Quotes', '/personal-quotes/bike', fn ($s) => $s->attributes(['icon' => 'bike']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::CycleQuotesList), 'Cycle Quotes', '/personal-quotes/cycle', fn ($s) => $s->attributes(['icon' => 'cycle']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::YachtQuotesList), 'Yacht Quotes', '/personal-quotes/yacht', fn ($s) => $s->attributes(['icon' => 'yacht']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::JetskiQuotesList), 'Jetski Quotes', '/personal-quotes/jetski', fn ($s) => $s->attributes(['icon' => 'jetski']));
             });
         }
 

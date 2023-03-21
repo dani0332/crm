@@ -2,6 +2,8 @@
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
+const permissionsEnum = computed(() => page.props.permissionsEnum);
+const permissions = computed(() => page.props.permissions);
 const openSidebar = ref(false);
 
 router.on('navigate', () => {
