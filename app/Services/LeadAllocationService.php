@@ -828,7 +828,7 @@ class LeadAllocationService extends BaseService
     {
         $shouldProcess = true;
 
-        if ($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
+        if (config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
             // if car lead allocation master switch is OFF then we shouldn't proceed further
             $shouldProcess = false;
         }
