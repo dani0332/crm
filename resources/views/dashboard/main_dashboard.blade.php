@@ -484,12 +484,11 @@
             cData.push({name: assignedLeadsBySource[index]['sourceName'], y: parseFloat(assignedLeadsBySource[index]['sourceCount'])});
         }
         createAssignedLeadRcdSummaryByLeadSourceChart(cData);
-
-
-        var cData = [];
+        advisorConversionData = advisorConversionData.sort((a, b) => a.id - b.id);
         for (let index = 0; index < advisorConversionData.length; index++) {
             var node = advisorConversionData[index];
-            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat(  ( node.sale_leads - node.created_sale_leads ) / (node.total_leads - node.bad_leads - node.manual_created ) )});
+            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( ( node.sale_leads - node.created_sale_leads ) / (node.total_leads - node.bad_leads - node.manual_created )  )});
+
         }
         createAdvisorConversionChart(cData);
 
@@ -774,5 +773,5 @@
             placeholderText: 'Select Advisor',
         }
     })
-</script>
+    </script>
 @endsection

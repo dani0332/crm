@@ -6,6 +6,7 @@ use App\Enums\EnvEnum;
 use App\Jobs\LeadAllocationJob;
 use App\Services\LeadAllocationService;
 use Barryvdh\Debugbar\Facade as Debugbar;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -34,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
             Debugbar::enable();
         }
         // DB::listen(function($query) {
-        //     Log::info(
+        //     info(
         //         $query->sql,
         //         $query->bindings,
         //         $query->time
