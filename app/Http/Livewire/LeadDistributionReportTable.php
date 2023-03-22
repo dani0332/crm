@@ -3,8 +3,6 @@
 namespace App\Http\Livewire;
 
 use App\Enums\GenericRequestEnum;
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
@@ -103,7 +101,6 @@ class LeadDistributionReportTable extends DataTableComponent
 
             SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END) AS unassigned_leads'), 'tiers.name AS tier_name')
         ->groupBy('tiers.name');
-
 
         if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);
