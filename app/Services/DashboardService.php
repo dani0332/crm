@@ -161,6 +161,8 @@ class DashboardService extends BaseService
         $query = $query->get()->sortBy(function ($record) {
             return $record->id;
         });
+        $data = [];
+        $labels = [];
         foreach ($query as $record) {
             $numerator = $record->sale_leads - $record->created_sale_leads;
             $denominator = ($record->total_leads - $record->manual_created) - ($record->bad_leads - $record->manual_created_bad_leads);
