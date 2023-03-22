@@ -95,6 +95,9 @@ const tableHeader = [
   { text: 'ACCOMMODATION TYPE', value: 'accommodation_type' },
   { text: 'POSSESION TYPE', value: 'possesion_type' },
 ];
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 </script>
 
 <template>
@@ -102,7 +105,12 @@ const tableHeader = [
     <Head title="Pet Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Pet Quotes List</h2>
-      <x-button size="sm" color="#ff5e00" href="/personal-quotes/pet/create">
+      <x-button
+        v-if="can(permissionsEnum.PetQuotesCreate)"
+        size="sm"
+        color="#ff5e00"
+        href="/personal-quotes/pet/create"
+      >
         Create Lead
       </x-button>
     </div>
@@ -216,11 +224,13 @@ const tableHeader = [
     >
       <template #item-uuid="{ code, uuid }">
         <Link
+          v-if="can(permissionsEnum.PetQuotesView)"
           :href="`/personal-quotes/pet/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
         </Link>
+        <span v-else>{{ code }}</span>
       </template>
 
       <template #item-advisor="{ advisor }">

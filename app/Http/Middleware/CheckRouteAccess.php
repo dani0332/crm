@@ -22,6 +22,7 @@ class CheckRouteAccess
             'store' => 'create',
             'update' => 'edit',
             'destroy' => 'delete',
+            'show' => 'view',
             'index' => 'list',
         ];
 

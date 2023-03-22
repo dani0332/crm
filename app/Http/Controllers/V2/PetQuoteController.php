@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -109,12 +108,6 @@ class PetQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
-            'can' => [
-                'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
-                'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
-                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && ! auth()->user()->hasRole(RolesEnum::PA),
-                'isPA' => auth()->user()->hasRole(RolesEnum::PA),
-            ],
         ]);
     }
 

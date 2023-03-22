@@ -30,6 +30,8 @@ defineProps({
 });
 
 const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const historyLoading = ref(false);
 
@@ -61,11 +63,18 @@ const historyDataTable = [
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Pet Detail</h2>
       <div class="flex gap-2">
-        <Link :href="`/personal-quotes/pet/${quote.uuid}/edit`">
+        <Link
+          v-if="can(permissionsEnum.PetQuotesEdit)"
+          :href="`/personal-quotes/pet/${quote.uuid}/edit`"
+        >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
-        <Link href="/personal-quotes/pet" preserve-scroll>
+        <Link
+          v-if="can(permissionsEnum.PetQuotesList)"
+          href="/personal-quotes/pet"
+          preserve-scroll
+        >
           <x-button size="sm" color="primary" tag="div"> Pet Quotes </x-button>
         </Link>
       </div>
