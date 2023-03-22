@@ -1223,7 +1223,7 @@ class CarQuoteService extends BaseService
 
     private function updateExistingQuoteViewCount($userId, $leadId)
     {
-        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->first();
+        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->first();
         if ($quoteViewCount) {
             $quoteViewCount->user_id = $userId;
             $quoteViewCount->view_count = 0;
