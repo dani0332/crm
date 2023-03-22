@@ -395,13 +395,7 @@ class SendEmailCustomerService extends BaseService
                 ]
             );
 
-            $messageId = json_decode($clientRequest->getBody()->getContents())->messageId;
-            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
             $responseCode = $clientRequest->getStatusCode();
-
-            if ($responseCode == 201) {
-                $isEmailSent = 1;
-            }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();

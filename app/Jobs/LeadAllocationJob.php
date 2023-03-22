@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpClient\Exception\TimeoutException as ExceptionTimeoutException;
 use Throwable;
 
+//Scheduled to delete, job moved to console command
 class LeadAllocationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, GetUserTreeTrait;
@@ -68,7 +69,7 @@ class LeadAllocationJob implements ShouldQueue
 
                 info('availableUsers: '.$availableUsersString);
 
-                $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();
+                $unAllocatedLeads = $leadAllocationService->getHealthUnallocatedLeads();
 
                 if (count($unAllocatedLeads) > 0) {
                     $currentIteration = now();
