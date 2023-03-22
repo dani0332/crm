@@ -79,7 +79,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
-        $this->teams = $this->getCurrentUserTeamsAndSubTeams($loginUserId)->keyBy('id')
+        $this->teams = $this->getUserTeams($loginUserId)->keyBy('id')
             ->map(fn ($Teams) => $Teams->name)
             ->toArray();
         $this->tiers = Tier::query()
@@ -172,25 +172,11 @@ class AdvisorConversionReportTable extends DataTableComponent
             )->html()->footer(function ($rows) {
                 return $rows->sum('manual_created');
             }),
-            Column::make('Gross Conversion')->label(fn ($row) => ($row->total_leads - $row->manual_created) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created))) * 100, 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
-                $total = 0;
-                foreach ($rows as $row) {
-                    if (($row->total_leads - $row->manual_created) > 0) {
-                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created)));
-                    }
-                }
-
-                return number_format($total * 100, 2, '.', '').' %';
+            Column::make('Gross Conversion')->label(fn ($row) => $this->calculateGrossConversion($row))->footer(function ($rows) {
+                return $this->calculateTotalGrossConversion($rows);
             }),
-            Column::make('Net Conversion')->label(fn ($row) => ($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0 ? number_format((($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads))) * 100, 2, '.', '').' %' : 'NaN')->footer(function ($rows) {
-                $total = 0;
-                foreach ($rows as $row) {
-                    if (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads) > 0) {
-                        $total = $total + (($row->sale_leads - $row->created_sale_leads) / (($row->total_leads - $row->manual_created) - ($row->bad_leads - $row->manual_created_bad_leads)));
-                    }
-                }
-
-                return number_format($total * 100, 2, '.', '').' %';
+            Column::make('Net Conversion')->label(fn ($row) => $this->calculateNetConversion($row))->footer(function ($rows) {
+                return $this->calculateTotalNetConversion($rows);
             }),
         ];
     }
@@ -291,5 +277,74 @@ class AdvisorConversionReportTable extends DataTableComponent
         }
 
         return $filters;
+    }
+
+    private function calculateTotalGrossConversion($rows)
+    {
+        $totalLeads = 0;
+        $manualCreated = 0;
+        $saleLeads = 0;
+        $createdSaleLeads = 0;
+        foreach ($rows as $row) {
+            $totalLeads += $row->total_leads;
+            $manualCreated += $row->manual_created;
+            $saleLeads += $row->sale_leads;
+            $createdSaleLeads += $row->created_sale_leads;
+        }
+        $numerator = $saleLeads - $createdSaleLeads;
+        $denominator = $totalLeads - $manualCreated;
+
+        return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
+    }
+
+    private function calculateGrossConversion($row)
+    {
+        $totalLeads = (int) $row->total_leads;
+        $manualCreated = (int) $row->manual_created;
+        $saleLeads = (int) $row->sale_leads;
+        $createdSaleLeads = (int) $row->created_sale_leads;
+        $numerator = $saleLeads - $createdSaleLeads;
+        $denominator = $totalLeads - $manualCreated;
+        if ($denominator > 0) {
+            return number_format(($numerator / $denominator) * 100, 2, '.', '').' %';
+        } else {
+            return 'NaN';
+        }
+    }
+
+    private function calculateTotalNetConversion($rows)
+    {
+        $totalLeads = 0;
+        $manualCreated = 0;
+        $badLeads = 0;
+        $manualCreatedBadLeads = 0;
+        $saleLeads = 0;
+        $createdSaleLeads = 0;
+        foreach ($rows as $row) {
+            $totalLeads += $row->total_leads;
+            $manualCreated += $row->manual_created;
+            $saleLeads += $row->sale_leads;
+            $createdSaleLeads += $row->created_sale_leads;
+            $badLeads += $row->bad_leads;
+            $manualCreatedBadLeads += $row->manual_created_bad_leads;
+        }
+        $numerator = $saleLeads - $createdSaleLeads;
+        $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
+
+        return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
+    }
+
+    private function calculateNetConversion($row)
+    {
+        $totalLeads = (int) $row->total_leads;
+        $manualCreated = (int) $row->manual_created;
+        $badLeads = (int) $row->bad_leads;
+        $manualCreatedBadLeads = (int) $row->manual_created_bad_leads;
+        $saleLeads = (int) $row->sale_leads;
+        $createdSaleLeads = (int) $row->created_sale_leads;
+        $numerator = $saleLeads - $createdSaleLeads;
+        $denominator = ($totalLeads - $manualCreated) - ($badLeads - $manualCreatedBadLeads);
+
+        return $denominator > 0 ? number_format($numerator / $denominator * 100, 2, '.', '').' %' : 'NaN';
     }
 }

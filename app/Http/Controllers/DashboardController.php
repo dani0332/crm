@@ -6,6 +6,7 @@ use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
@@ -70,8 +71,9 @@ class DashboardController extends Controller
 
     public function getRecentDailyStats(Request $request)
     {
-        $startDate = Carbon::parse(explode(',', $request->range)[0])->format('Y-m-d');
-        $endDate = Carbon::parse(explode(',', $request->range)[1])->format('Y-m-d');
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
+        $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
         $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
 
@@ -125,6 +127,7 @@ class DashboardController extends Controller
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
         )
         ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
@@ -146,8 +149,13 @@ class DashboardController extends Controller
         }
         $labels = [];
         $data = [];
-        foreach ($records->get() as $record) {
-            $total = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
+        $records = $records->get()->sortBy(function ($record) {
+            return $record->id;
+        });
+        foreach ($records as $record) {
+            $numerator = $record->sale_leads - $record->created_sale_leads;
+            $denominator = ($record->total_leads - $record->manual_created) - ($record->bad_leads - $record->manual_created_bad_leads);
+            $total = $denominator > 0 ? ($numerator / $denominator) : 0;
             $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
@@ -185,9 +193,10 @@ class DashboardController extends Controller
 
     public function getComprehensiveDashboardStats(Request $request): array
     {
-        $compTiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('is_active', 1)->get()->pluck('id');
+        $compTiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get()->pluck('id');
         $records = QuoteBatches::query()
         ->select(
+            'quote_batches.id',
             'quote_batches.name',
             DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
             DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
@@ -196,6 +205,7 @@ class DashboardController extends Controller
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
         )
         ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
@@ -220,8 +230,11 @@ class DashboardController extends Controller
 
         $labels = [];
         $data = [];
-        foreach ($records->get() as $record) {
-            $total = (($record->sale_leads - $record->created_sale_leads) / (($record->total_leads - $record->bad_leads - $record->manual_created) > 0 ? ($record->total_leads - $record->bad_leads - $record->manual_created) : 1));
+        $records = $records->get()->sortBy('id');
+        foreach ($records as $record) {
+            $numerator = $record->sale_leads - $record->created_sale_leads;
+            $denominator = ($record->total_leads - $record->manual_created) - ($record->bad_leads - $record->manual_created_bad_leads);
+            $total = $denominator > 0 ? ($numerator / $denominator) : 0;
             $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
         }
@@ -243,7 +256,7 @@ class DashboardController extends Controller
     public function renderComprehensiveDashboard(Request $request)
     {
         $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
-        $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('is_active', 1)->get();
+        $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
