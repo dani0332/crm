@@ -84,18 +84,22 @@ class LeadDistributionReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        $query = CarQuote::query()
-        ->select(
-            DB::raw('SUM(CASE WHEN (car_quote_request.advisor_id is null OR car_quote_request.auto_assigned = 1) THEN 1 ELSE 0 END) as received_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as lead_created'),
-            DB::raw('SUM(CASE WHEN car_quote_request.advisor_id is null AND car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as unassigned_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as auto_assigned'),
-            DB::raw('SUM(CASE WHEN car_quote_request.auto_assigned = 0  AND car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manually_assigned'),
-            DB::raw('count(car_quote_request.id) as total_leads'),
-        )
-        ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        $query = CarQuote::leftJoin('tiers', 'tiers.id', '=', 'car_quote_request.tier_id')
         ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-        ->distinct()
+        ->select(DB::raw('(
+
+            (SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
+            + SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
+            + SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END))
+            - SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END)) AS received_leads,
+
+            SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) AS lead_created, COUNT(*) AS total_leads,
+
+            SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS auto_assigned,
+
+            SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS manually_assigned,
+
+            SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END) AS unassigned_leads'), 'tiers.name AS tier_name')
         ->groupBy('tiers.name');
 
         if (! auth()->user()->hasRole(RolesEnum::Admin)) {
@@ -104,7 +108,7 @@ class LeadDistributionReportTable extends DataTableComponent
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
-        return $query;
+        return $query->orderBy('tiers.id');
     }
 
     public function filters(): array
