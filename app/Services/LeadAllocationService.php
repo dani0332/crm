@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\GetQuotePlansJob;
+use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -536,8 +537,7 @@ class LeadAllocationService extends BaseService
 
                             $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
 
-                            $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
-
+                            IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
                             info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                             DB::commit();
                         } catch (\Throwable $th) {
