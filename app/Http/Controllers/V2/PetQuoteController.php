@@ -74,10 +74,7 @@ class PetQuoteController extends Controller
     {
         $quote = PetQuoteRepository::getBy('uuid', $uuid);
 
-        // dd( $quote->toArray());
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
-
-        $quote->load('documents.createdBy');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
 
