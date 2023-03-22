@@ -118,13 +118,13 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function getUnAllocatedLeads()
+    public function getHealthUnallocatedLeads()
     {
         try {
             $unAllocatedLeads = [];
             $to = now();
             $from = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
-            info('from date : '.$from.' to date : '.$to);
+            info('Health Unallocated Leads from date : '.$from.' to date : '.$to);
             $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
                 ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
                 ->where('quote_status.id', QuoteStatusEnum::Qualified)
