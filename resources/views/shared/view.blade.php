@@ -637,19 +637,16 @@
                                                         @endforeach
                                                     </select>
                                                 </div>
+                                                @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Car))
                                                 <div class="col-md-2 col-sm-2">
-                                                    <label
-                                                        style="margin-left: 8px;font-size: 16px;font-weight: bolder;">Assignment
-                                                        Type</label>
+                                                    <label style="margin-left: 8px;font-size: 16px;font-weight: bolder;">Assignment Type</label>
                                                     <span class='required' style="margin-left:10px;">*</span>
-                                                    <select class="form-control" id="manual_assignment_email_flag"
-                                                        name="assignment_type">
-                                                        <option value="{{ GenericRequestEnum::ASSIGN_WITHOUT_EMAIL }}">
-                                                            Without Email</option>
-                                                        <option value="{{ GenericRequestEnum::ASSIGN_WITH_EMAIL }}">With
-                                                            Email</option>
+                                                    <select class="form-control" id="manual_assignment_email_flag" name="assignment_type">
+                                                        <option value="{{ GenericRequestEnum::ASSIGN_WITHOUT_EMAIL }}">Without Email</option>
+                                                        <option value="{{ GenericRequestEnum::ASSIGN_WITH_EMAIL }}">With Email</option>
                                                     </select>
                                                 </div>
+                                                @endif
                                                 <div class="col-md-2 col-sm-2">
                                                     <button type="submit" id="tmLeadsAssignToUser"
                                                         name="tmLeadsAssignToUser" style="margin-top:34px;"
