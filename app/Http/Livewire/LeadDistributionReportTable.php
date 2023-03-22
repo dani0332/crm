@@ -3,6 +3,8 @@
 namespace App\Http\Livewire;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
@@ -83,15 +85,13 @@ class LeadDistributionReportTable extends DataTableComponent
     public function builder(): Builder
     {
         $query = CarQuote::leftJoin('tiers', 'tiers.id', '=', 'car_quote_request.tier_id')
-        ->whereNotIn('car_quote_request.quote_status_id', [9, 35])
-        ->whereBetween('car_quote_request.created_at', ['2022-12-20 00:00:00', '2023-03-22 23:59:59'])
-        ->whereNull('car_quote_request.deleted_at')
+        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
         ->select(DB::raw('(
 
             (SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
             + SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
             + SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END))
-            - SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END)) AS received_leads,
+            - SUM(CASE WHEN car_quote_request.source = "'. LeadSourceEnum::IMCRM .'" THEN 1 ELSE 0 END)) AS received_leads,
 
             SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) AS lead_created, COUNT(*) AS total_leads,
 
