@@ -66,7 +66,6 @@ class LeadAllocationController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -99,7 +98,6 @@ class LeadAllocationController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -121,15 +119,20 @@ class LeadAllocationController extends Controller
 
     public function updateAvailability(Request $request)
     {
+        $updateLogString = '----- Update done successfully to change the';
         $leadAllocationUser = LeadAllocation::where('user_id', $request->aid)->where('id', $request->id)->first();
 
         if (isset($request->is_available)) {
+            $updateLogString = $updateLogString.' is_available to : '.$request->is_available;
             $leadAllocationUser->is_available = $request->is_available;
         }
         if (isset($request->max_cap)) {
+            $updateLogString = $updateLogString.' max_cap to : '.$request->max_cap;
             $leadAllocationUser->max_capacity = $request->max_cap;
         }
         $leadAllocationUser->save();
+        $updateLogString = $updateLogString.' for user : '.$request->aid.' and by user : '.auth()->user()->id.' ----- ';
+        info($updateLogString);
     }
 
     public function toggleLeadAllocationJobStatus()
@@ -147,5 +150,10 @@ class LeadAllocationController extends Controller
     public function toggleCarLeadFetchSequence()
     {
         $this->applicationStorageService->updateCarLeadFetchSequence();
+    }
+
+    public function getTierUsers($tierId)
+    {
+        return $this->leadAllocationService->getTierUsersWithLeadAllocationRecord($tierId);
     }
 }

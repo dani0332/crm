@@ -1,6 +1,7 @@
-<?php
-    use App\Enums\PermissionsEnum;
-?>
+@php
+use App\Enums\PermissionsEnum;
+use App\Enums\RolesEnum;
+@endphp
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
@@ -69,7 +70,7 @@ $(document).ready(function() {
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Vehicle Type"><b>Vehicle Type</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="Vehicle Body Type"><b>Vehicle Body Type</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
                                 <select class="form-control" id="vehicle_type_id" name="vehicle_type_id">
@@ -147,17 +148,19 @@ $(document).ready(function() {
                         </div>
                     </div>
                 </div>
-                @can('car-quotes-edit')
-                <div align="right">
-                    <span style="color:red;" id="error-motor-assumptions-form">All fields are required.</span>
-                    <input type="hidden" id="car_quote_id" name="car_quote_id" value="{{ $record->id }}">
-                    <button type="button" class="btn btn-primary btn-sm" id="cancel-motor-assumptions-btn">Cancel</button>
-                    @cannot(PermissionsEnum::ApprovePayments)
-                    <button type="submit" class="btn btn-success btn-sm" id="update-motor-assumptions-btn">Update</button>
-                    <button type="button" class="btn btn-primary btn-sm" id="edit-motor-assumptions-btn">Edit Assumptions</button>
-                    @endcannot
-                </div>
-                @endcan
+                @if(! auth()->user()->hasRole(RolesEnum::PA))
+                    @can('car-quotes-edit')
+                        <div align="right">
+                            <span style="color:red;" id="error-motor-assumptions-form">All fields are required.</span>
+                            <input type="hidden" id="car_quote_id" name="car_quote_id" value="{{ $record->id }}">
+                            <button type="button" class="btn btn-primary btn-sm" id="cancel-motor-assumptions-btn">Cancel</button>
+                            @cannot(PermissionsEnum::ApprovePayments)
+                                <button type="submit" class="btn btn-success btn-sm" id="update-motor-assumptions-btn">Update</button>
+                                <button type="button" class="btn btn-primary btn-sm" id="edit-motor-assumptions-btn">Edit Assumptions</button>
+                            @endcannot
+                        </div>
+                    @endcan
+                @endif
             </form>
             </div>
         </div>

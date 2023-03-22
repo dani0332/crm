@@ -42,7 +42,6 @@ class CarModel extends BaseModel
     }
 
     /**
-     * @param $query
      * @return void
      */
     public function scopeActive($query)
@@ -51,8 +50,6 @@ class CarModel extends BaseModel
     }
 
     /**
-     * @param $query
-     * @param $code
      * @return void
      */
     public function scopeActiveWithCode($query, $code)

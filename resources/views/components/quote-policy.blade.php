@@ -1,8 +1,7 @@
 @php
-    $dateFormat = config('constants.DATE_FORMAT');
-    use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 @endphp
-
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="{{ asset('build/js/quote_policy.js') }}"></script>
@@ -31,7 +30,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="quote_policy_issuance_date"><b>Issuance Date</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
-                        <input type="text" class="form-control" id="quote_policy_issuance_date" name="quote_policy_issuance_date" value="{{ $record->policy_issuance_date ? Carbon\Carbon::parse($record->policy_issuance_date)->format($dateFormat) : '' }}">
+                        <input type="text" class="form-control" id="quote_policy_issuance_date" name="quote_policy_issuance_date" value="{{ $record->policy_issuance_date ? $record->policy_issuance_date : '' }}">
                         </p>
                         </div>
                     </div>
@@ -41,7 +40,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="quote_policy_start_date"><b>Start Date</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
-                            <input type="text" class="form-control" id="quote_policy_start_date" name="quote_policy_start_date" value="{{ $record->policy_start_date ? Carbon\Carbon::createFromFormat('d/m/Y',$record->policy_start_date)->format($dateFormat) : '' }}">
+                            <input type="text" class="form-control" id="quote_policy_start_date" name="quote_policy_start_date" value="{{ $record->policy_start_date ? $record->policy_start_date : '' }}">
                             </p>
                         </div>
                     </div>
@@ -49,7 +48,7 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="quote_policy_expiry_date"><b>Expiry Date</b></label>
                         <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
-                            <input type="text" class="form-control" id="quote_policy_expiry_date" name="quote_policy_expiry_date" value="{{ $record->renewal_expiry_date ? Carbon\Carbon::parse($record->renewal_expiry_date)->format($dateFormat) : '' }}">
+                            <input type="text" class="form-control" id="quote_policy_expiry_date" name="quote_policy_expiry_date" value="{{ $record->renewal_expiry_date ? $record->renewal_expiry_date : '' }}">
                             </p>
                         </div>
                     </div>
@@ -68,7 +67,7 @@
                     </div>
                 </div>
                 <!-- Transaction Approved -->
-                @if($record->quote_status_id == QuoteStatusEnum::TransactionApproved) 
+                @if($record->quote_status_id == QuoteStatusEnum::TransactionApproved && ! auth()->user()->hasRole(RolesEnum::PA)) 
                     <div align="right">
                         <span style="color:red;" id="error-quote-policy-form"></span>
                         <button type="button" class="btn btn-primary btn-sm" id="cancel-quote-policy-btn">Cancel</button>

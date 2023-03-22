@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\BikeQuote;
@@ -142,7 +143,6 @@ class AMLController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Models\AML  $aml
      * @return \Illuminate\Http\Response
      */
     public function show(AML $aml)
@@ -350,12 +350,12 @@ class AMLController extends Controller
             $quoteStatusCode = '';
         }
 
-        if (Auth::user()->hasRole('COMPLIANCE')) {
+        if (Auth::user()->hasRole(RolesEnum::COMPLIANCE)) {
             $isCurrentUserFromCompliance = 1;
         } else {
             $isCurrentUserFromCompliance = 0;
         }
-        if (Auth::user()->hasRole('pa') || Auth::user()->hasRole('AML')) {
+        if (Auth::user()->hasRole(RolesEnum::PA) || Auth::user()->hasRole(RolesEnum::AML)) {
             $isCurrentUserFromPaAml = 1;
         } else {
             $isCurrentUserFromPaAml = 0;
@@ -439,7 +439,7 @@ class AMLController extends Controller
             $quoteTypeText = $updateQuoteStatusResp[2];
             $quotePaID = $updateQuoteStatusResp[3];
             $clientFullName = $updateQuoteStatusResp[4];
-            if (Auth::user()->hasRole('COMPLIANCE')) {
+            if (Auth::user()->hasRole(RolesEnum::COMPLIANCE)) {
                 $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
 
@@ -466,7 +466,7 @@ class AMLController extends Controller
             $quoteUpdate->first_name = $firstName;
             $quoteUpdate->last_name = $lastName;
             // Check current user role is pa/AML > If yes > update pa_id - current_user_id
-            if (Auth::user()->hasRole('AML') || Auth::user()->hasRole('pa')) {
+            if (Auth::user()->hasRole(RolesEnum::AML) || Auth::user()->hasRole(RolesEnum::PA)) {
                 $quoteUpdate->pa_id = Auth::user()->id;
             }
             $quoteUpdate->save();

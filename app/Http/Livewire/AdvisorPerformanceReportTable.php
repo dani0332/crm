@@ -2,35 +2,77 @@
 
 namespace App\Http\Livewire;
 
+use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Models\LeadSource;
-use App\Models\Team;
 use App\Models\Tier;
+use App\Services\ApplicationStorageService;
+use App\Traits\GetUserTreeTrait;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
 use Rappasoft\LaravelLivewireTables\Views\Column;
-use Rappasoft\LaravelLivewireTables\Views\Filters\DateFilter;
-use Rappasoft\LaravelLivewireTables\Views\Filters\SelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\MultiSelectFilter;
+use Rappasoft\LaravelLivewireTables\Views\Filters\TextFilter;
 
 class AdvisorPerformanceReportTable extends DataTableComponent
 {
-    public $url;
+    use GetUserTreeTrait;
 
+    public $url;
+    public $tiers = [];
+    public $teams = [];
+    public $leadSources = [];
+    private $maxDays = 92;
     public function configure(): void
     {
         $this->setPrimaryKey('id')
-          ->setColumnSelectDisabled()
-          ->setFilterLayoutSlideDown()
-          ->setPaginationDisabled()
-          ->setFooterEnabled()
-          ->setFooterTdAttributes(function ($rows) {
-              return [
-                  'default' => true,
-                  'class' => 'font-black',
-                  'style' => 'color:black;font-weight:900 !important;',
-              ];
-          });
+            ->setColumnSelectDisabled()
+            ->setFilterLayoutSlideDown()
+            ->setPaginationDisabled()
+            ->setFooterEnabled()
+            ->setFooterTdAttributes(function ($rows) {
+                return [
+                    'default' => true,
+                    'class' => 'font-black',
+                    'style' => 'color:black;font-weight:900 !important;',
+                ];
+            });
+    }
+
+    public function mount()
+    {
+        $loginUserId = auth()->user()->id;
+        $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $this->tiers = Tier::query()
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        $this->teams = $this->getUserTeams($loginUserId)->keyBy('id')
+        ->map(fn ($Teams) => $Teams->name)
+        ->toArray();
+
+        $this->leadSources = LeadSource::query()
+            ->select('name')
+            ->distinct()
+            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
+            ->orderBy('name')
+            ->get()
+            ->keyBy('name')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
+
+        if (! $this->getAppliedFilterWithValue('created_at')) {
+            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
+        }
     }
 
     public function columns(): array
@@ -69,80 +111,73 @@ class AdvisorPerformanceReportTable extends DataTableComponent
 
     public function builder(): Builder
     {
-        return CarQuote::query()
-          ->select(
-              DB::raw('count(car_quote_request.id) as total_leads'),
-              DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 40 THEN 1 ELSE 0 END) as new_leads'),
-              DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as auto_assigned'),
-              DB::raw('SUM(CASE WHEN car_quote_request_detail.advisor_assigned_by_id is not null and car_quote_request.advisor_id is not null THEN 1 ELSE 0 END) as manually_assigned'),
-              DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 8 THEN 1 ELSE 0 END) as not_interested'),
-              DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (2,24,25) THEN 1 ELSE 0 END) as in_progress'),
-              DB::raw('SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) as manual_created'),
-              DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
-              DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = 33 THEN 1 ELSE 0 END) as sale_leads'),
-              DB::raw('SUM(quote_view_count.visit_count) as view_count'),
-          )
-          ->join('users', 'users.id', 'car_quote_request.advisor_id')
-          ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-          ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
-          ->leftJoin('teams', function ($join) {
-              $join->on('users.team_id', '=', 'teams.id');
-              $join->on('users.sub_team_id', '=', 'teams.id');
-          })
-          ->whereNull('car_quote_request.renewal_import_code')
-          ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
-          ->orderBy('users.email');
+        $query = CarQuote::query()
+        ->select(
+            DB::raw('count(DISTINCT car_quote_request.id) as total_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
+            DB::raw('CAST(SUM(CASE WHEN car_quote_request.auto_assigned = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as auto_assigned'),
+            DB::raw('CAST(SUM(CASE WHEN (car_quote_request.auto_assigned = 0 and source != "'.LeadSourceEnum::IMCRM.'" ) THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as manually_assigned'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.') THEN 1 ELSE 0 END) as not_interested'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.') THEN 1 ELSE 0 END) as in_progress'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
+            DB::raw('SUM(quote_view_count.visit_count) as view_count'),
+        )
+        ->join('users', 'users.id', 'car_quote_request.advisor_id')
+        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+        ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
+        ->join('user_team', 'user_team.user_id', 'users.id')
+        ->join('teams', 'teams.id', 'user_team.team_id')
+        ->whereNull('car_quote_request.renewal_import_code')
+        ->groupBy('car_quote_request.advisor_id')
+        ->orderBy('users.email');
+
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for advisor performance report are : '.json_encode($userIds));
+            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+        }
+
+        return $query;
     }
 
     public function filters(): array
     {
-        return [
-            DateFilter::make('Start Date')
-              ->filter(function (Builder $builder, string $value) {
-                  $builder->whereDate('car_quote_request.created_at', '>=', $value);
-              }),
-            DateFilter::make('Stop Date')
-              ->filter(function (Builder $builder, string $value) {
-                  $builder->whereDate('car_quote_request.created_at', '<=', $value);
-              }),
-            SelectFilter::make('Teams')
-            ->options(
-                Team::query()
-                    ->orderBy('name')
-                    ->whereNotNull('parent_team_id')
-                    ->where('parent_team_id', 2)
-                    ->get()
-                    ->keyBy('id')
-                    ->map(fn ($Teams) => $Teams->name)
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
-                    ->toArray(),
-            )->filter(function (Builder $builder, $value) {
-                $builder->where('teams.id', $value);
+        return [
+            TextFilter::make('Advisor Assigned / Created Date', 'created_at')
+                ->config([
+                    'placeholder' => 'Select Start & End Date',
+                    'range' => true,
+                    'max_days' => $this->maxDays,
+                ])
+                ->filter(function (Builder $builder, string $value) use ($dateFormat) {
+                    $dates = explode('~', $value);
+                    $dates[0] = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
+                    $dates[1] = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
+                    $builder->where(function ($query) use ($dates) {
+                        $query->whereBetween('car_quote_request_detail.advisor_assigned_date', $dates)
+                              ->orWhereBetween('car_quote_request.created_at', $dates);
+                    });
+                }),
+            MultiSelectFilter::make('Teams')->config([
+                'placeholder' => 'SELECT ALL TEAMS',
+            ])
+            ->options($this->teams)->filter(function (Builder $builder, $value) {
+                $builder->whereIn('teams.id', $value);
             }),
-            SelectFilter::make('Tiers')
-            ->options(
-                Tier::query()
-                    ->orderBy('name')
-                    ->where('is_active', 1)
-                    ->get()
-                    ->keyBy('id')
-                    ->map(fn ($users) => $users->name)
-                    ->toArray(),
-            )->filter(function (Builder $builder, $value) {
-                $builder->where('car_quote_request.tier_id', $value);
+            MultiSelectFilter::make('Tiers')->config([
+                'placeholder' => 'SELECT ALL TIERS',
+            ])
+            ->options($this->tiers)->filter(function (Builder $builder, $value) {
+                $builder->whereIn('car_quote_request.tier_id', $value);
             }),
-            SelectFilter::make('Lead Source')
-            ->options(
-                LeadSource::query()
-                    ->orderBy('name')
-                    ->where('is_active', 1)
-                    ->get()
-                    ->keyBy('name')
-                    ->map(fn ($users) => $users->name)
-                    ->toArray(),
-            )->filter(function (Builder $builder, $value) {
-                $builder->where('car_quote_request.source', $value);
-            }),
+            MultiSelectFilter::make('Lead Source')
+                ->options($this->leadSources)->filter(function (Builder $builder, $value) {
+                    $builder->whereIn('car_quote_request.source', $value);
+                }),
 
         ];
     }

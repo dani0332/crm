@@ -2,10 +2,10 @@
 
 namespace App\Mail;
 
-use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class LeadAllocationFailedNotification extends Mailable
 {
@@ -13,7 +13,7 @@ class LeadAllocationFailedNotification extends Mailable
 
     private $exception;
 
-    public function __construct(Exception $exception)
+    public function __construct(Throwable $exception)
     {
         $this->exception = $exception;
     }
@@ -26,7 +26,7 @@ class LeadAllocationFailedNotification extends Mailable
     public function build()
     {
         return $this->subject(env('APP_ENV').' - Lead Allocation Job Failed')
-                ->to(['ahsan.ashfaq@insurancemarket.ae', 'hussain.fakhruddin@insurancemarket.ae'])
+                ->to(['ahsan.ashfaq@insurancemarket.ae', 'hussain.fakhruddin@insurancemarket.ae', 'daniyal.shahid@insurancemarket.ae'])
                 ->view('email.lead-allocation-job-failed', [
                     'exception' => $this->exception,
                 ]);

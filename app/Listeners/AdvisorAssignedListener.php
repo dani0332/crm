@@ -9,6 +9,7 @@ use Carbon\Carbon;
 class AdvisorAssignedListener
 {
     protected $healthQuoteService;
+
     /**
      * Create the event listener.
      *
@@ -22,7 +23,6 @@ class AdvisorAssignedListener
     /**
      * Handle the event.
      *
-     * @param  \App\Events\AdvisorAssigned  $event
      * @return void
      */
     public function handle(AdvisorAssigned $event)

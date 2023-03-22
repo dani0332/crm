@@ -1,53 +1,30 @@
 @extends('layouts.app_livewire')
 @section('title','Comprehensive Dashboard')
 @section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-2">
-            <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:right;">
-                <select
-                    class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                    id="userFilter" style="margin-left: 10px;">
-                    <option value="">All Users</option>
-                    @foreach ($carUsers as $carUser)
-                    <option value="{{$carUser->id}}"> {{ $carUser->name }} </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="panel-heading" style="font-size: 30px; font-wieght: 800;float:right;">
-                <select
-                    class="inline-flex w-full justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                    id="tier-filter">
-                    <option value="">Select Tier</option>
-                    @foreach ($tiers as $tier)
-                    <option value="{{$tier->id}}"> {{ $tier->name }} </option>
-                    @endforeach
-                </select>
-            </div>
-        </div>
-    </div>
-    <div style="clear: both;"></div>
-    <div class="row">
-        <div class="col-md-10 col-md-offset-1">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <div id="comprehensiveConversion"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
+@push('scripts')
+<meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script src="https://code.highcharts.com/highcharts.js"></script>
 <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+<script src="https://unpkg.com/slim-select@latest/dist/slimselect.min.js"></script>
+<link href="https://unpkg.com/slim-select@latest/dist/slimselect.css" rel="stylesheet"></link>
+<style>
+    .ss-main .ss-values .ss-value .ss-value-delete {
+        width: 18px;
+    }
+</style>
 <script>
     var comprehensiveDashboardStatChart = {};
-    var comprehensiveDashboardStats = <?php echo json_encode($comprehensiveDashboardStats)?>;
-    function createComprehensiveConversionChart(comprehensiveDashboardStats)
-    {
+    var comprehensiveDashboardStats = <?php echo json_encode($comprehensiveDashboardStats) ?>;
+
+    function createComprehensiveConversionChart(comprehensiveDashboardStats) {
         var data = [];
         for (let index = 0; index < comprehensiveDashboardStats[0].length; index++) {
-            data.push({name : comprehensiveDashboardStats[0][index] , y: parseFloat(comprehensiveDashboardStats[1][index])})
+            data.push({
+                name: comprehensiveDashboardStats[0][index],
+                y: parseFloat(comprehensiveDashboardStats[1][index])
+            })
         }
         comprehensiveDashboardStatChart = Highcharts.chart('comprehensiveConversion', {
             chart: {
@@ -85,39 +62,147 @@
                 pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b>'
             },
 
-            series: [
-                {
-                    name: 'Net Conversion',
-                    colorByPoint: true,
-                    data: data
-                }
-            ]
+            series: [{
+                name: 'Net Conversion',
+                colorByPoint: true,
+                data: data
+            }]
         });
 
     }
-    $(function(){
+    $(function() {
         createComprehensiveConversionChart(comprehensiveDashboardStats);
-        $('#tier-filter,#userFilter').on('change', function (e) {
-            var tierFilterValue = $('#tier-filter option:selected').val();
-            var userFilterValue = $('#userFilter option:selected').val();
-            $.get('/get-comp-filter-stats?tier_filter=' + tierFilterValue + '&userFilter='+ userFilterValue, function (result) {
-               if(result){
-                var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
-                var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
-                var numbers = [];
-                for (let index = 0; index < data.length; index++) {
-                    numbers.push(parseFloat(data[index]));
+        $('#tier-filter, #user-filter, #team-filter , #excludeManualFilter').on('change', function(e) {
+            var tierFilterValue = $('#tier-filter').val();
+            var userFilterValue = $('#user-filter').val();
+            var teamFilterValue = $('#team-filter').val();
+            if (e.target.id == 'team-filter') {
+                $.ajax({
+                    url: "/get-users-by-team",
+                    type: "post",
+                    data: {
+                        'team_filter': teamFilterValue
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(users) {
+                        if (users) {
+                            $('#user-filter').empty();
+                            users.forEach(user => {
+                                $('#user-filter').append($('<option>', {
+                                    value: user.id,
+                                    text: user.name
+                                }));
+                            });
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.log(textStatus, errorThrown);
+                    }
+                });
+            }
+            var excludeFilterValue = $('#excludeManualFilter option:selected').val();
+            comprehensiveDashboardStatChart.showLoading();
+            $.ajax({
+                url: "/get-comp-filter-stats",
+                type: "post",
+                data: {
+                    'tier_filter': tierFilterValue,
+                    'team_filter': teamFilterValue,
+                    'userFilter': userFilterValue,
+                    'excludeFilter': excludeFilterValue
+                },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(result) {
+                    if (result) {
+                        var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
+                        var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
+                        var numbers = [];
+                        for (let index = 0; index < data.length; index++) {
+                            numbers.push(parseFloat(data[index]));
+                        }
+                        if (labels.length > 0) {
+                            comprehensiveDashboardStatChart.destroy();
+                            createComprehensiveConversionChart([labels, numbers]);
+                        } else {
+                            comprehensiveDashboardStatChart.destroy();
+                            createComprehensiveConversionChart([
+                                [''],
+                                [0]
+                            ]);
+                        }
+                    }
+                    comprehensiveDashboardStatChart.hideLoading();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    comprehensiveDashboardStatChart.hideLoading();
+                    console.log(textStatus, errorThrown);
                 }
-                if(labels.length > 0 ){
-                    comprehensiveDashboardStatChart.destroy();
-                    createComprehensiveConversionChart([labels,numbers]);
-                }else{
-                    comprehensiveDashboardStatChart.destroy();
-                    createComprehensiveConversionChart([[''], [0]]);
-                }
-               }
             });
         });
     });
+
+    new SlimSelect({
+        select: '#user-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Users',
+        }
+    })
+    new SlimSelect({
+        select: '#tier-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Tiers',
+        }
+    })
+    new SlimSelect({
+        select: '#team-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Teams',
+        }
+    })
 </script>
+@endpush
+
+<div>
+    <div class="flex gap-4 justify-end mb-4">
+        <div class="md:w-1/4">
+            <label>Advisor Filter</label>
+            <select multiple name="users[]" id="user-filter">
+                <option data-placeholder="true"></option>
+                <optgroup data-selectall="true">
+                    @foreach ($carUsers as $carUser)
+                    <option value="{{$carUser->id}}"> {{ $carUser->name }} </option>
+                    @endforeach
+                </optgroup>
+            </select>
+        </div>
+        <div class="md:w-1/4">
+            <label>Tiers Filter</label>
+            <select multiple name="tiers[]" id="tier-filter">
+                <option data-placeholder="true"></option>
+                @foreach ($tiers as $tier)
+                <option value="{{$tier->id}}"> {{ $tier->name }} </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="md:w-1/4">
+            <label>Teams Filter</label>
+            <select multiple name="teams[]" id="team-filter">
+                <option data-placeholder="true"></option>
+                @foreach ($teams as $team)
+                <option @if($commonTeam==$team->id) selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
+                @endforeach
+            </select>
+        </div>
+    </div>
+    <div>
+        <div id="comprehensiveConversion"></div>
+    </div>
+</div>
 @endsection

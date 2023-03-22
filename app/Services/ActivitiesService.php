@@ -6,12 +6,15 @@ use App\Enums\QuoteTypeId;
 use App\Models\Activities;
 use App\Models\QuoteStatus;
 use App\Models\User;
+use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ActivitiesService extends BaseService
 {
+    use GetUserTreeTrait;
+
     protected $helperService;
 
     public function __construct(HelperService $helperService)
@@ -36,7 +39,7 @@ class ActivitiesService extends BaseService
 
     public function getGridData(Request $request)
     {
-        $activities = $this->getAllActivitesBasedOnUser();
+        $activities = $this->getAllActivitiesBasedOnUser();
 
         if ($request->period == null) {
             $request->period = 'today';
@@ -108,8 +111,10 @@ class ActivitiesService extends BaseService
             $quoteStatus = QuoteStatus::select('text')->where('id', $request->leadStatus)->first();
             $request->title = $quoteStatus->text;
         }
+        $nextFollowupDate = isset($request->next_followup_date) ? Carbon::parse($request->next_followup_date)->format('Y-m-d H:i:s') : null;
+        $dueDate = isset($request->due_date) ? Carbon::parse($request->due_date)->format('Y-m-d H:i:s') : null;
         $request->assignee_id = isset($request->assigned_to_user_id) ? $request->assigned_to_user_id : $request->assignee_id;
-        $activity->due_date = isset($request->due_date) ? $request->due_date : $request->next_followup_date;
+        $activity->due_date = isset($request->due_date) ? $dueDate : $nextFollowupDate;
         $activity->assignee_id = isset($request->assignee_id) ? $request->assignee_id : auth()->user()->id;
         $activity->description = isset($request->description) ? $request->description : $request->notes;
         $activity->title = $request->title;
@@ -173,12 +178,12 @@ class ActivitiesService extends BaseService
         }
     }
 
-    public function getAllActivitesBasedOnUser()
+    public function getAllActivitiesBasedOnUser()
     {
-        $subOrdinateIds = $this->helperService->walkTree(Auth::user()->id);
+        $subOrdinateIds = $this->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
-        $activites = Activities::whereIn('assignee_id', $subOrdinateIds);
+        $activities = Activities::whereIn('assignee_id', $subOrdinateIds);
 
-        return $activites;
+        return $activities;
     }
 }

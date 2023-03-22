@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RolesEnum;
 use App\Models\User;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\InvalidStateException;
@@ -48,6 +49,10 @@ class GoogleSocialiteController extends Controller
         auth()->login($requestingUser);
         $requestingUser->last_login = now();
         $requestingUser->save();
+
+        if ($requestingUser->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager, RolesEnum::CarDeputyManager])) {
+            return redirect()->intended('/quotes/car');
+        }
 
         return redirect()->intended('/leadsearch');
     }

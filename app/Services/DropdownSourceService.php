@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\BusinessInsuranceType;
 use App\Models\CarAddOn;
@@ -36,8 +35,8 @@ use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Models\VehicleType;
 use App\Models\YearOfManufacture;
-use DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DropdownSourceService extends BaseService
 {
@@ -102,7 +101,7 @@ class DropdownSourceService extends BaseService
         $lookUpService = new LookupService();
         switch ($type) {
             case 'parent_team_id':
-                $data = Team::whereNull('parent_team_id')->get();
+                $data = Team::whereNull('parent_team_id')->where('type', 1)->get();
                 break;
             case 'marital_status_id':
                 $data = MartialStatus::select('id', 'text')->where('is_active', true)->get();
@@ -111,18 +110,10 @@ class DropdownSourceService extends BaseService
                 $data = Nationality::select('id', 'text')->where('is_active', true)->orderBy('text')->get();
                 break;
             case 'quote_status_id':
-                $data = QuoteStatus::select('id', 'text')
-                    ->whereNotIn('id', [
-                        QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
-                        QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyInvoiced, QuoteStatusEnum::Issued, QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::AfiaRenewal, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec,
-                    ])
-                    ->where('is_active', true)
-                    ->orderBy('sort_order', 'asc')
-                    ->get();
-                // $data = QuoteStatus::select('quote_status.id as id', 'quote_status.text as text', 'quote_status.code as code')
-                //     ->where(['quote_status.is_active' => true, 'quote_status_map.quote_type_id' => $quoteTypeId])
-                //     ->leftjoin('quote_status_map', 'quote_status.id', 'quote_status_map.quote_status_id')
-                //     ->orderBy('quote_status_map.sort_order', 'asc')->get();
+                $data = QuoteStatus::select('quote_status.id as id', 'quote_status.text as text', 'quote_status.code as code')
+                    ->where(['quote_status.is_active' => true, 'quote_status_map.quote_type_id' => $quoteTypeId])
+                    ->leftjoin('quote_status_map', 'quote_status.id', 'quote_status_map.quote_status_id')
+                    ->orderBy('quote_status_map.sort_order', 'asc')->get();
                 break;
             case 'cover_for_id':
                 $data = HealthCoverFor::select('id', 'text')->where('is_active', true)->get();
@@ -137,7 +128,7 @@ class DropdownSourceService extends BaseService
                 $data = User::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'lead_source_id':
-                $data = LeadSource::select('id', 'name')->where('is_active', true)->get();
+                $data = LeadSource::select('id', 'name')->where('is_active', true)->where('is_applicable_for_rules', true)->get();
                 break;
             case 'rule_users':
                 $data = User::select('id', 'name')->where('is_active', true)->get();
@@ -149,6 +140,7 @@ class DropdownSourceService extends BaseService
                 $data = Tier::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'tiers':
+            case 'tier_id':
                 $data = Tier::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'quadrants':
@@ -293,6 +285,8 @@ class DropdownSourceService extends BaseService
             case 'currently_insured_with_id':
                 $data = $lookUpService->getActiveInsuranceProviders();
                 break;
+            case 'quote_batch_id':
+                $data = DB::table('quote_batches')->select('id', 'name')->get();
             default:
                 break;
         }

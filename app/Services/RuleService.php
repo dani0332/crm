@@ -62,6 +62,7 @@ class RuleService extends BaseService
             'rule_start_date' => $request->rule_start_date,
             'rule_end_date' => $request->rule_end_date,
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
+            'is_applicable_for_rules' => false,
         ]);
         if (isset($request->rule_users) && isset($request->lead_source_id)) {
             $userIds = $request->rule_users;
@@ -104,6 +105,8 @@ class RuleService extends BaseService
                 ]);
             }
         }
+
+        info('------ Rule update is successfully done by user : '.auth()->user()->id.' for rule : '.$rule->name.' ------');
 
         return $rule;
     }

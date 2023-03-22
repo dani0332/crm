@@ -188,18 +188,19 @@ class PetQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
         if ($request->ajax()) {
-            if (! isset($request->email) && $request->email == '') {
-                $this->query->where('qs.id', '!=', 9);
+            if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
+                    empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+                $this->query->where('pqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
             }
             if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_start'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['assigned_to_date_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('pqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
+                $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
+                $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
+                $this->query->whereBetween(DB::raw('DATE(pqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-                $dateFrom = Carbon::createFromFormat('Y-m-d', $request['created_at'])->startOfDay()->toDateTimeString();
-                $dateTo = Carbon::createFromFormat('Y-m-d', $request['created_at_end'])->endOfDay()->toDateTimeString();
-                $this->query->whereBetween('pqr.created_at', [$dateFrom, $dateTo]);
+                $dateFrom = $this->parseDate($request['created_at'], true);
+                $dateTo = $this->parseDate($request['created_at_end'], true);
+                $this->query->whereBetween(DB::raw('DATE(pqr.created_at)'), [$dateFrom, $dateTo]);
             }
             if (Auth::user()->isSpecificTeamAdvisor('Pet')) {
                 // if user has advisor Role then fetch leads assigned to the user only
@@ -297,6 +298,18 @@ class PetQuoteService extends BaseService
             return $this->query->orderBy($column, $direction);
         } else {
             return $this->query->orderBy('pqr.created_at', 'DESC');
+        }
+    }
+
+    private function parseDate($date, $isStartOfDay)
+    {
+        if ($date != '') {
+            $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+            if ($isStartOfDay) {
+                return Carbon::createFromFormat($dateFormat, $date)->startOfDay()->toDateString();
+            } else {
+                return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
+            }
         }
     }
 
@@ -551,7 +564,7 @@ class PetQuoteService extends BaseService
             'lost_reason' => 'input|text',
             'premium' => 'input|number',
             'policy_number' => 'input|text',
-            'type_of_pet1' => 'input|text|title|required',
+            'type_of_pet1' => 'input|text|title|required|max:3',
             'breed_of_pet1' => 'input|text|title|required',
             'age_of_pet1' => 'input|number|title|required',
             'is_neutered' => 'static|Yes,No',
@@ -661,7 +674,7 @@ class PetQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'advisor_id', 'created_at', 'is_renewal'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'is_renewal', 'advisor_id'];
     }
 
     public function fillRenewalProperties($model)

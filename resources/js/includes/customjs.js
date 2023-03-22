@@ -21,7 +21,9 @@ $(document).ready(function () {
     width: '100%',
     allowClear: true,
   });
-  $('.select-roles').select2({
+  $(
+    '.select-roles,#user-team-select,#user-product-select,#user-manager-select',
+  ).select2({
     width: '100%',
     allowClear: true,
   });
@@ -2159,7 +2161,7 @@ $(document).ready(function () {
     singleDatePicker: true,
     timePicker24Hour: true,
     locale: {
-      format: 'YYYY-MM-DD HH:mm:ss',
+      format: 'DD-MM-YYYY HH:mm:ss',
     },
   });
 
@@ -2599,11 +2601,9 @@ $(document).ready(function () {
               '</td><td>' +
               element.ModifiedBy +
               '</td><td>' +
-              element.NewStatus +
-              '</td><td>' +
-              element.NewAdvisor +
-              '</td><td>' +
               element.NewNotes +
+              '</td><td>' +
+              element.NewStatus +
               '</td></tr>';
           }
         } else {
@@ -3017,7 +3017,7 @@ $('#dob_div #dob').datepicker({
   // TM Leads
   changeMonth: true,
   changeYear: true,
-  dateFormat: 'dd/mm/yy',
+  dateFormat: 'dd-mm-yy',
   yearRange: '-80:+00',
 });
 
@@ -3114,3 +3114,49 @@ $('#send-one-click-buy-email-btn').on('click', function () {
   }
 });
 // Button: Send One click buy email - End
+
+var teamsDataTable = $('.teams-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    ajax: {
+      url: config.routes.teams_datatable_route,
+      data: function (d) {
+        d.name = $('#name').val();
+      },
+    },
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.teams_datatable_route +
+            '/' +
+            row.id +
+            "'>" +
+            row.id +
+            '</a>'
+          );
+        },
+      },
+      { data: 'name', name: 'name' },
+      { data: 'type', name: 'type' },
+      { data: 'parent.name', name: 'parent.name' },
+      { data: 'created_at', name: 'created_at' },
+      { data: 'updated_at', name: 'updated_at' },
+      { data: 'is_active', name: 'is_active' },
+    ],
+  });
+
+  $('#search-teams').submit(function (e) {
+    e.preventDefault();
+    $('.loader').show();
+    teamsDataTable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  });
