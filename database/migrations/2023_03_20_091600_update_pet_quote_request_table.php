@@ -14,10 +14,9 @@ class UpdatePetQuoteRequestTable extends Migration
     public function up()
     {
         Schema::table('pet_quote_request', function (Blueprint $table) {
-            if (! Schema::hasColumn('pet_quote_request','personal_quote_id')) {
+            if (! Schema::hasColumn('pet_quote_request', 'personal_quote_id')) {
                 $table->unsignedBigInteger('personal_quote_id')->nullable();
                 $table->foreign('personal_quote_id')->references('id')->on('personal_quotes');
-
             }
         });
     }
@@ -32,7 +31,6 @@ class UpdatePetQuoteRequestTable extends Migration
         Schema::table('pet_quote_request', function (Blueprint $table) {
             $table->dropForeign(['personal_quote_id']);
             $table->dropColumn('personal_quote_id');
-        
         });
     }
 }
