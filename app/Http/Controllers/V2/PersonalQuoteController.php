@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ChangePrimaryContactRequest;
 use App\Http\Requests\PersonalQuoteDocumentRequest;
 use App\Http\Requests\PersonalQuotePaymentRequest;
 use App\Http\Requests\PersonalQuotePolicyRequest;
@@ -74,5 +75,17 @@ class PersonalQuoteController extends Controller
     public function getAuditHistory($quoteId)
     {
         return PersonalQuoteRepository::getAuditHistory($quoteId);
+    }
+
+    /**
+     * @param $quoteId
+     * @param  ChangePrimaryContactRequest  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function changePrimaryContact($quoteId, ChangePrimaryContactRequest $request)
+    {
+        PersonalQuoteRepository::changePrimaryContact($quoteId, $request->validated());
+
+        return back();
     }
 }

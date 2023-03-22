@@ -187,4 +187,21 @@ class PersonalQuoteRepository extends BaseRepository
 
         return $audits;
     }
+
+    /**
+     * @param $quoteId
+     * @param $data
+     * @return mixed
+     */
+    public function fetchChangePrimaryContact($quoteId, $data)
+    {
+        return DB::transaction(function () use ($quoteId, $data) {
+            $quote = $this->findOrFail($quoteId);
+            $updateData = [$data['key'] => $data['value']];
+            $quote->update($updateData);
+            $quote->customer()->update($updateData);
+
+            return true;
+        });
+    }
 }
