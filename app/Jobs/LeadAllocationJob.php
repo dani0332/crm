@@ -69,7 +69,7 @@ class LeadAllocationJob implements ShouldQueue
 
                 info('availableUsers: '.$availableUsersString);
 
-                $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();
+                $unAllocatedLeads = $leadAllocationService->getHealthUnallocatedLeads();
 
                 if (count($unAllocatedLeads) > 0) {
                     $currentIteration = now();
