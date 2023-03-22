@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
+use App\Models\LeadSource;
 use App\Models\Tier;
 use App\Services\ApplicationStorageService;
 use App\Traits\GetUserTreeTrait;
@@ -59,10 +60,10 @@ class AdvisorPerformanceReportTable extends DataTableComponent
         ->map(fn ($Teams) => $Teams->name)
         ->toArray();
 
-        $this->leadSources = CarQuote::query()
-            ->select('source as name')
+        $this->leadSources = LeadSource::query()
+            ->select('name')
             ->distinct()
-            ->whereNotNull('source')
+            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
             ->orderBy('name')
             ->get()
             ->keyBy('name')

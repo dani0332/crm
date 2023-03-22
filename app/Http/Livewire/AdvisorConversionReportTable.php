@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
+use App\Models\LeadSource;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Models\User;
@@ -97,10 +98,11 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->map(fn ($batch) => $batch->name.'-('.$batch->start_date.' to '.$batch->end_date.')')
             ->toArray();
 
-        $this->leadSources = CarQuote::query()
-            ->select('source as name')
+        $this->leadSources = LeadSource::query()
+            ->select('name')
             ->distinct()
-            ->whereNotNull('source')
+            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
+            ->whereNotNull('name')
             ->orderBy('name')
             ->get()
             ->keyBy('name')
