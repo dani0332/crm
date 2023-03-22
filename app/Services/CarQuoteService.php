@@ -1189,7 +1189,7 @@ class CarQuoteService extends BaseService
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId); // update new and previous (if applicable) advisor counts in lead allocation table
 
-            $this->updateExistingQuoteViewCount($userId, $lead->id); // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
 
             $lead->save();
 
