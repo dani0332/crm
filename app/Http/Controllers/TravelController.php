@@ -109,7 +109,7 @@ class TravelController extends Controller
         if (!auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
-        
+
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'fieldsToDisplay' => $fields,
@@ -134,6 +134,7 @@ class TravelController extends Controller
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
+            'message' => session('message'),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
@@ -279,7 +280,7 @@ class TravelController extends Controller
 
         $this->travelQuoteService->updateTravelQuote($request, $id);
 
-        return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
+        return redirect('/quotes/travel/'. $id)->with('message', 'Record updated successfully');
     }
 
     public function planDetails($quoteId, $planId)

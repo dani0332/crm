@@ -11497,7 +11497,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }, formFields.value.reduce(function (acc, field) {
       acc[field.value] = props.quote[field.value];
 
-      if (field.value === 'dob' || field.value === 'policy_start_date') {
+      if (field.value === 'dob') {
         acc[field.value] = props.quote[field.value] ? props.quote[field.value].split('-').reverse().join('-') : null;
       }
 
@@ -12082,7 +12082,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     customerAdditionalContacts: Array,
     ecomTravelInsuranceQuoteUrl: String,
     fieldsToDisplay: Object,
-    quotes: Array
+    quotes: Array,
+    message: String
   },
   setup: function setup(__props, _ref) {
     var _page$props$lostReaso;
@@ -12922,7 +12923,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     };
 
-    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {});
+    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
+      if (page.props.message) {
+        notification.success({
+          title: page.props.message,
+          position: 'top'
+        });
+      }
+    });
     var __returned__ = {
       page: page,
       dateFormat: dateFormat,

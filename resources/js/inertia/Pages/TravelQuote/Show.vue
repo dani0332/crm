@@ -34,6 +34,7 @@ defineProps({
   ecomTravelInsuranceQuoteUrl: String,
   fieldsToDisplay: Object,
   quotes: Array,
+  message: String,
 });
 
 const page = usePage();
@@ -876,7 +877,14 @@ const onCopyText = text => {
     });
 };
 
-onMounted(() => {});
+onMounted(() => {
+  if (page.props.message) {
+    notification.success({
+      title: page.props.message,
+      position: 'top',
+    });
+  }
+});
 </script>
 <template>
   <div>

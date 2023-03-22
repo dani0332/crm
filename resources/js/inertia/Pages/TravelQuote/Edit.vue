@@ -30,7 +30,7 @@ const quoteForm = useForm({
   model: props.model,
   ...formFields.value.reduce((acc, field) => {
     acc[field.value] = props.quote[field.value];
-    if (field.value === 'dob' || field.value === 'policy_start_date') {
+      if (field.value === 'dob' ) {
       acc[field.value] = props.quote[field.value]
         ? props.quote[field.value].split('-').reverse().join('-')
         : null;

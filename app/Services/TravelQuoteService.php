@@ -113,6 +113,8 @@ class TravelQuoteService extends BaseService
             'referenceUrl' => config('constants.APP_URL'),
             'currentlyLocatedInId' => $request->currently_located_in_id,
             'dob' => $request->dob,
+            'policy_start_date' => $request->policy_start_date,
+            'details' => $request->details,
         ];
         if (! Auth::user()->hasRole('ADMIN') && ! Auth::user()->hasRole('Call Desk')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -545,6 +547,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
         $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->policy_start_date = $request->policy_start_date;
+        $travelQuote->details = $request->details;
         $travelQuote->save();
 
         if (isset($request->return_to_view)) {
