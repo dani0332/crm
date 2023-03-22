@@ -1,9 +1,4 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-import { useNotifications } from '@indielayer/ui';
-
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -36,14 +31,7 @@ const quoteForm = useForm({
   iam_possesion_type_id: props.quote?.pet_quote?.iam_possesion_type_id || '',
 });
 
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-};
-
-const isEmptyField = ref(false);
+const { isRequired, isEmail } = useRules();
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -97,7 +85,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.first_name"
           type="text"
           label="First Name*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.first_name"
         />
@@ -106,7 +94,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.last_name"
           type="text"
           label="Last Name*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.last_name"
         />
@@ -115,7 +103,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.email"
           type="email"
           label="Email*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.email"
         />
@@ -124,7 +112,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.mobile_no"
           type="tel"
           label="Phone Number*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
         />
@@ -149,7 +137,7 @@ function onSubmit(isValid) {
           type="text"
           maxlength="3"
           label="TYPE OF PET*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             pet_types.map(item => ({
               value: item.id,
@@ -163,7 +151,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.breed_of_pet1"
           type="tel"
           label="BREED OF PET*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.breed_of_pet1"
         />
@@ -172,7 +160,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.pet_age_id"
           type="number"
           label="AGE OF PET*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             pet_ages.map(item => ({
               value: item.id,
@@ -232,7 +220,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.gender"
           label="GENDER*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="[
             { value: 'Male', label: 'Male' },
             { value: 'Female', label: 'Female' },
@@ -243,7 +231,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.ilivein_accommodation_type_id"
           label="ACCOMMODATION TYPE*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             accomodation_types.map(item => ({
               value: item.id,
@@ -256,7 +244,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.iam_possesion_type_id"
           label="POSSESION TYPE *"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             possession_types.map(item => ({
               value: item.id,

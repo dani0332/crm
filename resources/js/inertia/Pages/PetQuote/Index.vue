@@ -1,10 +1,4 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link } from '@inertiajs/vue3';
-import Pagination from '@/inertia/Components/Pagination.vue';
-import ExportExcel from '@/inertia/Components/ExportExcel.vue';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
@@ -159,16 +153,15 @@ const permissionsEnum = page.props.permissionsEnum;
           class="w-full"
           placeholder="Search by Mobile Number"
         />
-        <x-input
+
+        <DatePicker
           v-model="filters.created_at_start"
-          type="date"
           name="created_at_start"
           label="Created Date Start"
           class="w-full"
         />
-        <x-input
+        <DatePicker
           v-model="filters.created_at_end"
-          type="date"
           name="created_at_end"
           label="Created Date End"
           class="w-full"
