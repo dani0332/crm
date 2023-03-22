@@ -446,12 +446,6 @@ class LeadAllocationService extends BaseService
     public function processCarLeads()
     {
         try {
-            if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
-                info('Car lead allocation master switch is off');
-
-                return false;
-            }
-
             $currentIterationTime = now();
 
             info('----------------------- CAR LEAD ALLOCATION STARTED AT '.$currentIterationTime.' -----------------------');
@@ -830,7 +824,7 @@ class LeadAllocationService extends BaseService
     {
         $shouldProcess = true;
 
-        if (config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
+        if (config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH') === 0) {
             // if car lead allocation master switch is OFF then we shouldn't proceed further
             $shouldProcess = false;
             info('shouldCarAllocationProceed -- Doppler -- output is : '.json_encode($shouldProcess));
