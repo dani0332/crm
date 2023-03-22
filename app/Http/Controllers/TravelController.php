@@ -106,7 +106,10 @@ class TravelController extends Controller
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
-
+        if (!auth()->user()->hasRole(RolesEnum::Engineering)) {
+            unset($fields['id']);
+        }
+        
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'fieldsToDisplay' => $fields,

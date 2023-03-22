@@ -1970,7 +1970,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     customerAdditionalContacts: Array,
     enums: Object,
     activities: Array,
-    advisors: Array
+    advisors: Array,
+    permissions: Object
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -3697,7 +3698,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     allowedDuplicateLOB: Boolean,
     quoteDetails: Object,
     customerAdditionalContacts: Array,
-    enums: Object
+    enums: Object,
+    permissions: Object
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -17151,7 +17153,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
     /* STABLE */
 
-  }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)($setup["Link"], {
+  }), $props.permissions.canEditQuote == true ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)($setup["Link"], {
+    key: 1,
     href: "".concat($props.quote.uuid, "/edit")
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
@@ -17172,7 +17175,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   }, 8
   /* PROPS */
-  , ["href"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_modal, {
+  , ["href"])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true)])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.duplicate,
     "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
       return $setup.modals.duplicate = $event;
@@ -20838,7 +20841,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
     /* STABLE */
 
-  }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)($setup["Link"], {
+  }), $props.permissions.canEditQuote == true ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createBlock)($setup["Link"], {
+    key: 1,
     href: "".concat($props.quote.uuid, "/edit")
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
@@ -20859,7 +20863,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   }, 8
   /* PROPS */
-  , ["href"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_modal, {
+  , ["href"])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.duplicate,
     "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
       return $setup.modals.duplicate = $event;
@@ -36119,7 +36123,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1
     /* STABLE */
 
-  }), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)($setup["Link"], {
+  }), $props.permissions.canEditQuote == true ? ((0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createBlock)($setup["Link"], {
+    key: 1,
     href: "".concat($props.quote.uuid, "/edit")
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
@@ -36140,7 +36145,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   }, 8
   /* PROPS */
-  , ["href"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
+  , ["href"])) : (0,vue__WEBPACK_IMPORTED_MODULE_2__.createCommentVNode)("v-if", true)])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.duplicate,
     "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
       return $setup.modals.duplicate = $event;

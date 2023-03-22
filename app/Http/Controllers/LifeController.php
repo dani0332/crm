@@ -171,6 +171,10 @@ class LifeController extends Controller
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
+        if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
+            unset($fields['id']);
+        }
+        
         return inertia('LifeQuote/Show', [
             'quote' => $quote,
             'fieldsToDisplay' => $fields,
