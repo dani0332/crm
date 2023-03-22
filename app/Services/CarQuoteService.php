@@ -1189,6 +1189,8 @@ class CarQuoteService extends BaseService
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId); // update new and previous (if applicable) advisor counts in lead allocation table
 
+            $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
+
             $lead->save();
 
             if (isset($request->assignment_type) && $request->assignment_type == GenericRequestEnum::ASSIGN_WITH_EMAIL) {
@@ -1216,6 +1218,16 @@ class CarQuoteService extends BaseService
         }
 
         return [];
+    }
+
+    private function updateExistingQuoteViewCount($userId, $leadId)
+    {
+        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->first();
+        if ($quoteViewCount) {
+            $quoteViewCount->user_id = $userId;
+            $quoteViewCount->view_count = 0;
+            $quoteViewCount->save();
+        }
     }
 
     public function updateTierAndCost($lead)
