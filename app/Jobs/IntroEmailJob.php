@@ -42,7 +42,7 @@ class IntroEmailJob implements ShouldQueue
      */
     public function handle(SendEmailCustomerService $sendEmailCustomerService)
     {
-        if (! $this->quoteType || $this->emailTemplateId) {
+        if (! $this->quoteType || ! $this->emailTemplateId) {
             return false;
         }
         switch($this->quoteType) {

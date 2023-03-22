@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Jobs\IntroEmailJob;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -1213,7 +1214,7 @@ class CarQuoteService extends BaseService
                 $emailTemplateIdReassign = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
                 $emailTemplateIIntro = (int) $this->applicationStorageService->getValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
 
-                $this->sendEmailCustomerService->sendLMSIntroEmail($isReassignment ? $emailTemplateIdReassign : $emailTemplateIIntro, $emailData, 'send-lms-reassignment-email');
+                IntroEmailJob::dispatch(quoteTypeCode::Car, $isReassignment ? $emailTemplateIdReassign : $emailTemplateIIntro, $emailData, 'send-lms-reassignment-email');
             }
         }
 
