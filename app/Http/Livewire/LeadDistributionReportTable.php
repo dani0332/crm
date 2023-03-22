@@ -91,7 +91,7 @@ class LeadDistributionReportTable extends DataTableComponent
             (SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
             + SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
             + SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END))
-            - SUM(CASE WHEN car_quote_request.source = "'. LeadSourceEnum::IMCRM .'" THEN 1 ELSE 0 END)) AS received_leads,
+            - SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END)) AS received_leads,
 
             SUM(CASE WHEN car_quote_request.source = "IMCRM" THEN 1 ELSE 0 END) AS lead_created, COUNT(*) AS total_leads,
 
