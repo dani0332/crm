@@ -128,7 +128,7 @@ class DropdownSourceService extends BaseService
                 $data = User::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'lead_source_id':
-                $data = LeadSource::select('id', 'name')->where('is_active', true)->get();
+                $data = LeadSource::select('id', 'name')->where('is_active', true)->where('is_applicable_for_rules', true)->get();
                 break;
             case 'rule_users':
                 $data = User::select('id', 'name')->where('is_active', true)->get();

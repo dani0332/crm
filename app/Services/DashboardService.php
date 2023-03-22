@@ -125,22 +125,29 @@ class DashboardService extends BaseService
     {
         $query = QuoteBatches::query()
         ->select(
+            'users.id as advisorId',
             'quote_batches.id',
             'quote_batches.name',
             DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
             DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
             DB::raw('count(car_quote_request.id) as total_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.') THEN 1 ELSE 0 END) as not_interested'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.') THEN 1 ELSE 0 END) as in_progress'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id  in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as created_sale_leads'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
         )
-        ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
+        ->join('car_quote_request', 'car_quote_request.quote_batch_id', 'quote_batches.id')
+        ->join('users', 'users.id', 'car_quote_request.advisor_id')
+        ->join('user_team', 'user_team.user_id', 'users.id')
         ->join('teams', 'teams.id', 'user_team.team_id')
-        ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
+        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+        ->whereNull('car_quote_request.renewal_import_code')
+        ->groupBy('quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
 
         if (isset($advisorId)) {
             $query->where('car_quote_request.advisor_id', $advisorId);
@@ -151,7 +158,18 @@ class DashboardService extends BaseService
             $query = $query->whereIn('teams.id', $userIds);
         }
 
-        return $query->get();
+        $query = $query->get()->sortBy(function ($record) {
+            return $record->id;
+        });
+        foreach ($query as $record) {
+            $numerator = $record->sale_leads - $record->created_sale_leads;
+            $denominator = ($record->total_leads - $record->manual_created) - ($record->bad_leads - $record->manual_created_bad_leads);
+            $total = $denominator > 0 ? ($numerator / $denominator) : 0;
+            $data[] = number_format((float) $total * 100, 2, '.', '');
+            $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
+        }
+
+        return [$labels, $data];
     }
 
     public function getAdvisorLeadAssignedData($teamIds)
