@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\GenericRequestEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
-class MakeAdditionalContactPrimaryRequest extends FormRequest
+class ChangePrimaryContactRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +25,7 @@ class MakeAdditionalContactPrimaryRequest extends FormRequest
     public function rules()
     {
         return [
-            'key' => 'required',
+            'key' => 'required|in:'.GenericRequestEnum::EMAIL.','.GenericRequestEnum::MOBILE_NO,
             'value' => 'required',
             'quote_id' => 'required',
         ];

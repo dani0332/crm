@@ -106,7 +106,7 @@ const additionalContactDeleteConfirmed = () => {
   );
 };
 const additionalContactPrimaryConfirmed = () => {
-  const url = `/personal-quotes/${page.props.quote.id}/customers/${page.props.quote.customer_id}`;
+  const url = `/personal-quotes/${page.props.quote.id}/change-primary-contact`;
 
   router.patch(
     url,

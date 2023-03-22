@@ -189,18 +189,20 @@ class PersonalQuoteRepository extends BaseRepository
         return $audits;
     }
 
-    public function fetchUpdateCustomerAdditionalContact($quoteId, $data)
+    /**
+     * @param $quoteId
+     * @param $data
+     * @return mixed
+     */
+    public function fetchChangePrimaryContact($quoteId, $data)
     {
-        $quote = $this->findOrFail($quoteId);
-        if ($data['key'] == GenericRequestEnum::EMAIL) {
-            $quote->email = $data['value'];
-            $customerData = ['email' => $data['value']];
-        } elseif ($data['key'] == GenericRequestEnum::MOBILE_NO) {
-            $quote->mobile_no = $data['value'];
-            $customerData = ['mobile_no' => $data['value']];
-            $quote->customer()->update(['mobile_no' => $data['value']]);
-        }
-        $quote->customer()->update($customerData);
-        $quote->save();
+        return DB::transaction(function() use($quoteId, $data)
+        {
+            $quote = $this->findOrFail($quoteId);
+            $updateData = [$data['key'] => $data['value']];
+            $quote->update($updateData);
+            $quote->customer()->update($updateData);
+            return true;
+        });
     }
 }
