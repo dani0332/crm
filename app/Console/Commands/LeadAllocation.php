@@ -75,9 +75,9 @@ class LeadAllocation extends Command
                     $availableUsersString .= $user->name.'|'.$user->last_allocated.',';
                 });
 
-                info('availableUsers: '.$availableUsersString);
+                info('Health Allocation Available Users: '.$availableUsersString);
 
-                $unAllocatedLeads = $leadAllocationService->getUnAllocatedLeads();
+                $unAllocatedLeads = $leadAllocationService->getHealthUnallocatedLeads();
 
                 if (count($unAllocatedLeads) > 0) {
                     $currentIteration = now();
@@ -126,7 +126,7 @@ class LeadAllocation extends Command
                     }
                     info('----------------------- HEALTH LEAD ALLOCATION ENDED AT '.$currentIteration.' -----------------------');
                 } else {
-                    info('No Unallocated Leads');
+                    info('No Unallocated Health Leads');
                 }
 
                 return;

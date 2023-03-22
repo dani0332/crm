@@ -11,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\GetQuotePlansJob;
+use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -117,13 +118,13 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function getUnAllocatedLeads()
+    public function getHealthUnallocatedLeads()
     {
         try {
             $unAllocatedLeads = [];
             $to = now();
             $from = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
-            info('from date : '.$from.' to date : '.$to);
+            info('Health Unallocated Leads from date : '.$from.' to date : '.$to);
             $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
                 ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
                 ->where('quote_status.id', QuoteStatusEnum::Qualified)
@@ -536,8 +537,7 @@ class LeadAllocationService extends BaseService
 
                             $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
 
-                            $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
-
+                            IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
                             info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                             DB::commit();
                         } catch (\Throwable $th) {
