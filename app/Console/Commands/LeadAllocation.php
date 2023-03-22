@@ -126,7 +126,7 @@ class LeadAllocation extends Command
                     }
                     info('----------------------- HEALTH LEAD ALLOCATION ENDED AT '.$currentIteration.' -----------------------');
                 } else {
-                    info('No Unallocated Leads');
+                    info('No Unallocated Health Leads');
                 }
 
                 return;
