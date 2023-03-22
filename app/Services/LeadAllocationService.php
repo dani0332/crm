@@ -821,13 +821,14 @@ class LeadAllocationService extends BaseService
     public function shouldCarAllocationProceed()
     {
         $shouldProcess = true;
-        $masterSwitchConfigValue = (int)config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH');
+        $masterSwitchConfigValue = (int) config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH');
         $masterSwitchValue = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
         $normalSwitchValue = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
-        if ( $masterSwitchConfigValue == 0) {
+        if ($masterSwitchConfigValue == 0) {
             // if car lead allocation master switch is OFF then we shouldn't proceed further
             $shouldProcess = false;
             info('shouldCarAllocationProceed -- Doppler -- output is : '.json_encode($shouldProcess));
+
             return false;
         }
 
@@ -836,7 +837,7 @@ class LeadAllocationService extends BaseService
             $shouldProcess = false;
         }
 
-        info('shouldCarAllocationProceed -- output is : '.json_encode($shouldProcess) . 'config value is : '. $masterSwitchConfigValue . ' and app storage value is'. $normalSwitchValue . ' and '. ! $masterSwitchValue);
+        info('shouldCarAllocationProceed -- output is : '.json_encode($shouldProcess).'config value is : '.$masterSwitchConfigValue.' and app storage value is'.$normalSwitchValue.' and '.! $masterSwitchValue);
 
         return $shouldProcess;
     }
