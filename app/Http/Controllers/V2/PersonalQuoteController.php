@@ -85,6 +85,7 @@ class PersonalQuoteController extends Controller
     public function changePrimaryContact($quoteId, ChangePrimaryContactRequest $request)
     {
         PersonalQuoteRepository::changePrimaryContact($quoteId, $request->validated());
+
         return back();
     }
 }

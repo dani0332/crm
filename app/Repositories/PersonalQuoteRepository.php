@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -196,12 +195,12 @@ class PersonalQuoteRepository extends BaseRepository
      */
     public function fetchChangePrimaryContact($quoteId, $data)
     {
-        return DB::transaction(function() use($quoteId, $data)
-        {
+        return DB::transaction(function () use ($quoteId, $data) {
             $quote = $this->findOrFail($quoteId);
             $updateData = [$data['key'] => $data['value']];
             $quote->update($updateData);
             $quote->customer()->update($updateData);
+
             return true;
         });
     }
