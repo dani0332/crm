@@ -1,5 +1,4 @@
 <script setup>
-import { computed } from 'vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import '@vuepic/vue-datepicker/dist/main.css';
 
@@ -11,12 +10,12 @@ const props = defineProps({
     type: String,
   },
   modelValue: {
-    type: [String, Date],
+    type: [String, Date, Object],
     default: '',
   },
   placeholder: {
     type: String,
-    default: 'Select Date',
+    default: 'Select Time',
   },
   single: {
     type: Boolean,
@@ -28,21 +27,12 @@ const props = defineProps({
   },
 });
 
-const format = (date, isServer = false) => {
-  if (!date) return '';
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
-
-  return isServer ? `${year}-${month}-${day}` : `${day}-${month}-${year}`;
-};
-
 const selectedData = computed({
   get() {
     return props.modelValue;
   },
   set(newValue) {
-    emit('update:modelValue', format(newValue, true));
+    emit('update:modelValue', newValue);
     return;
   },
 });
@@ -51,11 +41,10 @@ const selectedData = computed({
   <VueDatePicker
     v-model="selectedData"
     auto-apply
-    :format="format"
     :teleport="true"
-    :enable-time-picker="false"
     :month-change-on-scroll="false"
     :clearable="false"
+    :time-picker="true"
   >
     <template #dp-input="{ value, onClear }">
       <x-input
@@ -80,7 +69,7 @@ const selectedData = computed({
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+            d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
 
