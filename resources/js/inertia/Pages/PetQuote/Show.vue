@@ -139,7 +139,7 @@ const historyDataTable = [
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TYPE OF PET</dt>
-            <dd>{{ quote?.pet_quote?.type_of_pet?.text }}</dd>
+            <dd>{{ quote?.pet_quote?.pet_type?.text }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -149,7 +149,7 @@ const historyDataTable = [
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">AGE OF PET</dt>
-            <dd>{{ quote?.pet_quote?.age_of_pet?.text }}</dd>
+            <dd>{{ quote?.pet_quote?.pet_age?.text }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">

@@ -48,11 +48,11 @@ class PetQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(HomePossessionType::class, 'iam_possesion_type_id', 'id');
     }
-    public function typeOfPet()
+    public function petType()
     {
         return $this->belongsTo(Lookup::class, 'pet_type_id', 'id');
     }
-    public function ageOfPet()
+    public function petAge()
     {
         return $this->belongsTo(Lookup::class, 'pet_age_id', 'id');
     }

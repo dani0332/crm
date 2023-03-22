@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\GenericRequestEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PetQuoteRequest extends FormRequest
@@ -27,7 +28,7 @@ class PetQuoteRequest extends FormRequest
             'first_name' => 'required|max:50',
             'last_name' => 'required|max:50',
             'email' => 'required|email:rfc,dns',
-            'mobile_no' => 'required',
+            'mobile_no' => 'required|max:20',
             'premium' => 'nullable|numeric',
             'policy_number' => 'nullable|max:200',
             'pet_type_id' => 'required|exists:lookups,id',
@@ -38,7 +39,7 @@ class PetQuoteRequest extends FormRequest
             'microchip_no' => 'required_if:is_microchipped,=,1',
             'is_mixed_breed' => 'nullable',
             'has_injury' => 'nullable',
-            'gender' => 'required|string|in:Male,Female',
+            'gender' => 'required|string|in:'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE.'',
             'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
             'iam_possesion_type_id' => 'required|exists:home_possession_type,id',
         ];

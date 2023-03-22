@@ -78,9 +78,9 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'TYPE OF PET', value: 'type_of_pet1' },
-  { text: 'BREED OF PET', value: 'type_of_pet1' },
-  { text: 'AGE OF PET', value: 'age_of_pet1' },
+  { text: 'TYPE OF PET', value: 'type_of_pet' },
+  { text: 'BREED OF PET', value: 'breed_of_pet1' },
+  { text: 'AGE OF PET', value: 'age_of_pet' },
   { text: 'IS NEUTERED', value: 'is_neutered' },
   { text: 'IS MICROCHIPPED', value: 'is_microchipped' },
   { text: 'MICROCHIP NO', value: 'microchip_no' },
@@ -249,11 +249,11 @@ const permissionsEnum = page.props.permissionsEnum;
       <template #item-policy_number="{ pet_quote }">
         {{ pet_quote?.policy_number }}
       </template>
-      <template #item-type_of_pet1="{ pet_quote }">
-        {{ pet_quote?.type_of_pet1 }}
+      <template #item-type_of_pet="{ pet_quote }">
+        {{ pet_quote?.pet_type?.text }}
       </template>
-      <template #item-age_of_pet1="{ pet_quote }">
-        {{ pet_quote?.age_of_pet1 }}
+      <template #item-age_of_pet="{ pet_quote }">
+        {{ pet_quote?.pet_age?.text }}
       </template>
       <template #item-is_neutered="{ pet_quote }">
         {{ pet_quote?.is_neutered ? 'Yes' : 'No' }}

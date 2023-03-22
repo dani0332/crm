@@ -83,7 +83,7 @@ class PetQuoteRepository extends BaseRepository
     }
     public function fetchGetData()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.ageOfPet:id,text', 'petQuote.typeOfPet:id,text', 'currentlyInsuredWith', 'advisor'])
+        return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text', 'currentlyInsuredWith', 'advisor'])
             ->filter()
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
@@ -92,7 +92,7 @@ class PetQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeId(QuoteTypes::PET->id())
             ->where($column, $value)
-            ->with(['petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.ageOfPet:id,text', 'petQuote.typeOfPet:id,text', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
+            ->with(['petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
