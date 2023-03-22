@@ -48,12 +48,34 @@ class PetQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(HomePossessionType::class, 'iam_possesion_type_id', 'id');
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function petType()
     {
         return $this->belongsTo(Lookup::class, 'pet_type_id', 'id');
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function petAge()
     {
         return $this->belongsTo(Lookup::class, 'pet_age_id', 'id');
+    }
+
+    /**
+     * @return array
+     */
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => PetQuote::class, 'key' => 'personal_quote_id'],
+            ],
+        ];
     }
 }

@@ -293,7 +293,7 @@ const historyDataTable = [
     </div>
 
     <AuditLogs
-      :type="'App\\Models\\PersonalQuote'"
+      :quote-type="quoteType"
       :id="$page.props.quote.id"
     />
   </div>
