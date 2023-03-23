@@ -1226,7 +1226,7 @@ class CarQuoteService extends BaseService
         $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->first();
         if ($quoteViewCount) {
             $quoteViewCount->user_id = $userId;
-            $quoteViewCount->view_count = 0;
+            $quoteViewCount->visit_count = 0;
             $quoteViewCount->save();
         }
     }
