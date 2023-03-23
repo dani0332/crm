@@ -158,7 +158,7 @@ class LeadAllocationService extends BaseService
                 }
 
                 $lead->advisor_id = $advisorId;
-                if ($lead->quote_batch_id == null) {
+                if ($lead->quote_batch_id == null && str_contains(strtolower($lead->code), strtolower(quoteTypeCode::Car))) {
                     $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
                 }
                 $lead->save();
