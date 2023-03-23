@@ -135,7 +135,20 @@ class CRUDController extends Controller
     {
         $renewalAdvisors = [];
         $isNewBusinessUser = false;
-        $isManualAllocationAllowed = strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car) ? (Auth::user()->isAdmin() || Auth::user()->hasRole(RolesEnum::LeadPool) ? true : false) : true;
+        $isManualAllocationAllowed = false;
+        if(strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)){
+            $isManualAllocationAllowed =   Auth::user()->isAdmin() || Auth::user()->hasRole(RolesEnum::LeadPool) ? true : false;
+        }
+        else{
+            $userRoles = Auth::user()->usersroles()->get();
+            $isManager = false;
+            foreach ($userRoles as $userRole) {
+                if (!str_contains(strtolower($userRole->name), 'deputy') && str_contains(strtolower($userRole->name), 'manager')) {
+                    $isManager = true;
+                }
+            }
+            $isManualAllocationAllowed =   $isManager ? true : false;
+        }
         $isCarLeadAllocationOn = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
         $userMaxCap = 0;
         $todayAssignmentCount = 0;
