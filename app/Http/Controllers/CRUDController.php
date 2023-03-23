@@ -146,7 +146,7 @@ class CRUDController extends Controller
                     $isManager = true;
                 }
             }
-            $isManualAllocationAllowed = $isManager ? true : false;
+            $isManualAllocationAllowed = Auth::user()->isAdmin() ? true : $isManager;
         }
         $isCarLeadAllocationOn = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
         $userMaxCap = 0;
