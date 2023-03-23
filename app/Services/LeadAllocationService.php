@@ -158,7 +158,7 @@ class LeadAllocationService extends BaseService
                 }
 
                 $lead->advisor_id = $advisorId;
-                if ($lead->quote_batch_id == null) {
+                if ($lead->quote_batch_id == null && str_contains(strtolower($lead->code), strtolower(quoteTypeCode::Car))) {
                     $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
                 }
                 $lead->save();
@@ -640,7 +640,7 @@ class LeadAllocationService extends BaseService
         ->join('rules', 'rule_lead_sources.rule_id', 'rules.id')
         ->where('lead_sources.name', $source)
         ->where('rules.is_active', 1)
-        ->where('rules.is_applicable_for_rules', 1)
+        ->where('lead_sources.is_applicable_for_rules', 1)
         ->groupBy('rule_lead_sources.lead_source_id')
         ->select(
             'lead_sources.name AS leadSourceName',
