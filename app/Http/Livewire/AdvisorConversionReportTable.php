@@ -201,8 +201,6 @@ class AdvisorConversionReportTable extends DataTableComponent
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->join('user_team', 'user_team.user_id', 'users.id')
-        ->join('teams', 'teams.id', 'user_team.team_id')
         ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
@@ -255,7 +253,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                 }),
 
         ];
-        if (! auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+        if (config('constants.APP_ENV') == 'local') {
             array_push($filters, MultiSelectFilter::make('Lead Source')
             ->options($this->leadSources)->filter(function (Builder $builder, $value) {
                 $builder->whereIn('car_quote_request.source', $value);
@@ -266,7 +264,14 @@ class AdvisorConversionReportTable extends DataTableComponent
                 'placeholder' => 'SELECT ALL TEAMS',
             ])
             ->options($this->teams)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('teams.id', $value);
+                $builder ->whereIn('users.id', function($query) use ($value) {
+                    $query->distinct()
+                          ->select('users.id')
+                          ->from('users')
+                          ->join('user_team', 'user_team.user_id', '=', 'users.id')
+                          ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                          ->whereIn('teams.id', $value);
+                });
             }));
 
             array_push($filters, MultiSelectFilter::make('Advisors')
