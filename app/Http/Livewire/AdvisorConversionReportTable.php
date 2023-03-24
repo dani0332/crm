@@ -264,7 +264,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                 'placeholder' => 'SELECT ALL TEAMS',
             ])
             ->options($this->teams)->filter(function (Builder $builder, $value) {
-                $builder ->whereIn('users.id', function($query) use ($value) {
+                $builder->whereIn('users.id', function ($query) use ($value) {
                     $query->distinct()
                           ->select('users.id')
                           ->from('users')

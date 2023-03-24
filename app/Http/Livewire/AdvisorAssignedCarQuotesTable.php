@@ -97,7 +97,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         if ($this->teamsFilter != '' && count($this->teamsFilter) > 0) {
             info('teamsFilter are : '.json_encode($this->teamsFilter));
             $value = $this->teamsFilter;
-            $query ->whereIn('users.id', function($query) use ($value) {
+            $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
                       ->select('users.id')
                       ->from('users')
