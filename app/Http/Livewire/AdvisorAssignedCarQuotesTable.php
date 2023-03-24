@@ -101,8 +101,8 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
                 $query->distinct()
                       ->select('users.id')
                       ->from('users')
-                      ->join('user_team', 'user_team.user_id', '=', 'users.id')
-                      ->join('teams', 'teams.id', '=', 'user_team.team_id')
+                      ->join('user_team', 'user_team.user_id','users.id')
+                      ->join('teams', 'teams.id', 'user_team.team_id')
                       ->whereIn('teams.id', $value);
             });
         }
