@@ -66,6 +66,7 @@ use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
+use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
@@ -106,11 +107,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
         Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport'])->name('advisor-performance-report-view');
 
+        Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
         Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
         Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
         Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
         Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
     });
+
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
         Artisan::call('view:cache');
@@ -285,6 +288,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteId}/documents', [PersonalQuoteController::class, 'uploadDocument']);
         Route::post('{quoteId}/payments', [PersonalQuoteController::class, 'createPayment']);
         Route::patch('{quoteId}/payments/{paymentCode}', [PersonalQuoteController::class, 'updatePayment']);
+        Route::patch('{quoteId}/change-primary-contact', [PersonalQuoteController::class, 'changePrimaryContact']);
     });
 
     Route::group(['prefix' => 'generic'], function () {
@@ -377,6 +381,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/getCarModelTrimValues', [AjaxController::class, 'getCarModelTrimValues']);
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
+    Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed

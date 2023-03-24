@@ -1,7 +1,4 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
-
 const props = defineProps({
   quote: Object,
   dropdownSource: Object,
@@ -45,12 +42,7 @@ const quoteForm = useForm({
   has_home: props.quote.has_home,
 });
 
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired } = useRules();
 
 const isEmptyField = ref(false);
 
@@ -91,7 +83,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.first_name"
           type="text"
           label="FIRST NAME"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
         />
 
@@ -99,7 +91,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.last_name"
           type="text"
           label="LAST NAME"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
         />
 
@@ -123,7 +115,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.dob"
           type="date"
           label="DATE OF BIRTH"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
         />
 
@@ -144,7 +136,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.cover_for_id"
           label="WHO WOULD YOU LIKE COVER FOR?"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             dropdownSource.cover_for_id.map(item => ({
               value: item.id,
@@ -220,7 +212,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.emirate_of_your_visa_id"
           label="EMIRATE OF YOUR VISA"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             dropdownSource.emirate_of_your_visa_id.map(item => ({
               value: item.id,

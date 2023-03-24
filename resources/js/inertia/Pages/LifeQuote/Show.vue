@@ -1,10 +1,5 @@
 <script setup>
-import axios from 'axios';
-import { useNotifications } from '@indielayer/ui';
-import { computed, ref, reactive, onMounted } from 'vue';
-import { useDateFormat, useClipboard } from '@vueuse/core';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 
 defineProps({
   quote: Object,
@@ -35,9 +30,7 @@ const page = usePage();
 
 const notification = useNotifications('toast');
 
-const rules = {
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired } = useRules();
 
 const confirmDeleteData = reactive({
   docs: null,
@@ -532,7 +525,7 @@ const historyDataTable = [
                 label: lob,
               }))
             "
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             placeholder="Select LOB For Duplication"
             class="w-full"
             multiple
@@ -540,7 +533,7 @@ const historyDataTable = [
           <x-select
             v-model="leadDuplicateForm.lob_team_sub_selection"
             label="Reason"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
             :options="[
               { value: 'new_enquiry', label: 'New enquiry' },
@@ -729,7 +722,7 @@ const historyDataTable = [
             <x-input
               v-model="activityForm.title"
               label="Title"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
 
@@ -744,7 +737,7 @@ const historyDataTable = [
               v-model="activityForm.assignee_id"
               label="Assignee"
               :options="leadStatusOptions"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               placeholder="Select Assignee"
               class="w-full"
             />
@@ -860,7 +853,7 @@ const historyDataTable = [
                 { value: 'email', label: 'Email' },
                 { value: 'mobile_no', label: 'Mobile Number' },
               ]"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               placeholder="Select Type"
               class="w-full"
             />
@@ -868,7 +861,7 @@ const historyDataTable = [
             <x-input
               v-model="additionalContact.additional_contact_val"
               label="Value"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
           </div>

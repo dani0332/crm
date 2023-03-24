@@ -4,7 +4,6 @@ import { useNotifications } from '@indielayer/ui';
 import { computed, ref, reactive, onMounted } from 'vue';
 import { useDateFormat, useClipboard } from '@vueuse/core';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
 
 defineProps({
   quote: Object,
@@ -43,9 +42,13 @@ const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
 
 const notification = useNotifications('toast');
 
-const rules = {
-  isRequired: v => !!v || 'This field is required',
-};
+const {
+  isRequired,
+  policy_number,
+  premium,
+  renewal_expiry_date,
+  policy_start_date,
+} = useRules();
 
 const confirmDeleteData = reactive({
   docs: null,
@@ -297,45 +300,6 @@ const confirmModal = reactive({
   },
 });
 
-const policyDetailRules = {
-  policy_number: v => {
-    if (v) {
-      return (
-        v.length <= 50 || 'Policy Number should be less than 50 characters'
-      );
-    }
-    return true;
-  },
-  policy_start_date: v => {
-    if (v) {
-      const date = new Date(v);
-      return !isNaN(date.getTime());
-    }
-    return true;
-  },
-  renewal_expiry_date: v => {
-    if (v) {
-      const date = new Date(v);
-      if (policyDetails.policy_start_date) {
-        const startDate = new Date(policyDetails.policy_start_date);
-        if (startDate >= date) {
-          return 'Expiry date should be greater than Start Date';
-        }
-      }
-      return !isNaN(date.getTime());
-    }
-    return true;
-  },
-  premium: v => {
-    if (v) {
-      const premium = parseFloat(v);
-      if (premium < 0 || isNaN(premium)) {
-        return 'Premium should be greater than 0';
-      }
-    }
-    return true;
-  },
-};
 const dateToYMD = date => {
   if (date) {
     const d = new Date(date);
@@ -927,7 +891,7 @@ onMounted(() => {
                 label: lob,
               }))
             "
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             placeholder="Select LOB For Duplication"
             class="w-full"
             multiple
@@ -935,7 +899,7 @@ onMounted(() => {
           <x-select
             v-model="leadDuplicateForm.lob_team_sub_selection"
             label="Reason"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
             :options="[
               { value: 'new_enquiry', label: 'New enquiry' },
@@ -1195,7 +1159,7 @@ onMounted(() => {
               v-model="policyDetails.policy_number"
               :disabled="!policyDetails.editMode"
               label="Policy Number"
-              :rules="[rules.isRequired, policyDetailRules.policy_number]"
+              :rules="[isRequired, policy_number]"
               class="w-full"
             />
           </div>
@@ -1205,7 +1169,7 @@ onMounted(() => {
               :disabled="!policyDetails.editMode"
               type="date"
               label="Issuance Date"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
           </div>
@@ -1217,7 +1181,7 @@ onMounted(() => {
               :disabled="!policyDetails.editMode"
               type="date"
               label="Start Date"
-              :rules="[rules.isRequired, policyDetailRules.policy_start_date]"
+              :rules="[isRequired, policy_start_date]"
               class="w-full"
             />
           </div>
@@ -1227,7 +1191,7 @@ onMounted(() => {
               :disabled="!policyDetails.editMode"
               type="date"
               label="Expiry Date"
-              :rules="[rules.isRequired, policyDetailRules.renewal_expiry_date]"
+              :rules="[isRequired, renewal_expiry_date]"
               class="w-full"
             />
           </div>
@@ -1238,7 +1202,7 @@ onMounted(() => {
               v-model="policyDetails.premium"
               :disabled="!policyDetails.editMode"
               label="Premium"
-              :rules="[rules.isRequired, policyDetailRules.premium]"
+              :rules="[isRequired, premium]"
               class="w-full"
             />
           </div>
@@ -1700,7 +1664,7 @@ onMounted(() => {
             <x-input
               v-model="activityForm.title"
               label="Title"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
 
@@ -1715,7 +1679,7 @@ onMounted(() => {
               v-model="activityForm.assignee_id"
               label="Assignee"
               :options="advisorOptions"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               placeholder="Select Assignee"
               class="w-full"
             />
@@ -1832,7 +1796,7 @@ onMounted(() => {
                 { value: 'email', label: 'Email' },
                 { value: 'mobile_no', label: 'Mobile Number' },
               ]"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               placeholder="Select Type"
               class="w-full"
             />
@@ -1840,7 +1804,7 @@ onMounted(() => {
             <x-input
               v-model="additionalContact.additional_contact_val"
               label="Value"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
           </div>

@@ -1,9 +1,4 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-import { useNotifications } from '@indielayer/ui';
-
 const notification = useNotifications('toast');
 
 const props = defineProps({
@@ -23,7 +18,7 @@ const quoteForm = useForm({
   last_name: props.quote?.last_name || '',
   email: props.quote?.email || '',
   mobile_no: props.quote?.mobile_no || '',
-  dob: props.quote?.dob || '',
+  dob: props.quote?.dob || null,
   nationality_id: props.quote?.nationality_id || null,
   uae_license_held_for_id:
     props.quote?.bike_quote?.uae_license_held_for_id || null,
@@ -34,20 +29,25 @@ const quoteForm = useForm({
   year_of_manufacture: props.quote?.bike_quote?.year_of_manufacture || null,
 });
 
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired, isEmail } = useRules();
+
+const formFieldReq = reactive({
+    nationality: false,
+    dob: false,
+});
 
 const isEmptyField = ref(false);
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
-    isEmptyField.value = true;
+      formFieldReq.nationality_id = true;
   } else {
-    isEmptyField.value = false;
+      formFieldReq.nationality_id = false;
   }
+    if (quoteForm.dob == null || quoteForm.dob == "") {
+        formFieldReq.dob = true;
+    } else {
+        formFieldReq.dob = false;
+    }
 
   if (isValid) {
     let method = 'post';
@@ -100,7 +100,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.first_name"
           type="text"
           label="First Name*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.first_name"
         />
@@ -109,7 +109,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.last_name"
           type="text"
           label="Last Name*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.last_name"
         />
@@ -118,7 +118,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.email"
           type="email"
           label="Email*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired, isEmail]"
           class="w-full"
           :error="quoteForm.errors.email"
         />
@@ -127,19 +127,18 @@ function onSubmit(isValid) {
           v-model="quoteForm.mobile_no"
           type="tel"
           label="Phone Number*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
         />
 
-        <x-input
-          v-model="quoteForm.dob"
-          type="date"
-          label="Date of Birth"
-          :rules="[rules.isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.dob"
-        />
+          <DatePicker
+              v-model="quoteForm.dob"
+              name="created_at_start"
+              label="Date of Birth"
+              :hasError="quoteForm.errors.dob || formFieldReq.dob"
+          />
+
 
         <ComboBox
           v-model="quoteForm.nationality_id"
@@ -151,14 +150,14 @@ function onSubmit(isValid) {
               label: item.text,
             }))
           "
-          :hasError="isEmptyField"
+          :hasError="isEmptyField || formFieldReq.nationality_id"
           :error="quoteForm.errors.nationality_id"
         />
 
         <x-select
           v-model="quoteForm.uae_license_held_for_id"
           label="UAE licence held for*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             uaeLicenses.map(item => ({
               value: item.id,
@@ -173,7 +172,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.bike_company_to_insure"
           type="text"
           label="Bike(s) to insure*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.bike_company_to_insure"
         />
@@ -182,7 +181,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.asset_value"
           type="number"
           label="Bike value(AED)*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.asset_value"
         />
@@ -190,7 +189,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.year_of_manufacture"
           label="Year of manufacture*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             yearOfManufacture.map(item => ({
               value: item.text,
@@ -204,7 +203,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.currently_insured_with_id"
           label="Currently with:*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             insuranceProviders.map(item => ({
               value: item.id,

@@ -2,6 +2,7 @@
 import { reactive, computed, onMounted, ref } from "vue";
 import { Head, router, usePage, Link, useForm } from "@inertiajs/vue3";
 import { useNotifications } from "@indielayer/ui";
+import { useCan } from '../../Composables/can';
 
 defineProps({
   quotes: Object,

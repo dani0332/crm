@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\UserNameEnum;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\QuoteBatches;
 use App\Models\User;
 
 class CapiRequestService
@@ -40,11 +41,12 @@ class CapiRequestService
                     $carQuote->is_quote_locked = true;
                     $carQuote->car_model_detail_id = $data['trim'];
                     $carQuote->car_value_tier = $data['carValueTier'];
+                    $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
                     $carQuote->save();
 
                     if ($carQuote->advisor_id != null) {
                         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
-                        if ($carQuoteDetail != null) {
+                        if ($carQuoteDetail) {
                             $carQuoteDetail->advisor_assigned_date = now();
                             $carQuoteDetail->advisor_assigned_by_id = auth()->id();
                             $carQuoteDetail->save();

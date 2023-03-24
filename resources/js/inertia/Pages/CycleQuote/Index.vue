@@ -1,10 +1,4 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link } from '@inertiajs/vue3';
-import Pagination from '@/inertia/Components/Pagination.vue';
-import ExportExcel from '@/inertia/Components/ExportExcel.vue';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
@@ -97,6 +91,11 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
+
+const can = permission => useCan(permission);
+const canAny = permissions => useCanAny(permissions);
+const permissionsEnum = page.props.permissionsEnum;
+
 </script>
 
 <template>
@@ -104,7 +103,7 @@ const tableHeader = [
     <Head title="Cycle Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Cycle Quotes List</h2>
-      <x-button size="sm" color="#ff5e00" href="/personal-quotes/cycle/create">
+      <x-button v-if="canAny([permissionsEnum.CycleQuotesCreate])" size="sm" color="#ff5e00" href="/personal-quotes/cycle/create">
         Create Lead
       </x-button>
     </div>
@@ -231,12 +230,13 @@ const tableHeader = [
       fixed-checkbox
     >
       <template #item-uuid="{ code, uuid }">
-        <Link
+        <Link v-if="can(permissionsEnum.CycleQuotesShow)"
           :href="`/personal-quotes/cycle/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
         </Link>
+        <span v-else>{{code}}</span>
       </template>
 
       <template #item-advisor="{ advisor }">

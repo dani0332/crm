@@ -11,4 +11,18 @@ class CycleQuote extends Model
 
     protected $table = 'cycle_quote_request';
     protected $fillable = ['cycle_make', 'cycle_model', 'year_of_manufacture_id', 'accessories', 'has_accident', 'has_good_condition'];
+
+    /**
+     * @return array
+     */
+    public function getAuditables()
+    {
+        return [
+            'auditable_type' => PersonalQuote::class,
+            'relations' => [
+                ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => CycleQuote::class, 'key' => 'personal_quote_id'],
+            ],
+        ];
+    }
 }

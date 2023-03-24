@@ -1,8 +1,4 @@
 <script setup>
-import { router, useForm, usePage } from '@inertiajs/vue3';
-import { computed, reactive, ref } from 'vue';
-import { useNotifications } from '@indielayer/ui';
-
 defineProps({
   quote: Object,
   activities: Array,

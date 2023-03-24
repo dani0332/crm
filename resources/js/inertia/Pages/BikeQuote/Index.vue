@@ -1,9 +1,6 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link } from '@inertiajs/vue3';
-import Pagination from '@/inertia/Components/Pagination.vue';
-import ExportExcel from '@/inertia/Components/ExportExcel.vue';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
+import { ref } from 'vue';
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
   quotes: Object,
@@ -97,6 +94,14 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
+const quotesSelected = ref([]),
+  assignAdvisor = ref(null),
+  assignmentType = ref(null),
+  isDisabled = ref(false);
 </script>
 
 <template>
@@ -105,7 +110,12 @@ const tableHeader = [
 
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Bike Quotes List</h2>
-      <x-button size="sm" color="#ff5e00" href="/personal-quotes/bike/create">
+      <x-button
+        v-if="can(permissionsEnum.BikeQuotesCreate)"
+        size="sm"
+        color="#ff5e00"
+        href="/personal-quotes/bike/create"
+      >
         Create Lead
       </x-button>
     </div>
@@ -221,7 +231,30 @@ const tableHeader = [
       </div>
     </x-form>
 
+    <Transition name="fade">
+      <div v-if="quotesSelected.length > 0" class="mb-4">
+        <LeadAssignment
+          :selected="quotesSelected.map(e => e.id)"
+          :advisors="advisors"
+        />
+        <ExportExcel
+          :data="quotesSelected"
+          :columns="tableHeader"
+          :filename="'Home-List'"
+          :sheetname="'Leads'"
+        >
+          <x-button size="sm" color="emerald">
+            Export -
+            <span class="lining-nums">
+              Selected: {{ quotesSelected.length }}
+            </span>
+          </x-button>
+        </ExportExcel>
+      </div>
+    </Transition>
+
     <DataTable
+      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
@@ -233,11 +266,13 @@ const tableHeader = [
     >
       <template #item-uuid="{ code, uuid }">
         <Link
+          v-if="can(permissionsEnum.BikeQuotesShow)"
           :href="`/personal-quotes/bike/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
         </Link>
+        <span v-else>{{ code }}</span>
       </template>
 
       <template #item-advisor="{ advisor }">

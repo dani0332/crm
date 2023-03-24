@@ -5,13 +5,17 @@ import axios from 'axios';
 
 const props = defineProps({
   type: {
-    required: true,
+    required: false,
     type: String,
   },
   id: {
     required: true,
     type: [String, Number],
   },
+    quoteType : {
+      required: false,
+        type: String
+    }
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
@@ -32,12 +36,26 @@ const auditLogs = reactive({
 
 const onLoadAuditLogData = async () => {
   auditLogs.loading = true;
-  axios
-    .post('/auditlogs', {
+
+  let data = {
       auditableType: props.type,
       auditableId: props.id,
       jsonData: true,
-    })
+  };
+
+  let url = "/auditlogs";
+
+  if(props.quoteType != undefined) {
+      data = {
+          auditable_id: props.id,
+          quote_type :props.quoteType,
+          jsonData: true,
+      }
+      url = '/audits/get-quote-audits';
+  }
+
+  axios
+    .post(url, data)
     .then(res => {
       auditLogs.data = res.data;
     })

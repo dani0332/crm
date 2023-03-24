@@ -1,6 +1,5 @@
 <script setup>
-import { useNotifications } from '@indielayer/ui';
-import { useForm, usePage } from '@inertiajs/vue3';
+import {useCan} from "../../../Composables/can";
 
 defineProps({
   quote: Object,
@@ -22,6 +21,9 @@ const dateToYMD = date => {
   return '';
 };
 
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
+
 const policyForm = useForm({
   premium: page.props.quote.premium,
   policy_number: page.props.quote.policy_number || '',
@@ -31,7 +33,7 @@ const policyForm = useForm({
   quote_status_id: page.props.quote.quote_status_id,
   canEdit:
     page.props.quote.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved && !page.props.can.isPA,
+      page.props.quoteStatusEnum.TransactionApproved && !hasRole(rolesEnum.PA),
   editMode: false,
   quote_id: page.props.quote.id,
 });

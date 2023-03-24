@@ -371,8 +371,6 @@ class LeadAllocationService extends BaseService
                                 'users.last_login as lastLogin',
                                 'la.id as id'
                             )->get();
-
-        info('max_capacity for reset for users : '.json_encode($users));
         foreach ($users as $user) {
             $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
 
@@ -448,12 +446,6 @@ class LeadAllocationService extends BaseService
     public function processCarLeads()
     {
         try {
-            if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH')) {
-                info('Car lead allocation master switch is off');
-
-                return false;
-            }
-
             $currentIterationTime = now();
 
             info('----------------------- CAR LEAD ALLOCATION STARTED AT '.$currentIterationTime.' -----------------------');
@@ -523,30 +515,36 @@ class LeadAllocationService extends BaseService
                         $userId = reset($finalAvailableAndLoginAdvisorIds);
                     }
                     if ($userId) {
-                        info('About to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
+                        try {
+                            DB::beginTransaction();
+                            info('About to assign car lead : '.$carLead->uuid.' to user with id : '.$userId);
 
-                        $carQuote = CarQuote::where('id', $carLead->id)->first();
-                        $carQuote->advisor_id = $userId;
-                        $carQuote->tier_id = $selectedTier->id;
-                        $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
-                        if ($carQuote->quote_batch_id == null) {
-                            $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                            $carQuote = CarQuote::where('id', $carLead->id)->first();
+                            $carQuote->advisor_id = $userId;
+                            $carQuote->tier_id = $selectedTier->id;
+                            $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+                            if ($carQuote->quote_batch_id == null) {
+                                $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                            }
+                            $carQuote->save();
+
+                            info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
+                            $this->updateCarLeadDetailRecord($carLead->id); // updating detail table about assignment
+
+                            info('updating user record in lead allocation table with count increment userId: '.$userId);
+                            $this->updateLeadAllocationOnCarAutoAssignment($userId); // updating lead allocation record for user
+
+                            $emailData = $this->buildEmailDateForLMSIntroEmail($userId, $carQuote); // create email body for intro email
+
+                            $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
+
+                            $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
+
+                            info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
+                            DB::commit();
+                        } catch (\Throwable $th) {
+                            DB::rollBack();
                         }
-                        $carQuote->save();
-
-                        info('advisor and tier assignment done for : '.$carLead->uuid.' to user with id : '.$userId.' and tier id : '.$selectedTier->name);
-                        $this->updateCarLeadDetailRecord($carLead->id); // updating detail table about assignment
-
-                        info('updating user record in lead allocation table with count increment userId: '.$userId);
-                        $this->updateLeadAllocationOnCarAutoAssignment($userId); // updating lead allocation record for user
-
-                        $emailData = $this->buildEmailDateForLMSIntroEmail($userId, $carQuote); // create email body for intro email
-
-                        $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
-
-                        $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
-
-                        info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                     } else {
                         info('login users not found for selected lead so will try to assign only tier');
 
@@ -589,19 +587,17 @@ class LeadAllocationService extends BaseService
 
     public function updateLeadAllocationOnCarAutoAssignment($userId)
     {
-        $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-        $leadAllocation->allocation_count = $leadAllocation->allocation_count + 1;
-        $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count + 1;
-        $leadAllocation->last_allocated = Carbon::now()->timestamp;
-        $leadAllocation->updated_at = now();
-        $leadAllocation->save();
+        $leadAllocationRecord = LeadAllocation::where('user_id', $userId)->first();
+        info('Count before update for user Id : '.$userId.' , total count = '.$leadAllocationRecord->allocation_count.' and auto count = '.$leadAllocationRecord->auto_assignment_count);
+        DB::statement("UPDATE lead_allocation SET allocation_count = allocation_count + 1 , auto_assignment_count = auto_assignment_count + 1 ,
+             last_allocated = '".Carbon::now()->timestamp."' , updated_at = now() where user_id = ".$userId);
     }
 
     public function updateCarLeadDetailRecord($leadId)
     {
         info('---- Inside updateCarLeadDetailRecord');
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
-        if ($carQuoteDetail != null) {
+        if ($carQuoteDetail) {
             $carQuoteDetail->advisor_assigned_date = now();
             $carQuoteDetail->advisor_assigned_by_id = auth()->id();
             $carQuoteDetail->save();
@@ -634,7 +630,7 @@ class LeadAllocationService extends BaseService
             ->where('is_renewal_tier_email_sent', 0) // this check make sure that Tier R leads are excluded bcz we only send email for Tier R and not assign advisor
             ->whereBetween('created_at', [$from, $to])
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake) // excluding all Fake leads
-            ->where('source', '!=', LeadSourceEnum::IMCRM) // leads created from IMCRM are excluded because they get assigned to the creator right away
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]) // leads created from IMCRM are excluded because they get assigned to the creator right away
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc') // pickup order
             ->skip(0)->take($carLeadPickupLimit)->get();
     }
@@ -676,11 +672,13 @@ class LeadAllocationService extends BaseService
         info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
 
         $renewalQuote = CarQuote::where('source', LeadSourceEnum::RENEWAL_UPLOAD)
-        ->whereBetween('renewal_expiry_date', [$dateFrom, $dateTo])
+        ->whereBetween('previous_policy_expiry_date', [$dateFrom, $dateTo])
         ->where(function ($query) use ($lead) {
             $query->where('email', $lead->email)
                 ->orWhere('mobile_no', 'like', '%'.substr($lead->mobile_no, -7));
-        })->where('car_make_id', $lead->car_make_id)->where('car_model_id', $lead->car_model_id)->get();
+        })
+        ->where('car_make_id', $lead->car_make_id)
+        ->where('car_model_id', $lead->car_model_id)->get();
 
         if (count($renewalQuote) > 0) {
             info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid.' for car quote with uuid : '.$lead->uuid);
@@ -816,7 +814,7 @@ class LeadAllocationService extends BaseService
             $this->updateUserMaxCapacity();
         }
 
-        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() >= $carLeadAllocationStartTime) {
+        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() == $carLeadAllocationStartTime) {
             info('updateAllocationStatusIfNeeded -- Inside start case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
         }
@@ -825,18 +823,23 @@ class LeadAllocationService extends BaseService
     public function shouldCarAllocationProceed()
     {
         $shouldProcess = true;
-
-        if ($this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == '0' || $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') == 0) {
+        $masterSwitchConfigValue = (int) config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH');
+        $masterSwitchValue = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
+        $normalSwitchValue = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
+        if ($masterSwitchConfigValue == 0) {
             // if car lead allocation master switch is OFF then we shouldn't proceed further
             $shouldProcess = false;
+            info('shouldCarAllocationProceed -- Doppler -- output is : '.json_encode($shouldProcess));
+
+            return false;
         }
 
-        if (! $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH')) {
+        if (! $masterSwitchValue || ! $normalSwitchValue) {
             // if car lead allocation normal switch is OFF then we shouldn't proceed further
             $shouldProcess = false;
         }
 
-        info('shouldCarAllocationProceed -- output is : '.json_encode($shouldProcess));
+        info('shouldCarAllocationProceed -- output is : '.json_encode($shouldProcess).'config value is : '.$masterSwitchConfigValue.' and app storage value is'.$normalSwitchValue.' and '.! $masterSwitchValue);
 
         return $shouldProcess;
     }

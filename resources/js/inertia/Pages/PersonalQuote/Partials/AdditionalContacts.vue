@@ -1,7 +1,4 @@
 <script setup>
-import { reactive, ref } from 'vue';
-import { router, useForm, usePage } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
 const page = usePage();
 const notification = useNotifications('toast');
 
@@ -109,11 +106,10 @@ const additionalContactDeleteConfirmed = () => {
   );
 };
 const additionalContactPrimaryConfirmed = () => {
-  const isEmail = confirmData.contactPrimary.key === 'email';
-  router.post(
-    `/customer-additional-contact/${
-      isEmail ? confirmData.contactPrimary.id : 0
-    }/make-primary`,
+  const url = `/personal-quotes/${page.props.quote.id}/change-primary-contact`;
+
+  router.patch(
+    url,
     {
       isInertia: true,
       quote_id: page.props.quote.id,

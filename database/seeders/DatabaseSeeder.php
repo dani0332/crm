@@ -41,8 +41,9 @@ class DatabaseSeeder extends Seeder
             addLMSIntroEmailTemplateId::class,
             addPermissionsForReportsAndDashbords::class,
             JetskiLookupsSeeder::class,
-            PersonalQuoteRolesPermissionSeeder::class
+            PersonalQuoteRolesPermissionSeeder::class,
             addSystemUser::class,
+            addCarDripListKey::class,
         ]);
     }
 }
