@@ -55,7 +55,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
 
         $query = CarQuote::query()
         ->select(
-            DB::raw("CONCAT('first_name', ' ', 'last_name') as fullName"),
+            DB::raw("CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName"),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
