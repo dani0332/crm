@@ -1458,7 +1458,8 @@ select {
   color: rgb(0 0 0 / var(--tw-text-opacity));
 }
 .underline {
-  text-decoration-line: underline;
+  -webkit-text-decoration-line: underline;
+          text-decoration-line: underline;
 }
 .antialiased {
   -webkit-font-smoothing: antialiased;
@@ -1548,8 +1549,14 @@ select {
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     -webkit-backdrop-filter;
   transition-property: color, background-color, border-color,
+    fill, stroke, opacity, box-shadow, transform, filter,
+    -webkit-text-decoration-color, -webkit-backdrop-filter;
+  transition-property: color, background-color, border-color,
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     backdrop-filter;
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
+    backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;
   transition-property: color, background-color, border-color,
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     backdrop-filter, -webkit-backdrop-filter;
@@ -1691,8 +1698,14 @@ li.active > a {
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     -webkit-backdrop-filter;
   transition-property: color, background-color, border-color,
+    fill, stroke, opacity, box-shadow, transform, filter,
+    -webkit-text-decoration-color, -webkit-backdrop-filter;
+  transition-property: color, background-color, border-color,
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     backdrop-filter;
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
+    backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;
   transition-property: color, background-color, border-color,
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     backdrop-filter, -webkit-backdrop-filter;
@@ -1735,8 +1748,14 @@ li.active > a {
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     -webkit-backdrop-filter;
   transition-property: color, background-color, border-color,
+    fill, stroke, opacity, box-shadow, transform, filter,
+    -webkit-text-decoration-color, -webkit-backdrop-filter;
+  transition-property: color, background-color, border-color,
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     backdrop-filter;
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
+    backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;
   transition-property: color, background-color, border-color,
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     backdrop-filter, -webkit-backdrop-filter;
@@ -1779,8 +1798,14 @@ li.active > a {
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     -webkit-backdrop-filter;
   transition-property: color, background-color, border-color,
+    fill, stroke, opacity, box-shadow, transform, filter,
+    -webkit-text-decoration-color, -webkit-backdrop-filter;
+  transition-property: color, background-color, border-color,
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     backdrop-filter;
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
+    backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter;
   transition-property: color, background-color, border-color,
     text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter,
     backdrop-filter, -webkit-backdrop-filter;
@@ -1969,7 +1994,8 @@ table.min-w-full > tfoot {
   color: rgb(107 114 128 / var(--tw-text-opacity));
 }
 .focus\:underline:focus {
-  text-decoration-line: underline;
+  -webkit-text-decoration-line: underline;
+          text-decoration-line: underline;
 }
 .focus\:outline-none:focus {
   outline: 2px solid transparent;

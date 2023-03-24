@@ -311,7 +311,7 @@ onMounted(() => {
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
-        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50" v-if="permissions.isManualAllocationAllowed">
+        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50" v-if="permissions.isManualAllocationAllowed == true">
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
               <x-select
