@@ -253,7 +253,7 @@ class AdvisorConversionReportTable extends DataTableComponent
                 }),
 
         ];
-        if (config('constants.APP_ENV') == 'local') {
+        if (! auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             array_push($filters, MultiSelectFilter::make('Lead Source')
             ->options($this->leadSources)->filter(function (Builder $builder, $value) {
                 $builder->whereIn('car_quote_request.source', $value);
