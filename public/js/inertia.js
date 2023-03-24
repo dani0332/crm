@@ -12211,7 +12211,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__.usePage)();
 
     var dateFormat = function dateFormat(date) {
-      return (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_4__.useDateFormat)(date, 'DD-MM-YYYY');
+      if (!date) return '';
+      return (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_4__.useDateFormat)(date, 'DD MMM YYYY');
     };
 
     var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_5__.useNotifications)('toast');
@@ -12699,6 +12700,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     });
 
     var addActivity = function addActivity() {
+      console.log('addActivity');
       activityForm.title = null;
       activityForm.description = null;
       activityForm.due_date = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(new Date());
@@ -37274,10 +37276,10 @@ var _hoisted_13 = {
   "class": "flex flex-col gap-4"
 };
 var _hoisted_14 = {
-  "class": "flex justify-end"
+  "class": "w-full md:w-2/3"
 };
 var _hoisted_15 = {
-  "class": "w-full md:w-2/3"
+  "class": "flex justify-end"
 };
 var _hoisted_16 = {
   "class": "p-4 rounded shadow mb-6 bg-white"
@@ -37941,9 +37943,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
       return $setup.leadStatusForm.leadStatus = $event;
     }),
-    label: "Status",
+    label: "STATUS",
     options: $setup.leadStatusOptions,
-    disabled: $props.quote.quote_status_id == $props.enums.quoteStatusEnum.transactionApproved,
+    disabled: $props.quote.quote_status_id == $props.enums.quoteStatusEnum.TransactionApproved,
     placeholder: "Lead Status",
     "class": "w-full"
   }, null, 8
@@ -37954,18 +37956,45 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return $setup.leadStatusForm.notes = $event;
     }),
     type: "text",
-    label: "Notes",
+    label: "NOTES",
     placeholder: "Lead Notes",
     "class": "w-full",
-    disabled: $props.quote.quote_status_id == $props.enums.quoteStatusEnum.transactionApproved
+    disabled: $props.quote.quote_status_id == $props.enums.quoteStatusEnum.TransactionApproved
   }, null, 8
   /* PROPS */
-  , ["modelValue", "disabled"])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_14, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_button, {
+  , ["modelValue", "disabled"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_14, [$setup.leadStatusForm.leadStatus == $props.enums.quoteStatusEnum.TransactionApproved ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createBlock)(_component_x_input, {
+    key: 0,
+    disabled: $props.quote.quote_status_id == $props.enums.quoteStatusEnum.TransactionApproved,
+    modelValue: $setup.leadStatusForm.trans_code,
+    "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
+      return $setup.leadStatusForm.trans_code = $event;
+    }),
+    label: "TRANSAPP CODE",
+    placeholder: "TransApp Code is required",
+    "class": "w-full",
+    error: $setup.leadStatusForm.errors.trans_code
+  }, null, 8
+  /* PROPS */
+  , ["disabled", "modelValue", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true), $setup.leadStatusForm.leadStatus == $props.enums.quoteStatusEnum.Lost ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createBlock)(_component_x_select, {
+    key: 1,
+    modelValue: $setup.leadStatusForm.lostReason,
+    "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
+      return $setup.leadStatusForm.lostReason = $event;
+    }),
+    label: "LOST REASON",
+    options: $setup.lostReasonsOptions,
+    placeholder: "Lost Reason is required",
+    "class": "w-full",
+    error: $setup.leadStatusForm.errors.lostReason
+  }, null, 8
+  /* PROPS */
+  , ["modelValue", "options", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true)])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_15, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_button, {
     "class": "mt-4",
     color: "emerald",
     size: "sm",
     loading: $setup.leadStatusForm.processing,
-    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_3__.withModifiers)($setup.onLeadStatus, ["prevent"])
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_3__.withModifiers)($setup.onLeadStatus, ["prevent"]),
+    disabled: $props.quote.quote_status_id == $props.enums.quoteStatusEnum.TransactionApproved
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" Change Status ")];
@@ -37975,32 +38004,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   }, 8
   /* PROPS */
-  , ["loading", "onClick"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_15, [$setup.leadStatusForm.leadStatus == $props.enums.quoteStatusEnum.transactionApproved ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createBlock)(_component_x_input, {
-    key: 0,
-    modelValue: $setup.leadStatusForm.trans_code,
-    "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
-      return $setup.leadStatusForm.trans_code = $event;
-    }),
-    label: "TransApp Code",
-    placeholder: "TransApp Code is required",
-    "class": "w-full",
-    error: $setup.leadStatusForm.errors.trans_code
-  }, null, 8
-  /* PROPS */
-  , ["modelValue", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true), $setup.leadStatusForm.leadStatus == 17 ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createBlock)(_component_x_select, {
-    key: 1,
-    modelValue: $setup.leadStatusForm.lostReason,
-    "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
-      return $setup.leadStatusForm.lostReason = $event;
-    }),
-    label: "Lost Reason",
-    options: $setup.lostReasonsOptions,
-    placeholder: "Lost Reason is required",
-    "class": "w-full",
-    error: $setup.leadStatusForm.errors.lostReason
-  }, null, 8
-  /* PROPS */
-  , ["modelValue", "options", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_16, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", null, [_hoisted_17, (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_divider, {
+  , ["loading", "onClick", "disabled"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_16, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", null, [_hoisted_17, (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_18, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("dl", _hoisted_19, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_20, [_hoisted_21, (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)($props.ecomDetails.premium), 1
   /* TEXT */
@@ -38144,7 +38148,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             }),
             label: "Date of Birth",
             "input-classes": "w-full ",
-            rules: [_ctx.rules.isRequired]
+            rules: [$setup.isRequired]
           }, null, 8
           /* PROPS */
           , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_34, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_button, {
@@ -38240,7 +38244,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.policyDetails.policy_number = $event;
         }),
         disabled: !$setup.policyDetails.editMode,
-        label: "Policy Number",
+        label: "POLICY NUMBER",
         rules: [$setup.isRequired, $setup.policy_number],
         "class": "w-full"
       }, null, 8
@@ -38252,7 +38256,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         disabled: !$setup.policyDetails.editMode,
         type: "date",
-        label: "Issuance Date",
+        label: "ISSUANCE DATE",
         rules: [$setup.isRequired],
         "class": "w-full"
       }, null, 8
@@ -38264,7 +38268,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         disabled: !$setup.policyDetails.editMode,
         type: "date",
-        label: "Start Date",
+        label: "START DATE",
         rules: [$setup.isRequired, $setup.policy_start_date],
         "class": "w-full"
       }, null, 8
@@ -38276,7 +38280,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         disabled: !$setup.policyDetails.editMode,
         type: "date",
-        label: "Expiry Date",
+        label: "EXPIRY DATE",
         rules: [$setup.isRequired, $setup.renewal_expiry_date],
         "class": "w-full"
       }, null, 8
@@ -38287,7 +38291,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.policyDetails.premium = $event;
         }),
         disabled: !$setup.policyDetails.editMode,
-        label: "Premium",
+        label: "PREMIUM",
         rules: [$setup.isRequired, $setup.premium],
         "class": "w-full"
       }, null, 8
@@ -38912,7 +38916,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
               return $setup.activityForm.due_date = $event;
             }),
             label: "Due Date",
-            rules: [_ctx.rules.isRequired],
+            rules: [$setup.isRequired],
             "enable-time-picker": true,
             "is-24": true,
             "class": "w-full"

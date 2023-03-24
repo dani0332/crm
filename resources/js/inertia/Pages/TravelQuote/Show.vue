@@ -38,7 +38,10 @@ defineProps({
 
 const page = usePage();
 
-const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
+const dateFormat = date => {
+    if (!date) return '';
+    return useDateFormat(date, 'DD MMM YYYY');
+}
 
 const notification = useNotifications('toast');
 
@@ -556,6 +559,7 @@ const activityForm = useForm({
 });
 
 const addActivity = () => {
+    console.log('addActivity');
   activityForm.title = null;
   activityForm.description = null;
   activityForm.due_date = ref(new Date());
@@ -945,11 +949,11 @@ onMounted(() => {
           <div class="flex flex-col gap-4">
             <x-select
               v-model="leadStatusForm.leadStatus"
-              label="Status"
+              label="STATUS"
               :options="leadStatusOptions"
               :disabled="
                 quote.quote_status_id ==
-                enums.quoteStatusEnum.transactionApproved
+                enums.quoteStatusEnum.TransactionApproved
               "
               placeholder="Lead Status"
               class="w-full"
@@ -957,44 +961,37 @@ onMounted(() => {
             <x-textarea
               v-model="leadStatusForm.notes"
               type="text"
-              label="Notes"
+              label="NOTES"
               placeholder="Lead Notes"
               class="w-full"
               :disabled="
                 quote.quote_status_id ==
-                enums.quoteStatusEnum.transactionApproved
+                enums.quoteStatusEnum.TransactionApproved
               "
             />
           </div>
 
-          <div class="flex justify-end">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-            >
-              Change Status
-            </x-button>
-          </div>
         </div>
         <div class="w-full md:w-2/3">
           <x-input
             v-if="
               leadStatusForm.leadStatus ==
-              enums.quoteStatusEnum.transactionApproved
+              enums.quoteStatusEnum.TransactionApproved
             "
+            :disabled="
+                quote.quote_status_id ==
+                enums.quoteStatusEnum.TransactionApproved
+              "
             v-model="leadStatusForm.trans_code"
-            label="TransApp Code"
+            label="TRANSAPP CODE"
             placeholder="TransApp Code is required"
             class="w-full"
             :error="leadStatusForm.errors.trans_code"
           />
           <x-select
-            v-if="leadStatusForm.leadStatus == 17"
+            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
             v-model="leadStatusForm.lostReason"
-            label="Lost Reason"
+            label="LOST REASON"
             :options="lostReasonsOptions"
             placeholder="Lost Reason is required"
             class="w-full"
@@ -1002,6 +999,21 @@ onMounted(() => {
           />
         </div>
       </div>
+      <div class="flex justify-end">
+            <x-button
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="leadStatusForm.processing"
+              @click.prevent="onLeadStatus"
+              :disabled="
+                quote.quote_status_id ==
+                enums.quoteStatusEnum.TransactionApproved
+              "
+            >
+              Change Status
+            </x-button>
+          </div>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -1110,7 +1122,7 @@ onMounted(() => {
             v-model="travelerForm.dob"
             label="Date of Birth"
             input-classes="w-full "
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
           />
           <div class="flex justify-end">
             <x-button
@@ -1158,7 +1170,7 @@ onMounted(() => {
             <x-input
               v-model="policyDetails.policy_number"
               :disabled="!policyDetails.editMode"
-              label="Policy Number"
+              label="POLICY NUMBER"
               :rules="[isRequired, policy_number]"
               class="w-full"
             />
@@ -1168,7 +1180,7 @@ onMounted(() => {
               v-model="policyDetails.policy_issuance_date"
               :disabled="!policyDetails.editMode"
               type="date"
-              label="Issuance Date"
+              label="ISSUANCE DATE"
               :rules="[isRequired]"
               class="w-full"
             />
@@ -1180,7 +1192,7 @@ onMounted(() => {
               v-model="policyDetails.policy_start_date"
               :disabled="!policyDetails.editMode"
               type="date"
-              label="Start Date"
+              label="START DATE"
               :rules="[isRequired, policy_start_date]"
               class="w-full"
             />
@@ -1190,7 +1202,7 @@ onMounted(() => {
               v-model="policyDetails.renewal_expiry_date"
               :disabled="!policyDetails.editMode"
               type="date"
-              label="Expiry Date"
+              label="EXPIRY DATE"
               :rules="[isRequired, renewal_expiry_date]"
               class="w-full"
             />
@@ -1201,7 +1213,7 @@ onMounted(() => {
             <x-input
               v-model="policyDetails.premium"
               :disabled="!policyDetails.editMode"
-              label="Premium"
+              label="PREMIUM"
               :rules="[isRequired, premium]"
               class="w-full"
             />
@@ -1687,7 +1699,7 @@ onMounted(() => {
             <DatePicker
               v-model="activityForm.due_date"
               label="Due Date"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               :enable-time-picker="true"
               :is-24="true"
               class="w-full"
