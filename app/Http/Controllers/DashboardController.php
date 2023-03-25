@@ -318,11 +318,6 @@ class DashboardController extends Controller
         return $this->dashboardService->getAdvisorLeadAssignedData($request->teamFilter);
     }
 
-    public function getAdvisorConversionStats(Request $request)
-    {
-        return $this->dashboardService->getAdvisorConversionData($request->advisorFilter);
-    }
-
     public function getUsersByTeam(Request $request)
     {
         return $this->getUsersByTeamId($request->team_filter);
