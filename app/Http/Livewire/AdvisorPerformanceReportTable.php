@@ -114,15 +114,15 @@ class AdvisorPerformanceReportTable extends DataTableComponent
         $query = CarQuote::query()
         ->select(
             DB::raw('count(DISTINCT car_quote_request.id) as total_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
+            DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as new_leads'),
             DB::raw('CAST(SUM(CASE WHEN car_quote_request.auto_assigned = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as auto_assigned'),
             DB::raw('CAST(SUM(CASE WHEN (car_quote_request.auto_assigned = 0 and source != "'.LeadSourceEnum::IMCRM.'" ) THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as manually_assigned'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.') THEN 1 ELSE 0 END) as not_interested'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.') THEN 1 ELSE 0 END) as in_progress'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
-            DB::raw('SUM(quote_view_count.visit_count) as view_count'),
+            DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as not_interested'),
+            DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as in_progress'),
+            DB::raw('CAST(SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as manual_created'),
+            DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as bad_leads'),
+            DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as sale_leads'),
+            DB::raw('CAST(SUM(quote_view_count.visit_count) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as view_count'),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
