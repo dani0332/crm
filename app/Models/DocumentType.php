@@ -28,8 +28,6 @@ class DocumentType extends Model implements AuditableContract
     }
 
     /**
-     * @param $query
-     * @param $quoteTypeId
      * @return mixed
      */
     public function scopeByQuoteTypeId($query, $quoteTypeId)

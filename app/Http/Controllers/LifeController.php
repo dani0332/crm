@@ -30,8 +30,6 @@ class LifeController extends Controller
      * TravelController constructor.
      *
      * @param  LifeQuoteService  $service
-     * @param  LookupService  $lookupService
-     * @param  CRUDService  $crudService
      */
     public function __construct(LifeQuoteService $lifeQuoteService, LookupService $lookupService, CRUDService $crudService)
     {
@@ -110,7 +108,6 @@ class LifeController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -257,7 +254,6 @@ class LifeController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */

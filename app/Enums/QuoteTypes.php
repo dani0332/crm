@@ -10,18 +10,11 @@ enum QuoteTypes: string
     case YACHT = 'Yacht';
     case JETSKI = 'Jetski';
 
-    /**
-     * @return string
-     */
     public function id(): string
     {
         return static::getId($this);
     }
 
-    /**
-     * @param  QuoteTypes  $value
-     * @return int
-     */
     public static function getId(self $value): int
     {
         return match ($value) {

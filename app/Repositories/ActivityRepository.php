@@ -13,7 +13,6 @@ class ActivityRepository extends BaseRepository
     }
 
     /**
-     * @param $data
      * @return mixed
      */
     public function fetchCreate($data)
@@ -36,8 +35,6 @@ class ActivityRepository extends BaseRepository
     }
 
     /**
-     * @param $id
-     * @param $data
      * @return mixed
      */
     public function fetchUpdate($id, $data)

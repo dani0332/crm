@@ -14,7 +14,6 @@ class PersonalQuoteTypeRepository extends BaseRepository
     /**
      * get by code
      *
-     * @param $code
      * @return mixed
      */
     public function fetchGetByCode($code)
