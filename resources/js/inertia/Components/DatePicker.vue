@@ -21,19 +21,26 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  hasError: {
+  withTime: {
     type: Boolean,
     default: false,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
+  rules: {
+    type: Array,
+    default: () => [],
+  },
 });
 
-const format = (date, isServer = false) => {
+const format = date => {
   if (!date) return '';
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
-
-  return isServer ? `${year}-${month}-${day}` : `${day}-${month}-${year}`;
+  return `${year}-${month}-${day}`;
 };
 
 const selectedData = computed({
@@ -41,7 +48,7 @@ const selectedData = computed({
     return props.modelValue;
   },
   set(newValue) {
-    emit('update:modelValue', format(newValue, true));
+    emit('update:modelValue', props.withTime ? newValue : format(newValue));
     return;
   },
 });
@@ -50,11 +57,12 @@ const selectedData = computed({
   <VueDatePicker
     v-model="selectedData"
     auto-apply
-    :format="format"
+    :format="props.withTime ? `dd-MM-yyyy HH:mm` : `dd-MM-yyyy`"
     :teleport="true"
-    :enable-time-picker="false"
+    :enable-time-picker="props.withTime"
     :month-change-on-scroll="false"
     :clearable="false"
+    :disabled="props.disabled"
   >
     <template #dp-input="{ value, onClear }">
       <x-input
@@ -62,11 +70,15 @@ const selectedData = computed({
         :value="value"
         :label="props.label"
         :placeholder="placeholder"
-        :error="props.hasError ? 'This field is required' : ''"
+        :disabled="props.disabled"
         class="w-full"
+        :rules="props.rules"
         readonly
       />
-      <div class="absolute right-2.5 top-[34px] hover:text-secondary-500">
+      <div
+        v-if="!props.disabled"
+        class="absolute right-2.5 top-[34px] hover:text-secondary-500"
+      >
         <svg
           v-if="!value"
           xmlns="http://www.w3.org/2000/svg"

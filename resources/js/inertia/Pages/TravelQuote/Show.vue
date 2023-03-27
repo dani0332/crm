@@ -137,8 +137,8 @@ const modals = reactive({
   planDetails: false,
 });
 const travelFields = computed(() => {
-    console.log(page.props.fieldsToDisplay);
-    let skipFields = [
+  console.log(page.props.fieldsToDisplay);
+  let skipFields = [
     'previous_quote_policy_number',
     'previous_quote_policy_premium',
     'previous_policy_expiry_date',
@@ -1544,9 +1544,8 @@ onMounted(() => {
               v-model="activityForm.due_date"
               label="Due Date"
               :rules="[isRequired]"
-              :enable-time-picker="true"
-              :is-24="true"
               class="w-full"
+              withTime
             />
           </div>
 
