@@ -90,6 +90,8 @@ function onSubmit(isValid) {
               :disabled="field.disabled"
               class="w-full"
               :errors="quoteForm.errors[index]"
+              maxlength="255"
+
             />
           </label>
 
@@ -108,6 +110,7 @@ function onSubmit(isValid) {
               :disabled="field.disabled"
               class="w-full"
               :errors="quoteForm.errors[index]"
+              maxlength="255"
             />
           </label>
 
@@ -122,6 +125,7 @@ function onSubmit(isValid) {
               :disabled="field.disabled"
               class="w-full"
               :errors="quoteForm.errors[index]"
+              maxlength="20"
             />
           </label>
 
@@ -138,7 +142,7 @@ function onSubmit(isValid) {
               {{ field.label }}
               <sup v-if="field.required" class="text-red-500">*</sup>
             </p>
-            <x-select
+            <ComboBox
               v-model="quoteForm[index]"
               :rules="[field.required === true ? rules.isRequired : false]"
               :disabled="field.disabled"
@@ -148,8 +152,9 @@ function onSubmit(isValid) {
                   label: option.text,
                 }))
               "
+              :single="true"
               class="w-full"
-              :errors="quoteForm.errors[index]"
+              :hasError="quoteForm.errors[index]"
             />
           </label>
 
@@ -165,6 +170,7 @@ function onSubmit(isValid) {
               :disabled="field.disabled"
               class="w-full"
               :errors="quoteForm.errors[index]"
+                maxlength="1000"
             />
           </label>
         </template>

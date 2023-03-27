@@ -79,7 +79,7 @@ class TravelQuoteService extends BaseService
             'tqr.device',
             'tqr.previous_quote_policy_premium',
             'tqr.policy_issuance_date',
-            'tqr.policy_start_date',
+            DB::raw('DATE_FORMAT(tqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
             'tqr.customer_id',
             'tqr.parent_duplicate_quote_id'
         )
