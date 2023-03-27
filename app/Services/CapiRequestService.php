@@ -41,7 +41,6 @@ class CapiRequestService
                     $carQuote->is_quote_locked = true;
                     $carQuote->car_model_detail_id = $data['trim'];
                     $carQuote->car_value_tier = $data['carValueTier'];
-                    $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
                     $carQuote->save();
 
                     if ($carQuote->advisor_id != null) {
