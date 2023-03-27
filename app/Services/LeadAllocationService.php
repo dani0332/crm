@@ -524,8 +524,8 @@ class LeadAllocationService extends BaseService
                                 $quoteBatch = QuoteBatches::latest()->first();
                                 info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$carLead->uuid);
                                 $carQuote->quote_batch_id = $quoteBatch->id;
-                            }else{
-                                info('quote batch currently attached to quote : '. $carQuote->uuid .' and quote id is : '.$carQuote->quote_batch_id);
+                            } else {
+                                info('quote batch currently attached to quote : '.$carQuote->uuid.' and quote id is : '.$carQuote->quote_batch_id);
                             }
                             $carQuote->save();
 
