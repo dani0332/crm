@@ -284,7 +284,6 @@ class CRUDController extends Controller
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $modelType = json_decode($request->get('modelType'), true);
         $validateArray = [];
-
         if ($modelType !== quoteTypeCode::Health && $modelType !== quoteTypeCode::Home) {
             foreach ($modelPropertiesList as $property => $value) {
                 if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
@@ -293,9 +292,27 @@ class CRUDController extends Controller
             }
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
+        if ($request->has('first_name')) {
+            $this->validate($request, [
+                'first_name' => 'required|max:255',
+            ]);
+        } if ($request->has('last_name')) {
+            $this->validate($request, [
+                'last_name' => 'required|max:255',
+            ]);
+        }
         if ($request->has('email')) {
             $this->validate($request, [
                 'email' => 'required|email:rfc,dns|max:150',
+            ]);
+        }
+        if ($request->has('ilivein_accommodation_type_id')) {
+            $this->validate($request, [
+                'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
+            ]);
+        } if ($request->has('iam_possesion_type_id')) {
+            $this->validate($request, [
+                'iam_possesion_type_id' => 'required|exists:home_possession_type,id', 
             ]);
         }
         if ($request->has('type_of_pet1')) {
@@ -306,6 +323,11 @@ class CRUDController extends Controller
         if ($request->has('mobile_no')) {
             $this->validate($request, [
                 'mobile_no' => 'required|regex:/(0)[0-9]/|not_regex:/[a-z]/|min:7|max:20',
+            ]);
+        } 
+        if ($request->has('address')) {
+            $this->validate($request, [
+                'address' => 'required|max:2000',
             ]);
         }
 
@@ -351,6 +373,7 @@ class CRUDController extends Controller
         if (! $record) {
             abort(404);
         }
+        // dd($record);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');

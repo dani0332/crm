@@ -51,13 +51,14 @@ class HomeQuoteService extends BaseService
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+            DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+            DB::raw('DATE_FORMAT(hqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
             'hqr.premium',
             'hqr.advisor_id',
             'u.name as advisor_id_text',
             'hat.TEXT AS ilivein_accommodation_type_id_text',
             'hqr.iam_possesion_type_id',
             'hpt.TEXT AS iam_possesion_type_id_text',
-            'hqrd.next_followup_date',
             'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
@@ -65,7 +66,6 @@ class HomeQuoteService extends BaseService
             'hqr.renewal_expiry_date',
             'hqr.renewal_batch',
             'hqr.previous_quote_policy_number',
-            'hqr.previous_policy_expiry_date',
             'hqr.previous_quote_policy_premium',
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
@@ -525,6 +525,7 @@ class HomeQuoteService extends BaseService
         $homeQuote->has_contents = $request->has_contents == 'on' ? true : false;
         $homeQuote->nationality_id = $request->nationality_id;
         $homeQuote->premium = $request->premium;
+        $homeQuote->policy_number = $request->policy_number;
         $homeQuote->has_building = $request->has_building == 'on' ? true : false;
         $homeQuote->has_personal_belongings = $request->has_personal_belongings == 'on' ? true : false;
         $homeQuote->save();

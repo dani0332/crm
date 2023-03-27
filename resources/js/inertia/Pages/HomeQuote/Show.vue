@@ -202,6 +202,7 @@ const onActivitySubmit = isValid => {
     activityForm.post(`/activities/create-activity`, {
       preserveScroll: true,
       onSuccess: () => {
+        activityForm.reset();
         notification.success({
           title: 'Activity Added',
           position: 'top',
@@ -269,10 +270,14 @@ const onAdditionalContactSubmit = isValid => {
     .post(`/customer-additional-contact/add`, {
       preserveScroll: true,
       onSuccess: () => {
+        additionalContact.reset();
         notification.success({
           title: 'Additional Contact Added',
           position: 'top',
         });
+      },
+      onError: err => {
+        notification.error({ title: err.error, position: 'top' });
       },
       onFinish: () => {
         modals.addContact = false;
@@ -465,35 +470,35 @@ const policyDetails = useForm({
             <dd>{{ quote.code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ADVISOR</dt>
+            <dt class="font-medium">Advisor</dt>
             <dd>{{ quote.advisor_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CREATED DATE</dt>
+            <dt class="font-medium">Created Date</dt>
             <dd>{{ quote.created_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SOURCE</dt>
+            <dt class="font-medium">Source</dt>
             <dd>{{ quote.source }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST MODIFIED DATE</dt>
+            <dt class="font-medium">Last Modified Date</dt>
             <dd>{{ quote.updated_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT CDB ID</dt>
+            <dt class="font-medium">Parent Cdb Id</dt>
             <dd>{{ quote.parent_duplicate_quote_id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL BATCH</dt>
+            <dt class="font-medium">Renewal Batch</dt>
             <dd>{{ quote.renewal_batch }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL IMPORT CODE</dt>
+            <dt class="font-medium">Renewal import code</dt>
             <dd>{{ quote.renewal_import_code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DEVICE</dt>
+            <dt class="font-medium">Device</dt>
             <dd>{{ quote.device }}</dd>
           </div>
         </dl>
@@ -507,23 +512,23 @@ const policyDetails = useForm({
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">FIRST NAME</dt>
+            <dt class="font-medium">First Name</dt>
             <dd>{{ quote.first_name }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST NAME</dt>
+            <dt class="font-medium">Last Name</dt>
             <dd>{{ quote.last_name }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MOBILE NUMBER</dt>
+            <dt class="font-medium">Mobile Number</dt>
             <dd>{{ quote.mobile_no }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMAIL</dt>
+            <dt class="font-medium">Email</dt>
             <dd>{{ quote.email }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ADDRESS</dt>
+            <dt class="font-medium">Address</dt>
             <dd>{{ quote.address }}</dd>
           </div>
         </dl>
@@ -537,51 +542,51 @@ const policyDetails = useForm({
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">I AM</dt>
-            <dd>{{ quote.iam_possesion_type_id }}</dd>
+            <dt class="font-medium">I am</dt>
+            <dd>{{ quote.iam_possesion_type_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">I LIVE IN</dt>
-            <dd>{{ quote.ilivein_accommodation_type_id }}</dd>
+            <dt class="font-medium">I Live In</dt>
+            <dd>{{ quote.ilivein_accommodation_type_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">HAS CONTENTS</dt>
+            <dt class="font-medium">Has Contents</dt>
             <dd>{{ quote.has_contents ? 'Yes' : 'No' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CONTENTS AED</dt>
+            <dt class="font-medium">Contents Aed</dt>
             <dd>{{ quote.contents_aed }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">HAS BUILDING</dt>
+            <dt class="font-medium">Has Building</dt>
             <dd>{{ quote.has_building ? 'Yes' : 'No' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">BUILDING AED</dt>
+            <dt class="font-medium">Building Aed</dt>
             <dd>{{ quote.building_aed }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">HAS PERSONAL BELONGINGS</dt>
+            <dt class="font-medium">Has Personal Belongings</dt>
             <dd>{{ quote.has_personal_belongings ? 'Yes' : 'No' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PERSONAL BELONGINGS AED</dt>
+            <dt class="font-medium">Personal Belongings Aed</dt>
             <dd>{{ quote.personal_belongings_aed }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CURRENTLY INSURED WITH</dt>
+            <dt class="font-medium">Currently Insured With</dt>
             <dd>{{ quote.currently_insured_with_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TYPE OF PLAN</dt>
+            <dt class="font-medium">Type Of Plan</dt>
             <dd>{{ quote.plan_id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
+            <dt class="font-medium">Next FollowUp Date</dt>
             <dd>{{ quote.next_followup_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DETAILS</dt>
+            <dt class="font-medium">Details</dt>
             <dd>{{ quote.details }}</dd>
           </div>
         </dl>
@@ -597,15 +602,15 @@ const policyDetails = useForm({
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
+            <dt class="font-medium">Previous Policy Nnumber</dt>
             <dd>{{ quote.previous_quote_policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
+            <dt class="font-medium">Previous Policy Expiry Date</dt>
             <dd>{{ quote.previous_policy_expiry_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS QUOTE PREMIUM</dt>
+            <dt class="font-medium">Previous Quote Premium</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
         </dl>
@@ -619,15 +624,15 @@ const policyDetails = useForm({
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY NUMBER</dt>
+            <dt class="font-medium">Policy Number</dt>
             <dd>{{ quote.policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
+            <dt class="font-medium">Premium</dt>
             <dd>{{ quote.premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
+            <dt class="font-medium">TransApp Code</dt>
             <dd>{{ quote.transapp_code }}</dd>
           </div>
         </dl>
@@ -761,7 +766,7 @@ const policyDetails = useForm({
           <div class="grid gap-4">
             <x-input
               v-model="activityForm.title"
-              label="Title"
+              label="Title*"
               :rules="[rules.isRequired]"
               class="w-full"
             />
@@ -775,19 +780,18 @@ const policyDetails = useForm({
 
             <x-select
               v-model="activityForm.assignee_id"
-              label="Assignee"
+              label="Assignee*"
               :options="advisorOptions"
               :rules="[rules.isRequired]"
               placeholder="Select Assignee"
               class="w-full"
             />
 
-            <x-input
+            <DatePicker
               v-model="activityForm.due_date"
-              label="Due Date"
-              type="datetime-local"
+              withTime
               :rules="[rules.isRequired]"
-              class="w-full"
+              label="Due Date*"
             />
           </div>
 
@@ -835,7 +839,7 @@ const policyDetails = useForm({
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
-          Customer Additional Contacts
+          Customer Additional Contact
           <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
         </h3>
         <x-button
@@ -888,7 +892,7 @@ const policyDetails = useForm({
           <div class="grid gap-4">
             <x-select
               v-model="additionalContact.additional_contact_type"
-              label="Type"
+              label="Type*"
               :options="[
                 { value: 'email', label: 'Email' },
                 { value: 'mobile_no', label: 'Mobile Number' },
@@ -900,7 +904,7 @@ const policyDetails = useForm({
 
             <x-input
               v-model="additionalContact.additional_contact_val"
-              label="Value"
+              label="Value*"
               :rules="[rules.isRequired]"
               class="w-full"
             />

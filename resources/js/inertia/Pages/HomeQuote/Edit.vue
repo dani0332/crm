@@ -1,6 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 import { Head, router, useForm, Link } from '@inertiajs/vue3';
+import { useNotifications } from '@indielayer/ui';
+
+const notification = useNotifications('toast');
 
 const props = defineProps({
   quote: Object,
@@ -74,6 +77,10 @@ function onSubmit(isValid) {
             console.log(errors);
           },
           onSuccess: () => {
+            notification.success({
+              title: 'Quote updated successfully',
+              position: 'top',
+            });
             router.get(`/quotes/home/${props.quote.uuid}`);
           },
         });
