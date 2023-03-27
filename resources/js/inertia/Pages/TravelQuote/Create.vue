@@ -130,7 +130,7 @@ onMounted(() => {});
               {{ field.label }}
               <sup v-if="field.required" class="text-red-500">*</sup>
             </p>
-            <x-select
+            <ComboBox
               v-model="quoteForm[index]"
               :rules="[
                 field.required === true ? rules.isRequired : rules.allowEmpty,
@@ -142,8 +142,9 @@ onMounted(() => {});
                   label: option.text,
                 }))
               "
+              :single="true"
               class="w-full"
-              :error="quoteForm.errors[index]"
+              :hasError="quoteForm.errors[index]"
             />
           </label>
 

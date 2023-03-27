@@ -26,7 +26,7 @@ const quoteForm = useForm({
   model: props.model,
   ...formFields.value.reduce((acc, field) => {
     acc[field.value] = props.quote[field.value];
-      if (field.value === 'dob' ) {
+    if (field.value === 'dob') {
       acc[field.value] = props.quote[field.value]
         ? props.quote[field.value].split('-').reverse().join('-')
         : null;
@@ -91,7 +91,6 @@ function onSubmit(isValid) {
               class="w-full"
               :errors="quoteForm.errors[index]"
               maxlength="255"
-
             />
           </label>
 
@@ -170,7 +169,7 @@ function onSubmit(isValid) {
               :disabled="field.disabled"
               class="w-full"
               :errors="quoteForm.errors[index]"
-                maxlength="1000"
+              maxlength="1000"
             />
           </label>
         </template>
