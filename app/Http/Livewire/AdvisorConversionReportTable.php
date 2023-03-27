@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
+use App\Models\LeadSource;
 use App\Models\QuoteBatches;
 use App\Models\Tier;
 use App\Models\User;
@@ -97,10 +98,11 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->map(fn ($batch) => $batch->name.'-('.$batch->start_date.' to '.$batch->end_date.')')
             ->toArray();
 
-        $this->leadSources = CarQuote::query()
-            ->select('source as name')
+        $this->leadSources = LeadSource::query()
+            ->select('name')
             ->distinct()
-            ->whereNotNull('source')
+            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
+            ->whereNotNull('name')
             ->orderBy('name')
             ->get()
             ->keyBy('name')
@@ -199,8 +201,6 @@ class AdvisorConversionReportTable extends DataTableComponent
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->join('user_team', 'user_team.user_id', 'users.id')
-        ->join('teams', 'teams.id', 'user_team.team_id')
         ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
@@ -264,7 +264,14 @@ class AdvisorConversionReportTable extends DataTableComponent
                 'placeholder' => 'SELECT ALL TEAMS',
             ])
             ->options($this->teams)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('teams.id', $value);
+                $builder->whereIn('users.id', function ($query) use ($value) {
+                    $query->distinct()
+                          ->select('users.id')
+                          ->from('users')
+                          ->join('user_team', 'user_team.user_id', 'users.id')
+                          ->join('teams', 'teams.id', 'user_team.team_id')
+                          ->whereIn('teams.id', $value);
+                });
             }));
 
             array_push($filters, MultiSelectFilter::make('Advisors')

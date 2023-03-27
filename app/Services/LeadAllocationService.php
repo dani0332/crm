@@ -12,6 +12,7 @@ use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\GetQuotePlansJob;
+use App\Jobs\IntroEmailJob;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -117,13 +118,13 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function getUnAllocatedLeads()
+    public function getHealthUnallocatedLeads()
     {
         try {
             $unAllocatedLeads = [];
             $to = now();
             $from = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
-            info('from date : '.$from.' to date : '.$to);
+            info('Health Unallocated Leads from date : '.$from.' to date : '.$to);
             $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
                 ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
                 ->where('quote_status.id', QuoteStatusEnum::Qualified)
@@ -157,9 +158,6 @@ class LeadAllocationService extends BaseService
                 }
 
                 $lead->advisor_id = $advisorId;
-                if ($lead->quote_batch_id == null) {
-                    $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
-                }
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
@@ -523,8 +521,13 @@ class LeadAllocationService extends BaseService
                             $carQuote->advisor_id = $userId;
                             $carQuote->tier_id = $selectedTier->id;
                             $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+
                             if ($carQuote->quote_batch_id == null) {
-                                $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                                $quoteBatch = QuoteBatches::latest()->first();
+                                info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$carLead->uuid);
+                                $carQuote->quote_batch_id = $quoteBatch->id;
+                            } else {
+                                info('quote batch currently attached to quote : '.$carQuote->uuid.' and quote id is : '.$carQuote->quote_batch_id);
                             }
                             $carQuote->save();
 
@@ -538,8 +541,7 @@ class LeadAllocationService extends BaseService
 
                             $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
 
-                            $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
-
+                            IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'send-lms-intro-email'); // sending email using email body and template id
                             info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                             DB::commit();
                         } catch (\Throwable $th) {
@@ -642,6 +644,7 @@ class LeadAllocationService extends BaseService
         ->join('rules', 'rule_lead_sources.rule_id', 'rules.id')
         ->where('lead_sources.name', $source)
         ->where('rules.is_active', 1)
+        ->where('lead_sources.is_applicable_for_rules', 1)
         ->groupBy('rule_lead_sources.lead_source_id')
         ->select(
             'lead_sources.name AS leadSourceName',
@@ -814,7 +817,7 @@ class LeadAllocationService extends BaseService
             $this->updateUserMaxCapacity();
         }
 
-        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() == $carLeadAllocationStartTime) {
+        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() >= $carLeadAllocationStartTime) {
             info('updateAllocationStatusIfNeeded -- Inside start case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
         }
