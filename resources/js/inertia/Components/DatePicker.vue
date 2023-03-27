@@ -72,7 +72,7 @@ const selectedData = computed({
         :placeholder="placeholder"
         :disabled="props.disabled"
         class="w-full"
-        :rules="props.rules"
+        :rules="value ? [] : props.rules"
         readonly
       />
       <div
