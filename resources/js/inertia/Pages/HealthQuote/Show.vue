@@ -1861,12 +1861,12 @@ onMounted(() => {
               class="w-full"
             />
 
-            <x-input
+            <date-picker
               v-model="activityForm.due_date"
               label="Due Date"
-              type="datetime-local"
               :rules="[isRequired]"
               class="w-full"
+              withTime
             />
           </div>
 
