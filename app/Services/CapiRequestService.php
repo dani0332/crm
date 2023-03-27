@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\UserNameEnum;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
-use App\Models\QuoteBatches;
 use App\Models\User;
 
 class CapiRequestService
