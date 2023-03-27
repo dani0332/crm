@@ -21,6 +21,7 @@
         "laravel/legacy-factories": "^1.1",
         "laravel/sanctum": "^2.6",
         "laravel/socialite": "^5.2",
+        "laravel/telescope": "^4.14",
         "laravel/tinker": "^2.5",
         "laravelcollective/html": "^6.2",
         "livewire/livewire": "^2.0",
@@ -78,7 +79,9 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": [
+                "laravel/telescope"
+            ]
         },
         "hooks": {
             "pre-commit": [
