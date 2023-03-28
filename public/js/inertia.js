@@ -17,7 +17,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.dp__clear_icon {\r\n  top: 40%;\n}\r\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.dp__clear_icon {\n  top: 40%;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -572,7 +572,7 @@ __webpack_require__.r(__webpack_exports__);
       var day = date.getDate();
       var month = date.getMonth() + 1;
       var year = date.getFullYear();
-      return "".concat(year, "-").concat(month, "-").concat(day);
+      return withTime ? "".concat(year, "-").concat(month, "-").concat(day, " ").concat(date.getHours(), ":").concat(date.getMinutes()) : "".concat(year, "-").concat(month, "-").concat(day);
     };
 
     var selectedData = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)({
@@ -12856,6 +12856,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     };
 
+    var date = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(new Date()); // In case of a range picker, you'll receive [Date, Date]
+
+    var format = function format(date) {
+      var day = date.getDate();
+      var month = date.getMonth() + 1;
+      var year = date.getFullYear();
+      var hours = date.getHours();
+      var minutes = date.getMinutes();
+      return "".concat(day, "/").concat(month, "/").concat(year, " ").concat(hours, ":").concat(minutes, " ");
+    };
+
     var activityEdit = function activityEdit(data) {
       activityActionEdit.value = true;
       modals.activity = true;
@@ -12872,6 +12883,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (!isValid) return;
 
       if (activityActionEdit.value) {
+        var _date = new Date(activityForm.due_date);
+
+        _date = _date.toISOString().split('T')[0] + ' ' + _date.toTimeString().split(' ')[0];
+        activityForm.due_date = _date;
         activityForm.post("/activities/".concat(activityForm.uuid, "/update"), {
           preserveScroll: true,
           onSuccess: function onSuccess() {
@@ -12885,6 +12900,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           }
         });
       } else {
+        var _date2 = new Date(activityForm.due_date);
+
+        _date2 = _date2.toISOString().split('T')[0] + ' ' + _date2.toTimeString().split(' ')[0];
+        activityForm.due_date = _date2;
         activityForm.post("/activities/create-activity", {
           preserveScroll: true,
           onSuccess: function onSuccess() {
@@ -13195,6 +13214,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       activityForm: activityForm,
       addActivity: addActivity,
       onActivityStatusUpdate: onActivityStatusUpdate,
+      date: date,
+      format: format,
       activityEdit: activityEdit,
       onActivitySubmit: onActivitySubmit,
       activityDelete: activityDelete,
@@ -39192,6 +39213,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           }, null, 8
           /* PROPS */
           , ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_DatePicker, {
+            format: $setup.format,
             modelValue: $setup.activityForm.due_date,
             "onUpdate:modelValue": _cache[26] || (_cache[26] = function ($event) {
               return $setup.activityForm.due_date = $event;

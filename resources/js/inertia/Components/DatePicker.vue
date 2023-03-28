@@ -40,7 +40,9 @@ const format = date => {
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
-  return `${year}-${month}-${day}`;
+  return withTime
+    ? `${year}-${month}-${day} ${date.getHours()}:${date.getMinutes()}`
+    : `${year}-${month}-${day}`;
 };
 
 const selectedData = computed({

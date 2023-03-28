@@ -40,7 +40,7 @@ defineProps({
 const page = usePage();
 
 const dateFormat = date => {
-    if (!date) return '';
+  if (!date) return '';
   return useDateFormat(date, 'DD-MM-YYYY');
 };
 
@@ -603,6 +603,18 @@ const onActivityStatusUpdate = id => {
   });
 };
 
+const date = ref(new Date());
+// In case of a range picker, you'll receive [Date, Date]
+const format = date => {
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  return `${day}/${month}/${year} ${hours}:${minutes} `;
+};
+
 const activityEdit = data => {
   activityActionEdit.value = true;
   modals.activity = true;
@@ -622,6 +634,12 @@ const activityEdit = data => {
 const onActivitySubmit = isValid => {
   if (!isValid) return;
   if (activityActionEdit.value) {
+    let date = new Date(activityForm.due_date);
+    date =
+      date.toISOString().split('T')[0] +
+      ' ' +
+      date.toTimeString().split(' ')[0];
+    activityForm.due_date = date;
     activityForm.post(`/activities/${activityForm.uuid}/update`, {
       preserveScroll: true,
       onSuccess: () => {
@@ -635,6 +653,12 @@ const onActivitySubmit = isValid => {
       },
     });
   } else {
+    let date = new Date(activityForm.due_date);
+    date =
+      date.toISOString().split('T')[0] +
+      ' ' +
+      date.toTimeString().split(' ')[0];
+    activityForm.due_date = date;
     activityForm.post(`/activities/create-activity`, {
       preserveScroll: true,
       onSuccess: () => {
@@ -1541,6 +1565,7 @@ onMounted(() => {
             />
 
             <DatePicker
+              :format="format"
               v-model="activityForm.due_date"
               label="Due Date"
               :rules="[isRequired]"
