@@ -100,13 +100,17 @@ class SIBService extends BaseService
             info('sendEmailUsingSIB -- to recipients are : '.json_encode($to));
 
             $cc = null;
-            if (str_contains($renewalEmailCcRecipients, ',')) {
-                $cc = [];
-                foreach (explode(',', $renewalEmailCcRecipients) as $ccEmail) {
-                    $cc[] = ['email' => $ccEmail];
+
+            if(!empty($renewalEmailCcRecipients))
+            {
+                if (str_contains($renewalEmailCcRecipients, ',')) {
+                    $cc = [];
+                    foreach (explode(',', $renewalEmailCcRecipients) as $ccEmail) {
+                        $cc[] = ['email' => $ccEmail];
+                    }
+                } else {
+                    $cc[] = ['email' => $renewalEmailCcRecipients];
                 }
-            } else {
-                $cc[] = ['email' => $renewalEmailCcRecipients];
             }
 
             $body = [
