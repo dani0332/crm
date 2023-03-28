@@ -258,6 +258,7 @@ class CarQuoteService extends BaseService
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
+
         return $oldAdvisorAssignedDate;
     }
 
