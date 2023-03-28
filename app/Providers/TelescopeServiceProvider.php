@@ -58,7 +58,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewHorizon', function () {
+        Gate::define('viewTelescope', function () {
             if (Auth::user()->hasRole(RolesEnum::Admin)) {
                 return true;
             } else {
