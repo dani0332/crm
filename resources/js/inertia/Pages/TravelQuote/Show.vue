@@ -40,8 +40,8 @@ defineProps({
 const page = usePage();
 
 const dateFormat = date => {
-  if (!date) return '';
-  return useDateFormat(date, 'DD MMM YYYY');
+    if (!date) return '';
+  return useDateFormat(date, 'DD-MM-YYYY');
 };
 
 const notification = useNotifications('toast');

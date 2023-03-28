@@ -12330,7 +12330,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
     var dateFormat = function dateFormat(date) {
       if (!date) return '';
-      return (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_5__.useDateFormat)(date, 'DD MMM YYYY');
+      return (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_5__.useDateFormat)(date, 'DD-MM-YYYY');
     };
 
     var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_6__.useNotifications)('toast');
