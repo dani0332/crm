@@ -1544,9 +1544,8 @@ onMounted(() => {
               v-model="activityForm.due_date"
               label="Due Date"
               :rules="[isRequired]"
-              :enable-time-picker="true"
-              :is-24="true"
               class="w-full"
+              withTime
             />
           </div>
 
