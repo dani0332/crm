@@ -137,8 +137,8 @@ const modals = reactive({
   planDetails: false,
 });
 const travelFields = computed(() => {
-    console.log(page.props.fieldsToDisplay);
-    let skipFields = [
+  console.log(page.props.fieldsToDisplay);
+  let skipFields = [
     'previous_quote_policy_number',
     'previous_quote_policy_premium',
     'previous_policy_expiry_date',

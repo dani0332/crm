@@ -545,9 +545,19 @@ __webpack_require__.r(__webpack_exports__);
       type: Boolean,
       "default": true
     },
-    hasError: {
+    withTime: {
       type: Boolean,
       "default": false
+    },
+    disabled: {
+      type: Boolean,
+      "default": false
+    },
+    rules: {
+      type: Array,
+      "default": function _default() {
+        return [];
+      }
     }
   },
   emits: ['update:modelValue'],
@@ -558,12 +568,11 @@ __webpack_require__.r(__webpack_exports__);
     var props = __props;
 
     var format = function format(date) {
-      var isServer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
       if (!date) return '';
       var day = date.getDate();
       var month = date.getMonth() + 1;
       var year = date.getFullYear();
-      return isServer ? "".concat(year, "-").concat(month, "-").concat(day) : "".concat(day, "-").concat(month, "-").concat(year);
+      return "".concat(year, "-").concat(month, "-").concat(day);
     };
 
     var selectedData = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)({
@@ -571,7 +580,7 @@ __webpack_require__.r(__webpack_exports__);
         return props.modelValue;
       },
       set: function set(newValue) {
-        emit('update:modelValue', format(newValue, true));
+        emit('update:modelValue', props.withTime ? newValue : format(newValue));
         return;
       }
     });
@@ -13959,6 +13968,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
 /* unplugin-vue-components disabled */
 var _hoisted_1 = {
+  key: 0,
   "class": "absolute right-2.5 top-[34px] hover:text-secondary-500"
 };
 var _hoisted_2 = {
@@ -14000,11 +14010,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return $setup.selectedData = $event;
     }),
     "auto-apply": "",
-    format: $setup.format,
+    format: $setup.props.withTime ? "dd-MM-yyyy HH:mm" : "dd-MM-yyyy",
     teleport: true,
-    "enable-time-picker": false,
+    "enable-time-picker": $setup.props.withTime,
     "month-change-on-scroll": false,
-    clearable: false
+    clearable: false,
+    disabled: $setup.props.disabled
   }, {
     "dp-input": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (_ref) {
       var value = _ref.value,
@@ -14014,12 +14025,13 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         value: value,
         label: $setup.props.label,
         placeholder: $props.placeholder,
-        error: $setup.props.hasError ? 'This field is required' : '',
+        disabled: $setup.props.disabled,
         "class": "w-full",
+        rules: value ? [] : $setup.props.rules,
         readonly: ""
       }, null, 8
       /* PROPS */
-      , ["value", "label", "placeholder", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_1, [!value ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("svg", _hoisted_2, _hoisted_4)) : ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("svg", {
+      , ["value", "label", "placeholder", "disabled", "rules"]), !$setup.props.disabled ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_1, [!value ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("svg", _hoisted_2, _hoisted_4)) : ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("svg", {
         key: 1,
         onClick: onClear,
         xmlns: "http://www.w3.org/2000/svg",
@@ -14030,14 +14042,14 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "class": "w-4 h-4"
       }, _hoisted_7, 8
       /* PROPS */
-      , _hoisted_5))])];
+      , _hoisted_5))])) : (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)("v-if", true)];
     }),
     _: 1
     /* STABLE */
 
   }, 8
   /* PROPS */
-  , ["modelValue"]);
+  , ["modelValue", "format", "enable-time-picker", "disabled"]);
 }
 
 /***/ }),
