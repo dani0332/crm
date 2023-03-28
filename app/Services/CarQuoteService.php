@@ -1176,11 +1176,11 @@ class CarQuoteService extends BaseService
 
             $lead->advisor_id = $userId;
 
-            if ($lead->quote_batch_id == null) {
-                $quoteBatch = QuoteBatches::latest()->first();
-                info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$lead->uuid);
-                $lead->quote_batch_id = $quoteBatch->id;
-            }
+            $quoteBatch = QuoteBatches::latest()->first();
+
+            info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$lead->uuid);
+
+            $lead->quote_batch_id = $quoteBatch->id;
 
             $this->updateTierAndCost($lead); // will assign/update tier and update cost per lead from tier
 
