@@ -29,7 +29,7 @@ class addCarAllocationMasterSwitch extends Seeder
         if (! (ApplicationStorage::where('key_name', ApplicationStorageEnums::RENEWAL_ALLOCATION_LEAD_EMAIL_CC)->first())) {
             ApplicationStorage::insert([
                 'key_name' => ApplicationStorageEnums::RENEWAL_ALLOCATION_LEAD_EMAIL_CC,
-                'value' => 'avinash@afia.ae,lead.allocations@afia.ae',
+                'value' => '',
                 'created_at' => now(),
                 'updated_at' => now(),
                 'is_active' => 1,
