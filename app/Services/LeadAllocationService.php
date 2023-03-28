@@ -158,9 +158,6 @@ class LeadAllocationService extends BaseService
                 }
 
                 $lead->advisor_id = $advisorId;
-                if ($lead->quote_batch_id == null && str_contains(strtolower($lead->code), strtolower(quoteTypeCode::Car))) {
-                    $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
-                }
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
@@ -522,8 +519,13 @@ class LeadAllocationService extends BaseService
                             $carQuote->advisor_id = $userId;
                             $carQuote->tier_id = $selectedTier->id;
                             $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+
                             if ($carQuote->quote_batch_id == null) {
-                                $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                                $quoteBatch = QuoteBatches::latest()->first();
+                                info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$carLead->uuid);
+                                $carQuote->quote_batch_id = $quoteBatch->id;
+                            } else {
+                                info('quote batch currently attached to quote : '.$carQuote->uuid.' and quote id is : '.$carQuote->quote_batch_id);
                             }
                             $carQuote->save();
 
@@ -813,7 +815,7 @@ class LeadAllocationService extends BaseService
             $this->updateUserMaxCapacity();
         }
 
-        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() == $carLeadAllocationStartTime) {
+        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() >= $carLeadAllocationStartTime) {
             info('updateAllocationStatusIfNeeded -- Inside start case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
         }
