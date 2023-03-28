@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Enums\RolesEnum;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Telescope\IncomingEntry;
 use Laravel\Telescope\Telescope;
@@ -21,6 +19,10 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         $this->hideSensitiveRequestDetails();
 
         Telescope::filter(function (IncomingEntry $entry) {
+            if ($this->app->environment('staging') || $this->app->environment('local')) {
+                return true;
+            }
+
             return $entry->isReportableException() ||
                    $entry->isFailedRequest() ||
                    $entry->isFailedJob() ||
@@ -34,7 +36,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function hideSensitiveRequestDetails(): void
     {
-        if ($this->app->environment('local')) {
+        if ($this->app->environment('staging') || $this->app->environment('local')  ) {
             return;
         }
 
@@ -54,12 +56,10 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function gate(): void
     {
-        Gate::define('viewTelescope', function () {
-            if (Auth::user()->hasRole(RolesEnum::Admin)) {
-                return true;
-            } else {
-                return false;
-            }
+        Gate::define('viewTelescope', function ($user) {
+            return in_array($user->email, [
+                //
+            ]);
         });
     }
 }
