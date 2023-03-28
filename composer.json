@@ -79,9 +79,7 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": [
-                "laravel/telescope"
-            ]
+            "dont-discover": []
         },
         "hooks": {
             "pre-commit": [
