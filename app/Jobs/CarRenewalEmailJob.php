@@ -43,6 +43,7 @@ class CarRenewalEmailJob implements ShouldQueue
         info('sendRenewalLeadEmail -- start');
 
         $renewalEmailRecipients = $leadAllocationService->getAppStorageValueByKey('RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
+        $renewalEmailCcRecipients = $leadAllocationService->getAppStorageValueByKey('RENEWAL_ALLOCATION_LEAD_EMAIL_CC');
 
         $emailData = $emailDataService->generateTierREmailData($this->lead);
 
@@ -52,7 +53,7 @@ class CarRenewalEmailJob implements ShouldQueue
 
         info('sendRenewalLeadEmail -- start sending email for lead : '.$this->lead->uuid);
 
-        SIBService::sendEmailUsingSIB($templateId, $emailData, $tag, $renewalEmailRecipients);
+        SIBService::sendEmailUsingSIB($templateId, $emailData, $tag, $renewalEmailRecipients, $renewalEmailCcRecipients);
 
         info('sendRenewalLeadEmail -- email sending done for lead : '.$this->lead->uuid);
 
