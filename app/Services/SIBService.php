@@ -59,7 +59,7 @@ class SIBService extends BaseService
         return $apiResponse;
     }
 
-    public static function sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailTo)
+    public static function sendEmailUsingSIB($emailTemplateId, $emailData, $tag, $emailTo, $renewalEmailCcRecipients)
     {
         info('sendEmailUsingSIB -- start');
         info('sendEmailUsingSIB -- templateId :'.$emailTemplateId);
@@ -98,7 +98,18 @@ class SIBService extends BaseService
                 $to = $emailTo;
             }
             info('sendEmailUsingSIB -- to recipients are : '.json_encode($to));
-            $body = json_encode([
+
+            $cc = null;
+            if (str_contains($renewalEmailCcRecipients, ',')) {
+                $cc = [];
+                foreach (explode(',', $renewalEmailCcRecipients) as $ccEmail) {
+                    $cc[] = ['email' => $ccEmail];
+                }
+            } else {
+                $cc[] = ['email' => $renewalEmailCcRecipients];
+            }
+
+            $body = [
                 'to' => $to,
                 'templateId' => $emailTemplateId,
                 'params' => $emailData,
@@ -106,7 +117,13 @@ class SIBService extends BaseService
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
-            ], JSON_UNESCAPED_SLASHES);
+            ];
+
+            if ($cc != null) {
+                $body['cc'] = $cc;
+            }
+
+            $body = json_encode($body, JSON_UNESCAPED_SLASHES);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
