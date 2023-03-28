@@ -570,7 +570,7 @@ const activityForm = useForm({
   quoteType: 3,
   title: null,
   description: null,
-  due_date: ref(new Date()),
+  due_date: '',
   assignee_id: null,
   status: null,
   activity_id: null,
@@ -580,7 +580,7 @@ const activityForm = useForm({
 const addActivity = () => {
   activityForm.title = null;
   activityForm.description = null;
-  activityForm.due_date = ref(new Date());
+  activityForm.due_date = null;
   activityForm.assignee_id = null;
   activityForm.status = null;
   activityForm.activity_id = null;

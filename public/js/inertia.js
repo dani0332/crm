@@ -12824,7 +12824,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       quoteType: 3,
       title: null,
       description: null,
-      due_date: (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(new Date()),
+      due_date: '',
       assignee_id: null,
       status: null,
       activity_id: null,
@@ -12834,7 +12834,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var addActivity = function addActivity() {
       activityForm.title = null;
       activityForm.description = null;
-      activityForm.due_date = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(new Date());
+      activityForm.due_date = null;
       activityForm.assignee_id = null;
       activityForm.status = null;
       activityForm.activity_id = null;
