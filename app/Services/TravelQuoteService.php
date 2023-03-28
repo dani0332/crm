@@ -62,7 +62,7 @@ class TravelQuoteService extends BaseService
             'tp.text AS plan_id_text',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
-            DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
+            DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
             'tqrd.transapp_code',
             'ls.text as lost_reason',
             'tqrd.notes',
@@ -347,6 +347,7 @@ class TravelQuoteService extends BaseService
         if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->whereNull('tqr.previous_quote_policy_number');
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
             $this->query->where('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
