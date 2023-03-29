@@ -69,7 +69,7 @@ class RenewalsUploadController extends Controller
      * @param $id
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
-    public function fetchPlans($batch)
+    public function fetchPlans($batch, $skipPlans = false)
     {
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
@@ -89,6 +89,7 @@ class RenewalsUploadController extends Controller
                 'total_leads' => $totalPending,
                 'status' => ProcessStatusCode::IN_PROGRESS,
                 'user_id' => auth()->id(),
+                'skip_plans' => $skipPlans
             ]);
 
             FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);

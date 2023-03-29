@@ -337,44 +337,60 @@ class RenewalsUploadService
         try {
             $jobs = null;
 
-            RenewalQuoteProcess::where([
+            $query = RenewalQuoteProcess::where([
                 'status' => RenewalProcessStatuses::PROCESSED,
                 'quote_type' => QuoteTypeShortCode::CAR,
                 'batch' => $batch,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ])->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs) {
-                foreach ($leads as $lead) {
-                    $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
+            ]);
+
+            if($renewalStatusProcess->skip_plans)
+            {
+                $totalLeads = $query->count();
+                info($logPrefix .' skip fetch plans and update statues to be available for sending email');
+                $affected = $query->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
+                info($logPrefix .' leads status is updated as plans fetched for total leads ('.$affected.')');
+
+
+                $renewalStatusProcess->update(['total_leads' => $totalLeads, 'total_completed' => $affected ,'status' => ProcessStatusCode::COMPLETED]);
+                info($logPrefix .' renewal status process is completed');
+            }
+            else
+            {
+                $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs) {
+                    foreach ($leads as $lead) {
+                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
+                    }
+                });
+
+                if ($jobs != null && count($jobs)) {
+                    info($logPrefix.count($jobs).' found to schedule for fetch plans');
+
+                    Haystack::build()
+                        ->onQueue('renewals')
+                        ->addJobs($jobs)
+                        ->then(function () use ($logPrefix, $renewalStatusProcess) {
+                            info($logPrefix.' all jobs completed successfully');
+                            $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+                        })
+                        ->catch(function () use ($logPrefix, $renewalStatusProcess) {
+                            // Haystack failed
+                            info($logPrefix.' one of batch is failed. ');
+                            $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
+                        })
+                        ->finally(function () use ($logPrefix) {
+                            info($logPrefix.' everything done');
+                        })
+                        ->allowFailures()
+                        ->withDelay(10)
+                        ->dispatch();
+
+                    info($logPrefix.' all jobs are scheduled');
+                } else {
+                    info($logPrefix.' no jobs to create quotes');
+                    $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
                 }
-            });
-
-            if ($jobs != null && count($jobs)) {
-                info($logPrefix.count($jobs).' found to schedule for fetch plans');
-
-                Haystack::build()
-                    ->onQueue('renewals')
-                   ->addJobs($jobs)
-                   ->then(function () use ($logPrefix, $renewalStatusProcess) {
-                       info($logPrefix.' all jobs completed successfully');
-                       $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
-                   })
-                   ->catch(function () use ($logPrefix, $renewalStatusProcess) {
-                       // Haystack failed
-                       info($logPrefix.' one of batch is failed. ');
-                       $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
-                   })
-                   ->finally(function () use ($logPrefix) {
-                       info($logPrefix.' everything done');
-                   })
-                   ->allowFailures()
-                   ->withDelay(10)
-                   ->dispatch();
-
-                info($logPrefix.' all jobs are scheduled');
-            } else {
-                info($logPrefix.' no jobs to create quotes');
-                $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
             }
 
             return true;
@@ -397,6 +413,7 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
+
             if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (! $aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first())) {
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
                 $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
@@ -1486,7 +1503,10 @@ class RenewalsUploadService
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'email_sent' => 0,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])->distinct('quote_id')->get();
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])
+            ->whereHas('carQuote', function($q) {
+                $q->whereNull('paid_at');
+            })->groupBy('quote_id')->get();
     }
 
     public function updateRenewalQuoteEmailSent($batch, $quoteId)
