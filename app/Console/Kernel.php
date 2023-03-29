@@ -38,7 +38,7 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(1);
 
         $schedule->command('telescope:prune --hours=24')->daily();
-        }
+    }
 
     /**
      * Register the commands for the application.
