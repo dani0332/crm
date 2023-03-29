@@ -102,6 +102,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.first_name"
           type="text"
           label="FIRST NAME*"
+          maxLength="255"
           :rules="[rules.isRequired]"
           class="w-full"
         />
@@ -110,6 +111,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.last_name"
           type="text"
           label="LAST NAME*"
+          maxLength="255"
           :rules="[rules.isRequired]"
           class="w-full"
         />
@@ -141,6 +143,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.policy_number"
           type="text"
+          maxLength="100"
           label="POLICY NUMBER"
           class="w-full"
         />
@@ -176,6 +179,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.address"
           type="text"
           label="ADDRESS*"
+          maxLength="2000"
           :rules="[rules.isRequired]"
           class="w-full"
         />

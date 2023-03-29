@@ -645,16 +645,6 @@ const policyDetails = useForm({
         <x-divider class="mb-4 mt-1" />
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-2/3">
-          <x-textarea
-            v-model="leadStatusForm.notes"
-            type="text"
-            label="Notes"
-            placeholder="Lead Notes"
-            class="w-full"
-            :disabled="quote.quote_status_id == 15"
-          />
-        </div>
         <div class="w-full md:w-1/3">
           <div class="flex flex-col gap-4">
             <x-select
@@ -688,19 +678,30 @@ const policyDetails = useForm({
               :error="leadStatusForm.errors.lostReason"
             />
           </div>
-
-          <div class="flex justify-end">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-            >
-              Change Status
-            </x-button>
-          </div>
         </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+        <div class="w-full md:w-1/3">
+          <x-textarea
+            v-model="leadStatusForm.notes"
+            type="text"
+            label="Notes"
+            placeholder="Lead Notes"
+            class="w-full"
+            :disabled="quote.quote_status_id == 15"
+          />
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :loading="leadStatusForm.processing"
+          @click.prevent="onLeadStatus"
+        >
+          Change Status
+        </x-button>
       </div>
     </div>
 
