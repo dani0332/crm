@@ -115,6 +115,22 @@ const modals = reactive({
   planDetails: false,
 });
 
+const travelFields = computed(() => {
+  console.log(page.props.fieldsToDisplay);
+  let skipFields = [
+    'previous_quote_policy_number',
+    'previous_quote_policy_premium',
+    'previous_policy_expiry_date',
+  ];
+  let fields = {};
+  Object.keys(page.props.fieldsToDisplay).map(field => {
+    if (!skipFields.includes(field)) {
+      fields[field] = page.props.fieldsToDisplay[field];
+    }
+  });
+  return fields;
+});
+
 const leadStatusForm = useForm({
   modelType: 'Life',
   leadId: page.props.quote.id,
@@ -559,7 +575,7 @@ const historyDataTable = [
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div
             class="grid sm:grid-cols-2"
-            v-for="field in fieldsToDisplay"
+            v-for="field in travelFields"
             :key="field"
           >
             <dt class="font-medium">{{ field.title }}</dt>
@@ -567,7 +583,30 @@ const historyDataTable = [
           </div>
         </dl>
       </div>
-      <x-divider class="mb-4 mt-1" />
+
+      <div class="mt-6">
+        <h3 class="font-semibold text-primary-800">
+          Last Year's Policy Details
+        </h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
+            <dd>{{ quote.previous_quote_policy_number }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dd>{{ quote.previous_quote_policy_premium }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
+            <dd>{{ quote.previous_policy_expiry_date }}</dd>
+          </div>
+        </dl>
+      </div>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
@@ -580,11 +619,11 @@ const historyDataTable = [
           <div class="flex flex-col gap-4">
             <x-select
               v-model="leadStatusForm.leadStatus"
-              label="Status"
+              label="STATUS"
               :options="leadStatusOptions"
               :disabled="
                 quote.quote_status_id ==
-                enums.quoteStatusEnum.transactionApproved
+                enums.quoteStatusEnum.TransactionApproved
               "
               placeholder="Lead Status"
               class="w-full"
@@ -592,50 +631,55 @@ const historyDataTable = [
             <x-textarea
               v-model="leadStatusForm.notes"
               type="text"
-              label="Notes"
+              label="NOTES"
               placeholder="Lead Notes"
               class="w-full"
               :disabled="
                 quote.quote_status_id ==
-                enums.quoteStatusEnum.transactionApproved
+                enums.quoteStatusEnum.TransactionApproved
               "
             />
-          </div>
-
-          <div class="flex justify-end">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-            >
-              Change Status
-            </x-button>
           </div>
         </div>
         <div class="w-full md:w-2/3">
           <x-input
             v-if="
               leadStatusForm.leadStatus ==
-              enums.quoteStatusEnum.transactionApproved
+              enums.quoteStatusEnum.TransactionApproved
+            "
+            :disabled="
+              quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
             "
             v-model="leadStatusForm.trans_code"
-            label="TransApp Code"
+            label="TRANSAPP CODE"
             placeholder="TransApp Code is required"
             class="w-full"
             :error="leadStatusForm.errors.trans_code"
           />
           <x-select
-            v-if="leadStatusForm.leadStatus == 17"
+            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
             v-model="leadStatusForm.lostReason"
-            label="Lost Reason"
+            label="LOST REASON"
             :options="lostReasonsOptions"
             placeholder="Lost Reason is required"
             class="w-full"
             :error="leadStatusForm.errors.lostReason"
           />
         </div>
+      </div>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :loading="leadStatusForm.processing"
+          @click.prevent="onLeadStatus"
+          :disabled="
+            quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
+          "
+        >
+          Change Status
+        </x-button>
       </div>
     </div>
 

@@ -66,7 +66,7 @@ class LifeQuoteService extends BaseService
                 'liy.TEXT AS number_of_years_id_text',
                 'lqr.nationality_id',
                 'n.TEXT AS nationality_id_text',
-                'lqrd.next_followup_date',
+            DB::raw('DATE_FORMAT(lqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
                 'lqrd.transapp_code',
                 'lqrd.notes',
                 'ls.text as lost_reason',
@@ -75,7 +75,8 @@ class LifeQuoteService extends BaseService
                 'lqr.previous_quote_policy_number',
                 'lqr.renewal_expiry_date',
                 'lqr.device',
-                'lqr.previous_policy_expiry_date',
+            DB::raw('DATE_FORMAT(lqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+            DB::raw('DATE_FORMAT(lqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
                 'lqr.previous_quote_policy_premium',
                 'lqr.customer_id',
                 'lqr.parent_duplicate_quote_id'
@@ -381,6 +382,7 @@ class LifeQuoteService extends BaseService
         $lifeQuote->tenure_of_insurance_id = $request->tenure_of_insurance_id;
         $lifeQuote->number_of_years_id = $request->number_of_years_id;
         $lifeQuote->others_info = $request->others_info;
+        $lifeQuote->policy_start_date = $request->policy_start_date;
         $lifeQuote->save();
 
         if (isset($request->return_to_view)) {

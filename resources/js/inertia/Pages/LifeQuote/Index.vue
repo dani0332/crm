@@ -8,9 +8,9 @@ import { useNotifications } from '@indielayer/ui';
 
 defineProps({
   quotes: Object,
-    dropdownSource: Object,
-    permissions: Object,
-    advisors : Object,
+  dropdownSource: Object,
+  permissions: Object,
+  advisors: Object,
 });
 
 const rules = {
@@ -29,7 +29,7 @@ const rules = {
   },
 };
 
-const notification = useNotifications("toast");
+const notification = useNotifications('toast');
 
 const page = usePage();
 
@@ -114,8 +114,8 @@ function filterQuotes(isValid) {
 }
 
 function resetFilters() {
-  router.visit("/quotes/life", {
-    method: "get",
+  router.visit('/quotes/life', {
+    method: 'get',
     data: { page: 1 },
     preserveScroll: true,
     onBefore: () => (loader.table = true),
@@ -172,9 +172,13 @@ function onAssignLead(isValid) {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
+          let title =
+            quotesSelected.value.length > 1
+              ? 'Life Leads Assigned'
+              : 'Life Lead Assigned';
           quotesSelected.value = [];
           notification.success({
-            title: 'Life Leads Assigned',
+            title: title,
             position: 'top',
           });
         },
@@ -193,7 +197,7 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
-      <Link href="/quotes/life-cards">
+        <Link href="/quotes/life-cards">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
         <Link href="/quotes/life/create">
@@ -290,8 +294,10 @@ onMounted(() => {
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
-
-        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50" v-if="permissions.isManualAllocationAllowed">
+        <div
+          class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
+          v-if="permissions.isManualAllocationAllowed"
+        >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
               <x-select
