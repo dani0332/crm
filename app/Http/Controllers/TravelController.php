@@ -217,7 +217,7 @@ class TravelController extends Controller
             return redirect()->back()->with('message', $record->message)->withInput();
         }
 
-        redirect('/quotes/travel')->with('message', 'Record created successfully');
+        return redirect()->route('travel.edit', $record->id)->with('message', 'Quote created successfully.');
     }
 
     /**
