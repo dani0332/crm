@@ -37,10 +37,9 @@ class StoreTravelRequest extends FormRequest
             $rule = ['required'];
             if ($key == 'first_name' || $key == 'last_name') {
                 $rule[] = 'max:255';
-            }else {
+            } else {
                 $rule[] = 'max:1000';
             }
-
 
             if ($key == 'email') {
                 $rule[] = 'email:rfc,dns';

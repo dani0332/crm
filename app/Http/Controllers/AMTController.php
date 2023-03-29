@@ -370,6 +370,7 @@ class AMTController extends Controller
 
         $leadStatuses = array_map(function ($item) {
             $item['data'] = getDataAgainstStatus('Business', $item['id']);
+
             return $item;
         }, $leadStatuses);
 

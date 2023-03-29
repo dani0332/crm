@@ -174,7 +174,7 @@ class LifeController extends Controller
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
-        
+
         return inertia('LifeQuote/Show', [
             'quote' => $quote,
             'fieldsToDisplay' => $fields,
@@ -205,7 +205,7 @@ class LifeController extends Controller
                 'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
                 'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
-                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType) . '-quotes-edit'),
+                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
             ],
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),

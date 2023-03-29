@@ -27,9 +27,7 @@ class BusinessQuoteController extends Controller
     protected $crudService;
     protected $lookupService;
     protected $genericModel;
-
     protected $dropdownSourceService;
-
 
     public const TYPE = quoteTypeCode::Business;
     public const TYPE_ID = QuoteTypeId::Business;
@@ -235,6 +233,7 @@ class BusinessQuoteController extends Controller
 
         $leadStatuses = array_map(function ($item) {
             $item['data'] = getDataAgainstStatus('Business', $item['id']);
+
             return $item;
         }, $leadStatuses);
 
