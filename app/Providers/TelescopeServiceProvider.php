@@ -37,9 +37,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
      */
     protected function hideSensitiveRequestDetails(): void
     {
-        if ($this->app->environment('staging') || $this->app->environment('local')) {
-            return;
-        }
+        return;
 
         Telescope::hideRequestParameters(['_token']);
 
@@ -58,7 +56,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     protected function gate(): void
     {
         Gate::define('viewTelescope', function ($user) {
-            if (auth()->user()->hasRole(RolesEnum::Admin)) {
+            if (auth()->user()->hasRole(RolesEnum::Engineering)) {
                 return true;
             } else {
                 return false;
