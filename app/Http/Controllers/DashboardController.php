@@ -61,12 +61,11 @@ class DashboardController extends Controller
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($request);
         $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival(null, null);
         $assignedLeadsBySource = $this->dashboardService->getAssignedLeadsCountBySource(null, null);
-        $advisorConversionData = $this->dashboardService->getAdvisorConversionData(null);
         $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData(null);
 
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
             'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
-            'revivalLeadsCount', 'advisorConversionData', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
+            'revivalLeadsCount', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
     }
 
     public function getRecentDailyStats(Request $request)
@@ -317,11 +316,6 @@ class DashboardController extends Controller
     public function getTeamAdvisorConversionStats(Request $request)
     {
         return $this->dashboardService->getAdvisorLeadAssignedData($request->teamFilter);
-    }
-
-    public function getAdvisorConversionStats(Request $request)
-    {
-        return $this->dashboardService->getAdvisorConversionData($request->advisorFilter);
     }
 
     public function getUsersByTeam(Request $request)

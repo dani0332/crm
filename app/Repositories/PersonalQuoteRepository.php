@@ -150,7 +150,6 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $leadId
      * @return \Illuminate\Support\Collection
      */
     public function fetchGetAuditHistory($leadId)
@@ -178,8 +177,6 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $quoteId
-     * @param $data
      * @return mixed
      */
     public function fetchChangePrimaryContact($quoteId, $data)

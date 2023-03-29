@@ -50,8 +50,6 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @param $id
-     * @param  PersonalQuotePolicyRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updatePolicyDetails($id, PersonalQuotePolicyRequest $request)
@@ -62,7 +60,6 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @param $quoteId
      * @return mixed
      */
     public function getAuditHistory($quoteId)
@@ -71,8 +68,6 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @param $quoteId
-     * @param  ChangePrimaryContactRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function changePrimaryContact($quoteId, ChangePrimaryContactRequest $request)

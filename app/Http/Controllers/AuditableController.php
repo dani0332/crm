@@ -40,7 +40,6 @@ class AuditableController extends Controller
     }
 
     /**
-     * @param  Request  $request
      * @return mixed
      */
     public function getQuoteAudits(Request $request)

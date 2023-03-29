@@ -271,7 +271,7 @@
                                                 value="{{ old($property, $record->$property) }}" class="form-control"
                                                 value="{{ old($property, $record->$property) }}" class="form-control"
                                                 @if(strpos($value, 'max') !== false) maxlength="{{explode(":", $value)[1]}}" @endif
-                                                @if(!Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::Admin]))
+                                                @if(!Auth::user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::Admin, RolesEnum::LeadPool]))
                                                     @if($property == DatabaseColumnsString::RENEWAL_BATCH || $property == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER || $property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE)
                                                         readonly="readonly" style="background-color: #e9ecef !important;pointer-events: none;"
                                                     @endif

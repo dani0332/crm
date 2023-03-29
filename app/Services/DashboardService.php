@@ -6,7 +6,6 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
-use App\Models\QuoteBatches;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -116,39 +115,6 @@ class DashboardService extends BaseService
             $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
         } else {
             $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
-        }
-
-        return $query->get();
-    }
-
-    public function getAdvisorConversionData($advisorId)
-    {
-        $query = QuoteBatches::query()
-        ->select(
-            'quote_batches.id',
-            'quote_batches.name',
-            DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
-            DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
-            DB::raw('count(car_quote_request.id) as total_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
-        )
-        ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
-        ->join('teams', 'teams.id', 'user_team.team_id')
-        ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
-
-        if (isset($advisorId)) {
-            $query->where('car_quote_request.advisor_id', $advisorId);
-        }
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-            $userIds = $this->walkTree(auth()->user()->id);
-            info('user ids for advisor conversion report are : '.json_encode($userIds));
-            $query = $query->whereIn('teams.id', $userIds);
         }
 
         return $query->get();

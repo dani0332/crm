@@ -105,7 +105,6 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @param $date
      * @return string
      */
     public function getCreatedAtAttribute($date)
