@@ -254,10 +254,12 @@ class CarQuoteService extends BaseService
         if (! $childRecord) {
             $childRecord = $this->createDetailEntity($id);
         }
-
+        $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
+
+        return $oldAdvisorAssignedDate;
     }
 
     public function getSelectedLostReason($id)
@@ -1176,21 +1178,21 @@ class CarQuoteService extends BaseService
 
             $lead->advisor_id = $userId;
 
-            if ($lead->quote_batch_id == null) {
-                $quoteBatch = QuoteBatches::latest()->first();
-                info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$lead->uuid);
-                $lead->quote_batch_id = $quoteBatch->id;
-            }
+            $quoteBatch = QuoteBatches::latest()->first();
+
+            info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$lead->uuid);
+
+            $lead->quote_batch_id = $quoteBatch->id;
 
             $this->updateTierAndCost($lead); // will assign/update tier and update cost per lead from tier
 
             info('Manual assignment done for lead : '.$lead->uuid);
 
-            $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
+            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
 
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
 
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId); // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate); // update new and previous (if applicable) advisor counts in lead allocation table
 
             $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
 
@@ -1265,7 +1267,7 @@ class CarQuoteService extends BaseService
         return $leadIds;
     }
 
-    public function addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId)
+    public function addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate)
     {
         info('lead current advisor_id is : '.json_encode($previousAdvisorId).' and lead created date is : '.$lead->created_at);
         $shouldUpdateAllocationRecord = $userId != $previousAdvisorId;
@@ -1282,7 +1284,7 @@ class CarQuoteService extends BaseService
             $newAdvisorAllocationRecord->save();
         }
         info('new advisor after update is : '.json_encode($newAdvisorAllocationRecord));
-        if ($previousAdvisorId != null && Carbon::parse($lead->created_at)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
+        if ($previousAdvisorId != null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
             if ($lead->auto_assigned) {
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
