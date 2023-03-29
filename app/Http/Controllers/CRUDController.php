@@ -296,7 +296,6 @@ class CRUDController extends Controller
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $modelType = json_decode($request->get('modelType'), true);
         $validateArray = [];
-
         if ($modelType !== quoteTypeCode::Health && $modelType !== quoteTypeCode::Home) {
             foreach ($modelPropertiesList as $property => $value) {
                 if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
@@ -305,11 +304,39 @@ class CRUDController extends Controller
             }
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
+
+        if ($modelType == quoteTypeCode::Home) {
+            if ($request->has('first_name')) {
+                $this->validate($request, [
+                    'first_name' => 'required|max:255',
+                ]);
+            } if ($request->has('last_name')) {
+                $this->validate($request, [
+                    'last_name' => 'required|max:255',
+                ]);
+            }
+            if ($request->has('ilivein_accommodation_type_id')) {
+                $this->validate($request, [
+                    'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
+                ]);
+            } if ($request->has('iam_possesion_type_id')) {
+                $this->validate($request, [
+                    'iam_possesion_type_id' => 'required|exists:home_possession_type,id',
+                ]);
+            }
+            if ($request->has('address')) {
+                $this->validate($request, [
+                    'address' => 'required|max:2000',
+                ]);
+            }
+        }
+
         if ($request->has('email')) {
             $this->validate($request, [
                 'email' => 'required|email:rfc,dns|max:150',
             ]);
         }
+
         if ($request->has('type_of_pet1')) {
             $this->validate($request, [
                 'type_of_pet1' => 'required|max:3',
