@@ -116,7 +116,6 @@ const modals = reactive({
 });
 
 const travelFields = computed(() => {
-  console.log(page.props.fieldsToDisplay);
   let skipFields = [
     'previous_quote_policy_number',
     'previous_quote_policy_premium',
@@ -275,7 +274,6 @@ const addActivity = () => {
   activityForm.status = null;
   activityForm.activity_id = null;
   activityForm.uuid = null;
-
   activityActionEdit.value = false;
   modals.activity = true;
 };
@@ -291,6 +289,17 @@ const onActivityStatusUpdate = id => {
       });
     },
   });
+};
+
+const date = ref(new Date());
+const format = date => {
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  return `${day}/${month}/${year} ${hours}:${minutes} `;
 };
 
 const activityEdit = data => {
@@ -786,12 +795,12 @@ const historyDataTable = [
               class="w-full"
             />
             <DatePicker
+              :format="format"
               v-model="activityForm.due_date"
               label="Due Date"
-              :rules="[rules.isRequired]"
-              :enable-time-picker="true"
-              :is-24="true"
+              :rules="[isRequired]"
               class="w-full"
+              withTime
             />
           </div>
 

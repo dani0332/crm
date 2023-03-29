@@ -9130,7 +9130,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       planDetails: false
     });
     var travelFields = (0,vue__WEBPACK_IMPORTED_MODULE_3__.computed)(function () {
-      console.log(page.props.fieldsToDisplay);
       var skipFields = ['previous_quote_policy_number', 'previous_quote_policy_premium', 'previous_policy_expiry_date'];
       var fields = {};
       Object.keys(page.props.fieldsToDisplay).map(function (field) {
@@ -9192,25 +9191,26 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       },
       policy_start_date: function policy_start_date(v) {
         if (v) {
-          var date = new Date(v);
-          return !isNaN(date.getTime());
+          var _date = new Date(v);
+
+          return !isNaN(_date.getTime());
         }
 
         return true;
       },
       renewal_expiry_date: function renewal_expiry_date(v) {
         if (v) {
-          var date = new Date(v);
+          var _date2 = new Date(v);
 
           if (policyDetails.policy_start_date) {
             var startDate = new Date(policyDetails.policy_start_date);
 
-            if (startDate >= date) {
+            if (startDate >= _date2) {
               return 'Expiry date should be greater than Start Date';
             }
           }
 
-          return !isNaN(date.getTime());
+          return !isNaN(_date2.getTime());
         }
 
         return true;
@@ -9312,6 +9312,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
           });
         }
       });
+    };
+
+    var date = (0,vue__WEBPACK_IMPORTED_MODULE_3__.ref)(new Date());
+
+    var format = function format(date) {
+      var day = date.getDate();
+      var month = date.getMonth() + 1;
+      var year = date.getFullYear();
+      var hours = date.getHours();
+      var minutes = date.getMinutes();
+      return "".concat(day, "/").concat(month, "/").concat(year, " ").concat(hours, ":").concat(minutes, " ");
     };
 
     var activityEdit = function activityEdit(data) {
@@ -9575,6 +9586,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       activityForm: activityForm,
       addActivity: addActivity,
       onActivityStatusUpdate: onActivityStatusUpdate,
+      date: date,
+      format: format,
       activityEdit: activityEdit,
       onActivitySubmit: onActivitySubmit,
       activityDelete: activityDelete,
@@ -11586,9 +11599,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       if (isValid) {
         quoteForm.post("/quotes/travel", {
           onError: function onError(errors) {},
-          onSuccess: function onSuccess() {
-            _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.get("/quotes/travel/");
-          },
           onStart: function onStart() {
             quoteForm.clearErrors();
           }
@@ -12869,7 +12879,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     };
 
-    var date = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(new Date()); // In case of a range picker, you'll receive [Date, Date]
+    var date = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(new Date());
 
     var format = function format(date) {
       var day = date.getDate();
@@ -32673,15 +32683,15 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           }, null, 8
           /* PROPS */
           , ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_DatePicker, {
+            format: $setup.format,
             modelValue: $setup.activityForm.due_date,
             "onUpdate:modelValue": _cache[12] || (_cache[12] = function ($event) {
               return $setup.activityForm.due_date = $event;
             }),
             label: "Due Date",
-            rules: [_ctx.rules.isRequired],
-            "enable-time-picker": true,
-            "is-24": true,
-            "class": "w-full"
+            rules: [$setup.isRequired],
+            "class": "w-full",
+            withTime: ""
           }, null, 8
           /* PROPS */
           , ["modelValue", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_32, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_button, {

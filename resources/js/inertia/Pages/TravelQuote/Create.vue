@@ -38,9 +38,6 @@ function onSubmit(isValid) {
   if (isValid) {
     quoteForm.post(`/quotes/travel`, {
       onError: errors => {},
-      onSuccess: () => {
-        router.get(`/quotes/travel/`);
-      },
       onStart: () => {
         quoteForm.clearErrors();
       },

@@ -585,7 +585,6 @@ const addActivity = () => {
   activityForm.status = null;
   activityForm.activity_id = null;
   activityForm.uuid = null;
-
   activityActionEdit.value = false;
   modals.activity = true;
 };
@@ -604,7 +603,6 @@ const onActivityStatusUpdate = id => {
 };
 
 const date = ref(new Date());
-// In case of a range picker, you'll receive [Date, Date]
 const format = date => {
   const day = date.getDate();
   const month = date.getMonth() + 1;
