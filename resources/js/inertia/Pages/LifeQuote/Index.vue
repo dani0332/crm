@@ -153,7 +153,6 @@ const advisorOptions = computed(() => {
 
 const assignForm = useForm({
   assigned_to_id_new: null,
-  assignment_type: '1',
   modelType: 'life',
   selectTmLeadId: '',
   isManagerOrDeputy: page.props.permissions.isManagerOrDeputy,
@@ -300,17 +299,6 @@ onMounted(() => {
                 label="Assign Advisor"
                 :options="advisorOptions"
                 placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :rules="[rules.isRequired]"
-              />
-              <x-select
-                v-model="assignForm.assignment_type"
-                label="Assignment Type"
-                :options="[
-                  { value: '1', label: 'Without Email' },
-                  { value: '2', label: 'With Email' },
-                ]"
-                placeholder="Select Type"
                 class="flex-1 w-auto"
                 :rules="[rules.isRequired]"
               />

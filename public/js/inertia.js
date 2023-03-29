@@ -572,7 +572,7 @@ __webpack_require__.r(__webpack_exports__);
       var day = date.getDate();
       var month = date.getMonth() + 1;
       var year = date.getFullYear();
-      return withTime ? "".concat(year, "-").concat(month, "-").concat(day, " ").concat(date.getHours(), ":").concat(date.getMinutes()) : "".concat(year, "-").concat(month, "-").concat(day);
+      return props.withTime ? "".concat(year, "-").concat(month, "-").concat(day, " ").concat(date.getHours(), ":").concat(date.getMinutes()) : "".concat(year, "-").concat(month, "-").concat(day);
     };
 
     var selectedData = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)({
@@ -8793,7 +8793,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     });
     var assignForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
       assigned_to_id_new: null,
-      assignment_type: '1',
       modelType: 'life',
       selectTmLeadId: '',
       isManagerOrDeputy: page.props.permissions.isManagerOrDeputy,
@@ -31699,25 +31698,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             rules: [$setup.rules.isRequired]
           }, null, 8
           /* PROPS */
-          , ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
-            modelValue: $setup.assignForm.assignment_type,
-            "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
-              return $setup.assignForm.assignment_type = $event;
-            }),
-            label: "Assignment Type",
-            options: [{
-              value: '1',
-              label: 'Without Email'
-            }, {
-              value: '2',
-              label: 'With Email'
-            }],
-            placeholder: "Select Type",
-            "class": "flex-1 w-auto",
-            rules: [$setup.rules.isRequired]
-          }, null, 8
-          /* PROPS */
-          , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_9, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+          , ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_9, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
             color: "orange",
             size: "sm",
             type: "submit",
@@ -31769,7 +31750,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_DataTable, {
     "items-selected": $setup.quotesSelected,
-    "onUpdate:items-selected": _cache[12] || (_cache[12] = function ($event) {
+    "onUpdate:items-selected": _cache[11] || (_cache[11] = function ($event) {
       return $setup.quotesSelected = $event;
     }),
     "table-class-name": "tablefixed",

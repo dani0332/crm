@@ -40,7 +40,7 @@ const format = date => {
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
-  return withTime
+  return props.withTime
     ? `${year}-${month}-${day} ${date.getHours()}:${date.getMinutes()}`
     : `${year}-${month}-${day}`;
 };
