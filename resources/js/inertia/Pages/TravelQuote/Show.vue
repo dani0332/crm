@@ -885,6 +885,7 @@ const onCopyText = text => {
 };
 
 onMounted(() => {
+    console.log('Travel Detail Page Mounted');
   if (page.props.message) {
     notification.success({
       title: page.props.message,

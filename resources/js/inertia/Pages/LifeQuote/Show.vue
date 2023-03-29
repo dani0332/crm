@@ -587,7 +587,7 @@ const historyDataTable = [
             v-for="field in travelFields"
             :key="field"
           >
-            <dt class="font-medium">{{ field.title }}</dt>
+            <dt class="font-medium">{{ field.title.toUpperCase() }}</dt>
             <dd>{{ field.value }}</dd>
           </div>
         </dl>
