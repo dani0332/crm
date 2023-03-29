@@ -89,7 +89,7 @@ class RenewalsUploadController extends Controller
                 'total_leads' => $totalPending,
                 'status' => ProcessStatusCode::IN_PROGRESS,
                 'user_id' => auth()->id(),
-                'skip_plans' => $skipPlans
+                'skip_plans' => $skipPlans,
             ]);
 
             FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);

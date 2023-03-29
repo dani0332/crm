@@ -35,7 +35,7 @@ class RenewalBatchesPlanProcessTable extends DataTableComponent
             Column::make('Completed', 'total_completed'),
             Column::make('Failed', 'total_failed'),
             Column::make('Status'),
-            Column::make('Skip Plans')->format(function($skipPlans){
+            Column::make('Skip Plans')->format(function ($skipPlans) {
                 return ($skipPlans) ? GenericRequestEnum::Yes : GenericRequestEnum::No;
             }),
             Column::make('User', 'createdBy.email'),

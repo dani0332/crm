@@ -345,19 +345,15 @@ class RenewalsUploadService
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
             ]);
 
-            if($renewalStatusProcess->skip_plans)
-            {
+            if ($renewalStatusProcess->skip_plans) {
                 $totalLeads = $query->count();
-                info($logPrefix .' skip fetch plans and update statues to be available for sending email');
+                info($logPrefix.' skip fetch plans and update statues to be available for sending email');
                 $affected = $query->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
-                info($logPrefix .' leads status is updated as plans fetched for total leads ('.$affected.')');
+                info($logPrefix.' leads status is updated as plans fetched for total leads ('.$affected.')');
 
-
-                $renewalStatusProcess->update(['total_leads' => $totalLeads, 'total_completed' => $affected ,'status' => ProcessStatusCode::COMPLETED]);
-                info($logPrefix .' renewal status process is completed');
-            }
-            else
-            {
+                $renewalStatusProcess->update(['total_leads' => $totalLeads, 'total_completed' => $affected, 'status' => ProcessStatusCode::COMPLETED]);
+                info($logPrefix.' renewal status process is completed');
+            } else {
                 $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs) {
                     foreach ($leads as $lead) {
                         $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
@@ -413,7 +409,6 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
-
             if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (! $aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first())) {
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
                 $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
@@ -1504,7 +1499,7 @@ class RenewalsUploadService
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'email_sent' => 0,
             'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])
-            ->whereHas('carQuote', function($q) {
+            ->whereHas('carQuote', function ($q) {
                 $q->whereNull('paid_at');
             })->groupBy('quote_id')->get();
     }
