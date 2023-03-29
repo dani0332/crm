@@ -1,7 +1,9 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { Head, router, useForm, Link } from '@inertiajs/vue3';
+import { useNotifications } from '@indielayer/ui';
 
+const notification = useNotifications('toast');
 const props = defineProps({
   dropdownSource: Object,
   model: String,
@@ -68,6 +70,10 @@ function onSubmit(isValid) {
           console.log(errors);
         },
         onSuccess: () => {
+          notification.success({
+            title: 'Quote saved successfully',
+            position: 'top',
+          });
           router.get(`/quotes/home/`);
         },
       });
@@ -95,7 +101,8 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.first_name"
           type="text"
-          label="FIRST NAME"
+          label="FIRST NAME*"
+          maxLength="255"
           :rules="[rules.isRequired]"
           class="w-full"
         />
@@ -103,7 +110,8 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.last_name"
           type="text"
-          label="LAST NAME"
+          label="LAST NAME*"
+          maxLength="255"
           :rules="[rules.isRequired]"
           class="w-full"
         />
@@ -111,7 +119,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.email"
           type="email"
-          label="EMAIL"
+          label="EMAIL*"
           :rules="[rules.isRequired]"
           class="w-full"
         />
@@ -119,7 +127,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.mobile_no"
           type="tel"
-          label="MOBILE NUMBER"
+          label="MOBILE NUMBER*"
           :rules="[rules.isRequired]"
           class="w-full"
           :error="quoteForm?.errors?.mobile_no"
@@ -135,13 +143,14 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.policy_number"
           type="text"
+          maxLength="100"
           label="POLICY NUMBER"
           class="w-full"
         />
 
         <x-select
           v-model="quoteForm.iam_possesion_type_id"
-          label="I AM"
+          label="I AM*"
           :rules="[rules.isRequired]"
           :options="
             dropdownSource.iam_possesion_type_id.map(item => ({
@@ -155,7 +164,7 @@ function onSubmit(isValid) {
 
         <x-select
           v-model="quoteForm.ilivein_accommodation_type_id"
-          label="I LIVE IN"
+          label="I LIVE IN*"
           :rules="[rules.isRequired]"
           :options="
             dropdownSource.ilivein_accommodation_type_id.map(item => ({
@@ -169,7 +178,8 @@ function onSubmit(isValid) {
         <x-textarea
           v-model="quoteForm.address"
           type="text"
-          label="ADDRESS"
+          label="ADDRESS*"
+          maxLength="2000"
           :rules="[rules.isRequired]"
           class="w-full"
         />
@@ -177,7 +187,7 @@ function onSubmit(isValid) {
         <div class="grid grid-cols-2 gap-2">
           <x-checkbox
             v-model="quoteForm.has_contents"
-            label="HAS CONTENTS"
+            label="HAS CONTENTS*"
             color="primary"
             @change="handleConditionalFields"
           />

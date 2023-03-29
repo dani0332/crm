@@ -2,6 +2,7 @@
 import { reactive, computed, onMounted, ref } from 'vue';
 import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
 import { useNotifications } from '@indielayer/ui';
+import { useHasRole } from '../../Composables/can';
 
 defineProps({
   quotes: Object,
@@ -142,7 +143,6 @@ const rules = {
 
 const assignForm = useForm({
   assigned_to_id_new: null,
-  manual_assignment_email_flag: '1',
   modelType: 'Home',
   selectTmLeadId: '',
 });
@@ -169,6 +169,8 @@ function onAssignLead(isValid) {
   }
 }
 
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 onMounted(() => {
   setQueryStringFilters();
 });
@@ -250,6 +252,7 @@ onMounted(() => {
           :options="leadStatusOptions"
         />
         <ComboBox
+          v-if="!hasRole(rolesEnum.Advisor)"
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -286,17 +289,6 @@ onMounted(() => {
               label="Assign Advisor"
               :options="advisorOptions"
               placeholder="Select Advisor"
-              class="flex-1 w-auto"
-              :rules="[rules.isRequired]"
-            />
-            <x-select
-              v-model="assignForm.manual_assignment_email_flag"
-              label="Assignment Type"
-              :options="[
-                { value: '1', label: 'Without Email' },
-                { value: '2', label: 'With Email' },
-              ]"
-              placeholder="Select Type"
               class="flex-1 w-auto"
               :rules="[rules.isRequired]"
             />
