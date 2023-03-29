@@ -1,5 +1,8 @@
 <script setup>
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+
+import { useNotifications } from '@indielayer/ui';
+import { computed, ref, reactive, onMounted } from 'vue';
+import { useDateFormat} from '@vueuse/core';
 
 defineProps({
   quote: Object,
@@ -27,6 +30,11 @@ defineProps({
 });
 
 const page = usePage();
+
+const dateFormat = date => {
+  if (!date) return '';
+  return useDateFormat(date, 'DD-MM-YYYY');
+};
 
 const notification = useNotifications('toast');
 
@@ -513,6 +521,16 @@ const historyDataTable = [
   { text: 'Notes', value: 'NewNotes' },
   { text: 'Lead Status', value: 'NewStatus' },
 ];
+
+onMounted(() => {
+  if (page.props.message) {
+    notification.success({
+      title: page.props.message,
+      position: 'top',
+    });
+  }
+});
+
 </script>
 <template>
   <div>

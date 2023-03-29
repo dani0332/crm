@@ -137,7 +137,6 @@ const modals = reactive({
   planDetails: false,
 });
 const travelFields = computed(() => {
-  console.log(page.props.fieldsToDisplay);
   let skipFields = [
     'previous_quote_policy_number',
     'previous_quote_policy_premium',
@@ -885,7 +884,6 @@ const onCopyText = text => {
 };
 
 onMounted(() => {
-    console.log('Travel Detail Page Mounted');
   if (page.props.message) {
     notification.success({
       title: page.props.message,
