@@ -9,8 +9,6 @@ use App\Repositories\CustomerRepository;
 class CustomerController extends Controller
 {
     /**
-     * @param $customerId
-     * @param  CustomerAdditionalContactRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function storeAdditionalContact($customerId, CustomerAdditionalContactRequest $request)

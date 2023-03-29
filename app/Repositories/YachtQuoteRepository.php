@@ -21,7 +21,6 @@ class YachtQuoteRepository extends BaseRepository
      * create new personal quote
      *
      * @param $quoteTypeCode
-     * @param $data
      * @return mixed
      */
     public function fetchCreate($data)
@@ -51,8 +50,6 @@ class YachtQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $uuid
-     * @param $data
      * @return mixed
      */
     public function fetchUpdate($uuid, $data)
@@ -72,8 +69,6 @@ class YachtQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $column
-     * @param $value
      * @return mixed
      */
     public function fetchGetBy($column, $value)

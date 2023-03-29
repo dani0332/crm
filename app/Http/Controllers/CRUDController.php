@@ -140,7 +140,19 @@ class CRUDController extends Controller
     {
         $renewalAdvisors = [];
         $isNewBusinessUser = false;
-        $isManualAllocationAllowed = Auth::user()->isAdmin() || Auth::user()->hasRole(RolesEnum::LeadPool) ? true : false;
+        $isManualAllocationAllowed = false;
+        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
+            $isManualAllocationAllowed = Auth::user()->isAdmin() || Auth::user()->hasRole(RolesEnum::LeadPool) ? true : false;
+        } else {
+            $userRoles = Auth::user()->usersroles()->get();
+            $isManager = false;
+            foreach ($userRoles as $userRole) {
+                if (! str_contains(strtolower($userRole->name), 'deputy') && str_contains(strtolower($userRole->name), 'manager')) {
+                    $isManager = true;
+                }
+            }
+            $isManualAllocationAllowed = Auth::user()->isAdmin() ? true : $isManager;
+        }
         $isCarLeadAllocationOn = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
         $userMaxCap = 0;
         $todayAssignmentCount = 0;
@@ -362,7 +374,6 @@ class CRUDController extends Controller
      * Display the specified resource.
      *
      * @param  int  $id
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      * @return \Inertia\Response
      */
@@ -1283,7 +1294,6 @@ class CRUDController extends Controller
      * export selected plans to PDF.
      *
      * @param  Request  $request
-     * @param $quoteType
      * @return \Illuminate\Http\RedirectResponse
      */
     public function exportHealthPdf($quoteType, ExportPlansPdfRequest $request)

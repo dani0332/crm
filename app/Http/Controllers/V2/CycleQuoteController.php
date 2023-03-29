@@ -63,7 +63,6 @@ class CycleQuoteController extends Controller
     }
 
     /**
-     * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function edit($uuid)
@@ -92,7 +91,6 @@ class CycleQuoteController extends Controller
     }
 
     /**
-     * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($uuid)

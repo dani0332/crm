@@ -60,7 +60,6 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function edit($uuid)
@@ -71,7 +70,6 @@ class YachtQuoteController extends Controller
     }
 
     /**
-     * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($uuid)

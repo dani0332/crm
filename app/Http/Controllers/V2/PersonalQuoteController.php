@@ -13,9 +13,6 @@ use App\Repositories\PersonalQuoteRepository;
 class PersonalQuoteController extends Controller
 {
     /**
-     * @param $quoteType
-     * @param $quoteId
-     * @param  PersonalQuoteStatusRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updateStatus($quoteType, $quoteId, PersonalQuoteStatusRequest $request)
@@ -33,7 +30,6 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @param  PersonalQuotePaymentRequest  $request
      * @return void
      */
     public function createPayment($quoteId, PersonalQuotePaymentRequest $request)
@@ -44,9 +40,6 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @param $quoteId
-     * @param $paymentCode
-     * @param  PersonalQuotePaymentRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updatePayment($quoteId, $paymentCode, PersonalQuotePaymentRequest $request)
@@ -57,8 +50,6 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @param $id
-     * @param  PersonalQuotePolicyRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updatePolicyDetails($id, PersonalQuotePolicyRequest $request)
@@ -69,7 +60,6 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @param $quoteId
      * @return mixed
      */
     public function getAuditHistory($quoteId)
@@ -78,8 +68,6 @@ class PersonalQuoteController extends Controller
     }
 
     /**
-     * @param $quoteId
-     * @param  ChangePrimaryContactRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function changePrimaryContact($quoteId, ChangePrimaryContactRequest $request)

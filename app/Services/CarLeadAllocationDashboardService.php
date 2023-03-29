@@ -95,7 +95,7 @@ class CarLeadAllocationDashboardService extends BaseService
         return CarQuote::whereBetween('created_at', [$from, $to])
             ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
             ->where('is_renewal_tier_email_sent', 0)
-            ->where('source', '!=', LeadSourceEnum::IMCRM)
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereNull('advisor_id')
             ->count();
     }

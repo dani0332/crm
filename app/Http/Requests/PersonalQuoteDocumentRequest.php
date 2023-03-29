@@ -41,7 +41,6 @@ class PersonalQuoteDocumentRequest extends FormRequest
     }
 
     /**
-     * @param $validator
      * @return void
      */
     public function withValidator($validator)

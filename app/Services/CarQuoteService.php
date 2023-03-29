@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Jobs\IntroEmailJob;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -1176,7 +1177,9 @@ class CarQuoteService extends BaseService
             $lead->advisor_id = $userId;
 
             if ($lead->quote_batch_id == null) {
-                $lead->quote_batch_id = QuoteBatches::latest()->first()->id;
+                $quoteBatch = QuoteBatches::latest()->first();
+                info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$lead->uuid);
+                $lead->quote_batch_id = $quoteBatch->id;
             }
 
             $this->updateTierAndCost($lead); // will assign/update tier and update cost per lead from tier
@@ -1213,7 +1216,7 @@ class CarQuoteService extends BaseService
                 $emailTemplateIdReassign = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
                 $emailTemplateIIntro = (int) $this->applicationStorageService->getValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
 
-                $this->sendEmailCustomerService->sendLMSIntroEmail($isReassignment ? $emailTemplateIdReassign : $emailTemplateIIntro, $emailData, 'send-lms-reassignment-email');
+                IntroEmailJob::dispatch(quoteTypeCode::Car, $isReassignment ? $emailTemplateIdReassign : $emailTemplateIIntro, $emailData, 'send-lms-reassignment-email');
             }
         }
 
@@ -1222,10 +1225,10 @@ class CarQuoteService extends BaseService
 
     private function updateExistingQuoteViewCount($userId, $leadId)
     {
-        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->first();
+        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->first();
         if ($quoteViewCount) {
             $quoteViewCount->user_id = $userId;
-            $quoteViewCount->view_count = 0;
+            $quoteViewCount->visit_count = 0;
             $quoteViewCount->save();
         }
     }

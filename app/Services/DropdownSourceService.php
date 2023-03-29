@@ -128,7 +128,7 @@ class DropdownSourceService extends BaseService
                 $data = User::select('id', 'name')->where('is_active', true)->get();
                 break;
             case 'lead_source_id':
-                $data = LeadSource::select('id', 'name')->where('is_active', true)->get();
+                $data = LeadSource::select('id', 'name')->where('is_active', true)->where('is_applicable_for_rules', true)->get();
                 break;
             case 'rule_users':
                 $data = User::select('id', 'name')->where('is_active', true)->get();
@@ -204,7 +204,7 @@ class DropdownSourceService extends BaseService
                         $data = DB::table('users as u')->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))
                             ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
                             ->join('roles as r', 'mhr.role_id', '=', 'r.id')
-                            ->whereIn('r.name', [$advisorType.'_ADVISOR', $advisorType.'_NEW_BUSINESS_ADVISOR', $advisorType.'_RENEWAL_ADVISOR'])->get();
+                            ->whereIn('r.name', [$advisorType.'_ADVISOR', $advisorType.'_NEW_BUSINESS_ADVISOR', $advisorType.'_RENEWAL_ADVISOR', $advisorType.'_DEPUTY_MANAGER'])->get();
                     } else {
                         $data = User::select('id', 'name')->get();
                     }

@@ -55,12 +55,10 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
 
         $query = CarQuote::query()
         ->select(
-            DB::raw("CONCAT('first_name', ' ', 'last_name') as fullName"),
+            DB::raw("CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName"),
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->join('user_team', 'user_team.user_id', 'users.id')
-        ->join('teams', 'teams.id', 'user_team.team_id')
         ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->where('car_quote_request.advisor_id', $this->advisorId)
@@ -98,7 +96,15 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         }
         if ($this->teamsFilter != '' && count($this->teamsFilter) > 0) {
             info('teamsFilter are : '.json_encode($this->teamsFilter));
-            $query->whereIn('teams.id', $this->teamsFilter);
+            $value = $this->teamsFilter;
+            $query->whereIn('users.id', function ($query) use ($value) {
+                $query->distinct()
+                      ->select('users.id')
+                      ->from('users')
+                      ->join('user_team', 'user_team.user_id', 'users.id')
+                      ->join('teams', 'teams.id', 'user_team.team_id')
+                      ->whereIn('teams.id', $value);
+            });
         }
         if ($this->advisorsFilter != '' && count($this->advisorsFilter) > 0) {
             info('advisorsFilter are : '.json_encode($this->advisorsFilter));

@@ -21,8 +21,6 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $quoteId
-     * @param $data
      * @return mixed
      */
     public function fetchUpdateStatus($quoteType, $quoteId, $data)
@@ -59,8 +57,6 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $file
-     * @param $data
      * @return mixed
      */
     public function fetchUploadDocument($id, $file, $data)
@@ -96,8 +92,6 @@ class PersonalQuoteRepository extends BaseRepository
 
     /**
      * @param $quoteType
-     * @param $quoteId
-     * @param $data
      * @return mixed
      */
     public function fetchCreatePayment($quoteId, $data)
@@ -127,9 +121,6 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $quoteId
-     * @param $paymentCode
-     * @param $data
      * @return mixed
      */
     public function fetchUpdatePayment($quoteId, $paymentCode, $data)
@@ -148,8 +139,6 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $id
-     * @param $data
      * @return mixed
      */
     public function fetchUpdatePolicyDetails($id, $data)
@@ -161,7 +150,6 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $leadId
      * @return \Illuminate\Support\Collection
      */
     public function fetchGetAuditHistory($leadId)
@@ -189,8 +177,6 @@ class PersonalQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $quoteId
-     * @param $data
      * @return mixed
      */
     public function fetchChangePrimaryContact($quoteId, $data)

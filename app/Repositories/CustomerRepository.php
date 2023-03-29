@@ -15,8 +15,6 @@ class CustomerRepository extends BaseRepository
     }
 
     /**
-     * @param $customerId
-     * @param $data
      * @return bool
      */
     public function fetchStoreAdditionalContact($customerId, $data)

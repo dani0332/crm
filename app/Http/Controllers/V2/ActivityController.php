@@ -9,7 +9,6 @@ use App\Repositories\ActivityRepository;
 class ActivityController extends Controller
 {
     /**
-     * @param  ActivityRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(ActivityRequest $request)
@@ -20,7 +19,6 @@ class ActivityController extends Controller
     }
 
     /**
-     * @param  ActivityRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function update($id, ActivityRequest $request)
@@ -31,7 +29,6 @@ class ActivityController extends Controller
     }
 
     /**
-     * @param $id
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updateStatus($id)
@@ -43,7 +40,6 @@ class ActivityController extends Controller
     }
 
     /**
-     * @param $id
      * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy($id)

@@ -45,7 +45,6 @@ class JetskiQuoteController extends Controller
     }
 
     /**
-     * @param  JetskiQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      *
      * @throws \Illuminate\Validation\ValidationException
@@ -62,7 +61,6 @@ class JetskiQuoteController extends Controller
     }
 
     /**
-     * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function edit($uuid)
@@ -78,7 +76,6 @@ class JetskiQuoteController extends Controller
     }
 
     /**
-     * @param $uuid
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show($uuid)
@@ -123,8 +120,6 @@ class JetskiQuoteController extends Controller
     }
 
     /**
-     * @param $uuid
-     * @param  JetskiQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function update($uuid, JetskiQuoteRequest $request)
