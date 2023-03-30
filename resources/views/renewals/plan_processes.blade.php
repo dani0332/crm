@@ -13,7 +13,7 @@ use App\Enums\RolesEnum;
             <a href="{{ url('renewals/batches') }}" class="btn-2">Batches List</a>
             @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin)
             <a class="btn" onclick="return confirm('Do you want to fetch Plans?');" href="{{url('renewals/batches/' . $batch . '/fetch-plans')}}">Fetch Plans</a>
-            <a class="btn-success" onclick="return confirm('Do you want to fetch Plans?');" href="{{url('renewals/batches/' . $batch . '/skip-plans/1')}}">Skip Plans</a>
+            <a class="btn-success" onclick="return confirm('Do you want to skip Plans?');" href="{{url('renewals/batches/' . $batch . '/skip-plans/1')}}">Skip Plans</a>
             @endhasanyrole
         </div>
     </div>
