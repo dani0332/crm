@@ -32,10 +32,8 @@ class UpdateTravelRequest extends FormRequest
             return strpos($value, 'required') !== false;
         });
 
-
         $rules = [];
         foreach ($requireProperties as $key => $value) {
-
             if ($key == 'first_name' || $key == 'last_name') {
                 $rule[] = 'max:255';
             } else {
