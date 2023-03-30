@@ -112,7 +112,7 @@ class LifeQuoteService extends BaseService
             'premium' => $request->premium,
             'tenureOfInsuranceId' => $request->tenure_of_insurance_id,
             'numberOfYearsId' => $request->number_of_years_id,
-            'isSmoker' => $request->is_smoker == 'Yes' ? true : false,
+            'isSmoker' => $request->is_smoker == 1 ? 1 : 0,
             'gender' => $request->gender,
             'othersInfo' => $request->others_info,
             'source' => config('constants.SOURCE_NAME'),
@@ -383,6 +383,7 @@ class LifeQuoteService extends BaseService
         $lifeQuote->number_of_years_id = $request->number_of_years_id;
         $lifeQuote->others_info = $request->others_info;
         $lifeQuote->policy_start_date = $request->policy_start_date;
+        $lifeQuote->is_smoker = $request->is_smoker == 1 ? 1 : 0;
         $lifeQuote->save();
 
         if (isset($request->return_to_view)) {

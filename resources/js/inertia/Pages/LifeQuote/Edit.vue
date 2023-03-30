@@ -59,7 +59,9 @@ function onSubmit(isValid) {
   }
 }
 
-onMounted(() => {});
+onMounted(() => {
+    console.log(quoteForm);
+});
 </script>
 
 <template>

@@ -249,7 +249,7 @@ class LifeController extends Controller
             $typeOfField = array_shift($typeOfField);
 
             if (in_array('static', $value)) {
-                $options = $this->lifeQuoteService->getStaticFields($value);
+                $options = $this->lifeQuoteService->getStaticFields($value, $property);
                 $dropdownSource[$property] = $options;
                 $typeOfField = 'select';
             }
@@ -267,7 +267,6 @@ class LifeController extends Controller
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
 
-        // dd($record, $fields);
         return inertia('LifeQuote/Edit', [
             'quote' => $record,
             'modelType' => $this->genericModel->modelType,

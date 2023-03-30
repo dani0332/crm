@@ -155,8 +155,10 @@ class BaseService
                 $fields[$property]['title'] = ucwords(str_replace('_', ' ', $property));
                 $fields[$property]['value'] = '';
                 foreach ($options as $option) {
-                    if ($option == $quote->$property) {
-                        $fields[$property]['value'] = $option;
+                    if ($property == 'is_smoker') {
+                        $fields[$property]['value'] = $quote->$property == 1 ? 'Yes' : 'No';
+                    }else if ($option['text'] == $quote->$property) {
+                        $fields[$property]['value'] = $option['text'];
                     }
                 }
             } elseif (str_contains($field, 'select')) {
@@ -175,7 +177,7 @@ class BaseService
         return $fields;
     }
 
-    public function getStaticFields($field)
+    public function getStaticFields($field, $property = null)
     {
         if (! is_array($field)) {
             $field = explode('|', $field);
@@ -191,6 +193,13 @@ class BaseService
         $options = array_map(function ($item) {
             return ['id' => $item, 'text' => $item];
         }, $options);
+
+        if ($property == 'is_smoker') {
+            $options = [
+                ['id' => 1, 'text' => 'Yes'],
+                ['id' => 0, 'text' => 'No'],
+            ];
+        }
 
         return $options;
     }
