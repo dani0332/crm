@@ -18,8 +18,7 @@ class addCarQuoteNewStatuses extends Seeder
     public function run()
     {
         $pendingQuote = QuoteStatus::where('id', QuoteStatusEnum::PendingQuote)->first();
-        if(!$pendingQuote)
-        {
+        if (! $pendingQuote) {
             DB::table('quote_status')->insert([
                 'id' => 51,
                 'text' => 'Pending Quote',
