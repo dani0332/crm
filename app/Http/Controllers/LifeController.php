@@ -93,10 +93,18 @@ class LifeController extends Controller
 
         $fields = [];
         foreach ($fieldsToCreate as $property => $value) {
-            $value = array_diff(explode('|', $value), ['title']);
-            $type = $value[0] == 'select' ? 'select' : $value[1] ?? 'text';
+            $value = explode('|', $value);
+            $typeOfField = array_diff($value, ['title', 'input', 'required']);
+            $typeOfField = array_shift($typeOfField);
+
+            if (in_array('static', $value)) {
+                $options = $this->lifeQuoteService->getStaticFields($value);
+                $dropdownSource[$property] = $options;
+                $typeOfField = 'select';
+            }
+
             $fields[$property] = [
-                'type' => $type,
+                'type' => $typeOfField,
                 'required' => in_array('required', $value),
                 'readonly' => in_array('readonly', $value),
                 'disabled' => in_array('disabled', $value),
@@ -132,7 +140,7 @@ class LifeController extends Controller
             return redirect()->back()->with('message', $record->message)->withInput();
         }
 
-        redirect('/quotes/life')->with('message', 'Record created successfully');
+        return redirect()->route('life.show', data_get($record, 'quoteUID'))->with('message', 'Quote created successfully.');
     }
 
     public function show($uuid)
@@ -174,7 +182,7 @@ class LifeController extends Controller
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
-        
+
         return inertia('LifeQuote/Show', [
             'quote' => $quote,
             'fieldsToDisplay' => $fields,
@@ -259,6 +267,7 @@ class LifeController extends Controller
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
 
+        // dd($record, $fields);
         return inertia('LifeQuote/Edit', [
             'quote' => $record,
             'modelType' => $this->genericModel->modelType,

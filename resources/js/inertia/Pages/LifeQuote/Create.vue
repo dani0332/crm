@@ -132,7 +132,7 @@ onMounted(() => {});
               <sup v-if="field.required" class="text-red-500">*</sup>
             </p>
 
-            <x-select
+            <ComboBox
               v-if="field.type == 'select'"
               v-model="quoteForm[index]"
               :rules="[
@@ -146,7 +146,8 @@ onMounted(() => {});
                 }))
               "
               class="w-full"
-              :error="quoteForm.errors[index]"
+              :hasError="quoteForm.errors[index]"
+              :single="true"
             />
           </label>
 
