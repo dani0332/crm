@@ -42,6 +42,8 @@ class Kernel extends ConsoleKernel
         ->timezone('Asia/Dubai')
         ->dailyAt('01:00')->onOneServer()
         ->withoutOverlapping(1);
+
+        $schedule->command('telescope:prune --hours=24')->daily();
     }
 
     /**

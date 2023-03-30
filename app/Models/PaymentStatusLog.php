@@ -17,7 +17,7 @@ class PaymentStatusLog extends Model
 
     public function getCreatedAtAttribute($date)
     {
-        return (! empty($date)) ? Carbon::createFromFormat('Y-m-d H:i:s', $date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
+        return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
 
     /**
