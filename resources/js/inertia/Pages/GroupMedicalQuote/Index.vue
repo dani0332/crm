@@ -4,7 +4,7 @@ import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
 import { useNotifications } from '@indielayer/ui';
 
 defineProps({
-  model: Object,
+  model: String,
   leadStatuses: Array,
   advisors: Array,
   isManagerORDeputy: Boolean,
@@ -177,11 +177,13 @@ onMounted(() => {
           placeholder="Search by Mobile Number"
         />
         <DatePicker
+          :format="'d-m-Y'"
           v-model="filters.created_at_start"
           name="created_at_start"
           label="Created Date Start"
         />
         <DatePicker
+          :format="'d-m-Y'"
           v-model="filters.created_at_end"
           name="created_at_end"
           label="Created Date End"

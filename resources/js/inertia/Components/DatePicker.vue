@@ -40,9 +40,9 @@ const format = date => {
   const day = date.getDate();
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
-  return props.withTime
-    ? `${year}-${month}-${day} ${date.getHours()}:${date.getMinutes()}`
-    : `${year}-${month}-${day}`;
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  return `${year}-${month}-${day}`;
 };
 
 const selectedData = computed({
@@ -59,7 +59,7 @@ const selectedData = computed({
   <VueDatePicker
     v-model="selectedData"
     auto-apply
-    :format="props.withTime ? `dd-MM-yyyy HH:mm` : `dd-MM-yyyy`"
+    :format="format"
     :teleport="true"
     :enable-time-picker="props.withTime"
     :month-change-on-scroll="false"
