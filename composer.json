@@ -10,7 +10,6 @@
     "require": {
         "php": "^8.1",
         "arielmejiadev/larapex-charts": "^5.2",
-        "barryvdh/laravel-debugbar": "^3.7",
         "barryvdh/laravel-dompdf": "^2.0",
         "bensampo/laravel-enum": "^v4.2.0",
         "calebporzio/sushi": "^2.4",
@@ -26,6 +25,7 @@
         "laravel/legacy-factories": "^1.1",
         "laravel/sanctum": "^2.6",
         "laravel/socialite": "^5.2",
+        "laravel/telescope": "^4.14",
         "laravel/tinker": "^2.5",
         "laravelcollective/html": "^6.2",
         "livewire/livewire": "^2.0",

@@ -106,7 +106,7 @@ class TravelController extends Controller
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
-        if (!auth()->user()->hasRole(RolesEnum::Engineering)) {
+        if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
 
@@ -147,7 +147,7 @@ class TravelController extends Controller
                 'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
                 'canNotApprovePayments' => auth()->user()->cannot(PermissionsEnum::ApprovePayments),
-                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType) . '-quotes-edit'),
+                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
             ],
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
@@ -280,7 +280,7 @@ class TravelController extends Controller
 
         $this->travelQuoteService->updateTravelQuote($request, $id);
 
-        return redirect('/quotes/travel/'. $id)->with('message', 'Record updated successfully');
+        return redirect('/quotes/travel/'.$id)->with('message', 'Record updated successfully');
     }
 
     public function planDetails($quoteId, $planId)

@@ -157,7 +157,7 @@ class BaseService
                 foreach ($options as $option) {
                     if ($property == 'is_smoker') {
                         $fields[$property]['value'] = $quote->$property == 1 ? 'Yes' : 'No';
-                    }else if ($option['text'] == $quote->$property) {
+                    } elseif ($option['text'] == $quote->$property) {
                         $fields[$property]['value'] = $option['text'];
                     }
                 }
