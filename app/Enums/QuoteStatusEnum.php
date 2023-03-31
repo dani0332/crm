@@ -50,4 +50,5 @@ final class QuoteStatusEnum extends Enum
     const IMRenewal = 48;
     const NotLookingForMotorInsurance = 49;
     const NonGccSpec = 50;
+    const PendingQuote = 51;
 }

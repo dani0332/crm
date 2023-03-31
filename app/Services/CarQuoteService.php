@@ -207,33 +207,83 @@ class CarQuoteService extends BaseService
     {
         $carQuote = CarQuote::where('uuid', $id)->first();
         info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
-        $carQuote->first_name = $request->first_name;
-        $carQuote->last_name = $request->last_name;
-        $carQuote->dob = $request->dob;
-        $carQuote->nationality_id = $request->nationality_id;
-        $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
-        $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
-        $carQuote->year_of_manufacture = $request->year_of_manufacture;
-        $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
-        $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
-        $carQuote->claim_history_id = $request->claim_history_id;
-        $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
-        $carQuote->premium = $request->premium;
-        $carQuote->car_value = $request->car_value;
-        $carQuote->seat_capacity = $request->seat_capacity;
-        $carQuote->cylinder = $request->cylinder;
-        $carQuote->vehicle_type_id = $request->vehicle_type_id;
-        $carQuote->additional_notes = $request->additional_notes;
-        $carQuote->car_make_id = $request->car_make_id;
-        $carQuote->car_model_id = $request->car_model_id;
-        $carQuote->currently_insured_with = $request->currently_insured_with;
+        if ($request->first_name) {
+            $carQuote->first_name = $request->first_name;
+        }
+        if ($request->last_name) {
+            $carQuote->last_name = $request->last_name;
+        }
+        if ($request->dob) {
+            $carQuote->dob = $request->dob;
+        }
+        if ($request->nationality_id) {
+            $carQuote->nationality_id = $request->nationality_id;
+        }
+        if ($request->uae_license_held_for_id) {
+            $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
+        }
+        if ($request->back_home_license_held_for_id) {
+            $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
+        }
+        if ($request->year_of_manufacture) {
+            $carQuote->year_of_manufacture = $request->year_of_manufacture;
+        }
+        if ($request->emirate_of_registration_id) {
+            $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
+        }
+        if ($request->car_type_insurance_id) {
+            $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
+        }
+        if ($request->claim_history_id) {
+            $carQuote->claim_history_id = $request->claim_history_id;
+        }
+        if ($request->has_ncd_supporting_documents) {
+            $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
+        }
+        if ($request->premium) {
+            $carQuote->premium = $request->premium;
+        }
+        if ($request->car_value) {
+            $carQuote->car_value = $request->car_value;
+        }
+        if ($request->seat_capacity) {
+            $carQuote->seat_capacity = $request->seat_capacity;
+        }
+        if ($request->cylinder) {
+            $carQuote->cylinder = $request->cylinder;
+        }
+        if ($request->vehicle_type_id) {
+            $carQuote->vehicle_type_id = $request->vehicle_type_id;
+        }
+        if ($request->additional_notes) {
+            $carQuote->additional_notes = $request->additional_notes;
+        }
+        if ($request->car_make_id) {
+            $carQuote->car_make_id = $request->car_make_id;
+        }
+        if ($request->car_model_id) {
+            $carQuote->car_model_id = $request->car_model_id;
+        }
+        if ($request->currently_insured_with) {
+            $carQuote->currently_insured_with = $request->currently_insured_with;
+        }
         $carQuote->quote_updated_at = Carbon::now();
         $carQuote->is_quote_locked = true;
-        $carQuote->car_model_detail_id = $request->trim;
-        $carQuote->policy_start_date = $request->policy_start_date;
-        $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
-        $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
-        $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? $request->previous_policy_expiry_date : null;
+        if ($request->car_model_detail_id) {
+            $carQuote->car_model_detail_id = $request->trim;
+        }
+        if ($request->policy_start_date) {
+            $carQuote->policy_start_date = $request->policy_start_date;
+        }
+        if ($request->renewal_batch) {
+            $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
+        }
+        if ($request->previous_quote_policy_number) {
+            $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
+        }
+        if ($request->previous_policy_expiry_date) {
+            $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? $request->previous_policy_expiry_date : null;
+        }
         $carQuote->updated_by = auth()->user()->email;
         $carQuote->save();
 

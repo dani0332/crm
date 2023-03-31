@@ -120,7 +120,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         }
         if ($this->leadType == ReportsLeadTypeEnum::IN_PROGRESS) {
             info('inside lead type in progress');
-            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::PaymentPending, QuoteStatusEnum::AMLScreeningCleared]);
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::PaymentPending, QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::PendingQuote]);
         }
         if ($this->leadType == ReportsLeadTypeEnum::MANUAL_CREATED) {
             info('inside lead type MANUAL_CREATED');
