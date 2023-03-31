@@ -8,6 +8,7 @@ use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
+use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CarQuoteController;
 use App\Http\Controllers\CarRepairCoverageController;
@@ -233,7 +234,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
-        Route::resource('business', CRUDController::class);
+        // Route::resource('business', CRUDController::class);
+        Route::get('business/cards', [BusinessQuoteController::class, 'cardsView']);
+        Route::resource('business', BusinessQuoteController::class);
         Route::resource('travel', CRUDController::class);
         Route::resource('pet', CRUDController::class);
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
@@ -266,9 +269,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
 
+        Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('trave.cards');
         Route::resource('travel', TravelController::class);
         Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
+        Route::get('life-cards', [LifeController::class, 'cardsView'])->name('life.cards');
         Route::resource('life', LifeController::class);
     });
 
@@ -348,6 +353,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'medical'], function () {
+        Route::get('amt/cards', [AMTController::class, 'cardsView']);
         Route::resource('amt', AMTController::class);
     });
 

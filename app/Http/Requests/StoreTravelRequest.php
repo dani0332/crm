@@ -35,11 +35,17 @@ class StoreTravelRequest extends FormRequest
         $rules = [];
         foreach ($requireProperties as $key => $value) {
             $rule = ['required'];
+            if ($key == 'first_name' || $key == 'last_name') {
+                $rule[] = 'max:255';
+            } else {
+                $rule[] = 'max:1000';
+            }
+
             if ($key == 'email') {
                 $rule[] = 'email:rfc,dns';
             }
-            if ($key == 'phone') {
-                $rule[] = 'regex:regex:/(0)[0-9]/';
+            if ($key == 'mobile_no') {
+                $rule[] = 'regex:/(0)[0-9]/';
                 $rule[] = 'not_regex:/[a-z]/';
                 $rule[] = 'min:7';
                 $rule[] = 'max:20';

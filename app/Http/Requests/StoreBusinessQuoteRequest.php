@@ -3,10 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Enums\quoteTypeCode;
-use App\Services\LifeQuoteService;
+use App\Services\BusinessQuoteService;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreLifeRequest extends FormRequest
+class StoreBusinessQuoteRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,8 +25,8 @@ class StoreLifeRequest extends FormRequest
      */
     public function rules()
     {
-        $travelService = (app()->make(LifeQuoteService::class));
-        $travelService->getGenericModel(quoteTypeCode::Life);
+        $travelService = (app()->make(BusinessQuoteService::class));
+        $travelService->getGenericModel(quoteTypeCode::Business);
         $properties = $travelService->getFieldsToCreate('skipProperties', 'create');
         $requireProperties = array_filter($properties, function ($value) {
             return strpos($value, 'required') !== false;
@@ -38,7 +38,7 @@ class StoreLifeRequest extends FormRequest
             if ($key == 'email') {
                 $rule[] = 'email:rfc,dns';
             }
-            if ($key == 'mobile_no') {
+            if ($key == 'phone') {
                 $rule[] = 'regex:/(0)[0-9]/';
                 $rule[] = 'not_regex:/[a-z]/';
                 $rule[] = 'min:7';

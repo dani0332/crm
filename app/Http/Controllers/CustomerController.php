@@ -225,6 +225,11 @@ class CustomerController extends Controller
             'additional_contact_type' => 'required',
             'additional_contact_val' => 'required',
         ]);
+
+        if ($request->isInertia == true && $validator->fails()) {
+            return redirect()->back()->withErrors($validator->errors());
+        }
+
         if ($validator->fails()) {
             return response()->json(['error' => [
                 'message' => $validator->errors(),

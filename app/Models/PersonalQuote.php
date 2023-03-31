@@ -64,7 +64,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * bike quote request relation
+     * bike quote request relation.
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
@@ -182,7 +182,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * get data by personal quote type
+     * get data by personal quote type.
      *
      * @return mixed
      */

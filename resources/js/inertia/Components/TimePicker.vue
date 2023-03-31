@@ -10,50 +10,29 @@ const props = defineProps({
     type: String,
   },
   modelValue: {
-    type: [String, Date],
+    type: [String, Date, Object],
     default: '',
   },
   placeholder: {
     type: String,
-    default: 'Select Date',
+    default: 'Select Time',
   },
   single: {
     type: Boolean,
     default: true,
   },
-  withTime: {
+  hasError: {
     type: Boolean,
     default: false,
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  rules: {
-    type: Array,
-    default: () => [],
   },
 });
-
-const format = date => {
-  if (!date) return '';
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-
-  if(props.withTime) return `${year}-${month}-${day} ${hour}:${minute}`;
-
-  return `${year}-${month}-${day}`;
-};
 
 const selectedData = computed({
   get() {
     return props.modelValue;
   },
   set(newValue) {
-    emit('update:modelValue', props.withTime ? newValue : format(newValue));
+    emit('update:modelValue', newValue);
     return;
   },
 });
@@ -62,12 +41,10 @@ const selectedData = computed({
   <VueDatePicker
     v-model="selectedData"
     auto-apply
-    :format="props.withTime ? `dd-MM-yyyy HH:mm` : `dd-MM-yyyy`"
     :teleport="true"
-    :enable-time-picker="props.withTime"
     :month-change-on-scroll="false"
     :clearable="false"
-    :disabled="props.disabled"
+    :time-picker="true"
   >
     <template #dp-input="{ value, onClear }">
       <x-input
@@ -75,15 +52,11 @@ const selectedData = computed({
         :value="value"
         :label="props.label"
         :placeholder="placeholder"
-        :disabled="props.disabled"
+        :error="props.hasError ? 'This field is required' : ''"
         class="w-full"
-        :rules="value ? [] : props.rules"
         readonly
       />
-      <div
-        v-if="!props.disabled"
-        class="absolute right-2.5 top-[34px] hover:text-secondary-500"
-      >
+      <div class="absolute right-2.5 top-[34px] hover:text-secondary-500">
         <svg
           v-if="!value"
           xmlns="http://www.w3.org/2000/svg"
@@ -96,7 +69,7 @@ const selectedData = computed({
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
-            d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+            d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
 

@@ -62,7 +62,7 @@ class TravelQuoteService extends BaseService
             'tp.text AS plan_id_text',
             'tqr.region_cover_for_id',
             'r.TEXT AS region_cover_for_id_text',
-            'tqrd.next_followup_date',
+            DB::raw('DATE_FORMAT(tqrd.next_followup_date, "%d-%m-%Y %H:%i:%s") as next_followup_date'),
             'tqrd.transapp_code',
             'ls.text as lost_reason',
             'tqrd.notes',
@@ -75,11 +75,11 @@ class TravelQuoteService extends BaseService
             'tqr.renewal_batch',
             'tqr.renewal_import_code',
             'tqr.previous_quote_policy_number',
-            'tqr.previous_policy_expiry_date',
+            DB::raw('DATE_FORMAT(tqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
             'tqr.device',
             'tqr.previous_quote_policy_premium',
             'tqr.policy_issuance_date',
-            'tqr.policy_start_date',
+            DB::raw('DATE_FORMAT(tqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
             'tqr.customer_id',
             'tqr.parent_duplicate_quote_id'
         )
@@ -113,6 +113,8 @@ class TravelQuoteService extends BaseService
             'referenceUrl' => config('constants.APP_URL'),
             'currentlyLocatedInId' => $request->currently_located_in_id,
             'dob' => $request->dob,
+            'policy_start_date' => $request->policy_start_date,
+            'details' => $request->details,
         ];
         if (! Auth::user()->hasRole('ADMIN') && ! Auth::user()->hasRole('Call Desk')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -545,6 +547,7 @@ class TravelQuoteService extends BaseService
         $travelQuote->travel_cover_for_id = $request->travel_cover_for_id;
         $travelQuote->region_cover_for_id = $request->region_cover_for_id;
         $travelQuote->policy_start_date = $request->policy_start_date;
+        $travelQuote->details = $request->details;
         $travelQuote->save();
 
         if (isset($request->return_to_view)) {

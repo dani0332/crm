@@ -14,7 +14,6 @@ use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 
 class LifeQuoteService extends BaseService
@@ -66,7 +65,7 @@ class LifeQuoteService extends BaseService
                 'liy.TEXT AS number_of_years_id_text',
                 'lqr.nationality_id',
                 'n.TEXT AS nationality_id_text',
-                'lqrd.next_followup_date',
+                DB::raw('DATE_FORMAT(lqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
                 'lqrd.transapp_code',
                 'lqrd.notes',
                 'ls.text as lost_reason',
@@ -75,7 +74,8 @@ class LifeQuoteService extends BaseService
                 'lqr.previous_quote_policy_number',
                 'lqr.renewal_expiry_date',
                 'lqr.device',
-                'lqr.previous_policy_expiry_date',
+                DB::raw('DATE_FORMAT(lqr.previous_policy_expiry_date, "%d-%m-%Y") as previous_policy_expiry_date'),
+                DB::raw('DATE_FORMAT(lqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
                 'lqr.previous_quote_policy_premium',
                 'lqr.customer_id',
                 'lqr.parent_duplicate_quote_id'
@@ -111,7 +111,7 @@ class LifeQuoteService extends BaseService
             'premium' => $request->premium,
             'tenureOfInsuranceId' => $request->tenure_of_insurance_id,
             'numberOfYearsId' => $request->number_of_years_id,
-            'isSmoker' => $request->is_smoker == 'Yes' ? true : false,
+            'isSmoker' => $request->is_smoker == 1 ? 1 : 0,
             'gender' => $request->gender,
             'othersInfo' => $request->others_info,
             'source' => config('constants.SOURCE_NAME'),
@@ -381,6 +381,8 @@ class LifeQuoteService extends BaseService
         $lifeQuote->tenure_of_insurance_id = $request->tenure_of_insurance_id;
         $lifeQuote->number_of_years_id = $request->number_of_years_id;
         $lifeQuote->others_info = $request->others_info;
+        $lifeQuote->policy_start_date = $request->policy_start_date;
+        $lifeQuote->is_smoker = $request->is_smoker == 1 ? 1 : 0;
         $lifeQuote->save();
 
         if (isset($request->return_to_view)) {
@@ -773,55 +775,5 @@ class LifeQuoteService extends BaseService
         }
 
         return 'true';
-    }
-
-    public function fieldsToDisplay($fieldsToDisplay, $quote)
-    {
-        $crudService = app(CrudService::class);
-        $fields = [];
-        foreach ($fieldsToDisplay as $property => $field) {
-            if (str_contains($field, 'static')) {
-                $options = $this->getStaticFields($field);
-                $fields[$property]['title'] = ucwords(str_replace('_', ' ', $property));
-                $fields[$property]['value'] = '';
-                foreach ($options as $option) {
-                    if ($option == $quote->$property) {
-                        $fields[$property]['value'] = $option;
-                    }
-                }
-            } elseif (str_contains($field, 'select')) {
-                $fields[$property]['title'] = $crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
-                $name = $property.'_text';
-                $fields[$property]['value'] = $quote->$name ?? '';
-            } elseif (str_contains($field, 'title')) {
-                $fields[$property]['title'] = $crudService->getCustomTitleByModelType($this->genericModel->modelType, $property);
-                $fields[$property]['value'] = $quote->$property ?? '';
-            } else {
-                $fields[$property]['title'] = ucwords(str_replace('_', ' ', $property));
-                $fields[$property]['value'] = $quote->$property ?? '';
-            }
-        }
-
-        return $fields;
-    }
-
-    public function getStaticFields($field)
-    {
-        if (! is_array($field)) {
-            $field = explode('|', $field);
-        }
-
-        $options = array_filter($field, function ($item) {
-            return str_contains($item, ',');
-        });
-        $options = array_map(function ($item) {
-            return explode(',', $item);
-        }, $options);
-        $options = Arr::first($options);
-        $options = array_map(function ($item) {
-            return ['id' => $item, 'text' => $item];
-        }, $options);
-
-        return $options;
     }
 }

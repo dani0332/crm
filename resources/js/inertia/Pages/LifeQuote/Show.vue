@@ -1,5 +1,8 @@
 <script setup>
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+
+import { useNotifications } from '@indielayer/ui';
+import { computed, ref, reactive, onMounted } from 'vue';
+import { useDateFormat} from '@vueuse/core';
 
 defineProps({
   quote: Object,
@@ -27,6 +30,11 @@ defineProps({
 });
 
 const page = usePage();
+
+const dateFormat = date => {
+  if (!date) return '';
+  return useDateFormat(date, 'DD-MM-YYYY');
+};
 
 const notification = useNotifications('toast');
 
@@ -113,6 +121,21 @@ const modals = reactive({
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
   planDetails: false,
+});
+
+const travelFields = computed(() => {
+  let skipFields = [
+    'previous_quote_policy_number',
+    'previous_quote_policy_premium',
+    'previous_policy_expiry_date',
+  ];
+  let fields = {};
+  Object.keys(page.props.fieldsToDisplay).map(field => {
+    if (!skipFields.includes(field)) {
+      fields[field] = page.props.fieldsToDisplay[field];
+    }
+  });
+  return fields;
 });
 
 const leadStatusForm = useForm({
@@ -252,7 +275,13 @@ const activityForm = useForm({
 });
 
 const addActivity = () => {
-  activityForm.reset();
+  activityForm.title = null;
+  activityForm.description = null;
+  activityForm.due_date = ref(new Date());
+  activityForm.assignee_id = null;
+  activityForm.status = null;
+  activityForm.activity_id = null;
+  activityForm.uuid = null;
   activityActionEdit.value = false;
   modals.activity = true;
 };
@@ -268,6 +297,17 @@ const onActivityStatusUpdate = id => {
       });
     },
   });
+};
+
+const date = ref(new Date());
+const format = date => {
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  return `${day}/${month}/${year} ${hours}:${minutes} `;
 };
 
 const activityEdit = data => {
@@ -362,6 +402,12 @@ const additionalContact = useForm({
   quote_type: 'life',
 });
 
+const addAdditionalContact = () => {
+  additionalContact.additional_contact_type = null;
+  additionalContact.additional_contact_val = null;
+  modals.addContact = true;
+};
+
 const onAdditionalContactSubmit = isValid => {
   if (!isValid) return;
   additionalContact
@@ -379,6 +425,13 @@ const onAdditionalContactSubmit = isValid => {
       },
       onFinish: () => {
         modals.addContact = false;
+      },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
       },
     });
 };
@@ -468,6 +521,16 @@ const historyDataTable = [
   { text: 'Notes', value: 'NewNotes' },
   { text: 'Lead Status', value: 'NewStatus' },
 ];
+
+onMounted(() => {
+  if (page.props.message) {
+    notification.success({
+      title: page.props.message,
+      position: 'top',
+    });
+  }
+});
+
 </script>
 <template>
   <div>
@@ -483,7 +546,10 @@ const historyDataTable = [
           <x-button size="sm" color="primary" tag="div">Life List </x-button>
         </Link>
 
-        <Link :href="`${quote.uuid}/edit`">
+        <Link
+          v-if="permissions.canEditQuote == true"
+          :href="`${quote.uuid}/edit`"
+        >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>
@@ -536,96 +602,11 @@ const historyDataTable = [
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div
             class="grid sm:grid-cols-2"
-            v-for="field in fieldsToDisplay"
+            v-for="field in travelFields"
             :key="field"
           >
-            <dt class="font-medium">{{ field.title }}</dt>
+            <dt class="font-medium">{{ field.title.toUpperCase() }}</dt>
             <dd>{{ field.value }}</dd>
-          </div>
-        </dl>
-      </div>
-      <x-divider class="mb-4 mt-1" />
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Customer Profile</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">FIRST NAME</dt>
-            <dd>{{ quote.first_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST NAME</dt>
-            <dd>{{ quote.last_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MOBILE NUMBER</dt>
-            <dd>{{ quote.mobile_no }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMAIL</dt>
-            <dd>{{ quote.email }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">GENDER</dt>
-            <dd>{{ genderText(quote.gender).value }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MARITAL STATUS</dt>
-            <dd>{{ quote.marital_status_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NATIONALITY</dt>
-            <dd>{{ quote.nationality_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DATE OF BIRTH</dt>
-            <dd>{{ quote.dob }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMIRATE OF VISA</dt>
-            <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MEMBER CATEGORY</dt>
-            <dd>{{ quote.member_category_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SALARY BAND</dt>
-            <dd>{{ quote.salary_band_id_text }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Quote Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">WHO ARE YOU LOOKING TO COVER?</dt>
-            <dd>{{ quote.cover_for_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CURRENTLY INSURED WITH</dt>
-            <dd>{{ quote.currently_insured_with_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TYPE OF PLAN</dt>
-            <dd>{{ quote.plan_id }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-            <dd>{{ quote.next_followup_date }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DETAILS</dt>
-            <dd>{{ quote.details }}</dd>
           </div>
         </dl>
       </div>
@@ -653,36 +634,6 @@ const historyDataTable = [
           </div>
         </dl>
       </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY NUMBER</dt>
-            <dd>{{ quote.policy_number }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY START DATE</dt>
-            <dd>{{ quote.policy_start_date }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">POLICY END DATE</dt>
-            <dd>{{ quote.policy_issuance_date }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
-            <dd>{{ quote.premium }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.transapp_code }}</dd>
-          </div>
-        </dl>
-      </div>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
@@ -691,65 +642,71 @@ const historyDataTable = [
         <x-divider class="mb-4 mt-1" />
       </div>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-2/3">
-          <x-textarea
-            v-model="leadStatusForm.notes"
-            type="text"
-            label="Notes"
-            placeholder="Lead Notes"
-            class="w-full"
-            :disabled="
-              quote.quote_status_id == enums.quoteStatusEnum.transactionApproved
-            "
-          />
-        </div>
-        <div class="w-full md:w-1/3">
+        <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
             <x-select
               v-model="leadStatusForm.leadStatus"
-              label="Status"
+              label="STATUS"
               :options="leadStatusOptions"
               :disabled="
                 quote.quote_status_id ==
-                enums.quoteStatusEnum.transactionApproved
+                enums.quoteStatusEnum.TransactionApproved
               "
               placeholder="Lead Status"
               class="w-full"
             />
-            <x-input
-              v-if="
-                leadStatusForm.leadStatus ==
-                enums.quoteStatusEnum.transactionApproved
+            <x-textarea
+              v-model="leadStatusForm.notes"
+              type="text"
+              label="NOTES"
+              placeholder="Lead Notes"
+              class="w-full"
+              :disabled="
+                quote.quote_status_id ==
+                enums.quoteStatusEnum.TransactionApproved
               "
-              v-model="leadStatusForm.trans_code"
-              label="TransApp Code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
             />
-            <x-select
-              v-if="leadStatusForm.leadStatus == 17"
-              v-model="leadStatusForm.lostReason"
-              label="Lost Reason"
-              :options="lostReasonsOptions"
-              placeholder="Lost Reason is required"
-              class="w-full"
-              :error="leadStatusForm.errors.lostReason"
-            />
-          </div>
-
-          <div class="flex justify-end">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              :loading="leadStatusForm.processing"
-              @click.prevent="onLeadStatus"
-            >
-              Change Status
-            </x-button>
           </div>
         </div>
+        <div class="w-full md:w-2/3">
+          <x-input
+            v-if="
+              leadStatusForm.leadStatus ==
+              enums.quoteStatusEnum.TransactionApproved
+            "
+            :disabled="
+              quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
+            "
+            v-model="leadStatusForm.trans_code"
+            label="TRANSAPP CODE"
+            placeholder="TransApp Code is required"
+            class="w-full"
+            :error="leadStatusForm.errors.trans_code"
+          />
+          <x-select
+            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+            v-model="leadStatusForm.lostReason"
+            label="LOST REASON"
+            :options="lostReasonsOptions"
+            placeholder="Lost Reason is required"
+            class="w-full"
+            :error="leadStatusForm.errors.lostReason"
+          />
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :loading="leadStatusForm.processing"
+          @click.prevent="onLeadStatus"
+          :disabled="
+            quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
+          "
+        >
+          Change Status
+        </x-button>
       </div>
     </div>
 
@@ -855,13 +812,13 @@ const historyDataTable = [
               placeholder="Select Assignee"
               class="w-full"
             />
-
-            <x-input
+            <DatePicker
+              :format="format"
               v-model="activityForm.due_date"
               label="Due Date"
-              type="datetime-local"
               :rules="[isRequired]"
               class="w-full"
+              withTime
             />
           </div>
 
@@ -915,7 +872,7 @@ const historyDataTable = [
         <x-button
           size="sm"
           color="orange"
-          @click.prevent="modals.addContact = true"
+          @click.prevent="addAdditionalContact"
         >
           Add Additional Contacts
         </x-button>

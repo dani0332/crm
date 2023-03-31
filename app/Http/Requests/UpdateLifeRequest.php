@@ -6,7 +6,7 @@ use App\Enums\quoteTypeCode;
 use App\Services\LifeQuoteService;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreLifeRequest extends FormRequest
+class UpdateLifeRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,7 +27,7 @@ class StoreLifeRequest extends FormRequest
     {
         $travelService = (app()->make(LifeQuoteService::class));
         $travelService->getGenericModel(quoteTypeCode::Life);
-        $properties = $travelService->getFieldsToCreate('skipProperties', 'create');
+        $properties = $travelService->getFieldsToCreate('skipProperties', 'update');
         $requireProperties = array_filter($properties, function ($value) {
             return strpos($value, 'required') !== false;
         });
@@ -35,14 +35,8 @@ class StoreLifeRequest extends FormRequest
         $rules = [];
         foreach ($requireProperties as $key => $value) {
             $rule = ['required'];
-            if ($key == 'email') {
-                $rule[] = 'email:rfc,dns';
-            }
-            if ($key == 'mobile_no') {
-                $rule[] = 'regex:/(0)[0-9]/';
-                $rule[] = 'not_regex:/[a-z]/';
-                $rule[] = 'min:7';
-                $rule[] = 'max:20';
+            if ($key == 'email' || $key == 'mobile_no') {
+                continue;
             }
             $rules[$key] = $rule;
         }
