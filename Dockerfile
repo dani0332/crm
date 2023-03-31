@@ -13,7 +13,7 @@ ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/do
 # Install php extensions
 RUN chmod +x /usr/local/bin/install-php-extensions && sync
 RUN install-php-extensions mbstring pdo_mysql zip exif pcntl memcached
-#RUN apt-get install php8.1-mbstring php8.1-mysql php8.1-gd 
+#RUN apt-get install php8.1-mbstring php8.1-mysql php8.1-gd
 #RUN apt-get install zlib1g-dev libpng-dev -y
 #RUN docker-php-ext-install gd
 RUN pecl install redis \

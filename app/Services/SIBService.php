@@ -101,8 +101,7 @@ class SIBService extends BaseService
 
             $cc = null;
 
-            if(!empty($renewalEmailCcRecipients))
-            {
+            if (! empty($renewalEmailCcRecipients)) {
                 if (str_contains($renewalEmailCcRecipients, ',')) {
                     $cc = [];
                     foreach (explode(',', $renewalEmailCcRecipients) as $ccEmail) {

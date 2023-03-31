@@ -74,6 +74,7 @@ class AdvisorConversionReportTable extends DataTableComponent
         $userIds = $this->walkTree($loginUserId);
         $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->advisors = User::whereIn('id', $userIds)
+            ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
             ->get()
@@ -84,6 +85,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->map(fn ($Teams) => $Teams->name)
             ->toArray();
         $this->tiers = Tier::query()
+            ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
             ->get()
@@ -92,6 +94,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->toArray();
 
         $this->batches = QuoteBatches::query()
+            ->select('name', 'start_date', 'end_date', 'id')
             ->orderBy('id')
             ->get()
             ->keyBy('id')
@@ -100,7 +103,6 @@ class AdvisorConversionReportTable extends DataTableComponent
 
         $this->leadSources = LeadSource::query()
             ->select('name')
-            ->distinct()
             ->where('is_active', 1)->where('is_applicable_for_rules', 0)
             ->whereNotNull('name')
             ->orderBy('name')
@@ -208,7 +210,6 @@ class AdvisorConversionReportTable extends DataTableComponent
 
         if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);
-            info('user ids for advisor conversion report are : '.json_encode($userIds));
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
