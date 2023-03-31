@@ -74,7 +74,7 @@ class AdvisorConversionReportTable extends DataTableComponent
         $userIds = $this->walkTree($loginUserId);
         $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->advisors = User::whereIn('id', $userIds)
-            ->select('name')
+            ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
             ->get()
@@ -85,7 +85,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->map(fn ($Teams) => $Teams->name)
             ->toArray();
         $this->tiers = Tier::query()
-            ->select('name')
+            ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
             ->get()
@@ -94,7 +94,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->toArray();
 
         $this->batches = QuoteBatches::query()
-            ->select('name')
+            ->select('name', 'start_date', 'end_date', 'id')
             ->orderBy('id')
             ->get()
             ->keyBy('id')
