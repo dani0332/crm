@@ -21,7 +21,8 @@ const ipmiBenefits = reactive({
 
 const hidePlan = ref(false),
   isManual = ref(false),
-  memberFormLoader = ref(false);
+  memberFormLoader = ref(false),
+  newPremiums = ref([]);
 
 const canUpdate = computed(() => {
   return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
@@ -41,11 +42,31 @@ const tabs = ref([
   { index: 9, label: 'Policy Detail' },
 ]);
 
+const onMemberPremiumUpdate = (member, premium) => {
+  const index = newPremiums.value.findIndex(m => m.memberId == member.memberId);
+  if (index > -1) {
+    newPremiums.value[index].premium = premium;
+  } else {
+    newPremiums.value.push({
+      memberId: member.memberId,
+      premium: premium,
+    });
+  }
+};
+
 const onMemberUpdate = member => {
   const memberData = {
-    quoteUID: usePage().props.quote.code,
+    quoteUID: usePage().props.quote.uuid,
     planId: props.plan.id,
-    planDetails: [member],
+    planDetails: [
+      {
+        ...member,
+        premium:
+          Number(
+            newPremiums.value.find(m => m.memberId == member.memberId)?.premium,
+          ) || member.premium,
+      },
+    ],
   };
 
   memberFormLoader.value = true;
@@ -243,10 +264,12 @@ const onMemberUpdate = member => {
                   :value="item.premium"
                   :disabled="item.premium != 0 && !isManual"
                   size="sm"
+                  @update:modelValue="onMemberPremiumUpdate(item, $event)"
                 />
                 <x-button
                   v-if="$page.props.permissions.pa"
                   color="primary"
+                  class="ml-2"
                   size="sm"
                   outlined
                   :loading="memberFormLoader"
