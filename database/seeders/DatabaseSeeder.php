@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
             PersonalQuoteRolesPermissionSeeder::class,
             addSystemUser::class,
             addCarDripListKey::class,
+            addCarQuoteNewStatuses::class,
         ]);
     }
 }
