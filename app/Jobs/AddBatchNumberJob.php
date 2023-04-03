@@ -67,16 +67,13 @@ class AddBatchNumberJob implements ShouldQueue
 
     private function insertQuoteBatch($batch)
     {
-        $batchName = explode('|', $batch)[1];
-        if(!QuoteBatches::where('name', $batchName)->first()) {
-            QuoteBatches::insert([
-                'name' => $batchName,
-                'start_date' => explode(',', $batch)[0],
-                'end_date' => explode('|', explode(',', $batch)[1])[0],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
+        QuoteBatches::insert([
+            'name' => explode('|', $batch)[1],
+            'start_date' => explode(',', $batch)[0],
+            'end_date' => explode('|', explode(',', $batch)[1])[0],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
     }
 
     private function generateBatchNumbers($startDate)
