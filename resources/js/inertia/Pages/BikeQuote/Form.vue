@@ -32,29 +32,33 @@ const quoteForm = useForm({
 const { isRequired, isEmail } = useRules();
 
 const formFieldReq = reactive({
-    nationality: false,
-    dob: false,
+  nationality: false,
+  dob: false,
 });
 
 const isEmptyField = ref(false);
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
-      formFieldReq.nationality_id = true;
+    formFieldReq.nationality_id = true;
   } else {
-      formFieldReq.nationality_id = false;
+    formFieldReq.nationality_id = false;
   }
-    if (quoteForm.dob == null || quoteForm.dob == "") {
-        formFieldReq.dob = true;
-    } else {
-        formFieldReq.dob = false;
-    }
+  if (quoteForm.dob == null || quoteForm.dob == '') {
+    formFieldReq.dob = true;
+  } else {
+    formFieldReq.dob = false;
+  }
 
   if (isValid) {
     let method = 'post';
     let url = `/personal-quotes/bike/`;
+    let title = 'Quote saved successfully';
+    let redirectUrl = '/personal-quotes/bike';
     if (props.quote) {
       method = 'put';
       url = url + props.quote.uuid;
+      title = 'Quote updated successfully';
+      redirectUrl = `/personal-quotes/bike/${props.quote?.uuid}`;
     }
 
     quoteForm.submit(method, url, {
@@ -63,12 +67,12 @@ function onSubmit(isValid) {
       },
       onSuccess: () => {
         notification.success({
-          title: 'Quote saved successfully',
+          title: title,
           position: 'top',
         });
 
         setTimeout(function () {
-          router.get(`/personal-quotes/bike`);
+          router.get(redirectUrl);
         }, 500);
       },
     });
@@ -132,13 +136,12 @@ function onSubmit(isValid) {
           :error="quoteForm.errors.mobile_no"
         />
 
-          <DatePicker
-              v-model="quoteForm.dob"
-              name="created_at_start"
-              label="Date of Birth"
-              :hasError="quoteForm.errors.dob || formFieldReq.dob"
-          />
-
+        <DatePicker
+          v-model="quoteForm.dob"
+          name="created_at_start"
+          label="Date of Birth"
+          :hasError="quoteForm.errors.dob || formFieldReq.dob"
+        />
 
         <ComboBox
           v-model="quoteForm.nationality_id"

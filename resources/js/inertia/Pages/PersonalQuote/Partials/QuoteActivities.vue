@@ -15,6 +15,7 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
 };
 
+const activityLoader = ref(false);
 const modals = reactive({
   activity: false,
   activityConfirm: false,
@@ -57,11 +58,13 @@ const addActivity = () => {
 };
 
 const onStatusUpdate = id => {
+  activityLoader.value = true;
   activityForm.activity_id = id;
   activityForm.patch(`/activities/v2/${id}/update-status`, {
     preserveScroll: true,
 
     onSuccess: () => {
+      activityLoader.value = false;
       notification.success({
         title: 'Lead Activity Done',
         position: 'top',
@@ -166,6 +169,7 @@ const onDeleteConfirmation = () => {
           :modelValue="status === 1"
           :disabled="status === 1"
           @change="onStatusUpdate(id)"
+          :loading="activityLoader"
         />
       </template>
       <template #item-action="item">

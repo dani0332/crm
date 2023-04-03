@@ -65,17 +65,6 @@ const allowStatusUpdate = computed(() => {
       <x-divider class="mb-4 mt-1" />
     </div>
     <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-      <div class="w-full md:w-2/3">
-        <x-textarea
-          v-model="quoteStatusForm.notes"
-          type="text"
-          label="Notes"
-          placeholder="Lead Notes"
-          class="w-full"
-          :error="quoteStatusForm.errors.notes"
-          :disabled="allowStatusUpdate"
-        />
-      </div>
       <div class="w-full md:w-1/3">
         <div class="flex flex-col gap-4">
           <x-select
@@ -100,7 +89,6 @@ const allowStatusUpdate = computed(() => {
             :disabled="allowStatusUpdate"
             :error="quoteStatusForm.errors.transapp_code"
           />
-
           <x-select
             v-if="
               quoteStatusForm.quote_status_id == page.props.quoteStatusEnum.Lost
@@ -118,20 +106,32 @@ const allowStatusUpdate = computed(() => {
             :error="quoteStatusForm.errors.lost_reason_id"
           />
         </div>
-
-        <div class="flex justify-end">
-          <x-button
-            class="mt-4"
-            color="emerald"
-            size="sm"
-            :loading="quoteStatusForm.processing"
-            @click.prevent="onLeadStatus"
-            :disabled="allowStatusUpdate"
-          >
-            Change Status
-          </x-button>
-        </div>
       </div>
+    </div>
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+      <div class="w-full md:w-1/3">
+        <x-textarea
+          v-model="quoteStatusForm.notes"
+          type="text"
+          label="Notes"
+          placeholder="Lead Notes"
+          class="w-full"
+          :error="quoteStatusForm.errors.notes"
+          :disabled="allowStatusUpdate"
+        />
+      </div>
+    </div>
+    <div class="flex justify-end">
+      <x-button
+        class="mt-4"
+        color="emerald"
+        size="sm"
+        :loading="quoteStatusForm.processing"
+        @click.prevent="onLeadStatus"
+        :disabled="allowStatusUpdate"
+      >
+        Change Status
+      </x-button>
     </div>
   </div>
 </template>
