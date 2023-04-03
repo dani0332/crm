@@ -74,6 +74,7 @@ class AdvisorConversionReportTable extends DataTableComponent
         $userIds = $this->walkTree($loginUserId);
         $this->maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $this->advisors = User::whereIn('id', $userIds)
+            ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
             ->get()
@@ -84,6 +85,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->map(fn ($Teams) => $Teams->name)
             ->toArray();
         $this->tiers = Tier::query()
+            ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
             ->get()
@@ -92,6 +94,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->toArray();
 
         $this->batches = QuoteBatches::query()
+            ->select('name', 'start_date', 'end_date', 'id')
             ->orderBy('id')
             ->get()
             ->keyBy('id')
@@ -100,7 +103,6 @@ class AdvisorConversionReportTable extends DataTableComponent
 
         $this->leadSources = LeadSource::query()
             ->select('name')
-            ->distinct()
             ->where('is_active', 1)->where('is_applicable_for_rules', 0)
             ->whereNotNull('name')
             ->orderBy('name')
@@ -191,7 +193,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             DB::raw('count(car_quote_request.id) as total_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.') THEN 1 ELSE 0 END) as not_interested'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.') THEN 1 ELSE 0 END) as in_progress'),
+            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.') THEN 1 ELSE 0 END) as in_progress'),
             DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
             DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id  in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
@@ -201,8 +203,6 @@ class AdvisorConversionReportTable extends DataTableComponent
         )
         ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->join('user_team', 'user_team.user_id', 'users.id')
-        ->join('teams', 'teams.id', 'user_team.team_id')
         ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
         ->whereNull('car_quote_request.renewal_import_code')
         ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
@@ -210,7 +210,6 @@ class AdvisorConversionReportTable extends DataTableComponent
 
         if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);
-            info('user ids for advisor conversion report are : '.json_encode($userIds));
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
@@ -266,7 +265,14 @@ class AdvisorConversionReportTable extends DataTableComponent
                 'placeholder' => 'SELECT ALL TEAMS',
             ])
             ->options($this->teams)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('teams.id', $value);
+                $builder->whereIn('users.id', function ($query) use ($value) {
+                    $query->distinct()
+                          ->select('users.id')
+                          ->from('users')
+                          ->join('user_team', 'user_team.user_id', 'users.id')
+                          ->join('teams', 'teams.id', 'user_team.team_id')
+                          ->whereIn('teams.id', $value);
+                });
             }));
 
             array_push($filters, MultiSelectFilter::make('Advisors')

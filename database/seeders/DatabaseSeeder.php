@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
             addPermissionsForReportsAndDashbords::class,
             addSystemUser::class,
             addCarDripListKey::class,
+            addCarQuoteNewStatuses::class,
         ]);
     }
 }

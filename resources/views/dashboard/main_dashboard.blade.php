@@ -267,24 +267,6 @@
     </div>
     <div style="clear: both;">
     </div>
-    <div class="row">
-        <div class="col-md-3 relative flex justify-end">
-            <select
-                class="inline-flex w-full max-w-xs justify-center pr-10 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100"
-                id="advisor-filter" multiple="multiple">
-                @foreach ($carAdvisors as $team)
-                <option value="{{$team->id}}">{{$team->name}}</option>
-                @endforeach
-            </select>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-md-12" style="margin-top: 80px;">
-            <div class="panel-body">
-                <div id="advisorConversion"></div>
-            </div>
-        </div>
-    </div>
     <div style="clear: both;"  style="margin-bottom: 40px;">
     </div>
     <div class="row" style="margin-top: 40px;">
@@ -327,7 +309,6 @@
    var leadsCountByTier = <?php echo json_encode($leadsCountByTier)?>;
    var unAssignedLeadsByTier = <?php echo json_encode($unAssignedLeadsByTier)?>;
    var revivalLeadsCount = <?php echo json_encode($revivalLeadsCount)?>;
-   var advisorConversionData  = <?php echo json_encode($advisorConversionData)?>;
    var advisorLeadsAssignedData = <?php echo json_encode($advisorLeadsAssignedData)?>;
    var assignedLeadsBySource = <?php echo json_encode($assignedLeadsBySource)?>;
    var leadRcdSummaryByTierPieChart =  revivalLeadsCountChart = assignedLeadsBySourceChart = advisorConversionChart = leadAssignCountByAdvisorChart = {};
@@ -390,42 +371,6 @@
                }
             });
         });
-        $('#advisor-filter').on('change', function (e) {
-            var advisorFitlerValue = $('#advisor-filter').val();
-            advisorConversionChart.showLoading();
-            $.ajax({
-                url: "/get-advisor-conversion-stats",
-                type: "post",
-                data: { 'advisorFilter' : advisorFitlerValue} ,
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function (result) {
-                    if(result) {
-                        var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
-                        var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
-                        var numbers = [];
-                        var cData = [];
-                        for (let index = 0; index < result.length; index++) {
-                            var node = result[index];
-                            cData.push({name: node.name + '-(' + node.start_date + ' to ' + node.end_date +  ')', y: parseFloat( ( node.sale_leads - node.created_sale_leads ) / (node.total_leads - node.bad_leads - node.manual_created )  )});
-                        }
-                        if(cData.length > 0 ){
-                            advisorConversionChart.destroy();
-                            createAdvisorConversionChart(cData);
-                        }else{
-                            advisorConversionChart.destroy();
-                            createAdvisorConversionChart([{name: '', y: 0}]);
-                        }
-                    }
-                    advisorConversionChart.hideLoading();
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    advisorConversionChart.hideLoading();
-                    console.log(textStatus, errorThrown);
-                }
-            });
-        });
         $('#team-filter').on('change', function (e) {
             var teamFilteValue = $('#team-filter').val();
             leadAssignCountByAdvisorChart.showLoading();
@@ -484,9 +429,6 @@
             cData.push({name: assignedLeadsBySource[index]['sourceName'], y: parseFloat(assignedLeadsBySource[index]['sourceCount'])});
         }
         createAssignedLeadRcdSummaryByLeadSourceChart(cData);
-
-        createAdvisorConversionChart(advisorConversionData);
-
 
         var cData = [];
         for (let index = 0; index < advisorLeadsAssignedData.length; index++) {
@@ -652,62 +594,6 @@
                 data: data
             }]
         });
-    }
-
-    function createAdvisorConversionChart(advisorConversionReportDashboardStats)
-    {
-
-        var data = [];
-        for (let index = 0; index < advisorConversionReportDashboardStats[0].length; index++) {
-            data.push({
-                name: advisorConversionReportDashboardStats[0][index],
-                y: parseFloat(advisorConversionReportDashboardStats[1][index])
-            })
-        }
-        advisorConversionChart =  Highcharts.chart('advisorConversion', {
-            chart: {
-                type: 'column'
-            },
-            title: {
-                align: 'center',
-                text: 'ADVISOR CONVERSION REPORT'
-            },
-            xAxis: {
-                type: 'category'
-            },
-            yAxis: {
-                title: {
-                    text: 'Total Gross Conversion'
-                }
-
-            },
-            legend: {
-                enabled: false
-            },
-            plotOptions: {
-                series: {
-                    borderWidth: 0,
-                    dataLabels: {
-                        enabled: true,
-                        format: '{point.y:.1f}%'
-                    }
-                }
-            },
-
-            tooltip: {
-                headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
-                pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b>'
-            },
-
-            series: [
-                {
-                    name: 'Gross Conversion',
-                    colorByPoint: true,
-                    data: data
-                }
-            ]
-        });
-
     }
 
     function createLeadAssignCountSummaryByAdvisorChart(data)

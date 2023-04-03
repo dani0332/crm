@@ -41,10 +41,12 @@ class CapiRequestService
                     $carQuote->is_quote_locked = true;
                     $carQuote->car_model_detail_id = $data['trim'];
                     $carQuote->car_value_tier = $data['carValueTier'];
-                    $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                    $carQuote->auto_assigned = false;
                     $carQuote->save();
 
                     if ($carQuote->advisor_id != null) {
+                        $carQuote->quote_batch_id = QuoteBatches::latest()->first()->id;
+                        $carQuote->save();
                         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $carQuote->id)->first();
                         if ($carQuoteDetail) {
                             $carQuoteDetail->advisor_assigned_date = now();

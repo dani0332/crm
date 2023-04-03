@@ -335,6 +335,22 @@
                         </div>
                     </div>
 
+                    @if(auth()->user()->hasRole(\App\Enums\RolesEnum::Admin))
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Primary Product <span class="required">*</span></label>
+                        <div class="col-md-6 col-sm-6">
+                            <select name="primary_product" id="user-product-select" class="form-control select2" >
+                                <option value=""></option>
+                                @foreach ($products as $product)
+                                    <option value="{{ $product->id }}" @if  ($product->id == $user->team_id) selected="selected" @endif>
+                                        {{ $product->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    @endif
+
                     {{--<div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>
                         <div class="col-md-6 col-sm-6">
