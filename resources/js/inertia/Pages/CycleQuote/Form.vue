@@ -37,9 +37,13 @@ function onSubmit(isValid) {
   if (isValid) {
     let method = 'post';
     let url = `/personal-quotes/cycle/`;
+    let title = 'Quote saved successfully';
+    let redirectUrl = '/personal-quotes/cycle';
     if (props.quote) {
       method = 'put';
       url = url + props.quote.uuid;
+      title = 'Quote updated successfully';
+      redirectUrl = `/personal-quotes/cycle/${props.quote?.uuid}`;
     }
 
     quoteForm.submit(method, url, {
@@ -49,12 +53,12 @@ function onSubmit(isValid) {
 
       onSuccess: () => {
         notification.success({
-          title: 'Quote saved successfully',
+          title: title,
           position: 'top',
         });
 
         setTimeout(function () {
-          router.get(`/personal-quotes/cycle`);
+          router.get(redirectUrl);
         }, 500);
       },
     });

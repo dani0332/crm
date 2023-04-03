@@ -44,10 +44,14 @@ function onSubmit(isValid) {
   if (isValid) {
     let method = 'post';
     let url = `/personal-quotes/jetski/`;
+    let title = 'Quote saved successfully';
+    let redirectUrl = '/personal-quotes/jetski';
 
     if (props.quote) {
       method = 'put';
       url = url + props.quote.uuid;
+      title = 'Quote updated successfully';
+      redirectUrl = `/personal-quotes/jetski/${props.quote?.uuid}`;
     }
 
     quoteForm.clearErrors();
@@ -57,12 +61,12 @@ function onSubmit(isValid) {
       },
       onSuccess: () => {
         notification.success({
-          title: 'Quote is saved successfully',
+          title: title,
           position: 'top',
         });
 
         setTimeout(function () {
-          router.get(`/personal-quotes/jetski`);
+          router.get(redirectUrl);
         }, 500);
       },
     });

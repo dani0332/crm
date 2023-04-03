@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\GenericRequestEnum;
 use App\Repositories\AdditionalContactRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PersonalQuoteRepository;
@@ -26,11 +27,15 @@ class CustomerAdditionalContactRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'key' => 'required',
-            'value' => 'required',
-            'quote_id' => 'required',
-        ];
+        $rules['quote_id'] = 'required';
+        $rules['value'] = 'required';
+        $rules['key'] = 'required';
+
+        if ($this->key == GenericRequestEnum::EMAIL) {
+            $rules['value'] = 'required|email:rfc,dns';
+        }
+
+        return $rules;
     }
 
     /**
