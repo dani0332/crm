@@ -1,12 +1,10 @@
 <script setup>
-import { ref, reactive, computed } from 'vue';
-import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
-import { useDateFormat } from '@vueuse/shared';
-
 const props = defineProps({
   plan: Object,
   genders: Object,
 });
+
+const notification = useNotifications('toast');
 
 const genderText = v => {
   return props.genders[v];
@@ -22,7 +20,8 @@ const ipmiBenefits = reactive({
 });
 
 const hidePlan = ref(false),
-  isManual = ref(false);
+  isManual = ref(false),
+  memberFormLoader = ref(false);
 
 const canUpdate = computed(() => {
   return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
@@ -41,6 +40,38 @@ const tabs = ref([
   { index: 8, label: 'Exclusions' },
   { index: 9, label: 'Policy Detail' },
 ]);
+
+const onMemberUpdate = member => {
+  const memberData = {
+    quoteUID: usePage().props.quote.code,
+    planId: props.plan.id,
+    planDetails: [member],
+  };
+
+  memberFormLoader.value = true;
+
+  axios
+    .post('/health-plan-manual-update-process', memberData)
+    .then(res => {
+      if (res.data == 'Plan has been updated') {
+        notification.success({
+          title: 'Plan has been updated',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: res.data,
+          position: 'top',
+        });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    })
+    .finally(() => {
+      memberFormLoader.value = false;
+    });
+};
 </script>
 
 <template>
@@ -208,7 +239,21 @@ const tabs = ref([
                 {{ genderText(item.gender) }}
               </template>
               <template #item-premium="{ item }">
-                <x-input :value="item.premium" :disabled="true" size="sm" />
+                <x-input
+                  :value="item.premium"
+                  :disabled="item.premium != 0 && !isManual"
+                  size="sm"
+                />
+                <x-button
+                  v-if="$page.props.permissions.pa"
+                  color="primary"
+                  size="sm"
+                  outlined
+                  :loading="memberFormLoader"
+                  @click.prevent="onMemberUpdate(item)"
+                >
+                  Update
+                </x-button>
               </template>
             </x-table>
           </div>

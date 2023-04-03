@@ -1,8 +1,4 @@
 <script setup>
-import { ref } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-
 // const emit = defineEmits(["update:uploadedFiles"]);
 defineProps({
   members: Array,

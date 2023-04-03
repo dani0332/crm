@@ -1,7 +1,4 @@
 <script setup>
-import { reactive, watch } from 'vue';
-import axios from 'axios';
-
 const props = defineProps({
   uuid: String,
 });

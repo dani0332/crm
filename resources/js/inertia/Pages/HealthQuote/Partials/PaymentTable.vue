@@ -1,9 +1,4 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-import axios from 'axios';
-
 const notification = useNotifications('toast');
 const page = usePage();
 
