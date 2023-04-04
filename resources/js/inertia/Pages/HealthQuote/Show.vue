@@ -754,36 +754,6 @@ const onAdditionalContactSubmit = isValid => {
     });
 };
 
-const additionalContactDelete = id => {
-  modals.contactDeleteConfirm = true;
-  confirmDeleteData.contact = id;
-};
-
-const additionalContactDeleteConfirmed = () => {
-  router.post(
-    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
-    {
-      isInertia: true,
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.error({
-          title: 'Additional Contact Deleted',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactDeleteConfirm = false;
-      },
-    },
-  );
-};
-
 const additionalContactPrimary = data => {
   modals.contactPrimaryConfirm = true;
   confirmData.contactPrimary = data;
@@ -809,7 +779,7 @@ const additionalContactPrimaryConfirmed = () => {
       },
       onSuccess: () => {
         notification.success({
-          title: 'Additional Contact Primary',
+          title: 'Primary Contact Updated',
           position: 'top',
         });
       },
@@ -1939,24 +1909,14 @@ onMounted(() => {
           <span v-else> Mobile Number </span>
         </template>
         <template #item-action="item">
-          <div class="space-x-4">
-            <x-button
-              size="xs"
-              color="emerald"
-              outlined
-              @click.prevent="additionalContactPrimary(item)"
-            >
-              Make Primary
-            </x-button>
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="additionalContactDelete(item.id)"
-            >
-              Delete
-            </x-button>
-          </div>
+          <x-button
+            size="xs"
+            color="emerald"
+            outlined
+            @click.prevent="additionalContactPrimary(item)"
+          >
+            Make Primary
+          </x-button>
         </template>
       </DataTable>
 
@@ -2000,30 +1960,6 @@ onMounted(() => {
             </x-button>
           </div>
         </x-form>
-      </x-modal>
-
-      <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
-        <template #header> Delete Additional Contact </template>
-        <p>Are you sure you want to delete this?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.contactDeleteConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              @click.prevent="additionalContactDeleteConfirmed"
-              :loading="contactLoader"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
       </x-modal>
 
       <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
