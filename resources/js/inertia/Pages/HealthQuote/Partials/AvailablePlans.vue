@@ -31,15 +31,15 @@ const canUpdate = computed(() => {
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
   { index: 0, label: 'General Info' },
-  { index: 1, label: 'IPMI Benefits' },
-  { index: 2, label: 'Members' },
-  { index: 3, label: 'In Patient' },
-  { index: 4, label: 'Out Patient' },
+  // { index: 1, label: 'IPMI Benefits' },
+  { index: 1, label: 'Members' },
+  { index: 2, label: 'In Patient' },
+  { index: 3, label: 'Out Patient' },
+  { index: 4, label: 'Region coverage & Network list' },
   { index: 5, label: 'Co-pay/Co-insurance' },
-  { index: 6, label: 'Region coverage & Network list' },
-  { index: 7, label: 'Maternity cover' },
-  { index: 8, label: 'Exclusions' },
-  { index: 9, label: 'Policy Detail' },
+  { index: 6, label: 'Maternity cover' },
+  // { index: 8, label: 'Exclusions' },
+  // { index: 9, label: 'Policy Detail' },
 ]);
 
 const onMemberPremiumUpdate = (member, premium) => {
@@ -127,10 +127,10 @@ const onMemberUpdate = member => {
             <div class="md:col-span-2 text-right select-none border-b pb-2">
               <x-toggle v-model="hidePlan" color="error" label="Hide Plan" />
             </div>
-            <div class="grid sm:grid-cols-2">
+            <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Code</dt>
               <dd>{{ props.plan.providerCode }}</dd>
-            </div>
+            </div> -->
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Name</dt>
               <dd>{{ props.plan.providerName }}</dd>
@@ -158,7 +158,7 @@ const onMemberUpdate = member => {
           </dl>
         </TabPanel>
 
-        <TabPanel>
+        <!-- <TabPanel>
           <div class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             <div class="md:col-span-2 text-right select-none border-b pb-2">
               <x-toggle
@@ -240,7 +240,7 @@ const onMemberUpdate = member => {
               }}
             </div>
           </div>
-        </TabPanel>
+        </TabPanel> -->
 
         <TabPanel>
           <div class="p-4">
@@ -293,6 +293,7 @@ const onMemberUpdate = member => {
             </div>
           </dl>
         </TabPanel>
+
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
@@ -304,17 +305,7 @@ const onMemberUpdate = member => {
             </div>
           </dl>
         </TabPanel>
-        <TabPanel>
-          <dl class="grid md:grid-cols-2 gap-5 p-4">
-            <div
-              v-for="data in props.plan.benefits.coInsurance || []"
-              :key="data.code"
-            >
-              <dt class="font-medium mb-1">{{ data.text }}</dt>
-              <dd>{{ data.value }}</dd>
-            </div>
-          </dl>
-        </TabPanel>
+
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
@@ -333,6 +324,19 @@ const onMemberUpdate = member => {
             </div>
           </dl>
         </TabPanel>
+
+        <TabPanel>
+          <dl class="grid md:grid-cols-2 gap-5 p-4">
+            <div
+              v-for="data in props.plan.benefits.coInsurance || []"
+              :key="data.code"
+            >
+              <dt class="font-medium mb-1">{{ data.text }}</dt>
+              <dd>{{ data.value }}</dd>
+            </div>
+          </dl>
+        </TabPanel>
+
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
@@ -344,7 +348,8 @@ const onMemberUpdate = member => {
             </div>
           </dl>
         </TabPanel>
-        <TabPanel>
+
+        <!-- <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
               v-for="data in props.plan.benefits.exclusion || []"
@@ -368,7 +373,7 @@ const onMemberUpdate = member => {
               {{ data.text }}
             </x-link>
           </dl>
-        </TabPanel>
+        </TabPanel> -->
       </TabPanels>
     </TabGroup>
   </div>
