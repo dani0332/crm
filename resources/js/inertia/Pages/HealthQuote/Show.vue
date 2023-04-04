@@ -1500,7 +1500,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <PaymentTable
+    <!-- <PaymentTable
       v-if="isBetaUser"
       :payments="payments"
       :can="can"
@@ -1508,9 +1508,9 @@ onMounted(() => {
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"
       :quote="quote"
-    />
+    /> -->
 
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
         <x-divider class="mb-4 mt-1" />
@@ -1597,7 +1597,7 @@ onMounted(() => {
           >
         </div>
       </x-form>
-    </div>
+    </div> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
@@ -1692,7 +1692,7 @@ onMounted(() => {
       </x-modal>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
@@ -1776,7 +1776,7 @@ onMounted(() => {
           </div>
         </template>
       </x-modal>
-    </div>
+    </div> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
