@@ -52,7 +52,20 @@ class HandleInertiaRequests extends Middleware
             'sidebar' => fn () => $this->buildNavigation()->tree(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
+            'flash' => fn () => $this->shareFlashData($request),
         ]);
+    }
+
+    protected function shareFlashData(Request $request)
+    {
+        $flash = [
+            'message' => $request->session()->get('message'),
+            'error' => $request->session()->get('error'),
+            'success' => $request->session()->get('success'),
+            'warning' => $request->session()->get('warning'),
+            'info' => $request->session()->get('info'),
+        ];
+        return array_filter($flash, fn ($value) => $value !== null);
     }
 
     protected function buildNavigation()
