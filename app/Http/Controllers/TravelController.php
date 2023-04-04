@@ -59,6 +59,7 @@ class TravelController extends Controller
             'quotes' => $quotes,
             'dropdownSource' => $dropdownSource,
             'advisors' => $advisors,
+            'session' => $request->session()->only(['success', 'error', 'message']),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'travelAdvisor' => auth()->user()->hasRole(RolesEnum::TravelAdvisor),

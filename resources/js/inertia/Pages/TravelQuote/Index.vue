@@ -165,11 +165,18 @@ function onAssignLead(isValid) {
       .post('/quotes/travel/manualLeadAssign', {
         preserveScroll: true,
         preserveState: true,
-        onSuccess: () => {
-          let title =
-            quotesSelected.value.length > 1
-              ? 'Travel Leads Assigned'
-              : 'Travel Lead Assigned';
+        onSuccess: res => {
+          if (res.props.session.message) {
+            let title = res.props.session.message;
+            notification.success({
+              title: title,
+              position: 'top',
+              timeout: 0,
+            });
+            return false;
+          }
+
+          let title = res.props.session.success;
           quotesSelected.value = [];
           notification.success({
             title: title,

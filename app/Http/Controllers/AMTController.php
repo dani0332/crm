@@ -23,6 +23,7 @@ use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Redirect;
 
 class AMTController extends Controller
@@ -92,7 +93,7 @@ class AMTController extends Controller
                 'bqr.previous_quote_policy_premium',
                 'bqr.customer_id',
                 'bqr.parent_duplicate_quote_id'
-            )->orderBy('bqr.advisor_id', 'asc');
+            )->orderBy('bqr.created_at', 'desc');
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $data->where('bqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
@@ -265,6 +266,8 @@ class AMTController extends Controller
         }
 
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
+        $isDuplicateAllowed = in_array('Group Medical', $allowedDuplicateLOB) ? true : false;
+
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
@@ -292,6 +295,7 @@ class AMTController extends Controller
             'selectedLostReasonId' => $selectedLostReasonId,
             'quoteType' => $quoteType,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
+            'isDuplicateAllowed' => $isDuplicateAllowed,
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'quoteTypeId' => $quoteTypeId,
             'tiers' => $tiers,
