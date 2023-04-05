@@ -113,8 +113,9 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
   memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
-  selectedPlansPdf = ref([]),
+  selectedPlans = ref([]),
   exportLoader = ref(false),
+  toggleLoader = ref(false),
   contactLoader = ref(false),
   historyLoading = ref(false),
   isDisabled = ref(false);
@@ -475,7 +476,7 @@ const planClicked = plan => {
 };
 
 const onExportPlans = () => {
-  if (selectedPlansPdf.value.length < 3 || selectedPlansPdf.value.length > 5) {
+  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
     notification.error({
       title: 'Please select 3 to 5 plans to download PDF.',
       position: 'top',
@@ -483,7 +484,7 @@ const onExportPlans = () => {
     return;
   }
   exportLoader.value = true;
-  const planIds = selectedPlansPdf.value.map(p => {
+  const planIds = selectedPlans.value.map(p => {
     return p.id;
   });
   axios
@@ -515,6 +516,41 @@ const onExportPlans = () => {
     .finally(() => {
       exportLoader.value = false;
     });
+};
+
+const onTogglePlans = () => {
+  notification.error({
+    title: 'API not available.',
+    position: 'top',
+  });
+  // toggleLoader.value = true;
+  // const planIds = selectedPlans.value.map(p => {
+  //   return p.id;
+  // });
+  // axios
+  //   .post(
+  //     '/quotes/health/manual-plan-toggle',
+  //     {
+  //       plan_ids: planIds,
+  //       quote_uuid: page.props.quote.uuid,
+  //     },
+  //     {
+  //       responseType: 'json',
+  //     },
+  //   )
+  //   .then(response => {
+  //     console.log(response);
+  //     notification.success({
+  //       title: 'Plans Updated',
+  //       position: 'top',
+  //     });
+  //   })
+  //   .catch(error => {
+  //     console.log(error);
+  //   })
+  //   .finally(() => {
+  //     toggleLoader.value = false;
+  //   });
 };
 
 const onCreatePlan = () => {
@@ -1576,8 +1612,17 @@ onMounted(() => {
           <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
+          <x-button-group v-if="selectedPlans.length > 0" size="sm">
+            <x-button @click.prevent="onTogglePlans" :loading="toggleLoader">
+              Show
+            </x-button>
+            <x-button @click.prevent="onTogglePlans" :loading="toggleLoader">
+              Hide
+            </x-button>
+          </x-button-group>
+
           <x-button
-            v-if="selectedPlansPdf.length > 0"
+            v-if="selectedPlans.length > 0"
             size="sm"
             color="emerald"
             @click.prevent="onExportPlans"
@@ -1605,7 +1650,7 @@ onMounted(() => {
         </div>
       </div>
       <DataTable
-        v-model:items-selected="selectedPlansPdf"
+        v-model:items-selected="selectedPlans"
         table-class-name="tablefixed compact"
         :headers="plansTable.columns"
         :items="listQuotePlans || []"
@@ -1614,6 +1659,17 @@ onMounted(() => {
         :rows-per-page="15"
         :hide-footer="listQuotePlans.length < 15"
       >
+        <template #item-providerName="{ providerName, isManualPlan }">
+          <p>{{ providerName }}</p>
+          <x-tag
+            v-if="isManualPlan"
+            size="xs"
+            color="primary"
+            class="mt-0.5 text-[10px]"
+          >
+            Manual Plan
+          </x-tag>
+        </template>
         <template #item-total="{ actualPremium, vat, basmah }">
           {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
         </template>
