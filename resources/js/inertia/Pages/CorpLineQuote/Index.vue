@@ -138,7 +138,7 @@ function onAssignLead(isValid) {
 
 function displayNotification() {
   const session = usePage().props.flash;
-    for (const key in session) {
+  for (const key in session) {
     notification[key]({
       title: session[key],
       position: 'top',

@@ -3547,6 +3547,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
 /* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
 /* harmony import */ var _indielayer_ui__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @indielayer/ui */ "./node_modules/@indielayer/ui/lib/index.es.js");
+/* harmony import */ var _vueuse_shared__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @vueuse/shared */ "./node_modules/@vueuse/shared/index.mjs");
 /* harmony import */ var C_Users_ranam_code_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
 /* unplugin-vue-components disabled */function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 
@@ -3571,6 +3572,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 
+
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
   __name: 'Index',
   props: {
@@ -3588,6 +3590,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
     var _useRules = (0,C_Users_ranam_code_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_2__.useRules)(),
         isRequired = _useRules.isRequired;
+
+    var dateFormat = function dateFormat(date) {
+      return (0,_vueuse_shared__WEBPACK_IMPORTED_MODULE_4__.useDateFormat)(date, 'DD-MM-YYYY');
+    };
 
     var quotesSelected = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)([]);
     var loader = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
@@ -3762,6 +3768,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       page: page,
       notification: notification,
       isRequired: isRequired,
+      dateFormat: dateFormat,
       quotesSelected: quotesSelected,
       loader: loader,
       filters: filters,
@@ -3801,6 +3808,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
       get useNotifications() {
         return _indielayer_ui__WEBPACK_IMPORTED_MODULE_3__.useNotifications;
+      },
+
+      get useDateFormat() {
+        return _vueuse_shared__WEBPACK_IMPORTED_MODULE_4__.useDateFormat;
       }
 
     };

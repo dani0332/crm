@@ -2,6 +2,7 @@
 import { reactive, computed, onMounted, ref } from 'vue';
 import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
 import { useNotifications } from '@indielayer/ui';
+import { useDateFormat } from '@vueuse/shared';
 
 defineProps({
   model: String,
@@ -14,6 +15,7 @@ defineProps({
 const page = usePage();
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
 
 const quotesSelected = ref([]);
 
@@ -102,7 +104,6 @@ const assignForm = useForm({
   selectTmLeadId: '',
 });
 
-
 function onAssignLead(isValid) {
   if (isValid) {
     const selected = quotesSelected.value.map(e => e.id);
@@ -124,7 +125,7 @@ function onAssignLead(isValid) {
 
 function displayNotification() {
   const session = usePage().props.flash;
-    for (const key in session) {
+  for (const key in session) {
     notification[key]({
       title: session[key],
       position: 'top',
