@@ -135,7 +135,14 @@ class ActivitesController extends Controller
             return redirect('/quotes/'.$this->getQuoteTypeNameFromId($request->quoteType).'/'.$request->quote_uuid)->with('success', 'Activity updated successfully');
         }
 
-        if (isset($request->quoteType) && ($request->quoteType == QuoteTypeId::Health || $request->quoteType == QuoteTypeId::Home)) {
+        $types = [
+            QuoteTypeId::Health,
+            QuoteTypeId::Home,
+            QuoteTypeId::Travel,
+            QuoteTypeId::Business,
+            QuoteTypeId::Life,
+        ];
+        if (isset($request->quoteType) && in_array($request->quoteType, $types)) {
             return redirect()->back();
         }
 

@@ -264,7 +264,7 @@ const activityForm = useForm({
   entityId: page.props.quote.id,
   modelType: 'Life',
   parentType: 'Life',
-  quoteType: 3,
+  quoteType: 4,
   title: null,
   description: null,
   due_date: null,

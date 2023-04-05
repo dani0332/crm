@@ -566,7 +566,7 @@ const activityForm = useForm({
   entityId: page.props.quote.id,
   modelType: 'Travel',
   parentType: 'Travel',
-  quoteType: 3,
+  quoteType: 8,
   title: null,
   description: null,
   due_date: '',
