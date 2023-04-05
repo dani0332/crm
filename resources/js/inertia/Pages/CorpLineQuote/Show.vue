@@ -18,6 +18,10 @@ defineProps({
   permissions: Object,
 });
 
+const {
+  isRequired
+} = useRules();
+
 const page = usePage();
 
 const notification = useNotifications('toast');
@@ -111,8 +115,6 @@ const leadStatusForm = useForm({
 });
 
 const onLeadStatus = () => {
-  // axios to avoid redirect
-
   let data = {
     modelType: 'Business',
     leadId: leadStatusForm.leadId,
@@ -123,7 +125,6 @@ const onLeadStatus = () => {
     trans_code: leadStatusForm.trans_code,
     lostReason: leadStatusForm.lostReason,
   };
-  console.log(data);
   axios
     .post(`/quotes/Business/${page.props.quote.id}/update-lead-status`, data)
     .then(res => {
@@ -197,7 +198,13 @@ const activityForm = useForm({
 });
 
 const addActivity = () => {
-  activityForm.reset();
+  activityForm.title = null;
+  activityForm.description = null;
+  activityForm.due_date = null;
+  activityForm.assignee_id = null;
+  activityForm.status = null;
+  activityForm.activity_id = null;
+  activityForm.uuid = null;
   activityActionEdit.value = false;
   modals.activity = true;
 };
@@ -213,6 +220,17 @@ const onActivityStatusUpdate = id => {
       });
     },
   });
+};
+
+const date = ref(new Date());
+const format = date => {
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  return `${day}/${month}/${year} ${hours}:${minutes} `;
 };
 
 const activityEdit = data => {
@@ -234,6 +252,12 @@ const activityEdit = data => {
 const onActivitySubmit = isValid => {
   if (!isValid) return;
   if (activityActionEdit.value) {
+    let date = new Date(activityForm.due_date);
+    date =
+      date.toISOString().split('T')[0] +
+      ' ' +
+      date.toTimeString().split(' ')[0];
+    activityForm.due_date = date;
     activityForm.post(`/activities/${activityForm.uuid}/update`, {
       preserveScroll: true,
       onSuccess: () => {
@@ -247,6 +271,12 @@ const onActivitySubmit = isValid => {
       },
     });
   } else {
+    let date = new Date(activityForm.due_date);
+    date =
+      date.toISOString().split('T')[0] +
+      ' ' +
+      date.toTimeString().split(' ')[0];
+    activityForm.due_date = date;
     activityForm.post(`/activities/create-activity`, {
       preserveScroll: true,
       onSuccess: () => {
@@ -307,6 +337,12 @@ const additionalContact = useForm({
   quote_type: 'business',
 });
 
+const addAdditionalContact = () => {
+  additionalContact.additional_contact_type = null;
+  additionalContact.additional_contact_val = null;
+  modals.addContact = true;
+};
+
 const onAdditionalContactSubmit = isValid => {
   if (!isValid) return;
   additionalContact
@@ -324,6 +360,13 @@ const onAdditionalContactSubmit = isValid => {
       },
       onFinish: () => {
         modals.addContact = false;
+      },
+      onError: err => {
+        const firstError = Object.values(err)[0];
+        notification.error({
+          title: firstError,
+          position: 'top',
+        });
       },
     });
 };
@@ -492,32 +535,6 @@ onMounted(() => {});
 
     <x-divider class="my-4" />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/50">
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/2 flex gap-2 items-end">
-          <x-select
-            v-model="assignLead"
-            label="Assign Lead"
-            :options="advisorOptions"
-            placeholder="Select Lead"
-            class="w-auto flex-1"
-          />
-          <div>
-            <x-button
-              color="orange"
-              size="sm"
-              @click.prevent="onAssignLead"
-              :loading="isDisabled"
-            >
-              Assign
-            </x-button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <x-divider class="my-4" />
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -525,60 +542,6 @@ onMounted(() => {});
             <dt class="font-medium">CDB ID</dt>
             <dd>{{ quote.code }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CREATED DATE</dt>
-            <dd>{{ quote.created_at }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">ADVISOR</dt>
-            <dd>{{ quote.advisor_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SOURCE</dt>
-            <dd>{{ quote.source }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST MODIFIED DATE</dt>
-            <dd>{{ quote.updated_at }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT CDB ID</dt>
-            <dd>{{ quote.parent_duplicate_quote_id }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">IS ECOMMERCE</dt>
-            <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">IS EBP RENEWAL</dt>
-            <dd>{{ quote.is_ebp_renewal ? 'Yes' : 'No' }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL BATCH</dt>
-            <dd>{{ quote.renewal_batch }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LOST REASON</dt>
-            <dd>{{ quote.lost_reason }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TRANSAPP CODE</dt>
-            <dd>{{ quote.transapp_code }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DEVICE</dt>
-            <dd>{{ quote.device }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Customer Profile</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">FIRST NAME</dt>
             <dd>{{ quote.first_name }}</dd>
@@ -595,59 +558,43 @@ onMounted(() => {});
             <dt class="font-medium">EMAIL</dt>
             <dd>{{ quote.email }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">GENDER</dt>
-            <dd>{{ genderText(quote.gender).value }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MARITAL STATUS</dt>
-            <dd>{{ quote.marital_status_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NATIONALITY</dt>
-            <dd>{{ quote.nationality_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DATE OF BIRTH</dt>
-            <dd>{{ quote.dob }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMIRATE OF VISA</dt>
-            <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MEMBER CATEGORY</dt>
-            <dd>{{ quote.member_category_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SALARY BAND</dt>
-            <dd>{{ quote.salary_band_id_text }}</dd>
-          </div>
-        </dl>
-      </div>
 
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Quote Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CURRENTLY INSURED WITH</dt>
-            <dd>{{ quote.currently_insured_with_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TYPE OF PLAN</dt>
-            <dd>{{ quote.plan_id }}</dd>
+            <dt class="font-medium">COMPANY NAME</dt>
+            <dd>{{ quote.company_name }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
             <dd>{{ quote.next_followup_date }}</dd>
           </div>
+
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DETAILS</dt>
-            <dd>{{ quote.details }}</dd>
+            <dt class="font-medium">TRANSAPP CODE</dt>
+            <dd>{{ quote.transapp_code }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">SOURCE</dt>
+            <dd>{{ quote.source }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">LOST REASON</dt>
+            <dd>{{ quote.lost_reason }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ADVISOR</dt>
+            <dd>{{ quote.advisor_id_text }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">CREATED DATE</dt>
+            <dd>{{ quote.created_at }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">LAST MODIFIED DATE</dt>
+            <dd>{{ quote.updated_at }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -656,8 +603,8 @@ onMounted(() => {});
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">COMPANY NAME</dt>
-            <dd>{{ quote.company_name }}</dd>
+            <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
+            <dd>Group Medical</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -671,8 +618,28 @@ onMounted(() => {});
           </div>
 
           <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">RENEWAL BATCH</dt>
+            <dd>{{ quote.renewal_batch }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">GENDER</dt>
+            <dd>{{ genderText(quote.gender).value }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PARENT CDB ID</dt>
+            <dd>{{ quote.parent_duplicate_quote_id }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">RENEWAL IMPORT CODE</dt>
             <dd>{{ quote.renewal_import_code }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">DEVICE</dt>
+            <dd>{{ quote.device }}</dd>
           </div>
         </dl>
       </div>
@@ -701,207 +668,214 @@ onMounted(() => {});
         </dl>
       </div>
 
-      <div class="mt-6 p-4 rounded shadow mb-6 bg-primary-50/25">
+      <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
         <div>
           <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
           <x-divider class="mb-4 mt-1" />
         </div>
         <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-          <div class="w-full md:w-2/3">
-            <x-textarea
-              v-model="leadStatusForm.notes"
-              type="text"
-              label="Notes"
-              placeholder="Lead Notes"
-              class="w-full"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.transactionApproved
-              "
-            />
-          </div>
-          <div class="w-full md:w-1/3">
+          <div class="w-full md:w-1/2">
             <div class="flex flex-col gap-4">
               <x-select
                 v-model="leadStatusForm.leadStatus"
-                label="Status"
+                label="STATUS"
                 :options="leadStatusOptions"
                 :disabled="
                   quote.quote_status_id ==
-                  enums.quoteStatusEnum.transactionApproved
+                  enums.quoteStatusEnum.TransactionApproved
                 "
                 placeholder="Lead Status"
                 class="w-full"
               />
-              <x-input
-                v-if="
-                  leadStatusForm.leadStatus ==
-                  enums.quoteStatusEnum.transactionApproved
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                label="NOTES"
+                placeholder="Lead Notes"
+                class="w-full"
+                :disabled="
+                  quote.quote_status_id ==
+                  enums.quoteStatusEnum.TransactionApproved
                 "
-                v-model="leadStatusForm.trans_code"
-                label="TransApp Code"
-                placeholder="TransApp Code is required"
-                class="w-full"
-                :error="leadStatusForm.errors.trans_code"
               />
-              <x-select
-                v-if="leadStatusForm.leadStatus == 17"
-                v-model="leadStatusForm.lostReason"
-                label="Lost Reason"
-                :options="lostReasonsOptions"
-                placeholder="Lost Reason is required"
-                class="w-full"
-                :error="leadStatusForm.errors.lostReason"
-              />
-            </div>
-
-            <div class="flex justify-end">
-              <x-button
-                class="mt-4"
-                color="emerald"
-                size="sm"
-                :loading="leadStatusForm.processing"
-                @click.prevent="onLeadStatus"
-              >
-                Change Status
-              </x-button>
             </div>
           </div>
+          <div class="w-full md:w-2/3">
+            <x-input
+              v-if="
+                leadStatusForm.leadStatus ==
+                enums.quoteStatusEnum.TransactionApproved
+              "
+              :disabled="
+                quote.quote_status_id ==
+                enums.quoteStatusEnum.TransactionApproved
+              "
+              v-model="leadStatusForm.trans_code"
+              label="TRANSAPP CODE"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+            <x-select
+              v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+              v-model="leadStatusForm.lostReason"
+              label="LOST REASON"
+              :options="lostReasonsOptions"
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <x-button
+            class="mt-4"
+            color="emerald"
+            size="sm"
+            :loading="leadStatusForm.processing"
+            @click.prevent="onLeadStatus"
+            :disabled="
+              quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
+            "
+          >
+            Change Status
+          </x-button>
         </div>
       </div>
 
       <div class="p-4 rounded shadow mb-6 bg-white">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Lead Activities
-            <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-          </h3>
-          <x-button size="sm" color="orange" @click.prevent="addActivity">
-            Add Activity
-          </x-button>
-        </div>
-        <x-divider class="my-4" />
-
-        <DataTable
-          table-class-name="compact"
-          :headers="activityTable"
-          :items="activities"
-          border-cell
-          hide-rows-per-page
-          :rows-per-page="15"
-          :hide-footer="activities.length < 15"
-        >
-          <template #item-status="{ status, id }">
-            <x-checkbox
-              color="emerald"
-              size="xl"
-              :modelValue="status === 1"
-              :disabled="status === 1"
-              @change="onActivityStatusUpdate(id)"
-            />
-          </template>
-          <template #item-action="item">
-            <div class="space-x-4">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                :disabled="item.status === 1"
-                @click.prevent="activityEdit(item)"
-              >
-                Edit
-              </x-button>
-              <x-button
-                size="xs"
-                color="error"
-                :disabled="item.status === 1"
-                outlined
-                @click.prevent="activityDelete(item.id)"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </DataTable>
-        <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-          <template #header>
-            {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-          </template>
-
-          <x-form @submit="onActivitySubmit" :auto-focus="false">
-            <div class="grid gap-4">
-              <x-input
-                v-model="activityForm.title"
-                label="Title"
-                :rules="[rules.isRequired]"
-                class="w-full"
-              />
-
-              <x-textarea
-                v-model="activityForm.description"
-                label="Description"
-                :adjust-to-text="false"
-                class="w-full"
-              />
-
-              <x-select
-                v-model="activityForm.assignee_id"
-                label="Assignee"
-                :options="advisorOptions"
-                :rules="[rules.isRequired]"
-                placeholder="Select Assignee"
-                class="w-full"
-              />
-
-              <x-input
-                v-model="activityForm.due_date"
-                label="Due Date"
-                type="datetime-local"
-                :rules="[rules.isRequired]"
-                class="w-full"
-              />
-            </div>
-
-            <div class="text-right space-x-4 mt-12">
-              <x-button size="sm" @click.prevent="modals.activity = false">
-                Cancel
-              </x-button>
-
-              <x-button
-                size="sm"
-                color="emerald"
-                :loading="activityForm.processing"
-                type="submit"
-              >
-                {{ activityActionEdit ? 'Update' : 'Save' }}
-              </x-button>
-            </div>
-          </x-form>
-        </x-modal>
-        <x-modal v-model="modals.activityConfirm" show-close backdrop>
-          <template #header> Delete Activity </template>
-          <p>Are you sure you want to delete this activity?</p>
-          <template #actions>
-            <div class="text-right space-x-4">
-              <x-button
-                size="sm"
-                ghost
-                @click.prevent="modals.activityConfirm = false"
-              >
-                Cancel
-              </x-button>
-              <x-button
-                size="sm"
-                color="error"
-                :loading="activityForm.processing"
-                @click.prevent="activityDeleteConfirmed"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </x-modal>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Lead Activities
+          <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+        </h3>
+        <x-button size="sm" color="orange" @click.prevent="addActivity">
+          Add Activity
+        </x-button>
       </div>
+      <x-divider class="my-4" />
+
+      <DataTable
+        table-class-name="compact"
+        :headers="activityTable"
+        :items="activities"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="activities.length < 15"
+      >
+        <template #item-status="{ status, id }">
+          <x-checkbox
+            color="emerald"
+            size="xl"
+            :modelValue="status === 1"
+            :disabled="status === 1"
+            @change="onActivityStatusUpdate(id)"
+          />
+        </template>
+        <template #item-action="item">
+          <div class="space-x-4">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              :disabled="item.status === 1"
+              @click.prevent="activityEdit(item)"
+            >
+              Edit
+            </x-button>
+            <x-button
+              size="xs"
+              color="error"
+              :disabled="item.status === 1"
+              outlined
+              @click.prevent="activityDelete(item.id)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
+      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+        <template #header>
+          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+        </template>
+
+        <x-form @submit="onActivitySubmit" :auto-focus="false">
+          <div class="grid gap-4">
+            <x-input
+              v-model="activityForm.title"
+              label="Title"
+              :rules="[isRequired]"
+              class="w-full"
+            />
+
+            <x-textarea
+              v-model="activityForm.description"
+              label="Description"
+              :adjust-to-text="false"
+              class="w-full"
+            />
+
+            <x-select
+              v-model="activityForm.assignee_id"
+              label="Assignee"
+              :options="advisorOptions"
+              :rules="[isRequired]"
+              placeholder="Select Assignee"
+              class="w-full"
+            />
+
+            <DatePicker
+              :format="format"
+              v-model="activityForm.due_date"
+              label="Due Date"
+              :rules="[isRequired]"
+              class="w-full"
+              withTime
+            />
+          </div>
+
+          <div class="text-right space-x-4 mt-12">
+            <x-button size="sm" @click.prevent="modals.activity = false">
+              Cancel
+            </x-button>
+
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="activityForm.processing"
+              type="submit"
+            >
+              {{ activityActionEdit ? 'Update' : 'Save' }}
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
+      <x-modal v-model="modals.activityConfirm" show-close backdrop>
+        <template #header> Delete Activity </template>
+        <p>Are you sure you want to delete this activity?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.activityConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              :loading="activityForm.processing"
+              @click.prevent="activityDeleteConfirmed"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+    </div>
 
       <div class="p-4 rounded shadow mb-6 bg-white">
         <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
@@ -914,7 +888,7 @@ onMounted(() => {});
           <x-button
             size="sm"
             color="orange"
-            @click.prevent="modals.addContact = true"
+            @click.prevent="addAdditionalContact"
           >
             Add Additional Contacts
           </x-button>
