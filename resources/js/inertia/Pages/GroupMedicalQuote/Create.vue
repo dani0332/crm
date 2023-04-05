@@ -41,7 +41,7 @@ const rules = {
     'E-mail must be valid',
   isRequired: v => !!v || 'This field is required',
   isNumber: v => /^\d+$/.test(v) || 'This field must be a number',
-  isDecimal: v => /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal',
+  emptyOrDecimal: v => !v || /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal',
 };
 
 const isEmptyField = ref(false);
@@ -74,89 +74,137 @@ function onSubmit(isValid) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-input
-          v-model="quoteForm.first_name"
-          type="text"
-          label="FIRST NAME"
-          :rules="[rules.isRequired]"
-          class="w-full"
-          :errors="quoteForm.errors.first_name"
-        />
+        <label>
+          <p>
+            FIRST NAME
+            <sup class="text-red-500">*</sup>
+          </p>
 
-        <x-input
-          v-model="quoteForm.last_name"
-          type="text"
-          label="LAST NAME"
-          :rules="[rules.isRequired]"
-          class="w-full"
-          :errors="quoteForm.errors.last_name"
-        />
+          <x-input
+            v-model="quoteForm.first_name"
+            type="text"
+            :rules="[rules.isRequired]"
+            class="w-full"
+            :errors="quoteForm.errors.first_name"
+          />
+        </label>
 
-        <x-input
-          v-model="quoteForm.email"
-          type="email"
-          label="EMAIL"
-          :rules="[rules.isRequired, rules.isEmail]"
-          class="w-full"
-          :errors="quoteForm.errors.email"
-        />
+        <label>
+          <p>
+            LAST NAME
+            <sup class="text-red-500">*</sup>
+          </p>
 
-        <x-input
-          v-model="quoteForm.mobile_no"
-          type="tel"
-          label="MOBILE NUMBER"
-          :rules="[rules.isRequired]"
-          class="w-full"
-          :errors="quoteForm.errors.mobile_no"
-        />
+          <x-input
+            v-model="quoteForm.last_name"
+            type="text"
+            :rules="[rules.isRequired]"
+            class="w-full"
+            :errors="quoteForm.errors.last_name"
+          />
+        </label>
 
-        <x-input
-          v-model="quoteForm.company_name"
-          type="text"
-          label="Company Name"
-          :rules="[rules.isRequired]"
-          class="w-full"
-          :errors="quoteForm.errors.company_name"
-        />
+        <label>
+          <p>
+            EMAIL
+            <sup class="text-red-500">*</sup>
+          </p>
 
-        <x-input
-          v-model="quoteForm.number_of_employees"
-          type="text"
-          label="Number Of Employees"
-          :rules="[rules.isRequired, rules.isNumber]"
-          class="w-full"
-          :errors="quoteForm.errors.number_of_employees"
-        />
+          <x-input
+            v-model="quoteForm.email"
+            type="email"
+            :rules="[rules.isRequired, rules.isEmail]"
+            class="w-full"
+            :errors="quoteForm.errors.email"
+          />
+        </label>
 
-        <x-select
-          v-model="quoteForm.business_type_of_insurance_id"
-          label="Business Insurance Type"
-          :options="
-            businessInsuranceType.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          :rules="[rules.isRequired]"
-          class="w-full"
-          :errors="quoteForm.errors.business_type_of_insurance_id"
-        />
+        <label>
+          <p>
+            MOBILE NUMBER
+            <sup class="text-red-500">*</sup>
+          </p>
+
+          <x-input
+            v-model="quoteForm.mobile_no"
+            type="tel"
+            :rules="[rules.isRequired]"
+            class="w-full"
+            :errors="quoteForm.errors.mobile_no"
+          />
+        </label>
+
+        <label>
+          <p>
+            COMPANY NAME
+            <sup class="text-red-500">*</sup>
+          </p>
+
+          <x-input
+            v-model="quoteForm.company_name"
+            type="text"
+            :rules="[rules.isRequired]"
+            class="w-full"
+            :errors="quoteForm.errors.company_name"
+          />
+        </label>
+
+        <label>
+          <p>
+            NUMBER OF EMPLOYEES
+            <sup class="text-red-500">*</sup>
+          </p>
+
+          <x-input
+            v-model="quoteForm.number_of_employees"
+            type="text"
+            :rules="[rules.isRequired, rules.isNumber]"
+            class="w-full"
+            :errors="quoteForm.errors.number_of_employees"
+          />
+        </label>
+
+        <label>
+          <p>
+            Business Insurance Type
+            <sup class="text-red-500">*</sup>
+          </p>
+
+          <x-select
+            v-model="quoteForm.business_type_of_insurance_id"
+            :options="
+              businessInsuranceType.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            :rules="[rules.isRequired]"
+            class="w-full"
+            :errors="quoteForm.errors.business_type_of_insurance_id"
+          />
+        </label>
+
+        <label>
+          <p>
+            BRIEF DETAILS
+            <sup class="text-red-500">*</sup>
+          </p>
+
+          <x-textarea
+            v-model="quoteForm.brief_details"
+            :rules="[rules.isRequired]"
+            class="w-full"
+            :errors="quoteForm.errors.brief_details"
+          />
+        </label>
 
         <x-input
           v-model="quoteForm.premium"
           type="text"
           label="PREMIUM"
-          :rules="[rules.isRequired, rules.isDecimal]"
           class="w-full"
+          :rules="[rules.emptyOrDecimal]"
           :errors="quoteForm.errors.premium"
-        />
-
-        <x-textarea
-          v-model="quoteForm.brief_details"
-          label="Brief Details"
-          :rules="[rules.isRequired]"
-          class="w-full"
-          :errors="quoteForm.errors.brief_details"
         />
       </div>
       <x-divider class="my-4" />

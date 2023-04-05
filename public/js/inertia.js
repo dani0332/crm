@@ -1547,6 +1547,9 @@ __webpack_require__.r(__webpack_exports__);
       },
       isDecimal: function isDecimal(v) {
         return /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal';
+      },
+      emptyOrDecimal: function emptyOrDecimal(v) {
+        return !v || /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal';
       }
     };
     var isEmptyField = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false); //businessInsuranceTypeOptions
@@ -1650,7 +1653,7 @@ __webpack_require__.r(__webpack_exports__);
     var props = __props;
     var quoteForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
       modelType: '"Business"',
-      gender: '',
+      gender: props.quote.gender,
       first_name: props.quote.first_name,
       last_name: props.quote.last_name,
       email: props.quote.email,
@@ -3358,8 +3361,8 @@ __webpack_require__.r(__webpack_exports__);
       isNumber: function isNumber(v) {
         return /^\d+$/.test(v) || 'This field must be a number';
       },
-      isDecimal: function isDecimal(v) {
-        return /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal';
+      emptyOrDecimal: function emptyOrDecimal(v) {
+        return !v || /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal';
       }
     };
     var isEmptyField = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
@@ -3484,6 +3487,9 @@ __webpack_require__.r(__webpack_exports__);
         quoteForm.put("/medical/amt/".concat(props.quote.uuid), {
           onSuccess: function onSuccess() {
             _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.get("/medical/amt/".concat(props.quote.uuid));
+          },
+          onStart: function onStart() {
+            quoteForm.clearErrors();
           }
         });
       }
@@ -16370,7 +16376,64 @@ var _hoisted_3 = {
 var _hoisted_4 = {
   "class": "grid sm:grid-cols-2 gap-4"
 };
-var _hoisted_5 = {
+
+var _hoisted_5 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" FIRST NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_6 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" LAST NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_7 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" EMAIL "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_8 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" MOBILE NUMBER "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_9 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" COMPANY NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_10 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" NUMBER OF EMPLOYEES "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_11 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" BUSINESS INSURANCE TYPE "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_12 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", {
+  "class": "mb-2"
+}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" GENDER "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_13 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" BRIEF DETAILS "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_14 = {
   "class": "flex justify-end gap-3 mb-4"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
@@ -16415,128 +16478,119 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "auto-focus": false
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_5, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.first_name,
         "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
           return $setup.quoteForm.first_name = $event;
         }),
         type: "text",
-        label: "FIRST NAME",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.first_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.last_name,
         "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
           return $setup.quoteForm.last_name = $event;
         }),
         type: "text",
-        label: "LAST NAME",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.last_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_7, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.email,
         "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
           return $setup.quoteForm.email = $event;
         }),
         type: "email",
-        label: "EMAIL",
         rules: [$setup.rules.isRequired, $setup.rules.isEmail],
         "class": "w-full",
         errors: $setup.quoteForm.errors.email
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.mobile_no,
         "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
           return $setup.quoteForm.mobile_no = $event;
         }),
         type: "tel",
-        label: "MOBILE NUMBER",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.mobile_no
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_9, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.company_name,
         "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
           return $setup.quoteForm.company_name = $event;
         }),
         type: "text",
-        label: "Company Name",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.company_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.number_of_employees,
         "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
           return $setup.quoteForm.number_of_employees = $event;
         }),
         type: "text",
-        label: "Number Of Employees",
         rules: [$setup.rules.isRequired, $setup.rules.isNumber],
         "class": "w-full",
         errors: $setup.quoteForm.errors.number_of_employees
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_11, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.business_type_of_insurance_id,
         "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
           return $setup.quoteForm.business_type_of_insurance_id = $event;
         }),
-        label: "Business Insurance Type",
         options: $setup.businessInsuranceTypeOptions,
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.business_type_of_insurance_id
       }, null, 8
       /* PROPS */
-      , ["modelValue", "options", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+      , ["modelValue", "options", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.gender,
         "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
           return $setup.quoteForm.gender = $event;
         }),
-        label: "Gender",
         options: $setup.genderOptions,
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.gender
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.premium,
         "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
           return $setup.quoteForm.premium = $event;
         }),
         type: "text",
         label: "PREMIUM",
-        rules: [$setup.rules.isRequired, $setup.rules.isDecimal],
+        rules: [$setup.rules.emptyOrDecimal],
         "class": "w-full",
         errors: $setup.quoteForm.errors.premium
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_textarea, {
+      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_13, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_textarea, {
         modelValue: $setup.quoteForm.brief_details,
         "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
           return $setup.quoteForm.brief_details = $event;
         }),
-        label: "Brief Details",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.brief_details
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
+      , ["modelValue", "rules", "errors"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
         "class": "my-4"
-      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_14, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "md",
         color: "emerald",
         type: "submit",
@@ -16589,7 +16643,62 @@ var _hoisted_3 = {
 var _hoisted_4 = {
   "class": "grid sm:grid-cols-2 gap-4"
 };
-var _hoisted_5 = {
+
+var _hoisted_5 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" FIRST NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_6 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" LAST NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_7 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" EMAIL "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_8 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" MOBILE NUMBER "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_9 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" COMPANY NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_10 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" NUMBER OF EMPLOYEES "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_11 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" BUSINESS INSURANCE TYPE "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_12 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" GENDER "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_13 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Brief Details "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_14 = {
   "class": "flex justify-end gap-3 mb-4"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
@@ -16655,107 +16764,66 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "auto-focus": false
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_5, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.first_name,
         "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
           return $setup.quoteForm.first_name = $event;
         }),
         type: "text",
-        label: "FIRST NAME",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.first_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.last_name,
         "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
           return $setup.quoteForm.last_name = $event;
         }),
         type: "text",
-        label: "LAST NAME",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.last_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_7, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.email,
         "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
           return $setup.quoteForm.email = $event;
         }),
         type: "email",
-        label: "EMAIL",
         rules: [$setup.rules.isRequired, $setup.rules.isEmail],
         disabled: true,
         "class": "w-full",
         errors: $setup.quoteForm.errors.email
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.mobile_no,
         "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
           return $setup.quoteForm.mobile_no = $event;
         }),
         type: "tel",
-        label: "MOBILE NUMBER",
         rules: [$setup.rules.isRequired],
         disabled: true,
         "class": "w-full",
         errors: $setup.quoteForm.errors.mobile_no
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_9, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.company_name,
         "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
           return $setup.quoteForm.company_name = $event;
         }),
         type: "text",
-        label: "Company Name",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.company_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
-        modelValue: $setup.quoteForm.number_of_employees,
-        "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
-          return $setup.quoteForm.number_of_employees = $event;
-        }),
-        type: "text",
-        label: "Number Of Employees",
-        rules: [$setup.rules.isRequired, $setup.rules.isNumber],
-        "class": "w-full",
-        errors: $setup.quoteForm.errors.number_of_employees
-      }, null, 8
-      /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
-        modelValue: $setup.quoteForm.business_type_of_insurance_id,
-        "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
-          return $setup.quoteForm.business_type_of_insurance_id = $event;
-        }),
-        label: "Business Insurance Type",
-        options: $setup.businessInsuranceTypeOptions,
-        rules: [$setup.rules.isRequired],
-        "class": "w-full",
-        errors: $setup.quoteForm.errors.business_type_of_insurance_id
-      }, null, 8
-      /* PROPS */
-      , ["modelValue", "options", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
-        modelValue: $setup.quoteForm.gender,
-        "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
-          return $setup.quoteForm.gender = $event;
-        }),
-        label: "Gender",
-        options: $setup.genderOptions,
-        rules: [$setup.rules.isRequired],
-        "class": "w-full",
-        errors: $setup.quoteForm.errors.gender
-      }, null, 8
-      /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)(" <label>\n          <p>POLICY NUMBER</p>\n\n          <x-input\n            v-model=\"quoteForm.policy_number\"\n            type=\"text\"\n            class=\"w-full\"\n            :errors=\"quoteForm.errors.company_name\"\n          />\n        </label> "), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.premium,
-        "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
+        "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
           return $setup.quoteForm.premium = $event;
         }),
         type: "text",
@@ -16765,20 +16833,52 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         errors: $setup.quoteForm.errors.premium
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_textarea, {
+      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+        modelValue: $setup.quoteForm.number_of_employees,
+        "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
+          return $setup.quoteForm.number_of_employees = $event;
+        }),
+        type: "text",
+        rules: [$setup.rules.isRequired, $setup.rules.isNumber],
+        "class": "w-full",
+        errors: $setup.quoteForm.errors.number_of_employees
+      }, null, 8
+      /* PROPS */
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_11, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+        modelValue: $setup.quoteForm.business_type_of_insurance_id,
+        "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
+          return $setup.quoteForm.business_type_of_insurance_id = $event;
+        }),
+        options: $setup.businessInsuranceTypeOptions,
+        rules: [$setup.rules.isRequired],
+        "class": "w-full",
+        errors: $setup.quoteForm.errors.business_type_of_insurance_id
+      }, null, 8
+      /* PROPS */
+      , ["modelValue", "options", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+        modelValue: $setup.quoteForm.gender,
+        "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
+          return $setup.quoteForm.gender = $event;
+        }),
+        options: $setup.genderOptions,
+        rules: [$setup.rules.isRequired],
+        "class": "w-full",
+        errors: $setup.quoteForm.errors.gender
+      }, null, 8
+      /* PROPS */
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_13, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_textarea, {
         modelValue: $setup.quoteForm.brief_details,
         "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
           return $setup.quoteForm.brief_details = $event;
         }),
-        label: "Brief Details",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.brief_details
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
+      , ["modelValue", "rules", "errors"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
         "class": "my-4"
-      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_14, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "md",
         color: "emerald",
         type: "submit",
@@ -19960,7 +20060,56 @@ var _hoisted_3 = {
 var _hoisted_4 = {
   "class": "grid sm:grid-cols-2 gap-4"
 };
-var _hoisted_5 = {
+
+var _hoisted_5 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" FIRST NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_6 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" LAST NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_7 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" EMAIL "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_8 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" MOBILE NUMBER "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_9 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" COMPANY NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_10 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" NUMBER OF EMPLOYEES "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_11 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Business Insurance Type "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_12 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" BRIEF DETAILS "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_13 = {
   "class": "flex justify-end gap-3 mb-4"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
@@ -20026,84 +20175,77 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "auto-focus": false
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_5, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.first_name,
         "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
           return $setup.quoteForm.first_name = $event;
         }),
         type: "text",
-        label: "FIRST NAME",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.first_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.last_name,
         "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
           return $setup.quoteForm.last_name = $event;
         }),
         type: "text",
-        label: "LAST NAME",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.last_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_7, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.email,
         "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
           return $setup.quoteForm.email = $event;
         }),
         type: "email",
-        label: "EMAIL",
         rules: [$setup.rules.isRequired, $setup.rules.isEmail],
         "class": "w-full",
         errors: $setup.quoteForm.errors.email
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.mobile_no,
         "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
           return $setup.quoteForm.mobile_no = $event;
         }),
         type: "tel",
-        label: "MOBILE NUMBER",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.mobile_no
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_9, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.company_name,
         "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
           return $setup.quoteForm.company_name = $event;
         }),
         type: "text",
-        label: "Company Name",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.company_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.number_of_employees,
         "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
           return $setup.quoteForm.number_of_employees = $event;
         }),
         type: "text",
-        label: "Number Of Employees",
         rules: [$setup.rules.isRequired, $setup.rules.isNumber],
         "class": "w-full",
         errors: $setup.quoteForm.errors.number_of_employees
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_11, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.business_type_of_insurance_id,
         "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
           return $setup.quoteForm.business_type_of_insurance_id = $event;
         }),
-        label: "Business Insurance Type",
         options: $props.businessInsuranceType.map(function (item) {
           return {
             value: item.id,
@@ -20115,32 +20257,31 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         errors: $setup.quoteForm.errors.business_type_of_insurance_id
       }, null, 8
       /* PROPS */
-      , ["modelValue", "options", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
-        modelValue: $setup.quoteForm.premium,
-        "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
-          return $setup.quoteForm.premium = $event;
-        }),
-        type: "text",
-        label: "PREMIUM",
-        rules: [$setup.rules.isRequired, $setup.rules.isDecimal],
-        "class": "w-full",
-        errors: $setup.quoteForm.errors.premium
-      }, null, 8
-      /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_textarea, {
+      , ["modelValue", "options", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_textarea, {
         modelValue: $setup.quoteForm.brief_details,
-        "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
+        "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
           return $setup.quoteForm.brief_details = $event;
         }),
-        label: "Brief Details",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.brief_details
       }, null, 8
       /* PROPS */
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+        modelValue: $setup.quoteForm.premium,
+        "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
+          return $setup.quoteForm.premium = $event;
+        }),
+        type: "text",
+        label: "PREMIUM",
+        "class": "w-full",
+        rules: [$setup.rules.emptyOrDecimal],
+        errors: $setup.quoteForm.errors.premium
+      }, null, 8
+      /* PROPS */
       , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
         "class": "my-4"
-      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_13, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "md",
         color: "emerald",
         type: "submit",
@@ -20193,7 +20334,68 @@ var _hoisted_3 = {
 var _hoisted_4 = {
   "class": "grid sm:grid-cols-2 gap-4"
 };
-var _hoisted_5 = {
+
+var _hoisted_5 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" FIRST NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_6 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" LAST NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_7 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" EMAIL "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_8 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" MOBILE NUMBER "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_9 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" COMPANY NAME "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_10 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" NUMBER OF EMPLOYEES "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_11 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Business Insurance Type "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_12 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Group Medical Type "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_13 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" PREMIUM "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_14 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("p", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" BRIEF DETAILS "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("sup", {
+  "class": "text-red-500"
+}, "*")], -1
+/* HOISTED */
+);
+
+var _hoisted_15 = {
   "class": "flex justify-end gap-3 mb-4"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
@@ -20220,7 +20422,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         tag: "div"
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" View ")];
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Cancel ")];
         }),
         _: 1
         /* STABLE */
@@ -20259,86 +20461,79 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "auto-focus": false
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_5, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.first_name,
         "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
           return $setup.quoteForm.first_name = $event;
         }),
         type: "text",
-        label: "FIRST NAME",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.first_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.last_name,
         "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
           return $setup.quoteForm.last_name = $event;
         }),
         type: "text",
-        label: "LAST NAME",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.last_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_7, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.email,
         "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
           return $setup.quoteForm.email = $event;
         }),
         type: "email",
-        label: "EMAIL",
         rules: [$setup.rules.isRequired, $setup.rules.isEmail],
         disabled: true,
         "class": "w-full",
         errors: $setup.quoteForm.errors.email
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.mobile_no,
         "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
           return $setup.quoteForm.mobile_no = $event;
         }),
         type: "tel",
-        label: "MOBILE NUMBER",
         rules: [$setup.rules.isRequired],
         disabled: true,
         "class": "w-full",
         errors: $setup.quoteForm.errors.mobile_no
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_9, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.company_name,
         "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
           return $setup.quoteForm.company_name = $event;
         }),
         type: "text",
-        label: "Company Name",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.company_name
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.number_of_employees,
         "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
           return $setup.quoteForm.number_of_employees = $event;
         }),
         type: "text",
-        label: "Number Of Employees",
         rules: [$setup.rules.isRequired, $setup.rules.isNumber],
         "class": "w-full",
         errors: $setup.quoteForm.errors.number_of_employees
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_11, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.business_type_of_insurance_id,
         "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
           return $setup.quoteForm.business_type_of_insurance_id = $event;
         }),
-        label: "Business Insurance Type",
         options: $props.businessInsuranceType.map(function (item) {
           return {
             value: item.id,
@@ -20350,12 +20545,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         errors: $setup.quoteForm.errors.business_type_of_insurance_id
       }, null, 8
       /* PROPS */
-      , ["modelValue", "options", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+      , ["modelValue", "options", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
         modelValue: $setup.quoteForm.group_medical_type_id,
         "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
           return $setup.quoteForm.group_medical_type_id = $event;
         }),
-        label: "Group Medical Type",
         options: $props.gmTypes.map(function (item) {
           return {
             value: item.id,
@@ -20367,32 +20561,30 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         errors: $setup.quoteForm.errors.group_medical_type_id
       }, null, 8
       /* PROPS */
-      , ["modelValue", "options", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+      , ["modelValue", "options", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_13, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.premium,
         "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
           return $setup.quoteForm.premium = $event;
         }),
         type: "text",
-        label: "PREMIUM",
         rules: [$setup.rules.isRequired, $setup.rules.isDecimal],
         "class": "w-full",
         errors: $setup.quoteForm.errors.premium
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_textarea, {
+      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("label", null, [_hoisted_14, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_textarea, {
         modelValue: $setup.quoteForm.brief_details,
         "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
           return $setup.quoteForm.brief_details = $event;
         }),
-        label: "Brief Details",
         rules: [$setup.rules.isRequired],
         "class": "w-full",
         errors: $setup.quoteForm.errors.brief_details
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules", "errors"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
+      , ["modelValue", "rules", "errors"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_divider, {
         "class": "my-4"
-      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_15, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
         size: "md",
         color: "emerald",
         type: "submit",
