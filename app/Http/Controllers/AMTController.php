@@ -118,8 +118,8 @@ class AMTController extends Controller
             $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
         }
         if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
-            $dateFrom = $this->parseDate($request['created_at_start'], true);
-            $dateTo = $this->parseDate($request['created_at_end'], false);
+            $dateFrom = $request['created_at_start'];
+            $dateTo = $request['created_at_end'];
             $data->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
         }
         if (isset($request->last_name) && $request->last_name != '') {
