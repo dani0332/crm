@@ -65,6 +65,7 @@ class HandleInertiaRequests extends Middleware
             'warning' => $request->session()->get('warning'),
             'info' => $request->session()->get('info'),
         ];
+
         return array_filter($flash, fn ($value) => $value !== null);
     }
 
