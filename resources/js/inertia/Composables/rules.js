@@ -2,6 +2,15 @@ export const useRules = () => {
   const isEmail = v =>
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
     'E-mail must be valid';
+
+  const isMobile = v => {
+    if (v) {
+      return v.length <= 10 || 'Mobile Number should be 10 digits long';
+    }
+
+    return true;
+  };
+
   const isRequired = v => !!v || 'This field is required';
 
   const isNumber = v => /^\d+$/.test(v) || 'This field must be a number';
@@ -53,6 +62,7 @@ export const useRules = () => {
 
   return {
     isEmail,
+    isMobile,
     isRequired,
     isNumber,
     policy_number,

@@ -187,9 +187,13 @@ class CustomerController extends Controller
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         if ($request->key == GenericRequestEnum::EMAIL) {
             $quoteObject->email = $request->value;
-            if ($quoteObject->customer) {
+            if ($quoteObject->customer && ! $this->customerService->getCustomerByEmail($request->value)) {
                 Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
                 $quoteObject->customer->update(['email' => $request->value]);
+            } else {
+                return response()->json(['data' => [
+                    'message' => 'Email Address already in use for a customer.',
+                ]]);
             }
         } elseif ($request->key == GenericRequestEnum::MOBILE_NO) {
             $quoteObject->mobile_no = $request->value;
@@ -214,7 +218,7 @@ class CustomerController extends Controller
         }
 
         return response()->json(['data' => [
-            'message' => 'success',
+            'message' => 'Primary Contact Updated',
         ]]);
     }
 
