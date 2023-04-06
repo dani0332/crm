@@ -23,9 +23,7 @@ const notification = useNotifications('toast');
 
 const { copy, copied } = useClipboard();
 
-const rules = {
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired } = useRules();
 
 const dateToYMD = date => {
   if (date) {
@@ -323,7 +321,7 @@ onMounted(() => {});
                 label: lob,
               }))
             "
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             placeholder="Select LOB For Duplication"
             class="w-full"
             multiple
@@ -614,7 +612,7 @@ onMounted(() => {});
                   { value: 'email', label: 'Email' },
                   { value: 'mobile_no', label: 'Mobile Number' },
                 ]"
-                :rules="[rules.isRequired]"
+                :rules="[isRequired]"
                 placeholder="Select Type"
                 class="w-full"
               />
@@ -622,7 +620,7 @@ onMounted(() => {});
               <x-input
                 v-model="additionalContact.additional_contact_val"
                 label="Value"
-                :rules="[rules.isRequired]"
+                :rules="[isRequired]"
                 class="w-full"
               />
             </div>

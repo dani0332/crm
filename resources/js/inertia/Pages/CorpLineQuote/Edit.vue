@@ -24,14 +24,7 @@ const quoteForm = useForm({
   brief_details: props.quote.brief_details,
 });
 
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-  isNumber: v => /^\d+$/.test(v) || 'This field must be a number',
-  isDecimal: v => /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal',
-};
+const { isRequired, isNumber, isDecimal, isEmail  } = useRules();
 
 const isEmptyField = ref(false);
 
@@ -100,7 +93,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.first_name"
             type="text"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
             :errors="quoteForm.errors.first_name"
           />
@@ -115,7 +108,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.last_name"
             type="text"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
             :errors="quoteForm.errors.last_name"
           />
@@ -130,7 +123,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.email"
             type="email"
-            :rules="[rules.isRequired, rules.isEmail]"
+            :rules="[isRequired, isEmail]"
             :disabled="true"
             class="w-full"
             :errors="quoteForm.errors.email"
@@ -146,7 +139,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             :disabled="true"
             class="w-full"
             :errors="quoteForm.errors.mobile_no"
@@ -162,7 +155,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.company_name"
             type="text"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
             :errors="quoteForm.errors.company_name"
           />
@@ -183,7 +176,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.premium"
           type="text"
           label="PREMIUM"
-          :rules="[rules.isRequired, rules.isDecimal]"
+          :rules="[isRequired, isDecimal]"
           class="w-full"
           :errors="quoteForm.errors.premium"
         />
@@ -197,7 +190,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.number_of_employees"
             type="text"
-            :rules="[rules.isRequired, rules.isNumber]"
+            :rules="[isRequired, isNumber]"
             class="w-full"
             :errors="quoteForm.errors.number_of_employees"
           />
@@ -212,7 +205,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.business_type_of_insurance_id"
             :options="businessInsuranceTypeOptions"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
             :errors="quoteForm.errors.business_type_of_insurance_id"
           />
@@ -226,7 +219,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.gender"
             :options="genderOptions"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
             :errors="quoteForm.errors.gender"
           />
@@ -240,7 +233,7 @@ function onSubmit(isValid) {
 
           <x-textarea
             v-model="quoteForm.brief_details"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
             :errors="quoteForm.errors.brief_details"
           />

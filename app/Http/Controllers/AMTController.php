@@ -264,8 +264,8 @@ class AMTController extends Controller
             $assignedUserName = $assignedUser->name;
         }
 
-        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
-        $isDuplicateAllowed = in_array('Group Medical', $allowedDuplicateLOB) ? true : false;
+        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB(quoteTypeCode::GroupMedical, $record->code);
+        $isDuplicateAllowed = in_array(quoteTypeCode::GroupMedical, $allowedDuplicateLOB) ? true : false;
 
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
