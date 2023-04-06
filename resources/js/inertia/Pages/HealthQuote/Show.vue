@@ -122,7 +122,7 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
 
 const { copy, copied } = useClipboard();
 
-const { isRequired } = useRules();
+const { isRequired, isEmail, isNumber, isMobile } = useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -1996,7 +1996,12 @@ onMounted(() => {
             <x-input
               v-model="additionalContact.additional_contact_val"
               label="Value"
-              :rules="[isRequired]"
+              :rules="[
+                isRequired,
+                additionalContact.additional_contact_type === 'email'
+                  ? isEmail
+                  : isNumber,
+              ]"
               class="w-full"
             />
           </div>
