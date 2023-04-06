@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
+use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -52,6 +54,8 @@ class HandleInertiaRequests extends Middleware
             'sidebar' => fn () => $this->buildNavigation()->tree(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
+            'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
+            'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
         ]);
     }
 

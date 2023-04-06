@@ -58,10 +58,8 @@ class AMLController extends Controller
     {
         $quoteTypes = QuoteType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $quoteStatuses = QuoteStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-
+        $dataAml = [];
         if ($request->ajax()) {
-            $dataAml = [];
-
             if (isset($request->quoteType) && ! empty($request->quoteType)) {
                 $quoteTypeCode = QuoteType::where('id', '=', $request->quoteType)->value('code');
                 if ($quoteTypeCode == quoteTypeCode::Car) {
@@ -96,7 +94,7 @@ class AMLController extends Controller
                     ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
                     ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
                     ->where('kyc_logs.quote_type_id', $request->quoteType)
-                    ->orderBy('kyc_logs.created_at', 'desc');
+                    ->orderBy('kyc_logs.created_at', 'desc')->simplePaginate();
 
                 if (
                     isset($request->searchType) && ! empty($request->searchType) &&
@@ -127,17 +125,15 @@ class AMLController extends Controller
                     $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$request->amlCreatedStartDate.'" AND "'.$request->amlCreatedEndDate.'"');
                 }
             }
-
-            return DataTables::of($dataAml)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('aml.actions', compact('row'))->render();
-                })
-                ->rawColumns(['action'])
-                ->make(true);
         }
 
-        return view('aml.view', compact('quoteTypes', 'quoteStatuses'));
+        // return view('aml.view', compact('quoteTypes', 'quoteStatuses'));
+
+        return inertia('Aml/Index', [
+            'quoteTypes' => $quoteTypes,
+            'quoteStatuses' => $quoteStatuses,
+            'aml' => $dataAml,
+        ]);
     }
 
     /**
@@ -149,7 +145,12 @@ class AMLController extends Controller
     {
         $amlResults = json_decode($aml->results);
 
-        return view('aml.show', compact('aml', 'amlResults'));
+        $aml->quote_type_text = $aml->quotetype->text;
+
+        return inertia('Aml/Show', [
+            'amlResults' => $amlResults,
+            'aml' => $aml,
+        ]);
     }
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
@@ -386,45 +387,47 @@ class AMLController extends Controller
         $yearsList = $this->sanctionListService->years();
 
         if ($quoteTypeCode == quoteTypeCode::Business) {
-            return view('aml.details', compact(
-                'quoteTypeCode',
-                'quoteTypeText',
-                'quoteRequest',
-                'businessTypeCode',
-                'businessCoverTypeText',
-                'businessCommuModeText',
-                'kycLogs',
-                'quoteStatusCode',
-                'auditLogLine',
-                'isCurrentUserFromCompliance',
-                'isCurrentUserFromPaAml',
-                'firstAmlLogResults',
-                'latestAmlLogResults',
-                'quoteTypeId',
-                'getAMLNumRows',
-                'nationalityList',
-                'yearsList',
-                'isCompanySearchEnabled'
-            ));
+            $data = [
+                'quoteTypeCode' => $quoteTypeCode,
+                'quoteTypeText' => $quoteTypeText,
+                'quoteRequest' => $quoteRequest,
+                'businessTypeCode' => $businessTypeCode,
+                'businessCoverTypeText' => $businessCoverTypeText,
+                'businessCommuModeText' => $businessCommuModeText,
+                'kycLogs' => $kycLogs,
+                'quoteStatusCode' => $quoteStatusCode,
+                'auditLogLine' => $auditLogLine,
+                'isCurrentUserFromCompliance' => $isCurrentUserFromCompliance,
+                'isCurrentUserFromPaAml' => $isCurrentUserFromPaAml,
+                'firstAmlLogResults' => $firstAmlLogResults,
+                'latestAmlLogResults' => $latestAmlLogResults,
+                'quoteTypeId' => $quoteTypeId,
+                'getAMLNumRows' => $getAMLNumRows,
+                'nationalityList' => $nationalityList,
+                'yearsList' => $yearsList,
+                'isCompanySearchEnabled' => $isCompanySearchEnabled,
+            ];
         } else {
-            return view('aml.details', compact(
-                'quoteTypeCode',
-                'quoteTypeText',
-                'quoteRequest',
-                'kycLogs',
-                'quoteStatusCode',
-                'auditLogLine',
-                'isCurrentUserFromCompliance',
-                'isCurrentUserFromPaAml',
-                'firstAmlLogResults',
-                'latestAmlLogResults',
-                'quoteTypeId',
-                'getAMLNumRows',
-                'nationalityList',
-                'yearsList',
-                'isCompanySearchEnabled'
-            ));
+            $data = [
+                'quoteTypeCode' => $quoteTypeCode,
+                'quoteTypeText' => $quoteTypeText,
+                'quoteRequest' => $quoteRequest,
+                'kycLogs' => $kycLogs,
+                'quoteStatusCode' => $quoteStatusCode,
+                'auditLogLine' => $auditLogLine,
+                'isCurrentUserFromCompliance' => $isCurrentUserFromCompliance,
+                'isCurrentUserFromPaAml' => $isCurrentUserFromPaAml,
+                'firstAmlLogResults' => $firstAmlLogResults,
+                'latestAmlLogResults' => $latestAmlLogResults,
+                'quoteTypeId' => $quoteTypeId,
+                'getAMLNumRows' => $getAMLNumRows,
+                'nationalityList' => $nationalityList,
+                'yearsList' => $yearsList,
+                'isCompanySearchEnabled' => $isCompanySearchEnabled,
+            ];
         }
+
+        return inertia('Aml/Details', $data);
     }
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
