@@ -80,7 +80,7 @@ class CustomersImport implements OnEachRow
             $customer = Customer::find($customerId);
             if ($this->inviatationEmail == 'on') {
                 if ($customer && $customer->is_we_sent == 0) {
-                    MAWelcomeJob::dispatch($customer, 'CORPORATE', 'corporate-myalfred-we')->delay(now()->addMinutes(5));
+                    MAWelcomeJob::dispatch($customer, 'CORPORATE', 'corporate-myalfred-we');
                 }
             }
 
