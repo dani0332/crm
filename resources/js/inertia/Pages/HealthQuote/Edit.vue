@@ -126,12 +126,12 @@ function onSubmit(isValid) {
           class="w-full"
         />
 
-        <x-input
+        <!-- <x-input
           v-model="quoteForm.policy_number"
           type="text"
           label="POLICY NUMBER"
           class="w-full"
-        />
+        /> -->
 
         <x-select
           v-model="quoteForm.cover_for_id"
@@ -146,12 +146,12 @@ function onSubmit(isValid) {
           class="w-full"
         />
 
-        <x-input
+        <!-- <x-input
           v-model="quoteForm.preference"
           type="text"
           label="PREFERENCE"
           class="w-full"
-        />
+        /> -->
 
         <x-input
           v-model="quoteForm.details"
@@ -172,7 +172,7 @@ function onSubmit(isValid) {
           class="w-full"
         />
 
-        <x-select
+        <!-- <x-select
           v-model="quoteForm.currently_insured_with_id"
           label="CURRENTLY INSURED WITH"
           :options="
@@ -182,9 +182,9 @@ function onSubmit(isValid) {
             }))
           "
           class="w-full"
-        />
+        /> -->
 
-        <x-select
+        <!-- <x-select
           v-model="quoteForm.marital_status_id"
           label="MARITAL STATUS"
           :options="
@@ -194,7 +194,7 @@ function onSubmit(isValid) {
             }))
           "
           class="w-full"
-        />
+        /> -->
 
         <ComboBox
           v-model="quoteForm.nationality_id"
@@ -253,12 +253,12 @@ function onSubmit(isValid) {
           class="w-full"
         />
 
-        <x-input
+        <!-- <x-input
           v-model="quoteForm.policy_start_date"
           type="text"
           label="POLICY START DATE"
           class="w-full"
-        />
+        /> -->
 
         <div class="grid grid-cols-2 gap-2">
           <x-checkbox

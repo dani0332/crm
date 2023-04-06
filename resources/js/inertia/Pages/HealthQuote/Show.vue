@@ -113,15 +113,16 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
   memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
-  selectedPlansPdf = ref([]),
+  selectedPlans = ref([]),
   exportLoader = ref(false),
+  toggleLoader = ref(false),
   contactLoader = ref(false),
   historyLoading = ref(false),
   isDisabled = ref(false);
 
 const { copy, copied } = useClipboard();
 
-const { isRequired } = useRules();
+const { isRequired, isEmail, isNumber, isMobile } = useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -315,10 +316,10 @@ const memberDetailsTable = reactive({
       text: 'Emirate of Visa',
       value: 'emirate',
     },
-    {
-      text: 'Relationship',
-      value: 'member_category_id',
-    },
+    // {
+    //   text: 'Relationship',
+    //   value: 'member_category_id',
+    // },
     {
       text: 'Action',
       value: 'action',
@@ -475,7 +476,7 @@ const planClicked = plan => {
 };
 
 const onExportPlans = () => {
-  if (selectedPlansPdf.value.length < 3 || selectedPlansPdf.value.length > 5) {
+  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
     notification.error({
       title: 'Please select 3 to 5 plans to download PDF.',
       position: 'top',
@@ -483,7 +484,7 @@ const onExportPlans = () => {
     return;
   }
   exportLoader.value = true;
-  const planIds = selectedPlansPdf.value.map(p => {
+  const planIds = selectedPlans.value.map(p => {
     return p.id;
   });
   axios
@@ -515,6 +516,41 @@ const onExportPlans = () => {
     .finally(() => {
       exportLoader.value = false;
     });
+};
+
+const onTogglePlans = () => {
+  notification.error({
+    title: 'API not available.',
+    position: 'top',
+  });
+  // toggleLoader.value = true;
+  // const planIds = selectedPlans.value.map(p => {
+  //   return p.id;
+  // });
+  // axios
+  //   .post(
+  //     '/quotes/health/manual-plan-toggle',
+  //     {
+  //       plan_ids: planIds,
+  //       quote_uuid: page.props.quote.uuid,
+  //     },
+  //     {
+  //       responseType: 'json',
+  //     },
+  //   )
+  //   .then(response => {
+  //     console.log(response);
+  //     notification.success({
+  //       title: 'Plans Updated',
+  //       position: 'top',
+  //     });
+  //   })
+  //   .catch(error => {
+  //     console.log(error);
+  //   })
+  //   .finally(() => {
+  //     toggleLoader.value = false;
+  //   });
 };
 
 const onCreatePlan = () => {
@@ -754,36 +790,6 @@ const onAdditionalContactSubmit = isValid => {
     });
 };
 
-const additionalContactDelete = id => {
-  modals.contactDeleteConfirm = true;
-  confirmDeleteData.contact = id;
-};
-
-const additionalContactDeleteConfirmed = () => {
-  router.post(
-    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
-    {
-      isInertia: true,
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.error({
-          title: 'Additional Contact Deleted',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactDeleteConfirm = false;
-      },
-    },
-  );
-};
-
 const additionalContactPrimary = data => {
   modals.contactPrimaryConfirm = true;
   confirmData.contactPrimary = data;
@@ -809,7 +815,7 @@ const additionalContactPrimaryConfirmed = () => {
       },
       onSuccess: () => {
         notification.success({
-          title: 'Additional Contact Primary',
+          title: 'Primary Contact Updated',
           position: 'top',
         });
       },
@@ -1344,14 +1350,14 @@ onMounted(() => {
               :hasError="memberFieldReq.dob"
             />
 
-            <x-select
+            <!-- <x-select
               v-model="memberForm.member_category_id"
               label="Relationship"
               :options="memberCategoriesOptions"
               :rules="[isRequired]"
               placeholder="Select Relationship"
               class="w-full"
-            />
+            /> -->
 
             <x-select
               v-model="memberForm.salary_band_id"
@@ -1500,7 +1506,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <PaymentTable
+    <!-- <PaymentTable
       v-if="isBetaUser"
       :payments="payments"
       :can="can"
@@ -1508,9 +1514,9 @@ onMounted(() => {
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"
       :quote="quote"
-    />
+    /> -->
 
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
         <x-divider class="mb-4 mt-1" />
@@ -1597,7 +1603,7 @@ onMounted(() => {
           >
         </div>
       </x-form>
-    </div>
+    </div> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
@@ -1606,8 +1612,17 @@ onMounted(() => {
           <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
+          <!-- <x-button-group v-if="selectedPlans.length > 0" size="sm">
+            <x-button @click.prevent="onTogglePlans" :loading="toggleLoader">
+              Show
+            </x-button>
+            <x-button @click.prevent="onTogglePlans" :loading="toggleLoader">
+              Hide
+            </x-button>
+          </x-button-group> -->
+
           <x-button
-            v-if="selectedPlansPdf.length > 0"
+            v-if="selectedPlans.length > 0"
             size="sm"
             color="emerald"
             @click.prevent="onExportPlans"
@@ -1635,7 +1650,7 @@ onMounted(() => {
         </div>
       </div>
       <DataTable
-        v-model:items-selected="selectedPlansPdf"
+        v-model:items-selected="selectedPlans"
         table-class-name="tablefixed compact"
         :headers="plansTable.columns"
         :items="listQuotePlans || []"
@@ -1644,6 +1659,17 @@ onMounted(() => {
         :rows-per-page="15"
         :hide-footer="listQuotePlans.length < 15"
       >
+        <template #item-providerName="{ providerName, isManualPlan }">
+          <p>{{ providerName }}</p>
+          <x-tag
+            v-if="isManualPlan"
+            size="xs"
+            color="primary"
+            class="mt-0.5 text-[10px]"
+          >
+            Manual Plan
+          </x-tag>
+        </template>
         <template #item-total="{ actualPremium, vat, basmah }">
           {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
         </template>
@@ -1692,7 +1718,7 @@ onMounted(() => {
       </x-modal>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
@@ -1776,7 +1802,7 @@ onMounted(() => {
           </div>
         </template>
       </x-modal>
-    </div>
+    </div> -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
@@ -1867,6 +1893,7 @@ onMounted(() => {
               :rules="[isRequired]"
               class="w-full"
               withTime
+              :timezone="'UTC'"
             />
           </div>
 
@@ -1939,24 +1966,14 @@ onMounted(() => {
           <span v-else> Mobile Number </span>
         </template>
         <template #item-action="item">
-          <div class="space-x-4">
-            <x-button
-              size="xs"
-              color="emerald"
-              outlined
-              @click.prevent="additionalContactPrimary(item)"
-            >
-              Make Primary
-            </x-button>
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="additionalContactDelete(item.id)"
-            >
-              Delete
-            </x-button>
-          </div>
+          <x-button
+            size="xs"
+            color="emerald"
+            outlined
+            @click.prevent="additionalContactPrimary(item)"
+          >
+            Make Primary
+          </x-button>
         </template>
       </DataTable>
 
@@ -1980,7 +1997,12 @@ onMounted(() => {
             <x-input
               v-model="additionalContact.additional_contact_val"
               label="Value"
-              :rules="[isRequired]"
+              :rules="[
+                isRequired,
+                additionalContact.additional_contact_type === 'email'
+                  ? isEmail
+                  : isNumber,
+              ]"
               class="w-full"
             />
           </div>
@@ -2000,30 +2022,6 @@ onMounted(() => {
             </x-button>
           </div>
         </x-form>
-      </x-modal>
-
-      <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
-        <template #header> Delete Additional Contact </template>
-        <p>Are you sure you want to delete this?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.contactDeleteConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              @click.prevent="additionalContactDeleteConfirmed"
-              :loading="contactLoader"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
       </x-modal>
 
       <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
