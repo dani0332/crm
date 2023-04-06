@@ -208,18 +208,31 @@ class DashboardController extends Controller
         )
         ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
         ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->join('user_team', 'user_team.user_id', 'car_quote_request.advisor_id')
-        ->join('teams', 'teams.id', 'user_team.team_id')
+        ->join('users', 'users.id', 'car_quote_request.advisor_id')
         ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
         $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'null';
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
-            $records = $this->applyFilter($records, 'teams.id', $request->team_filter, IMCRMSearchTypesEnum::MULTI_SEARCH);
+            $records->whereIn('users.id', function ($query) use($request)  {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->whereIn('teams.id', $request->team_filter);
+            });
         } else {
             $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
             if (count($commonTeams) > 0) {
-                $records = $this->applyFilter($records, 'teams.id', $commonTeams[0], IMCRMSearchTypesEnum::EQUAL_SEARCH);
+                $records->whereIn('users.id', function ($query) use($commonTeams)  {
+                    $query->distinct()
+                        ->select('users.id')
+                        ->from('users')
+                        ->join('user_team', 'user_team.user_id', 'users.id')
+                        ->join('teams', 'teams.id', 'user_team.team_id')
+                        ->where('teams.id', $commonTeams[0]);
+                });
             }
         }
 
