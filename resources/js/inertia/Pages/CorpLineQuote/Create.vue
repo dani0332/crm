@@ -91,7 +91,7 @@ function onSubmit(isValid) {
             type="text"
             :rules="[isRequired]"
             class="w-full"
-            :errors="quoteForm.errors.first_name"
+            :error="quoteForm.errors.first_name"
           />
         </label>
 
@@ -106,7 +106,7 @@ function onSubmit(isValid) {
             type="text"
             :rules="[isRequired]"
             class="w-full"
-            :errors="quoteForm.errors.last_name"
+            :error="quoteForm.errors.last_name"
           />
         </label>
 
@@ -121,7 +121,7 @@ function onSubmit(isValid) {
             type="email"
             :rules="[isRequired, isEmail]"
             class="w-full"
-            :errors="quoteForm.errors.email"
+            :error="quoteForm.errors.email"
           />
         </label>
 
@@ -136,7 +136,7 @@ function onSubmit(isValid) {
             type="tel"
             :rules="[isRequired]"
             class="w-full"
-            :errors="quoteForm.errors.mobile_no"
+            :error="quoteForm.errors.mobile_no"
           />
         </label>
 
@@ -151,7 +151,7 @@ function onSubmit(isValid) {
             type="text"
             :rules="[isRequired]"
             class="w-full"
-            :errors="quoteForm.errors.company_name"
+            :error="quoteForm.errors.company_name"
           />
         </label>
 
@@ -166,7 +166,7 @@ function onSubmit(isValid) {
             type="text"
             :rules="[isRequired, isNumber]"
             class="w-full"
-            :errors="quoteForm.errors.number_of_employees"
+            :error="quoteForm.errors.number_of_employees"
           />
         </label>
 
@@ -181,7 +181,7 @@ function onSubmit(isValid) {
             :options="businessInsuranceTypeOptions"
             :rules="[isRequired]"
             class="w-full"
-            :errors="quoteForm.errors.business_type_of_insurance_id"
+            :error="quoteForm.errors.business_type_of_insurance_id"
           />
         </label>
 
@@ -195,7 +195,7 @@ function onSubmit(isValid) {
             :options="genderOptions"
             :rules="[isRequired]"
             class="w-full"
-            :errors="quoteForm.errors.gender"
+            :error="quoteForm.errors.gender"
           />
         </label>
 
@@ -205,7 +205,7 @@ function onSubmit(isValid) {
           label="PREMIUM"
           :rules="[emptyOrDecimal]"
           class="w-full"
-          :errors="quoteForm.errors.premium"
+          :error="quoteForm.errors.premium"
         />
 
         <label>
@@ -218,7 +218,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.brief_details"
             :rules="[isRequired]"
             class="w-full"
-            :errors="quoteForm.errors.brief_details"
+            :error="quoteForm.errors.brief_details"
           />
         </label>
       </div>
