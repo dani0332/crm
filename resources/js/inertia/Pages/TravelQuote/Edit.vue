@@ -89,7 +89,7 @@ function onSubmit(isValid) {
               :rules="[field.required === true ? rules.isRequired : false]"
               :disabled="field.disabled"
               class="w-full"
-              :errors="quoteForm.errors[index]"
+              :error="quoteForm.errors[index]"
               maxlength="255"
             />
           </label>
@@ -108,7 +108,7 @@ function onSubmit(isValid) {
               ]"
               :disabled="field.disabled"
               class="w-full"
-              :errors="quoteForm.errors[index]"
+              :error="quoteForm.errors[index]"
               maxlength="255"
             />
           </label>
@@ -123,7 +123,7 @@ function onSubmit(isValid) {
               v-model="quoteForm[index]"
               :disabled="field.disabled"
               class="w-full"
-              :errors="quoteForm.errors[index]"
+              :error="quoteForm.errors[index]"
               maxlength="20"
             />
           </label>
@@ -168,7 +168,7 @@ function onSubmit(isValid) {
               :rules="[field.required === true ? rules.isRequired : false]"
               :disabled="field.disabled"
               class="w-full"
-              :errors="quoteForm.errors[index]"
+              :error="quoteForm.errors[index]"
               maxlength="1000"
             />
           </label>

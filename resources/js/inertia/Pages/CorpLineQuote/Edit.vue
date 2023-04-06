@@ -1,7 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
+import { computed, ref } from "vue";
+import { Head, router, useForm, Link } from "@inertiajs/vue3";
+import ComboBox from "@/inertia/Components/ComboBox.vue";
 
 const props = defineProps({
   quote: Object,
@@ -24,7 +24,7 @@ const quoteForm = useForm({
   brief_details: props.quote.brief_details,
 });
 
-const { isRequired, isNumber, isDecimal, isEmail  } = useRules();
+const { isRequired, isNumber, isDecimal, isEmail } = useRules();
 
 const isEmptyField = ref(false);
 
@@ -32,10 +32,10 @@ const isEmptyField = ref(false);
 
 const businessInsuranceTypeOptions = computed(() => {
   return Object.keys(props.dropdownSource.business_type_of_insurance_id).map(
-    status => ({
+    (status) => ({
       value: props.dropdownSource.business_type_of_insurance_id[status].id,
       label: props.dropdownSource.business_type_of_insurance_id[status].text,
-    }),
+    })
   );
 });
 
@@ -43,16 +43,16 @@ const businessInsuranceTypeOptions = computed(() => {
 
 const genderOptions = [
   {
-    value: 'Male',
-    label: 'Male',
+    value: "Male",
+    label: "Male",
   },
   {
-    value: 'FS',
-    label: 'Female-Single',
+    value: "FS",
+    label: "Female-Single",
   },
   {
-    value: 'FM',
-    label: 'Female-Married',
+    value: "FM",
+    label: "Female-Married",
   },
 ];
 
@@ -241,12 +241,7 @@ function onSubmit(isValid) {
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
-        <x-button
-          size="md"
-          color="emerald"
-          type="submit"
-          :loading="quoteForm.processing"
-        >
+        <x-button size="md" color="emerald" type="submit" :loading="quoteForm.processing">
           Update
         </x-button>
       </div>
