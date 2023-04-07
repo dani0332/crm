@@ -1,9 +1,4 @@
 <script setup>
-import { computed, ref, reactive, onMounted } from 'vue';
-import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
-import { useDateFormat, useClipboard } from '@vueuse/core';
-import { useNotifications } from '@indielayer/ui';
-import axios from 'axios';
 
 defineProps({
   quote: Object,
