@@ -287,6 +287,11 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
                 </ul>
+                @endif 
+                @if (true)
+                <ul class="nav side-menu">
+                    <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
+                </ul>
                 @endif
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
