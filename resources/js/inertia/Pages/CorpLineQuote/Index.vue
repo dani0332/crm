@@ -24,7 +24,7 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
+  created_at: '',
   created_at_end: '',
   quote_status_id: '',
   advisor_id: '',
@@ -226,8 +226,8 @@ onMounted(() => {
           placeholder="Search by Mobile Number"
         />
         <DatePicker
-          v-model="filters.created_at_start"
-          name="created_at_start"
+          v-model="filters.created_at"
+          name="created_at"
           label="Created Date Start"
         />
         <DatePicker

@@ -1,5 +1,4 @@
 <script setup>
-
 defineProps({
   quotes: Object,
   dropdownSource: Object,

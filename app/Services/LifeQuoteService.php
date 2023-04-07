@@ -190,7 +190,7 @@ class LifeQuoteService extends BaseService
         } else {
             $searchProperties = $model->searchProperties;
         }
-        if ($request->ajax()) {
+        // if ($request->ajax()) {
             if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
                     empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
                 $this->query->where('lqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
@@ -278,7 +278,7 @@ class LifeQuoteService extends BaseService
                     }
                 }
             }
-        }
+        // }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';

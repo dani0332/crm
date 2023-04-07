@@ -343,7 +343,7 @@ class BusinessQuoteService extends BaseService
         } else {
             $searchProperties = $model->searchProperties;
         }
-        if ($request->ajax()) {
+        // if ($request->ajax()) {
             if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
                     empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
                 $this->query->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
@@ -359,8 +359,8 @@ class BusinessQuoteService extends BaseService
                 $this->query->whereBetween(DB::raw('DATE(bqrd.next_followup_date)'), [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
-                $dateFrom = $this->parseDate($request['created_at'], true);
-                $dateTo = $this->parseDate($request['created_at_end'], true);
+                $dateFrom = $request['created_at'];
+                $dateTo = $request['created_at_end'];
                 $this->query->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
             }
             if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
@@ -427,7 +427,7 @@ class BusinessQuoteService extends BaseService
                     }
                 }
             }
-        }
+        // }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
