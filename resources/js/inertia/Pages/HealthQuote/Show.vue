@@ -316,10 +316,10 @@ const memberDetailsTable = reactive({
       text: 'Emirate of Visa',
       value: 'emirate',
     },
-    {
-      text: 'Relationship',
-      value: 'member_category_id',
-    },
+    // {
+    //   text: 'Relationship',
+    //   value: 'member_category_id',
+    // },
     {
       text: 'Action',
       value: 'action',
@@ -1350,14 +1350,14 @@ onMounted(() => {
               :hasError="memberFieldReq.dob"
             />
 
-            <x-select
+            <!-- <x-select
               v-model="memberForm.member_category_id"
               label="Relationship"
               :options="memberCategoriesOptions"
               :rules="[isRequired]"
               placeholder="Select Relationship"
               class="w-full"
-            />
+            /> -->
 
             <x-select
               v-model="memberForm.salary_band_id"
@@ -1612,14 +1612,14 @@ onMounted(() => {
           <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
-          <x-button-group v-if="selectedPlans.length > 0" size="sm">
+          <!-- <x-button-group v-if="selectedPlans.length > 0" size="sm">
             <x-button @click.prevent="onTogglePlans" :loading="toggleLoader">
               Show
             </x-button>
             <x-button @click.prevent="onTogglePlans" :loading="toggleLoader">
               Hide
             </x-button>
-          </x-button-group>
+          </x-button-group> -->
 
           <x-button
             v-if="selectedPlans.length > 0"
@@ -1893,6 +1893,7 @@ onMounted(() => {
               :rules="[isRequired]"
               class="w-full"
               withTime
+              :timezone="'UTC'"
             />
           </div>
 
