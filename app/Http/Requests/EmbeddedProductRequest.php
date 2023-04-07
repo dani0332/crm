@@ -13,7 +13,7 @@ class EmbeddedProductRequest extends FormRequest
      */
     public function authorize()
     {
-        return false;
+        return true;
     }
 
     /**
@@ -24,7 +24,20 @@ class EmbeddedProductRequest extends FormRequest
     public function rules()
     {
         return [
-            //
+            'company_name' => 'required',
+            'product_name' => 'required',
+            'short_code' => 'required',
+            'display_name' => 'required',
+            'product_type' => 'required',
+            'pricing' => 'required',
+            'placement' => 'required',
+            'description' => 'required',
+            'description2' => 'required',
+            'commission_type' => 'required',
+            'commission_value' => 'required',
+            'email_template_id' => 'required',
+            'company_documents' => 'required',
+          
         ];
     }
 }
