@@ -1,8 +1,5 @@
 <script setup>
-import axios from 'axios';
-import { useNotifications } from '@indielayer/ui';
-import { computed, ref, reactive, onMounted } from 'vue';
-import { useDateFormat, useClipboard } from '@vueuse/core';
+
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 

@@ -1,8 +1,4 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-import { useDateFormat } from '@vueuse/shared';
 
 defineProps({
   model: String,

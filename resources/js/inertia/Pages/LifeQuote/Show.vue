@@ -1,8 +1,5 @@
 <script setup>
 
-import { useNotifications } from '@indielayer/ui';
-import { computed, ref, reactive, onMounted } from 'vue';
-import { useDateFormat} from '@vueuse/core';
 
 defineProps({
   quote: Object,
