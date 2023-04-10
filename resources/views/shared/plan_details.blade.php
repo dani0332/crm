@@ -851,7 +851,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 	<div class="col-md-12 col-sm-12 admin-detail">
 		<div class="x_panel" style="border: none">
 			<div class="x_title" style="text-align: center;">
-				<div class="h5">{{ ucwords($listQuotePlanName) }}</div>
+				<div class="h5">{{ isset($listQuotePlanName) ? ucwords($listQuotePlanName) : '' }}</div>
 				<div class="clearfix"></div>
 			</div>
 			<div class="x_content">

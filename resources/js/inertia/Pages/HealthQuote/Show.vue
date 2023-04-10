@@ -316,10 +316,10 @@ const memberDetailsTable = reactive({
       text: 'Emirate of Visa',
       value: 'emirate',
     },
-    // {
-    //   text: 'Relationship',
-    //   value: 'member_category_id',
-    // },
+    {
+      text: 'Member Category',
+      value: 'member_category_id',
+    },
     {
       text: 'Action',
       value: 'action',
@@ -445,7 +445,7 @@ const plansTable = reactive({
     },
     {
       text: 'Network Provider',
-      value: 'planCode',
+      value: 'eligibilityName',
     },
     {
       text: 'Base Premium',
@@ -1350,14 +1350,14 @@ onMounted(() => {
               :hasError="memberFieldReq.dob"
             />
 
-            <!-- <x-select
+            <x-select
               v-model="memberForm.member_category_id"
-              label="Relationship"
+              label="Member Category"
               :options="memberCategoriesOptions"
               :rules="[isRequired]"
-              placeholder="Select Relationship"
+              placeholder="Select Member Category"
               class="w-full"
-            /> -->
+            />
 
             <x-select
               v-model="memberForm.salary_band_id"

@@ -282,7 +282,7 @@
                                                     @if($property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE && $record->$property)
                                                         readonly="readonly" style="background-color: #e9ecef !important;pointer-events: none;"
                                                     @endif
-                                                @endif >
+                                                @endif @if($property == DatabaseColumnsString::DATE_OF_BIRTH) readonly="readonly" @endif>
                                             @if ($errors->has($property))
                                                 <span class="text-danger">{{ $errors->first($property) }}</span>
                                             @endif
