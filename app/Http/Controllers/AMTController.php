@@ -92,7 +92,7 @@ class AMTController extends Controller
                 'bqr.previous_quote_policy_premium',
                 'bqr.customer_id',
                 'bqr.parent_duplicate_quote_id'
-            )->orderBy('bqr.advisor_id', 'asc');
+            )->orderBy('bqr.created_at', 'desc');
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $data->where('bqr.advisor_id', Auth::user()->id);	// fetch leads assigned to the user
@@ -117,8 +117,8 @@ class AMTController extends Controller
             $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
         }
         if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
-            $dateFrom = $this->parseDate($request['created_at_start'], true);
-            $dateTo = $this->parseDate($request['created_at_end'], false);
+            $dateFrom = $request['created_at_start'];
+            $dateTo = $request['created_at_end'];
             $data->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
         }
         if (isset($request->last_name) && $request->last_name != '') {
@@ -264,7 +264,9 @@ class AMTController extends Controller
             $assignedUserName = $assignedUser->name;
         }
 
-        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
+        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB(quoteTypeCode::GroupMedical, $record->code);
+        $isDuplicateAllowed = in_array(quoteTypeCode::GroupMedical, $allowedDuplicateLOB) ? true : false;
+
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
@@ -292,6 +294,7 @@ class AMTController extends Controller
             'selectedLostReasonId' => $selectedLostReasonId,
             'quoteType' => $quoteType,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
+            'isDuplicateAllowed' => $isDuplicateAllowed,
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'quoteTypeId' => $quoteTypeId,
             'tiers' => $tiers,

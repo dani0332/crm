@@ -137,7 +137,7 @@ class DashboardController extends Controller
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $tiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
-            $records->whereIn('users.id', function ($query) use($request)  {
+            $records->whereIn('users.id', function ($query) use ($request) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -148,7 +148,7 @@ class DashboardController extends Controller
         } else {
             $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
             if (count($commonTeams) > 0) {
-                $records->whereIn('users.id', function ($query) use($commonTeams)  {
+                $records->whereIn('users.id', function ($query) use ($commonTeams) {
                     $query->distinct()
                         ->select('users.id')
                         ->from('users')
@@ -226,7 +226,7 @@ class DashboardController extends Controller
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
-            $records->whereIn('users.id', function ($query) use($request)  {
+            $records->whereIn('users.id', function ($query) use ($request) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -237,7 +237,7 @@ class DashboardController extends Controller
         } else {
             $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
             if (count($commonTeams) > 0) {
-                $records->whereIn('users.id', function ($query) use($commonTeams)  {
+                $records->whereIn('users.id', function ($query) use ($commonTeams) {
                     $query->distinct()
                         ->select('users.id')
                         ->from('users')
