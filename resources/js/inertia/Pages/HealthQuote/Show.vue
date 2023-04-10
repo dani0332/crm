@@ -445,7 +445,7 @@ const plansTable = reactive({
     },
     {
       text: 'Network Provider',
-      value: 'planCode',
+      value: 'eligibilityName',
     },
     {
       text: 'Base Premium',

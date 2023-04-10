@@ -137,7 +137,7 @@ const onMemberUpdate = member => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Network Provider</dt>
-              <dd>{{ props.plan.planCode }}</dd>
+              <dd>{{ props.plan.eligibilityName }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Base Premium</dt>
