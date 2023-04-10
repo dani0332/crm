@@ -71,7 +71,8 @@ RUN useradd -u 1000 -ms /bin/bash -g www www
 RUN doppler configure set token ${IMCRM_TOKEN}
 
 RUN \
-  curl -L https://download.newrelic.com/php_agent/release/newrelic-php5-10.8.0.323-linux.tar.gz | tar -C /tmp -zx && \
+  wget -P /tmp -r -nd --no-parent -A 'newrelic-php5-*-linux.tar.gz' https://download.newrelic.com/php_agent/release/ && \
+  cd /tmp/ && tar -zxvf newrelic-php5-*-linux.tar.gz && cd .. && \
   export NR_INSTALL_USE_CP_NOT_LN=1 && \
   export NR_INSTALL_SILENT=1 && \
   /tmp/newrelic-php5-*/newrelic-install install && \
