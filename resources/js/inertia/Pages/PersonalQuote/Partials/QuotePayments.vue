@@ -184,7 +184,7 @@ const generateCCLink = async payment => {
 
     const response = await axios.post('/generate-payment-link', {
       quoteId: page.props.quote.id,
-      modelType: 'personal',
+      modelType: page.props.quoteType,
       paymentCode: payment.code,
       isInertia: true,
     });

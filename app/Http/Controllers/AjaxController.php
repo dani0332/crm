@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
@@ -118,22 +120,22 @@ class AjaxController extends Controller
             return response()->json(['success' => true, 'payment_link' => $payment->payment_link]);
         } else {
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
 
-            $description = (get_class($quoteModel) == PersonalQuote::class) ? $payment->personalPlan->text : $quoteModel->plan->text;
+            $description = (get_class($quoteModel) == PersonalQuote::class) ? $payment->personalPlan->text : ($quoteModel->plan->text ?? "");
 
-            $tokenRequest = NetworkPaymentService::sendNetworkTokenRequest();
-            if ($tokenRequest->getStatusCode() == 200) {
-                $getContents = $tokenRequest->getBody();
-                $decodedContent = json_decode($getContents);
-                $token = $decodedContent->access_token;
-                $invoiceRequestData = [
+            $paymentLink = config('constants.MANUAL_PAYMENT_LINK');
+            $paymentParams = [
+                'code' => $payment->code,
+                'quoteTypeId' => $quoteTypeId
+            ];
+            $paymentLinkURL = $paymentLink . "?" . http_build_query($paymentParams);
+
+            $invoiceRequestData = [
                     'firstName' => $quoteModel->first_name,
                     'lastName' => $quoteModel->last_name,
                     'email' => $quoteModel->email,
                     'emailSubject' => 'Payment Request',
-                    'invoiceExpiryDate' => now()->addDays(3)->format('Y-m-d'),
-                    'transactionType' => 'AUTH',
-                    'paymentAttempts' => 3,
                     'items' => [
                         [
                             'description' => $description,
@@ -150,23 +152,9 @@ class AjaxController extends Controller
                     ],
                     'merchantOrderReference' => strtoupper($payment->code),
                 ];
-                info('Request object for '.$quoteModel->uuid.' is '.json_encode($invoiceRequestData));
-                $invoiceRequest = NetworkPaymentService::sendNetworkInvoiceRequest($invoiceRequestData, $token);
-                if ($invoiceRequest->getStatusCode() == 201) {
-                    $invoiceResponse = $invoiceRequest->getBody();
-                    $parsedInvoiceResponse = json_decode($invoiceResponse);
-                    $paymentLink = $parsedInvoiceResponse->_links->payment->href;
-                    $payment->payment_link = $paymentLink;
-                    $payment->payment_link_created_at = now();
-                    $payment->save();
 
-                    return response()->json(['success' => true, 'payment_link' => $paymentLink]);
-                } else {
-                    return response()->json(['success' => false, 'message' => 'Something went wrong', 'exception' => $invoiceRequest->getBody(), 'status_code' => $invoiceRequest->getStatusCode()]);
-                }
-            } else {
-                return 'API failed';
-            }
+            info('Request object for '.$quoteModel->uuid.' is '.json_encode($invoiceRequestData));
+            return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
     }
 }

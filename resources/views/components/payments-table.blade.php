@@ -146,7 +146,7 @@ use App\Enums\PaymentStatusEnum;
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
                                         @if($payment->paymentMethod->code == 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID &&
-                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && 
+                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
                                         ! auth()->user()->hasRole(RolesEnum::PA))
                                             <button
                                             data-modelType="{{$modeltype}}"
@@ -155,7 +155,7 @@ use App\Enums\PaymentStatusEnum;
                                             class="btn btn-sm btn-success generateCCLink" style="float: left;">Copy Link</button>
                                         @endif
                                         @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
-                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && 
+                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
                                         ! auth()->user()->hasRole(RolesEnum::PA))
                                          @can(PermissionsEnum::PaymentsEdit)
                                             <button class="btn btn-primary btn-sm edit-payment-btn" data-code="{{$payment->code}}"
@@ -169,7 +169,7 @@ use App\Enums\PaymentStatusEnum;
                                         @endif
                                     @endcannot
                                     @can(PermissionsEnum::ApprovePayments)
-                                        @if( $payment->paymentMethod->code != 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED && 
+                                        @if( $payment->paymentMethod->code != 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED &&
                                         ! auth()->user()->hasRole(RolesEnum::PA))
                                             <button class="btn btn-success btn-sm" id="approve-paymnet-btn" data-code="{{$payment->code}}"
                                                 data-reference="{{$payment->reference}}"
