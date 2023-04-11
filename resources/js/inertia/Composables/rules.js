@@ -56,6 +56,10 @@ export const useRules = () => {
     return true;
   };
 
+  const isDecimal = v => /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal';
+  const emptyOrDecimal = v =>
+    !v || /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal';
+
   return {
     isEmail,
     isMobile,
@@ -65,5 +69,7 @@ export const useRules = () => {
     policy_start_date,
     renewal_expiry_date,
     premium,
+    isDecimal,
+    emptyOrDecimal,
   };
 };

@@ -1,9 +1,4 @@
 <script setup>
-import { reactive } from 'vue';
-import { Head, usePage, Link } from '@inertiajs/vue3';
-import { useDateFormat } from '@vueuse/shared';
-import axios from 'axios';
-
 const page = usePage();
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
