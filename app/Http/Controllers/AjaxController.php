@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
@@ -13,7 +12,6 @@ use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Services\HealthQuoteService;
-use App\Services\NetworkPaymentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -122,38 +120,39 @@ class AjaxController extends Controller
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
 
-            $description = (get_class($quoteModel) == PersonalQuote::class) ? $payment->personalPlan->text : ($quoteModel->plan->text ?? "");
+            $description = (get_class($quoteModel) == PersonalQuote::class) ? $payment->personalPlan->text : ($quoteModel->plan->text ?? '');
 
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
             $paymentParams = [
                 'code' => $payment->code,
-                'quoteTypeId' => $quoteTypeId
+                'quoteTypeId' => $quoteTypeId,
             ];
-            $paymentLinkURL = $paymentLink . "?" . http_build_query($paymentParams);
+            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
 
             $invoiceRequestData = [
-                    'firstName' => $quoteModel->first_name,
-                    'lastName' => $quoteModel->last_name,
-                    'email' => $quoteModel->email,
-                    'emailSubject' => 'Payment Request',
-                    'items' => [
-                        [
-                            'description' => $description,
-                            'totalPrice' => [
-                                'currencyCode' => 'AED',
-                                'value' => ceil($payment->captured_amount * 100),
-                            ],
-                            'quantity' => 1,
+                'firstName' => $quoteModel->first_name,
+                'lastName' => $quoteModel->last_name,
+                'email' => $quoteModel->email,
+                'emailSubject' => 'Payment Request',
+                'items' => [
+                    [
+                        'description' => $description,
+                        'totalPrice' => [
+                            'currencyCode' => 'AED',
+                            'value' => ceil($payment->captured_amount * 100),
                         ],
+                        'quantity' => 1,
                     ],
-                    'total' => [
-                        'currencyCode' => 'AED',
-                        'value' => ceil($payment->captured_amount * 100),
-                    ],
-                    'merchantOrderReference' => strtoupper($payment->code),
-                ];
+                ],
+                'total' => [
+                    'currencyCode' => 'AED',
+                    'value' => ceil($payment->captured_amount * 100),
+                ],
+                'merchantOrderReference' => strtoupper($payment->code),
+            ];
 
             info('Request object for '.$quoteModel->uuid.' is '.json_encode($invoiceRequestData));
+
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
     }
