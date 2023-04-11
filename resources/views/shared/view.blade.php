@@ -439,6 +439,22 @@
                     });
             }
         }
+        $(document).on("click", ".const-create-car-lead", function(e){
+            e.preventDefault();
+            $('#createCarLeadModal').modal('show');
+            $('.const-car-lead-cnfrm-btn').on('click', function (e) {
+                var confirm = $("input[name='reason-manual-lead']:checked").attr('data-confirmation');
+                if(confirm)
+                {
+                    $(".const-lead-err-msg").addClass('d-none');
+                    window.location.href = "{{ url('quotes/' . strtolower($model->modelType) . '/create') }}";
+                    $('#createCarLeadModal').modal('hide');
+                }else{
+                    $(".const-lead-err-msg").removeClass('d-none');
+                }
+            });
+        });
+
         window.onload = function() {
             window.localStorage.clear();
         }
@@ -485,7 +501,11 @@
                             @if (strtolower($model->modelType) != strtolower(quoteTypeCode::Business))
                                 @can(strtolower($model->modelType) . '-quotes-create')
                                     <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
-                                            class="btn btn-warning btn-sm">Create
+                                           @class(['btn', 'btn-warning', 'btn-sm',
+                                                'const-create-car-lead' => collect([ strtolower(quoteTypeCode::Car)])
+                                                ->contains(strtolower($model->modelType))
+                                           ])
+                                            >Create
                                             {{ str_contains(strtolower($model->modelType), 'team')
                                                 ? 'Team'
                                                 : (str_contains(strtolower($model->modelType), 'leadstatus')
@@ -717,11 +737,15 @@
                             <tbody>
                             </tbody>
                         </table>
-
                     </div>
                 </div>
             </div>
         </div>
     </div>
     </div>
+
+    @if(collect([ strtolower(quoteTypeCode::Car)])->contains(strtolower($model->modelType)))
+        @include('components.car-create-lead-modal')
+    @endif
+
 @endsection
