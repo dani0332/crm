@@ -25,7 +25,7 @@ steps:
 #  name: privkey
 #  displayName: 'Download cert file'
 #  inputs:
-#    secureFile: 'imcrm_privkey.pem'    
+#    secureFile: 'imcrm_privkey.pem'
 #- script: |
 #    cp $(fullchain.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
 #    cp $(privkey.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
@@ -33,7 +33,7 @@ steps:
 #  name: env
 #  displayName: 'Download env file'
 #  inputs:
-#    secureFile: '.env.crmprod'
+#    secureFile: '.env-old.crmprod'
 #- script: cp $(env.secureFilePath) $(System.DefaultWorkingDirectory)/
 
 - publish: '$(System.DefaultWorkingDirectory)'

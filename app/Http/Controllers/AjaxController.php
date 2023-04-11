@@ -124,7 +124,7 @@ class AjaxController extends Controller
 
             $description = (get_class($quoteModel) == PersonalQuote::class) ? $payment->personalPlan->text : ($quoteModel->plan->text ?? "");
 
-            $paymentLink = config('constants.MANUAL_PAYMENT_LINK');
+            $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
             $paymentParams = [
                 'code' => $payment->code,
                 'quoteTypeId' => $quoteTypeId
