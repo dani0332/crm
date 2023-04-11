@@ -1,8 +1,5 @@
 <script setup>
 
-import { useNotifications } from '@indielayer/ui';
-import { computed, ref, reactive, onMounted } from 'vue';
-import { useDateFormat} from '@vueuse/core';
 
 defineProps({
   quote: Object,
@@ -264,7 +261,7 @@ const activityForm = useForm({
   entityId: page.props.quote.id,
   modelType: 'Life',
   parentType: 'Life',
-  quoteType: 3,
+  quoteType: 4,
   title: null,
   description: null,
   due_date: null,

@@ -1,17 +1,17 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
 
 defineProps({
   quotes: Object,
-  dropdownSource: Array,
+  dropdownSource: Object,
+  session: Object,
 });
 
 const page = usePage();
 
+const notification = useNotifications('toast');
+const { isRequired } = useRules();
 
-const selectedItems = ref([])
+const quotesSelected = ref([]);
 
 const loader = reactive({
   table: false,
@@ -24,7 +24,7 @@ const filters = reactive({
   last_name: '',
   email: '',
   mobile_no: '',
-  created_at_start: '',
+  created_at: '',
   created_at_end: '',
   quote_status_id: '',
   advisor_id: '',
@@ -108,6 +108,42 @@ function filterQuotes(isValid) {
   });
 }
 
+const assignForm = useForm({
+  assigned_to_id_new: null,
+  modelType: 'business',
+  selectTmLeadId: '',
+});
+
+function onAssignLead(isValid) {
+  if (isValid) {
+    const selected = quotesSelected.value.map(e => e.id);
+
+    assignForm
+      .transform(data => ({
+        ...data,
+        selectTmLeadId: `${selected}`,
+      }))
+      .post('/quotes/business/manualLeadAssign', {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: res => {
+          displayNotification();
+        },
+      });
+  }
+}
+
+function displayNotification() {
+  const session = usePage().props.flash;
+  for (const key in session) {
+    notification[key]({
+      title: session[key],
+      position: 'top',
+      timeout: 0,
+    });
+  }
+}
+
 function setQueryFilters() {
   let query = router.page.url.split('?')[1];
   if (query) {
@@ -138,7 +174,7 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
-      <Link href="/quotes/business/cards">
+        <Link href="/quotes/business/cards">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
         <Link href="/quotes/business/create">
@@ -190,8 +226,8 @@ onMounted(() => {
           placeholder="Search by Mobile Number"
         />
         <DatePicker
-          v-model="filters.created_at_start"
-          name="created_at_start"
+          v-model="filters.created_at"
+          name="created_at"
           label="Created Date Start"
         />
         <DatePicker
@@ -231,9 +267,34 @@ onMounted(() => {
     </x-form>
 
     <Transition name="fade">
-      <div v-if="selectedItems.length > 0" class="mb-4">
+      <div v-if="quotesSelected.length > 0" class="mb-4">
+        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
+          <x-form @submit="onAssignLead" :auto-focus="false">
+            <div class="w-full flex flex-col md:flex-row gap-4">
+              <x-select
+                v-model="assignForm.assigned_to_id_new"
+                label="Assign Advisor"
+                :options="advisorOptions"
+                placeholder="Select Advisor"
+                class="flex-1 w-auto"
+                :rules="[isRequired]"
+              />
+              <div class="mb-3 md:pt-6">
+                <x-button
+                  color="orange"
+                  size="sm"
+                  type="submit"
+                  :loading="assignForm.processing"
+                >
+                  Assign
+                </x-button>
+              </div>
+            </div>
+          </x-form>
+        </div>
+
         <ExportExcel
-          :data="selectedItems"
+          :data="quotesSelected"
           :columns="tableHeader"
           :filename="'Business-List'"
           :sheetname="'Leads'"
@@ -241,7 +302,7 @@ onMounted(() => {
           <x-button size="sm" color="emerald">
             Export -
             <span class="lining-nums">
-              Selected: {{ selectedItems.length }}
+              Selected: {{ quotesSelected.length }}
             </span>
           </x-button>
         </ExportExcel>
@@ -249,7 +310,7 @@ onMounted(() => {
     </Transition>
 
     <DataTable
-      v-model:items-selected="selectedItems"
+      v-model:items-selected="quotesSelected"
       :loading="loader.table"
       :headers="tableHeader"
       :items="quotes.data || []"
