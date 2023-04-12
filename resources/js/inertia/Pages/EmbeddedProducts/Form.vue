@@ -13,8 +13,9 @@ const embeddedProductsForm = useForm({
   short_code: props.embeddedProduct?.short_code || '',
   display_name: props.embeddedProduct?.display_name || '',
   product_type: props.embeddedProduct?.product_type || '',
-  pricing: props.embeddedProduct?.pricing || '',
-  placement: props.embeddedProduct?.placement || '',
+  price: [],
+  quote_type_ids: [],
+  positions: [],
   logic: props.embeddedProduct?.logic || '',
   description: props.embeddedProduct?.description || '',
   description2: props.embeddedProduct?.description2 || '',
@@ -39,10 +40,66 @@ const quoteTypesOptions = computed(() => {
     label: method.text,
   }));
 });
+let lobCounter = ref(0);
+let positionCounter = ref(0);
+let priceCounter = ref(0);
 
+let pricingData = reactive([
+  {
+    id: 'price0',
+    label: 'Price',
+    value: '',
+  },
+]);
+
+let data = reactive([
+  {
+    lob: {
+      id: 'lob0',
+      label: 'Lob',
+      value: '',
+    },
+    position: {
+      id: 'pos0',
+      label: 'Position',
+      value: '',
+    },
+  },
+]);
+
+let positionOptions = reactive([
+  { value: 'frontline', label: 'FrontLine' },
+  { value: 'checkout', label: 'Checkout' },
+]);
+
+function adNewPrice() {
+  pricingData.push({
+    id: `price${++priceCounter.value}`,
+    label: 'Price',
+    value: '',
+  });
+}
+function deletePrice(index) {
+  if (index) {
+    this.pricingData.splice(index, 1);
+  }
+}
+function addNewLobAndPostion() {
+  let newObj = {
+    lob: {
+      id: `lob${++lobCounter.value}`,
+      label: 'Lob',
+      value: '',
+    },
+    position: {
+      id: `position${++positionCounter.value}`,
+      label: 'Position',
+      value: '',
+    },
+  };
+  data.push(newObj);
+}
 function onSubmit(isValid) {
-  console.log(embeddedProductsForm);
-
   if (isValid) {
     let method = 'post';
     let url = `/embedded-products/`;
@@ -152,26 +209,6 @@ function onSubmit(isValid) {
           class="w-full"
           :error="embeddedProductsForm.errors.logic"
         />
-        <!-- placement code -->
-        <x-select
-          v-model="embeddedProductsForm.quote_type_id"
-          label="Lob*"
-          :rules="[isRequired]"
-          placeholder="Lob"
-          :options="quoteTypesOptions"
-          class="w-full"
-        /> 
-        <x-select
-          v-model="embeddedProductsForm.postion"
-          label="Position*"
-          :rules="[isRequired]"
-          placeholder="position"
-          :options="[
-            { value: 'frontline', label: 'FrontLine' },
-            { value: 'checkout', label: 'Checkout' },
-          ]"
-          class="w-full"
-        />
         <x-select
           v-model="embeddedProductsForm.product_type"
           label="Product Type*"
@@ -183,27 +220,6 @@ function onSubmit(isValid) {
           ]"
           class="w-full"
         />
-
-        <!-- <x-select
-          v-model="embeddedProductsForm.pricing"
-          label="Pricing*"
-          :rules="[isRequired]"
-          placeholder="Pricing"
-          :options="[
-            { value: 'single', label: 'Single' },
-            { value: 'multiple', label: 'Multiple' },
-          ]"
-          class="w-full"
-        /> -->
-
-        <!-- <x-input
-          v-model="embeddedProductsForm.placement"
-          type="text"
-          label="Placement*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="embeddedProductsForm.errors.placement"
-        /> -->
         <x-textarea
           v-model="embeddedProductsForm.description"
           label="Description 1*"
@@ -269,6 +285,61 @@ function onSubmit(isValid) {
           class="w-full"
           :error="embeddedProductsForm.errors.removal_confirmation"
         />
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-semibold text-primary-800">Placement</h3>
+        <div class="flex justify-end gap-3 mb-1">
+          <x-button @click="addNewLobAndPostion" size="md" color="emerald">
+            add new
+          </x-button>
+        </div>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+
+      <div class="text-sm">
+        <div v-for="(input, index) in data" :key="index">
+          <div class="grid sm:grid-cols-2 gap-4">
+            <x-select
+              v-model="embeddedProductsForm.quote_type_ids[index]"
+              :label="input.lob.label"
+              :options="quoteTypesOptions"
+              class="w-full"
+            />
+          </div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <x-select
+              v-model="embeddedProductsForm.positions[index]"
+              :label="input.position.label"
+              :options="positionOptions"
+              class="w-full"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-semibold text-primary-800">Pricing</h3>
+        <div class="flex justify-end gap-3 mb-1">
+          <x-button @click="adNewPrice" size="md" color="emerald">
+            add new
+          </x-button>
+        </div>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+
+      <div class="text-sm">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div v-for="(input, index) in pricingData" :key="index">
+            <x-input
+              v-model="embeddedProductsForm.price[index]"
+              type="number"
+              :label="input.label"
+              class="w-full"
+            />
+            <x-button @click="deletePrice(index)">delete</x-button>
+          </div>
+        </dl>
       </div>
 
       <x-divider class="my-4" />

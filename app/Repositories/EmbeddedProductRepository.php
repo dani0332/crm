@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\EmbeddedProduct;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class EmbeddedProductRepository extends BaseRepository
 {
@@ -24,6 +25,28 @@ class EmbeddedProductRepository extends BaseRepository
             'quoteTypes' => QuoteTypeRepository::getList(),
         ];
     }
+
+     /**
+     * @param $quoteType
+     * @return mixed
+     */
+    public function fetchCreate($data)
+    {
+        
+        return DB::transaction(function () use ( $data) {
+            $product = $this->create($data);
+          
+            foreach($data['quote_type_ids'] as $key=>$value){
+                $placementData[$key]['quote_type_id']=$value;
+            }  foreach($data['positions'] as $key=>$value){
+                $placementData[$key]['position']=$value;
+            }
+            $product->embeddedProductPlacement()->createMany($placementData);
+
+            return $product;
+        });
+    }
+
     /**
      * @return mixed
      */
