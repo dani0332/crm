@@ -40,6 +40,7 @@ defineProps({
 const page = usePage();
 
 const notification = useNotifications('toast');
+const hasRole = role => useHasRole(role);
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
 
@@ -1036,7 +1037,10 @@ onMounted(() => {
 
     <x-divider class="my-4" />
 
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/50">
+    <div
+      v-if="!hasRole($page.props.rolesEnum.HealthAdvisor)"
+      class="p-4 rounded shadow mb-6 bg-primary-50/50"
+    >
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2 flex gap-2 items-end">
           <x-select
@@ -1057,7 +1061,10 @@ onMounted(() => {
             </x-button>
           </div>
         </div>
-        <div class="w-full md:w-1/2 flex gap-2 items-end">
+        <div
+          v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
+          class="w-full md:w-1/2 flex gap-2 items-end"
+        >
           <x-select
             v-model="assignLead"
             label="Assign Lead"
