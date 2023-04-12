@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
@@ -61,6 +62,7 @@ use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\JetskiQuoteController;
@@ -107,11 +109,21 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
         Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport'])->name('advisor-performance-report-view');
 
-        Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
-        Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
-        Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
-        Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
-        Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
+        if (in_array(quoteTypeCode::Pet, newUi())) {
+            Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
+        }
+        if (in_array(quoteTypeCode::Bike, newUi())) {
+            Route::resource('personal-quotes/bike', BikeQuoteController::class)->names(generateRouteNames('bike-quotes'));
+        }
+        if (in_array(quoteTypeCode::Cycle, newUi())) {
+            Route::resource('personal-quotes/cycle', CycleQuoteController::class)->names(generateRouteNames('cycle-quotes'));
+        }
+        if (in_array(quoteTypeCode::Yacht, newUi())) {
+            Route::resource('personal-quotes/yacht', YachtQuoteController::class)->names(generateRouteNames('yacht-quotes'));
+        }
+        if (in_array(quoteTypeCode::Jetski, newUi())) {
+            Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
+        }
     });
 
     Route::get('/clear-cache', function () {
@@ -235,11 +247,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
-        // Route::resource('business', CRUDController::class);
-        Route::get('business/cards', [BusinessQuoteController::class, 'cardsView']);
-        Route::resource('business', BusinessQuoteController::class);
+        Route::resource('business', CRUDController::class);
+        if (in_array(quoteTypeCode::Business, newUi())) {
+            Route::get('business/cards', [BusinessQuoteController::class, 'cardsView']);
+            Route::resource('business', BusinessQuoteController::class);
+        }
         Route::resource('travel', CRUDController::class);
-        Route::resource('pet', CRUDController::class);
+        if (!in_array(quoteTypeCode::Pet, newUi())) {
+            Route::resource('pet', CRUDController::class);
+        }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
@@ -270,12 +286,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
 
-        Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('trave.cards');
-        Route::resource('travel', TravelController::class);
-        Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
+        if (in_array(quoteTypeCode::Travel, newUi()) || in_array(quoteTypeCode::Life, newUi())) {
+            Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('trave.cards');
+            Route::resource('travel', TravelController::class);
+            Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
-        Route::get('life-cards', [LifeController::class, 'cardsView'])->name('life.cards');
-        Route::resource('life', LifeController::class);
+            Route::get('life-cards', [LifeController::class, 'cardsView'])->name('life.cards');
+            Route::resource('life', LifeController::class);
+        }
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
@@ -354,8 +372,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'medical'], function () {
-        Route::get('amt/cards', [AMTController::class, 'cardsView']);
-        Route::resource('amt', AMTController::class);
+        if (in_array('Business', newUi())) {
+            Route::get('amt/cards', [V2AmtController::class, 'cardsView']);
+            Route::resource('amt', V2AmtController::class);
+        } else {
+            Route::resource('amt', AMTController::class);
+        }
     });
 
     Route::group(['prefix' => 'discount'], function () {
