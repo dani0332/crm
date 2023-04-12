@@ -2,63 +2,81 @@
 const notification = useNotifications('toast');
 
 const props = defineProps({
-  embeddedProducts: { type: Object, default: null },
+  embeddedProduct: Object,
+  insuranceProviders: Object,
 });
-
+const page = usePage();
 const embeddedProductsForm = useForm({
-  company_name: props.embeddedProducts?.first_name || '',
-  product_name: props.embeddedProducts?.last_name || '',
-  short_code: props.embeddedProducts?.last_name || '',
-  display_name: props.embeddedProducts?.last_name || '',
-  product_type: props.embeddedProducts?.last_name || '',
-  pricing: props.embeddedProducts?.last_name || '',
-  placement: props.embeddedProducts?.last_name || '',
-  description: props.embeddedProducts?.last_name || '',
-  description2: props.embeddedProducts?.last_name || '',
-  commission_type: props.embeddedProducts?.last_name || '',
-  commission_value: props.embeddedProducts?.last_name || '',
-  email_template_id: props.embeddedProducts?.last_name || '',
-  company_documents: props.embeddedProducts?.last_name || '',
+  insurance_provider_id: props.embeddedProduct?.insurance_provider_id || '',
+  product_name: props.embeddedProduct?.product_name || '',
+  short_code: props.embeddedProduct?.short_code || '',
+  display_name: props.embeddedProduct?.display_name || '',
+  product_type: props.embeddedProduct?.product_type || '',
+  pricing: props.embeddedProduct?.pricing || '',
+  placement: props.embeddedProduct?.placement || '',
+  logic: props.embeddedProduct?.logic || '',
+  description: props.embeddedProduct?.description || '',
+  description2: props.embeddedProduct?.description2 || '',
+  commission_type: props.embeddedProduct?.commission_type || '',
+  commission_value: props.embeddedProduct?.commission_value || '',
+  email_template_id: props.embeddedProduct?.email_template_id || '',
+  company_documents: props.embeddedProduct?.company_documents || '',
+  removal_confirmation: props.embeddedProduct?.removal_confirmation || '',
 });
 
 const { isRequired } = useRules();
 
+const insuranceProviderOptions = computed(() => {
+  return page.props.insuranceProviders.map(method => ({
+    value: method.id,
+    label: method.text,
+  }));
+});
+
 function onSubmit(isValid) {
+  console.log(embeddedProductsForm);
+
   if (isValid) {
     let method = 'post';
-    let url = `/embedded-products`;
-    let title = 'Quote saved successfully';
+    let url = `/embedded-products/`;
+    let title = 'Product saved successfully';
     let redirectUrl = '/embedded-products';
-    if (props.quote) {
-      //   method = 'put';
-      //   url = url + props.quote.uuid;
-      //   title = 'Quote updated successfully';
-      //   redirectUrl = `/personal-quotes/cycle/${props.quote?.uuid}`;
+    if (props.embeddedProduct) {
+      method = 'put';
+      url = url + props.embeddedProduct.id;
+      title = 'Product updated successfully';
+      redirectUrl = `/embedded-products/${props.embeddedProduct?.id}`;
     }
 
-    embeddedProductsForm.submit(method, url, {
-      onError: errors => {
-        console.log(quoteForm.setError(errors));
-      },
+    embeddedProductsForm
+      .transform(data => ({
+        ...data,
+        short_code: data.short_code.toUpperCase(),
+      }))
+      .submit(method, url, {
+        onError: errors => {
+          console.log(errors);
+          console.log(embeddedProductsForm.setError(errors));
+        },
 
-      onSuccess: () => {
-        notification.success({
-          title: title,
-          position: 'top',
-        });
+        onSuccess: () => {
+          notification.success({
+            title: title,
+            position: 'top',
+          });
 
-        setTimeout(function () {
-          router.get(redirectUrl);
-        }, 500);
-      },
-    });
+          setTimeout(function () {
+            router.get(redirectUrl);
+          }, 500);
+        },
+      });
   }
 }
 </script>
 
 <template>
   <div>
-    <Head title="Embedded products" />
+    <Head title="Embedded Products" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
         Embedded products <span v-if="quote">{{ quote?.uuid }}</span>
@@ -77,20 +95,18 @@ function onSubmit(isValid) {
         color="error"
         class="mb-5"
         v-if="embeddedProductsForm.errors.error"
-        >{{ embeddedProductsForm?.errors?.error }}</x-alert
       >
+        {{ embeddedProductsForm?.errors?.error }}
+      </x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-input
-          v-model="embeddedProductsForm.company_name"
-          type="text"
+        <x-select
+          v-model="embeddedProductsForm.insurance_provider_id"
           label="Company Name*"
-          maxLength="255"
+          :options="insuranceProviderOptions"
           :rules="[isRequired]"
           class="w-full"
-          :error="embeddedProductsForm.errors.company_name"
         />
-
         <x-input
           v-model="embeddedProductsForm.product_name"
           type="text"
@@ -107,8 +123,9 @@ function onSubmit(isValid) {
           maxLength="3"
           label="Shortcode*"
           :rules="[isRequired]"
-          class="w-full"
+          class="w-full uppercase"
           :error="embeddedProductsForm.errors.short_code"
+          v-uppercase
         />
         <x-input
           v-model="embeddedProductsForm.display_name"
@@ -118,6 +135,15 @@ function onSubmit(isValid) {
           :rules="[isRequired]"
           class="w-full"
           :error="embeddedProductsForm.errors.display_name"
+        />
+        <x-input
+          v-model="embeddedProductsForm.logic"
+          type="text"
+          label="Logic*"
+          maxLength="100"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="embeddedProductsForm.errors.logic"
         />
         <x-select
           v-model="embeddedProductsForm.product_type"
@@ -131,7 +157,7 @@ function onSubmit(isValid) {
           class="w-full"
         />
 
-        <x-select
+        <!-- <x-select
           v-model="embeddedProductsForm.pricing"
           label="Pricing*"
           :rules="[isRequired]"
@@ -141,44 +167,39 @@ function onSubmit(isValid) {
             { value: 'multiple', label: 'Multiple' },
           ]"
           class="w-full"
-        />
-        <!-- <x-input
-          v-if="embeddedProductsForm.pricing == 'multiple'"
-          label="TransApp Code"
-          placeholder="TransApp Code is required"
-          class="w-full"
         /> -->
-        <x-input
+
+        <!-- <x-input
           v-model="embeddedProductsForm.placement"
           type="text"
           label="Placement*"
           :rules="[isRequired]"
           class="w-full"
           :error="embeddedProductsForm.errors.placement"
-        />
-        <x-input
+        /> -->
+        <x-textarea
           v-model="embeddedProductsForm.description"
-          type="text"
           label="Description 1*"
-          :rules="[isRequired]"
+          :adjust-to-text="false"
           class="w-full"
-          :error="embeddedProductsForm.errors.description"
         />
-        <x-input
+
+        <x-textarea
           v-model="embeddedProductsForm.description2"
-          type="text"
           label="Description 2*"
-          :rules="[isRequired]"
+          :adjust-to-text="false"
           class="w-full"
-          :error="embeddedProductsForm.errors.description2"
         />
-        <x-input
+        <x-select
           v-model="embeddedProductsForm.commission_type"
-          type="text"
           label="Commission type*"
           :rules="[isRequired]"
+          placeholder="Commission type"
+          :options="[
+            { value: '1', label: 'Flat Amount' },
+            { value: '2', label: '% Value' },
+          ]"
           class="w-full"
-          :error="embeddedProductsForm.errors.commission_type"
         />
         <x-input
           v-model="embeddedProductsForm.commission_value"
@@ -194,9 +215,9 @@ function onSubmit(isValid) {
           :rules="[isRequired]"
           placeholder="Email Templates"
           :options="[
-            { value: 1, label: 'Generic templates' },
-            { value: 2, label: 'Specific templates' },
-            { value: 3, label: 'OCB' },
+            { value: '1', label: 'Generic templates' },
+            { value: '2', label: 'Specific templates' },
+            { value: '3', label: 'OCB' },
           ]"
           class="w-full"
         />
@@ -207,10 +228,19 @@ function onSubmit(isValid) {
           :rules="[isRequired]"
           placeholder="Company Documents"
           :options="[
-            { value: 1, label: 'Certificate template' },
-            { value: 2, label: 'policy Wordings' },
+            { value: '1', label: 'Certificate template' },
+            { value: '2', label: 'policy Wordings' },
           ]"
           class="w-full"
+        />
+
+        <x-input
+          v-model="embeddedProductsForm.removal_confirmation"
+          type="text"
+          label="Removal Confirmation*"
+          :rules="[isRequired]"
+          class="w-full"
+          :error="embeddedProductsForm.errors.removal_confirmation"
         />
       </div>
 

@@ -13,22 +13,58 @@ class EmbeddedProductController extends Controller
      */
     public function index()
     {
-        return inertia('EmbeddedProducts/Index');
+        $data = EmbeddedProductRepository::getData();
+
+        return inertia('EmbeddedProducts/Index', [
+            'embeddedProducts' => $data,
+        ]);
     }
-       /**
+
+    /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function create()
     {
+        $data = EmbeddedProductRepository::getFormOptions();
 
-        return inertia('EmbeddedProducts/Form');
+        return inertia('EmbeddedProducts/Form', $data);
     }
+
+    /**
+     * @param $quoteTypeCode
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(EmbeddedProductRequest $request)
     {
-        dd('m here');
         EmbeddedProductRepository::create($request->validated());
 
         return back()->with('message', 'Embedded Product created successfully');
+    }
+
+    /**
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function edit($id)
+    {
+        $embeddedProduct = EmbeddedProductRepository::getBy('id', $id);
+        $data = EmbeddedProductRepository::getFormOptions();
+
+        return inertia('EmbeddedProducts/Form', array_merge($data, [
+            'embeddedProduct' => $embeddedProduct,
+        ]));
+    }
+
+    /**
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function show($id)
+    {
+        $data = EmbeddedProductRepository::getBy('id', $id);
+
+        return inertia('EmbeddedProducts/Show', [
+            'embeddedProduct' => $data,
+
+        ]);
     }
 
     public function update($id, EmbeddedProductRequest $request)

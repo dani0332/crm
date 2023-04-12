@@ -15,21 +15,21 @@ class CreateEmbeddedProductsTable extends Migration
     {
         Schema::create('embedded_products', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('embedded_productable_id')->nullable();
-            $table->string('embedded_productable_type', '255')->nullable();
+            $table->integer('insurance_provider_id')->nullable();
+            $table->foreign('insurance_provider_id')->references('id')->on('insurance_provider');
             $table->string('company_name', '255')->nullable();
             $table->string('product_name', '255')->nullable();
             $table->string('short_code', '50')->nullable();
             $table->string('display_name', '255')->nullable();
             $table->string('product_type', '255')->nullable();
-            $table->string('pricing', '255')->nullable();
-            $table->string('placement', '255')->nullable();
-            $table->text('description')->nullable();
-            $table->text('description2')->nullable();
+            $table->string('logic', '255')->nullable();
+            $table->string('description', '255')->nullable();
+            $table->string('description2', '255')->nullable();
             $table->string('commission_type', 100)->nullable();
             $table->string('commission_value', 100)->nullable();
             $table->string('email_template_id', 50)->nullable();
             $table->text('company_documents')->nullable();
+            $table->text('removal_confirmation')->nullable();
             $table->timestamps();
         });
     }
