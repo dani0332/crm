@@ -36,7 +36,7 @@ trait TmLeadTrait
 
     public function getYearsOfDriving()
     {
-        return  UAELicenseHeldFor::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        return UAELicenseHeldFor::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
     }
 
     public function getCarMakes()

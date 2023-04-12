@@ -45,7 +45,7 @@ class IntroEmailJob implements ShouldQueue
         if (! $this->quoteType || ! $this->emailTemplateId) {
             return false;
         }
-        switch($this->quoteType) {
+        switch ($this->quoteType) {
             case quoteTypeCode::Car:
                 $sendEmailCustomerService->sendLMSIntroEmail($this->emailTemplateId, $this->emailData, 'send-lms-intro-email');
                 break;

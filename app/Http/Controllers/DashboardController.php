@@ -176,7 +176,7 @@ class DashboardController extends Controller
 
     private function applyFilter($query, $column, $value, $searchType)
     {
-        switch($searchType) {
+        switch ($searchType) {
             case IMCRMSearchTypesEnum::EQUAL_SEARCH :
                 $query = $query->where($column, $value);
                 break;
