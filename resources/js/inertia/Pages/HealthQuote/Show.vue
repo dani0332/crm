@@ -779,6 +779,13 @@ const onAdditionalContactSubmit = isValid => {
     }))
     .post(`/customer-additional-contact/add`, {
       preserveScroll: true,
+      onError: errors => {
+        console.log(errors);
+        notification.error({
+          title: errors.error || 'Data not saved',
+          position: 'top',
+        });
+      },
       onSuccess: () => {
         notification.success({
           title: 'Additional Contact Added',
@@ -1249,7 +1256,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
-            <dd>{{ quote.previous_policy_expiry_date }}</dd>
+            <dd>{{ dateFormat(quote.previous_policy_expiry_date) }}</dd>
           </div>
         </dl>
       </div>
