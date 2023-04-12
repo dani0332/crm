@@ -27,7 +27,7 @@ if (! function_exists('generate_code')) {
 
 if (! function_exists('vAbort')) {
     /**
-     * abort script execution and return errors in validation format with http status 422
+     * abort script execution and return errors in validation format with http status 422.
      *
      * @param $messages message string or array of messages
      *
@@ -55,7 +55,7 @@ if (! function_exists('generateUuid')) {
 
 if (! function_exists('storageUrl')) {
     /**
-     * get azure storage url
+     * get azure storage url.
      *
      * @return string
      */
@@ -341,7 +341,7 @@ function get_dob_date_format()
 }
 
 /**
- * Add search clause to any model's built-in query
+ * Add search clause to any model's built-in query.
  */
 function addSearchClauses($model, $request, $query, $searchPrefix)
 {
@@ -375,7 +375,7 @@ function addSearchClauses($model, $request, $query, $searchPrefix)
 }
 
 /**
- * Add orderBy clause to any model's built-in query
+ * Add orderBy clause to any model's built-in query.
  */
 function addOrderByClauses($request, $query, $searchPrefix)
 {
@@ -416,6 +416,8 @@ if (! function_exists('newUi')) {
     {
         return [
             quoteTypeCode::Health,
+            quoteTypeCode::Travel,
+            quoteTypeCode::Home,
         ];
     }
 }
