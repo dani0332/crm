@@ -43,7 +43,7 @@ const format = date => {
   const hour = date.getHours();
   const minute = date.getMinutes();
 
-  if(props.withTime) return `${year}-${month}-${day} ${hour}:${minute}`;
+  if (props.withTime) return `${year}-${month}-${day} ${hour}:${minute}`;
 
   return `${year}-${month}-${day}`;
 };
@@ -68,6 +68,7 @@ const selectedData = computed({
     :month-change-on-scroll="false"
     :clearable="false"
     :disabled="props.disabled"
+    utc="preserve"
   >
     <template #dp-input="{ value, onClear }">
       <x-input
