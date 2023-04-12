@@ -1,10 +1,10 @@
 <?php
 
-use Carbon\Carbon;
-use App\Enums\quoteTypeCode;
-use Illuminate\Support\Facades\DB;
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\quoteTypeCode;
 use App\Models\CustomerAdditionalInfo;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 if (! function_exists('generate_code')) {
     /**
@@ -411,11 +411,11 @@ function generateRouteNames($prefix)
     ];
 }
 
-if (!function_exists('newUi')) {
+if (! function_exists('newUi')) {
     function newUi(): array
     {
         return [
-            quoteTypeCode::Health
+            quoteTypeCode::Health,
         ];
     }
 }
