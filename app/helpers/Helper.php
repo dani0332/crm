@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\quoteTypeCode;
 use App\Models\CustomerAdditionalInfo;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -408,4 +409,13 @@ function generateRouteNames($prefix)
         'update' => $prefix.'-update',
         'destroy' => $prefix.'-delete',
     ];
+}
+
+if (! function_exists('newUi')) {
+    function newUi(): array
+    {
+        return [
+            quoteTypeCode::Health,
+        ];
+    }
 }
