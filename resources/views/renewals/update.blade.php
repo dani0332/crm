@@ -52,23 +52,22 @@
                                     <span class="text-danger">{{ $errors->first('file_name') }}</span>
                                 @endif
                             </div>
-                            {{--<div class="col">
-                                <span class="col-form-label col-md-6 col-sm-6">Import Code <span class="required">*</span></span>
-                                <select class="form-control" id="renewal_import_code" name="renewal_import_code" data-toggle="tooltip" data-placement="top" title="Please select import code">
-                                        <option value="">Select</option>
-                                        @foreach($renewalsUploads as $renewalsUpload)
-                                            @if (old('renewal_import_code') == $renewalsUpload->renewal_import_code)
-                                                <option value="{{ $renewalsUpload->renewal_import_code }}" selected>{{ $renewalsUpload->renewal_import_code }}</option>
-                                            @else
-                                                <option value="{{ $renewalsUpload->renewal_import_code }}">{{ $renewalsUpload->renewal_import_code }} ({{ $renewalsUpload->created_at }})</option>
-                                            @endif
-                                        @endforeach
-                                </select>
-                                @if ($errors->has('renewal_import_code'))
-                                    <span class="text-danger">{{ $errors->first('renewal_import_code') }}</span>
-                                @endif
-                            </div>--}}
                         </div>
+
+                        <div class="item form-group">
+                            <div class="col-lg-6 offset-lg-3">
+                                <div class="col">
+                                    <span class="col-form-label col-md-6 col-sm-6">Skip Plans <span class="required">*</span></span>
+                                    <select class="form-control" id="skip_plans" name="skip_plans" data-toggle="tooltip" data-placement="top" required>
+                                        <option value="0" selected="selected">No</option>
+                                        <option value="1">Yes</option>
+                                    </select><br/>
+                                    <span class="text-sm"><strong>Skip Plans - No</strong> - Plans will be fetched/refreshed during fetch plans process.</span><br/>
+                                    <span class="text-sm"><strong>Skip Plans - Yes</strong> - <span class="text-danger">Plans will be not be refreshed during fetch plans process. make sure plans are already fetched for the batch being uploaded.</span></span>
+                                </div>
+                            </div>
+                        </div>
+
 
                         <div class="item form-group">
 
