@@ -780,7 +780,6 @@ const onAdditionalContactSubmit = isValid => {
     .post(`/customer-additional-contact/add`, {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
         notification.error({
           title: errors.error || 'Data not saved',
           position: 'top',
