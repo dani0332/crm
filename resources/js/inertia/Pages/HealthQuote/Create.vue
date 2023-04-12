@@ -33,7 +33,6 @@ const quoteForm = useForm({
   member_category_id: null,
   gender: null,
   currently_insured_with_id: null,
-  policy_start_date: null,
   is_ebp_renewal: null,
   is_ecommerce: null,
   has_dental: null,
@@ -110,12 +109,10 @@ function onSubmit(isValid) {
           :error="quoteForm.errors.mobile_no"
         />
 
-        <x-input
+        <DatePicker
           v-model="quoteForm.dob"
-          type="date"
           label="DATE OF BIRTH"
           :rules="[isRequired]"
-          class="w-full"
         />
 
         <x-input
@@ -249,13 +246,6 @@ function onSubmit(isValid) {
           v-model="quoteForm.gender"
           label="GENDER"
           :options="genderSelect"
-          class="w-full"
-        />
-
-        <x-input
-          v-model="quoteForm.policy_start_date"
-          type="text"
-          label="POLICY START DATE"
           class="w-full"
         />
 
