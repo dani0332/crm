@@ -1,8 +1,5 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from "vue";
-import { Head, router, usePage, Link, useForm } from "@inertiajs/vue3";
-import { useNotifications } from "@indielayer/ui";
-import { useCan } from '../../Composables/can';
+import { useNotifications } from '@indielayer/ui';
 
 defineProps({
   quotes: Object,
@@ -11,7 +8,7 @@ defineProps({
 });
 
 const page = usePage();
-const notification = useNotifications("toast");
+const notification = useNotifications('toast');
 
 const loader = reactive({
   table: false,
@@ -22,70 +19,70 @@ const quotesSelected = ref([]);
 const assignForm = useForm({
   assign_team: null,
   assigned_to_id_new: null,
-  assignment_type: "1",
-  modelType: "Health",
-  selectTmLeadId: "",
+  assignment_type: '1',
+  modelType: 'Health',
+  selectTmLeadId: '',
   isManagerOrDeputy: 1,
   isLeadPool: null,
   isManualAllocationAllowed: 1,
 });
 
 const tableHeader = [
-  { text: "CDB ID", value: "code" },
-  { text: "FIRST NAME", value: "first_name" },
-  { text: "LAST NAME", value: "last_name" },
-  { text: "LEAD STATUS", value: "quote_status_id_text" },
-  { text: "ADVISOR", value: "advisor_id_text" },
-  { text: "WC ADVISOR", value: "wcu_id_text" },
-  { text: "CREATED DATE", value: "created_at" },
-  { text: "LAST MODIFIED DATE", value: "updated_at" },
-  { text: "HEALTH TEAM TYPE", value: "health_team_type" },
-  { text: "TRANSAPP CODE", value: "transapp_code" },
-  { text: "LOST REASON", value: "lost_reason" },
-  { text: "PREMIUM", value: "premium" },
-  { text: "POLICY NUMBER", value: "policy_number" },
-  { text: "SOURCE", value: "source" },
-  { text: "LEAD TYPE", value: "lead_type_id_text" },
-  { text: "SALARY BAND", value: "salary_band_id_text" },
-  { text: "MEMBER CATEGORY", value: "member_category_id_text" },
-  { text: "CURRENTLY INSURED WITH", value: "currently_insured_with_id_text" },
-  { text: "IS ECOMMERCE", value: "is_ecommerce" },
+  { text: 'CDB ID', value: 'code' },
+  { text: 'FIRST NAME', value: 'first_name' },
+  { text: 'LAST NAME', value: 'last_name' },
+  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'WC ADVISOR', value: 'wcu_id_text' },
+  { text: 'CREATED DATE', value: 'created_at' },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  { text: 'HEALTH TEAM TYPE', value: 'health_team_type' },
+  { text: 'TRANSAPP CODE', value: 'transapp_code' },
+  { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'PREMIUM', value: 'premium' },
+  { text: 'POLICY NUMBER', value: 'policy_number' },
+  { text: 'SOURCE', value: 'source' },
+  { text: 'LEAD TYPE', value: 'lead_type_id_text' },
+  { text: 'SALARY BAND', value: 'salary_band_id_text' },
+  { text: 'MEMBER CATEGORY', value: 'member_category_id_text' },
+  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_id_text' },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
 const filters = reactive({
-  code: "",
-  first_name: "",
-  last_name: "",
-  email: "",
-  mobile_no: "",
-  created_at_start: "",
-  created_at_end: "",
-  sub_team: "",
+  code: '',
+  first_name: '',
+  last_name: '',
+  email: '',
+  mobile_no: '',
+  created_at_start: '',
+  created_at_end: '',
+  sub_team: '',
   quote_status: [],
   advisors: [],
-  is_ecommerce: "",
-  is_renewal: "",
+  is_ecommerce: '',
+  is_renewal: '',
   page: 1,
 });
 
 const subTeamOptions = [
-  { value: "", label: "All" },
-  { value: "RM-NB", label: "RM-NB" },
-  { value: "RM-Speed", label: "RM-Speed" },
-  { value: "EBP", label: "EBP" },
-  { value: "Wow-Call", label: "Wow-Call" },
-  { value: "No-Type", label: "No-Type" },
+  { value: '', label: 'All' },
+  { value: 'RM-NB', label: 'RM-NB' },
+  { value: 'RM-Speed', label: 'RM-Speed' },
+  { value: 'EBP', label: 'EBP' },
+  { value: 'Wow-Call', label: 'Wow-Call' },
+  { value: 'No-Type', label: 'No-Type' },
 ];
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses.map((status) => ({
+  return page.props.leadStatuses.map(status => ({
     value: status.id,
     label: status.text,
   }));
 });
 
 const advisorOptions = computed(() => {
-  return page.props.advisors.map((advisor) => ({
+  return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.name,
   }));
@@ -95,10 +92,12 @@ function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
     Object.keys(filters).forEach(
-      (key) => (filters[key] === "" || filters[key].length === 0) && delete filters[key]
+      key =>
+        (filters[key] === '' || filters[key].length === 0) &&
+        delete filters[key],
     );
-    router.visit("/quotes/health", {
-      method: "get",
+    router.visit('/quotes/health', {
+      method: 'get',
       data: filters,
       preserveState: true,
       preserveScroll: true,
@@ -106,13 +105,13 @@ function onSubmit(isValid) {
       onFinish: () => (loader.table = false),
     });
   } else {
-    console.log("Invalid");
+    console.log('Invalid');
   }
 }
 
 function onReset() {
-  router.visit("/quotes/health", {
-    method: "get",
+  router.visit('/quotes/health', {
+    method: 'get',
     data: { page: 1 },
     preserveScroll: true,
     onBefore: () => (loader.table = true),
@@ -121,25 +120,25 @@ function onReset() {
 }
 
 const rules = {
-  isRequired: (v) => !!v || "Please select this option",
+  isRequired: v => !!v || 'Please select this option',
 };
 
 function onAssignLead(isValid) {
   if (isValid) {
-    const selected = quotesSelected.value.map((e) => e.id);
+    const selected = quotesSelected.value.map(e => e.id);
     assignForm
-      .transform((data) => ({
+      .transform(data => ({
         ...data,
         selectTmLeadId: `${selected}`,
       }))
-      .post("/quotes/health/manualLeadAssign", {
+      .post('/quotes/health/manualLeadAssign', {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
           quotesSelected.value = [];
           notification.success({
-            title: "Health Leads Assigned",
-            position: "top",
+            title: 'Health Leads Assigned',
+            position: 'top',
           });
         },
       });
@@ -150,43 +149,45 @@ function setQueryStringFilters() {
   let queryString = window.location.search;
   let urlParams = new URLSearchParams(queryString);
 
-  if (urlParams.has("code")) {
-    filters.code = urlParams.get("code");
+  if (urlParams.has('code')) {
+    filters.code = urlParams.get('code');
   }
-  if (urlParams.has("first_name")) {
-    filters.first_name = urlParams.get("first_name");
+  if (urlParams.has('first_name')) {
+    filters.first_name = urlParams.get('first_name');
   }
-  if (urlParams.has("last_name")) {
-    filters.last_name = urlParams.get("last_name");
+  if (urlParams.has('last_name')) {
+    filters.last_name = urlParams.get('last_name');
   }
-  if (urlParams.has("email")) {
-    filters.email = urlParams.get("email");
+  if (urlParams.has('email')) {
+    filters.email = urlParams.get('email');
   }
-  if (urlParams.has("mobile_no")) {
-    filters.mobile_no = urlParams.get("mobile_no");
+  if (urlParams.has('mobile_no')) {
+    filters.mobile_no = urlParams.get('mobile_no');
   }
-  if (urlParams.has("created_at_start")) {
-    filters.created_at_start = urlParams.get("created_at_start");
+  if (urlParams.has('created_at_start')) {
+    filters.created_at_start = urlParams.get('created_at_start');
   }
-  if (urlParams.has("created_at_end")) {
-    filters.created_at_end = urlParams.get("created_at_end");
+  if (urlParams.has('created_at_end')) {
+    filters.created_at_end = urlParams.get('created_at_end');
   }
-  if (urlParams.has("sub_team")) {
-    filters.sub_team = urlParams.get("sub_team");
+  if (urlParams.has('sub_team')) {
+    filters.sub_team = urlParams.get('sub_team');
   }
-  if (urlParams.has("quote_status[]")) {
+  if (urlParams.has('quote_status[]')) {
     filters.quote_status = urlParams
-      .getAll("quote_status[]")
-      .map((status) => parseInt(status));
+      .getAll('quote_status[]')
+      .map(status => parseInt(status));
   }
-  if (urlParams.has("advisors[]")) {
-    filters.advisors = urlParams.getAll("advisors[]").map((status) => parseInt(status));
+  if (urlParams.has('advisors[]')) {
+    filters.advisors = urlParams
+      .getAll('advisors[]')
+      .map(status => parseInt(status));
   }
-  if (urlParams.has("is_renewal")) {
-    filters.is_renewal = urlParams.get("is_renewal");
+  if (urlParams.has('is_renewal')) {
+    filters.is_renewal = urlParams.get('is_renewal');
   }
-  if (urlParams.has("is_ecommerce")) {
-    filters.is_ecommerce = urlParams.get("is_ecommerce");
+  if (urlParams.has('is_ecommerce')) {
+    filters.is_ecommerce = urlParams.get('is_ecommerce');
   }
 }
 
@@ -309,7 +310,9 @@ onMounted(() => {
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset"> Reset </x-button>
+        <x-button size="sm" color="primary" @click.prevent="onReset">
+          Reset
+        </x-button>
       </div>
     </x-form>
     <Transition name="fade">
@@ -339,17 +342,7 @@ onMounted(() => {
                 class="flex-1 w-auto"
                 :rules="[rules.isRequired]"
               />
-              <x-select
-                v-model="assignForm.assignment_type"
-                label="Assignment Type"
-                :options="[
-                  { value: '1', label: 'Without Email' },
-                  { value: '2', label: 'With Email' },
-                ]"
-                placeholder="Select Type"
-                class="flex-1 w-auto"
-                :rules="[rules.isRequired]"
-              />
+
               <div class="mb-3 md:pt-6">
                 <x-button
                   color="orange"
@@ -372,7 +365,9 @@ onMounted(() => {
         >
           <x-button size="sm" color="emerald">
             Export -
-            <span class="lining-nums"> Selected: {{ quotesSelected.length }} </span>
+            <span class="lining-nums">
+              Selected: {{ quotesSelected.length }}
+            </span>
           </x-button>
         </ExportExcel>
       </div>
@@ -389,14 +384,17 @@ onMounted(() => {
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <Link :href="`/quotes/health/${uuid}`" class="text-primary-500 hover:underline">
+        <Link
+          :href="`/quotes/health/${uuid}`"
+          class="text-primary-500 hover:underline"
+        >
           {{ code }}
         </Link>
       </template>
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
-            {{ is_ecommerce ? "Yes" : "No" }}
+            {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
       </template>
