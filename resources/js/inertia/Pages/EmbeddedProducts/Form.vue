@@ -4,6 +4,7 @@ const notification = useNotifications('toast');
 const props = defineProps({
   embeddedProduct: Object,
   insuranceProviders: Object,
+  quoteTypes: Object,
 });
 const page = usePage();
 const embeddedProductsForm = useForm({
@@ -28,6 +29,12 @@ const { isRequired } = useRules();
 
 const insuranceProviderOptions = computed(() => {
   return page.props.insuranceProviders.map(method => ({
+    value: method.id,
+    label: method.text,
+  }));
+});
+const quoteTypesOptions = computed(() => {
+  return page.props.quoteTypes.map(method => ({
     value: method.id,
     label: method.text,
   }));
@@ -144,6 +151,26 @@ function onSubmit(isValid) {
           :rules="[isRequired]"
           class="w-full"
           :error="embeddedProductsForm.errors.logic"
+        />
+        <!-- placement code -->
+        <x-select
+          v-model="embeddedProductsForm.quote_type_id"
+          label="Lob*"
+          :rules="[isRequired]"
+          placeholder="Lob"
+          :options="quoteTypesOptions"
+          class="w-full"
+        /> 
+        <x-select
+          v-model="embeddedProductsForm.postion"
+          label="Position*"
+          :rules="[isRequired]"
+          placeholder="position"
+          :options="[
+            { value: 'frontline', label: 'FrontLine' },
+            { value: 'checkout', label: 'Checkout' },
+          ]"
+          class="w-full"
         />
         <x-select
           v-model="embeddedProductsForm.product_type"

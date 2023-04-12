@@ -12,6 +12,10 @@ class QuoteType extends Model
 
     protected $table = 'quote_type';
 
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
