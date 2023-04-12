@@ -255,7 +255,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('business', BusinessQuoteController::class);
         }
         Route::resource('travel', CRUDController::class);
-        if (!in_array(quoteTypeCode::Pet, newUi())) {
+        if (! in_array(quoteTypeCode::Pet, newUi())) {
             Route::resource('pet', CRUDController::class);
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
