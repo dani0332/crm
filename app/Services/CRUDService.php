@@ -252,7 +252,7 @@ class CRUDService extends BaseService
             SyncSIBContactJob::dispatch($entity);
         }
 
-        //Disabling Cammy flow
+        //Disabling - Enable for RM Deployment
         // if (
         //     strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
         //     && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
