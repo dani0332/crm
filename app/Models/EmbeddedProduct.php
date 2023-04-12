@@ -12,4 +12,13 @@ class EmbeddedProduct extends Model
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');
     }
+
+    public function embeddedProductPlacement()
+    {
+        return $this->hasMany(EmbeddedProductPlacement::class);
+    } 
+    public function embeddedProductPrice()
+    {
+        return $this->hasMany(EmbeddedProductPricing::class);
+    }
 }
