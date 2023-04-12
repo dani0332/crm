@@ -23,21 +23,25 @@ class EmbeddedProductRequest extends FormRequest
      */
     public function rules()
     {
+        $id = request()->route()->parameter('embedded_product');
+
         return [
-            'company_name' => 'required',
+            'insurance_provider_id' => 'required|int|exists:insurance_provider,id',
             'product_name' => 'required',
-            'short_code' => 'required',
+            'short_code' => 'required|max:3|unique:embedded_products,short_code,'.$id,
             'display_name' => 'required',
             'product_type' => 'required',
-            'pricing' => 'required',
-            'placement' => 'required',
+            'logic' => 'required',
+            // 'pricing' => 'required',
+            // 'placement' => 'required',
             'description' => 'required',
             'description2' => 'required',
             'commission_type' => 'required',
             'commission_value' => 'required',
             'email_template_id' => 'required',
             'company_documents' => 'required',
-          
+            'removal_confirmation' => 'required',
+
         ];
     }
 }
