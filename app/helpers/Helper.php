@@ -418,6 +418,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Health,
             quoteTypeCode::Travel,
             quoteTypeCode::Home,
+            quoteTypeCode::Life,
         ];
     }
 }
