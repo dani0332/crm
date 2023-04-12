@@ -126,12 +126,16 @@ const rules = {
 function onAssignLead(isValid) {
   if (isValid) {
     const selected = quotesSelected.value.map(e => e.id);
+    const url =
+      assignForm.assign_team === 'Wow-Call'
+        ? '/quotes/wcuAssign'
+        : '/quotes/health/manualLeadAssign';
     assignForm
       .transform(data => ({
         ...data,
         selectTmLeadId: `${selected}`,
       }))
-      .post('/quotes/health/manualLeadAssign', {
+      .post(url, {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
@@ -324,10 +328,10 @@ onMounted(() => {
                 v-model="assignForm.assign_team"
                 label="Assign Subteam"
                 :options="[
+                  { value: 'Wow-Call', label: 'Wow-Call' },
                   { value: 'RM-NB', label: 'RM-NB' },
                   { value: 'RM-Speed', label: 'RM-Speed' },
                   { value: 'EBP', label: 'EBP' },
-                  { value: 'Wow-Call', label: 'Wow-Call' },
                   { value: 'No-Type', label: 'No-Type' },
                 ]"
                 placeholder="Select Subteam"
