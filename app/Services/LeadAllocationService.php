@@ -170,7 +170,7 @@ class LeadAllocationService extends BaseService
                 if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
                     SyncSIBContactJob::dispatch($lead);
                 }
-                //Disabling Cammy Flow
+                //Disabling - Enable for RM Deployment
                 // if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
                 // && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
                 //     CammyJob::dispatch($lead, 'intro');
