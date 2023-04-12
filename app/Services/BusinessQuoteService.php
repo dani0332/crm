@@ -270,7 +270,7 @@ class BusinessQuoteService extends BaseService
             $entity = $this->createDetailEntity($id);
         }
 
-        return  $entity;
+        return $entity;
     }
 
     public function createDetailEntity($id)
