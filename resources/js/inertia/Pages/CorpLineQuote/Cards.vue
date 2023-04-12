@@ -1,8 +1,4 @@
 <script setup>
-import { reactive, onMounted } from 'vue';
-import { Head, usePage, Link } from '@inertiajs/vue3';
-import { useDateFormat } from '@vueuse/shared';
-import axios from 'axios';
 
 const page = usePage();
 const dateFormat = date => {

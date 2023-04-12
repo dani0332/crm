@@ -56,7 +56,21 @@ class HandleInertiaRequests extends Middleware
             'rolesEnum' => RolesEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
+            'flash' => fn () => $this->shareFlashData($request),
         ]);
+    }
+
+    protected function shareFlashData(Request $request)
+    {
+        $flash = [
+            'message' => $request->session()->get('message'),
+            'error' => $request->session()->get('error'),
+            'success' => $request->session()->get('success'),
+            'warning' => $request->session()->get('warning'),
+            'info' => $request->session()->get('info'),
+        ];
+
+        return array_filter($flash, fn ($value) => $value !== null);
     }
 
     protected function buildNavigation()

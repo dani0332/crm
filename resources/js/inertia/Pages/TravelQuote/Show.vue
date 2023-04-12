@@ -1,8 +1,5 @@
 <script setup>
-import axios from 'axios';
-import { useNotifications } from '@indielayer/ui';
-import { computed, ref, reactive, onMounted } from 'vue';
-import { useDateFormat, useClipboard } from '@vueuse/core';
+
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 
@@ -566,7 +563,7 @@ const activityForm = useForm({
   entityId: page.props.quote.id,
   modelType: 'Travel',
   parentType: 'Travel',
-  quoteType: 3,
+  quoteType: 8,
   title: null,
   description: null,
   due_date: '',

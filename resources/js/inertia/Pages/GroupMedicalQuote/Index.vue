@@ -1,7 +1,4 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
 
 defineProps({
   model: String,
@@ -12,8 +9,11 @@ defineProps({
 });
 
 const page = usePage();
+const notification = useNotifications('toast');
+const { isRequired } = useRules();
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
 
-const selectedItems = ref([]);
+const quotesSelected = ref([]);
 
 const loader = reactive({
   table: false,
@@ -92,6 +92,42 @@ function filterQuotes(isValid) {
       loader.table = true;
     },
   });
+}
+
+const assignForm = useForm({
+  assigned_to_id_new: null,
+  modelType: 'business',
+  selectTmLeadId: '',
+});
+
+function onAssignLead(isValid) {
+  if (isValid) {
+    const selected = quotesSelected.value.map(e => e.id);
+
+    assignForm
+      .transform(data => ({
+        ...data,
+        selectTmLeadId: `${selected}`,
+      }))
+      .post('/quotes/business/manualLeadAssign', {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          displayNotification();
+        },
+      });
+  }
+}
+
+function displayNotification() {
+  const session = usePage().props.flash;
+  for (const key in session) {
+    notification[key]({
+      title: session[key],
+      position: 'top',
+      timeout: 0,
+    });
+  }
 }
 
 function setQueryFilters() {
@@ -177,13 +213,11 @@ onMounted(() => {
           placeholder="Search by Mobile Number"
         />
         <DatePicker
-          :format="'d-m-Y'"
           v-model="filters.created_at_start"
           name="created_at_start"
           label="Created Date Start"
         />
         <DatePicker
-          :format="'d-m-Y'"
           v-model="filters.created_at_end"
           name="created_at_end"
           label="Created Date End"
@@ -213,9 +247,34 @@ onMounted(() => {
     </x-form>
 
     <Transition name="fade">
-      <div v-if="selectedItems.length > 0" class="mb-4">
+      <div v-if="quotesSelected.length > 0" class="mb-4">
+        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
+          <x-form @submit="onAssignLead" :auto-focus="false">
+            <div class="w-full flex flex-col md:flex-row gap-4">
+              <x-select
+                v-model="assignForm.assigned_to_id_new"
+                label="Assign Advisor"
+                :options="advisorOptions"
+                placeholder="Select Advisor"
+                class="flex-1 w-auto"
+                :rules="[isRequired]"
+              />
+              <div class="mb-3 md:pt-6">
+                <x-button
+                  color="orange"
+                  size="sm"
+                  type="submit"
+                  :loading="assignForm.processing"
+                >
+                  Assign
+                </x-button>
+              </div>
+            </div>
+          </x-form>
+        </div>
+
         <ExportExcel
-          :data="selectedItems"
+          :data="quotesSelected"
           :columns="tableHeader"
           :filename="'Business-List'"
           :sheetname="'Leads'"
@@ -223,7 +282,7 @@ onMounted(() => {
           <x-button size="sm" color="emerald">
             Export -
             <span class="lining-nums">
-              Selected: {{ selectedItems.length }}
+              Selected: {{ quotesSelected.length }}
             </span>
           </x-button>
         </ExportExcel>
@@ -231,7 +290,7 @@ onMounted(() => {
     </Transition>
 
     <DataTable
-      v-model:items-selected="selectedItems"
+      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
