@@ -13,4 +13,9 @@ class QuoteTypeRepository extends BaseRepository
     {
         return QuoteType::class;
     }
+
+    public function fetchGetList()
+    {
+        return $this->withActive()->orderBy('sort_order')->get();
+    }
 }

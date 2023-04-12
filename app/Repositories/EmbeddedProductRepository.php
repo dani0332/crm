@@ -21,6 +21,7 @@ class EmbeddedProductRepository extends BaseRepository
     {
         return [
             'insuranceProviders' => InsuranceProviderRepository::getList(),
+            'quoteTypes' => QuoteTypeRepository::getList(),
         ];
     }
     /**
