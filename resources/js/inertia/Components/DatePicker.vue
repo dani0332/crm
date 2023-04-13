@@ -6,8 +6,8 @@ const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps({
   label: {
-    required: true,
     type: String,
+    default: '',
   },
   modelValue: {
     type: [String, Date],
@@ -70,7 +70,8 @@ const selectedData = computed({
       />
       <div
         v-if="!props.disabled"
-        class="absolute right-2.5 top-[34px] hover:text-secondary-500"
+        :class="props.label == '' ? 'top-3' : 'top-[34px]'"
+        class="absolute right-2.5 hover:text-secondary-500"
       >
         <svg
           v-if="!value"
