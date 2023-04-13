@@ -16,7 +16,7 @@ class EmbeddedProduct extends Model
     public function embeddedProductPlacement()
     {
         return $this->hasMany(EmbeddedProductPlacement::class);
-    } 
+    }
     public function embeddedProductPrice()
     {
         return $this->hasMany(EmbeddedProductPricing::class);

@@ -13,7 +13,7 @@ class CreateEmbeddedProductsPricingTable extends Migration
      */
     public function up()
     {
-        Schema::create('embedded_product_pricing', function (Blueprint $table) {
+        Schema::create('embedded_product_pricings', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('embedded_product_id')->nullable();
             $table->foreign('embedded_product_id')->references('id')->on('embedded_products');
@@ -30,6 +30,6 @@ class CreateEmbeddedProductsPricingTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('embedded_product_pricing');
+        Schema::dropIfExists('embedded_product_pricings');
     }
 }
