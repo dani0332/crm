@@ -76,205 +76,212 @@ function onSubmit(isValid) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-input
-          v-model="quoteForm.first_name"
-          type="text"
-          label="FIRST NAME"
-          :rules="[isRequired]"
-          class="w-full"
-        />
-
-        <x-input
-          v-model="quoteForm.last_name"
-          type="text"
-          label="LAST NAME"
-          :rules="[isRequired]"
-          class="w-full"
-        />
-
-        <x-input
-          v-model="quoteForm.email"
-          type="email"
-          label="EMAIL"
-          :rules="[isRequired, isEmail]"
-          class="w-full"
-        />
-
-        <x-input
-          v-model="quoteForm.mobile_no"
-          type="tel"
-          label="MOBILE NUMBER"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.mobile_no"
-        />
-
-        <DatePicker
-          v-model="quoteForm.dob"
-          label="DATE OF BIRTH"
-          :rules="[isRequired]"
-        />
-
-        <x-input
-          v-model="quoteForm.premium"
-          type="text"
-          label="PREMIUM"
-          class="w-full"
-        />
-
-        <x-input
-          v-model="quoteForm.policy_number"
-          type="text"
-          label="POLICY NUMBER"
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.cover_for_id"
-          label="WHO WOULD YOU LIKE COVER FOR?"
-          :rules="[isRequired]"
-          :options="
-            dropdownSource.cover_for_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <x-input
-          v-model="quoteForm.preference"
-          type="text"
-          label="PREFERENCE"
-          class="w-full"
-        />
-
-        <x-input
-          v-model="quoteForm.details"
-          type="text"
-          label="DETAILS"
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.lead_type_id"
-          label="LEAD TYPE"
-          :options="
-            dropdownSource.lead_type_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.currently_insured_with_id"
-          label="CURRENTLY INSURED WITH"
-          :options="
-            dropdownSource.currently_insured_with_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.marital_status_id"
-          label="MARITAL STATUS"
-          :options="
-            dropdownSource.marital_status_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <ComboBox
-          v-model="quoteForm.nationality_id"
-          label="NATIONALITY"
-          :single="true"
-          :options="
-            dropdownSource.nationality_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          :hasError="isEmptyField"
-        />
-
-        <x-select
-          v-model="quoteForm.emirate_of_your_visa_id"
-          label="EMIRATE OF YOUR VISA"
-          :rules="[isRequired]"
-          :options="
-            dropdownSource.emirate_of_your_visa_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.member_category_id"
-          label="MEMBER CATEGORY"
-          :options="
-            dropdownSource.member_category_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.salary_band_id"
-          label="SALARY BAND"
-          :options="
-            dropdownSource.salary_band_id.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-        />
-
-        <x-select
-          v-model="quoteForm.gender"
-          label="GENDER"
-          :options="genderSelect"
-          class="w-full"
-        />
-
-        <div class="grid grid-cols-2 gap-2">
-          <x-checkbox
-            v-model="quoteForm.is_ebp_renewal"
-            label="IS EBP RENEWAL"
-            color="primary"
+        <x-field label="FIRST NAME" required>
+          <x-input
+            v-model="quoteForm.first_name"
+            :rules="[isRequired]"
             class="w-full"
           />
+        </x-field>
 
-          <x-checkbox
-            v-model="quoteForm.has_dental"
-            label="DENTAL"
-            color="primary"
+        <x-field label="LAST NAME" required>
+          <x-input
+            v-model="quoteForm.last_name"
+            :rules="[isRequired]"
+            class="w-full"
           />
+        </x-field>
 
-          <x-checkbox
-            v-model="quoteForm.has_worldwide_cover"
-            label="WORLDWIDE COVER"
-            color="primary"
+        <x-field label="EMAIL" required>
+          <x-input
+            v-model="quoteForm.email"
+            type="email"
+            :rules="[isRequired, isEmail]"
+            class="w-full"
           />
+        </x-field>
 
-          <x-checkbox
-            v-model="quoteForm.has_home"
-            label="HOME COUNTRY COVER"
-            color="primary"
+        <x-field label="MOBILE NUMBER" required>
+          <x-input
+            v-model="quoteForm.mobile_no"
+            type="tel"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.mobile_no"
           />
-        </div>
+        </x-field>
+
+        <x-field label="DATE OF BIRTH" required>
+          <DatePicker
+            v-model="quoteForm.dob"
+            :rules="[isRequired]"
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="PREMIUM">
+          <x-input v-model="quoteForm.premium" class="w-full" />
+        </x-field>
+
+        <x-field label="POLICY NUMBER">
+          <x-input v-model="quoteForm.policy_number" class="w-full" />
+        </x-field>
+
+        <x-field label="WHO WOULD YOU LIKE COVER FOR?" required>
+          <x-select
+            v-model="quoteForm.cover_for_id"
+            :rules="[isRequired]"
+            :options="
+              dropdownSource.cover_for_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="NATIONALITY" required>
+          <ComboBox
+            v-model="quoteForm.nationality_id"
+            :single="true"
+            :options="
+              dropdownSource.nationality_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            :hasError="isEmptyField"
+          />
+        </x-field>
+
+        <x-field label="EMIRATE OF YOUR VISA" required>
+          <x-select
+            v-model="quoteForm.emirate_of_your_visa_id"
+            :rules="[isRequired]"
+            :options="
+              dropdownSource.emirate_of_your_visa_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="PREFERENCE">
+          <x-input v-model="quoteForm.preference" class="w-full" />
+        </x-field>
+
+        <x-field label="DETAILS">
+          <x-input v-model="quoteForm.details" class="w-full" />
+        </x-field>
+
+        <x-field label="LEAD TYPE">
+          <x-select
+            v-model="quoteForm.lead_type_id"
+            :options="
+              dropdownSource.lead_type_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="CURRENTLY INSURED WITH">
+          <x-select
+            v-model="quoteForm.currently_insured_with_id"
+            :options="
+              dropdownSource.currently_insured_with_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="MARITAL STATUS">
+          <x-select
+            v-model="quoteForm.marital_status_id"
+            :options="
+              dropdownSource.marital_status_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="MEMBER CATEGORY">
+          <x-select
+            v-model="quoteForm.member_category_id"
+            :options="
+              dropdownSource.member_category_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="SALARY BAND">
+          <x-select
+            v-model="quoteForm.salary_band_id"
+            :options="
+              dropdownSource.salary_band_id.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="GENDER">
+          <x-select
+            v-model="quoteForm.gender"
+            :options="genderSelect"
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="POLICY START DATE">
+          <x-input v-model="quoteForm.policy_start_date" class="w-full" />
+        </x-field>
+
+        <x-field>
+          <div class="grid grid-cols-2 gap-2">
+            <x-checkbox
+              v-model="quoteForm.is_ebp_renewal"
+              label="IS EBP RENEWAL"
+              color="primary"
+              class="w-full"
+            />
+
+            <x-checkbox
+              v-model="quoteForm.has_dental"
+              label="DENTAL"
+              color="primary"
+            />
+
+            <x-checkbox
+              v-model="quoteForm.has_worldwide_cover"
+              label="WORLDWIDE COVER"
+              color="primary"
+            />
+
+            <x-checkbox
+              v-model="quoteForm.has_home"
+              label="HOME COUNTRY COVER"
+              color="primary"
+            />
+          </div>
+        </x-field>
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">

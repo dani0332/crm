@@ -1,8 +1,8 @@
 <script setup>
 const props = defineProps({
   label: {
-    required: true,
     type: String,
+    default: '',
   },
   options: {
     type: Array,
