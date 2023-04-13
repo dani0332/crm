@@ -42,7 +42,8 @@ const page = usePage();
 const notification = useNotifications('toast');
 const hasRole = role => useHasRole(role);
 
-const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
@@ -382,6 +383,7 @@ const onMemberSubmit = isValid => {
           title: 'Member Updated',
           position: 'top',
         });
+        memberForm.reset();
       },
       onFinish: () => {
         modals.member = false;
@@ -700,6 +702,7 @@ const onActivitySubmit = isValid => {
     activityForm.post(`/activities/${activityForm.uuid}/update`, {
       preserveScroll: true,
       onSuccess: () => {
+        activityForm.reset();
         notification.success({
           title: 'Activity Updated',
           position: 'top',
@@ -713,6 +716,7 @@ const onActivitySubmit = isValid => {
     activityForm.post(`/activities/create-activity`, {
       preserveScroll: true,
       onSuccess: () => {
+        activityForm.reset();
         notification.success({
           title: 'Activity Added',
           position: 'top',
@@ -786,6 +790,7 @@ const onAdditionalContactSubmit = isValid => {
         });
       },
       onSuccess: () => {
+        additionalContact.reset();
         notification.success({
           title: 'Additional Contact Added',
           position: 'top',
@@ -880,46 +885,6 @@ const policyDetails = useForm({
   modelType: page.props.modelType,
   quote_id: page.props.quote.id,
 });
-
-const policyDetailRules = {
-  policy_number: v => {
-    if (v) {
-      return (
-        v.length <= 50 || 'Policy Number should be less than 50 characters'
-      );
-    }
-    return true;
-  },
-  policy_start_date: v => {
-    if (v) {
-      const date = new Date(v);
-      return !isNaN(date.getTime());
-    }
-    return true;
-  },
-  renewal_expiry_date: v => {
-    if (v) {
-      const date = new Date(v);
-      if (policyDetails.policy_start_date) {
-        const startDate = new Date(policyDetails.policy_start_date);
-        if (startDate >= date) {
-          return 'Expiry date should be greater than Start Date';
-        }
-      }
-      return !isNaN(date.getTime());
-    }
-    return true;
-  },
-  premium: v => {
-    if (v) {
-      const premium = parseFloat(v);
-      if (premium < 0 || isNaN(premium)) {
-        return 'Premium should be greater than 0';
-      }
-    }
-    return true;
-  },
-};
 
 const cancelPolicyFrom = () => {
   policyDetails.editMode = false;
@@ -1226,7 +1191,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-            <dd>{{ quote.next_followup_date }}</dd>
+            <dd>{{ dateFormat(quote.next_followup_date) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">DETAILS</dt>
@@ -1287,7 +1252,7 @@ onMounted(() => {
           {{ genderText(gender).value }}
         </template>
         <template #item-dob="{ dob }">
-          {{ dateFormat(dob).value }}
+          {{ dateFormat(dob) }}
         </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
@@ -1963,7 +1928,10 @@ onMounted(() => {
         <x-button
           size="sm"
           color="orange"
-          @click.prevent="modals.addContact = true"
+          @click.prevent="
+            additionalContact.reset();
+            modals.addContact = true;
+          "
         >
           Add Additional Contacts
         </x-button>

@@ -55,7 +55,7 @@ const selectedData = computed({
     :month-change-on-scroll="false"
     :clearable="false"
     :disabled="props.disabled"
-    utc="utc"
+    utc="preserve"
   >
     <template #dp-input="{ value, onClear }">
       <x-input
