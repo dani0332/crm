@@ -74,6 +74,26 @@ const page = usePage();
           </div>
         </dl>
       </div>
+      <div class="mt-6">
+        <h3 class="font-semibold text-primary-800">Placement</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+
+      <div
+        v-for="item in embeddedProduct.embedded_product_placement"
+        class="text-sm"
+      >
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Lob</dt>
+            <dd>{{ item.quotetype?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Position</dt>
+            <dd>{{ item.position }}</dd>
+          </div>
+        </dl>
+      </div>
     </div>
   </div>
 </template>

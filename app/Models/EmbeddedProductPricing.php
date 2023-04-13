@@ -8,6 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class EmbeddedProductPricing extends Model
 {
     use HasFactory;
-    protected $fillable = ['embedded_product_id', 'price'];
 
+    protected $fillable = ['embedded_product_id', 'price'];
 }

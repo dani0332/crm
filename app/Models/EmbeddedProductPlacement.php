@@ -11,4 +11,8 @@ class EmbeddedProductPlacement extends Model
 
     protected $fillable = ['embedded_product_id', 'quote_type_id', 'position'];
 
+    public function quotetype()
+    {
+        return $this->belongsTo(QuoteType::class, 'quote_type_id', 'id');
+    }
 }

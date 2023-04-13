@@ -67,6 +67,7 @@ let data = reactive([
   },
 ]);
 
+let commissionlabel = ref('Commission value*');
 let positionOptions = reactive([
   { value: 'frontline', label: 'FrontLine' },
   { value: 'checkout', label: 'Checkout' },
@@ -247,7 +248,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="embeddedProductsForm.commission_value"
           type="number"
-          label="Commission value*"
+          :label="commissionlabel"
           :rules="[isRequired]"
           class="w-full"
           :error="embeddedProductsForm.errors.commission_value"
