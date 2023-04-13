@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
+            'baseUrl' => url('/'),
         ]);
     }
 
@@ -149,6 +150,8 @@ class HandleInertiaRequests extends Middleware
         if (auth()->check() && auth()->user()->hasMyLeadAccess()) {
             $nav = $nav->add('My Leads', url('/myleads'));
         }
+
+        $nav = $nav->add('Embedded Products', url('/embedded-products'));
 
         if (auth()->user()->can(PermissionsEnum::RewardList)) {
             $nav = $nav->add('Rewards', '', function (Section $section) {
