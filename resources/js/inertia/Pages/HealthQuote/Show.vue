@@ -1044,7 +1044,13 @@ onMounted(() => {
     <x-divider class="my-4" />
 
     <div
-      v-if="!hasRole($page.props.rolesEnum.HealthAdvisor)"
+      v-if="
+        !hasRole(
+          $page.props.rolesEnum.HealthAdvisor,
+          $page.props.rolesEnum.EBPAdvisor,
+          $page.props.rolesEnum.RMAdvisor,
+        )
+      "
       class="p-4 rounded shadow mb-6 bg-primary-50/50"
     >
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
