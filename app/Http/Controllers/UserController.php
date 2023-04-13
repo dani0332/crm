@@ -215,6 +215,14 @@ class UserController extends Controller
         $user->password = bcrypt($request->password);
         $user->is_active = $request->is_active == 'on' ? 1 : 0;
 
+        /**
+         * temp fix: health lead allocation is using team_id to target health product
+         * this needs to be updated with new team/product structure
+         */
+        if (! empty($request->primary_product)) {
+            $user->team_id = $request->primary_product;
+        }
+
         $this->leadAllocationService->updateUserAllocationRecord($user->id, null, null, $user->is_active);
 
         if (isset($request->additionalTeams)) {
@@ -298,7 +306,7 @@ class UserController extends Controller
             return [];
         }
 
-        return  $this->getSubTeamsByTeamIds($request->teamId);
+        return $this->getSubTeamsByTeamIds($request->teamId);
     }
 
     public function getTeamManagers(Request $request)

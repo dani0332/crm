@@ -137,7 +137,7 @@ const onMemberUpdate = member => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Network Provider</dt>
-              <dd>{{ props.plan.planCode }}</dd>
+              <dd>{{ props.plan.eligibilityName }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Base Premium</dt>
@@ -149,11 +149,17 @@ const onMemberUpdate = member => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Policy Fee</dt>
-              <dd>{{ props.plan.fee }}</dd>
+              <dd>{{ props.plan.policyFee }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Total (with VAT)</dt>
-              <dd>{{ props.plan.actualPremium + (props.plan.basmah || 0) }}</dd>
+              <dt class="font-medium">Total (exclusive of VAT)</dt>
+              <dd>
+                {{
+                  props.plan.actualPremium +
+                  (props.plan.basmah || 0) +
+                  (props.plan.policyFee || 0)
+                }}
+              </dd>
             </div>
           </dl>
         </TabPanel>

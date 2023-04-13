@@ -20,7 +20,7 @@ use App\Enums\TeamTypeEnum;
                 if(element.type == '{{TeamTypeEnum::PRODUCT_STR}}' && selectedType == '{{TeamTypeEnum::TEAM}}') {
                     $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
                 }
-                if(element.type == '{{TeamTypeEnum::TEAM}}' && selectedType == '{{TeamTypeEnum::SUB_TEAM}}') {
+                if(element.type == '{{TeamTypeEnum::TEAM_STR}}' && selectedType == '{{TeamTypeEnum::SUB_TEAM}}') {
                     $('#parent_team_id').append('<option value="'+ element.id +'" >'+ element.name +'</option>');
                 }
             }

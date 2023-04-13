@@ -40,8 +40,10 @@ defineProps({
 const page = usePage();
 
 const notification = useNotifications('toast');
+const hasRole = role => useHasRole(role);
 
-const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
@@ -113,15 +115,16 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
   memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
-  selectedPlansPdf = ref([]),
+  selectedPlans = ref([]),
   exportLoader = ref(false),
+  toggleLoader = ref(false),
   contactLoader = ref(false),
   historyLoading = ref(false),
   isDisabled = ref(false);
 
 const { copy, copied } = useClipboard();
 
-const { isRequired } = useRules();
+const { isRequired, isEmail, isNumber, isMobile } = useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -316,7 +319,7 @@ const memberDetailsTable = reactive({
       value: 'emirate',
     },
     {
-      text: 'Relationship',
+      text: 'Member Category',
       value: 'member_category_id',
     },
     {
@@ -380,6 +383,7 @@ const onMemberSubmit = isValid => {
           title: 'Member Updated',
           position: 'top',
         });
+        memberForm.reset();
       },
       onFinish: () => {
         modals.member = false;
@@ -444,7 +448,7 @@ const plansTable = reactive({
     },
     {
       text: 'Network Provider',
-      value: 'planCode',
+      value: 'eligibilityName',
     },
     {
       text: 'Base Premium',
@@ -475,7 +479,7 @@ const planClicked = plan => {
 };
 
 const onExportPlans = () => {
-  if (selectedPlansPdf.value.length < 3 || selectedPlansPdf.value.length > 5) {
+  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
     notification.error({
       title: 'Please select 3 to 5 plans to download PDF.',
       position: 'top',
@@ -483,7 +487,7 @@ const onExportPlans = () => {
     return;
   }
   exportLoader.value = true;
-  const planIds = selectedPlansPdf.value.map(p => {
+  const planIds = selectedPlans.value.map(p => {
     return p.id;
   });
   axios
@@ -515,6 +519,41 @@ const onExportPlans = () => {
     .finally(() => {
       exportLoader.value = false;
     });
+};
+
+const onTogglePlans = () => {
+  notification.error({
+    title: 'API not available.',
+    position: 'top',
+  });
+  // toggleLoader.value = true;
+  // const planIds = selectedPlans.value.map(p => {
+  //   return p.id;
+  // });
+  // axios
+  //   .post(
+  //     '/quotes/health/manual-plan-toggle',
+  //     {
+  //       plan_ids: planIds,
+  //       quote_uuid: page.props.quote.uuid,
+  //     },
+  //     {
+  //       responseType: 'json',
+  //     },
+  //   )
+  //   .then(response => {
+  //     console.log(response);
+  //     notification.success({
+  //       title: 'Plans Updated',
+  //       position: 'top',
+  //     });
+  //   })
+  //   .catch(error => {
+  //     console.log(error);
+  //   })
+  //   .finally(() => {
+  //     toggleLoader.value = false;
+  //   });
 };
 
 const onCreatePlan = () => {
@@ -663,6 +702,7 @@ const onActivitySubmit = isValid => {
     activityForm.post(`/activities/${activityForm.uuid}/update`, {
       preserveScroll: true,
       onSuccess: () => {
+        activityForm.reset();
         notification.success({
           title: 'Activity Updated',
           position: 'top',
@@ -676,6 +716,7 @@ const onActivitySubmit = isValid => {
     activityForm.post(`/activities/create-activity`, {
       preserveScroll: true,
       onSuccess: () => {
+        activityForm.reset();
         notification.success({
           title: 'Activity Added',
           position: 'top',
@@ -742,7 +783,14 @@ const onAdditionalContactSubmit = isValid => {
     }))
     .post(`/customer-additional-contact/add`, {
       preserveScroll: true,
+      onError: errors => {
+        notification.error({
+          title: errors.error || 'Data not saved',
+          position: 'top',
+        });
+      },
       onSuccess: () => {
+        additionalContact.reset();
         notification.success({
           title: 'Additional Contact Added',
           position: 'top',
@@ -837,46 +885,6 @@ const policyDetails = useForm({
   modelType: page.props.modelType,
   quote_id: page.props.quote.id,
 });
-
-const policyDetailRules = {
-  policy_number: v => {
-    if (v) {
-      return (
-        v.length <= 50 || 'Policy Number should be less than 50 characters'
-      );
-    }
-    return true;
-  },
-  policy_start_date: v => {
-    if (v) {
-      const date = new Date(v);
-      return !isNaN(date.getTime());
-    }
-    return true;
-  },
-  renewal_expiry_date: v => {
-    if (v) {
-      const date = new Date(v);
-      if (policyDetails.policy_start_date) {
-        const startDate = new Date(policyDetails.policy_start_date);
-        if (startDate >= date) {
-          return 'Expiry date should be greater than Start Date';
-        }
-      }
-      return !isNaN(date.getTime());
-    }
-    return true;
-  },
-  premium: v => {
-    if (v) {
-      const premium = parseFloat(v);
-      if (premium < 0 || isNaN(premium)) {
-        return 'Premium should be greater than 0';
-      }
-    }
-    return true;
-  },
-};
 
 const cancelPolicyFrom = () => {
   policyDetails.editMode = false;
@@ -999,8 +1007,10 @@ onMounted(() => {
     </x-modal>
 
     <x-divider class="my-4" />
-
-    <div class="p-4 rounded shadow mb-6 bg-primary-50/50">
+    <div
+      v-if="!$page.props.can.isAdvisor"
+      class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
+    >
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2 flex gap-2 items-end">
           <x-select
@@ -1021,7 +1031,10 @@ onMounted(() => {
             </x-button>
           </div>
         </div>
-        <div class="w-full md:w-1/2 flex gap-2 items-end">
+        <div
+          v-if="!hasRole($page.props.rolesEnum.HealthWCUAdvisor)"
+          class="w-full md:w-1/2 flex gap-2 items-end"
+        >
           <x-select
             v-model="assignLead"
             label="Assign Lead"
@@ -1178,7 +1191,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-            <dd>{{ quote.next_followup_date }}</dd>
+            <dd>{{ dateFormat(quote.next_followup_date) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">DETAILS</dt>
@@ -1206,7 +1219,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
-            <dd>{{ quote.previous_policy_expiry_date }}</dd>
+            <dd>{{ dateFormat(quote.previous_policy_expiry_date) }}</dd>
           </div>
         </dl>
       </div>
@@ -1239,7 +1252,7 @@ onMounted(() => {
           {{ genderText(gender).value }}
         </template>
         <template #item-dob="{ dob }">
-          {{ dateFormat(dob).value }}
+          {{ dateFormat(dob) }}
         </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
@@ -1316,10 +1329,10 @@ onMounted(() => {
 
             <x-select
               v-model="memberForm.member_category_id"
-              label="Relationship"
+              label="Member Category"
               :options="memberCategoriesOptions"
               :rules="[isRequired]"
-              placeholder="Select Relationship"
+              placeholder="Select Member Category"
               class="w-full"
             />
 
@@ -1576,22 +1589,35 @@ onMounted(() => {
           <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
-          <x-button
-            v-if="selectedPlansPdf.length > 0"
+          <!-- <x-button-group v-if="selectedPlans.length > 0" size="sm">
+            <x-button @click.prevent="onTogglePlans" :loading="toggleLoader">
+              Show
+            </x-button>
+            <x-button @click.prevent="onTogglePlans" :loading="toggleLoader">
+              Hide
+            </x-button>
+          </x-button-group> -->
+
+          <!-- <x-button
+            v-if="selectedPlans.length > 0"
             size="sm"
             color="emerald"
             @click.prevent="onExportPlans"
             :loading="exportLoader"
           >
             Download PDF
-          </x-button>
+          </x-button> -->
+
+          <!-- hide create quote button for rm deployment -->
           <x-button
             size="sm"
             color="primary"
+            v-show="false"
             @click.prevent="modals.createPlan = true"
           >
             Create Quote
           </x-button>
+
           <x-button
             v-if="listQuotePlans.length > 0"
             size="sm"
@@ -1605,7 +1631,7 @@ onMounted(() => {
         </div>
       </div>
       <DataTable
-        v-model:items-selected="selectedPlansPdf"
+        v-model:items-selected="selectedPlans"
         table-class-name="tablefixed compact"
         :headers="plansTable.columns"
         :items="listQuotePlans || []"
@@ -1614,6 +1640,17 @@ onMounted(() => {
         :rows-per-page="15"
         :hide-footer="listQuotePlans.length < 15"
       >
+        <template #item-providerName="{ providerName, isManualPlan }">
+          <p>{{ providerName }}</p>
+          <x-tag
+            v-if="isManualPlan"
+            size="xs"
+            color="primary"
+            class="mt-0.5 text-[10px]"
+          >
+            Manual Plan
+          </x-tag>
+        </template>
         <template #item-total="{ actualPremium, vat, basmah }">
           {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
         </template>
@@ -1837,6 +1874,7 @@ onMounted(() => {
               :rules="[isRequired]"
               class="w-full"
               withTime
+              :timezone="'UTC'"
             />
           </div>
 
@@ -1890,7 +1928,10 @@ onMounted(() => {
         <x-button
           size="sm"
           color="orange"
-          @click.prevent="modals.addContact = true"
+          @click.prevent="
+            additionalContact.reset();
+            modals.addContact = true;
+          "
         >
           Add Additional Contacts
         </x-button>
@@ -1940,7 +1981,12 @@ onMounted(() => {
             <x-input
               v-model="additionalContact.additional_contact_val"
               label="Value"
-              :rules="[isRequired]"
+              :rules="[
+                isRequired,
+                additionalContact.additional_contact_type === 'email'
+                  ? isEmail
+                  : isNumber,
+              ]"
               class="w-full"
             />
           </div>

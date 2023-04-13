@@ -472,7 +472,7 @@ class TravelQuoteService extends BaseService
                 return 'tcf';
                 break;
             case 'region':
-                return  'r';
+                return 'r';
                 break;
             case 'advisor':
                 return 'u';
@@ -481,10 +481,10 @@ class TravelQuoteService extends BaseService
                 return 'qs';
                 break;
             case 'nationality':
-                return  'n';
+                return 'n';
                 break;
             default:
-                return  'tqr';
+                return 'tqr';
                 break;
         }
     }

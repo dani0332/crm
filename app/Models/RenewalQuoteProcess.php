@@ -24,6 +24,14 @@ class RenewalQuoteProcess extends Model
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function carQuote()
+    {
+        return $this->belongsTo(CarQuote::class, 'quote_id');
+    }
+
+    /**
      * json encode data.
      * todo: fix later as its not preserving order
      *
