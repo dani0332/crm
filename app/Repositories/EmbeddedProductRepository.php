@@ -35,17 +35,8 @@ class EmbeddedProductRepository extends BaseRepository
         return DB::transaction(function () use ($data) {
             $product = $this->create($data);
 
-            foreach ($data['quote_type_ids'] as $key => $value) {
-                $placementData[$key]['quote_type_id'] = $value;
-            }  foreach ($data['positions'] as $key => $value) {
-                $placementData[$key]['position'] = $value;
-            }
-            $product->embeddedProductPlacement()->createMany($placementData);
-
-            foreach ($data['price'] as $key => $value) {
-                $priceData[$key]['price'] = $value;
-            }
-            $product->embeddedProductPrice()->createMany($priceData);
+            $product->embeddedProductPlacement()->createMany($data['positions']);
+            $product->embeddedProductPrice()->createMany($data['pricings']);
 
             return $product;
         });
@@ -63,13 +54,10 @@ class EmbeddedProductRepository extends BaseRepository
 
             $product->update($productData);
             $product->embeddedProductPlacement()->delete();
+            $product->embeddedProductPlacement()->createMany($data['positions']);
 
-            foreach ($data['quote_type_ids'] as $key => $value) {
-                $placementData[$key]['quote_type_id'] = $value;
-            }  foreach ($data['positions'] as $key => $value) {
-                $placementData[$key]['position'] = $value;
-            }
-            $product->embeddedProductPlacement()->createMany($placementData);
+            $product->embeddedProductPrice()->delete();
+            $product->embeddedProductPrice()->createMany($data['pricings']);
 
             return $product;
         });

@@ -47,6 +47,19 @@ const page = usePage();
             <dt class="font-medium">Display Name</dt>
             <dd>{{ embeddedProduct.display_name }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Commission Type</dt>
+            <dd>
+              {{
+                embeddedProduct.commission_type == 1 ? 'Fixed Amout' : '% Value'
+              }}
+            </dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Commission Value</dt>
+            <dd>{{ embeddedProduct.commission_value }}</dd>
+          </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Product Type</dt>
@@ -91,6 +104,22 @@ const page = usePage();
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Position</dt>
             <dd>{{ item.position }}</dd>
+          </div>
+        </dl>
+      </div>
+      <div class="mt-6">
+        <h3 class="font-semibold text-primary-800">Price</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+
+      <div
+        v-for="item in embeddedProduct.embedded_product_price"
+        class="text-sm"
+      >
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Price</dt>
+            <dd>{{ item.price }}</dd>
           </div>
         </dl>
       </div>
