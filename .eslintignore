@@ -1,7 +1,0 @@
-dist
-node_modules
-public/**/*.*
-vendor
-build
-out
-tailwind.config.js

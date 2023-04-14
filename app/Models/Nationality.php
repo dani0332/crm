@@ -37,6 +37,11 @@ class Nationality extends BaseModel
         return true;
     }
 
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
     public function processGetDSL($filters)
     {
         return self::processGetBaseDSL($filters, 'nationality', ['code', 'id', 'text']);

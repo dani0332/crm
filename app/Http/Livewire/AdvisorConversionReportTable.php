@@ -120,7 +120,7 @@ class AdvisorConversionReportTable extends DataTableComponent
     {
         return [
             Column::make('Batch Number', 'batch.name')->footer(function () {
-                return  'Total';
+                return 'Total';
             }),
             Column::make('Start Date', 'batch.start_date')->format(
                 fn ($value) => $value ? Carbon::parse($value)->format('d-m-Y') : null

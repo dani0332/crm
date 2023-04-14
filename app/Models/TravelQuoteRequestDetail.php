@@ -40,4 +40,10 @@ class TravelQuoteRequestDetail extends Model implements AuditableContract
     {
         return $this->hasOne(User::class, 'id', 'advisor_assigned_by_id');
     }
+    public function getNextFollowupDateAttribute($table)
+    {
+        $date_time_format = Config::get('constants.datetime_format');
+
+        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+    }
 }

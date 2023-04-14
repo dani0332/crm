@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\QuoteStatusEnum;
-use App\Jobs\SyncSIBContactJob;
 use App\Models\Customer;
 use App\Models\HealthQuote;
 use App\Models\MyAlFredUser;
@@ -60,18 +59,6 @@ class ApiService
             return response()->json(['message' => $newMyAlFredUser->signup_url], 500);
         } else {
             return response()->json(['message' => $WEGenerateUrlResponse], 500);
-        }
-    }
-
-    public function triggerSibFlow($request)
-    {
-        try {
-            $quoteData = HealthQuote::where('uuid', $request->quoteUID)->where('quote_status_id', $request->QuoteStatus)->first();
-            if ($quoteData) {
-                SyncSIBContactJob::dispatch($quoteData);
-            }
-        } catch (Exception $e) {
-            return response()->json(['message' => 'Something went wrong. Please try again later.'], 500);
         }
     }
 

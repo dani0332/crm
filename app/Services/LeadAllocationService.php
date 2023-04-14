@@ -9,6 +9,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Jobs\CammyJob;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
@@ -169,6 +170,11 @@ class LeadAllocationService extends BaseService
                 if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
                     SyncSIBContactJob::dispatch($lead);
                 }
+                //Disabling - Enable for RM Deployment
+                // if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+                // && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
+                //     CammyJob::dispatch($lead, 'intro');
+                // }
                 GetQuotePlansJob::dispatch($lead);
                 DB::commit();
 

@@ -18,9 +18,19 @@ class HealthMemberDetail extends Model
         return $this->belongsTo(HealthQuote::class, 'id', 'primary_member_id');
     }
 
+    public function emirate()
+    {
+        return $this->hasOne(Emirate::class, 'id', 'emirate_of_your_visa_id');
+    }
+
     public function memberCategory()
     {
         return $this->belongsTo(MemberCategory::class, 'member_category_id', 'id');
+    }
+
+    public function nationality()
+    {
+        return $this->hasOne(Nationality::class, 'id', 'nationality_id');
     }
 
     public function salaryBand()
@@ -31,5 +41,10 @@ class HealthMemberDetail extends Model
     public function getDobAttribute($value)
     {
         return Carbon::parse($value)->format('Y-m-d');
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(QuoteDocument::class, 'member_detail_id');
     }
 }

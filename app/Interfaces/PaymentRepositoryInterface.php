@@ -2,6 +2,8 @@
 
 namespace App\Interfaces;
 
+use App\Services\PaymentLinkService;
+
 interface PaymentRepositoryInterface
 {
     public function getPaymentsByQuoteId($quoteId, $quoteTypeId);
@@ -9,5 +11,5 @@ interface PaymentRepositoryInterface
     public function deletePayment($paymentId);
     public function createPayment(array $paymentInformation);
     public function updatePayment($paymentId, array $newInformation);
-    public function getPaymentLink($paymentId, $quoteTypeId, $leadId);
+    public function getPaymentLink(PaymentLinkService $paymentLinkService, $paymentId, $quoteTypeId, $leadId);
 }
