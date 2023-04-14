@@ -15,13 +15,13 @@ const embeddedProductsForm = useForm({
   product_type: props.embeddedProduct?.product_type || '',
   price: [],
   quote_type_ids: [],
-  positions: [
+  positions: props.embeddedProduct?.embedded_product_placement || [
     {
-      lob: '',
+      quote_type_id: '',
       position: '',
     },
   ],
-  pricings: [
+  pricings: props.embeddedProduct?.embedded_product_price || [
     {
       price: '',
     },
@@ -58,7 +58,7 @@ let positionOptions = reactive([
 
 const addPosition = () => {
     embeddedProductsForm.positions.push({
-      lob: '',
+      quote_type_id: '',
       position: '',
     });
   },
@@ -206,6 +206,7 @@ function onSubmit(isValid) {
         <x-field label="Description 1" required>
           <x-textarea
             v-model="embeddedProductsForm.description"
+            :rules="[isRequired]"
             :adjust-to-text="false"
             class="w-full"
           />
@@ -214,6 +215,7 @@ function onSubmit(isValid) {
         <x-field label="Description 2" required>
           <x-textarea
             v-model="embeddedProductsForm.description2"
+            :rules="[isRequired]"
             :adjust-to-text="false"
             class="w-full"
           />
@@ -263,7 +265,7 @@ function onSubmit(isValid) {
             placeholder="Company Documents"
             :options="[
               { value: '1', label: 'Certificate template' },
-              { value: '2', label: 'policy Wordings' },
+              { value: '2', label: 'Policy Wordings' },
             ]"
             class="w-full"
           />
@@ -292,7 +294,7 @@ function onSubmit(isValid) {
             >
               <x-field label="LOB" required>
                 <x-select
-                  v-model="embeddedProductsForm.positions[index].lob"
+                  v-model="embeddedProductsForm.positions[index].quote_type_id"
                   :rules="[isRequired]"
                   placeholder="Select LOB"
                   :options="quoteTypesOptions"

@@ -151,8 +151,6 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('My Leads', url('/myleads'));
         }
 
-        $nav = $nav->add('Embedded Products', url('/embedded-products'));
-
         if (auth()->user()->can(PermissionsEnum::RewardList)) {
             $nav = $nav->add('Rewards', '', function (Section $section) {
                 $section
