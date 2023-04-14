@@ -6,13 +6,13 @@ use App\Interfaces\PaymentRepositoryInterface;
 use App\Models\Payment;
 use App\Services\PaymentLinkService;
 
-class PaymentRepository implements PaymentRepositoryInterface
+class PaymentRepository extends BaseRepository implements PaymentRepositoryInterface
 {
     protected $paymentService;
 
-    public function __construct(PaymentLinkService $paymentService)
+    public function model()
     {
-        $this->paymentService = $paymentService;
+        return Payment::class;
     }
 
     public function getPaymentsByQuoteId($quoteId, $quoteTypeId)
@@ -40,7 +40,7 @@ class PaymentRepository implements PaymentRepositoryInterface
         return Payment::find($paymentId)->update($newInformation);
     }
 
-    public function getPaymentLink($paymentId, $quoteTypeId, $leadId)
+    public function getPaymentLink(PaymentLinkService $paymentLinkService, $paymentId, $quoteTypeId, $leadId)
     {
         $payment = $this->getPaymentById($paymentId);
         $paymentLink = $this->paymentService->getPaymentLink($payment, $quoteTypeId, $leadId);

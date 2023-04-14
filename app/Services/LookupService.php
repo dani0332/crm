@@ -117,4 +117,19 @@ class LookupService extends BaseService
     {
         return UAELicenseHeldFor::find($id);
     }
+
+    public function paymentMethodsWithSubMethods()
+    {
+        $paymentMethods = PaymentMethod::whereNull('parent_code')->with('childPaymentMethods')->get();
+        $paymentOptions = [];
+        $paymentOptions['methods'] = $paymentMethods->filter(function ($paymentMethod) {
+            return $paymentMethod->childPaymentMethods->count() > 0;
+        })->flatten(1)->toArray();
+
+        $paymentOptions['subMethods'] = $paymentMethods->filter(function ($paymentMethod) {
+            return $paymentMethod->childPaymentMethods->count() == 0;
+        })->toArray();
+
+        return $paymentOptions;
+    }
 }

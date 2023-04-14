@@ -19,4 +19,14 @@ class PaymentStatusLog extends Model
     {
         return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';
     }
+
+    /**
+     * Prepare a date for array / JSON serialization.
+     *
+     * @return string
+     */
+    protected function serializeDate(\DateTimeInterface $date)
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
 }

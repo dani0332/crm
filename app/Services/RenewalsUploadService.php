@@ -30,6 +30,7 @@ use App\Models\CarQuoteValuation;
 use App\Models\ClaimHistory;
 use App\Models\Customer;
 use App\Models\Emirate;
+use App\Models\HealthPlan;
 use App\Models\InsuranceProvider;
 use App\Models\Nationality;
 use App\Models\QuoteStatus;
@@ -62,6 +63,7 @@ class RenewalsUploadService
     protected $lookupService;
     protected $sendEmailCustomerService;
     protected $userService;
+    protected $healthQuoteService;
 
     public function __construct(
         RenewalsAddonServices $renewalsAddonService,
@@ -72,7 +74,8 @@ class RenewalsUploadService
         CRUDService $crudService,
         LookupService $lookupService,
         SendEmailCustomerService $sendEmailCustomerService,
-        UserService $userService
+        UserService $userService,
+        HealthQuoteService $healthQuoteService
     ) {
         $this->renewalsAddonService = $renewalsAddonService;
         $this->checkAMLService = $checkAMLService;
@@ -83,6 +86,7 @@ class RenewalsUploadService
         $this->lookupService = $lookupService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->userService = $userService;
+        $this->healthQuoteService = $healthQuoteService;
     }
 
     /*
@@ -238,21 +242,21 @@ class RenewalsUploadService
             if ($jobs != null && count($jobs)) {
                 Haystack::build()
                     ->onQueue('renewals')
-                   ->addJobs($jobs)
-                   ->then(function () use ($logPrefix, $renewalsUploadLead) {
-                       info($logPrefix.' all jobs completed successfully');
-                       $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
-                   })
-                   ->catch(function () use ($logPrefix, $renewalsUploadLead) {
-                       info($logPrefix.' one of batch is failed. ');
-                       $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-                   })
-                   ->finally(function () use ($logPrefix) {
-                       info($logPrefix.' everything done');
-                   })
-                   ->allowFailures()
-                   ->withDelay(2)
-                   ->dispatch();
+                    ->addJobs($jobs)
+                    ->then(function () use ($logPrefix, $renewalsUploadLead) {
+                        info($logPrefix.' all jobs completed successfully');
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                    })
+                    ->catch(function () use ($logPrefix, $renewalsUploadLead) {
+                        info($logPrefix.' one of batch is failed. ');
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+                    })
+                    ->finally(function () use ($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->allowFailures()
+                    ->withDelay(2)
+                    ->dispatch();
             } else {
                 info($logPrefix.' No jobs to create quotes');
                 $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
@@ -283,22 +287,22 @@ class RenewalsUploadService
             if ($jobs != null && count($jobs)) {
                 Haystack::build()
                     ->onQueue('renewals')
-                   ->addJobs($jobs)
-                   ->then(function () use ($logPrefix, $renewalsUploadLead) {
-                       info($logPrefix.' all jobs completed successfully');
-                       $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
-                   })
-                   ->catch(function () use ($logPrefix, $renewalsUploadLead) {
-                       // Haystack failed
-                       info($logPrefix.' one of batch is failed. ');
-                       $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
-                   })
-                   ->finally(function () use ($logPrefix) {
-                       info($logPrefix.' everything done');
-                   })
-                   ->allowFailures()
-                   ->withDelay(2)
-                   ->dispatch();
+                    ->addJobs($jobs)
+                    ->then(function () use ($logPrefix, $renewalsUploadLead) {
+                        info($logPrefix.' all jobs completed successfully');
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::COMPLETED]);
+                    })
+                    ->catch(function () use ($logPrefix, $renewalsUploadLead) {
+                        // Haystack failed
+                        info($logPrefix.' one of batch is failed. ');
+                        $renewalsUploadLead->update(['status' => ProcessStatusCode::FAILED]);
+                    })
+                    ->finally(function () use ($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->allowFailures()
+                    ->withDelay(2)
+                    ->dispatch();
 
                 info($logPrefix.' jobs dispatched');
             } else {
@@ -775,6 +779,10 @@ class RenewalsUploadService
                 $quoteData['currently_insured_with'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->text;
             }
 
+            if ($quoteType->code == quoteTypeCode::Health) {
+                $quoteData['currently_insured_with_id'] = $this->insuranceProviderService->getProviderByCode($data['insurer'])->id;
+            }
+
             //set business type insurance id
             if (! empty($data['product_type'] && $quoteType->code == quoteTypeCode::Business)) {
                 if (($businessSubline = $this->renewalsAddonService->getBusinessSublineInsurance($data['product_type']))) {
@@ -803,6 +811,19 @@ class RenewalsUploadService
             info($logPrefix.' AML check started for UUID: '.$quote->uuid);
             $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
             info($logPrefix.' AML check completed for UUID: '.$quote->uuid);
+        }
+
+        /**
+         * create manual plan for health
+         */
+        if ($quote && $renewalQuoteProcess->quote_type == QuoteTypeShortCode::HEA && ! empty($data['plan_name'])) {
+            $planResponse = $this->createHealthPlan($data, $quote);
+
+            if (is_int($planResponse) && $planResponse == 200) {
+                info($logPrefix.' manual plan for health created successfully for UUID: '.$quote->uuid);
+            } else {
+                info($logPrefix.' manual plan for health failed for UUID: '.$quote->uuid);
+            }
         }
 
         return $quote;
@@ -950,9 +971,9 @@ class RenewalsUploadService
             }
 
             if (! empty($carModel) && ($carModelDetail = CarModelDetail::active()
-                    ->where('is_default', 1)
-                    ->where('car_model_id', $carModel->id)
-                    ->first())) {
+                ->where('is_default', 1)
+                ->where('car_model_id', $carModel->id)
+                ->first())) {
                 $quoteData['cylinder'] = $carModelDetail->cylinder;
                 $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                 $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
@@ -1014,7 +1035,42 @@ class RenewalsUploadService
     }
 
     /**
-     * todo: add conditions if before updating plan info.
+     * @return void
+     */
+    public function createHealthPlan($data, $quote)
+    {
+        $logPrefix = 'CreatePlan FN: createPlan UUID: '.$quote->uuid;
+        info($logPrefix.' Create Health Plan Started');
+
+        $provider = InsuranceProvider::where('code', $data['insurer'])->first();
+
+        $healthPlan = HealthPlan::where([
+            'provider_id' => $provider->id,
+            'text' => $data['plan_name'],
+        ])->first();
+
+        $planData = [
+            'quoteUID' => $quote->uuid,
+            'update' => false,
+        ];
+
+        $planData['plans'][] = [
+            'planId' => $healthPlan->id,
+            'actualPremium' => $data['premium'],
+            'discountPremium' => 0,
+            'isManualUpdate' => false,
+            'isManualPremium' => true,
+        ];
+
+        info($logPrefix.' setup create plan data is completed.');
+
+        info($logPrefix.' PlanData: '.json_encode($planData));
+
+        return $this->healthQuoteService->renewalCreatePlan($planData);
+    }
+
+    /**
+     * create manual plan for Car
      *
      * @return void
      */
@@ -1030,7 +1086,8 @@ class RenewalsUploadService
             'repair_type' => $data['plan_type'],
             'provider_id' => $provider->id,
         ])->with(['carAddons' => function ($q) {
-            $q->whereIn('code', [CarPlanAddonsCode::DRIVER_COVER, CarPlanAddonsCode::PASSENGER_COVER,
+            $q->whereIn('code', [
+                CarPlanAddonsCode::DRIVER_COVER, CarPlanAddonsCode::PASSENGER_COVER,
                 CarPlanAddonsCode::CAR_HIRE, CarPlanAddonsCode::OMAN_COVER, CarPlanAddonsCode::BREAKDOWN_COVER,
             ])->with('carAddonOptions');
         }])->first();
@@ -1115,10 +1172,8 @@ class RenewalsUploadService
 
         info($logPrefix.' setup create plan data is completed.');
 
-        //todo: temporary logging, remove later
         info($logPrefix.' PlanData: '.json_encode($planData));
 
-        //todo: what to do when it fails
         return $this->carQuoteService->renewalCreatePlan($planData);
     }
 
@@ -1273,9 +1328,16 @@ class RenewalsUploadService
                 }
                 if (! $leadData->insurer) {
                     $leadValidationErrors->push('Insurance Provider is required');
-                } elseif (! InsuranceProvider::where('code', $leadData->insurer)->first()) {
+                } elseif (! ($insurer = InsuranceProvider::where('code', $leadData->insurer)->first())) {
                     $leadValidationErrors->push('Invalid Insurance Code Provided');
                 }
+
+                if ($lead->quote_type == QuoteTypeShortCode::HEA && $lead->type == RenewalsUploadType::CREATE_LEADS && isset($insurer->id) && ! empty($leadData->plan_name)) {
+                    if (! HealthPlan::where(['provider_id' => $insurer->id, 'text' => $leadData->plan_name])->first()) {
+                        $leadValidationErrors->push('Invalid Plan Name Provided');
+                    }
+                }
+
                 if ($lead->type == RenewalsUploadType::UPDATE_LEADS && ! $leadData->product_type) {
                     $leadValidationErrors->push('Product Type is Required');
                 }
@@ -1315,7 +1377,7 @@ class RenewalsUploadService
                     }
                 }
 
-                switch($lead->quote_type) {
+                switch ($lead->quote_type) {
                     case QuoteTypeShortCode::CAR:
                         if ($lead->type == RenewalsUploadType::UPDATE_LEADS) {
                             if ($leadData->make && ! CarMake::where('text', $leadData->make)->first()) {
@@ -1404,7 +1466,8 @@ class RenewalsUploadService
 
                                     $carPlan->load([
                                         'carAddons' => function ($q) {
-                                            $q->whereIn('code', [CarPlanAddonsCode::DRIVER_COVER, CarPlanAddonsCode::PASSENGER_COVER,
+                                            $q->whereIn('code', [
+                                                CarPlanAddonsCode::DRIVER_COVER, CarPlanAddonsCode::PASSENGER_COVER,
                                                 CarPlanAddonsCode::CAR_HIRE, CarPlanAddonsCode::OMAN_COVER, CarPlanAddonsCode::BREAKDOWN_COVER,
                                             ])->with('carAddonOptions');
                                         },
@@ -1483,7 +1546,8 @@ class RenewalsUploadService
         return RenewalQuoteProcess::where([
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
-            'type' => RenewalsUploadType::UPDATE_LEADS, ])->distinct('quote_id')->count();
+            'type' => RenewalsUploadType::UPDATE_LEADS,
+        ])->distinct('quote_id')->count();
     }
 
     public function getProcessTotalLeadsWithPlans($batch)
@@ -1493,7 +1557,8 @@ class RenewalsUploadService
             'batch' => $batch,
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])->distinct('quote_id')->count();
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        ])->distinct('quote_id')->count();
     }
 
     public function getProcessLeads($batch)
@@ -1503,7 +1568,8 @@ class RenewalsUploadService
             'batch' => $batch,
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])->distinct('quote_id')->get();
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        ])->distinct('quote_id')->get();
     }
 
     public function getProcessLeadsToSendEmails($batch)
@@ -1514,7 +1580,8 @@ class RenewalsUploadService
             'type' => RenewalsUploadType::UPDATE_LEADS,
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'email_sent' => 0,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED, ])
+            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+        ])
             ->whereHas('carQuote', function ($q) {
                 $q->whereNull('paid_at');
             })->groupBy('quote_id')->get();
@@ -1532,7 +1599,8 @@ class RenewalsUploadService
             'status' => RenewalProcessStatuses::PLANS_FETCHED,
             'email_sent' => 0,
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-            'quote_id' => $quoteId, ])->first();
+            'quote_id' => $quoteId,
+        ])->first();
         $emailSent->email_sent = 1;
         $emailSent->save();
         Log::info('updateRenewalQuoteEmailSent emailSent->id: '.$emailSent->id);

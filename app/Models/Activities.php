@@ -11,6 +11,7 @@ class Activities extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
 
+    protected $guarded = [];
     protected $table = 'activities';
 
     public function getCreatedAtAttribute($date)
@@ -26,5 +27,10 @@ class Activities extends Model implements AuditableContract
     public function getDueDateAttribute($date)
     {
         return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
+    }
+
+    public function assignee()
+    {
+        return $this->hasOne(User::class, 'id', 'assignee_id');
     }
 }

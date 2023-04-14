@@ -1,4 +1,10 @@
 const mix = require('laravel-mix');
+const path = require('path');
+
+const Components = require('unplugin-vue-components/webpack');
+const AutoImport = require('unplugin-auto-import/webpack');
+const { HeadlessUiResolver } = require('unplugin-vue-components/resolvers');
+
 mix.options({
   terser: {
     extractComments: false,
@@ -16,15 +22,64 @@ mix.options({
  */
 
 mix
-  .js('resources/js/alpine/alpine.js', 'public/js')
-  .postCss('resources/css/livewire.css', 'public/css', []);
+  .js('resources/js/inertia/inertia.js', 'public/js')
+  .vue({ runtimeOnly: (process.env.NODE_ENV || 'production') === 'production' })
+  .webpackConfig({
+    resolve: {
+      alias: {
+        '@': path.resolve('./resources/js'),
+      },
+      extensions: ['.js', '.vue', '.json'],
+    },
+    output: {
+      chunkFilename: 'js/[name].js?id=[chunkhash]',
+    },
+    plugins: [
+      AutoImport({
+        imports: [
+          'vue',
+          '@vueuse/core',
+          {
+            '@inertiajs/vue3': ['router', 'usePage', 'useForm'],
+            '@indielayer/ui': ['useNotifications'],
+            axios: [['default', 'axios']],
+          },
+        ],
+        dirs: ['resources/js/inertia/Composables'],
+      }),
+      Components({
+        dirs: [
+          'resources/js/inertia/Components',
+          'resources/js/inertia/Layouts',
+        ],
+        extensions: ['vue'],
+        resolvers: [
+          HeadlessUiResolver(),
+          name => {
+            if (name === 'Head') {
+              return {
+                importName: 'Head',
+                path: '@inertiajs/vue3',
+              };
+            }
 
-// this should be removed, react's resources are not used
-mix
-  .js('resources/js/app.js', 'public/js')
-  .react()
-  .version()
-  .postCss('resources/css/app.css', 'build/css', [require('tailwindcss')]);
+            if (name === 'Link') {
+              return {
+                importName: 'Link',
+                path: '@inertiajs/vue3',
+              };
+            }
+          },
+        ],
+        directoryAsNamespace: true,
+      }),
+    ],
+  })
+  .postCss('resources/css/app.css', 'public/css', [require('tailwindcss')])
+  .extract()
+  .version();
+
+mix.css('resources/css/livewire.css', 'public/css');
 
 mix
   .scripts(

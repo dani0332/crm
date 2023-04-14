@@ -16,6 +16,19 @@ class CheckRouteAccess
     public function handle(Request $request, Closure $next)
     {
         $routeName = $request->route()->getName();
+        $methodName = $request->route()->getActionMethod();
+
+        $methodMapping = [
+            'store' => 'create',
+            'update' => 'edit',
+            'destroy' => 'delete',
+            'show' => 'view',
+            'index' => 'list',
+        ];
+
+        if (isset($methodMapping[$methodName])) {
+            $routeName = str_replace($methodName, $methodMapping[$methodName], $routeName);
+        }
 
         if (auth()->user()->can($routeName)) {
             return $next($request);

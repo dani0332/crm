@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\IMCRMSearchTypesEnum;
+use App\Enums\quoteTypeCode;
 use App\Models\CustomerAdditionalInfo;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,7 @@ if (! function_exists('generate_code')) {
 
 if (! function_exists('vAbort')) {
     /**
-     * abort script execution and return errors in validation format with http status 422
+     * abort script execution and return errors in validation format with http status 422.
      *
      * @param $messages message string or array of messages
      *
@@ -38,6 +39,29 @@ if (! function_exists('vAbort')) {
             $messages = [$field => [$messages]];
         }
         throw Illuminate\Validation\ValidationException::withMessages($messages);
+    }
+}
+
+if (! function_exists('generateUuid')) {
+    function generateUuid()
+    {
+        $client = new Hidehalo\Nanoid\Client();
+        $alphabets = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $nanoId = $client->formattedId($alphabets, 8);
+
+        return $nanoId;
+    }
+}
+
+if (! function_exists('storageUrl')) {
+    /**
+     * get azure storage url.
+     *
+     * @return string
+     */
+    function storageUrl()
+    {
+        return config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
     }
 }
 
@@ -317,7 +341,7 @@ function get_dob_date_format()
 }
 
 /**
- * Add search clause to any model's built-in query
+ * Add search clause to any model's built-in query.
  */
 function addSearchClauses($model, $request, $query, $searchPrefix)
 {
@@ -351,7 +375,7 @@ function addSearchClauses($model, $request, $query, $searchPrefix)
 }
 
 /**
- * Add orderBy clause to any model's built-in query
+ * Add orderBy clause to any model's built-in query.
  */
 function addOrderByClauses($request, $query, $searchPrefix)
 {
@@ -372,4 +396,26 @@ function formatAmount($value, $decimals = 2, $appendPrefix = true)
     $value = number_format($value, $decimals);
 
     return ($appendPrefix) ? 'AED '.$value : $value;
+}
+
+function generateRouteNames($prefix)
+{
+    return [
+        'index' => $prefix.'-list',
+        'create' => $prefix.'-create',
+        'store' => $prefix.'-store',
+        'show' => $prefix.'-show',
+        'edit' => $prefix.'-edit',
+        'update' => $prefix.'-update',
+        'destroy' => $prefix.'-delete',
+    ];
+}
+
+if (! function_exists('newUi')) {
+    function newUi(): array
+    {
+        return [
+            quoteTypeCode::Health,
+        ];
+    }
 }
