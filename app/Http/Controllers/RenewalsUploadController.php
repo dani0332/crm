@@ -69,7 +69,7 @@ class RenewalsUploadController extends Controller
      * @param $id
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
-    public function fetchPlans($batch, $skipPlans = false)
+    public function fetchPlans($batch)
     {
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
@@ -88,8 +88,7 @@ class RenewalsUploadController extends Controller
                 'batch' => $batch,
                 'total_leads' => $totalPending,
                 'status' => ProcessStatusCode::IN_PROGRESS,
-                'user_id' => auth()->id(),
-                'skip_plans' => $skipPlans,
+                'user_id' => auth()->id()
             ]);
 
             FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);
@@ -230,7 +229,8 @@ class RenewalsUploadController extends Controller
                 'renewals_upload_leads.status as status',
                 'renewals_upload_leads.created_at as created_at',
                 'renewals_upload_leads.updated_at as updated_at',
-                'users.name as uploaded_by'
+                'users.name as uploaded_by',
+                'renewals_upload_leads.skip_plans'
             )
             ->leftjoin('users', 'users.id', 'renewals_upload_leads.created_by_id')
             ->orderBy('renewals_upload_leads.created_at', 'desc');
@@ -344,7 +344,10 @@ class RenewalsUploadController extends Controller
 
     public function validationPassed($id)
     {
-        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])->get();
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)
+            ->with('renewalUploadLead')
+            ->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])
+            ->get();
 
         $batch_id = $id;
 
