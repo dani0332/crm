@@ -234,7 +234,14 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="Commission Value" required>
+        <x-field
+          :label="
+            embeddedProductsForm.commission_type == '2'
+              ? 'Percentage Value'
+              : 'Commission Value'
+          "
+          required
+        >
           <x-input
             v-model="embeddedProductsForm.commission_value"
             type="number"
