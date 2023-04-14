@@ -15,13 +15,13 @@ const embeddedProductsForm = useForm({
   product_type: props.embeddedProduct?.product_type || '',
   price: [],
   quote_type_ids: [],
-  positions: props.embeddedProduct?.embedded_product_placement || [
+  positions: props.embeddedProduct?.placements || [
     {
       quote_type_id: '',
       position: '',
     },
   ],
-  pricings: props.embeddedProduct?.embedded_product_price || [
+  pricings: props.embeddedProduct?.prices || [
     {
       price: '',
     },

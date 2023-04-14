@@ -35,8 +35,8 @@ class EmbeddedProductRepository extends BaseRepository
         return DB::transaction(function () use ($data) {
             $product = $this->create($data);
 
-            $product->embeddedProductPlacement()->createMany($data['positions']);
-            $product->embeddedProductPrice()->createMany($data['pricings']);
+            $product->Placements()->createMany($data['positions']);
+            $product->Prices()->createMany($data['pricings']);
 
             return $product;
         });
@@ -53,11 +53,11 @@ class EmbeddedProductRepository extends BaseRepository
             $productData = Arr::only($data, ['insurance_provider_id', 'product_name', 'short_code', 'display_name', 'product_type',  'description',  'description2',  'commission_type',  'commission_value',  'email_template_id',  'company_documents', 'removel_confirmation', 'logic']);
 
             $product->update($productData);
-            $product->embeddedProductPlacement()->delete();
-            $product->embeddedProductPlacement()->createMany($data['positions']);
+            $product->Placements()->delete();
+            $product->Placements()->createMany($data['positions']);
 
-            $product->embeddedProductPrice()->delete();
-            $product->embeddedProductPrice()->createMany($data['pricings']);
+            $product->Prices()->delete();
+            $product->Prices()->createMany($data['pricings']);
 
             return $product;
         });
@@ -68,7 +68,7 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->where($column, $value)->with(['insuranceprovider', 'embeddedProductPlacement.quotetype', 'embeddedProductPrice'])->firstOrFail();
+        return $this->where($column, $value)->with(['insuranceProvider', 'Placements.quoteType', 'Prices'])->firstOrFail();
     }
 
     /**
@@ -76,6 +76,6 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetData()
     {
-        return $this->with(['insuranceprovider'])->orderBy('created_at', 'desc')->simplePaginate();
+        return $this->with(['insuranceProvider'])->orderBy('created_at', 'desc')->simplePaginate();
     }
 }
