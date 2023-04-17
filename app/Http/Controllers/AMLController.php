@@ -36,6 +36,7 @@ class AMLController extends Controller
     protected $quoteStatusService;
     protected $sanctionListService;
     use GenericQueriesAllLobs;
+
     /**
      * Display a listing of the resource.
      *
@@ -58,81 +59,54 @@ class AMLController extends Controller
     {
         $quoteTypes = QuoteType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $quoteStatuses = QuoteStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $dataAml = [];
-        if ($request->ajax()) {
-            if (isset($request->quoteType) && ! empty($request->quoteType)) {
-                $quoteTypeCode = QuoteType::where('id', '=', $request->quoteType)->value('code');
-                if ($quoteTypeCode == quoteTypeCode::Car) {
-                    $quoteRequestTable = 'car_quote_request';
-                }
-                if ($quoteTypeCode == quoteTypeCode::Home) {
-                    $quoteRequestTable = 'home_quote_request';
-                }
-                if ($quoteTypeCode == quoteTypeCode::Health) {
-                    $quoteRequestTable = 'health_quote_request';
-                }
-                if ($quoteTypeCode == quoteTypeCode::Life) {
-                    $quoteRequestTable = 'life_quote_request';
-                }
-                if ($quoteTypeCode == quoteTypeCode::Business) {
-                    $quoteRequestTable = 'business_quote_request';
-                }
-                if ($quoteTypeCode == quoteTypeCode::Bike) {
-                    $quoteRequestTable = 'bike_quote_request';
-                }
-                if ($quoteTypeCode == quoteTypeCode::Yacht) {
-                    $quoteRequestTable = 'yacht_quote_request';
-                }
-                if ($quoteTypeCode == quoteTypeCode::Travel) {
-                    $quoteRequestTable = 'travel_quote_request';
-                }
-                if ($quoteTypeCode == quoteTypeCode::Pet) {
-                    $quoteRequestTable = 'pet_quote_request';
-                }
+        $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
 
-                $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
-                    ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
-                    ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
-                    ->where('kyc_logs.quote_type_id', $request->quoteType)
-                    ->orderBy('kyc_logs.created_at', 'desc')->simplePaginate();
+        $quotes = new AML();
+        if (isset($request->quoteType) && !empty($request->quoteType)) {
 
-                if (
-                    isset($request->searchType) && ! empty($request->searchType) &&
-                    isset($request->searchField) && ! empty($request->searchField)
-                ) {
-                    if ($request->searchType == 'cdbId') {
-                        $dataAml->where($quoteRequestTable.'.code', $request->searchField);
-                    }
-                    if ($request->searchType == 'id') {
-                        $dataAml->where('kyc_logs.id', $request->searchField);
-                    }
-                    if ($request->searchType == 'customerEmail') {
-                        $dataAml->where($quoteRequestTable.'.email', $request->searchField);
-                    }
+            $quoteRequestTable = str_replace(' ', '_', strtolower($request->quoteType) . '_quote_request');
+
+            $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable . '.code as cdb_id')
+            ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
+            ->leftjoin($quoteRequestTable, $quoteRequestTable . '.id', 'kyc_logs.quote_request_id')
+            ->where('kyc_logs.quote_type_id', $quoteTypeId)
+            ->orderBy('kyc_logs.created_at', 'desc');
+
+            if (
+                isset($request->searchType) && !empty($request->searchType) &&
+                isset($request->searchField) && !empty($request->searchField)
+            ) {
+                if ($request->searchType == 'cdbId') {
+                    $dataAml->where($quoteRequestTable . '.code', $request->searchField);
                 }
-                if (isset($request->matchFound)) {
-                    if ($request->matchFound == 'False') {
-                        $dataAml->where('kyc_logs.results_found', '=', '0');
-                    }
-                    if ($request->matchFound == 'True') {
-                        $dataAml->where('kyc_logs.results_found', '>', '0');
-                    }
+                if ($request->searchType == 'id') {
+                    $dataAml->where('kyc_logs.id', $request->searchField);
                 }
-                if (
-                    isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
-                    isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
-                ) {
-                    $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$request->amlCreatedStartDate.'" AND "'.$request->amlCreatedEndDate.'"');
+                if ($request->searchType == 'customerEmail') {
+                    $dataAml->where($quoteRequestTable . '.email', $request->searchField);
                 }
             }
+            if (isset($request->matchFound)) {
+                if ($request->matchFound == 'False') {
+                    $dataAml->where('kyc_logs.results_found', '=', '0');
+                }
+                if ($request->matchFound == 'True') {
+                    $dataAml->where('kyc_logs.results_found', '>', '0');
+                }
+            }
+            if (
+                isset($request->amlCreatedStartDate) && !empty($request->amlCreatedStartDate) &&
+                isset($request->amlCreatedEndDate) && !empty($request->amlCreatedEndDate)
+            ) {
+                // $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "' . $request->amlCreatedStartDate . '" AND "' . $request->amlCreatedEndDate . '"');
+            }
+            $quotes = $dataAml->simplePaginate(10)->withQueryString();
         }
-
         // return view('aml.view', compact('quoteTypes', 'quoteStatuses'));
-
         return inertia('Aml/Index', [
             'quoteTypes' => $quoteTypes,
             'quoteStatuses' => $quoteStatuses,
-            'aml' => $dataAml,
+            'aml' => $quotes,
         ]);
     }
 

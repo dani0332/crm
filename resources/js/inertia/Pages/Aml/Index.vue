@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import * as dayjs from 'dayjs';
 
 defineProps({
   aml: Object,
@@ -13,6 +14,14 @@ const loader = reactive({
   export: false,
 });
 
+const { isRequired } = useRules();
+
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss');
+
+const rules = {
+  isRequired,
+};
+
 let availableFilters = {
   quoteType: null,
   searchType: '',
@@ -24,6 +33,16 @@ let availableFilters = {
 };
 
 const filters = reactive(availableFilters);
+
+function onReset() {
+  router.visit('/kyc/aml', {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
+}
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -85,12 +104,14 @@ const tableHeader = [
           placeholder=""
           :options="
             quoteTypes.map(item => ({
-              value: item.id,
+              value: item.code,
               label: item.text,
             }))
           "
           class="w-full"
         />
+      </div>
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-select
           v-model="filters.searchType"
           label="Search By"
@@ -110,7 +131,8 @@ const tableHeader = [
           class="w-full"
           placeholder="Search Value"
         />
-
+      </div>
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-select
           v-model="filters.matchFound"
           label="Match found"
@@ -121,17 +143,21 @@ const tableHeader = [
           ]"
           class="w-full"
         />
+      </div>
+      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
           v-model="filters.amlCreatedStartDate"
           name="created_at_end"
           label="Created Date Start"
           class="w-full"
+          :rules="[isRequired]"
         />
         <DatePicker
           v-model="filters.amlCreatedEndDate"
           name="created_at_end"
           label="Created Date End"
           class="w-full"
+          :rules="[isRequired]"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
@@ -143,7 +169,6 @@ const tableHeader = [
     </x-form>
 
     <DataTable
-      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
@@ -158,10 +183,26 @@ const tableHeader = [
           {{ id }}
         </Link>
       </template>
-
+      <template #item-cdb_id="item">
+        <Link :href="`/kyc/aml/${item.quote_type_id}/details/${item.quote_request_id}`" class="text-primary-500 hover:underline">
+          {{ item.cdb_id }}
+        </Link>
+      </template>
       <template #item-screenshot="{ screenshot }">
-        <img :src="screenshot" alt="IMCRM" class="w-6" />
+        <a :href="screenshot" download>
+          <img :src="screenshot" alt="IMCRM" class="w-10 h-10" />
+        </a>
       </template>
     </DataTable>
+
+    <Pagination
+      :links="{
+        next: aml.next_page_url,
+        prev: aml.prev_page_url,
+        current: aml.current_page,
+        from: aml.from,
+        to: aml.to,
+      }"
+    />
   </div>
 </template>

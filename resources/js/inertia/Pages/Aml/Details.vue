@@ -20,6 +20,7 @@ defineProps({
   isCompanySearchEnabled: Array,
 });
 
+const notification = useNotifications('toast');
 const page = usePage();
 const loader = reactive({
   table: false,
@@ -36,7 +37,38 @@ const tableHeader = [
 ];
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
-console.log(page.props);
+
+const yob = computed(() => {
+  return page.props.yearsList.map(year => ({
+    value: year,
+    label: year,
+  }));
+});
+
+const customer = useForm({
+  first_name: page.props.quoteRequest.first_name,
+  last_name: page.props.quoteRequest.last_name,
+  year_of_birth: page.props.quoteRequest.year_of_birth,
+});
+
+const updateCustomer = isValid => {
+  if (!isValid) {
+    return;
+  }
+  customer
+    .transform(data => {
+      return {
+        ...data,
+      };
+    })
+      .get(`${page.props.quoteRequest.id}/quoteUpdate`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            const session = usePage().props.flash;
+            notification.success(session.success);
+        },
+      });
+};
 </script>
 
 <template>
@@ -74,16 +106,35 @@ console.log(page.props);
             <dd>{{ quoteRequest.quote_status_text }}</dd>
           </div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">First Name</dt>
-          </div>
+          <div class="grid sm:grid-cols-2"></div>
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Last Name</dt>
-          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <x-form @submit="updateCustomer" :auto-focus="false">
+              <x-input
+                label="First Name"
+                :value="customer.first_name"
+                :auto-focus="true"
+              />
 
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Year of Birth</dt>
+              <x-input
+                label="Last Name"
+                :value="customer.last_name"
+                class="w-full"
+              />
+              <ComboBox
+                :single="true"
+                v-model="customer.year_of_birth"
+                label="Year of Birth"
+                :options="yob"
+                class="w-full"
+              />
+              <x-button
+                type="submit"
+                color="primary"
+                :loading="customer.processing"
+                >Update & Verify</x-button
+              >
+            </x-form>
           </div>
 
           <div class="grid sm:grid-cols-2">
