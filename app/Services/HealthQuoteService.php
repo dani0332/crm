@@ -314,7 +314,7 @@ class HealthQuoteService extends BaseService
         }
         // advisors filter
         if (isset($request->advisors) && $request->advisors != '') {
-            $this->query->whereIn('advisor_id', $request->advisors);
+            $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
         }
         // is_renewal filter
         if (isset($request->is_renewal) && $request->is_renewal != '') {
