@@ -16107,11 +16107,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, 8
   /* PROPS */
   , ["items-selected", "loading", "items"])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_AuditLogs, {
-    "quote-type": $props.quoteTypeCode,
+    type: "App\\Models\\".concat($props.quoteTypeCode, "Quote"),
     id: $props.quoteRequest.id
   }, null, 8
   /* PROPS */
-  , ["quote-type", "id"])]);
+  , ["type", "id"])]);
 }
 
 /***/ }),

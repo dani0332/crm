@@ -562,6 +562,6 @@ const updateCustomer = isValid => {
         </template>
       </DataTable>
     </div>
-    <AuditLogs :quote-type="quoteTypeCode" :id="quoteRequest.id" />
+    <AuditLogs :type="`App\\Models\\${quoteTypeCode}Quote`" :id="quoteRequest.id" />
   </div>
 </template>
