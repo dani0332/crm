@@ -132,7 +132,7 @@
                 columnDefs: [
 
                         ],
-                buttons: isAdmin || isManagerOrDeputy || canExtractData ? [{
+                buttons: canExtractData ? [{
                         extend: 'excel',
                         text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
                         title: 'Group Medical Listing',
