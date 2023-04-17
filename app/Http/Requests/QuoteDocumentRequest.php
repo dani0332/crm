@@ -42,7 +42,7 @@ class QuoteDocumentRequest extends FormRequest
             $rules['file'] .= '|mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
         }
 
-        return  $rules;
+        return $rules;
     }
 
     /**

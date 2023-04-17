@@ -306,7 +306,7 @@ class UserController extends Controller
             return [];
         }
 
-        return  $this->getSubTeamsByTeamIds($request->teamId);
+        return $this->getSubTeamsByTeamIds($request->teamId);
     }
 
     public function getTeamManagers(Request $request)

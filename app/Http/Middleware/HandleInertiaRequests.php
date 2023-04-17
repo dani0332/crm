@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -221,11 +222,11 @@ class HandleInertiaRequests extends Middleware
                         '/quotes/home',
                         fn ($s) => $s->attributes(['icon' => 'home'])
                     )
-                    ->addIf(auth()->user()->can(PermissionsEnum::PetQuotesList), 'Pet Quotes', '/personal-quotes/pet', fn ($s) => $s->attributes(['icon' => 'pet']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::BikeQuotesList), 'Bike Quotes', '/personal-quotes/bike', fn ($s) => $s->attributes(['icon' => 'bike']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::CycleQuotesList), 'Cycle Quotes', '/personal-quotes/cycle', fn ($s) => $s->attributes(['icon' => 'cycle']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::YachtQuotesList), 'Yacht Quotes', '/personal-quotes/yacht', fn ($s) => $s->attributes(['icon' => 'yacht']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::JetskiQuotesList), 'Jetski Quotes', '/personal-quotes/jetski', fn ($s) => $s->attributes(['icon' => 'jetski']));
+                    ->addIf(in_array(quoteTypeCode::Pet, newUi()) && auth()->user()->can(PermissionsEnum::PetQuotesList), 'Pet Quotes', '/personal-quotes/pet', fn ($s) => $s->attributes(['icon' => 'pet']))
+                    ->addIf(in_array(quoteTypeCode::Bike, newUi()) && auth()->user()->can(PermissionsEnum::BikeQuotesList), 'Bike Quotes', '/personal-quotes/bike', fn ($s) => $s->attributes(['icon' => 'bike']))
+                    ->addIf(in_array(quoteTypeCode::Cycle, newUi()) && auth()->user()->can(PermissionsEnum::CycleQuotesList), 'Cycle Quotes', '/personal-quotes/cycle', fn ($s) => $s->attributes(['icon' => 'cycle']))
+                    ->addIf(in_array(quoteTypeCode::Yacht, newUi()) && auth()->user()->can(PermissionsEnum::YachtQuotesList), 'Yacht Quotes', '/personal-quotes/yacht', fn ($s) => $s->attributes(['icon' => 'yacht']))
+                    ->addIf(in_array(quoteTypeCode::Jetski, newUi()) && auth()->user()->can(PermissionsEnum::JetskiQuotesList), 'Jetski Quotes', '/personal-quotes/jetski', fn ($s) => $s->attributes(['icon' => 'jetski']));
             });
         }
 

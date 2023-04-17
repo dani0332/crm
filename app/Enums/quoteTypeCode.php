@@ -43,4 +43,6 @@ class quoteTypeCode extends Enum
     const business = 'business';
     const WCU = 'Wow-Call';
     const Amt = 'AMT';
+    const Cycle = 'Cycle';
+    const Jetski = 'Jetski';
 }

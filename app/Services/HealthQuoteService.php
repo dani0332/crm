@@ -82,6 +82,7 @@ class HealthQuoteService extends BaseService
             'hqr.lead_type_id',
             'lt.TEXT AS lead_type_id_text',
             'ls.text as lost_reason',
+            'ls.id as lost_reason_id',
             'hqr.previous_quote_id',
             'hqr.salary_band_id',
             'sb.text as salary_band_id_text',
@@ -314,7 +315,7 @@ class HealthQuoteService extends BaseService
         }
         // advisors filter
         if (isset($request->advisors) && $request->advisors != '') {
-            $this->query->whereIn('advisor_id', $request->advisors);
+            $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
         }
         // is_renewal filter
         if (isset($request->is_renewal) && $request->is_renewal != '') {

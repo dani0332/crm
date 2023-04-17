@@ -199,7 +199,7 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         // inertia rendering for health quote
-        if ($this->genericModel->modelType == quoteTypeCode::Health) {
+        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
@@ -212,7 +212,7 @@ class CRUDController extends Controller
         }
 
         // inertia rendering for home quote
-        if ($this->genericModel->modelType == quoteTypeCode::Home) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
             $quote_status = $dropdownSource['quote_status_id'];
@@ -266,7 +266,7 @@ class CRUDController extends Controller
         }
         $model = $this->genericModel;
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health) {
+        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
             return inertia('HealthQuote/Create', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
@@ -274,7 +274,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Home) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
             return inertia('HomeQuote/Create', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
@@ -305,12 +305,15 @@ class CRUDController extends Controller
         }
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
 
-        if ($modelType == quoteTypeCode::Home) {
+        // new ui enabled
+        if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
+            $validateArray = [];
             if ($request->has('first_name')) {
                 $this->validate($request, [
                     'first_name' => 'required|max:255',
                 ]);
-            } if ($request->has('last_name')) {
+            }
+            if ($request->has('last_name')) {
                 $this->validate($request, [
                     'last_name' => 'required|max:255',
                 ]);
@@ -319,7 +322,8 @@ class CRUDController extends Controller
                 $this->validate($request, [
                     'ilivein_accommodation_type_id' => 'required|exists:home_accommodation_type,id',
                 ]);
-            } if ($request->has('iam_possesion_type_id')) {
+            }
+            if ($request->has('iam_possesion_type_id')) {
                 $this->validate($request, [
                     'iam_possesion_type_id' => 'required|exists:home_possession_type,id',
                 ]);
@@ -329,6 +333,8 @@ class CRUDController extends Controller
                     'address' => 'required|max:2000',
                 ]);
             }
+        } elseif ($modelType == quoteTypeCode::Home) {
+            $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['create']);
         }
 
         if ($request->has('email')) {
@@ -357,11 +363,11 @@ class CRUDController extends Controller
             if (! isset($record->quoteUID)) {
                 return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
             } else {
-                if ($modelType == quoteTypeCode::Health) {
+                if ($modelType == quoteTypeCode::Health && in_array($modelType, newUi())) {
                     return redirect('/quotes/health');
                 }
 
-                if ($modelType == quoteTypeCode::Home) {
+                if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
                     return redirect('/quotes/home');
                 }
 
@@ -515,7 +521,7 @@ class CRUDController extends Controller
             ]));
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Home) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
@@ -543,7 +549,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health) { // Health plans to display on detail view
+        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
             $listQuotePlans = [];
             $quotePlans = $this->healthQuoteService->getQuotePlans($id);
             if (isset($quotePlans->message) && $quotePlans->message != '') {
@@ -639,6 +645,7 @@ class CRUDController extends Controller
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
                     'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+                    'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
                 ],
             ]);
         } else {
@@ -682,7 +689,7 @@ class CRUDController extends Controller
             }
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Health) {
+        if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
             return inertia('HealthQuote/Edit', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -692,7 +699,7 @@ class CRUDController extends Controller
             ]);
         }
 
-        if ($this->genericModel->modelType == quoteTypeCode::Home) {
+        if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
             return inertia('HomeQuote/Edit', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -1059,9 +1066,11 @@ class CRUDController extends Controller
                 // MS: dispatch sib work flow
                 SyncSIBContactJob::dispatch($lead);
             }
-            if ($request->leadStatus == QuoteStatusEnum::FollowupCall ||
-            $request->leadStatus == QuoteStatusEnum::Interested ||
-            $request->leadStatus == QuoteStatusEnum::NoAnswer) {
+            if (
+                $request->leadStatus == QuoteStatusEnum::FollowupCall ||
+                $request->leadStatus == QuoteStatusEnum::Interested ||
+                $request->leadStatus == QuoteStatusEnum::NoAnswer
+            ) {
                 $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
                 $this->validate($request, [
                     'next_followup_date' => 'required',
@@ -1110,7 +1119,8 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->status) {
             $results = getDataAgainstEveryStatus($request->modelType, $request);
 
-            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life])) {
+            // and newUi is true
+            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life]) && in_array($request->modelType, newUi())) {
                 return $results;
             }
 
@@ -1155,7 +1165,7 @@ class CRUDController extends Controller
         if ($request->has('modelType') && $request->modelType && $request->term && $request->status) {
             $results = getDataAgainstSearchTerm($request->modelType, $request);
 
-            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life])) {
+            if (in_array($request->modelType, [quoteTypeCode::Health, quoteTypeCode::Business, quoteTypeCode::Travel, quoteTypeCode::Home, quoteTypeCode::Life]) && in_array($request->modelType, newUi())) {
                 return $results;
             }
 
