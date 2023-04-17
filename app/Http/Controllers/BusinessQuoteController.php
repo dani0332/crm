@@ -1,0 +1,244 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
+use App\Http\Requests\StoreBusinessQuoteRequest;
+use App\Http\Requests\UpdateBusinessQuoteRequest;
+use App\Models\BusinessQuote;
+use App\Services\BusinessQuoteService;
+use App\Services\CRUDService;
+use App\Services\DropdownSourceService;
+use App\Services\LookupService;
+use App\Traits\RolePermissionConditions;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+
+class BusinessQuoteController extends Controller
+{
+    protected $businessQuoteService;
+    protected $crudService;
+    protected $lookupService;
+    protected $genericModel;
+    protected $dropdownSourceService;
+
+    public const TYPE = quoteTypeCode::Business;
+    public const TYPE_ID = QuoteTypeId::Business;
+
+    use RolePermissionConditions;
+
+    public function __construct(
+        BusinessQuoteService $businessQuoteService,
+        CRUDService $crudService,
+        LookupService $lookupService,
+        DropdownSourceService $dropdownSourceService
+    ) {
+        $this->businessQuoteService = $businessQuoteService;
+        $this->genericModel = $this->businessQuoteService->getGenericModel(self::TYPE);
+        $this->crudService = $crudService;
+        $this->lookupService = $lookupService;
+        $this->dropdownSourceService = $dropdownSourceService;
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function index(Request $request)
+    {
+        $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $gridData = $this->businessQuoteService->getGridData($this->genericModel, $request);
+        $quotes = $gridData->simplePaginate(10)->withQueryString();
+
+        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource'));
+    }
+
+    private function parseDate($date, $isStartOfDay)
+    {
+        if ($date != '') {
+            $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+            if ($isStartOfDay) {
+                return Carbon::createFromFormat($dateFormat, $date)->startOfDay()->toDateString();
+            } else {
+                return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
+            }
+        }
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function create(Request $request)
+    {
+        $isRenewalUser = auth()->user()->isRenewalUser();
+
+        $renewalAdvisors = $this->businessQuoteService->getRenewalAdvisors();
+        $this->businessQuoteService->fillData();
+        $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+
+        $model = $this->genericModel;
+
+        return inertia('CorpLineQuote/Create', [
+            'quote' => new BusinessQuote(),
+            'dropdownSource' => $dropdownSource,
+            'renewalAdvisors' => $renewalAdvisors ?? [],
+            'isRenewalUser' => $isRenewalUser,
+        ]);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function store(StoreBusinessQuoteRequest $request)
+    {
+        $record = $this->businessQuoteService->saveBusinessQuote($request);
+
+        redirect('/quotes/business')->with('message', 'Record created successfully');
+    }
+
+    /**
+     * @param $uuid
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function show($id)
+    {
+        $quoteType = strtolower($this->genericModel->modelType);
+        $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
+        $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+        $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+        $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
+        $isRenewalUser = auth()->user()->isRenewalUser();
+        $renewalAdvisors = $this->businessQuoteService->getRenewalAdvisors();
+        $this->businessQuoteService->fillData();
+
+        $assignmentTypes = [GenericRequestEnum::ASSIGN_WITHOUT_EMAIL => 'Without Email', GenericRequestEnum::ASSIGN_WITH_EMAIL => 'With Email'];
+        $isQuoteDocumentEnabled = $this->businessQuoteService->quoteDocumentEnabled($this->genericModel->modelType);
+        $quoteDocuments = $this->businessQuoteService->getQuoteDocuments($this->genericModel->modelType, $record->id);
+        $displaySendPolicyButton = $this->businessQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
+        $documentTypes = $this->businessQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
+        $documentTypes = collect($documentTypes)->groupBy('category');
+
+        $activities = $this->businessQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
+        $customerAdditionalContacts = $this->businessQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
+
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+
+        return inertia('CorpLineQuote/Show', [
+            'quote' => $record,
+            'quoteDetails' => $quoteDetails,
+            'modelType' => $this->genericModel->modelType,
+            'dropdownSource' => $dropdownSource,
+            'leadStatuses' => $dropdownSource['quote_status_id'],
+            'advisors' => $advisors,
+            'renewalAdvisors' => $renewalAdvisors,
+            'allowedDuplicateLOB' => $allowedDuplicateLOB,
+            'assignmentTypes' => $assignmentTypes,
+            'genderOptions' => $this->crudService->getGenderOptions(),
+            'lostReasons' => $this->lookupService->getLostReasons(),
+            'quoteDocuments' => $quoteDocuments,
+            'documentTypes' => $documentTypes,
+            'cdnPath' => $cdnPath,
+            'memberCategories' => $this->lookupService->getMemberCategories(),
+            'activities' => $activities,
+            'isAdmin' => auth()->user()->isAdmin(),
+            'customerAdditionalContacts' => $customerAdditionalContacts,
+            'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
+            'permissions' => [
+                'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
+                'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
+                'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
+                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
+                'displaySendPolicyButton' => $displaySendPolicyButton,
+                'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
+                'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
+                'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
+                'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
+                'canNotApprovePayments' => auth()->user()->cannot(PermissionsEnum::ApprovePayments),
+                'canEditQuote' => auth()->user()->can('corpline-quotes-edit'),
+            ],
+            'enums' => [
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            ],
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  int  $id
+     * @return \\Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function edit($id)
+    {
+        $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
+
+        return inertia('CorpLineQuote/Edit', [
+            'quote' => $record,
+            'modelType' => $this->genericModel->modelType,
+            'dropdownSource' => $dropdownSource,
+            'leadStatuses' => $dropdownSource['quote_status_id'],
+            'genderOptions' => $this->crudService->getGenderOptions(),
+            'lostReasons' => $this->lookupService->getLostReasons(),
+            'isAdmin' => auth()->user()->isAdmin(),
+            'permissions' => [
+                'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
+                'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
+                'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
+            ],
+            'enums' => [
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            ],
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(UpdateBusinessQuoteRequest $request, $id)
+    {
+        $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
+
+        $this->crudService->updateModelByType('business', $request, $id);
+
+        return redirect('/quotes/business/'.$id)->with('success', 'Business quote has been updated');
+    }
+
+    public function cardsView(Request $request)
+    {
+        $quotes = [];
+        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
+        $leadStatuses = $leadStatuses->filter(function ($item) {
+            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::QUALIFIED || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::MISSING_DOCUMENTS || $item->text == quoteStatusCode::PENDINGUW || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING;
+        })->toArray();
+
+        $leadStatuses = array_map(function ($item) {
+            $item['data'] = getDataAgainstStatus('Business', $item['id']);
+
+            return $item;
+        }, $leadStatuses);
+
+        return inertia('CorpLineQuote/Cards', [
+            'quotes' => array_values($leadStatuses),
+        ]);
+    }
+}

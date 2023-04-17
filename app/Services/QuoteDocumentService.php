@@ -31,7 +31,7 @@ class QuoteDocumentService extends BaseService
 
     public function isEnabled($quoteModelType)
     {
-        $enabledLOBs = [quoteTypeCode::Car];
+        $enabledLOBs = [quoteTypeCode::Car, quoteTypeCode::Health];
         if (in_array($quoteModelType, $enabledLOBs)) {
             return true;
         }
@@ -65,7 +65,7 @@ class QuoteDocumentService extends BaseService
         //check for document and delete if found
         if (($document = $quote->documents->first())) {
             $document->delete();
-            Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
+            //Log::info('CL: '.get_class().' FN: deleteQuoteDocument  UUID: '.$data['quote_uuid'].' Message: document ('.$data['doc_name'].') deleted');
 
             return response()->json(['message' => 'document deleted successfully']);
         }
@@ -109,6 +109,7 @@ class QuoteDocumentService extends BaseService
                 'document_type_code' => $documentType->code,
                 'document_type_text' => $documentType->text,
                 'doc_uuid' => $docUuid,
+                'member_detail_id' => $data['member_detail_id'] ?? null,
                 'created_by_id' => auth()->id(),
             ]);
         } catch (\Exception $exception) {

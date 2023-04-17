@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Jobs\CammyJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
@@ -194,7 +196,7 @@ class CRUDService extends BaseService
                 $entityDetail = $this->{strtolower($leadType).'QuoteService'}->getDetailEntity($leadId);
                 if ($entityDetail) {
                     $query->where('a.auditable_id', $entityDetail->id)
-                    ->where('a.auditable_type', 'App\Models\\'.$leadType.'QuoteRequestDetail');
+                        ->where('a.auditable_type', 'App\Models\\'.$leadType.'QuoteRequestDetail');
                 }
             })
             ->orderBy('a.created_at', 'DESC')->get();
@@ -249,6 +251,25 @@ class CRUDService extends BaseService
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP) {
             SyncSIBContactJob::dispatch($entity);
         }
+
+        //Disabling - Enable for RM Deployment
+        // if (
+        //     strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
+        //     && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+        // ) {
+        //     if ($request->leadStatus == QuoteStatusEnum::Quoted) {
+        //         CammyJob::dispatch($entity, 'intro');
+        //     } else {
+        //         SyncSIBContactJob::dispatch($entity);
+        //     }
+
+        //     if (
+        //         $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
+        //         || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
+        //     ) {
+        //         CammyJob::dispatch($entity, 'unsub');
+        //     }
+        // }
 
         QuoteStatusLog::create([
             'quote_type_id' => QuoteTypeId::Car,
@@ -442,5 +463,16 @@ class CRUDService extends BaseService
         }
 
         return $result;
+    }
+
+    public function getGenderOptions()
+    {
+        $genderOptions = [
+            GenericRequestEnum::MALE_SINGLE_VALUE => GenericRequestEnum::MALE_SINGLE,
+            GenericRequestEnum::FEMALE_SINGLE_VALUE => GenericRequestEnum::FEMALE_SINGLE,
+            GenericRequestEnum::FEMALE_MARRIED_VALUE => GenericRequestEnum::FEMALE_MARRIED,
+        ];
+
+        return $genderOptions;
     }
 }

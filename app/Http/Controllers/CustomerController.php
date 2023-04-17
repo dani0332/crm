@@ -153,13 +153,17 @@ class CustomerController extends Controller
         return view('customers.upload');
     }
 
-    public function deleteAdditionalContact($id)
+    public function deleteAdditionalContact($id, Request $request)
     {
         $deleteCustomerAdditionalContact = CustomerAdditionalContact::find($id);
 
         if ($deleteCustomerAdditionalContact) {
             Log::info('Customer additional contact deleted. ID: '.$id);
             $deleteCustomerAdditionalContact->delete();
+        }
+
+        if (isset($request->isInertia) && $request->isInertia) {
+            return redirect()->back();
         }
 
         return response()->json(['data' => [
@@ -209,6 +213,10 @@ class CustomerController extends Controller
         }
         $quoteObject->save();
 
+        if (isset($request->isInertia) && $request->isInertia) {
+            return redirect()->back();
+        }
+
         return response()->json(['data' => [
             'message' => 'Primary Contact Updated',
         ]]);
@@ -221,6 +229,11 @@ class CustomerController extends Controller
             'additional_contact_type' => 'required',
             'additional_contact_val' => 'required',
         ]);
+
+        if ($request->isInertia == true && $validator->fails()) {
+            return redirect()->back()->withErrors($validator->errors());
+        }
+
         if ($validator->fails()) {
             return response()->json(['error' => [
                 'message' => $validator->errors(),
@@ -235,9 +248,7 @@ class CustomerController extends Controller
             $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
 
             if ($isAdditionalEmailExist) {
-                return response()->json(['error' => [
-                    'message' => 'Email Address already in use for a customer. Please try another.',
-                ]]);
+                vAbort('Email Address already in use for a customer. Please try another.');
             }
         }
 
@@ -245,9 +256,7 @@ class CustomerController extends Controller
             $isAdditionalMobileNoExist = $this->customerService->checkAdditionalMobileNoExist($quoteObject, $value);
 
             if ($isAdditionalMobileNoExist) {
-                return response()->json(['error' => [
-                    'message' => 'Mobile Number already in use for a customer. Please try another.',
-                ]]);
+                vAbort('Mobile Number already in use for a customer. Please try another.');
             }
         }
 
@@ -257,6 +266,10 @@ class CustomerController extends Controller
             'key' => $key,
             'value' => trim($value),
         ]);
+
+        if (isset($request->isInertia) && $request->isInertia) {
+            return redirect()->back();
+        }
 
         return response()->json(['data' => [
             'message' => 'Contact added successfully.',

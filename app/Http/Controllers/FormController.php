@@ -60,7 +60,7 @@ class FormController extends ApiController
             $deletePermission = $modelInstance->access['delete'];
             $collection = collect($deletePermission);
             if (! $collection->contains($role)) {
-                return  $this->respondError('Access denied');
+                return $this->respondError('Access denied');
             }
 
             return $this->respondData($modelInstance->deleteForm($request));
@@ -83,7 +83,7 @@ class FormController extends ApiController
             $writePermission = $modelInstance->access['write'];
             $collection = collect($writePermission);
             if (! $collection->contains($role)) {
-                return  $this->respondError('Access denied', 400);
+                return $this->respondError('Access denied', 400);
             }
 
             return $modelInstance->saveForm($request, false);

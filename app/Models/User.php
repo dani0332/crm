@@ -109,7 +109,7 @@ class User extends Authenticatable implements AuditableContract
             }
         }
         if ($isManager) {
-            $userIds = User::where('manager_id', $this->id)->get()->pluck('id');
+            $userIds = self::where('manager_id', $this->id)->get()->pluck('id');
 
             return $userIds->implode(',');
         } else {
@@ -233,7 +233,7 @@ class User extends Authenticatable implements AuditableContract
 
     public function getUserRoles()
     {
-        return User::select(['id', 'name'])->whereHas(
+        return self::select(['id', 'name'])->whereHas(
             'roles',
             function ($q) {
                 $q->where('name', 'pa');

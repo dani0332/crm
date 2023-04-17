@@ -96,7 +96,7 @@ class DropdownSourceService extends BaseService
 
     public function getDropdownSource($type, $quoteTypeId = false)
     {
-        $advisorType = strtoupper(explode('/', $_SERVER['REQUEST_URI'])[2]);
+        $advisorType = strtoupper(explode('/', request()->path())[1]);
         $data = '';
         $lookUpService = new LookupService();
         switch ($type) {
