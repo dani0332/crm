@@ -42,7 +42,7 @@ use App\Enums\PermissionsEnum;
     })
   })
 
-  document.addEventListener('alpine:initialized', () => {
+  document.addEventListener('DOMContentLoaded', () => {
     const elements = document.querySelectorAll('.side-menu li a');
     const route = window.location;
 
