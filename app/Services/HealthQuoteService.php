@@ -82,6 +82,7 @@ class HealthQuoteService extends BaseService
             'hqr.lead_type_id',
             'lt.TEXT AS lead_type_id_text',
             'ls.text as lost_reason',
+            'ls.id as lost_reason_id',
             'hqr.previous_quote_id',
             'hqr.salary_band_id',
             'sb.text as salary_band_id_text',
