@@ -198,6 +198,10 @@ function setQueryStringFilters() {
 onMounted(() => {
   setQueryStringFilters();
 });
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 </script>
 
 <template>
@@ -366,6 +370,7 @@ onMounted(() => {
           :columns="tableHeader"
           :filename="'Health-List'"
           :sheetname="'Leads'"
+          v-if="can(permissionsEnum.DATA_EXTRACTION)"
         >
           <x-button size="sm" color="emerald">
             Export -
