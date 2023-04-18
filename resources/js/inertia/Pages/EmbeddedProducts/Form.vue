@@ -64,8 +64,8 @@ const addPosition = () => {
       position: '',
     });
   },
-  removePosition = () => {
-    embeddedProductsForm.positions.pop();
+  removePosition = index => {
+    embeddedProductsForm.positions.splice(index, 1);
   };
 
 const addPricing = () => {
@@ -74,8 +74,8 @@ const addPricing = () => {
       price: '',
     });
   },
-  removePricing = () => {
-    embeddedProductsForm.pricings.pop();
+  removePricing = index => {
+    embeddedProductsForm.pricings.splice(index, 1);
   };
 
 function onSubmit(isValid) {
@@ -306,16 +306,16 @@ function onSubmit(isValid) {
       </div>
 
       <div class="p-4 rounded shadow mb-6 bg-primary-50/25 mt-4">
-        <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Placement</h3>
+        <h3 class="font-semibold text-primary-800 text-lg">Placement</h3>
 
-          <x-divider class="mb-4 mt-1" />
+        <x-divider class="mb-4 mt-1" />
 
-          <div class="grid sm:grid-cols-2 gap-4">
-            <template
-              v-for="(i, index) in embeddedProductsForm.positions"
-              :key="index"
-            >
+        <template
+          v-for="(i, index) in embeddedProductsForm.positions"
+          :key="index"
+        >
+          <div class="flex flex-wrap gap-4 mb-4">
+            <div class="grid sm:grid-cols-2 gap-4 flex-auto">
               <x-field label="LOB" required>
                 <x-select
                   v-model="embeddedProductsForm.positions[index].quote_type_id"
@@ -335,37 +335,47 @@ function onSubmit(isValid) {
                   class="w-full"
                 />
               </x-field>
-            </template>
-
-            <x-button
-              v-if="embeddedProductsForm.positions.length > 1"
-              @click="removePosition"
-              size="xs"
-              outlined
-              color="error"
-            >
-              Remove last position
-            </x-button>
-            <x-button @click="addPosition" size="xs" outlined color="success">
-              Add another position
-            </x-button>
+            </div>
+            <div class="mb-3 flex items-end">
+              <x-button
+                :disabled="embeddedProductsForm.positions.length == 1"
+                @click="removePosition(index)"
+                size="sm"
+                outlined
+                color="error"
+              >
+                Remove
+              </x-button>
+            </div>
           </div>
+        </template>
+        <div class="w-full">
+          <x-button @click="addPosition" size="sm" outlined color="success">
+            Add another position
+          </x-button>
         </div>
       </div>
 
       <div class="p-4 rounded shadow mb-6 bg-primary-50/25 mt-4">
-        <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Pricing</h3>
+        <h3 class="font-semibold text-primary-800 text-lg">Pricing</h3>
 
-          <x-divider class="mb-4 mt-1" />
+        <x-divider class="mb-4 mt-1" />
 
-          <div class="grid sm:grid-cols-2 gap-4">
-            <template
-              v-if="embeddedProductsForm.pricing_type == 2"
-              v-for="(i, index) in embeddedProductsForm.pricings"
-              :key="index"
+        <template
+          v-for="(i, index) in embeddedProductsForm.pricings"
+          :key="index"
+        >
+          <div class="flex flex-wrap gap-4 mb-4">
+            <div
+              :class="
+                embeddedProductsForm.pricing_type == 2 ? 'sm:grid-cols-2' : ''
+              "
+              class="grid gap-4 flex-auto"
             >
-              <x-field label="Variant">
+              <x-field
+                v-if="embeddedProductsForm.pricing_type == 2"
+                label="Variant"
+              >
                 <x-input
                   v-model="embeddedProductsForm.pricings[index].variant"
                   class="w-full"
@@ -379,40 +389,25 @@ function onSubmit(isValid) {
                   class="w-full"
                 />
               </x-field>
-            </template>
-            <template
-              v-else
-              v-for="(i, index) in embeddedProductsForm.pricings"
-            >
-              <x-field class="sm:col-span-2" label="Price" required>
-                <x-input
-                  v-model="embeddedProductsForm.pricings[index].price"
-                  type="number"
-                  :rules="[isRequired]"
-                  class="w-full"
-                />
-              </x-field>
-            </template>
-
-            <x-button
-              v-if="embeddedProductsForm.pricings.length > 1"
-              @click="removePricing"
-              size="xs"
-              outlined
-              color="error"
-            >
-              Remove last pricing
-            </x-button>
-            <x-button
-              v-if="embeddedProductsForm.pricing_type == 2"
-              @click="addPricing"
-              size="xs"
-              outlined
-              color="success"
-            >
-              Add another pricing
-            </x-button>
+            </div>
+            <div class="mb-3 flex items-end">
+              <x-button
+                :disabled="embeddedProductsForm.pricings.length == 1"
+                @click="removePricing(index)"
+                size="sm"
+                outlined
+                color="error"
+              >
+                Remove
+              </x-button>
+            </div>
           </div>
+        </template>
+
+        <div class="w-full" v-if="embeddedProductsForm.pricing_type == 2">
+          <x-button @click="addPricing" size="sm" outlined color="success">
+            Add another pricing
+          </x-button>
         </div>
       </div>
 
