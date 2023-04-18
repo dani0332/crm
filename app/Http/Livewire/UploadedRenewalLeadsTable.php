@@ -50,7 +50,7 @@ class UploadedRenewalLeadsTable extends DataTableComponent
               ->html(),
             Column::make('Status', 'status'),
             Column::make('Skip Plans')->format(function ($skipPlans) {
-                return  ($skipPlans) ? GenericRequestEnum::Yes : GenericRequestEnum::No ;
+                return ($skipPlans) ? GenericRequestEnum::Yes : GenericRequestEnum::No;
             }),
             Column::make('Submitted By', 'createdby.name'),
             Column::make('Submitted At', 'created_at'),
