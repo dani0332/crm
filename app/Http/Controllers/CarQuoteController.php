@@ -79,15 +79,15 @@ class CarQuoteController extends Controller
     public function resubmitApi(Request $request)
     {
         return 'rtrter: '.$request;
-        $carQuotes = $request->car_quotes;
-        if (count($carQuotes) > 0) {
-            foreach ($carQuotes as $carQuote) {
-                $carQuoteModel = CarQuote::find($carQuote);
-                $this->sendDataCentralizedApi($carQuoteModel);
-            }
-        }
-
-        return true;
+//        $carQuotes = $request->car_quotes;
+//        if (count($carQuotes) > 0) {
+//            foreach ($carQuotes as $carQuote) {
+//                $carQuoteModel = CarQuote::find($carQuote);
+//                $this->sendDataCentralizedApi($carQuoteModel);
+//            }
+//        }
+//
+//        return true;
     }
 
     public function sendDataCentralizedApi($bean)
