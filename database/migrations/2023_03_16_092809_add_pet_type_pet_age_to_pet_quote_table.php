@@ -14,11 +14,14 @@ class AddPetTypePetAgeToPetQuoteTable extends Migration
     public function up()
     {
         Schema::table('pet_quote_request', function (Blueprint $table) {
-            $table->unsignedBigInteger('pet_type_id')->nullable();
-            $table->foreign('pet_type_id')->references('id')->on('lookups');
-
-            $table->unsignedBigInteger('pet_age_id')->nullable();
-            $table->foreign('pet_age_id')->references('id')->on('lookups');
+            if (! Schema::hasColumn('pet_quote_request', 'pet_type_id')) {
+                $table->unsignedBigInteger('pet_type_id')->nullable();
+                $table->foreign('pet_type_id')->references('id')->on('lookups');
+            }
+            if (! Schema::hasColumn('pet_quote_request', 'pet_age_id')) {
+                $table->unsignedBigInteger('pet_age_id')->nullable();
+                $table->foreign('pet_age_id')->references('id')->on('lookups');
+            }
         });
     }
 
