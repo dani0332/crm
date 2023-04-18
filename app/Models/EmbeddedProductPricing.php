@@ -9,5 +9,5 @@ class EmbeddedProductPricing extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['embedded_product_id', 'price','variant'];
+    protected $fillable = ['embedded_product_id', 'price', 'variant'];
 }

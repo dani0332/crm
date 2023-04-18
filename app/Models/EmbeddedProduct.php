@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmbeddedProduct extends Model
 {
-    protected $fillable = ['insurance_provider_id', 'product_name', 'short_code', 'display_name', 'product_type', 'logic', 'description', 'description2', 'commission_type', 'commission_value', 'email_template_id', 'company_documents', 'pricing_type','removal_confirmation'];
+    protected $fillable = ['insurance_provider_id', 'product_name', 'short_code', 'display_name', 'product_type', 'logic', 'description', 'description2', 'commission_type', 'commission_value', 'email_template_id', 'company_documents', 'pricing_type', 'removal_confirmation'];
 
     public function insuranceProvider()
     {
@@ -17,6 +17,7 @@ class EmbeddedProduct extends Model
     {
         return $this->hasMany(EmbeddedProductPlacement::class);
     }
+
     public function prices()
     {
         return $this->hasMany(EmbeddedProductPricing::class);

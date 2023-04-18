@@ -149,8 +149,8 @@ class DashboardService extends BaseService
     public function getTeamWiseLeadStats($teams)
     {
         $todaysLeads = CarQuote::whereHas('carQuoteRequestDetail', function ($q) {
-                    $q->whereBetween('advisor_assigned_date', [now()->startOfDay(), now()->endOfDay()]);
-                })
+            $q->whereBetween('advisor_assigned_date', [now()->startOfDay(), now()->endOfDay()]);
+        })
                 ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
 
         $teamWiseLeadsAssignedAverage = [];
