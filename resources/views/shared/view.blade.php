@@ -448,6 +448,7 @@
                 {
                     $(".const-lead-err-msg").addClass('d-none');
                     window.location.href = "{{ url('quotes/' . strtolower($model->modelType) . '/create') }}";
+                    localStorage.setItem('throughConfirmation', true);
                     $('#createCarLeadModal').modal('hide');
                 }else{
                     $(".const-lead-err-msg").removeClass('d-none');
