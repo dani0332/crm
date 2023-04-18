@@ -15,14 +15,15 @@ const embeddedProductsForm = useForm({
   product_type: props.embeddedProduct?.product_type || '',
   price: [],
   quote_type_ids: [],
-  positions: props.embeddedProduct?.embedded_product_placement || [
+  positions: props.embeddedProduct?.placements || [
     {
       quote_type_id: '',
       position: '',
     },
   ],
-  pricings: props.embeddedProduct?.embedded_product_price || [
+  pricings: props.embeddedProduct?.prices || [
     {
+      variant: '',
       price: '',
     },
   ],
@@ -33,6 +34,7 @@ const embeddedProductsForm = useForm({
   commission_value: props.embeddedProduct?.commission_value || '',
   email_template_id: props.embeddedProduct?.email_template_id || '',
   company_documents: props.embeddedProduct?.company_documents || '',
+  pricing_type: props.embeddedProduct?.pricing_type || '',
   removal_confirmation: props.embeddedProduct?.removal_confirmation || '',
 });
 
@@ -68,6 +70,7 @@ const addPosition = () => {
 
 const addPricing = () => {
     embeddedProductsForm.pricings.push({
+      variant: '',
       price: '',
     });
   },
@@ -181,10 +184,11 @@ function onSubmit(isValid) {
         </x-field>
 
         <x-field label="Logic" required>
-          <x-input
+          <x-textarea
             v-model="embeddedProductsForm.logic"
             maxLength="100"
             :rules="[isRequired]"
+            :adjust-to-text="false"
             class="w-full"
             :error="embeddedProductsForm.errors.logic"
           />
@@ -278,12 +282,25 @@ function onSubmit(isValid) {
           />
         </x-field>
 
+        <x-field label="Pricing Type" required>
+          <x-select
+            v-model="embeddedProductsForm.pricing_type"
+            :rules="[isRequired]"
+            placeholder="Pricing Type"
+            :options="[
+              { value: '1', label: 'Single' },
+              { value: '2', label: 'Multiple' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
         <x-field label="Removal Confirmation" required>
-          <x-input
+          <x-textarea
             v-model="embeddedProductsForm.removal_confirmation"
             :rules="[isRequired]"
             class="w-full"
             :error="embeddedProductsForm.errors.removal_confirmation"
+            :adjust-to-text="false"
           />
         </x-field>
       </div>
@@ -344,8 +361,28 @@ function onSubmit(isValid) {
 
           <div class="grid sm:grid-cols-2 gap-4">
             <template
+              v-if="embeddedProductsForm.pricing_type == 2"
               v-for="(i, index) in embeddedProductsForm.pricings"
               :key="index"
+            >
+              <x-field label="Variant">
+                <x-input
+                  v-model="embeddedProductsForm.pricings[index].variant"
+                  class="w-full"
+                />
+              </x-field>
+              <x-field label="Price" required>
+                <x-input
+                  v-model="embeddedProductsForm.pricings[index].price"
+                  type="number"
+                  :rules="[isRequired]"
+                  class="w-full"
+                />
+              </x-field>
+            </template>
+            <template
+              v-else
+              v-for="(i, index) in embeddedProductsForm.pricings"
             >
               <x-field class="sm:col-span-2" label="Price" required>
                 <x-input
@@ -366,7 +403,13 @@ function onSubmit(isValid) {
             >
               Remove last pricing
             </x-button>
-            <x-button @click="addPricing" size="xs" outlined color="success">
+            <x-button
+              v-if="embeddedProductsForm.pricing_type == 2"
+              @click="addPricing"
+              size="xs"
+              outlined
+              color="success"
+            >
               Add another pricing
             </x-button>
           </div>

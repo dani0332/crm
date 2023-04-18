@@ -18,7 +18,7 @@ class CreateEmbeddedProductsPricingTable extends Migration
             $table->unsignedBigInteger('embedded_product_id')->nullable();
             $table->foreign('embedded_product_id')->references('id')->on('embedded_products');
 
-            $table->string('price', '255')->nullable();
+            $table->decimal('price', 10, 2)->nullable();
             $table->timestamps();
         });
     }

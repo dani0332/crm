@@ -3,7 +3,7 @@
 
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <!-- Meta, title, CSS, favicons, etc.... --- ... -->
+    <!-- Meta, title, CSS, favicons, etc, . -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -59,8 +59,7 @@
     <div class="loader">
     </div>
     <!-- Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -206,45 +205,45 @@
                 renewal_uploaded_leads: "{{ url('renewals/uploaded-leads') }}",
                 renewal_base_url: "{{ url('renewals') }}",
                 car_lead_allocation_index_route: "{{ route('car-lead-allocation.index') }}",
-                advisor_conversion_report_route : "{{ url('reports/advisor-conversion')  }}",
+                advisor_conversion_report_route: "{{ url('reports/advisor-conversion')  }}",
                 teams_datatable_route: "{{ route('team.index') }}",
             },
             _token: "{{ csrf_token() }}",
             image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}",
             image_path_rewards_slider: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/rewards-slider/' }}"
         };
-          // TM Leads: Expost data into csv
+        // TM Leads: Expost data into csv
         function newexportaction(e, dt, button, config) {
             var self = this;
             var oldStart = dt.settings()[0]._iDisplayStart;
-            dt.one('preXhr', function (e, s, data) {
-            data.start = 0;
-            data.length = 2147483647;
-            dt.one('preDraw', function (e, settings) {
-                if (button[0].className.indexOf('buttons-csv') >= 0) {
-                $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config)
-                    ? $.fn.dataTable.ext.buttons.csvHtml5.action.call(
-                        self,
-                        e,
-                        dt,
-                        button,
-                        config,
-                    )
-                    : $.fn.dataTable.ext.buttons.csvFlash.action.call(
-                        self,
-                        e,
-                        dt,
-                        button,
-                        config,
-                    );
-                }
-                dt.one('preXhr', function (e, s, data) {
-                settings._iDisplayStart = oldStart;
-                data.start = oldStart;
+            dt.one('preXhr', function(e, s, data) {
+                data.start = 0;
+                data.length = 2147483647;
+                dt.one('preDraw', function(e, settings) {
+                    if (button[0].className.indexOf('buttons-csv') >= 0) {
+                        $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
+                            $.fn.dataTable.ext.buttons.csvHtml5.action.call(
+                                self,
+                                e,
+                                dt,
+                                button,
+                                config,
+                            ) :
+                            $.fn.dataTable.ext.buttons.csvFlash.action.call(
+                                self,
+                                e,
+                                dt,
+                                button,
+                                config,
+                            );
+                    }
+                    dt.one('preXhr', function(e, s, data) {
+                        settings._iDisplayStart = oldStart;
+                        data.start = oldStart;
+                    });
+                    setTimeout(dt.ajax.reload, 0);
+                    return false;
                 });
-                setTimeout(dt.ajax.reload, 0);
-                return false;
-            });
             });
             dt.ajax.reload();
         }

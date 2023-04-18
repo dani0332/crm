@@ -30,7 +30,7 @@ const page = usePage();
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Company Name</dt>
-            <dd>{{ embeddedProduct.insuranceprovider?.text }}</dd>
+            <dd>{{ embeddedProduct.insurance_provider?.text }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -92,14 +92,11 @@ const page = usePage();
         <x-divider class="mb-4 mt-1" />
       </div>
 
-      <div
-        v-for="item in embeddedProduct.embedded_product_placement"
-        class="text-sm"
-      >
+      <div v-for="item in embeddedProduct.placements" class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Lob</dt>
-            <dd>{{ item.quotetype?.text }}</dd>
+            <dd>{{ item.quote_type?.text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Position</dt>
@@ -112,10 +109,7 @@ const page = usePage();
         <x-divider class="mb-4 mt-1" />
       </div>
 
-      <div
-        v-for="item in embeddedProduct.embedded_product_price"
-        class="text-sm"
-      >
+      <div v-for="item in embeddedProduct.prices" class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Price</dt>

@@ -40,8 +40,8 @@ class EmbeddedProductRequest extends FormRequest
             'commission_value' => 'required',
             'email_template_id' => 'required',
             'company_documents' => 'required',
+            'pricing_type' => 'required',
             'removal_confirmation' => 'required',
-
         ];
     }
 }

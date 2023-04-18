@@ -211,7 +211,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate']);
         Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses']);
         Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans']);
-        Route::get('batches/{id}/skip-plans/{skipPlans}', [RenewalsUploadController::class, 'fetchPlans']);
         Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
 
@@ -295,6 +294,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
             Route::get('life-cards', [LifeController::class, 'cardsView'])->name('life.cards');
             Route::resource('life', LifeController::class);
+        } else {
+            Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
         }
     });
 

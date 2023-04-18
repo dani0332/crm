@@ -59,8 +59,8 @@ const permissionsEnum = page.props.permissionsEnum;
         </Link>
       </template>
 
-      <template #item-company_name="{ insuranceprovider }">
-        {{ insuranceprovider?.text }}
+      <template #item-company_name="{ insurance_provider }">
+        {{ insurance_provider?.text }}
       </template>
     </DataTable>
 
