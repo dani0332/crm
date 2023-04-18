@@ -50,7 +50,7 @@ class EmbeddedProductRepository extends BaseRepository
         return DB::transaction(function () use ($id, $data) {
             $product = $this->where('id', $id)->firstOrFail();
 
-            $productData = Arr::only($data, ['insurance_provider_id', 'product_name', 'short_code', 'display_name', 'product_type',  'description',  'description2',  'commission_type',  'commission_value',  'email_template_id',  'company_documents', 'removel_confirmation', 'logic']);
+            $productData = Arr::only($data, ['insurance_provider_id', 'product_name', 'short_code', 'display_name', 'product_type',  'description',  'description2',  'commission_type',  'commission_value',  'email_template_id',  'company_documents', 'pricing_type','removel_confirmation', 'logic']);
 
             $product->update($productData);
             $product->placements()->delete();
