@@ -458,17 +458,17 @@ class ClaimController extends Controller
         return DataTables::of([])
             ->addIndexColumn()
             ->make(true);
-        $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel'];
-        if (! in_array(strtolower($request->teamName), $allowedTypes)) {
-            return DataTables::of([])
-                ->addIndexColumn()
-                ->make(true);
-        } else {
-            $gridData = $this->crudService->getOverDueFollowups($request, $request->teamName)->get();
-
-            return DataTables::of($gridData)
-                ->addIndexColumn()
-                ->make(true);
-        }
+//        $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel'];
+//        if (! in_array(strtolower($request->teamName), $allowedTypes)) {
+//            return DataTables::of([])
+//                ->addIndexColumn()
+//                ->make(true);
+//        } else {
+//            $gridData = $this->crudService->getOverDueFollowups($request, $request->teamName)->get();
+//
+//            return DataTables::of($gridData)
+//                ->addIndexColumn()
+//                ->make(true);
+//        }
     }
 }
