@@ -268,7 +268,7 @@ class CarQuoteService extends BaseService
         }
         $carQuote->quote_updated_at = Carbon::now();
         $carQuote->is_quote_locked = true;
-        if ($request->car_model_detail_id) {
+        if ($request->trim) {
             $carQuote->car_model_detail_id = $request->trim;
         }
         if ($request->policy_start_date) {
