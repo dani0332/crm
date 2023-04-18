@@ -26,10 +26,10 @@ class RenewalsUploadRequest extends FormRequest
     {
         $rules = [
             'file_name' => 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
-            'renewals_upload_type' => 'required'
+            'renewals_upload_type' => 'required',
         ];
 
-        if(!empty(request()->renewals_upload_type) && request()->renewals_upload_type == "update") {
+        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update') {
             $rules['skip_plans'] = 'required';
         }
 
