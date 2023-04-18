@@ -6,7 +6,6 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
-use App\Models\Tier;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -149,7 +148,7 @@ class DashboardService extends BaseService
 
     public function getTeamWiseLeadStats($teams)
     {
-        $todaysLeads = CarQuote::whereHas('carQuoteRequestDetail', function($q) {
+        $todaysLeads = CarQuote::whereHas('carQuoteRequestDetail', function ($q) {
                     $q->whereBetween('advisor_assigned_date', [now()->startOfDay(), now()->endOfDay()]);
                 })
                 ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
@@ -160,13 +159,13 @@ class DashboardService extends BaseService
 
             $usersCount = count($teamUserIds);
             $leadsCount = $todaysLeads->whereIn('advisor_id', $teamUserIds)->count();
-            $stats = $leadsCount . ' / ' . $usersCount . ' =  ' . number_format((float) $usersCount == 0 ? 0 : $leadsCount / $usersCount, 2, '.', '');
+            $stats = $leadsCount.' / '.$usersCount.' =  '.number_format((float) $usersCount == 0 ? 0 : $leadsCount / $usersCount, 2, '.', '');
 
             $teamWiseLeadsAssignedAverage[] = [
                 'totalUsersUnderTeam' => $usersCount,
                 'teamName' => $team->name,
                 'totalLeadsCount' => $leadsCount,
-                'stats' => $stats
+                'stats' => $stats,
             ];
         }
 

@@ -137,10 +137,10 @@ class RenewalsUploadService
             'good' => 0,
             'cannot_upload' => 0,
             'created_by_id' => auth()->user()->id,
-            'renewal_import_type' => $renewalImportType
+            'renewal_import_type' => $renewalImportType,
         ];
 
-        if(!empty($data['skip_plans'])) {
+        if (! empty($data['skip_plans'])) {
             $uploadLeadData['skip_plans'] = $data['skip_plans'];
         }
 
@@ -357,10 +357,9 @@ class RenewalsUploadService
             ])->with(['renewalUploadLead', 'carQuote']);
 
             $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
-                foreach ($leads as $lead)
-                {
-                    if($lead->renewalUploadLead->skip_plans) {
-                        info($logPrefix.' skipping fetch plans for uuid : ' . $lead->carQuote->uuid);
+                foreach ($leads as $lead) {
+                    if ($lead->renewalUploadLead->skip_plans) {
+                        info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                         $totalSkipped++;
                     } else {
@@ -369,9 +368,9 @@ class RenewalsUploadService
                 }
             });
 
-            if($totalSkipped > 0) {
+            if ($totalSkipped > 0) {
                 $renewalStatusProcess->update(['total_completed' => $totalSkipped]);
-                info($logPrefix.' total leads for skipped plans (' . $totalSkipped . ')');
+                info($logPrefix.' total leads for skipped plans ('.$totalSkipped.')');
             }
 
             if ($jobs != null && count($jobs)) {
@@ -966,7 +965,7 @@ class RenewalsUploadService
             /**
              * API refresh plans when quote_updated_at have latest date
              */
-            if(!$renewalUploadLead->skip_plans){
+            if (! $renewalUploadLead->skip_plans) {
                 $quoteData['quote_updated_at'] = Carbon::now();
             }
 

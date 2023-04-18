@@ -292,7 +292,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
             Route::get('life-cards', [LifeController::class, 'cardsView'])->name('life.cards');
             Route::resource('life', LifeController::class);
-        }else{
+        } else {
             Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
         }
     });
