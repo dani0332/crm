@@ -95,6 +95,10 @@ function onSubmit(isValid) {
       .transform(data => ({
         ...data,
         short_code: data.short_code.toUpperCase(),
+        pricings: data.pricings.map(pricing => ({
+          ...pricing,
+          variant: data.pricing_type == '2' ? pricing.variant : null,
+        })),
       }))
       .submit(method, url, {
         onError: errors => {

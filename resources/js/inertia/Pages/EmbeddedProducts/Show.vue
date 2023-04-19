@@ -111,6 +111,13 @@ const page = usePage();
 
       <div v-for="item in embeddedProduct.prices" class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div
+            v-if="embeddedProduct.pricing_type == 2"
+            class="grid sm:grid-cols-2"
+          >
+            <dt class="font-medium">Variant</dt>
+            <dd>{{ item.variant }}</dd>
+          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Price</dt>
             <dd>{{ item.price }}</dd>
