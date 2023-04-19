@@ -94,9 +94,6 @@ trait QuotesFilterAndOrderClauseTrait
             case 'car_plan_provider':
                 return 'cpip';
                 break;
-            case 'quote_status':
-                return 'qs';
-                break;
             default:
                 return 'cqr';
                 break;

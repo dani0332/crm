@@ -95,8 +95,6 @@ class GenericCrudController extends Controller
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
-
-            return view('generic.view', compact('model', 'dropdownSource', 'customTitles'));
         }
 
         return view('generic.view', compact('model', 'dropdownSource', 'customTitles'));

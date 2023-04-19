@@ -646,9 +646,6 @@ class TravelQuoteService extends BaseService
             case 'mobile_no':
                 $title = 'Mobile Number';
                 break;
-            case 'next_followup_date':
-                $title = 'Next Followup Date';
-                break;
             case 'previous_quote_id':
                 $title = 'Previous Quote Id';
                 break;

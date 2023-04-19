@@ -604,9 +604,6 @@ class PetQuoteService extends BaseService
             case 'ilivein_accommodation_type_id':
                 $title = 'Accommodation Type';
                 break;
-            case 'mobile_no':
-                $title = 'Mobile Number';
-                break;
             case 'iam_possesion_type_id':
                 $title = 'Possesion Type';
                 break;

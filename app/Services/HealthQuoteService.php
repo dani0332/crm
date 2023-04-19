@@ -464,9 +464,6 @@ class HealthQuoteService extends BaseService
             case 'emirates':
                 return 'e';
                 break;
-            case 'advisor':
-                return 'u';
-                break;
             default:
                 return 'hqr';
                 break;

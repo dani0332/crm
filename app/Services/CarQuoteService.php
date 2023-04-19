@@ -501,9 +501,6 @@ class CarQuoteService extends BaseService
             case 'promo_code':
                 $title = 'Advisor/Promo Code';
                 break;
-            case 'quote_status_id':
-                $title = 'Quote Status';
-                break;
             case 'device':
                 $title = 'Device';
                 break;
@@ -576,9 +573,9 @@ class CarQuoteService extends BaseService
             case 'cost_per_lead':
                 $title = 'Lead Cost';
                 break;
-            case 'quote_batch_id':
-                $title = 'Quote Batch';
-                break;
+//            case 'quote_batch_id':
+//                $title = 'Quote Batch';
+//                break;
             default:
                 break;
         }
@@ -926,9 +923,9 @@ class CarQuoteService extends BaseService
             case 'car_plan_provider':
                 return 'cpip';
                 break;
-            case 'quote_status':
-                return 'qs';
-                break;
+//            case 'quote_status':
+//                return 'qs';
+//                break;
             default:
                 return 'cqr';
                 break;

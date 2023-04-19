@@ -28,7 +28,7 @@ class AuditRepository extends BaseRepository
         if (! empty($auditables['relations'])) {
             foreach ($auditables['relations'] as $relation) {
                 $model = $relation['auditable_type'];
-                if (($childRecord = $model::where($relation['key'], request()->auditable_id)->first())) {
+                if ($childRecord = $model::where($relation['key'], request()->auditable_id)->first()) {
                     $query->orWhere(function ($q) use ($relation, $childRecord) {
                         $q->where('auditable_type', $relation['auditable_type'])->where('auditable_id', $childRecord->id);
                     });

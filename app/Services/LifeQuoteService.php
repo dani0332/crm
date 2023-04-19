@@ -637,9 +637,6 @@ class LifeQuoteService extends BaseService
             case 'nationality_id':
                 $title = 'Nationality';
                 break;
-            case 'mobile_no':
-                $title = 'Mobile Number';
-                break;
             case 'sum_insured_value':
                 $title = 'Sum Insured Value';
                 break;
