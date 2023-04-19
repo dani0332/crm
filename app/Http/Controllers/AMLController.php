@@ -268,13 +268,25 @@ class AMLController extends Controller
     {
         $url = env('AZURE_RYU_STORAGE_URL').env('AZURE_AML_HISTORY');
 
-        if ($request->ajax()) {
-            return $datatables::of($sanctionListDownloads::query()->orderBy('created_at', 'DESC'))
-                ->addIndexColumn()
-                ->make(true);
-        }
+        $sanctionListDownloads = $sanctionListDownloads->newQuery();
 
-        return view('aml.history', compact('url'));
+        if ($request->file_name != '') {
+            $sanctionListDownloads =  $sanctionListDownloads->where('file_name', 'like', '%' . $request->file_name . '%');
+        }
+        if ($request->is_processed == '0' || $request->is_processed == '1') {
+            $value = $request->is_processed == '1' ? true : false;
+            $sanctionListDownloads = $sanctionListDownloads->where('is_processed', $value);
+        }
+        $orderBy = $request->sortBy == '' ? 'created_at' : $request->sortBy;
+        $sortType = $request->sortType == '' ? 'DESC' : $request->sortType;
+
+        $sanctionListDownloads = $sanctionListDownloads->orderBy($orderBy, $sortType)->paginate(10);
+        return inertia('Aml/History', [
+            'sanctionListDownloads' => $sanctionListDownloads,
+            'url' => $url,
+        ]);
+
+        // return view('aml.history', compact('url'));
     }
 
     public function uaeSanctionListUpload(Request $request)
@@ -308,6 +320,7 @@ class AMLController extends Controller
 
     public function uploadUaeSanctionList()
     {
-        return view('aml.upload');
+        return inertia('Aml/UploadUae');
+        // return view('aml.upload');
     }
 }

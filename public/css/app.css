@@ -701,8 +701,20 @@ html.dark{
 .col-auto{
   grid-column: auto;
 }
+.col-span-4{
+  grid-column: span 4 / span 4;
+}
 .col-span-6{
   grid-column: span 6 / span 6;
+}
+.col-start-1{
+  grid-column-start: 1;
+}
+.col-start-2{
+  grid-column-start: 2;
+}
+.col-end-3{
+  grid-column-end: 3;
 }
 .float-right{
   float: right;
@@ -1279,6 +1291,12 @@ html.dark{
 .resize{
   resize: both;
 }
+.list-inside{
+  list-style-position: inside;
+}
+.list-disc{
+  list-style-type: disc;
+}
 .appearance-none{
   -webkit-appearance: none;
      -moz-appearance: none;
@@ -1292,6 +1310,9 @@ html.dark{
 }
 .grid-cols-4{
   grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.grid-cols-6{
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 .flex-row{
   flex-direction: row;
@@ -2233,6 +2254,10 @@ html.dark{
   --tw-text-opacity: 1;
   color: rgb(0 0 0 / var(--tw-text-opacity));
 }
+.text-blue-500{
+  --tw-text-opacity: 1;
+  color: rgb(59 130 246 / var(--tw-text-opacity));
+}
 .text-gray-200{
   --tw-text-opacity: 1;
   color: rgb(229 231 235 / var(--tw-text-opacity));
@@ -2264,6 +2289,10 @@ html.dark{
 .text-gray-900{
   --tw-text-opacity: 1;
   color: rgb(17 24 39 / var(--tw-text-opacity));
+}
+.text-green-500{
+  --tw-text-opacity: 1;
+  color: rgb(34 197 94 / var(--tw-text-opacity));
 }
 .text-green-600{
   --tw-text-opacity: 1;
@@ -3268,6 +3297,11 @@ label{
 
 .hover\:text-\[color\:var\(--x-notification-action-hover\)\]:hover{
   color: var(--x-notification-action-hover);
+}
+
+.hover\:text-blue-700:hover{
+  --tw-text-opacity: 1;
+  color: rgb(29 78 216 / var(--tw-text-opacity));
 }
 
 .hover\:text-gray-500:hover{
