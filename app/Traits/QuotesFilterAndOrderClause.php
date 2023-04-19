@@ -11,8 +11,8 @@ trait QuotesFilterAndOrderClauseTrait
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $searchProperties = $model->searchProperties;
         foreach ($searchProperties as $searchProperty) {
-            if (ucwords($model->modelType) == 'Car' && in_array($searchProperty, ['created_at', 'renewal_expiry_date', 'advisor_assigned_date'])) {
-            }
+//            if (ucwords($model->modelType) == 'Car' && in_array($searchProperty, ['created_at', 'renewal_expiry_date', 'advisor_assigned_date'])) {
+//            }
             if (isset($request->$searchProperty)) {
                 $prefix = $this->{ 'get'.ucwords($model->modelType).'QuoteQueryPrefix'}($searchProperty);
                 $propertyMetaData = $model->properties[$searchProperty];
