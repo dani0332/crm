@@ -419,6 +419,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Travel,
             quoteTypeCode::Home,
             quoteTypeCode::Life,
+            quoteTypeCode::Pet,
         ];
     }
 }
