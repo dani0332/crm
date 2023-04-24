@@ -14,6 +14,7 @@ use Auth;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -177,6 +178,8 @@ class UserController extends Controller
         $userTeamIds = $this->getUserTeams($user->id)->pluck('id')->toArray();
         $managers = $this->getManagersBasedOnTeamId($userTeamIds, $user->id);
         $userManagerIds = $this->getUserManagers($user->id)->pluck('id')->toArray();
+        $permissions = Permission::orderBy('name')->get();
+        $userPermissions = $user->getDirectPermissions()->pluck('name')->toArray();
 
         return view('user.edit', compact(
             'user',
@@ -189,7 +192,9 @@ class UserController extends Controller
             'teams',
             'userTeamIds',
             'managers',
-            'userManagerIds'
+            'userManagerIds',
+            'permissions',
+            'userPermissions'
         ));
     }
 
@@ -206,7 +211,9 @@ class UserController extends Controller
             'email' => 'required|email',
             'roles' => 'required',
             'teams' => 'required',
+            'permissions' => 'nullable|array'
         ]);
+
         // Updating user
         $user->name = $request->name;
         $user->email = $request->email;
@@ -267,6 +274,9 @@ class UserController extends Controller
                 ]);
             }
         }
+
+        $permissions = (!empty($request->permissions) && sizeof($request->permissions)) ? $request->permissions : [];
+        $user->syncPermissions($permissions);
 
         // Updating user roles
         DB::table('model_has_roles')->where('model_id', $user->id)->delete();

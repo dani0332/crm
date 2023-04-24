@@ -351,6 +351,23 @@
                     </div>
                     @endif
 
+                    <div class="item form-group">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Permissions</label>
+                        <div class="col-md-6 col-sm-6">
+
+                            <select name="permissions[]" multiple="multiple" style="margin-bottom:15px;"
+                                    class="form-control select2 js-example-basic-multiple select_multiple">
+                                @foreach($permissions as $permission)
+                                    <option value="{{$permission->name }}"}} @if (in_array($permission->name, $userPermissions)) selected="selected" @endif >
+                                        {{ $permission->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+
+                    </div>
+
                     {{--<div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>
                         <div class="col-md-6 col-sm-6">
