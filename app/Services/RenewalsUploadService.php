@@ -127,9 +127,9 @@ class RenewalsUploadService
     /**
      * @return RenewalsUploadLeads
      */
-    public function createRenewalsLead($uploadedFile, $renewalImportType)
+    public function createRenewalsLead($uploadedFile, $renewalImportType, $data)
     {
-        return RenewalsUploadLeads::create([
+        $uploadLeadData = [
             'renewal_import_code' => $this->generateRandomString(),
             'file_name' => $uploadedFile['file_name'],
             'file_path' => $uploadedFile['azure_file_path'],
@@ -138,7 +138,13 @@ class RenewalsUploadService
             'cannot_upload' => 0,
             'created_by_id' => auth()->user()->id,
             'renewal_import_type' => $renewalImportType,
-        ]);
+        ];
+
+        if (! empty($data['skip_plans'])) {
+            $uploadLeadData['skip_plans'] = $data['skip_plans'];
+        }
+
+        return RenewalsUploadLeads::create($uploadLeadData);
     }
 
     /**
@@ -152,7 +158,7 @@ class RenewalsUploadService
         $uploadedFile = $this->uploadRenewalsFile();
 
         //create lead record
-        $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::CREATE_LEADS);
+        $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::CREATE_LEADS, $data);
         info('UAT FN: renewalsUploadCreate File uploaded and renewals lead created');
 
         //start import process
@@ -340,6 +346,7 @@ class RenewalsUploadService
 
         try {
             $jobs = null;
+            $totalSkipped = 0;
 
             $query = RenewalQuoteProcess::where([
                 'status' => RenewalProcessStatuses::PROCESSED,
@@ -347,50 +354,52 @@ class RenewalsUploadService
                 'batch' => $batch,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
                 'fetch_plans_status' => FetchPlansStatuses::PENDING,
-            ]);
+            ])->with(['renewalUploadLead', 'carQuote']);
 
-            if ($renewalStatusProcess->skip_plans) {
-                $totalLeads = $query->count();
-                info($logPrefix.' skip fetch plans and update statues to be available for sending email');
-                $affected = $query->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
-                info($logPrefix.' leads status is updated as plans fetched for total leads ('.$affected.')');
-
-                $renewalStatusProcess->update(['total_leads' => $totalLeads, 'total_completed' => $affected, 'status' => ProcessStatusCode::COMPLETED]);
-                info($logPrefix.' renewal status process is completed');
-            } else {
-                $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs) {
-                    foreach ($leads as $lead) {
+            $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
+                foreach ($leads as $lead) {
+                    if ($lead->renewalUploadLead->skip_plans) {
+                        info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
+                        $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
+                        $totalSkipped++;
+                    } else {
                         $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
                     }
-                });
-
-                if ($jobs != null && count($jobs)) {
-                    info($logPrefix.count($jobs).' found to schedule for fetch plans');
-
-                    Haystack::build()
-                        ->onQueue('renewals')
-                        ->addJobs($jobs)
-                        ->then(function () use ($logPrefix, $renewalStatusProcess) {
-                            info($logPrefix.' all jobs completed successfully');
-                            $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
-                        })
-                        ->catch(function () use ($logPrefix, $renewalStatusProcess) {
-                            // Haystack failed
-                            info($logPrefix.' one of batch is failed. ');
-                            $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
-                        })
-                        ->finally(function () use ($logPrefix) {
-                            info($logPrefix.' everything done');
-                        })
-                        ->allowFailures()
-                        ->withDelay(10)
-                        ->dispatch();
-
-                    info($logPrefix.' all jobs are scheduled');
-                } else {
-                    info($logPrefix.' no jobs to create quotes');
-                    $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
                 }
+            });
+
+            if ($totalSkipped > 0) {
+                $renewalStatusProcess->update(['total_completed' => $totalSkipped]);
+                info($logPrefix.' total leads for skipped plans ('.$totalSkipped.')');
+            }
+
+            if ($jobs != null && count($jobs)) {
+                info($logPrefix.count($jobs).' found to schedule for fetch plans');
+
+                Haystack::build()
+                    ->onQueue('renewals')
+                    ->addJobs($jobs)
+                    ->then(function () use ($logPrefix, $renewalStatusProcess) {
+                        info($logPrefix.' all jobs completed successfully');
+                        $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+                    })
+                    ->catch(function () use ($logPrefix, $renewalStatusProcess) {
+                        // Haystack failed
+                        info($logPrefix.' one of batch is failed. ');
+                        $renewalStatusProcess->update(['status' => ProcessStatusCode::FAILED]);
+                    })
+                    ->finally(function () use ($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->allowFailures()
+                    ->withDelay(10)
+                    ->dispatch();
+
+                info($logPrefix.' all jobs are scheduled');
+            } else {
+                info($logPrefix.' no leads available for fetch plans, about to mark status as completed');
+                $renewalStatusProcess->update(['status' => ProcessStatusCode::COMPLETED]);
+                info($logPrefix.' fetch plans is completed');
             }
 
             return true;
@@ -465,7 +474,7 @@ class RenewalsUploadService
         $uploadedFile = $this->uploadRenewalsFile();
 
         //create lead record
-        $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::UPDATE_LEADS);
+        $renewalsUploadLead = $this->createRenewalsLead($uploadedFile, RenewalsUploadType::UPDATE_LEADS, $data);
         info('UAU FN: renewalsUploadUpdate File uploaded and renewals lead created');
 
         ProcessRenewalsUploadUpdate::dispatch($renewalsUploadLead);
@@ -950,9 +959,15 @@ class RenewalsUploadService
                 'vehicle_category' => $vehicleType->category ?? null,
                 'year_of_manufacture' => $data['year'] ?? null,
                 'previous_advisor_id' => $previousAdvisorId,
-                'quote_updated_at' => Carbon::now(),
                 'has_ncd_supporting_documents' => $data['nc_letter'],
             ]);
+
+            /**
+             * API refresh plans when quote_updated_at have latest date
+             */
+            if (! $renewalUploadLead->skip_plans) {
+                $quoteData['quote_updated_at'] = Carbon::now();
+            }
 
             if (! empty($carModel) && ($carModelDetail = CarModelDetail::active()
                 ->where('is_default', 1)

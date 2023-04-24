@@ -6,8 +6,8 @@ const emit = defineEmits(['update:modelValue']);
 
 const props = defineProps({
   label: {
-    required: true,
     type: String,
+    default: '',
   },
   modelValue: {
     type: [String, Date],
@@ -55,7 +55,7 @@ const selectedData = computed({
     :month-change-on-scroll="false"
     :clearable="false"
     :disabled="props.disabled"
-    utc="utc"
+    utc="preserve"
   >
     <template #dp-input="{ value, onClear }">
       <x-input
@@ -70,7 +70,8 @@ const selectedData = computed({
       />
       <div
         v-if="!props.disabled"
-        class="absolute right-2.5 top-[34px] hover:text-secondary-500"
+        :class="props.label == '' ? 'top-3' : 'top-[34px]'"
+        class="absolute right-2.5 hover:text-secondary-500"
       >
         <svg
           v-if="!value"

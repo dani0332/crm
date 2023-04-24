@@ -36,6 +36,7 @@
             var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
             var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
             var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+            let canExtractData = '{{ auth()->user()->can(PermissionsEnum::DATA_EXTRACTION) }}';
             var isLeadPool = $("#isLeadPool").val();
             var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
             var isManualAllocationAllowed = JSON.parse('<?php echo json_encode($isManualAllocationAllowed); ?>');
@@ -234,12 +235,12 @@
                                     </span>&emsp;Processing ...",
                 },
                 columns: dataTableColumns,
-                buttons: [{
+                buttons: canExtractData ? [{
                     extend: 'excel',
                     text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
                     title: model.modelType + ' Listing',
                     action: newexportaction
-                }]
+                }] : []
             });
             vehicleTypeDataTable.on('draw', function() {
                 var rows = $('#dtBasicExample tr');
