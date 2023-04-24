@@ -984,7 +984,7 @@ class CRUDController extends Controller
         }
         $assignedUser = $this->userService->getUserById((int) $request->assigned_to_id_new);
         if (! $assignedUser) {
-            return Redirect::back()->with('message', 'Advisor not available');
+            return Redirect::back()->with('message', 'Selected advisor does not exist in the system!');
         }
         $assignmentResult = $this->{strtolower($request->modelType).'QuoteService'}->processManualLeadAssignment($request);
         if (count($assignmentResult) > 0) {
