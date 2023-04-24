@@ -336,6 +336,7 @@
                     </div>
 
                     @if(auth()->user()->hasRole(\App\Enums\RolesEnum::Admin))
+
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Primary Product <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
@@ -349,7 +350,6 @@
                             </select>
                         </div>
                     </div>
-                    @endif
 
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Permissions</label>
@@ -364,9 +364,9 @@
                                 @endforeach
                             </select>
                         </div>
-
-
                     </div>
+
+                    @endif
 
                     {{--<div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="roles">Manager</label>
