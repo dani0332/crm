@@ -2,7 +2,6 @@
 
 namespace App\Http\Livewire;
 
-use App\Enums\GenericRequestEnum;
 use App\Models\RenewalStatusProcess;
 use Illuminate\Database\Eloquent\Builder;
 use Rappasoft\LaravelLivewireTables\DataTableComponent;
