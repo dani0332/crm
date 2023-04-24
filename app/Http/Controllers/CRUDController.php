@@ -982,6 +982,10 @@ class CRUDController extends Controller
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('message', $isValidRequest);
         }
+        $assignedUser = $this->userService->getUserById((int) $request->assigned_to_id_new);
+        if (! $assignedUser) {
+            return Redirect::back()->with('message', 'Advisor not available');
+        }
         $assignmentResult = $this->{strtolower($request->modelType).'QuoteService'}->processManualLeadAssignment($request);
         if (count($assignmentResult) > 0) {
             $msg = '';
@@ -992,9 +996,7 @@ class CRUDController extends Controller
 
             return Redirect::back()->with('message', $msg);
         } else {
-            $assignedUserName = $this->userService->getUserNameById((int) $request->assigned_to_id_new);
-
-            return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUserName);
+            return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
         }
     }
 
