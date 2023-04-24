@@ -26,24 +26,48 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-1">
-                                        <input type="radio" data-confirmation="true" name="reason-manual-lead" value="early-renewal" />
+                                        <input type="radio" data-confirmation="true" name="reason-manual-lead" value="renewal-allocation" />
                                     </div>
-                                    <span class="col-form-label col-md-3 col-sm-3">Early Renewal</span>
+                                    <span class="col-form-label col-md-3 col-sm-3">Advance Renewal Allocation</span>
                                 </div>
                                 <div class="row">
                                     <div class="col-1">
-                                        <input type="radio" name="reason-manual-lead" value="change-plan" />
+                                        <input type="radio" name="reason-manual-lead" value="ps-pending" />
                                     </div>
-                                    <span class="col-form-label col-md-3 col-sm-3">Change Plan</span>
+                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Pending</span>
                                 </div>
                                 <div class="row">
                                     <div class="col-1">
-                                        <input type="radio" name="reason-manual-lead" value="other" />
+                                        <input type="radio" name="reason-manual-lead" value="ps-authorized" />
                                     </div>
-                                    <span class="col-form-label col-md-3 col-sm-3">Other</span>
+                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Authorized </span>
+                                </div>
+                                <div class="row">
+                                    <div class="col-1">
+                                        <input type="radio" name="reason-manual-lead" value="ps-declined" />
+                                    </div>
+                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Declined </span>
+                                </div>
+                                <div class="row">
+                                    <div class="col-1">
+                                        <input type="radio" name="reason-manual-lead" value="ps-failed" />
+                                    </div>
+                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Failed </span>
+                                </div>
+                                <div class="row">
+                                    <div class="col-1">
+                                        <input type="radio" name="reason-manual-lead" value="ps-captured" />
+                                    </div>
+                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Captured </span>
+                                </div>
+                                <div class="row">
+                                    <div class="col-1">
+                                        <input type="radio" name="reason-manual-lead" value="ps-cancelled" />
+                                    </div>
+                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Cancelled </span>
                                 </div>
                         </fieldset>
-                        <p class="red const-lead-err-msg d-none">Unable to create lead for now.</p>
+                        <p class="red const-lead-err-msg d-none">Unable to create manual lead, you can edit the same lead.</p>
                     </div>
                 </div>
                 <div class="modal-footer" style="justify-content: center;">
