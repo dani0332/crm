@@ -281,7 +281,7 @@ class CarQuoteService extends BaseService
             $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
         }
         if ($request->previous_policy_expiry_date) {
-            $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? $request->previous_policy_expiry_date : null;
+            $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format('Y-m-d') : null;
         }
         $carQuote->updated_by = auth()->user()->email;
         $carQuote->save();
