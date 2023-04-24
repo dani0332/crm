@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\QuoteStatus;
+use App\Models\QuoteStatusMap;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -477,6 +479,11 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Followed Up
+        $healthFollowedUp = QuoteStatus::find(24);
+        if (! $healthFollowedUp) {
+            DB::insert("INSERT INTO `quote_status` (`id`, `code`, `text`, `text_ar`, `is_active`, `sort_order`, `is_deleted`, `created_at`, `updated_at`, `deleted_at`, `uuid`, `created_by`, `updated_by`)
+            VALUES(24, 'Followed Up', 'Followed Up', NULL, 1, 5, 0, '2021-02-01 08:47:52', '2021-02-01 08:47:52', NULL, '4cf834e6-79e2-11ec-954e-f23017e1271d', '', '');");
+        }
         $healthFollowedUpMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 24])->first();
         if (! $healthFollowedUpMap) {
             DB::table('quote_status_map')->insert([
@@ -485,6 +492,33 @@ class QuoteStatusTableSeeder extends Seeder
                 'sort_order' => 5,
                 'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
                 'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+        // AML Screening Cleared
+        $amlScreeningCleared = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 6])->first();
+        if (! $amlScreeningCleared) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 6,
+                'sort_order' => 11,
+                'created_by' => 'daniyal.shahid@insurancemarket.ae',
+                'updated_by' => 'daniyal.shahid@insurancemarket.ae',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // AML Screening Failed
+        $amlScreeningFailed = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 7])->first();
+        if (! $amlScreeningFailed) {
+            DB::table('quote_status_map')->insert([
+                'quote_type_id' => 3,
+                'quote_status_id' => 7,
+                'sort_order' => 12,
+                'created_by' => 'daniyal.shahid@insurancemarket.ae',
+                'updated_by' => 'daniyal.shahid@insurancemarket.ae',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -533,17 +567,9 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // Pending with UW
-        $healthPendingWithUwMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 27])->first();
-        if (! $healthPendingWithUwMap) {
-            DB::table('quote_status_map')->insert([
-                'quote_type_id' => 3,
-                'quote_status_id' => 27,
-                'sort_order' => 9,
-                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $healthPendingWithUwMap = QuoteStatusMap::where(['quote_type_id' => 3, 'quote_status_id' => 27])->first();
+        if ($healthPendingWithUwMap) {
+            $healthPendingWithUwMap->delete();
         }
 
         // Application Submitted
@@ -561,59 +587,27 @@ class QuoteStatusTableSeeder extends Seeder
         }
 
         // FTC Pending
-        $healthFtcPendingMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 22])->first();
-        if (! $healthFtcPendingMap) {
-            DB::table('quote_status_map')->insert([
-                'quote_type_id' => 3,
-                'quote_status_id' => 22,
-                'sort_order' => 11,
-                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $healthFtcPendingMap = QuoteStatusMap::where(['quote_type_id' => 3, 'quote_status_id' => 22])->first();
+        if ($healthFtcPendingMap) {
+            $healthFtcPendingMap->delete();
         }
 
         // FTC Sent
-        $healthFtcSentMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 10])->first();
-        if (! $healthFtcSentMap) {
-            DB::table('quote_status_map')->insert([
-                'quote_type_id' => 3,
-                'quote_status_id' => 10,
-                'sort_order' => 12,
-                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $healthFtcSentMap = QuoteStatusMap::where(['quote_type_id' => 3, 'quote_status_id' => 10])->first();
+        if ($healthFtcSentMap) {
+            $healthFtcSentMap->delete();
         }
 
         // FTC Accepted
-        $healthFtcAcceptedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 11])->first();
-        if (! $healthFtcAcceptedMap) {
-            DB::table('quote_status_map')->insert([
-                'quote_type_id' => 3,
-                'quote_status_id' => 11,
-                'sort_order' => 13,
-                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $healthFtcAcceptedMap = QuoteStatusMap::where(['quote_type_id' => 3, 'quote_status_id' => 11])->first();
+        if ($healthFtcAcceptedMap) {
+            $healthFtcAcceptedMap->delete();
         }
 
         // FTC Resubmitted
-        $healthFtcResubmittedMap = DB::table('quote_status_map')->where(['quote_type_id' => 3, 'quote_status_id' => 12])->first();
-        if (! $healthFtcResubmittedMap) {
-            DB::table('quote_status_map')->insert([
-                'quote_type_id' => 3,
-                'quote_status_id' => 12,
-                'sort_order' => 14,
-                'created_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                'updated_by' => 'muhammad.shajiuddin@insurancemarket.ae',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $healthFtcResubmittedMap = QuoteStatusMap::where(['quote_type_id' => 3, 'quote_status_id' => 12])->first();
+        if ($healthFtcResubmittedMap) {
+            $healthFtcResubmittedMap->delete();
         }
 
         // KYC Cleared

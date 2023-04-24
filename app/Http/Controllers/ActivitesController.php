@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\HealthTeamType;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Http\Requests\ActivitiesRequest;
 use App\Models\Activities;
 use App\Models\User;
@@ -134,6 +135,17 @@ class ActivitesController extends Controller
             return redirect('/quotes/'.$this->getQuoteTypeNameFromId($request->quoteType).'/'.$request->quote_uuid)->with('success', 'Activity updated successfully');
         }
 
+        $types = [
+            QuoteTypeId::Health,
+            QuoteTypeId::Home,
+            QuoteTypeId::Travel,
+            QuoteTypeId::Business,
+            QuoteTypeId::Life,
+        ];
+        if (isset($request->quoteType) && in_array($request->quoteType, $types)) {
+            return redirect()->back();
+        }
+
         return redirect('/activities')->with('success', 'Activity updated successfully');
     }
 
@@ -148,6 +160,10 @@ class ActivitesController extends Controller
         Activities::where('id', $id)->delete();
         if (isset($request->isLeadView) && $request->isLeadView == 1) {
             return redirect('/quotes/'.$request->quoteType.'/'.$request->quote_uuid)->with('success', 'Activity deleted successfully');
+        }
+
+        if (isset($request->isInertia) && $request->isInertia) {
+            return redirect()->back();
         }
 
         return redirect('/activities')->with('success', 'Activity deleted successfully');

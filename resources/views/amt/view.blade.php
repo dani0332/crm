@@ -48,10 +48,11 @@
                 });
                 dt.ajax.reload();
             }
-       
+
         var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
         var isManagerOrDeputy = $("#isManagerOrDeputy").val();
         var isRenewalUser = JSON.parse('<?php echo json_encode(Auth::user()->hasAnyRole('GM_RENEWAL_ADVISOR', 'GM_RENEWAL_MANAGER')); ?>');
+        let canExtractData = '{{ auth()->user()->can(\App\Enums\PermissionsEnum::DATA_EXTRACTION) }}';
         $(document).on("change", "#amtLeadID", function () {
             var idsArray = $('#selectTmLeadId').val();
             idsArray = idsArray+ ',' + $(this).val() + ',';
@@ -131,7 +132,7 @@
                 columnDefs: [
 
                         ],
-                buttons: isAdmin || isManagerOrDeputy ? [{
+                buttons: canExtractData ? [{
                         extend: 'excel',
                         text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
                         title: 'Group Medical Listing',
@@ -206,7 +207,7 @@
                 columnDefs: [
                         { orderable: false, targets: [1,2,3,4,5,6,7,9,10] }
                         ],
-                buttons: isAdmin || isManagerOrDeputy ? [{
+                buttons: canExtractData ? [{
                         extend: 'excel',
                         text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
                         title: 'Group Medical Listing',

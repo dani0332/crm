@@ -43,13 +43,14 @@ class DashboardController extends Controller
     public function renderMainDashboard(Request $request)
     {
         $loggedInUserId = auth()->user()->id;
-        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
+        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
         $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
 
         $carAdvisors = $this->getUsersByTeamId(count($teamIds->toArray()) > 0 ? $teamIds->toArray() : []);
-        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($todaysLeads, $teams);
+        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($teams);
 
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
@@ -76,14 +77,8 @@ class DashboardController extends Controller
         $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
 
-        foreach ($teams as $team) {
-            $teamUserIds = $this->getUsersByTeamId($team->id);
-            $teamWiseLeadsAssignedAverage[] = [
-                'totalUsersUnderTeam' => count($teamUserIds),
-                'teamName' => $team->name,
-                'totalLeadsCount' => count($todaysLeads->whereIn('car_quote_request.advisor_id', $teamUserIds)),
-            ];
-        }
+        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($teams);
+
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
         $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
@@ -137,7 +132,7 @@ class DashboardController extends Controller
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $tiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
-            $records->whereIn('users.id', function ($query) use($request)  {
+            $records->whereIn('users.id', function ($query) use ($request) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -148,7 +143,7 @@ class DashboardController extends Controller
         } else {
             $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
             if (count($commonTeams) > 0) {
-                $records->whereIn('users.id', function ($query) use($commonTeams)  {
+                $records->whereIn('users.id', function ($query) use ($commonTeams) {
                     $query->distinct()
                         ->select('users.id')
                         ->from('users')
@@ -176,7 +171,7 @@ class DashboardController extends Controller
 
     private function applyFilter($query, $column, $value, $searchType)
     {
-        switch($searchType) {
+        switch ($searchType) {
             case IMCRMSearchTypesEnum::EQUAL_SEARCH :
                 $query = $query->where($column, $value);
                 break;
@@ -226,7 +221,7 @@ class DashboardController extends Controller
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
-            $records->whereIn('users.id', function ($query) use($request)  {
+            $records->whereIn('users.id', function ($query) use ($request) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
@@ -237,7 +232,7 @@ class DashboardController extends Controller
         } else {
             $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
             if (count($commonTeams) > 0) {
-                $records->whereIn('users.id', function ($query) use($commonTeams)  {
+                $records->whereIn('users.id', function ($query) use ($commonTeams) {
                     $query->distinct()
                         ->select('users.id')
                         ->from('users')

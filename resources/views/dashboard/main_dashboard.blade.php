@@ -200,9 +200,9 @@
                 style="background-color:white;margin-top:10px; min-width:250px;float:left; margin-left:10px; border-radius: 8px;border: 1px solid black;padding: 10px;text-align: center;color:black;">
                 <b  style="color: cornflowerblue;">{{strtoupper($item['teamName'])}}</b>
                 <div style="text-align: center;">
-                    <b id={{str_replace(' ', '', $item['teamName'])}}>{{ $item['totalLeadsCount'] .' / '. $item['totalUsersUnderTeam']. ' = ' .
-                        number_format((float)$item['totalUsersUnderTeam'] == 0 ? 0 : $item['totalLeadsCount'] / $item['totalUsersUnderTeam'], 2, '.', '')
-                        }}</b>
+                    <b id={{str_replace(' ', '', $item['teamName'])}}>
+                        {{ $item['stats'] }}
+                    </b>
                 </div>
             </div>
             @endforeach
@@ -351,9 +351,7 @@
                  $('#totalUnAssignedRevivalLeads').text(data['totalUnAssignedRevivalLeads']);
                  for (let index = 0; index < data['teamWiseLeadsAssignedAverage'].length; index++) {
                     const teamName = data['teamWiseLeadsAssignedAverage'][index]['teamName'];
-                    const totalLeadsCount = data['teamWiseLeadsAssignedAverage'][index]['totalLeadsCount'];
-                    const totalUsersUnderTeam = data['teamWiseLeadsAssignedAverage'][index]['totalUsersUnderTeam'];
-                    $('#'+ teamName.replace(/ /g,'')).text(totalLeadsCount + ' / ' + totalUsersUnderTeam + ' = ' + totalLeadsCount/totalUsersUnderTeam);
+                    $('#'+ teamName.replace(/ /g,'')).text(data['stats']);
                  }
                  leadRcdSummaryByTierPieChart.destroy();
                  var leadRcdSummaryByTierPieChartData = [];
