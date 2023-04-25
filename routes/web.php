@@ -66,6 +66,7 @@ use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\JetskiQuoteController;
+use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
@@ -292,6 +293,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
             Route::get('life-cards', [LifeController::class, 'cardsView'])->name('life.cards');
             Route::resource('life', LifeController::class);
+            Route::resource('lifes', LifeQuoteController::class);
         } else {
             Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
         }

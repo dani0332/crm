@@ -1,9 +1,6 @@
 <script setup>
 defineProps({
   quotes: Object,
-  dropdownSource: Object,
-  permissions: Object,
-  advisors: Object,
 });
 
 const rules = {
@@ -50,11 +47,11 @@ const tableHeader = [
   { text: 'CDB ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'LEAD STATUS', value: 'quote_status' },
+  { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'NATIONALITY', value: '' },
+  { text: 'NATIONALITY', value: 'nationality' },
   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
@@ -70,14 +67,15 @@ const advisorsOptions = computed(() => {
   });
 });
 
-const leadsStatusOptions = computed(() => {
-  return page.props.dropdownSource.quote_status_id.map(item => {
-    return {
-      value: item.id,
-      label: item.text,
-    };
-  });
-});
+const leadsStatusOptions = reactive([]);
+// const leadsStatusOptions = computed(() => {
+//   return page.props.dropdownSource.quote_status_id.map(item => {
+//     return {
+//       value: item.id,
+//       label: item.text,
+//     };
+//   });
+// });
 
 function filterQuotes(isValid) {
   if (!isValid) {
@@ -148,9 +146,6 @@ const assignForm = useForm({
   assigned_to_id_new: null,
   modelType: 'life',
   selectTmLeadId: '',
-  isManagerOrDeputy: page.props.permissions.isManagerOrDeputy,
-  isLeadPool: page.props.permissions.isLeadPool,
-  isManualAllocationAllowed: page.props.permissions.isManualAllocationAllowed,
 });
 
 function onAssignLead(isValid) {
@@ -258,13 +253,13 @@ onMounted(() => {
           placeholder="Search by Lead Status"
           :options="leadsStatusOptions"
         />
-        <ComboBox
+        <!-- <ComboBox
           v-if="!permissions.travelAdvisor"
           v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorsOptions"
-        />
+        /> -->
 
         <x-select
           v-model="filters.is_renewal"
@@ -350,13 +345,22 @@ onMounted(() => {
           {{ code }}
         </Link>
       </template>
-      <template #item-is_ecommerce="{ is_ecommerce }">
+      <template #item-advisor="{ advisor }">
+        {{ advisor?.name }}
+      </template>
+      <template #item-quote_status="{ quote_status }">
+        {{ quote_status?.code }}
+      </template>
+      <template #item-nationality="{ nationality }">
+        {{ nationality?.code }}
+      </template>
+      <!-- <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
-      </template>
+      </template> -->
     </DataTable>
 
     <Pagination
