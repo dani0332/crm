@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-        <img src='{{ asset("image/new_logo.png") }}' />
+        <img src='{{ asset("image/logo.png") }}' />
         @if (session('status'))
         <div class="mb-4 font-medium text-sm text-green-600">
             {{ session('status') }}
