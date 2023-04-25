@@ -3,8 +3,6 @@
 namespace App\Providers;
 
 use App\Enums\EnvEnum;
-use App\Jobs\LeadAllocationJob;
-use App\Services\LeadAllocationService;
 use Barryvdh\Debugbar\Facade as Debugbar;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -28,10 +26,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // $allowedEnvs = [EnvEnum::LOCAL, EnvEnum::DEVELOPMENT, EnvEnum::STAGING];
-        // if (in_array(config('APP_ENV', 'production'), $allowedEnvs)) {
-        //     Debugbar::enable();
-        // }
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,
