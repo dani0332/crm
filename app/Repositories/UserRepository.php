@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 class UserRepository extends BaseRepository
 {
@@ -14,16 +13,15 @@ class UserRepository extends BaseRepository
 
     public function fetchGetPersonalQuoteAdvisors($modelType)
     {
-        if($modelType){
-            $roles = [strtoupper($modelType).'_ADVISOR',strtoupper($modelType).'_RENEWAL_ADVISOR',strtoupper($modelType).'_NEW_BUSINESS_ADVISOR'];
-           
-            return $this->with(['roles' => fn($q) =>   $q->whereIn('name',$roles)])
+        if ($modelType) {
+            $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR'];
+
+            return $this->with(['roles' => fn ($q) => $q->whereIn('name', $roles)])
             ->whereHas('roles', function ($q) use ($roles) {
-                $q->whereIn('name',$roles);  //todo: add required roles here
+                $q->whereIn('name', $roles);  //todo: add required roles here
             })->get();
-        }else{
+        } else {
             return [];
         }
-      
     }
 }

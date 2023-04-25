@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -18,13 +16,9 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
-use App\Services\CRUDService;
-use App\Services\PetQuoteService;
-use Auth;
 
 class PetQuoteController extends Controller
 {
-    
     /**
      * Display a listing of the resource.
      *
@@ -35,7 +29,7 @@ class PetQuoteController extends Controller
         $personalQuotes = PetQuoteRepository::getData();
         $advisors = PetQuoteRepository::advisors();
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
-        
+
         return inertia('PetQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,

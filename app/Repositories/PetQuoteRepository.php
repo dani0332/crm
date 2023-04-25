@@ -99,18 +99,19 @@ class PetQuoteRepository extends BaseRepository
             }])->firstOrFail();
     }
 
-    public function fetchAdvisors(){
+    public function fetchAdvisors()
+    {
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
-        $data=[];
-        foreach($advisors as $item){
-            $temp['id']=$item['id'];
+        $data = [];
+        foreach ($advisors as $item) {
+            $temp['id'] = $item['id'];
 
-            if(!empty($item['roles'])){
-               $temp['name'] =$item['name'].'-'.$item['roles'][0]['name'];
+            if (! empty($item['roles'])) {
+                $temp['name'] = $item['name'].'-'.$item['roles'][0]['name'];
             }
-            $data[]=$temp;
-            
+            $data[] = $temp;
         }
+
         return $data;
     }
     /**
