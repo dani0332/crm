@@ -24,7 +24,7 @@ class quoteTypeCode extends Enum
     const RM_SPEED = 'RM-SPEED';
     const RetailMedical = 'Retail Medical';
     const EBP = 'EBP';
-    const CORPLINE = 'CORPLINE';
+    const CORPLINE = 'Corpline';
     const GM = 'GM';
     const RM = 'RM';
     const GroupMedical = 'Group Medical';
