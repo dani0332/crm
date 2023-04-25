@@ -10974,7 +10974,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
 /* harmony import */ var C_Users_ranam_code_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
+/* harmony import */ var _indielayer_ui__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @indielayer/ui */ "./node_modules/@indielayer/ui/lib/index.es.js");
 /* unplugin-vue-components disabled */
+
 
 
 
@@ -11157,6 +11159,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         };
       });
     });
+    var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_4__.useNotifications)('toast');
     var quotesSelected = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)([]);
     var assignForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
       assigned_to_id_new: null,
@@ -11212,6 +11215,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       permissionsEnum: permissionsEnum,
       options: options,
       advisorOptions: advisorOptions,
+      notification: notification,
       quotesSelected: quotesSelected,
       assignForm: assignForm,
       onAssignLead: onAssignLead

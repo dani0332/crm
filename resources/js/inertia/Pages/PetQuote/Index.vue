@@ -114,6 +114,8 @@ const advisorOptions = computed(() => {
   }));
 });
 
+const notification = useNotifications('toast');
+
 const quotesSelected = ref([]);
 
 const assignForm = useForm({
