@@ -16,6 +16,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use Auth;
 
 class PetQuoteController extends Controller
 {
@@ -28,10 +29,15 @@ class PetQuoteController extends Controller
     {
         $personalQuotes = PetQuoteRepository::getData();
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
+        $allowedRoles = [RolesEnum::Admin, RolesEnum::PetAdvisor, RolesEnum::PetManager];
+        $isManualAllocationAllowed = Auth::user()->hasAnyRole($allowedRoles);
+        $isManger = Auth::user()->hasRole(RolesEnum::PetManager);
 
         return inertia('PetQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
+            'isManualAllocationAllowed' => $isManualAllocationAllowed,
+            'isManger' => $isManger,
         ]);
     }
 

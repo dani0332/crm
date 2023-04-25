@@ -3,6 +3,8 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  isManger: Boolean,
+  isManualAllocationAllowed: Boolean,
 });
 
 const page = usePage();
@@ -92,6 +94,43 @@ const tableHeader = [
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+
+const quotesSelected = ref([]);
+
+const assignForm = useForm({
+  assigned_to_id_new: null,
+  modelType: 'Pet',
+  selectTmLeadId: '',
+  isManagerOrDeputy: page.isManger,
+  isLeadPool: false,
+  isManualAllocationAllowed: page.isManualAllocationAllowed,
+});
+
+function onAssignLead(isValid) {
+  if (isValid) {
+    const selected = quotesSelected.value.map(e => e.id);
+    assignForm
+      .transform(data => ({
+        ...data,
+        selectTmLeadId: `${selected}`,
+      }))
+      .post('/quotes/pet/manualLeadAssign', {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          let title =
+            quotesSelected.value.length > 1
+              ? 'Pet Leads Assigned'
+              : 'Pet Lead Assigned';
+          quotesSelected.value = [];
+          notification.success({
+            title: title,
+            position: 'top',
+          });
+        },
+      });
+  }
+}
 </script>
 
 <template>
@@ -205,7 +244,40 @@ const permissionsEnum = page.props.permissionsEnum;
       </div>
     </x-form>
 
+    <Transition name="fade">
+      <div v-if="quotesSelected.length > 0" class="mb-4">
+        <div
+          class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
+          v-if="permissions.isManualAllocationAllowed"
+        >
+          <x-form @submit="onAssignLead" :auto-focus="false">
+            <div class="w-full flex flex-col md:flex-row gap-4">
+              <x-select
+                v-model="assignForm.assigned_to_id_new"
+                label="Assign Advisor"
+                :options="advisorOptions"
+                placeholder="Select Advisor"
+                class="flex-1 w-auto"
+                :rules="[rules.isRequired]"
+              />
+              <div class="mb-3 md:pt-6">
+                <x-button
+                  color="orange"
+                  size="sm"
+                  type="submit"
+                  :loading="assignForm.processing"
+                >
+                  Assign
+                </x-button>
+              </div>
+            </div>
+          </x-form>
+        </div>
+      </div>
+    </Transition>
+
     <DataTable
+      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
