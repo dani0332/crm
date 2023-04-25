@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Enums\EnvEnum;
-use Barryvdh\Debugbar\Facade as Debugbar;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 
