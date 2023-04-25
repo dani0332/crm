@@ -8,6 +8,8 @@ defineProps({
   dropdownSource: Object,
 });
 
+const { isRequired } = useRules();
+
 const page = usePage();
 const loader = reactive({
   table: false,
@@ -275,7 +277,7 @@ function onAssignLead(isValid) {
                 :options="advisorOptions"
                 placeholder="Select Advisor"
                 class="flex-1 w-auto"
-                :rules="[rules.isRequired]"
+                :rules="[isRequired]"
               />
               <div class="mb-3 md:pt-6">
                 <x-button

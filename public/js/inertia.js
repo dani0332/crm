@@ -10970,10 +10970,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
-/* harmony import */ var C_Users_ranam_code_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
+/* harmony import */ var C_Users_ranam_code_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var C_Users_ranam_code_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
 /* unplugin-vue-components disabled */
+
 
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -10995,8 +10997,12 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
     expose();
-    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.usePage)();
-    var loader = (0,vue__WEBPACK_IMPORTED_MODULE_1__.reactive)({
+
+    var _useRules = (0,C_Users_ranam_code_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_0__.useRules)(),
+        isRequired = _useRules.isRequired;
+
+    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.usePage)();
+    var loader = (0,vue__WEBPACK_IMPORTED_MODULE_2__.reactive)({
       table: false,
       "export": false
     });
@@ -11014,7 +11020,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       is_renewal: '',
       page: 1
     };
-    var filters = (0,vue__WEBPACK_IMPORTED_MODULE_1__.reactive)(availableFilters);
+    var filters = (0,vue__WEBPACK_IMPORTED_MODULE_2__.reactive)(availableFilters);
 
     function onSubmit(isValid) {
       if (isValid) {
@@ -11022,7 +11028,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         Object.keys(filters).forEach(function (key) {
           return (filters[key] === '' || filters[key].length === 0) && delete filters[key];
         });
-        _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router.visit('/personal-quotes/pet', {
+        _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.visit('/personal-quotes/pet', {
           method: 'get',
           data: filters,
           preserveState: true,
@@ -11040,7 +11046,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }
 
     function onReset() {
-      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router.visit('/personal-quotes/pet', {
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.visit('/personal-quotes/pet', {
         method: 'get',
         data: {
           page: 1
@@ -11055,7 +11061,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     }
 
-    (0,vue__WEBPACK_IMPORTED_MODULE_1__.onMounted)(function () {});
+    (0,vue__WEBPACK_IMPORTED_MODULE_2__.onMounted)(function () {});
     var tableHeader = [{
       text: 'CDB ID',
       value: 'uuid'
@@ -11131,11 +11137,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }];
 
     var can = function can(permission) {
-      return (0,C_Users_ranam_code_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_2__.useCan)(permission);
+      return (0,C_Users_ranam_code_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_3__.useCan)(permission);
     };
 
     var permissionsEnum = page.props.permissionsEnum;
-    var options = (0,vue__WEBPACK_IMPORTED_MODULE_1__.computed)(function () {
+    var options = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
       return page.props.dropdownSource.advisor_id.map(function (item) {
         return {
           value: item.id,
@@ -11143,7 +11149,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         };
       });
     });
-    var advisorOptions = (0,vue__WEBPACK_IMPORTED_MODULE_1__.computed)(function () {
+    var advisorOptions = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
       return page.props.advisors.map(function (advisor) {
         return {
           value: advisor.id,
@@ -11151,8 +11157,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         };
       });
     });
-    var quotesSelected = (0,vue__WEBPACK_IMPORTED_MODULE_1__.ref)([]);
-    var assignForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
+    var quotesSelected = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)([]);
+    var assignForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
       assigned_to_id_new: null,
       modelType: 'Pet',
       selectTmLeadId: '',
@@ -11186,6 +11192,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }
 
     var __returned__ = {
+      isRequired: isRequired,
       page: page,
       loader: loader,
 
@@ -34888,7 +34895,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             options: $setup.advisorOptions,
             placeholder: "Select Advisor",
             "class": "flex-1 w-auto",
-            rules: [_ctx.rules.isRequired]
+            rules: [$setup.isRequired]
           }, null, 8
           /* PROPS */
           , ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_8, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
