@@ -10989,7 +10989,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     quoteStatuses: Array,
     advisors: Array,
     isManger: Boolean,
-    isManualAllocationAllowed: Boolean
+    isManualAllocationAllowed: Boolean,
+    dropdownSource: Object
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -11134,6 +11135,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     };
 
     var permissionsEnum = page.props.permissionsEnum;
+    var options = (0,vue__WEBPACK_IMPORTED_MODULE_1__.computed)(function () {
+      return page.props.dropdownSource.advisor_id.map(function (item) {
+        return {
+          value: item.id,
+          label: item.name
+        };
+      });
+    });
+    var advisorOptions = (0,vue__WEBPACK_IMPORTED_MODULE_1__.computed)(function () {
+      return page.props.advisors.map(function (advisor) {
+        return {
+          value: advisor.id,
+          label: advisor.name
+        };
+      });
+    });
     var quotesSelected = (0,vue__WEBPACK_IMPORTED_MODULE_1__.ref)([]);
     var assignForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
       assigned_to_id_new: null,
@@ -11186,6 +11203,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       tableHeader: tableHeader,
       can: can,
       permissionsEnum: permissionsEnum,
+      options: options,
+      advisorOptions: advisorOptions,
       quotesSelected: quotesSelected,
       assignForm: assignForm,
       onAssignLead: onAssignLead
@@ -34799,7 +34818,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         label: "Advisor",
         placeholder: "Search by Advisor",
-        options: _ctx.advisorOptions
+        options: $setup.options
       }, null, 8
       /* PROPS */
       , ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
@@ -34866,7 +34885,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
               return $setup.assignForm.assigned_to_id_new = $event;
             }),
             label: "Assign Advisor",
-            options: _ctx.advisorOptions,
+            options: $setup.advisorOptions,
             placeholder: "Select Advisor",
             "class": "flex-1 w-auto",
             rules: [_ctx.rules.isRequired]

@@ -5,6 +5,7 @@ defineProps({
   advisors: Array,
   isManger: Boolean,
   isManualAllocationAllowed: Boolean,
+  dropdownSource: Object,
 });
 
 const page = usePage();
@@ -94,6 +95,22 @@ const tableHeader = [
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+
+const options = computed(() => {
+  return page.props.dropdownSource.advisor_id.map(item => {
+    return {
+      value: item.id,
+      label: item.name,
+    };
+  });
+});
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
 
 const quotesSelected = ref([]);
 
@@ -222,7 +239,7 @@ function onAssignLead(isValid) {
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="advisorOptions"
+          :options="options"
         />
         <x-select
           v-model="filters.is_ecommerce"
