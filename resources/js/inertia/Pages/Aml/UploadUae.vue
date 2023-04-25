@@ -1,6 +1,7 @@
 <script setup>
+import { router } from '@inertiajs/core';
 
-defineProps({ errors: Object })
+defineProps({ errors: Object });
 
 const notification = useNotifications('toast');
 const page = usePage();
@@ -13,7 +14,10 @@ const uploadForm = useForm({
 function onSubmit(isValid) {
   if (isValid) {
     uploadForm.post(`/kyc/aml/upload/uae-list`, {
-      onError: errors => {},
+        onError: errors => { },
+        onSuccess: () => {
+            displayNotification();
+        },
       onStart: () => {
         uploadForm.clearErrors();
       },
@@ -21,7 +25,20 @@ function onSubmit(isValid) {
   }
 }
 
-onMounted(() => {});
+function displayNotification() {
+  const session = usePage().props.flash;
+  for (const key in session) {
+    notification[key]({
+      title: session[key],
+      position: 'top',
+      timeout: 0,
+    });
+  }
+}
+
+onMounted(() => {
+
+});
 </script>
 
 <template>
