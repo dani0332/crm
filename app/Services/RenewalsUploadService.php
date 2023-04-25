@@ -763,10 +763,10 @@ class RenewalsUploadService
                 }
 
                 if (! empty($quoteData['car_model_id'])) {
-                    if (($carModelDetail = CarModelDetail::active()
+                    if ($carModelDetail = CarModelDetail::active()
                         ->where('is_default', 1)
                         ->where('car_model_id', $quoteData['car_model_id'])
-                        ->first())) {
+                        ->first()) {
                         $quoteData['cylinder'] = $carModelDetail->cylinder;
                         $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                         $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;

@@ -31,6 +31,12 @@ class AddCreatedUpdatedFieldsToCarQuoteFtcDocuments extends Migration
     public function down()
     {
         Schema::table('car_quote_ftc_documents', function (Blueprint $table) {
+            if (Schema::hasColumn('car_quote_ftc_documents', 'created_by')) {
+                $table->dropColumn('created_by');
+            }
+            if (Schema::hasColumn('car_quote_ftc_documents', 'updated_by')) {
+                $table->dropColumn('updated_by');
+            }
         });
     }
 }

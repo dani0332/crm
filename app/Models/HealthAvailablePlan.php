@@ -55,13 +55,13 @@ class HealthAvailablePlan extends Model
 
     protected function getAPI()
     {
-        $listQuotePlans = '';
+//        $listQuotePlans = '';
         $responseData = [];
         $quotePlans = app(HealthQuoteService::class)->getQuotePlans(last(request()->segments()));
 
-        if (isset($quotePlans->message) && $quotePlans->message != '') {
-            $listQuotePlans = $quotePlans->message;
-        } else {
+//        if (isset($quotePlans->message) && $quotePlans->message != '') {
+//            $listQuotePlans = $quotePlans->message;
+//        } else {
             if (gettype($quotePlans) !== GenericRequestEnum::TypeString) {
                 $listQuotePlans = $quotePlans->quote->plans;
 
@@ -85,10 +85,11 @@ class HealthAvailablePlan extends Model
                         'excess' => json_encode($plan?->excess),
                     ];
                 })->toArray();
-            } else {
-                $listQuotePlans = $quotePlans;
             }
-        }
+//            else {
+//                $listQuotePlans = $quotePlans;
+//            }
+//        }
 
         return $responseData;
     }

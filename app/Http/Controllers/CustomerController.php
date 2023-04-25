@@ -230,7 +230,7 @@ class CustomerController extends Controller
             'additional_contact_val' => 'required',
         ]);
 
-        if ($request->isInertia == true && $validator->fails()) {
+        if ($request->isInertia && $validator->fails()) {
             return redirect()->back()->withErrors($validator->errors());
         }
 
