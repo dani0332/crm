@@ -366,8 +366,13 @@ class CRUDService extends BaseService
     public function updateModelByType($modelType, Request $request, $id)
     {
         $lowerCaseModelType = strtolower($modelType);
-        $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
+        $response = $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)}($request, $id);
+
+        if((in_array($lowerCaseModelType, $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)) == 'update'.ucwords($modelType).'Quote')
+        {
+            return $response;
+        }
     }
 
     public function getEntity($modelType, $id)

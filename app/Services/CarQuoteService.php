@@ -21,6 +21,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class CarQuoteService extends BaseService
@@ -205,7 +207,9 @@ class CarQuoteService extends BaseService
     public function updateCarQuote(Request $request, $id)
     {
         $carQuote = CarQuote::where('uuid', $id)->first();
+        $oldCarValue = $carQuote->car_value;
         info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
+
         if ($request->first_name) {
             $carQuote->first_name = $request->first_name;
         }
@@ -285,11 +289,18 @@ class CarQuoteService extends BaseService
             $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
         }
         $carQuote->updated_by = auth()->user()->email;
-        $carQuote->save();
+        $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
 
-        if (isset($request->return_to_view)) {
-            return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
+        if($deleteValuationResponse){
+            $carQuote->save();
+
+            if (isset($request->return_to_view)) {
+                return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
+            }
+        }else{
+            return false;
         }
+
     }
 
     public function getEntity($id)
@@ -1492,5 +1503,30 @@ class CarQuoteService extends BaseService
                 ]);
             }
         }
+    }
+
+    private function deleteValuationAPI($oldValue, $currentValue, $quoteUuId)
+    {
+        if($oldValue != $currentValue)
+        {
+            $deleteValuationAPI = config('constants.KEN_API_ENDPOINT') . '/delete-car-valuation';
+            $kenCapiBasicAuthUsername = config('constants.KEN_API_USER');
+            $kenCapiBasicAuthPassword = config('constants.KEN_API_PWD');
+            $kenCapiApiToken = config('constants.KEN_API_TOKEN');
+
+            $response = Http::withHeaders(['x-api-token' => $kenCapiApiToken])
+                ->withBasicAuth($kenCapiBasicAuthUsername, $kenCapiBasicAuthPassword)
+                ->post($deleteValuationAPI, ['quoteUuid' => $quoteUuId]);
+
+            if($response->successful())
+            {
+                $response = json_decode($response->body(), true);
+                return $response['isDeleted'];
+            }
+
+            return false;
+        }
+
+        return true;
     }
 }
