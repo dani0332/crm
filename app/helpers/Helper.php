@@ -420,6 +420,8 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Home,
             quoteTypeCode::Life,
             quoteTypeCode::Pet,
+            quoteTypeCode::CORPLINE,
+            quoteTypeCode::Business,
         ];
     }
 }
