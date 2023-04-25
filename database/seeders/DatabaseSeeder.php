@@ -46,7 +46,8 @@ class DatabaseSeeder extends Seeder
             addCarDripListKey::class,
             addCarQuoteNewStatuses::class,
             AddPermissionForExportData::class,
-            RenewalBatchUpdatePermissionSeeder::class
+            RenewalBatchUpdatePermissionSeeder::class,
+            addBusinessAsProduct::class,
         ]);
     }
 }
