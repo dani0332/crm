@@ -45,19 +45,14 @@ class PetQuoteController extends Controller
     {
         $personalQuotes = PetQuoteRepository::getData();
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
-        $allowedRoles = [RolesEnum::Admin, RolesEnum::PetManager];
-        $isManualAllocationAllowed = Auth::user()->hasAnyRole($allowedRoles);
-        $isManger = Auth::user()->hasRole(RolesEnum::PetManager);
-        $crudService = app(CRUDService::class);
+       $crudService = app(CRUDService::class);
         $advisors = $crudService->getAdvisorsByModelType('Pet');
 
         $dropdownSource = $this->petQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
-
+        
         return inertia('PetQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
-            'isManualAllocationAllowed' => $isManualAllocationAllowed,
-            'isManger' => $isManger,
             'advisors' => $advisors,
             'dropdownSource' => $dropdownSource,
         ]);

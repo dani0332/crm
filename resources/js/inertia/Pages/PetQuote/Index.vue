@@ -3,8 +3,6 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
-  isManger: Boolean,
-  isManualAllocationAllowed: Boolean,
   dropdownSource: Object,
 });
 
@@ -97,6 +95,18 @@ const tableHeader = [
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
+
+const role = [rolesEnum.Admin, rolesEnum.PetManager];
+const petManagerRole = [rolesEnum.PetManager];
+
+const hasAnyRole = role => useHasAnyRole(role);
+
+const isManualAllocationAllowed = ref(false);
+const isManager = ref(false);
+
+isManualAllocationAllowed.value = hasAnyRole(role);
+isManager.value = hasAnyRole(petManagerRole);
 
 const options = computed(() => {
   return page.props.dropdownSource.advisor_id.map(item => {
@@ -122,9 +132,9 @@ const assignForm = useForm({
   assigned_to_id_new: null,
   modelType: 'Pet',
   selectTmLeadId: '',
-  isManagerOrDeputy: page.props.isManger,
+  isManagerOrDeputy: isManager,
   isLeadPool: false,
-  isManualAllocationAllowed: page.props.isManualAllocationAllowed,
+  isManualAllocationAllowed: isManualAllocationAllowed,
 });
 
 function onAssignLead(isValid) {
