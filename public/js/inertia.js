@@ -11139,9 +11139,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       assigned_to_id_new: null,
       modelType: 'Pet',
       selectTmLeadId: '',
-      isManagerOrDeputy: page.isManger,
+      isManagerOrDeputy: page.props.isManger,
       isLeadPool: false,
-      isManualAllocationAllowed: page.isManualAllocationAllowed
+      isManualAllocationAllowed: page.props.isManualAllocationAllowed
     });
 
     function onAssignLead(isValid) {
@@ -34855,7 +34855,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     name: "fade"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-      return [$setup.quotesSelected.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", _hoisted_5, [_ctx.permissions.isManualAllocationAllowed ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_form, {
+      return [$setup.quotesSelected.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", _hoisted_5, [$props.isManualAllocationAllowed ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_form, {
         onSubmit: $setup.onAssignLead,
         "auto-focus": false
       }, {
