@@ -45,7 +45,7 @@ class PetQuoteController extends Controller
     {
         $personalQuotes = PetQuoteRepository::getData();
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
-        $allowedRoles = [RolesEnum::Admin, RolesEnum::PetAdvisor, RolesEnum::PetManager];
+        $allowedRoles = [RolesEnum::Admin, RolesEnum::PetManager];
         $isManualAllocationAllowed = Auth::user()->hasAnyRole($allowedRoles);
         $isManger = Auth::user()->hasRole(RolesEnum::PetManager);
         $crudService = app(CRUDService::class);
