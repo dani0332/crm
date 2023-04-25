@@ -1507,8 +1507,10 @@ class CarQuoteService extends BaseService
 
     private function deleteValuationAPI($oldValue, $currentValue, $quoteUuId)
     {
-        if($oldValue != $currentValue)
-        {
+        if($oldValue == $currentValue)
+            return true;
+
+        try {
             $deleteValuationAPI = config('constants.KEN_API_ENDPOINT') . '/delete-car-valuation';
             $kenCapiBasicAuthUsername = config('constants.KEN_API_USER');
             $kenCapiBasicAuthPassword = config('constants.KEN_API_PWD');
@@ -1521,9 +1523,9 @@ class CarQuoteService extends BaseService
             if($response->ok())
                 return true;
 
+        } catch (\Exception $exception){
+            Log::info('Delete Valuation API Error: '.$exception->getMessage());
             return false;
         }
-
-        return true;
     }
 }
