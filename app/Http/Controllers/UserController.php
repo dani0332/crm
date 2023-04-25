@@ -211,7 +211,7 @@ class UserController extends Controller
             'email' => 'required|email',
             'roles' => 'required',
             'teams' => 'required',
-            'permissions' => 'nullable|array'
+            'permissions' => 'nullable|array',
         ]);
 
         // Updating user
@@ -275,7 +275,7 @@ class UserController extends Controller
             }
         }
 
-        $permissions = (!empty($request->permissions) && sizeof($request->permissions)) ? $request->permissions : [];
+        $permissions = (! empty($request->permissions) && count($request->permissions)) ? $request->permissions : [];
         $user->syncPermissions($permissions);
 
         // Updating user roles
