@@ -3,7 +3,6 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
-  dropdownSource: Object,
 });
 
 const { isRequired } = useRules();
@@ -107,15 +106,6 @@ const isManager = ref(false);
 
 isManualAllocationAllowed.value = hasAnyRole(role);
 isManager.value = hasAnyRole(petManagerRole);
-
-const options = computed(() => {
-  return page.props.dropdownSource.advisor_id.map(item => {
-    return {
-      value: item.id,
-      label: item.name,
-    };
-  });
-});
 
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
@@ -253,7 +243,7 @@ function onAssignLead(isValid) {
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="options"
+          :options="advisorOptions"
         />
         <x-select
           v-model="filters.is_ecommerce"

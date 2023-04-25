@@ -10991,8 +10991,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   props: {
     quotes: Object,
     quoteStatuses: Array,
-    advisors: Array,
-    dropdownSource: Object
+    advisors: Array
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -11153,14 +11152,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var isManager = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)(false);
     isManualAllocationAllowed.value = hasAnyRole(role);
     isManager.value = hasAnyRole(petManagerRole);
-    var options = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
-      return page.props.dropdownSource.advisor_id.map(function (item) {
-        return {
-          value: item.id,
-          label: item.name
-        };
-      });
-    });
     var advisorOptions = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
       return page.props.advisors.map(function (advisor) {
         return {
@@ -11229,7 +11220,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       hasAnyRole: hasAnyRole,
       isManualAllocationAllowed: isManualAllocationAllowed,
       isManager: isManager,
-      options: options,
       advisorOptions: advisorOptions,
       notification: notification,
       quotesSelected: quotesSelected,
@@ -34845,7 +34835,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         label: "Advisor",
         placeholder: "Search by Advisor",
-        options: $setup.options
+        options: $setup.advisorOptions
       }, null, 8
       /* PROPS */
       , ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {

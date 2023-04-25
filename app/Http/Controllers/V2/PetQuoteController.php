@@ -24,18 +24,7 @@ use Auth;
 
 class PetQuoteController extends Controller
 {
-    protected $genericModel;
-    protected $petQuoteService;
-
-    public const TYPE = quoteTypeCode::Pet;
-    public const TYPE_ID = QuoteTypeId::Pet;
-
-    public function __construct()
-    {
-        $this->petQuoteService = app(PetQuoteService::class);
-        $this->genericModel = $this->petQuoteService->getGenericModel(self::TYPE);
-    }
-
+    
     /**
      * Display a listing of the resource.
      *
@@ -44,17 +33,13 @@ class PetQuoteController extends Controller
     public function index()
     {
         $personalQuotes = PetQuoteRepository::getData();
+        $advisors = PetQuoteRepository::advisors();
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
-       $crudService = app(CRUDService::class);
-        $advisors = $crudService->getAdvisorsByModelType('Pet');
-
-        $dropdownSource = $this->petQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         
         return inertia('PetQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
             'advisors' => $advisors,
-            'dropdownSource' => $dropdownSource,
         ]);
     }
 
