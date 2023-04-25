@@ -1518,11 +1518,8 @@ class CarQuoteService extends BaseService
                 ->withBasicAuth($kenCapiBasicAuthUsername, $kenCapiBasicAuthPassword)
                 ->post($deleteValuationAPI, ['quoteUuid' => $quoteUuId]);
 
-            if($response->successful())
-            {
-                $response = json_decode($response->body(), true);
-                return $response['isDeleted'];
-            }
+            if($response->ok())
+                return true;
 
             return false;
         }
