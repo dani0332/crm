@@ -737,7 +737,10 @@ class CRUDController extends Controller
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         // dd($request->all(), $validateArray);
         // $this->validate($request, $validateArray);
-        $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+        $response = $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+        if(!is_null($response) && !$response){
+            return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id.'/edit')->with('error', json_decode($request->modelType, true).' has not been updated');
+        }
 
         return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
     }
