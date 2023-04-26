@@ -30,12 +30,7 @@ const quoteForm = useForm({
   personal_belongings_aed: null,
 });
 
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired, isEmail } = useRules();
 
 const handleConditionalFields = () => {
   if (
@@ -58,7 +53,6 @@ const handleConditionalFields = () => {
   }
 };
 
-const isEmptyField = ref(false);
 function onSubmit(isValid) {
   if (quoteForm.has_contents || quoteForm.has_building) {
     if (isValid) {
@@ -100,7 +94,7 @@ function onSubmit(isValid) {
           type="text"
           label="FIRST NAME*"
           maxLength="255"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
         />
 
@@ -109,7 +103,7 @@ function onSubmit(isValid) {
           type="text"
           label="LAST NAME*"
           maxLength="255"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
         />
 
@@ -117,7 +111,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.email"
           type="email"
           label="EMAIL*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired, isEmail]"
           class="w-full"
         />
 
@@ -125,7 +119,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.mobile_no"
           type="tel"
           label="MOBILE NUMBER*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
           :error="quoteForm?.errors?.mobile_no"
         />
@@ -148,7 +142,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.iam_possesion_type_id"
           label="I AM*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             dropdownSource.iam_possesion_type_id.map(item => ({
               value: item.id,
@@ -162,7 +156,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.ilivein_accommodation_type_id"
           label="I LIVE IN*"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           :options="
             dropdownSource.ilivein_accommodation_type_id.map(item => ({
               value: item.id,
@@ -177,7 +171,7 @@ function onSubmit(isValid) {
           type="text"
           label="ADDRESS*"
           maxLength="2000"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
           class="w-full"
         />
 
@@ -218,7 +212,7 @@ function onSubmit(isValid) {
           label="CONTENTS AED"
           type="number"
           class="w-full"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
         />
 
         <x-input
@@ -227,7 +221,7 @@ function onSubmit(isValid) {
           label="PERSONAL BELONGINGS AED"
           type="number"
           class="w-full"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
         />
 
         <x-input
@@ -236,7 +230,7 @@ function onSubmit(isValid) {
           label="BUILDING AED"
           type="number"
           class="w-full"
-          :rules="[rules.isRequired]"
+          :rules="[isRequired]"
         />
       </div>
       <x-divider class="my-4" />
