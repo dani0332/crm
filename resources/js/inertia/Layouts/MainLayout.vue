@@ -48,7 +48,7 @@ router.on('navigate', () => {
           </button>
 
           <a href="/" class="block w-full">
-            <img src="/images/logo.png" alt="IMCRM" class="w-full" />
+            <img src="/image/new_logo.png" alt="IMCRM" class="w-full" />
           </a>
         </div>
       </header>

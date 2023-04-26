@@ -120,8 +120,8 @@ class AmtController extends Controller
             $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
         }
         if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
-            $dateFrom = $this->parseDate($request['created_at_start'], true);
-            $dateTo = $this->parseDate($request['created_at_end'], false);
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $data->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
         }
         if (isset($request->last_name) && $request->last_name != '') {
@@ -177,18 +177,6 @@ class AmtController extends Controller
         $quotes = $data->simplePaginate(15)->withQueryString();
 
         return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes'));
-    }
-
-    private function parseDate($date, $isStartOfDay)
-    {
-        if ($date != '') {
-            $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
-            if ($isStartOfDay) {
-                return Carbon::createFromFormat($dateFormat, $date)->startOfDay()->toDateString();
-            } else {
-                return Carbon::createFromFormat($dateFormat, $date)->endOfDay()->toDateString();
-            }
-        }
     }
 
     /**

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -16,9 +18,24 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\CRUDService;
+use App\Services\PetQuoteService;
+use Auth;
 
 class PetQuoteController extends Controller
 {
+    protected $genericModel;
+    protected $petQuoteService;
+
+    public const TYPE = quoteTypeCode::Pet;
+    public const TYPE_ID = QuoteTypeId::Pet;
+
+    public function __construct()
+    {
+        $this->petQuoteService = app(PetQuoteService::class);
+        $this->genericModel = $this->petQuoteService->getGenericModel(self::TYPE);
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -28,10 +45,21 @@ class PetQuoteController extends Controller
     {
         $personalQuotes = PetQuoteRepository::getData();
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
+        $allowedRoles = [RolesEnum::Admin, RolesEnum::PetManager];
+        $isManualAllocationAllowed = Auth::user()->hasAnyRole($allowedRoles);
+        $isManger = Auth::user()->hasRole(RolesEnum::PetManager);
+        $crudService = app(CRUDService::class);
+        $advisors = $crudService->getAdvisorsByModelType('Pet');
+
+        $dropdownSource = $this->petQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
 
         return inertia('PetQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
+            'isManualAllocationAllowed' => $isManualAllocationAllowed,
+            'isManger' => $isManger,
+            'advisors' => $advisors,
+            'dropdownSource' => $dropdownSource,
         ]);
     }
 
