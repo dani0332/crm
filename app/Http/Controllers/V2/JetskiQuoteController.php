@@ -93,7 +93,7 @@ class JetskiQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::getList();
         $personalPlans = PersonalPlanRepository::get();
-        $advisors = UserRepository::getPersonalQuoteAdvisors();
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::JETSKI->id(),

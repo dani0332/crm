@@ -88,7 +88,7 @@ class BikeQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::getList();
         $personalPlans = PersonalPlanRepository::get();
-        $advisors = UserRepository::getPersonalQuoteAdvisors();
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::BIKE->id(),
