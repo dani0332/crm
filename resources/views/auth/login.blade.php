@@ -1,11 +1,7 @@
 <x-guest-layout>
     <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-        <img src='{{ asset("image/logo.png") }}' />
-        @if (session('status'))
-        <div class="mb-4 font-medium text-sm text-green-600">
-            {{ session('status') }}
-        </div>
-        @endif
+        <img src='{{ asset("image/new_logo.png") }}' />
+
 
         <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
             <h2 class="text-2xl text-center font-normal mb-6">Welcome</h2>
@@ -21,6 +17,11 @@
                     <strong>Google Login</strong>
                 </a>
             </form>
+            @if (session('status'))
+            <div class="mt-4 font-medium text-sm text-red-600 text-center">
+                {{ session('status') }}
+            </div>
+            @endif
         </div>
     </div>
 </x-guest-layout>

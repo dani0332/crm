@@ -363,14 +363,6 @@ class CRUDController extends Controller
             if (! isset($record->quoteUID)) {
                 return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
             } else {
-                if ($modelType == quoteTypeCode::Health && in_array($modelType, newUi())) {
-                    return redirect('/quotes/health');
-                }
-
-                if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
-                    return redirect('/quotes/home');
-                }
-
                 return redirect('/quotes/'.strtolower($modelType).'/'.$record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : 'Lead'))).' has been created');
             }
         }
