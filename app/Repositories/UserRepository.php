@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypes;
 use App\Models\User;
 
 class UserRepository extends BaseRepository
@@ -13,8 +14,12 @@ class UserRepository extends BaseRepository
 
     public function fetchGetPersonalQuoteAdvisors($modelType)
     {
-        if ($modelType) {
-            $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR'];
+        if (! empty($modelType)) {
+            if ($modelType == QuoteTypes::PET->value) {
+                $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR'];
+            } else {
+                $roles = [strtoupper($modelType).'_ADVISOR'];
+            }
 
             return $this->with(['roles' => fn ($q) => $q->whereIn('name', $roles)])
             ->whereHas('roles', function ($q) use ($roles) {

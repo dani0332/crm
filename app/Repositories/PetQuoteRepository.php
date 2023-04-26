@@ -99,21 +99,6 @@ class PetQuoteRepository extends BaseRepository
             }])->firstOrFail();
     }
 
-    public function fetchAdvisors()
-    {
-        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
-        $data = [];
-        foreach ($advisors as $item) {
-            $temp['id'] = $item['id'];
-
-            if (! empty($item['roles'])) {
-                $temp['name'] = $item['name'].'-'.$item['roles'][0]['name'];
-            }
-            $data[] = $temp;
-        }
-
-        return $data;
-    }
     /**
      * get all dropdown options required for form
      *

@@ -27,7 +27,7 @@ class PetQuoteController extends Controller
     public function index()
     {
         $personalQuotes = PetQuoteRepository::getData();
-        $advisors = PetQuoteRepository::advisors();
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
 
         return inertia('PetQuote/Index', [
