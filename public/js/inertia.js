@@ -17,7 +17,7 @@ __webpack_require__.r(__webpack_exports__);
 
 var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBPACK_IMPORTED_MODULE_0___default()(function(i){return i[1]});
 // Module
-___CSS_LOADER_EXPORT___.push([module.id, "\n.dp__clear_icon {\r\n  top: 40%;\n}\r\n", ""]);
+___CSS_LOADER_EXPORT___.push([module.id, "\n.dp__clear_icon {\n  top: 40%;\n}\n", ""]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
@@ -577,6 +577,10 @@ __webpack_require__.r(__webpack_exports__);
       "default": function _default() {
         return [];
       }
+    },
+    customError: {
+      type: String,
+      "default": ''
     }
   },
   emits: ['update:modelValue'],
@@ -1248,6 +1252,9 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     var _useRules = (0,C_Users_ranam_code_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_4__.useRules)(),
         isRequired = _useRules.isRequired;
 
+    var amlCreatedStartDate = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(dayjs__WEBPACK_IMPORTED_MODULE_2__().subtract(30, 'day').format('YYYY-MM-DD'));
+    var amlCreatedEndDate = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(dayjs__WEBPACK_IMPORTED_MODULE_2__().format('YYYY-MM-DD'));
+
     var dateFormat = function dateFormat(date) {
       return (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_5__.useDateFormat)(date, 'DD-MM-YYYY h:mm:ss');
     };
@@ -1264,7 +1271,15 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       amlCreatedEndDate: '',
       page: 1
     };
-    var filters = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)(availableFilters);
+    var filtersForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
+      quoteType: null,
+      searchType: '',
+      searchField: '',
+      matchFound: '',
+      amlCreatedStartDate: '',
+      amlCreatedEndDate: '',
+      page: 1
+    });
 
     function onReset() {
       _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.router.visit('/kyc/aml', {
@@ -1284,24 +1299,25 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
     function onSubmit(isValid) {
       if (isValid) {
-        filters.page = 1;
-        Object.keys(filters).forEach(function (key) {
-          return (filters[key] === '' || filters[key].length === 0) && delete filters[key];
+        //remove empty fields
+        Object.keys(filtersForm).forEach(function (key) {
+          return filtersForm[key] == '' && delete filtersForm[key];
         });
-        _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.router.visit('/kyc/aml/', {
-          method: 'get',
-          data: filters,
-          preserveState: true,
+        console.log(dayjs__WEBPACK_IMPORTED_MODULE_2__().diff(dayjs__WEBPACK_IMPORTED_MODULE_2__(filtersForm.amlCreatedStartDate), 'day'));
+        filtersForm.get("/kyc/aml", {
           preserveScroll: true,
           onBefore: function onBefore() {
-            return loader.table = true;
+            if (dayjs__WEBPACK_IMPORTED_MODULE_2__().diff(dayjs__WEBPACK_IMPORTED_MODULE_2__(filtersForm.amlCreatedStartDate), 'day') > 30) {
+              filtersForm.setError('amlCreatedStartDate', 'Allowed no. of days between start & end dates are 30 days.');
+              return false;
+            }
+
+            loader.table = true;
           },
           onSuccess: function onSuccess() {
             return loader.table = false;
           }
         });
-      } else {
-        console.log('Invalid');
       }
     }
 
@@ -1314,11 +1330,22 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
             key = _Object$entries$_i[0];
 
         if (urlParams.has(key)) {
-          filters[key] = urlParams.get(key);
+          filtersForm[key] = urlParams.get(key);
         }
       }
     }
 
+    var quoteTypeOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      return (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)([{
+        value: '',
+        label: 'Select'
+      }].concat(page.props.quoteTypes.map(function (item) {
+        return {
+          value: item.code,
+          label: item.text
+        };
+      })));
+    });
     (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
       setQueryStringFilters();
     });
@@ -1348,6 +1375,8 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       page: page,
       loader: loader,
       isRequired: isRequired,
+      amlCreatedStartDate: amlCreatedStartDate,
+      amlCreatedEndDate: amlCreatedEndDate,
       dateFormat: dateFormat,
       rules: rules,
 
@@ -1359,10 +1388,11 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
         availableFilters = v;
       },
 
-      filters: filters,
+      filtersForm: filtersForm,
       onReset: onReset,
       onSubmit: onSubmit,
       setQueryStringFilters: setQueryStringFilters,
+      quoteTypeOptions: quoteTypeOptions,
       tableHeader: tableHeader,
       ref: vue__WEBPACK_IMPORTED_MODULE_0__.ref,
 
@@ -1472,11 +1502,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _indielayer_ui__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @indielayer/ui */ "./node_modules/@indielayer/ui/lib/index.es.js");
-/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
-/* harmony import */ var C_Users_ranam_code_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var _inertiajs_core__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @inertiajs/core */ "./node_modules/@inertiajs/core/dist/index.esm.js");
+/* harmony import */ var _indielayer_ui__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @indielayer/ui */ "./node_modules/@indielayer/ui/lib/index.es.js");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var C_Users_ranam_code_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
 /* unplugin-vue-components disabled */
+
+
 
 
 
@@ -1488,13 +1521,13 @@ __webpack_require__.r(__webpack_exports__);
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
     expose();
-    var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_3__.useNotifications)('toast');
-    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.usePage)();
+    var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_4__.useNotifications)('toast');
+    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.usePage)();
 
-    var _useRules = (0,C_Users_ranam_code_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__.useRules)(),
+    var _useRules = (0,C_Users_ranam_code_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_2__.useRules)(),
         isRequired = _useRules.isRequired;
 
-    var uploadForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
+    var uploadForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
       file_name: ''
     });
 
@@ -1502,6 +1535,10 @@ __webpack_require__.r(__webpack_exports__);
       if (isValid) {
         uploadForm.post("/kyc/aml/upload/uae-list", {
           onError: function onError(errors) {},
+          onSuccess: function onSuccess() {
+            displayNotification();
+            uploadForm.file_name = '';
+          },
           onStart: function onStart() {
             uploadForm.clearErrors();
           }
@@ -1509,13 +1546,31 @@ __webpack_require__.r(__webpack_exports__);
       }
     }
 
-    (0,vue__WEBPACK_IMPORTED_MODULE_2__.onMounted)(function () {});
+    function displayNotification() {
+      var session = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.usePage)().props.flash;
+
+      for (var key in session) {
+        notification[key]({
+          title: session[key],
+          position: 'top',
+          timeout: 0
+        });
+      }
+    }
+
+    (0,vue__WEBPACK_IMPORTED_MODULE_3__.onMounted)(function () {});
     var __returned__ = {
       notification: notification,
       page: page,
       isRequired: isRequired,
       uploadForm: uploadForm,
-      onSubmit: onSubmit
+      onSubmit: onSubmit,
+      displayNotification: displayNotification,
+
+      get router() {
+        return _inertiajs_core__WEBPACK_IMPORTED_MODULE_0__.router;
+      }
+
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
       enumerable: false,
@@ -14557,10 +14612,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         disabled: $setup.props.disabled,
         "class": "w-full",
         rules: value ? [] : $setup.props.rules,
-        readonly: ""
+        readonly: "",
+        error: $setup.props.customError ? $setup.props.customError : ''
       }, null, 8
       /* PROPS */
-      , ["value", "label", "placeholder", "disabled", "rules"]), !$setup.props.disabled ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_1, [!value ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("svg", _hoisted_2, _hoisted_4)) : ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("svg", {
+      , ["value", "label", "placeholder", "disabled", "rules", "error"]), !$setup.props.disabled ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("div", _hoisted_1, [!value ? ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("svg", _hoisted_2, _hoisted_4)) : ((0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)("svg", {
         key: 1,
         onClick: onClear,
         xmlns: "http://www.w3.org/2000/svg",
@@ -16653,25 +16709,20 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_1, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_select, {
-        modelValue: $setup.filters.quoteType,
+        modelValue: $setup.filtersForm.quoteType,
         "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
-          return $setup.filters.quoteType = $event;
+          return $setup.filtersForm.quoteType = $event;
         }),
         label: "Quote Type",
         placeholder: "",
-        options: $props.quoteTypes.map(function (item) {
-          return {
-            value: item.code,
-            label: item.text
-          };
-        }),
+        options: $setup.quoteTypeOptions.value,
         "class": "w-full"
       }, null, 8
       /* PROPS */
       , ["modelValue", "options"])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_select, {
-        modelValue: $setup.filters.searchType,
+        modelValue: $setup.filtersForm.searchType,
         "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
-          return $setup.filters.searchType = $event;
+          return $setup.filtersForm.searchType = $event;
         }),
         label: "Search By",
         placeholder: "",
@@ -16689,9 +16740,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, null, 8
       /* PROPS */
       , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_input, {
-        modelValue: $setup.filters.searchField,
+        modelValue: $setup.filtersForm.searchField,
         "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
-          return $setup.filters.searchField = $event;
+          return $setup.filtersForm.searchField = $event;
         }),
         type: "Search Value",
         name: "code",
@@ -16701,9 +16752,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, null, 8
       /* PROPS */
       , ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_select, {
-        modelValue: $setup.filters.matchFound,
+        modelValue: $setup.filtersForm.matchFound,
         "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
-          return $setup.filters.matchFound = $event;
+          return $setup.filtersForm.matchFound = $event;
         }),
         label: "Match found",
         placeholder: "",
@@ -16718,28 +16769,30 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, null, 8
       /* PROPS */
       , ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_DatePicker, {
-        modelValue: $setup.filters.amlCreatedStartDate,
+        modelValue: $setup.filtersForm.amlCreatedStartDate,
         "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
-          return $setup.filters.amlCreatedStartDate = $event;
+          return $setup.filtersForm.amlCreatedStartDate = $event;
         }),
         name: "created_at_end",
         label: "Created Date Start",
         "class": "w-full",
-        rules: [$setup.isRequired]
+        rules: [$setup.isRequired],
+        customError: $setup.filtersForm.errors.amlCreatedStartDate
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_DatePicker, {
-        modelValue: $setup.filters.amlCreatedEndDate,
+      , ["modelValue", "rules", "customError"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_DatePicker, {
+        modelValue: $setup.filtersForm.amlCreatedEndDate,
         "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
-          return $setup.filters.amlCreatedEndDate = $event;
+          return $setup.filtersForm.amlCreatedEndDate = $event;
         }),
         name: "created_at_end",
         label: "Created Date End",
         "class": "w-full",
-        rules: [$setup.isRequired]
+        rules: [$setup.isRequired],
+        customError: $setup.filtersForm.errors.amlCreatedEndDate
       }, null, 8
       /* PROPS */
-      , ["modelValue", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_button, {
+      , ["modelValue", "rules", "customError"])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_button, {
         size: "sm",
         color: "#ff5e00",
         type: "submit"

@@ -17,6 +17,7 @@ function onSubmit(isValid) {
         onError: errors => { },
         onSuccess: () => {
             displayNotification();
+            uploadForm.file_name = '';
         },
       onStart: () => {
         uploadForm.clearErrors();

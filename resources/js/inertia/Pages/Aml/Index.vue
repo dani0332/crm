@@ -16,6 +16,11 @@ const loader = reactive({
 
 const { isRequired } = useRules();
 
+const amlCreatedStartDate = ref(
+  dayjs().subtract(30, 'day').format('YYYY-MM-DD'),
+);
+const amlCreatedEndDate = ref(dayjs().format('YYYY-MM-DD'));
+
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss');
 
 const rules = {
@@ -32,7 +37,15 @@ let availableFilters = {
   page: 1,
 };
 
-const filters = reactive(availableFilters);
+const filtersForm = useForm({
+  quoteType: null,
+  searchType: '',
+  searchField: '',
+  matchFound: '',
+  amlCreatedStartDate: '',
+  amlCreatedEndDate: '',
+  page: 1,
+});
 
 function onReset() {
   router.visit('/kyc/aml', {
@@ -46,24 +59,27 @@ function onReset() {
 
 function onSubmit(isValid) {
   if (isValid) {
-    filters.page = 1;
-
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
+    //remove empty fields
+    Object.keys(filtersForm).forEach(
+      key => filtersForm[key] == '' && delete filtersForm[key],
     );
 
-    router.visit('/kyc/aml/', {
-      method: 'get',
-      data: filters,
-      preserveState: true,
+    console.log(dayjs().diff(dayjs(filtersForm.amlCreatedStartDate), 'day'));
+
+    filtersForm.get(`/kyc/aml`, {
       preserveScroll: true,
-      onBefore: () => (loader.table = true),
+      onBefore: () => {
+        if (dayjs().diff(dayjs(filtersForm.amlCreatedStartDate), 'day') > 30) {
+          filtersForm.setError(
+            'amlCreatedStartDate',
+            'Allowed no. of days between start & end dates are 30 days.',
+          );
+          return false;
+        }
+        loader.table = true;
+      },
       onSuccess: () => (loader.table = false),
     });
-  } else {
-    console.log('Invalid');
   }
 }
 
@@ -73,11 +89,21 @@ function setQueryStringFilters() {
 
   for (const [key] of Object.entries(availableFilters)) {
     if (urlParams.has(key)) {
-      filters[key] = urlParams.get(key);
+      filtersForm[key] = urlParams.get(key);
     }
   }
 }
 
+const quoteTypeOptions = computed(() =>
+  ref(
+    [{ value: '', label: 'Select' }].concat(
+      page.props.quoteTypes.map(item => ({
+        value: item.code,
+        label: item.text,
+      })),
+    ),
+  ),
+);
 onMounted(() => {
   setQueryStringFilters();
 });
@@ -99,21 +125,16 @@ const tableHeader = [
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-select
-          v-model="filters.quoteType"
+          v-model="filtersForm.quoteType"
           label="Quote Type"
           placeholder=""
-          :options="
-            quoteTypes.map(item => ({
-              value: item.code,
-              label: item.text,
-            }))
-          "
+          :options="quoteTypeOptions.value"
           class="w-full"
         />
       </div>
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-select
-          v-model="filters.searchType"
+          v-model="filtersForm.searchType"
           label="Search By"
           placeholder=""
           :options="[
@@ -124,7 +145,7 @@ const tableHeader = [
           class="w-full"
         />
         <x-input
-          v-model="filters.searchField"
+          v-model="filtersForm.searchField"
           type="Search Value"
           name="code"
           label="Search Value"
@@ -134,7 +155,7 @@ const tableHeader = [
       </div>
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-select
-          v-model="filters.matchFound"
+          v-model="filtersForm.matchFound"
           label="Match found"
           placeholder=""
           :options="[
@@ -146,18 +167,20 @@ const tableHeader = [
       </div>
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
-          v-model="filters.amlCreatedStartDate"
+          v-model="filtersForm.amlCreatedStartDate"
           name="created_at_end"
           label="Created Date Start"
           class="w-full"
           :rules="[isRequired]"
+          :customError="filtersForm.errors.amlCreatedStartDate"
         />
         <DatePicker
-          v-model="filters.amlCreatedEndDate"
+          v-model="filtersForm.amlCreatedEndDate"
           name="created_at_end"
           label="Created Date End"
           class="w-full"
           :rules="[isRequired]"
+          :customError="filtersForm.errors.amlCreatedEndDate"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
@@ -184,7 +207,10 @@ const tableHeader = [
         </Link>
       </template>
       <template #item-cdb_id="item">
-        <Link :href="`/kyc/aml/${item.quote_type_id}/details/${item.quote_request_id}`" class="text-primary-500 hover:underline">
+        <Link
+          :href="`/kyc/aml/${item.quote_type_id}/details/${item.quote_request_id}`"
+          class="text-primary-500 hover:underline"
+        >
           {{ item.cdb_id }}
         </Link>
       </template>

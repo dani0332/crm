@@ -33,6 +33,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  customError: {
+    type: String,
+    default: '',
+  },
 });
 
 const format = date => {
@@ -43,7 +47,7 @@ const format = date => {
   const hour = date.getHours();
   const minute = date.getMinutes();
 
-  if(props.withTime) return `${year}-${month}-${day} ${hour}:${minute}`;
+  if (props.withTime) return `${year}-${month}-${day} ${hour}:${minute}`;
 
   return `${year}-${month}-${day}`;
 };
@@ -79,6 +83,7 @@ const selectedData = computed({
         class="w-full"
         :rules="value ? [] : props.rules"
         readonly
+        :error="props.customError ? props.customError : ''"
       />
       <div
         v-if="!props.disabled"
