@@ -9,6 +9,12 @@ const openSidebar = ref(false);
 router.on('navigate', () => {
   openSidebar.value = false;
 });
+
+const onLogout = () => {
+  axios.post('/logout').then(() => {
+    window.location.href = '/login';
+  });
+};
 </script>
 
 <template>
@@ -151,13 +157,7 @@ router.on('navigate', () => {
               <x-button>{{ user.name }}</x-button>
               <template #content>
                 <x-popover-container class="p-2">
-                  <Link
-                    href="/logout"
-                    method="post"
-                    as="button"
-                    type="submit"
-                    class="flex gap-2 items-center"
-                  >
+                  <button class="flex gap-2 items-center" @click="onLogout">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -173,7 +173,7 @@ router.on('navigate', () => {
                       />
                     </svg>
                     <span class="text-sm font-semibold">Logout</span>
-                  </Link>
+                  </button>
                 </x-popover-container>
               </template>
             </x-popover>
