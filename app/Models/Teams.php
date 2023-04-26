@@ -128,6 +128,8 @@ class Teams extends BaseModel
                         case 'reassign':
                             $notes = 'reassign  production agent';
                             break;
+                        default:
+                            break;
                     }
                 }
 

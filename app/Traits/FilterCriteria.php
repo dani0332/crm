@@ -47,6 +47,8 @@ trait FilterCriteria
                                 $query->whereBetween(DB::raw('date('.$key.')'), [$startDate, $endDate]);
                             }
                             break;
+                        default:
+                            break;
                     }
                 }
             }

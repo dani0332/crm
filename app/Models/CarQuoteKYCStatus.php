@@ -87,6 +87,8 @@ class CarQuoteKYCStatus extends BaseModel
                     case '2':
                         $quoteStatusId = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'kyc_cleared']); //11;
                         break;
+                    default:
+                        break;
                 }
 
                 $carQuote->quote_status_id = $quoteStatusId;

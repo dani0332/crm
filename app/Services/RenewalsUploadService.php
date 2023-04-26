@@ -1511,6 +1511,8 @@ class RenewalsUploadService
                             }
                         }
                         break;
+                    default:
+                        break;
                 }
 
                 if ($leadValidationErrors->count() == 0) {

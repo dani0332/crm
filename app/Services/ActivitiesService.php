@@ -146,10 +146,10 @@ class ActivitiesService extends BaseService
             case 'business':
                 $quoteTypeId = QuoteTypeId::Business;
                 break;
-            default:
-                break;
             case 'pet':
                 $quoteTypeId = QuoteTypeId::Pet;
+                break;
+            default:
                 break;
         }
 
