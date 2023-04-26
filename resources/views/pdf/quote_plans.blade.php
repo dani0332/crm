@@ -336,7 +336,9 @@
         ["code" => "spacer"],
         ["type" => "buy", "heading_class" => "no-border"],
         ["code" => "spacer"],
-        ["code" => "excess", "title" => "Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing']
+        ["code" => "excess", "title" => "Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "spacer"],
+        ["code" => "ancillaryExcess", "title" => "Ancillary Excess", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
     ];
 
 @endphp
@@ -513,8 +515,12 @@
                             <p>
                                 @if($feature['type'] == 'info')
 
-                                    {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
-
+                                    @if($feature['code'] == 'ancillaryExcess')
+                                        {!!  $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%')  : 'N/A' !!}
+                                    @else
+                                        {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
+                                    @endif
+                                    
                                 @elseif($feature['type'] == 'prop')
 
                                     {!!  $plans[$planId]->{$feature['code']} !!}
