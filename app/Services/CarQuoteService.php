@@ -816,8 +816,7 @@ class CarQuoteService extends BaseService
                         }
                     } elseif ($item == 'quote_status_id' && is_array($request[$item]) && ! empty($request[$item])) {
                         $this->query->whereIn('cqr.quote_status_id', $request[$item]);
-                    }
-                    elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    } elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
                         $this->query->whereIn('cqr.tier_id', $request[$item]);
                     } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && ! empty($request[$item])) {
                         $this->query->whereIn('qb.id', $request[$item]);
@@ -825,16 +824,13 @@ class CarQuoteService extends BaseService
                         $searchedValue = preg_match("/\b".'Yes'."\b/i", $request[$item]) || preg_match("/\b".'No'."\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
                         if ($item == 'policy_number') {
                             $this->query->where('cqr.previous_quote_policy_number', $searchedValue);
-                        }
-                        elseif($item == 'show_renewal_upload_leads'){
+                        } elseif ($item == 'show_renewal_upload_leads') {
                             if ($request[$item] == 'Yes') {
                                 $this->query->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD);
-                            }
-                            else{
+                            } else {
                                 $this->query->where('cqr.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
                             }
-                        }
-                        else {
+                        } else {
                             $this->query->where($this->getQuerySuffix($item).'.'.$item, $searchedValue);
                         }
                     }
@@ -996,6 +992,7 @@ class CarQuoteService extends BaseService
     public function fillModelSearchProperties()
     {
         $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads'];
+
         return $searchProperties;
     }
 
