@@ -12,6 +12,8 @@ const formFields = computed(() => {
   }));
 });
 
+const notification = useNotifications('toast');
+
 const quoteForm = useForm({
   ...formFields.value.reduce((acc, field) => {
     acc[field.value] = '';
@@ -32,10 +34,13 @@ function onSubmit(isValid) {
   if (isValid) {
     quoteForm.post(`/quotes/life`, {
       onError: errors => {
-        console.log(errors);
+        quoteForm.setError(errors);
       },
       onSuccess: () => {
-        router.get(`/quotes/life/`);
+        notification.success({
+          title: 'Quote saved successfully',
+          position: 'top',
+        });
       },
       onStart: () => {
         quoteForm.clearErrors();

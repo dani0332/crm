@@ -1,15 +1,12 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-
-const notification = useNotifications('toast');
 const props = defineProps({
   dropdownSource: Object,
   model: String,
   genderOptions: Object,
   homePossessionTypeEnum: Object,
 });
+
+const notification = useNotifications('toast');
 
 const hasContentOrBuilding = ref(true);
 
@@ -67,14 +64,14 @@ function onSubmit(isValid) {
     if (isValid) {
       quoteForm.post(`/quotes/save`, {
         onError: errors => {
-          console.log(errors);
+          quoteForm.setError(errors);
         },
         onSuccess: () => {
           notification.success({
             title: 'Quote saved successfully',
             position: 'top',
           });
-          router.get(`/quotes/home/`);
+          quoteForm.reset();
         },
       });
     }

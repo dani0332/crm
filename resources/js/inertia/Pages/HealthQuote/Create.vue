@@ -5,6 +5,8 @@ const props = defineProps({
   genderOptions: Object,
 });
 
+const notification = useNotifications('toast');
+
 const genderSelect = computed(() => {
   return Object.keys(props.genderOptions).map(status => ({
     value: status,
@@ -52,10 +54,14 @@ function onSubmit(isValid) {
   if (isValid) {
     quoteForm.post(`/quotes/save`, {
       onError: errors => {
-        console.log(errors);
+        quoteForm.setError(errors);
       },
       onSuccess: () => {
-        router.get(`/quotes/health/`);
+        notification.success({
+          title: 'Quote saved successfully',
+          position: 'top',
+        });
+        quoteForm.reset();
       },
     });
   }
