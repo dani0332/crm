@@ -203,13 +203,6 @@ class PetQuoteService extends BaseService
                 $this->query->whereBetween(DB::raw('DATE(pqr.created_at)'), [$dateFrom, $dateTo]);
             }
 
-            if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
-                $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
-                $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-
-                $this->query->whereBetween(DB::raw('DATE(pqr.created_at)'), [$dateFrom, $dateTo]);
-            }
-
             if (Auth::user()->isSpecificTeamAdvisor('Pet')) {
                 // if user has advisor Role then fetch leads assigned to the user only
                 $this->query->where('pqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
