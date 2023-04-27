@@ -100,6 +100,7 @@ class LeadDistributionReportTable extends DataTableComponent
             SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS manually_assigned,
 
             SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END) AS unassigned_leads'), 'tiers.name AS tier_name')
+        ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
         ->groupBy('tiers.name');
 
         if (! auth()->user()->hasRole(RolesEnum::Admin)) {

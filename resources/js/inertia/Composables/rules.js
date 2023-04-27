@@ -13,6 +13,8 @@ export const useRules = () => {
 
   const isRequired = v => !!v || 'This field is required';
 
+  const allowEmpty = v => true || 'This field is required';
+
   const isNumber = v => /^\d+$/.test(v) || 'This field must be a number';
 
   const policy_number = v => {
@@ -64,6 +66,7 @@ export const useRules = () => {
     isEmail,
     isMobile,
     isRequired,
+    allowEmpty,
     isNumber,
     policy_number,
     policy_start_date,

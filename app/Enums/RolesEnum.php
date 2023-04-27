@@ -27,6 +27,7 @@ final class RolesEnum extends Enum
     public const HealthNewBusinessAdvisor = 'HEALTH_NEW_BUSINESS_ADVISOR';
     public const TravelRenewalAdvisor = 'TRAVEL_RENEWAL_ADVISOR';
     public const TravelNewBusinessAdvisor = 'TRAVEL_NEW_BUSINESS_ADVISOR';
+    public const LifeManager = 'LIFE_MANAGER';
     public const LifeRenewalAdvisor = 'LIFE_RENEWAL_ADVISOR';
     public const LifeNewBusinessAdvisor = 'LIFE_NEW_BUSINESS_ADVISOR';
     public const HomeRenewalAdvisor = 'HOME_RENEWAL_ADVISOR';
