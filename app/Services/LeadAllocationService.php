@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\DaysNameEnum;
 use App\Enums\HealthTeamType;
@@ -254,7 +255,7 @@ class LeadAllocationService extends BaseService
         try {
             $advisor = User::where('id', $advisorId)->first();
 
-            $byPassUsersForAssignment = $this->getAppStorageValueByKey('HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS');
+            $byPassUsersForAssignment = $this->getAppStorageValueByKey(ApplicationStorageEnums::HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS);
 
             if (in_array($advisor->email, explode(',', $byPassUsersForAssignment))) {
             return true;

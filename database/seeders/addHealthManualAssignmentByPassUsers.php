@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
 use Illuminate\Database\Seeder;
 
@@ -14,10 +15,10 @@ class addHealthManualAssignmentByPassUsers extends Seeder
      */
     public function run()
     {
-        $byPassEmails = ApplicationStorage::where('key_name', 'HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS')->first();
+        $byPassEmails = ApplicationStorage::where('key_name', ApplicationStorageEnums::HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS)->first();
         if ($byPassEmails == null) {
             ApplicationStorage::insert([
-                'key_name' => 'HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS',
+                'key_name' => ApplicationStorageEnums::HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS,
                 'value' => 'LostLeadsRM@gmail.com',
                 'created_at' => now(),
                 'updated_at' => now(),
