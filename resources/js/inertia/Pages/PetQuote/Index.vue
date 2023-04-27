@@ -5,6 +5,8 @@ defineProps({
   advisors: Array,
 });
 
+const { isRequired } = useRules();
+
 const page = usePage();
 const loader = reactive({
   table: false,
@@ -92,6 +94,66 @@ const tableHeader = [
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
+
+const role = [rolesEnum.Admin, rolesEnum.PetManager];
+const petManagerRole = [rolesEnum.PetManager];
+
+const hasAnyRole = role => useHasAnyRole(role);
+
+const isManualAllocationAllowed = ref(false);
+const isManager = ref(false);
+
+isManualAllocationAllowed.value = hasAnyRole(role);
+isManager.value = hasAnyRole(petManagerRole);
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.roles[0].name
+      ? advisor.name + '-' + advisor.roles[0]?.name
+      : advisor.name,
+  }));
+});
+
+const notification = useNotifications('toast');
+
+const quotesSelected = ref([]);
+
+const assignForm = useForm({
+  assigned_to_id_new: null,
+  modelType: 'Pet',
+  selectTmLeadId: '',
+  isManagerOrDeputy: isManager,
+  isLeadPool: false,
+  isManualAllocationAllowed: isManualAllocationAllowed,
+});
+
+function onAssignLead(isValid) {
+  if (isValid) {
+    const selected = quotesSelected.value.map(e => e.id);
+    assignForm
+      .transform(data => ({
+        ...data,
+        selectTmLeadId: `${selected}`,
+      }))
+      .post('/quotes/pet/manualLeadAssign', {
+        preserveScroll: true,
+        preserveState: true,
+        onSuccess: () => {
+          let title =
+            quotesSelected.value.length > 1
+              ? 'Pet Leads Assigned'
+              : 'Pet Lead Assigned';
+          quotesSelected.value = [];
+          notification.success({
+            title: title,
+            position: 'top',
+          });
+        },
+      });
+  }
+}
 </script>
 
 <template>
@@ -205,7 +267,40 @@ const permissionsEnum = page.props.permissionsEnum;
       </div>
     </x-form>
 
+    <Transition name="fade">
+      <div v-if="quotesSelected.length > 0" class="mb-4">
+        <div
+          class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
+          v-if="isManualAllocationAllowed"
+        >
+          <x-form @submit="onAssignLead" :auto-focus="false">
+            <div class="w-full flex flex-col md:flex-row gap-4">
+              <x-select
+                v-model="assignForm.assigned_to_id_new"
+                label="Assign Advisor"
+                :options="advisorOptions"
+                placeholder="Select Advisor"
+                class="flex-1 w-auto"
+                :rules="[isRequired]"
+              />
+              <div class="mb-3 md:pt-6">
+                <x-button
+                  color="orange"
+                  size="sm"
+                  type="submit"
+                  :loading="assignForm.processing"
+                >
+                  Assign
+                </x-button>
+              </div>
+            </div>
+          </x-form>
+        </div>
+      </div>
+    </Transition>
+
     <DataTable
+      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"

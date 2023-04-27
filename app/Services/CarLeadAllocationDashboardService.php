@@ -26,24 +26,24 @@ class CarLeadAllocationDashboardService extends BaseService
     {
         try {
             $users = User::join('tier_users as tu', 'tu.user_id', 'users.id')
-                            ->join('tiers as t', 't.id', 'tu.tier_id')
-                            ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
-                            ->leftJoin('quadrants as q', 'q.id', 'qu.quad_id')
-                            ->join('lead_allocation as la', 'la.user_id', 'users.id')
-                            ->join('user_team', 'user_team.user_id', 'users.id')
-                            ->join('teams', 'teams.id', 'user_team.team_id')
-                            ->where('users.is_active', 1)
-                            ->groupBy('users.name', 'users.id', 'la.id')
-                            ->select(
-                                'users.id as userId',
-                                'users.name as userName', DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
-                                DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
-                                DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'),
-                                'la.last_allocated as lastAllocation',
-                                'la.max_capacity as maxCapacity',
-                                'la.is_available as isAvailable',
-                                'users.last_login as lastLogin', 'la.id as id', 'la.manual_assignment_count as manualAllocationCount', 'la.auto_assignment_count as autoAllocationCount'
-                            );
+                ->join('tiers as t', 't.id', 'tu.tier_id')
+                ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
+                ->leftJoin('quadrants as q', 'q.id', 'qu.quad_id')
+                ->join('lead_allocation as la', 'la.user_id', 'users.id')
+                ->join('user_team', 'user_team.user_id', 'users.id')
+                ->join('teams', 'teams.id', 'user_team.team_id')
+                ->where('users.is_active', 1)
+                ->groupBy('users.name', 'users.id', 'la.id')
+                ->select(
+                    'users.id as userId',
+                    'users.name as userName', DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
+                    DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
+                    DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'),
+                    'la.last_allocated as lastAllocation',
+                    'la.max_capacity as maxCapacity',
+                    'la.is_available as isAvailable',
+                    'users.last_login as lastLogin', 'la.id as id', 'la.manual_assignment_count as manualAllocationCount', 'la.auto_assignment_count as autoAllocationCount'
+                );
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
                 $users = $users->whereIn('teams.id', $userTeamIds);

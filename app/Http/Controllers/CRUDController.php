@@ -363,14 +363,6 @@ class CRUDController extends Controller
             if (! isset($record->quoteUID)) {
                 return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
             } else {
-                if ($modelType == quoteTypeCode::Health && in_array($modelType, newUi())) {
-                    return redirect('/quotes/health');
-                }
-
-                if ($modelType == quoteTypeCode::Home && in_array($modelType, newUi())) {
-                    return redirect('/quotes/home');
-                }
-
                 return redirect('/quotes/'.strtolower($modelType).'/'.$record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : 'Lead'))).' has been created');
             }
         }
@@ -982,6 +974,10 @@ class CRUDController extends Controller
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('message', $isValidRequest);
         }
+        $assignedUser = $this->userService->getUserById((int) $request->assigned_to_id_new);
+        if (! $assignedUser) {
+            return Redirect::back()->with('message', 'Selected advisor does not exist in the system!');
+        }
         $assignmentResult = $this->{strtolower($request->modelType).'QuoteService'}->processManualLeadAssignment($request);
         if (count($assignmentResult) > 0) {
             $msg = '';
@@ -992,9 +988,7 @@ class CRUDController extends Controller
 
             return Redirect::back()->with('message', $msg);
         } else {
-            $assignedUserName = $this->userService->getUserNameById((int) $request->assigned_to_id_new);
-
-            return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUserName);
+            return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
         }
     }
 

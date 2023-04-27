@@ -188,25 +188,25 @@ class AdvisorConversionReportTable extends DataTableComponent
     public function builder(): Builder
     {
         $query = CarQuote::query()
-        ->select(
-            'users.id as advisorId',
-            DB::raw('count(car_quote_request.id) as total_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.') THEN 1 ELSE 0 END) as not_interested'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.') THEN 1 ELSE 0 END) as in_progress'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id  in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as created_sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
-        )
-        ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-        ->whereNull('car_quote_request.renewal_import_code')
-        ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
-        ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
+            ->select(
+                'users.id as advisorId',
+                DB::raw('count(car_quote_request.id) as total_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.') THEN 1 ELSE 0 END) as not_interested'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.') THEN 1 ELSE 0 END) as in_progress'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id  in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
+            )
+            ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->whereNull('car_quote_request.renewal_import_code')
+            ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
+            ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
         if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);
@@ -256,30 +256,30 @@ class AdvisorConversionReportTable extends DataTableComponent
         ];
         if (! auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             array_push($filters, MultiSelectFilter::make('Lead Source')
-            ->options($this->leadSources)->filter(function (Builder $builder, $value) {
+                ->options($this->leadSources)->filter(function (Builder $builder, $value) {
                 $builder->whereIn('car_quote_request.source', $value);
             }));
 
             array_push($filters, MultiSelectFilter::make('Teams')
-            ->config([
-                'placeholder' => 'SELECT ALL TEAMS',
-            ])
-            ->options($this->teams)->filter(function (Builder $builder, $value) {
+                ->config([
+                    'placeholder' => 'SELECT ALL TEAMS',
+                ])
+                ->options($this->teams)->filter(function (Builder $builder, $value) {
                 $builder->whereIn('users.id', function ($query) use ($value) {
                     $query->distinct()
-                          ->select('users.id')
-                          ->from('users')
-                          ->join('user_team', 'user_team.user_id', 'users.id')
-                          ->join('teams', 'teams.id', 'user_team.team_id')
-                          ->whereIn('teams.id', $value);
+                        ->select('users.id')
+                        ->from('users')
+                        ->join('user_team', 'user_team.user_id', 'users.id')
+                        ->join('teams', 'teams.id', 'user_team.team_id')
+                        ->whereIn('teams.id', $value);
                 });
             }));
 
             array_push($filters, MultiSelectFilter::make('Advisors')
-            ->config([
-                'placeholder' => 'SELECT ALL ADVISORS',
-            ])
-            ->options($this->advisors)->filter(function (Builder $builder, $value) {
+                ->config([
+                    'placeholder' => 'SELECT ALL ADVISORS',
+                ])
+                ->options($this->advisors)->filter(function (Builder $builder, $value) {
                 $builder->whereIn('car_quote_request.advisor_id', $value);
             }));
         }

@@ -90,9 +90,9 @@ class Teams extends BaseModel
             ['lead_id', '=', Auth::user()->id],
             ['user_id', '=', $userId],
         ])
-        ->join('car_quote_request', 'teams.user_id', '=', 'car_quote_request.pa_id')
-        ->where('car_quote_request.id', $quoteId)
-        ->first();
+            ->join('car_quote_request', 'teams.user_id', '=', 'car_quote_request.pa_id')
+            ->where('car_quote_request.id', $quoteId)
+            ->first();
 
         return $response;
     }
@@ -145,8 +145,8 @@ class Teams extends BaseModel
                             $q->where('name', 'pa');
                         }
                     )
-                    ->where('users.id', $userId)
-                    ->get();
+                        ->where('users.id', $userId)
+                        ->get();
 
                     if ($getUser) {
                         $request->request->add(['lead_id' => Auth::user()->id]);

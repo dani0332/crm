@@ -29,12 +29,12 @@ class CarRepairTypeController extends Controller
             $data = CarRepairType::select('*')->orderBy('sort_order', 'asc');
 
             return DataTables::of($data)
-                    ->addIndexColumn()
-                    ->addColumn('action', function ($row) {
-                        return view('carrepairtype.actions', compact('row'))->render();
-                    })
-                    ->rawColumns(['action'])
-                    ->make(true);
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('carrepairtype.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
 
         return view('carrepairtype.view');
