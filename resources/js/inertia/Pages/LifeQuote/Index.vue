@@ -1,8 +1,12 @@
 <script setup>
 defineProps({
   quotes: Object,
+  quoteStatuses: Array,
 });
 
+const page = usePage();
+
+const rolesEnum = page.props.rolesEnum;
 const rules = {
   isRequired: v => !!v || 'This field is required',
   created_at_end: v => {
@@ -19,9 +23,16 @@ const rules = {
   },
 };
 
-const notification = useNotifications('toast');
+const role = [rolesEnum.Admin, rolesEnum.LeadPool];
+const roleLeadPool = [rolesEnum.LeadPool];
+const hasAnyRole = role => useHasAnyRole(role);
 
-const page = usePage();
+const isManualAllocationAllowed = ref(false);
+const isLeadPool = ref(false);
+
+isManualAllocationAllowed.value = hasAnyRole(role);
+isLeadPool.value = hasAnyRole(roleLeadPool);
+const notification = useNotifications('toast');
 
 const filters = reactive({
   code: '',
@@ -57,25 +68,6 @@ const tableHeader = [
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'PREMIUM', value: 'premium' },
 ];
-
-const advisorsOptions = computed(() => {
-  return page.props.dropdownSource.advisor_id.map(item => {
-    return {
-      value: item.id,
-      label: item.name,
-    };
-  });
-});
-
-const leadsStatusOptions = reactive([]);
-// const leadsStatusOptions = computed(() => {
-//   return page.props.dropdownSource.quote_status_id.map(item => {
-//     return {
-//       value: item.id,
-//       label: item.text,
-//     };
-//   });
-// });
 
 function filterQuotes(isValid) {
   if (!isValid) {
@@ -114,25 +106,16 @@ function resetFilters() {
   });
 }
 
-function setQueryFilters() {
-  let query = router.page.url.split('?')[1];
-  if (query) {
-    query = query.split('&');
-    query.forEach(item => {
-      const [key, value] = item.split('=');
+function setQueryStringFilters() {
+  let queryString = window.location.search;
+  let urlParams = new URLSearchParams(queryString);
 
-      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
-        let id = key.slice(0, -2);
-        if (filters[id]) {
-          filters[id].push(parseInt(value));
-        }
-      } else {
-        filters[key] = value;
-      }
-    });
+  for (const [key] of Object.entries(availableFilters)) {
+    if (urlParams.has(key)) {
+      filters[key] = urlParams.get(key);
+    }
   }
 }
-
 const quotesSelected = ref([]);
 
 const advisorOptions = computed(() => {
@@ -251,15 +234,20 @@ onMounted(() => {
           label="Lead Status"
           name="quote_status_id"
           placeholder="Search by Lead Status"
-          :options="leadsStatusOptions"
+          :options="
+            quoteStatuses.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
         />
-        <!-- <ComboBox
-          v-if="!permissions.travelAdvisor"
+        <ComboBox
+          v-if="1"
           v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="advisorsOptions"
-        /> -->
+          :options="[]"
+        />
 
         <x-select
           v-model="filters.is_renewal"
@@ -284,7 +272,7 @@ onMounted(() => {
       <div v-if="quotesSelected.length > 0" class="mb-4">
         <div
           class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
-          v-if="permissions.isManualAllocationAllowed"
+          v-if="isManualAllocationAllowed"
         >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">

@@ -4,9 +4,11 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\LifeQuoteRequest;
+use App\Repositories\ActivityRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
-use Illuminate\Http\Request;
+use App\Repositories\UserRepository;
 
 class LifeQuoteController extends Controller
 {
@@ -19,7 +21,7 @@ class LifeQuoteController extends Controller
     {
         $lifeQuotes = LifeQuoteRepository::getData();
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
-    //    dd( $lifeQuotes->toArray());
+
         return inertia('LifeQuote/Index', [
             'quotes' => $lifeQuotes,
             'quoteStatuses' => $quoteStatuses,
@@ -33,7 +35,9 @@ class LifeQuoteController extends Controller
      */
     public function create()
     {
-        //
+        $data = LifeQuoteRepository::getFormOptions();
+
+        return inertia('LifeQuote/Form', $data);
     }
 
     /**
@@ -41,9 +45,15 @@ class LifeQuoteController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(LifeQuoteRequest $request)
     {
-        //
+        $response = LifeQuoteRepository::create($request->validated());
+
+        if (! empty($response->errors) || ! empty($response->msg)) {
+            vAbort($response->msg);
+        }
+
+        return back()->with('message', 'Quote is created successfully.');
     }
 
     /**
@@ -52,9 +62,22 @@ class LifeQuoteController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($uuid)
     {
-        //
+        $quote = LifeQuoteRepository::getBy('uuid', $uuid);
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
+
+        $activities = ActivityRepository::where([
+            'quote_type_id' => QuoteTypes::LIFE->id(),
+            'quote_request_id' => $quote->id,
+        ])->with('assignee')->orderBy('created_at', 'desc')->get();
+
+        return inertia('LifeQuote/Show', [
+            'quote' => $quote,
+            'activities' => $activities,
+            'advisors' => $advisors,
+            'allowedDuplicateLOB', [],
+        ]);
     }
 
     /**
@@ -63,9 +86,14 @@ class LifeQuoteController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit($uuid)
     {
-        //
+        $data = LifeQuoteRepository::getFormOptions();
+        $quote = LifeQuoteRepository::getBy('uuid', $uuid);
+
+        return inertia('LifeQuote/Form', array_merge($data, [
+            'quote' => $quote,
+        ]));
     }
 
     /**
@@ -74,9 +102,11 @@ class LifeQuoteController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(LifeQuoteRequest $request, $uuid)
     {
-        //
+        LifeQuoteRepository::update($uuid, $request->validated());
+
+        return back()->with('message', 'Quote is updated successfully.');
     }
 
     /**

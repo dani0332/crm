@@ -43,6 +43,12 @@ class LifeQuote extends Model implements AuditableContract
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+     public function getDobAttribute($table)
+     {
+         $date_format = Config::get('constants.DATE_FORMAT');
+
+         return $this->asDate($table)->timezone(config('app.timezone'))->format($date_format);
+     }
 
     public function quoteStatus()
     {
@@ -60,5 +66,35 @@ class LifeQuote extends Model implements AuditableContract
     public function nationality()
     {
         return $this->belongsTo(Nationality::class);
+    }
+     public function purposeOfInsurance()
+     {
+         return $this->belongsTo(LifePurposeOfInsurance::class, 'purpose_of_insurance_id', 'id');
+     }
+    public function childern()
+    {
+        return $this->belongsTo(LifeChildren::class, 'children_id', 'id');
+    }
+    public function currency()
+    {
+        return $this->belongsTo(CurrencyType::class, 'sum_insured_currency_id', 'id');
+    }
+    public function insuranceTenure()
+    {
+        return $this->belongsTo(LifeInsuranceTenure::class, 'tenure_of_insurance_id', 'id');
+    }
+    public function numberOfYears()
+    {
+        return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id', 'id');
+    } public function maritalStatus()
+    {
+        return $this->belongsTo(MartialStatus::class, 'marital_status_id', 'id');
+    }public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id', 'id');
+    }
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 }
