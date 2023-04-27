@@ -256,7 +256,9 @@ class LeadAllocationService extends BaseService
 
             $byPassUsersForAssignment = $this->getAppStorageValueByKey('HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS');
 
-            if(in_array($advisor->email,explode(',',$byPassUsersForAssignment))) return true;
+            if (in_array($advisor->email, explode(',', $byPassUsersForAssignment))) {
+            return true;
+            }
 
             info('checkIfAdvisorCanTakeLead -- started');
             $leadAllocation = LeadAllocation::where('user_id', $advisorId)->first();
