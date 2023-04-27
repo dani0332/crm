@@ -121,6 +121,8 @@ const tableHeader = [
 <template>
   <div>
     <Head title="AMl" />
+    <h2 class="text-xl font-semibold">AML List</h2>
+    <x-divider class="my-4" />
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -131,8 +133,7 @@ const tableHeader = [
           :options="quoteTypeOptions.value"
           class="w-full"
         />
-      </div>
-      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+
         <x-select
           v-model="filtersForm.searchType"
           label="Search By"
@@ -152,8 +153,7 @@ const tableHeader = [
           class="w-full"
           placeholder="Search Value"
         />
-      </div>
-      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+
         <x-select
           v-model="filtersForm.matchFound"
           label="Match found"
@@ -164,8 +164,7 @@ const tableHeader = [
           ]"
           class="w-full"
         />
-      </div>
-      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+
         <DatePicker
           v-model="filtersForm.amlCreatedStartDate"
           name="created_at_end"
