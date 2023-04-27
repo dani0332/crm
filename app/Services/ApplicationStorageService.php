@@ -158,8 +158,8 @@ class ApplicationStorageService extends BaseService
     public function getIsActiveByKey($keyName)
     {
         $query = ApplicationStorage::select('is_active')
-        ->where('key_name', $keyName)
-        ->first();
+            ->where('key_name', $keyName)
+            ->first();
 
         if (! $query) {
             return false;
@@ -171,8 +171,8 @@ class ApplicationStorageService extends BaseService
     public function getValueByKey($keyName)
     {
         $query = ApplicationStorage::select('value')
-        ->where('key_name', $keyName)
-        ->first();
+            ->where('key_name', $keyName)
+            ->first();
 
         if (! $query) {
             return false;
@@ -184,8 +184,8 @@ class ApplicationStorageService extends BaseService
     public static function getValueByKeyName($keyName)
     {
         $query = ApplicationStorage::select('value')
-        ->where('key_name', $keyName)
-        ->first();
+            ->where('key_name', $keyName)
+            ->first();
 
         if (! $query) {
             return false;

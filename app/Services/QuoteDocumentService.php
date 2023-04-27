@@ -25,8 +25,8 @@ class QuoteDocumentService extends BaseService
             'receive_from_customer' => 1,
             'quote_type_id' => $quoteTypeId,
         ])
-        ->orderBy('sort_order')
-        ->get();
+            ->orderBy('sort_order')
+            ->get();
     }
 
     public function isEnabled($quoteModelType)
@@ -42,8 +42,8 @@ class QuoteDocumentService extends BaseService
     public function getQuoteDocumentsForUpload($quoteTypeId)
     {
         return DocumentType::where(['quote_type_id' => $quoteTypeId, 'is_active' => true])
-        ->orderBy('sort_order', 'asc')
-        ->get();
+            ->orderBy('sort_order', 'asc')
+            ->get();
     }
 
     /**

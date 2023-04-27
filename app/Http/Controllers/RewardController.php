@@ -33,7 +33,7 @@ class RewardController extends Controller
     {
         if ($request->ajax()) {
             $data = Reward::select('reward.*', 'partner.name as partner')
-            ->leftjoin('partner', 'reward.partner_id', 'partner.id')->orderBy('reward.start_date', 'desc');
+                ->leftjoin('partner', 'reward.partner_id', 'partner.id')->orderBy('reward.start_date', 'desc');
 
             return Datatables::of($data)
                 ->addIndexColumn()
