@@ -452,6 +452,7 @@ class CarQuoteService extends BaseService
                 $title = 'Car Model';
                 break;
             case 'trim':
+            case 'car_model_detail_id':
                 $title = 'Trim';
                 break;
             case 'nationality_id':
@@ -547,9 +548,6 @@ class CarQuoteService extends BaseService
             case 'has_ncd_supporting_documents':
                 $title = 'Can you provide no-claims letter from your previous insurers?';
                 break;
-            case 'car_model_detail_id':
-                $title = 'Trim';
-                break;
             case 'parent_duplicate_quote_id':
                 $title = 'Parent CDB ID';
                 break;
@@ -574,9 +572,6 @@ class CarQuoteService extends BaseService
             case 'cost_per_lead':
                 $title = 'Lead Cost';
                 break;
-//            case 'quote_batch_id':
-//                $title = 'Quote Batch';
-//                break;
             default:
                 break;
         }
