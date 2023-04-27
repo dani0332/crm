@@ -32,9 +32,9 @@ class TmUploadLeadController extends Controller
     {
         if ($request->ajax()) {
             $dataTmLeads = $tmUploadLead::select('tm_upload_leads.*', 'users.name as user_name')
-            ->leftjoin('users', 'tm_upload_leads.created_by_id', 'users.id')
-            ->where('tm_upload_leads.is_deleted', 0)
-            ->orderBy('tm_upload_leads.created_at', 'desc');
+                ->leftjoin('users', 'tm_upload_leads.created_by_id', 'users.id')
+                ->where('tm_upload_leads.is_deleted', 0)
+                ->orderBy('tm_upload_leads.created_at', 'desc');
 
             return $datatables::of($dataTmLeads)->addIndexColumn()->make(true);
         }

@@ -10,8 +10,8 @@ class EmailStatusService extends BaseService
     public function getEmailStatus($quoteTypeId, $quoteId)
     {
         return EmailStatus::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
-        ->orderBy('updated_at', 'desc')
-        ->get();
+            ->orderBy('updated_at', 'desc')
+            ->get();
     }
 
     public function addEmailStatus($emailData, $messageId, $emailSubject)
