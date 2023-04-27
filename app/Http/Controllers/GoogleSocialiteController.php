@@ -29,24 +29,17 @@ class GoogleSocialiteController extends Controller
         try {
             $socialUser = Socialite::driver(config('constants.social_driver'))->stateless()->user();
         } catch (InvalidStateException $exception) {
-            return redirect()->route('login')
-                ->withErrors([
-                    'email' => [
-                        __('Google Login failed, please try again.'),
-                    ],
-                ]);
+            return redirect()->route('login')->with('status', 'Google login failed. Please try again.');
         }
+
         $requestingUser = User::where('email', $socialUser->getEmail())->first();
+
         if (! $requestingUser) {
-            return redirect()->route('login')
-                ->withErrors([
-                    'email' => [
-                        __('User wth the email not found'),
-                    ],
-                ]);
+            return redirect()->route('login')->with('status', 'You are not authorized to login. Please contact admin.');
         }
 
         auth()->login($requestingUser);
+
         $requestingUser->last_login = now();
         $requestingUser->save();
 

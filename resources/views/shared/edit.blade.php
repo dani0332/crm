@@ -282,7 +282,12 @@
                                                     @if($property == DatabaseColumnsString::PREVIOUS_POLICY_EXPIRY_DATE && $record->$property)
                                                         readonly="readonly" style="background-color: #e9ecef !important;pointer-events: none;"
                                                     @endif
-                                                @endif @if($property == DatabaseColumnsString::DATE_OF_BIRTH) readonly="readonly" @endif>
+                                                    @if($property == DatabaseColumnsString::RENEWAL_BATCH && !empty($record->$property) && !auth()->user()->can(\App\Enums\PermissionsEnum::RenewalBatchUpdate))
+                                                        readonly="readonly" style="background-color: #e9ecef !important;"
+                                                    @endif
+                                                @endif
+
+                                            @if($property == DatabaseColumnsString::DATE_OF_BIRTH) readonly="readonly" @endif>
                                             @if ($errors->has($property))
                                                 <span class="text-danger">{{ $errors->first($property) }}</span>
                                             @endif
