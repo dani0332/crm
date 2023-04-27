@@ -89,7 +89,7 @@ class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, 
      */
     public function getColumns()
     {
-        return  [
+        return [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
             'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'required|max:255'],
             'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'required|max:100'],

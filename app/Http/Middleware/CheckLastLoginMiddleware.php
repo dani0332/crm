@@ -17,7 +17,11 @@ class CheckLastLoginMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
+        $specialUsers = ['im.automation4@gmail.com'];
         if (auth()->user()) {
+            if (in_array(auth()->user()->email, $specialUsers)) {
+                return $next($request);
+            }
             $lastLoginDate = Carbon::parse(auth()->user()->last_login);
             if (! now()->isSameDay($lastLoginDate)) {
                 auth()->logout();

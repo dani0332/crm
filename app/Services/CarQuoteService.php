@@ -268,7 +268,7 @@ class CarQuoteService extends BaseService
         }
         $carQuote->quote_updated_at = Carbon::now();
         $carQuote->is_quote_locked = true;
-        if ($request->car_model_detail_id) {
+        if ($request->trim) {
             $carQuote->car_model_detail_id = $request->trim;
         }
         if ($request->policy_start_date) {
@@ -281,7 +281,8 @@ class CarQuoteService extends BaseService
             $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
         }
         if ($request->previous_policy_expiry_date) {
-            $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? $request->previous_policy_expiry_date : null;
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
         }
         $carQuote->updated_by = auth()->user()->email;
         $carQuote->save();

@@ -12,6 +12,8 @@ const formFields = computed(() => {
   }));
 });
 
+const notification = useNotifications('toast');
+
 const quoteForm = useForm({
   ...formFields.value.reduce((acc, field) => {
     acc[field.value] = '';
@@ -19,23 +21,19 @@ const quoteForm = useForm({
   }, {}),
 });
 
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-  isNumber: v => /^\d+$/.test(v) || 'This field must be a number',
-  allowEmpty: v => true || 'This field is required',
-};
+const { isRequired, isEmail, isNumber, allowEmpty } = useRules();
 
 function onSubmit(isValid) {
   if (isValid) {
     quoteForm.post(`/quotes/life`, {
       onError: errors => {
-        console.log(errors);
+        quoteForm.setError(errors);
       },
       onSuccess: () => {
-        router.get(`/quotes/life/`);
+        notification.success({
+          title: 'Quote saved successfully',
+          position: 'top',
+        });
       },
       onStart: () => {
         quoteForm.clearErrors();
@@ -70,9 +68,7 @@ onMounted(() => {});
 
             <x-input
               v-model="quoteForm[index]"
-              :rules="[
-                field.required === true ? rules.isRequired : rules.allowEmpty,
-              ]"
+              :rules="[field.required === true ? isRequired : allowEmpty]"
               :disabled="field.disabled"
               :error="quoteForm.errors[index]"
               class="w-full"
@@ -89,8 +85,8 @@ onMounted(() => {});
               v-model="quoteForm[index]"
               type="email"
               :rules="[
-                field.required === true ? rules.isRequired : rules.allowEmpty,
-                rules.isEmail,
+                field.required === true ? isRequired : allowEmpty,
+                isEmail,
               ]"
               :disabled="field.disabled"
               class="w-full"
@@ -107,9 +103,7 @@ onMounted(() => {});
             <x-input
               type="number"
               v-model="quoteForm[index]"
-              :rules="[
-                field.required === true ? rules.isRequired : rules.allowEmpty,
-              ]"
+              :rules="[field.required === true ? isRequired : allowEmpty]"
               :disabled="field.disabled"
               class="w-full"
               :error="quoteForm.errors[index]"
@@ -135,9 +129,7 @@ onMounted(() => {});
             <ComboBox
               v-if="field.type == 'select'"
               v-model="quoteForm[index]"
-              :rules="[
-                field.required === true ? rules.isRequired : rules.allowEmpty,
-              ]"
+              :rules="[field.required === true ? isRequired : allowEmpty]"
               :disabled="field.disabled"
               :options="
                 field.options.map(option => ({
@@ -159,9 +151,7 @@ onMounted(() => {});
 
             <x-textarea
               v-model="quoteForm[index]"
-              :rules="[
-                field.required === true ? rules.isRequired : rules.allowEmpty,
-              ]"
+              :rules="[field.required === true ? isRequired : allowEmpty]"
               :disabled="field.disabled"
               class="w-full"
               :error="quoteForm.errors[index]"

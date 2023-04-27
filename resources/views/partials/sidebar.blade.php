@@ -1,4 +1,5 @@
 @php
+use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\PermissionsEnum;
 @endphp
@@ -6,7 +7,7 @@ use App\Enums\PermissionsEnum;
     <div class="left_col scroll-view" style="border: 0;backgroundlinear-gradient(0deg,#69d0fe,#4183bd);">
         <div class="navbar nav_title" style="border: 0;background:#eef1f4;">
             <a href="/" class="site_title">
-                <img src='{{ asset("image/logo.png") }}' style="width:200px;" alt="IMCRM logo" />
+                <img src='{{ asset("image/new_logo.png") }}' style="width:200px;" alt="IMCRM logo" />
             </a>
         </div>
         <div class="clearfix"></div>
@@ -126,12 +127,25 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
                             @endcan
                             @can(PermissionsEnum::PetQuotesList)
-                            <li><a href="{{ url('personal-quotes/pet') }}">Pet Quotes</a></li>
+                                @if(in_array(quoteTypeCode::Pet, newUi()))
+                                <li><a href="{{ url('personal-quotes/pet') }}">Pet Quotes</a></li>
+                                @else
+                                <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
+                                @endif
                             @endcan
+
+                            @if(in_array(quoteTypeCode::Bike, newUi()))
                             <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
+                            @endif
+                            @if(in_array(quoteTypeCode::Cycle, newUi()))
                             <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>
+                            @endif
+                            @if(in_array(quoteTypeCode::Yacht, newUi()))
                             <li><a href="{{ url('personal-quotes/yacht') }}">Yacht Quotes</a></li>
+                            @endif
+                            @if(in_array(quoteTypeCode::Jetski, newUi()))
                             <li><a href="{{ url('personal-quotes/jetski') }}">JetSki Quotes</a></li>
+                            @endif
                         </ul>
                     </li>
                 </ul>

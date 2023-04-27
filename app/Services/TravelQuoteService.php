@@ -315,11 +315,19 @@ class TravelQuoteService extends BaseService
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
             $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
-            $dateFrom = $request['created_at_start'];
-            $dateTo = $request['created_at_end'];
+        if (! empty($request->created_at) && ! empty($request->created_at_end)) {
+            $dateFrom = $this->parseDate($request['created_at'], true);
+            $dateTo = $this->parseDate($request['created_at_end'], true);
             $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
         }
+
+        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
+
+            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+        }
+
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
@@ -472,7 +480,7 @@ class TravelQuoteService extends BaseService
                 return 'tcf';
                 break;
             case 'region':
-                return  'r';
+                return 'r';
                 break;
             case 'advisor':
                 return 'u';
@@ -481,10 +489,10 @@ class TravelQuoteService extends BaseService
                 return 'qs';
                 break;
             case 'nationality':
-                return  'n';
+                return 'n';
                 break;
             default:
-                return  'tqr';
+                return 'tqr';
                 break;
         }
     }

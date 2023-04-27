@@ -24,9 +24,16 @@ class RenewalsUploadRequest extends FormRequest
      */
     public function rules()
     {
-        return [
+        $rules = [
             'file_name' => 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
+            'renewals_upload_type' => 'required',
         ];
+
+        if (! empty(request()->renewals_upload_type) && request()->renewals_upload_type == 'update') {
+            $rules['skip_plans'] = 'required';
+        }
+
+        return $rules;
     }
 
     /**

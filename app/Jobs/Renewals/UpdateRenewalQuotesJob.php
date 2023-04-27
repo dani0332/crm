@@ -18,7 +18,7 @@ use Throwable;
 
 class UpdateRenewalQuotesJob implements ShouldQueue, StackableJob
 {
-    use  Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
 
     public $timeout = 60;
     public $backoff = 10;

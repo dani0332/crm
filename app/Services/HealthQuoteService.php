@@ -82,6 +82,7 @@ class HealthQuoteService extends BaseService
             'hqr.lead_type_id',
             'lt.TEXT AS lead_type_id_text',
             'ls.text as lost_reason',
+            'ls.id as lost_reason_id',
             'hqr.previous_quote_id',
             'hqr.salary_band_id',
             'sb.text as salary_band_id_text',
@@ -249,8 +250,9 @@ class HealthQuoteService extends BaseService
             $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$request->created_at, $request->created_at_end]);
         }
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
-            $dateFrom = $request['created_at_start'];
-            $dateTo = $request['created_at_end'];
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
+            $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
+
             $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
         }
         if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
@@ -314,7 +316,7 @@ class HealthQuoteService extends BaseService
         }
         // advisors filter
         if (isset($request->advisors) && $request->advisors != '') {
-            $this->query->whereIn('advisor_id', $request->advisors);
+            $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
         }
         // is_renewal filter
         if (isset($request->is_renewal) && $request->is_renewal != '') {

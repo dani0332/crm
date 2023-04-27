@@ -391,7 +391,7 @@ class CarQuote extends BaseModel
                 }
             }
 
-            return  parent::saveForm($request, true);
+            return parent::saveForm($request, true);
         } elseif (Auth::user()->hasRole('payment') && $request->has('action')) {
             $request->request->add(['payment_id' => Auth::user()->id]);
 
