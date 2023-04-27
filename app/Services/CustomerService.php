@@ -116,7 +116,7 @@ class CustomerService extends BaseService
         $newAdditionalEmail = strtolower($newAdditionalEmail);
         $customer = $this->getCustomerByEmail($newAdditionalEmail);
         $additionalEmail = CustomerAdditionalContact::where(['key' => GenericRequestEnum::EMAIL, 'value' => $newAdditionalEmail])
-        ->first();
+            ->first();
 
         if ($newAdditionalEmail == strtolower($quoteObject->email)
             || $customer && $newAdditionalEmail == strtolower($customer->email)
@@ -131,7 +131,7 @@ class CustomerService extends BaseService
     {
         $customer = $this->getUniqueCustomerByMobileNo($newAdditionalMobileNo);
         $additionalMobileNo = CustomerAdditionalContact::where(['key' => GenericRequestEnum::MOBILE_NO, 'value' => $newAdditionalMobileNo])
-        ->first();
+            ->first();
 
         if ($newAdditionalMobileNo == $quoteObject->mobile_no
         || $customer && $newAdditionalMobileNo == $customer->mobile_no

@@ -35,9 +35,9 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id')
-          ->setColumnSelectDisabled()
-          ->setSearchDisabled()
-          ->setPerPageVisibilityDisabled();
+            ->setColumnSelectDisabled()
+            ->setSearchDisabled()
+            ->setPerPageVisibilityDisabled();
     }
 
     public function columns(): array
@@ -54,15 +54,15 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
         $batch = QuoteBatches::where('start_date', $this->startDate)->where('end_date', $this->endDate)->first();
 
         $query = CarQuote::query()
-        ->select(
-            DB::raw("CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName"),
-        )
-        ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-        ->whereNull('car_quote_request.renewal_import_code')
-        ->where('car_quote_request.advisor_id', $this->advisorId)
-        ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
+            ->select(
+                DB::raw("CONCAT(car_quote_request.first_name, ' ', car_quote_request.last_name) as fullName"),
+            )
+            ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->whereNull('car_quote_request.renewal_import_code')
+            ->where('car_quote_request.advisor_id', $this->advisorId)
+            ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
 
         if ($batch != null) {
             info('batch : '.json_encode($batch->id));
@@ -99,11 +99,11 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
             $value = $this->teamsFilter;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
-                      ->select('users.id')
-                      ->from('users')
-                      ->join('user_team', 'user_team.user_id', 'users.id')
-                      ->join('teams', 'teams.id', 'user_team.team_id')
-                      ->whereIn('teams.id', $value);
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->whereIn('teams.id', $value);
             });
         }
         if ($this->advisorsFilter != '' && count($this->advisorsFilter) > 0) {
