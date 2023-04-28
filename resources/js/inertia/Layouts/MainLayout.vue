@@ -101,7 +101,7 @@ const onLogout = () => {
               :href="link.url"
               class="pl-3 py-2.5 flex gap-2 items-center hover:bg-black/10"
               :class="{
-                '!bg-primary-800': $page.url.startsWith(link.url),
+                '!bg-primary-800': $page.props.baseUrl + $page.url == link.url,
               }"
             >
               <x-icon
