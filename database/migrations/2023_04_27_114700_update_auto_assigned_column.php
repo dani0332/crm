@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AlterInslyDataMapping extends Migration
+class UpdateAutoAssignedColumn extends Migration
 {
     /**
      * Run the migrations.
@@ -13,9 +13,8 @@ class AlterInslyDataMapping extends Migration
      */
     public function up()
     {
-        Schema::table('insly_data_mapping', function (Blueprint $table) {
-            $table->boolean('is_corrupt_data')
-                ->default(false);
+        Schema::table('car_quote_request', function (Blueprint $table) {
+            $table->boolean('auto_assigned')->nullable()->default(null)->change();
         });
     }
 

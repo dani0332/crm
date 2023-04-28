@@ -33,10 +33,10 @@ class VehicleDepreciationController extends Controller
     {
         if ($request->ajax()) {
             $data = VehicleDepreciation::select('vehicle_depreciation.*', 'car_make.text as car_make_text', 'ip.text as ip_text', 'car_model.text as car_model_text')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_depreciation.insurance_provider_id')
-            ->leftjoin('car_make', 'vehicle_depreciation.car_make_id', 'car_make.id')
-            ->leftjoin('car_model', 'vehicle_depreciation.car_model_id', 'car_model.id')
-            ->orderBy('created_at', 'desc');
+                ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_depreciation.insurance_provider_id')
+                ->leftjoin('car_make', 'vehicle_depreciation.car_make_id', 'car_make.id')
+                ->leftjoin('car_model', 'vehicle_depreciation.car_model_id', 'car_model.id')
+                ->orderBy('created_at', 'desc');
             if (isset($request->carmake) && ! empty($request->carmake)) {
                 $data->where('car_make_id', $request->carmake);
             }
@@ -45,8 +45,8 @@ class VehicleDepreciationController extends Controller
             }
 
             return DataTables::of($data)
-                    ->addIndexColumn()
-                    ->make(true);
+                ->addIndexColumn()
+                ->make(true);
         }
 
         return view('vehicledepreciation.view');
@@ -88,9 +88,9 @@ class VehicleDepreciationController extends Controller
         ]);
         if ($request->car_make_value || $request->car_model_value || $request->insurance_provider_value) {
             $existingDepreciation = VehicleDepreciation::where('car_make_id', $request->car_make_value)
-                                                        ->where('car_model_id', $request->car_model_value)
-                                                        ->where('insurance_provider_id', $request->insurance_provider_value)
-                                                        ->first();
+                ->where('car_model_id', $request->car_model_value)
+                ->where('insurance_provider_id', $request->insurance_provider_value)
+                ->first();
             if ($existingDepreciation) {
                 return redirect()->back()->with('message', 'Depreciation with same Make, Model, Insurer already exists.')->withInput($request->input());
             }
