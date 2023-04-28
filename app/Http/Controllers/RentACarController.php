@@ -28,12 +28,12 @@ class RentACarController extends Controller
             $data = RentACar::select('*')->orderBy('sort_order', 'asc');
 
             return DataTables::of($data)
-                    ->addIndexColumn()
-                    ->addColumn('action', function ($row) {
-                        return view('rentacar.actions', compact('row'))->render();
-                    })
-                    ->rawColumns(['action'])
-                    ->make(true);
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('rentacar.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
 
         return view('rentacar.view');
