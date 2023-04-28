@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Exports\HealthQuotesExport;
 use App\Models\HealthQuote;
 use App\Services\HealthQuoteService;
 use Config;
@@ -293,5 +294,30 @@ class HealthQuoteController extends Controller
         return inertia('HealthQuote/Cards', [
             'quotes' => $quotes,
         ]);
+    }
+
+    /**
+     * Export health quotes.
+     */
+    public function export()
+    {
+        $created_at_start = request()->created_at_start;
+        $created_at_end = request()->created_at_end;
+
+        $from = date('Y-m-d 00:00:00', strtotime($created_at_start));
+        $to = date('Y-m-d 23:59:59', strtotime($created_at_end));
+
+        $code = request()->code;
+        $fname = request()->first_name;
+        $lname = request()->last_name;
+        $email = request()->email;
+        $mobile = request()->mobile;
+        $sub_team = request()->sub_team;
+        $lead_status = request()->quote_status ? array_merge(explode(',', request()->quote_status)) : [];
+        $advisors = request()->advisors ? array_merge(explode(',', request()->advisors)) : [];
+        $is_ecom = request()->is_ecom;
+        $is_renewal = request()->is_renewal;
+
+        return (new HealthQuotesExport($code, $fname, $lname, $email, $mobile, $from, $to, $sub_team, $lead_status, $advisors, $is_ecom, $is_renewal))->download('Health-List.xlsx');
     }
 }
