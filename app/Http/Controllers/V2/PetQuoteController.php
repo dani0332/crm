@@ -27,11 +27,13 @@ class PetQuoteController extends Controller
     public function index()
     {
         $personalQuotes = PetQuoteRepository::getData();
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::PET->id())->get();
 
         return inertia('PetQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
+            'advisors' => $advisors,
         ]);
     }
 
@@ -82,7 +84,7 @@ class PetQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::getList();
         $personalPlans = PersonalPlanRepository::get();
-        $advisors = UserRepository::getPersonalQuoteAdvisors();
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::PET->id(),

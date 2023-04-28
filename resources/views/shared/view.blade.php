@@ -105,6 +105,10 @@
                 skipPropertiesArray.push('source');
                 skipPropertiesArray.push('lost_reason');
             }
+            if (model.modelType == '{{ quoteTypeCode::Car }}' &&
+                '{{ Auth::user()->hasRole(RolesEnum::CarManager) }}') {
+                    model.searchProperties.push('show_renewal_upload_leads');
+            }
             var modelPropertiesArray = convertObjectToArray(model.properties);
             $('#modelType').val(model.modelType);
             var dataTableColumns = [];
@@ -214,6 +218,7 @@
                         d.renewal_expiry_date = $('#renewal_expiry_date').val();
                         d.renewal_expiry_date_end = $('#renewal_expiry_date_end').val();
                         d.policy_number = $('#policy_number').val();
+                       if(isManagerOrDeputy == '1') d.show_renewal_upload_leads = $('#show_renewal_upload_leads').val();
                         if (model.properties['created_at'] && model.properties['created_at'].indexOf(
                                 'range') > -1) {
                             d['created_at_end'] = $('#created_at_end').val();
@@ -551,6 +556,9 @@
                                     ->hasRole(RolesEnum::CarAdvisor) && array_search('advisor_id', $searchProperties)
                             ) {
                                 unset( $searchProperties[array_search('advisor_id', $searchProperties)]);
+                            }
+                            if ($model->modelType == quoteTypeCode::Car && !Auth::user()->hasRole(RolesEnum::CarManager)) {
+                                unset( $searchProperties[array_search('show_renewal_upload_leads', $searchProperties)]);
                             }
                             $sourcePropertiesArry = $crudService->sortMetaArray($model->properties, 'ss:');
                             $skipProperties = $model->skipProperties;

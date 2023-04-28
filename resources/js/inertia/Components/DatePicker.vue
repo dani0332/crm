@@ -10,7 +10,7 @@ const props = defineProps({
     default: '',
   },
   modelValue: {
-    type: [String, Date],
+    type: [String, Date, Array],
     default: '',
   },
   placeholder: {
@@ -56,6 +56,7 @@ const selectedData = computed({
     :clearable="false"
     :disabled="props.disabled"
     utc="preserve"
+    :is-24="false"
   >
     <template #dp-input="{ value, onClear }">
       <x-input
