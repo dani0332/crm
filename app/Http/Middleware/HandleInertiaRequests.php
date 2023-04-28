@@ -403,7 +403,7 @@ class HandleInertiaRequests extends Middleware
         if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess()) {
             $nav = $nav->add('Policy Issuance', url('ftcform'));
         }
-        if (auth()->user()->hasAnyRole([ RolesEnum::Admin, RolesEnum::BetaUser ,RolesEnum::Engineering])) {
+        if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
 
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
