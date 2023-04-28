@@ -111,22 +111,22 @@ class DashboardController extends Controller
     {
         $tiers = Tier::where('can_handle_tpl', 1)->get()->pluck('id');
         $records = QuoteBatches::query()
-        ->select(
-            'quote_batches.id',
-            'quote_batches.name',
-            DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
-            DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
-            DB::raw('count(car_quote_request.id) as total_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
-        )
-        ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
+            ->select(
+                'quote_batches.id',
+                'quote_batches.name',
+                DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
+                DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
+                DB::raw('count(car_quote_request.id) as total_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
+            )
+            ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
 
         $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'undefined';
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $tiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
@@ -201,22 +201,22 @@ class DashboardController extends Controller
     {
         $compTiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get()->pluck('id');
         $records = QuoteBatches::query()
-        ->select(
-            'quote_batches.id',
-            'quote_batches.name',
-            DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
-            DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
-            DB::raw('count(car_quote_request.id) as total_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
-            DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
-        )
-        ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
+            ->select(
+                'quote_batches.id',
+                'quote_batches.name',
+                DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
+                DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
+                DB::raw('count(car_quote_request.id) as total_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (9,35) THEN 1 ELSE 0 END) as bad_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in (33,15) THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
+            )
+            ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
         $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'null';
         $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
 

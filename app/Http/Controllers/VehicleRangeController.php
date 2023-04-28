@@ -20,10 +20,10 @@ class VehicleRangeController extends Controller
     {
         if ($request->ajax()) {
             $data = VehicleRange::select('vehicle_valuation_range.*', 'car_make.text as car_make_text', 'ip.text as ip_text', 'car_model.text as car_model_text')
-            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_valuation_range.insurance_provider_id')
-            ->leftjoin('car_make', 'vehicle_valuation_range.car_make_id', 'car_make.id')
-            ->leftjoin('car_model', 'vehicle_valuation_range.car_model_id', 'car_model.id')
-            ->orderBy('created_at', 'desc');
+                ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_valuation_range.insurance_provider_id')
+                ->leftjoin('car_make', 'vehicle_valuation_range.car_make_id', 'car_make.id')
+                ->leftjoin('car_model', 'vehicle_valuation_range.car_model_id', 'car_model.id')
+                ->orderBy('created_at', 'desc');
             if (isset($request->carmake) && ! empty($request->carmake)) {
                 $data->where('car_make_id', $request->carmake);
             }
@@ -32,8 +32,8 @@ class VehicleRangeController extends Controller
             }
 
             return DataTables::of($data)
-                    ->addIndexColumn()
-                    ->make(true);
+                ->addIndexColumn()
+                ->make(true);
         }
 
         return view('vehiclerange.view');
@@ -67,9 +67,9 @@ class VehicleRangeController extends Controller
         ]);
         if ($request->car_make_value || $request->car_model_value || $request->insurance_provider_value) {
             $existingRange = VehicleRange::where('car_make_id', $request->car_make_value)
-                                                        ->where('car_model_id', $request->car_model_value)
-                                                        ->where('insurance_provider_id', $request->insurance_provider_value)
-                                                        ->first();
+                ->where('car_model_id', $request->car_model_value)
+                ->where('insurance_provider_id', $request->insurance_provider_value)
+                ->first();
             if ($existingRange) {
                 return redirect()->back()->with('message', 'Range with same Make, Model, Insurer already exists.')->withInput($request->input());
             }

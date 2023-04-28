@@ -15,12 +15,12 @@ class CacheService extends BaseService
         } else {
             $value = Cache::remember('leadSources', 86400, function () {
                 return CarQuote::where('source', '!=', 'test')
-                ->where('source', '!=', 'postman')
-                ->where('source', 'not like', '%vercel%')
-                ->where('source', 'not like', '%localhost%')
-                ->groupBy('source')
-                ->get()
-                ->pluck('source');
+                    ->where('source', '!=', 'postman')
+                    ->where('source', 'not like', '%vercel%')
+                    ->where('source', 'not like', '%localhost%')
+                    ->groupBy('source')
+                    ->get()
+                    ->pluck('source');
             });
         }
 

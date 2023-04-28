@@ -28,13 +28,13 @@ class AuditableController extends Controller
 
     public function loadAuditLogs(Request $request)
     {
-        return DB::table('audits')
-           ->select('audits.*', 'users.name')
-           ->join('users', 'audits.user_id', 'users.id')
-           ->where('auditable_id', $request->auditableId)
-           ->where('auditable_type', $request->auditableType)
-           ->orderBy('created_at', 'desc')
-           ->get();
+        $audits = DB::table('audits')
+            ->select('audits.*', 'users.name')
+            ->join('users', 'audits.user_id', 'users.id')
+            ->where('auditable_id', $request->auditableId)
+            ->where('auditable_type', $request->auditableType)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
     }
 
