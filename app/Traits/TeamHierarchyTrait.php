@@ -81,8 +81,8 @@ trait TeamHierarchyTrait
                     ->whereIn('team_id', (array) $teamId);
             })->orWhereIn('sub_team_id', (array) $teamId);
         })->where('is_active', 1)
-          ->pluck('id')
-          ->toArray();
+            ->pluck('id')
+            ->toArray();
 
         $users = User::whereIn('id', $userIds)
             ->select('id', 'name')
