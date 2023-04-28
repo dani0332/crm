@@ -403,7 +403,10 @@ class HandleInertiaRequests extends Middleware
         if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess()) {
             $nav = $nav->add('Policy Issuance', url('ftcform'));
         }
-        $nav = $nav->add('Embedded Products', url('embedded-products'));
+        if (auth()->user()->hasAnyRole([ RolesEnum::Admin, RolesEnum::BetaUser ,RolesEnum::Engineering])) {
+
+            $nav = $nav->add('Embedded Products', url('embedded-products'));
+        }
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
                 $section
