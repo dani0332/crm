@@ -878,11 +878,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 				<div class="tab-content" style="padding-top: 20px;">
 					<div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
 						{{csrf_field()}}
-						<input type="hidden" id="car_plan_id" name="car_plan_id" value="{{ $planId }}">
-						<input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ $quoteId }}">
-						<input type="hidden" id="car_value_lower_limit" name="car_value_lower_limit" value="{{ $carValueLowerLimit }}">
-						<input type="hidden" id="car_value_upper_limit" name="car_value_upper_limit" value="{{ $carValueUpperLimit }}">
-						<input type="hidden" id="repair_type" name="repair_type" value="{{ $repairType }}">
+						<input type="hidden" id="car_plan_id" name="car_plan_id" value="{{ isset($planId) ? $planId : NULL }}">
+						<input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{ isset($quoteId) ? $quoteId : NULL }}">
+						<input type="hidden" id="car_value_lower_limit" name="car_value_lower_limit" value="{{ isset($carValueLowerLimit) ? $carValueLowerLimit : 0 }}">
+						<input type="hidden" id="car_value_upper_limit" name="car_value_upper_limit" value="{{ isset($carValueUpperLimit) ? $carValueUpperLimit : 0 }}">
+						<input type="hidden" id="repair_type" name="repair_type" value="{{ isset($repairType) ? $repairType : NULL }}">
 						<input type="hidden" id="is_create" name="is_create" value="0">
 						<input type="hidden" id="current_url" name="current_url" value="{{ url()->current() }}">
 						<table cellpadding="10" cellspacing="10">

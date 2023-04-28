@@ -30,7 +30,7 @@ class AjaxController extends Controller
     public function carModelBasedOnCarMake(Request $request)
     {
         $carmodel = CarModel::activeWithCode($request->make_code)
-        ->select('id', 'text', 'code')->orderBy('text')->get();
+            ->select('id', 'text', 'code')->orderBy('text')->get();
 
         return response()->json($carmodel);
     }
@@ -42,7 +42,7 @@ class AjaxController extends Controller
             $carMakeCode = $request->id;
         }
         $carmodel = CarModel::activeWithCode($carMakeCode)
-        ->select('id', 'text', 'code', 'car_make_code')->orderBy('text')->get();
+            ->select('id', 'text', 'code', 'car_make_code')->orderBy('text')->get();
 
         return response()->json($carmodel);
     }
@@ -57,14 +57,14 @@ class AjaxController extends Controller
     public function getCarModelDetails(Request $request)
     {
         $carModelDetail = CarModelDetail::active()
-        ->select('cylinder', 'seating_capacity as seat_capacity', 'vehicle_type_id', 'text', 'id', 'is_default')
-        ->where('car_model_id', $request->car_model_id)
-        ->get();
+            ->select('cylinder', 'seating_capacity as seat_capacity', 'vehicle_type_id', 'text', 'id', 'is_default')
+            ->where('car_model_id', $request->car_model_id)
+            ->get();
         if (! $carModelDetail) {
             $carModelDetail = CarModel::active()
-            ->select('cylinder', 'seat_capacity', 'vehicle_type_id')
-            ->whereId($request->car_model_id)
-            ->get();
+                ->select('cylinder', 'seat_capacity', 'vehicle_type_id')
+                ->whereId($request->car_model_id)
+                ->get();
         }
 
         return response()->json($carModelDetail);
@@ -73,9 +73,9 @@ class AjaxController extends Controller
     public function getCarModelTrimValues(Request $request)
     {
         $carModelDetail = CarModelDetail::active()
-        ->select('cylinder', 'seating_capacity as seat_capacity', 'vehicle_type_id')
-        ->whereId($request->id)
-        ->first();
+            ->select('cylinder', 'seating_capacity as seat_capacity', 'vehicle_type_id')
+            ->whereId($request->id)
+            ->first();
 
         return response()->json($carModelDetail);
     }

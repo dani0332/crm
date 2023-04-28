@@ -62,7 +62,7 @@ class LifeController extends Controller
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'lifeAdvisor' => auth()->user()->hasRole(RolesEnum::LifeAdvisor),
-                'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
+                'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LifeManager) ? true : false,
                 'isLeadPool' => auth()->user()->isLeadPool(),
                 'isManagerORDeputy' => auth()->user()->isManagerOrDeputy(),
             ],
