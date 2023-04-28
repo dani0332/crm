@@ -269,7 +269,7 @@ class BaseService
     {
         $sorted = [];
         foreach ($sourceArray as $key => $value) {
-            if (preg_match('/' . $token . '(\d+)/', $value, $matches)) {
+            if (preg_match('/'.$token.'(\d+)/', $value, $matches)) {
                 $sorted[$key] = $matches[1];
             } else {
                 $sorted[$key] = PHP_INT_MAX;
