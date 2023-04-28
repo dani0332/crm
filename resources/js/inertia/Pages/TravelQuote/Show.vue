@@ -1,5 +1,4 @@
 <script setup>
-
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 
@@ -49,6 +48,7 @@ const {
   premium,
   renewal_expiry_date,
   policy_start_date,
+  isEmail,
 } = useRules();
 
 const confirmDeleteData = reactive({
@@ -1676,9 +1676,18 @@ onMounted(() => {
             />
 
             <x-input
+              v-if="additionalContact.additional_contact_type === 'mobile_no'"
               v-model="additionalContact.additional_contact_val"
               label="Value"
               :rules="[isRequired]"
+              class="w-full"
+            />
+
+            <x-input
+              v-if="additionalContact.additional_contact_type === 'email'"
+              v-model="additionalContact.additional_contact_val"
+              label="Value"
+              :rules="[isRequired, isEmail]"
               class="w-full"
             />
           </div>
