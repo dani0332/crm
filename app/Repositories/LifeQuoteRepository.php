@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Enums\quoteTypeCode;
+use App\Enums\QuoteStatusEnum;
 use App\Facades\Capi;
 use App\Models\LifeNumberOfYears;
 use App\Models\LifeQuote;
@@ -46,7 +46,9 @@ class LifeQuoteRepository extends BaseRepository
         $response = Capi::request('/api/v1-save-life-quote', 'post', $dataArr);
 
         if (isset($response->quoteUID)) {
-            $this->savePremium(quoteTypeCode::LifeQuote, $request, $response);
+            $quote = $this->where('uuid', $response->quoteUID)->firstOrFail();
+
+            $quote->update(['premium' => $request['premium']]);
         }
 
         return $response;
@@ -68,7 +70,7 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetData()
     {
-        return $this->filter()->where('quote_status_id', '!=', 9)->with(['advisor', 'quoteStatus', 'nationality'])->orderBy('created_at', 'desc')->simplePaginate();
+        return $this->where('quote_status_id', '!=', QuoteStatusEnum::Fake)->with(['advisor', 'quoteStatus', 'nationality'])->filter()->orderBy('created_at', 'desc')->simplePaginate()->withQueryString();
     }
 
     public function fetchGetBy($column, $value)

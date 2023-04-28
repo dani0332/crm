@@ -2,19 +2,23 @@
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 
+import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+
 defineProps({
   quote: Object,
+  quoteStatuses: Object,
   quoteType: String,
   activities: Object,
   advisors: Object,
   allowedDuplicateLOB: Array,
+  lostReasons: Array,
+  quoteStatusEnum: Object,
 });
 
 const page = usePage();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-console.log(permissionsEnum);
 const historyLoading = ref(false);
 
 // history data
@@ -301,6 +305,13 @@ const onCreateDuplicate = isValid => {
       </div>
     </div>
 
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quote-status-enum="quoteStatusEnum"
+    />
     <QuoteActivities
       :can="can"
       :quote="quote"
@@ -309,7 +320,7 @@ const onCreateDuplicate = isValid => {
       :quote-type="quoteType"
     />
 
-    <AdditionalContacts :quote="quote" />
+    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

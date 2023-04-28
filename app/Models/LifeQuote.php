@@ -26,8 +26,7 @@ class LifeQuote extends Model implements AuditableContract
         'created_at' => FilterTypes::DATE_BETWEEN,
         'renewal_batch' => FilterTypes::EXACT,
         'quote_status_id' => FilterTypes::IN,
-        'is_ecommerce' => FilterTypes::EXACT,
-        'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
+        'advisor_id' => FilterTypes::IN,
     ];
 
     public function getCreatedAtAttribute($table)

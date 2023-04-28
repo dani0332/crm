@@ -2,11 +2,14 @@
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
+  advisors: Array,
 });
 
 const page = usePage();
 
+const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
+
 const rules = {
   isRequired: v => !!v || 'This field is required',
   created_at_end: v => {
@@ -69,6 +72,14 @@ const tableHeader = [
   { text: 'PREMIUM', value: 'premium' },
 ];
 
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.roles[0].name
+      ? advisor.name + '-' + advisor.roles[0]?.name
+      : advisor.name,
+  }));
+});
 function filterQuotes(isValid) {
   if (!isValid) {
     return;
@@ -106,24 +117,25 @@ function resetFilters() {
   });
 }
 
-function setQueryStringFilters() {
-  let queryString = window.location.search;
-  let urlParams = new URLSearchParams(queryString);
+function setQueryFilters() {
+  let query = router.page.url.split('?')[1];
+  if (query) {
+    query = query.split('&');
+    query.forEach(item => {
+      const [key, value] = item.split('=');
 
-  for (const [key] of Object.entries(availableFilters)) {
-    if (urlParams.has(key)) {
-      filters[key] = urlParams.get(key);
-    }
+      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
+        let id = key.slice(0, -2);
+        if (filters[id]) {
+          filters[id].push(parseInt(value));
+        }
+      } else {
+        filters[key] = value;
+      }
+    });
   }
 }
 const quotesSelected = ref([]);
-
-const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
-});
 
 const assignForm = useForm({
   assigned_to_id_new: null,
@@ -242,11 +254,11 @@ onMounted(() => {
           "
         />
         <ComboBox
-          v-if="1"
+          v-if="!hasRole(rolesEnum.TravelAdvisor)"
           v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="[]"
+          :options="advisorOptions"
         />
 
         <x-select

@@ -86,7 +86,7 @@ class PetQuoteRepository extends BaseRepository
         return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text', 'currentlyInsuredWith', 'advisor'])
             ->filter()
             ->orderBy('created_at', 'desc')
-            ->simplePaginate();
+            ->simplePaginate()->withQueryString();
     }
     public function fetchGetBy($column, $value)
     {
