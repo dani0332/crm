@@ -29,12 +29,12 @@ class SubTypeOfInsuranceController extends Controller
             $data = SubTypeOfInsurance::select('*')->orderBy('sort_order', 'asc');
 
             return DataTables::of($data)
-                    ->addIndexColumn()
-                    ->addColumn('action', function ($row) {
-                        return view('subtypeofinsurance.actions', compact('row'))->render();
-                    })
-                    ->rawColumns(['action'])
-                    ->make(true);
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('subtypeofinsurance.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
 
         return view('subtypeofinsurance.view');

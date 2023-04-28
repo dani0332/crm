@@ -232,8 +232,8 @@ class RenewalsUploadController extends Controller
                 'users.name as uploaded_by',
                 'renewals_upload_leads.skip_plans'
             )
-            ->leftjoin('users', 'users.id', 'renewals_upload_leads.created_by_id')
-            ->orderBy('renewals_upload_leads.created_at', 'desc');
+                ->leftjoin('users', 'users.id', 'renewals_upload_leads.created_by_id')
+                ->orderBy('renewals_upload_leads.created_at', 'desc');
 
             return $datatables::of($dataRenewalUpload)
                 ->addIndexColumn()
@@ -249,8 +249,8 @@ class RenewalsUploadController extends Controller
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
         $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', RenewalsUploadType::CREATE_LEADS)
-        ->where('renewal_import_code', '!=', '')
-        ->orderBy('created_at', 'desc')->get();
+            ->where('renewal_import_code', '!=', '')
+            ->orderBy('created_at', 'desc')->get();
 
         return view('renewals.update', compact('azureStorageUrl', 'azureStorageContainer', 'renewalsUploads'));
     }
