@@ -18,11 +18,4 @@ class LookUpModelHelper
         return $result->id;
     }
 
-    public static function subjectForFTCEmailCarQuote($carQuote)
-    {
-        $dateTime = Carbon::parse($carQuote->created_at)->format(config('constants.FTC_EMAIL_FORMAT'));
-        $subject = 'Lead Updates of CDB ID: '.$carQuote->code.' Customer Name: '.ucwords($carQuote->first_name).' '.ucwords($carQuote->last_name).'  Created on '.$dateTime;
-
-        return $subject;
-    }
 }

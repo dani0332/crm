@@ -39,14 +39,6 @@ class BaseModel extends Model implements AuditableContract
         static::updating(function ($model) {
             $exploded = explode('\\', get_class($model));
             $getModel = end($exploded);
-            if ($getModel == 'CarQuote') {
-                if (isset($model->quote_status_id) && $model->isDirty('quote_status_id')) {
-                    $ftcModel = new FtcQuoteStatusHistory;
-                    $ftcModel->quote_status_id = $model->quote_status_id;
-                    $ftcModel->car_quote_id = $model->id;
-                    $ftcModel->save();
-                }
-            }
             if (Auth::check()) {
                 $model->updated_by = Auth::user()->email;
             }
