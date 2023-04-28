@@ -96,7 +96,15 @@ use App\Enums\GenericRequestEnum;
                     <ul class="nav navbar-right panel_toolbox">
                         @cannot(PermissionsEnum::ApprovePayments)
                             @if (count($allowedDuplicateLOB) > 0)
-                                <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
+                                @if(str_contains(strtolower($model->modelType), 'car'))
+                                    @if(!auth()->user()->hasAnyRole([
+                                        RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager]
+                                    ))
+                                        <li><a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a></li>
+                                    @endif
+                                @else
+                                    <li><a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a></li>
+                                @endif
                             @endif
                         @endcannot
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType)) }}"
