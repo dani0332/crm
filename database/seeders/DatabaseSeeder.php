@@ -48,6 +48,7 @@ class DatabaseSeeder extends Seeder
             AddPermissionForExportData::class,
             RenewalBatchUpdatePermissionSeeder::class,
             addBusinessAsProduct::class,
+            addHealthManualAssignmentByPassUsers::class,
         ]);
     }
 }

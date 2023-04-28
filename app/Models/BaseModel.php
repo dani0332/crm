@@ -176,29 +176,29 @@ class BaseModel extends Model implements AuditableContract
 
         //  DB::enableQueryLog();
         $response = self::with($this->relations())
-        ->select($access->toArray())
-        ->where(function ($query) use ($filters) {
-            foreach ($filters as $key => $value) {
-                if (is_array($value)) {
-                    switch ($value['op']) {
-                        case 'in':
-                            $query->whereIn($key, $value['val']);
-                            break;
-                        default:
+            ->select($access->toArray())
+            ->where(function ($query) use ($filters) {
+                foreach ($filters as $key => $value) {
+                    if (is_array($value)) {
+                        switch ($value['op']) {
+                            case 'in':
+                                $query->whereIn($key, $value['val']);
+                                break;
+                            default:
 
-                            if ($value['op'] == '<>' && $value['val'] == 'null') {
-                                $query->whereNotNull($key);
-                            } else {
-                                $query->where($key, $value['op'], $value['val']);
-                            }
+                                if ($value['op'] == '<>' && $value['val'] == 'null') {
+                                    $query->whereNotNull($key);
+                                } else {
+                                    $query->where($key, $value['op'], $value['val']);
+                                }
+                        }
+                    } else {
+                        $query->where($key, $value);
                     }
-                } else {
-                    $query->where($key, $value);
                 }
-            }
-        })
-        ->relationWhere($this->isGetList, $filters)
-        ->get();
+            })
+            ->relationWhere($this->isGetList, $filters)
+            ->get();
 
         //dd($response);exit;
         // $query = DB::getQueryLog();

@@ -17,12 +17,12 @@ class KenService
         $this->baseUrl = config('constants.KEN_API_ENDPOINT');
 
         $this->client = Http::withBasicAuth(config('constants.KEN_API_USER'), config('constants.KEN_API_PWD'))
-        ->withHeaders([
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            'x-api-token' => config('constants.KEN_API_TOKEN'),
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json',
+                'x-api-token' => config('constants.KEN_API_TOKEN'),
 
-        ])->timeout(config('constants.KEN_API_TIMEOUT'));
+            ])->timeout(config('constants.KEN_API_TIMEOUT'));
     }
 
     /**

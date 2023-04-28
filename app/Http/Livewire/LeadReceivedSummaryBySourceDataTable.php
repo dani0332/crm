@@ -13,10 +13,10 @@ class LeadReceivedSummaryBySourceDataTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id')
-        ->setColumnSelectDisabled()
-        ->setPerPageVisibilityDisabled()
-        ->setPaginationVisibilityDisabled()
-        ->setSearchDisabled();
+            ->setColumnSelectDisabled()
+            ->setPerPageVisibilityDisabled()
+            ->setPaginationVisibilityDisabled()
+            ->setSearchDisabled();
     }
 
     public function columns(): array
