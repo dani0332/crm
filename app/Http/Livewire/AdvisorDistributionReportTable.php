@@ -180,15 +180,15 @@ class AdvisorDistributionReportTable extends DataTableComponent
                 $filters,
                 MultiSelectFilter::make('Teams')
                     ->options($this->teams)->config([
-                    'placeholder' => 'SELECT ALL TEAMS',
-                ])
+                        'placeholder' => 'SELECT ALL TEAMS',
+                    ])
                     ->filter(function (Builder $builder, $value) {
                         $builder->whereIn('teams.id', $value);
                     }),
                 MultiSelectFilter::make('Tiers')
                     ->options($this->tiers)->config([
-                    'placeholder' => 'SELECT ALL TIERS',
-                ])
+                        'placeholder' => 'SELECT ALL TIERS',
+                    ])
                     ->filter(function (Builder $builder, $value) {
                         $builder->whereIn('car_quote_request.tier_id', $value);
                     })
