@@ -12,6 +12,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Http\Requests\ChangeInsurerRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -1112,7 +1113,7 @@ class CRUDController extends Controller
         if ($response == 200 || $response == 201) {
             return redirect()->back()->with('success', 'Car Plan has been saved');
         } else {
-            return redirect()->back()->with('message', $response);
+            return redirect()->back()->with('error', $response);
         }
     }
 

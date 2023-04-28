@@ -263,7 +263,8 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 								{{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
 							</td>
 							<td>{{ isset($quotePlan->excess) ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
-							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
+							<td>
+                                <a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal"
 									class="btn btn-warning btn-sm quotePlanModalPopup">View</a>
                                 @if($totalPremium > 0)
@@ -275,7 +276,18 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                     data-websiteURL="{{$websiteURL}}"
                                     >Copy</button>
                                 @endif
-                                </td>
+
+                                @if(auth()->user()->hasRole(RolesEnum::CarAdvisor))
+                                    <button class="btn btn-info btn-sm btn-change-insurer"
+                                            data-planId="{{$quotePlan->id}}"
+                                            data-uuid="{{$record->uuid}}"
+                                            data-providerCode="{{$quotePlan->providerCode}}"
+                                    >
+                                        Change Insurer
+                                    </button>
+                                @endif
+
+                            </td>
 						</tr>
 						@endforeach
 					</tbody>

@@ -295,6 +295,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         } else {
             Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
         }
+
+        Route::post('car/change-insurer', [\App\Http\Controllers\V2\CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
+
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);

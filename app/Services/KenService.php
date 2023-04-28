@@ -35,7 +35,11 @@ class KenService
     public function request($path, $method = 'post', $data = [])
     {
         $url = $this->baseUrl.$path;
-        $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url);
+
+        $response = $this->client->withBody(json_encode($data), 'application/json')
+            ->send($method, $url)->onError(function($response) {
+                vAbort($response->json()['msg']);
+            });
 
         return $response->json();
     }
