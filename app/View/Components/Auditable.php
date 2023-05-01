@@ -2,6 +2,9 @@
 
 namespace App\View\Components;
 
+use App\Models\CarQuote;
+use App\Models\CarQuotePlanDetail;
+use App\Models\CarQuoteRequestDetail;
 use DB;
 use Illuminate\View\Component;
 
@@ -28,13 +31,30 @@ class Auditable extends Component
      */
     public function render()
     {
-        $audits = DB::table('audits')
+
+        $auditableId = $this->auditableId;
+
+        $query = DB::table('audits')
        ->select('audits.*', 'users.name')
        ->join('users', 'audits.user_id', 'users.id')
        ->where('auditable_id', $this->auditableId)
-       ->where('auditable_type', $this->auditableType)
+       ->where('auditable_type', $this->auditableType);
 
-       ->get();
+        if($this->auditableType == CarQuote::class) {
+
+            $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $auditableId)->with('carQuote')->first();
+
+            $query->orWhere(function ($q) use($auditableId, $carQuoteDetail) {
+                $q->where('auditable_type', CarQuoteRequestDetail::class)->where('auditable_id', $carQuoteDetail->id);
+            });
+
+            $query->orWhere(function ($q) use($auditableId, $carQuoteDetail) {
+                $carQuotePlanDetailIds = CarQuotePlanDetail::where('quote_uuid', $carQuoteDetail->carQuote->uuid)->get()->pluck('id')->toArray();
+                $q->where('auditable_type', CarQuotePlanDetail::class)->whereIn('auditable_id', $carQuotePlanDetailIds);
+            });
+        }
+
+        $audits = $query->get();
 
         return view('components.auditable', compact('audits'));
     }
