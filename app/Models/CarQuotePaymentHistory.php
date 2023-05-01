@@ -49,7 +49,7 @@ class CarQuotePaymentHistory extends BaseModel
                 $statusVal = Str::replace(' ', '', $request->input('status'));
 
                 if ($carQuote && ($statusVal === 'TransactionApproved' || $statusVal === 'TransactionDeclined')) {
-                    // ftc-form-delete schedule on 30th May 2023
+                    // ftc-form-delete schedule on 7th June 2023
 //                    $row = $carQuote->toArray();
 //                    $row['notes'] = $request->input('notes', '');
 //                    $paymentStatus = $statusVal === 'TransactionApproved' ? 'Approved' : 'Declined';

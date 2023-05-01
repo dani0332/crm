@@ -400,7 +400,7 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        // ftc-form-delete schedule on 30th May 2023
+        // ftc-form-delete schedule on 7th June 2023
         // if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess()) {
         //     $nav = $nav->add('Policy Issuance', url('ftcform'));
         // }

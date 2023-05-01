@@ -62,7 +62,7 @@ class CarQuotePayment extends BaseModel
                 $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1)])->first();
                 if ($carQuote) {
                     if (parent::saveForm($request, $update)) {
-                        // ftc-form-delete schedule on 30th May 2023
+                        // ftc-form-delete schedule on 7th June 2023
 //                        $advisorEmail = $carQuote->advisor_id()->first()->email;
 //                        $templateParams = [
 //                            'notes' => $request->input('comment', ''),

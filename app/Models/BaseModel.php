@@ -37,7 +37,7 @@ class BaseModel extends Model implements AuditableContract
             }
         });
         static::updating(function ($model) {
-            // ftc-form-delete schedule on 30th May 2023
+            // ftc-form-delete schedule on 7th June 2023
 //            $exploded = explode('\\', get_class($model));
 //            $getModel = end($exploded);
 //            if ($getModel == 'CarQuote') {

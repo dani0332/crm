@@ -429,7 +429,7 @@ Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'Proce
 /***** RestAPI */
 
 Route::group(['middleware' => ['auth.rest']], function () {
-    // ftc-form-delete schedule on 30th May 2023
+    // ftc-form-delete schedule on 7th June 2023
 //    Route::resource('ftcform', FtcFormController::class);
 //    Route::resource('assignOE', FtcFormController::class);
     Route::group(['prefix' => 'form'], function () {

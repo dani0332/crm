@@ -70,7 +70,7 @@ class CarQuotePolicy extends BaseModel
             $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'pa_id' => Auth::user()->id])->get()->first();
             if ($carQuote) {
                 if (parent::saveForm($request, $update)) {
-                    // ftc-form-delete schedule on 30th May 2023
+                    // ftc-form-delete schedule on 7th June 2023
 //                    $templateParams = [
 //                        'notes' => 'Policy issued',
 //                        'first_name' => $carQuote->first_name,
