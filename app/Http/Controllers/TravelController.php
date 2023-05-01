@@ -58,7 +58,7 @@ class TravelController extends Controller
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
         $isManager = auth()->user()->isManagerOrDeputy();
-        $isManualAllocationAllowed = Auth::user()->isAdmin() ? true : $isManager;
+        $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
 
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
