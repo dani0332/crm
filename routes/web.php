@@ -22,6 +22,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FailedJobsController;
 use App\Http\Controllers\FormController;
+//use App\Http\Controllers\FtcFormController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -427,6 +428,8 @@ Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'Proce
 /***** RestAPI */
 
 Route::group(['middleware' => ['auth.rest']], function () {
+//    Route::resource('ftcform', FtcFormController::class);
+//    Route::resource('assignOE', FtcFormController::class);
     Route::group(['prefix' => 'form'], function () {
         Route::GET('/{form}', [FormController::class, 'index']);
         Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);

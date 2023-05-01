@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+//use App\Jobs\FTCMailServiceJob;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use LookUpModel;
@@ -62,6 +63,28 @@ class CarQuotePayment extends BaseModel
                 $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1)])->first();
                 if ($carQuote) {
                     if (parent::saveForm($request, $update)) {
+//                        $advisorEmail = $carQuote->advisor_id()->first()->email;
+//                        $templateParams = [
+//                            'notes' => $request->input('comment', ''),
+//                            'first_name' => $carQuote->first_name,
+//                            'last_name' => $carQuote->last_name,
+//                            'code' => $carQuote->code,
+//                        ];
+//                        if ($advisorEmail) {
+//                            $params = [
+//                                'to' => $advisorEmail,
+//                                'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
+//                                'templateName' => 'notification',
+//                                'templateParams' => $templateParams,
+//                            ];
+//
+//                            $oeId = $carQuote->oe_id()->first();
+//                            if ($oeId && $oeId->email) {
+//                                $params['cc'] = $oeId->email;
+//                            }
+//
+//                            dispatch(new FTCMailServiceJob($params));
+//                        }
 
                         // when transaction declined
                         $transcDeclinedId = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_declined']);

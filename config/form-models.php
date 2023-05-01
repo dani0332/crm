@@ -13,6 +13,9 @@ return [
     'car_make' => [
         'model' => CarMake::class,
     ],
+//    'car_quote_ftc_documents' => [
+//        'model' => FtcDocument::class,
+//    ],
     'car_quote_documents' => [
         'model' => CarQuoteDocuments::class,
     ],
@@ -25,15 +28,24 @@ return [
     'vehicle_type' => [
         'model' => VehicleType::class,
     ],
+//    'ftc_history' => [
+//        'model' => FTCHistory::class,
+//    ],
     'car_quote_payment' => [
         'model' => CarQuotePayment::class,
     ],
     'car_quote_policy' => [
         'model' => CarQuotePolicy::class,
     ],
+//    'ftc_quote_status_history' => [
+//        'model' => FtcQuoteStatusHistory::class,
+//    ],
     'car_quote_assign_oe_to_advisor' => [
         'model' => CarQuoteAdvisorToOE::class,
     ],
+//    'payment_modes' => [
+//        'model' => FTCPaymentMode::class,
+//    ],
     'car_quote_payment_history' => [
         'model' => CarQuotePaymentHistory::class,
     ],
