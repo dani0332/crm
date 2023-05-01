@@ -29,12 +29,12 @@ class ClaimsStatusController extends Controller
             $data = ClaimsStatus::select('*')->orderBy('sort_order', 'asc');
 
             return DataTables::of($data)
-                    ->addIndexColumn()
-                    ->addColumn('action', function ($row) {
-                        return view('claimsstatus.actions', compact('row'))->render();
-                    })
-                    ->rawColumns(['action'])
-                    ->make(true);
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('claimsstatus.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
 
         return view('claimsstatus.view');

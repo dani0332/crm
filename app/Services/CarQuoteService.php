@@ -1485,8 +1485,8 @@ class CarQuoteService extends BaseService
         if ($record->advisor_id != null && $record->advisor_id == Auth::user()->id) {
             // Search for an existing record with the same quote_id and user_id
             $quoteViewCount = QuoteViewCount::where('quote_id', $record->id)
-            ->where('user_id', Auth::user()->id)
-            ->first();
+                ->where('user_id', Auth::user()->id)
+                ->first();
 
             if ($quoteViewCount) {
                 // If the record exists, increment its visit_count

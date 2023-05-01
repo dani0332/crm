@@ -15,7 +15,7 @@ class AlterInslyDataMapping extends Migration
     {
         Schema::table('insly_data_mapping', function (Blueprint $table) {
             $table->boolean('is_corrupt_data')
-                    ->default(false);
+                ->default(false);
         });
     }
 
