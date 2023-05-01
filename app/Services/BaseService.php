@@ -159,6 +159,8 @@ class BaseService
                         $fields[$property]['value'] = $quote->$property == 1 ? 'Yes' : 'No';
                     } elseif ($option['text'] == $quote->$property) {
                         $fields[$property]['value'] = $option['text'];
+                    } elseif ($property == 'is_ecommerce') {
+                        $fields[$property]['value'] = $quote->$property == 1 ? 'Yes' : 'No';
                     }
                 }
             } elseif (str_contains($field, 'select')) {
