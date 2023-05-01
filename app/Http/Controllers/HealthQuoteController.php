@@ -307,6 +307,10 @@ class HealthQuoteController extends Controller
         $from = date('Y-m-d 00:00:00', strtotime($created_at_start));
         $to = date('Y-m-d 23:59:59', strtotime($created_at_end));
 
+        if (! $from || ! $to) {
+            return redirect()->back()->with('error', 'Please select date ranges to export.');
+        }
+
         $code = request()->code;
         $fname = request()->first_name;
         $lname = request()->last_name;
