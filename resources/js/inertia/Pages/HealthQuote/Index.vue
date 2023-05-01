@@ -312,9 +312,9 @@ onMounted(() => {
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-        <div v-if="canExport">
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
           <x-button
-            v-if="can(permissionsEnum.DATA_EXTRACTION)"
+            v-if="canExport"
             size="sm"
             color="emerald"
             :href="`/quotes/health-export?${objToUrl(filters)}`"
@@ -322,15 +322,16 @@ onMounted(() => {
           >
             Export
           </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
         </div>
-        <x-tooltip v-else position="right">
-          <x-button tag="div" size="sm" color="emerald"> Export </x-button>
-          <template #tooltip>
-            <span class="font-medium">
-              Created dates are required to export data.
-            </span>
-          </template>
-        </x-tooltip>
+        <div v-else />
         <div class="flex justify-self-end gap-3">
           <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
           <x-button size="sm" color="primary" @click.prevent="onReset">
