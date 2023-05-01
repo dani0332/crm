@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\DaysNameEnum;
 use App\Enums\HealthTeamType;
@@ -58,11 +59,11 @@ class LeadAllocationService extends BaseService
                 'st.name as teamName',
                 'u.name as userName',
             ])
-              ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-              ->leftJoin('teams as t', 'u.team_id', '=', 't.id')
-              ->leftJoin('teams as st', 'st.id', '=', 'u.sub_team_id')
-              ->whereNotNull('u.sub_team_id')
-              ->where('t.name', '=', quoteTypeCode::Health);
+                ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
+                ->leftJoin('teams as t', 'u.team_id', '=', 't.id')
+                ->leftJoin('teams as st', 'st.id', '=', 'u.sub_team_id')
+                ->whereNotNull('u.sub_team_id')
+                ->where('t.name', '=', quoteTypeCode::Health);
 
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $query = $query->where('u.manager_id', auth()->user()->id);
@@ -252,6 +253,14 @@ class LeadAllocationService extends BaseService
     public function checkIfAdvisorCanTakeLead($advisorId)
     {
         try {
+            $advisor = User::where('id', $advisorId)->first();
+
+            $byPassUsersForAssignment = $this->getAppStorageValueByKey(ApplicationStorageEnums::HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS);
+
+            if (in_array($advisor->email, explode(',', $byPassUsersForAssignment))) {
+            return true;
+            }
+
             info('checkIfAdvisorCanTakeLead -- started');
             $leadAllocation = LeadAllocation::where('user_id', $advisorId)->first();
             if ($leadAllocation != null) {
@@ -354,25 +363,25 @@ class LeadAllocationService extends BaseService
     public function updateUserMaxCapacity()
     {
         $users = User::join('tier_users as tu', 'tu.user_id', 'users.id')
-                            ->join('tiers as t', 't.id', 'tu.tier_id')
-                            ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
-                            ->leftJoin('quadrants as q', 'q.id', 'qu.quad_id')
-                            ->join('lead_allocation as la', 'la.user_id', 'users.id')
-                            ->where('users.is_active', 1)
-                            ->groupBy('users.name', 'users.id', 'la.id')
-                            ->select(
-                                'users.id as userId',
-                                'users.name as userName',
-                                'users.email as userEmail',
-                                DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
-                                DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
-                                'la.allocation_count as allocationCount',
-                                'la.last_allocated as lastAllocation',
-                                'la.max_capacity as maxCapacity',
-                                'la.is_available as isAvailable',
-                                'users.last_login as lastLogin',
-                                'la.id as id'
-                            )->get();
+            ->join('tiers as t', 't.id', 'tu.tier_id')
+            ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
+            ->leftJoin('quadrants as q', 'q.id', 'qu.quad_id')
+            ->join('lead_allocation as la', 'la.user_id', 'users.id')
+            ->where('users.is_active', 1)
+            ->groupBy('users.name', 'users.id', 'la.id')
+            ->select(
+                'users.id as userId',
+                'users.name as userName',
+                'users.email as userEmail',
+                DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
+                DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
+                'la.allocation_count as allocationCount',
+                'la.last_allocated as lastAllocation',
+                'la.max_capacity as maxCapacity',
+                'la.is_available as isAvailable',
+                'users.last_login as lastLogin',
+                'la.id as id'
+            )->get();
         foreach ($users as $user) {
             $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
 
@@ -411,14 +420,14 @@ class LeadAllocationService extends BaseService
     {
         try {
             $availableUserId = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                                            ->join('teams as t', 't.id', '=', 'u.sub_team_id')
-                                            ->where('lead_allocation.is_available', 1)
-                                            ->where(function ($query) {
-                                                $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
-                                                    ->orWhere('lead_allocation.max_capacity', '=', -1);
-                                            })
-                                            ->where(strtolower('t.name'), strtolower($lead->health_team_type))
-                                            ->orderBy('lead_allocation.last_allocated', 'asc');
+                ->join('teams as t', 't.id', '=', 'u.sub_team_id')
+                ->where('lead_allocation.is_available', 1)
+                ->where(function ($query) {
+                    $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
+                        ->orWhere('lead_allocation.max_capacity', '=', -1);
+                })
+                ->where(strtolower('t.name'), strtolower($lead->health_team_type))
+                ->orderBy('lead_allocation.last_allocated', 'asc');
 
             return $availableUserId->first();
         } catch (\Exception $e) {
@@ -430,14 +439,14 @@ class LeadAllocationService extends BaseService
     {
         try {
             $availableAdvisors = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-            ->join('teams as t', 't.id', '=', 'u.sub_team_id')
-            ->where('lead_allocation.is_available', 1)
-            ->where(function ($query) {
-                $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
-                    ->orWhere('lead_allocation.max_capacity', '=', -1);
-            })
-            ->orderBy('lead_allocation.last_allocated', 'asc')
-            ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.last_allocated');
+                ->join('teams as t', 't.id', '=', 'u.sub_team_id')
+                ->where('lead_allocation.is_available', 1)
+                ->where(function ($query) {
+                    $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
+                        ->orWhere('lead_allocation.max_capacity', '=', -1);
+                })
+                ->orderBy('lead_allocation.last_allocated', 'asc')
+                ->select('u.id', 'u.name', 'u.email', 'u.sub_team_id', 't.name as sub_team_name', 'lead_allocation.allocation_count', 'lead_allocation.max_capacity', 'lead_allocation.last_allocated');
 
             return $availableAdvisors->get();
         } catch (\Exception $e) {
@@ -644,17 +653,17 @@ class LeadAllocationService extends BaseService
     public function getRulesByLeadSource($source)
     {
         $records = LeadSource::join('rule_lead_sources', 'rule_lead_sources.lead_source_id', 'lead_sources.id')
-        ->join('users', 'users.id', 'rule_lead_sources.user_id')
-        ->join('rules', 'rule_lead_sources.rule_id', 'rules.id')
-        ->where('lead_sources.name', $source)
-        ->where('rules.is_active', 1)
-        ->where('lead_sources.is_applicable_for_rules', 1)
-        ->groupBy('rule_lead_sources.lead_source_id')
-        ->select(
-            'lead_sources.name AS leadSourceName',
-            'lead_sources.id AS leadSourceId',
-            DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers')
-        );
+            ->join('users', 'users.id', 'rule_lead_sources.user_id')
+            ->join('rules', 'rule_lead_sources.rule_id', 'rules.id')
+            ->where('lead_sources.name', $source)
+            ->where('rules.is_active', 1)
+            ->where('lead_sources.is_applicable_for_rules', 1)
+            ->groupBy('rule_lead_sources.lead_source_id')
+            ->select(
+                'lead_sources.name AS leadSourceName',
+                'lead_sources.id AS leadSourceId',
+                DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers')
+            );
 
         return $records->get();
     }
@@ -679,13 +688,13 @@ class LeadAllocationService extends BaseService
         info('car lead allocation renewal date from : '.$dateFrom.' and date to : '.$dateTo);
 
         $renewalQuote = CarQuote::where('source', LeadSourceEnum::RENEWAL_UPLOAD)
-        ->whereBetween('previous_policy_expiry_date', [$dateFrom, $dateTo])
-        ->where(function ($query) use ($lead) {
-            $query->where('email', $lead->email)
-                ->orWhere('mobile_no', 'like', '%'.substr($lead->mobile_no, -7));
-        })
-        ->where('car_make_id', $lead->car_make_id)
-        ->where('car_model_id', $lead->car_model_id)->get();
+            ->whereBetween('previous_policy_expiry_date', [$dateFrom, $dateTo])
+            ->where(function ($query) use ($lead) {
+                $query->where('email', $lead->email)
+                    ->orWhere('mobile_no', 'like', '%'.substr($lead->mobile_no, -7));
+            })
+            ->where('car_make_id', $lead->car_make_id)
+            ->where('car_model_id', $lead->car_model_id)->get();
 
         if (count($renewalQuote) > 0) {
             info('car lead allocation found a renewal quote with uuid : '.$renewalQuote->first()->uuid.' for car quote with uuid : '.$lead->uuid);
@@ -768,15 +777,15 @@ class LeadAllocationService extends BaseService
          * User's allocation count should be less then his max_capacity OR his max_capacity should be -1.
          */
         $query = LeadAllocation::join('users as u', 'u.id', 'lead_allocation.user_id')
-        ->select('u.id', 'u.email')
-        ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-        ->where('lead_allocation.is_available', 1) // user must be available
-        ->where(function ($query) {
-            $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
-                ->orWhere('lead_allocation.max_capacity', '=', -1);
-        })
-        ->whereIn('u.id', $tierUsers)
-        ->orderBy('lead_allocation.last_allocated', 'desc');
+            ->select('u.id', 'u.email')
+            ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+            ->where('lead_allocation.is_available', 1) // user must be available
+            ->where(function ($query) {
+                $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
+                    ->orWhere('lead_allocation.max_capacity', '=', -1);
+            })
+            ->whereIn('u.id', $tierUsers)
+            ->orderBy('lead_allocation.last_allocated', 'desc');
 
         return $query->get()->pluck('id')->toArray();
     }
@@ -784,8 +793,8 @@ class LeadAllocationService extends BaseService
     public function getAppStorageValueByKey($keyName)
     {
         $query = ApplicationStorage::select('value')
-        ->where('key_name', $keyName)
-        ->first();
+            ->where('key_name', $keyName)
+            ->first();
 
         if (! $query) {
             return false;

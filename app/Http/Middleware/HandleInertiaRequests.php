@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
+            'baseUrl' => url('/'),
         ]);
     }
 
@@ -399,10 +400,14 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess()) {
-            $nav = $nav->add('Policy Issuance', url('ftcform'));
-        }
+        // ftc-form-delete schedule on 7th June 2023
+        // if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess()) {
+        //     $nav = $nav->add('Policy Issuance', url('ftcform'));
+        // }
+        if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
 
+            $nav = $nav->add('Embedded Products', url('embedded-products'));
+        }
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
                 $section
@@ -438,60 +443,60 @@ class HandleInertiaRequests extends Middleware
         ])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
-                ->addIf(
-                    auth()->user()->can(PermissionsEnum::UsersList),
-                    'Users',
-                    url('admin/users'),
-                    fn ($s) => $s->attributes(['icon' => 'box'])
-                )
-                ->addIf(
-                    auth()->user()->can(PermissionsEnum::RoleList),
-                    'Roles',
-                    url('admin/roles'),
-                    fn ($s) => $s->attributes(['icon' => 'box'])
-                )
-                ->addIf(
-                    auth()->user()->can(PermissionsEnum::TeamsList),
-                    'Teams',
-                    url('generic/team'),
-                    fn ($s) => $s->attributes(['icon' => 'box'])
-                )
-                ->addIf(
-                    auth()->user()->can(PermissionsEnum::TIER_CONFIG_LIST),
-                    'Tiers (Allocation)',
-                    url('generic/tier'),
-                    fn ($s) => $s->attributes(['icon' => 'box'])
-                )
-                ->addIf(
-                    auth()->user()->can(PermissionsEnum::QUAD_CONFIG_LIST),
-                    'Quadrants (Allocation)',
-                    url('generic/quadrant'),
-                    fn ($s) => $s->attributes(['icon' => 'box'])
-                )
-                ->addIf(
-                    auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
-                    'Rules (Allocation)',
-                    url('generic/rule'),
-                    fn ($s) => $s->attributes(['icon' => 'box'])
-                )
-                ->addIf(
-                    auth()->user()->can(PermissionsEnum::InsuranceProviderList),
-                    'Insurance Providers',
-                    url('generic/insuranceprovider'),
-                    fn ($s) => $s->attributes(['icon' => 'box'])
-                )
-                ->addIf(
-                    auth()->user()->can(PermissionsEnum::ApplicationStorageList),
-                    'Application Storage',
-                    url('generic/applicationstorage'),
-                    fn ($s) => $s->attributes(['icon' => 'box'])
-                )
-                ->addIf(
-                    auth()->user()->hasRole(RolesEnum::Admin),
-                    'Failed Jobs',
-                    route('failed-jobs.index'),
-                    fn ($s) => $s->attributes(['icon' => 'box'])
-                );
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::UsersList),
+                        'Users',
+                        url('admin/users'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::RoleList),
+                        'Roles',
+                        url('admin/roles'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TeamsList),
+                        'Teams',
+                        url('generic/team'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::TIER_CONFIG_LIST),
+                        'Tiers (Allocation)',
+                        url('generic/tier'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::QUAD_CONFIG_LIST),
+                        'Quadrants (Allocation)',
+                        url('generic/quadrant'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
+                        'Rules (Allocation)',
+                        url('generic/rule'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::InsuranceProviderList),
+                        'Insurance Providers',
+                        url('generic/insuranceprovider'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::ApplicationStorageList),
+                        'Application Storage',
+                        url('generic/applicationstorage'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->hasRole(RolesEnum::Admin),
+                        'Failed Jobs',
+                        route('failed-jobs.index'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    );
             });
         }
 

@@ -35,20 +35,20 @@ class Auditable extends Component
         $auditableId = $this->auditableId;
 
         $query = DB::table('audits')
-       ->select('audits.*', 'users.name')
-       ->join('users', 'audits.user_id', 'users.id')
-       ->where('auditable_id', $this->auditableId)
-       ->where('auditable_type', $this->auditableType);
+            ->select('audits.*', 'users.name')
+            ->join('users', 'audits.user_id', 'users.id')
+            ->where('auditable_id', $this->auditableId)
+            ->where('auditable_type', $this->auditableType);
 
-        if($this->auditableType == CarQuote::class) {
+        if ($this->auditableType == CarQuote::class) {
 
             $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $auditableId)->with('carQuote')->first();
 
-            $query->orWhere(function ($q) use($auditableId, $carQuoteDetail) {
+            $query->orWhere(function ($q) use ($auditableId, $carQuoteDetail) {
                 $q->where('auditable_type', CarQuoteRequestDetail::class)->where('auditable_id', $carQuoteDetail->id);
             });
 
-            $query->orWhere(function ($q) use($auditableId, $carQuoteDetail) {
+            $query->orWhere(function ($q) use ($auditableId, $carQuoteDetail) {
                 $carQuotePlanDetailIds = CarQuotePlanDetail::where('quote_uuid', $carQuoteDetail->carQuote->uuid)->get()->pluck('id')->toArray();
                 $q->where('auditable_type', CarQuotePlanDetail::class)->whereIn('auditable_id', $carQuotePlanDetailIds);
             });

@@ -15,15 +15,15 @@ class UploadedRenewalLeadsTable extends DataTableComponent
     public function configure(): void
     {
         $this->setPrimaryKey('id')
-          ->setDefaultSort('updated_at', 'desc')
-          ->setFilterLayoutSlideDown()
-          ->setSearchDisabled()
-          ->setPerPageVisibilityDisabled()
-          ->setColumnSelectDisabled()
-          ->setPaginationVisibilityDisabled()
-          ->setConfigurableAreas([
-              'after-pagination' => 'livewire.pagination',
-          ]);
+            ->setDefaultSort('updated_at', 'desc')
+            ->setFilterLayoutSlideDown()
+            ->setSearchDisabled()
+            ->setPerPageVisibilityDisabled()
+            ->setColumnSelectDisabled()
+            ->setPaginationVisibilityDisabled()
+            ->setConfigurableAreas([
+                'after-pagination' => 'livewire.pagination',
+            ]);
     }
 
     public function columns(): array
@@ -35,19 +35,19 @@ class UploadedRenewalLeadsTable extends DataTableComponent
             Column::make('File name', 'file_name'),
             Column::make('Total records', 'total_records'),
             Column::make('Good', 'good')
-              ->format(
-                  function ($value, $row, Column $column) {
-                      return isset($value) ? '<a href="'.url('renewals/uploaded-leads').'/'.$row->id.'/validation-passed" title="View Passed Validation" class="btn-passed">'.$value.'</a>' : '';
-                  }
-              )
-              ->html(),
+                ->format(
+                    function ($value, $row, Column $column) {
+                        return isset($value) ? '<a href="'.url('renewals/uploaded-leads').'/'.$row->id.'/validation-passed" title="View Passed Validation" class="btn-passed">'.$value.'</a>' : '';
+                    }
+                )
+                ->html(),
             Column::make('Bad', 'cannot_upload')
-              ->format(
-                  function ($value, $row, Column $column) {
-                      return isset($value) ? '<a href="'.url('renewals/uploaded-leads').'/'.$row->id.'/validation-failed" title="View Failed Validation" class="btn-failed">'.$value.'</a>' : '';
-                  }
-              )
-              ->html(),
+                ->format(
+                    function ($value, $row, Column $column) {
+                        return isset($value) ? '<a href="'.url('renewals/uploaded-leads').'/'.$row->id.'/validation-failed" title="View Failed Validation" class="btn-failed">'.$value.'</a>' : '';
+                    }
+                )
+                ->html(),
             Column::make('Status', 'status'),
             Column::make('Skip Plans')->format(function ($skipPlans) {
                 return ($skipPlans) ? GenericRequestEnum::Yes : GenericRequestEnum::No;
