@@ -1221,10 +1221,7 @@ class CarQuoteService extends BaseService
             }
         }
 
-        if (
-            ($quote->payment_status_id == PaymentStatusEnum::CANCELLED || ($quote->payment_status_id == PaymentStatusEnum::AUTHORISED && !empty($quote->paid_at) && ($paidAtDays = Carbon::now()->diffInDays(Carbon::parse($quote->paid_at))) > 10))
-            && Auth::user()->hasRole(RolesEnum::CarAdvisor)
-        ) {
+        if ($quote->payment_status_id == PaymentStatusEnum::CANCELLED && Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
             info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid . ' payment status ' . $quote->paymentStatus->text . ' and paid days diff is ' . $paidAtDays . ' to ' . RolesEnum::CarAdvisor);
             return true;
         }
