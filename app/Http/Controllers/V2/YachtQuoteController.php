@@ -85,7 +85,7 @@ class YachtQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::getList();
         $personalPlans = PersonalPlanRepository::get();
-        $advisors = UserRepository::getPersonalQuoteAdvisors();
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::YACHT->value);
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::YACHT->id(),

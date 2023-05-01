@@ -85,7 +85,7 @@ class HandlerController extends Controller
         }
 
         return redirect()->back()
-        ->with('success', 'Handler created successfully');
+            ->with('success', 'Handler created successfully');
     }
 
     /**

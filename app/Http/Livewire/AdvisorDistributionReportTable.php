@@ -54,8 +54,8 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->toArray();
 
         $this->teams = $this->getUserTeams($loginUserId)->keyBy('id')
-        ->map(fn ($team) => $team->name)
-        ->toArray();
+            ->map(fn ($team) => $team->name)
+            ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
             $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
@@ -179,19 +179,19 @@ class AdvisorDistributionReportTable extends DataTableComponent
             array_push(
                 $filters,
                 MultiSelectFilter::make('Teams')
-                ->options($this->teams)->config([
-                    'placeholder' => 'SELECT ALL TEAMS',
-                ])
+                    ->options($this->teams)->config([
+                        'placeholder' => 'SELECT ALL TEAMS',
+                    ])
                     ->filter(function (Builder $builder, $value) {
                         $builder->whereIn('teams.id', $value);
                     }),
                 MultiSelectFilter::make('Tiers')
-                ->options($this->tiers)->config([
-                    'placeholder' => 'SELECT ALL TIERS',
-                ])
-                ->filter(function (Builder $builder, $value) {
-                    $builder->whereIn('car_quote_request.tier_id', $value);
-                })
+                    ->options($this->tiers)->config([
+                        'placeholder' => 'SELECT ALL TIERS',
+                    ])
+                    ->filter(function (Builder $builder, $value) {
+                        $builder->whereIn('car_quote_request.tier_id', $value);
+                    })
             );
         }
 

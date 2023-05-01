@@ -446,7 +446,6 @@ class CRUDService extends BaseService
         return $this->applicationstorageService->getValueByKey($key);
     }
 
-
     public function getGenderOptions()
     {
         $genderOptions = [
