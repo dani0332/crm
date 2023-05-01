@@ -1,4 +1,5 @@
 <?php
+
 //ftc-form-delete scheduled on 7th June 2023
 
 use Illuminate\Database\Migrations\Migration;
