@@ -314,7 +314,7 @@ onMounted(() => {
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="canExport">
           <x-button
-            v-if="!can(permissionsEnum.DATA_EXTRACTION)"
+            v-if="can(permissionsEnum.DATA_EXTRACTION)"
             size="sm"
             color="emerald"
             :href="`/quotes/health-export?${objToUrl(filters)}`"
@@ -380,21 +380,6 @@ onMounted(() => {
             </div>
           </x-form>
         </div>
-
-        <!-- <ExportExcel
-          :data="quotesSelected"
-          :columns="tableHeader"
-          :filename="'Health-List'"
-          :sheetname="'Leads'"
-          v-if="can(permissionsEnum.DATA_EXTRACTION)"
-        >
-          <x-button size="sm" color="emerald">
-            Export -
-            <span class="lining-nums">
-              Selected: {{ quotesSelected.length }}
-            </span>
-          </x-button>
-        </ExportExcel> -->
       </div>
     </Transition>
     <DataTable
