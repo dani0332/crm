@@ -11,9 +11,11 @@ class CentralController extends Controller
 {
     // use CentralTrait;
    public function createDuplicate(DuplicateLobRequest $request){
-    
-    LifeQuoteRepository::duplicateAllowedLobs('Life','1122');
-    // $this->saveDuplicateLeads($request->validated());
+
+       $quoteType = 'Life';
+       $quoteType = 'App\\Repositories\\'. $quoteType . 'QuoteRepository';
+       $quoteType::saveDuplicateLeads($request->validated());
+       // $this->saveDuplicateLeads($request->validated());
 
 
    }
