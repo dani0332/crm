@@ -301,7 +301,13 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
                 </ul>
-                @endif
+                @endif 
+                @hasanyrole(RolesEnum::BetaUser.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
+                <ul class="nav side-menu">
+                    <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
+                </ul>
+                @endhasanyrole
+              
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
                     <li><a href="{{ url('assignOE') }}"><i></i> Assign OE </a>
