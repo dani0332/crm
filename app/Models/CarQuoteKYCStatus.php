@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-//use App\Jobs\FTCMailServiceJob;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use LookUpModel;
@@ -47,6 +46,7 @@ class CarQuoteKYCStatus extends BaseModel
         if (Auth::user()->hasRole('pa') && $request->has('status')) {
             $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1), 'pa_id' => Auth::user()->id])->first();
             $status = $request->input('status', 0);
+            // ftc-form-delete schedule on 30th May 2023
 //            if ($status == '1') { // request additional document
 //                if ($carQuote) {
 //                    $templateParams = [

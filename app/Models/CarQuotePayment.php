@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-//use App\Jobs\FTCMailServiceJob;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use LookUpModel;
@@ -63,6 +62,7 @@ class CarQuotePayment extends BaseModel
                 $carQuote = CarQuote::where(['id' => $request->input('car_quote_id', -1)])->first();
                 if ($carQuote) {
                     if (parent::saveForm($request, $update)) {
+                        // ftc-form-delete schedule on 30th May 2023
 //                        $advisorEmail = $carQuote->advisor_id()->first()->email;
 //                        $templateParams = [
 //                            'notes' => $request->input('comment', ''),

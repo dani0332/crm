@@ -18,6 +18,7 @@ class LookUpModelHelper
         return $result->id;
     }
 
+    // ftc-form-delete schedule on 30th May 2023
 //    public static function subjectForFTCEmailCarQuote($carQuote)
 //    {
 //        $dateTime = Carbon::parse($carQuote->created_at)->format(config('constants.FTC_EMAIL_FORMAT'));

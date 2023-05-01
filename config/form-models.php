@@ -13,6 +13,7 @@ return [
     'car_make' => [
         'model' => CarMake::class,
     ],
+    // ftc-form-delete schedule on 30th May 2023
 //    'car_quote_ftc_documents' => [
 //        'model' => FtcDocument::class,
 //    ],
@@ -28,6 +29,7 @@ return [
     'vehicle_type' => [
         'model' => VehicleType::class,
     ],
+    // ftc-form-delete schedule on 30th May 2023
 //    'ftc_history' => [
 //        'model' => FTCHistory::class,
 //    ],
@@ -37,15 +39,16 @@ return [
     'car_quote_policy' => [
         'model' => CarQuotePolicy::class,
     ],
+    // ftc-form-delete schedule on 30th May 2023
 //    'ftc_quote_status_history' => [
 //        'model' => FtcQuoteStatusHistory::class,
 //    ],
     'car_quote_assign_oe_to_advisor' => [
         'model' => CarQuoteAdvisorToOE::class,
     ],
-//    'payment_modes' => [
-//        'model' => FTCPaymentMode::class,
-//    ],
+    'payment_modes' => [
+        'model' => FTCPaymentMode::class,
+    ],
     'car_quote_payment_history' => [
         'model' => CarQuotePaymentHistory::class,
     ],

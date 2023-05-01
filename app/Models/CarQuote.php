@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-//use App\Jobs\FTCMailServiceJob;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use LookUpModel;
@@ -364,6 +363,7 @@ class CarQuote extends BaseModel
         if (Auth::user()->hasRole('pa') && $request->has('action')) {
             $request->request->add(['pa_id' => Auth::user()->id]);
 
+            // ftc-form-delete schedule on 30th May 2023
 //            $carQuote = self::where(['id' => $request->form_id])->whereNull('pa_id')->first();
 //            if ($carQuote) {
 //                $templateParams = [
@@ -395,6 +395,7 @@ class CarQuote extends BaseModel
         } elseif (Auth::user()->hasRole('payment') && $request->has('action')) {
             $request->request->add(['payment_id' => Auth::user()->id]);
 
+            // ftc-form-delete schedule on 30th May 2023
 //            $carQuote = self::where(['id' => $request->form_id])->whereNull('payment_id')->first();
 //            if ($carQuote) {
 //                $templateParams = [
@@ -425,6 +426,7 @@ class CarQuote extends BaseModel
         } elseif (Auth::user()->hasRole('invoicing') && $request->has('action')) {
             $request->request->add(['invoicing' => Auth::user()->id]);
 
+            // ftc-form-delete schedule on 30th May 2023
 //            $carQuote = self::where(['id' => $request->form_id])->whereNull('invoicing')->first();
 //            if ($carQuote) {
 //                $templateParams = [
