@@ -3,15 +3,18 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Facades\Capi;
 use App\Models\LifeNumberOfYears;
 use App\Models\LifeQuote;
+use App\Traits\CentralTrait;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LifeQuoteRepository extends BaseRepository
 {
+    use CentralTrait;
     public function model()
     {
         return LifeQuote::class;
@@ -97,5 +100,10 @@ class LifeQuoteRepository extends BaseRepository
             'numberOfYears' => LifeNumberOfYears::withActive()->get(),
 
         ];
-    }
+    } 
+    
+    // public function fetchDuplicateAllowedLobsList($code)
+    // {
+    //    return $this->duplicateAllowedLobs(quoteTypeCode::Life,$code);
+    // }
 }

@@ -63,6 +63,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\LifeQuoteController;
@@ -257,7 +258,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
-        Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
+        // Route::post('createDuplicate', [CRUDController::class, 'createDuplicate'])->name('createDuplicate');
+        Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
 
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);

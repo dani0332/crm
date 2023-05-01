@@ -14,6 +14,8 @@ defineProps({
   lostReasons: Array,
   quoteStatusEnum: Object,
 });
+const { isRequired } = useRules();
+const notification = useNotifications('toast');
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -107,7 +109,12 @@ const onCreateDuplicate = isValid => {
           <x-select
             v-model="leadDuplicateForm.lob_team"
             label="LOBs"
-            :options="[]"
+            :options="
+              allowedDuplicateLOB.map((lob, index) => ({
+                value: index,
+                label: lob,
+              }))
+            "
             :rules="[isRequired]"
             placeholder="Select LOB For Duplication"
             class="w-full"
