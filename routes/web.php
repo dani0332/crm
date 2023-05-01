@@ -65,6 +65,7 @@ use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
 use App\Http\Controllers\V2\CycleQuoteController;
+use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\JetskiQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
@@ -126,6 +127,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
     });
 
+    Route::resource('embedded-products', EmbeddedProductController::class);
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
         Artisan::call('view:cache');

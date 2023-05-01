@@ -890,7 +890,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td>Hide Plan?</td>
 								<td style="width: 10%;">
 									<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
-										<input type="checkbox" class="success" id="is_disabled" name="is_disabled" @if($isDisabled=="false" ) checked="checked" @endif>
+										<input type="checkbox" class="success" id="is_disabled" name="is_disabled" @if(isset($isDisabled) && $isDisabled==GenericRequestEnum::FALSE ) checked="checked" @endif>
 										<span class="slider round"></span>
 								</td>
 								<td>Manual</td>
