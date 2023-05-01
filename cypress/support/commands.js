@@ -23,6 +23,7 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+import 'cypress-file-upload'
 Cypress.Commands.add('loginByCookies', (session, token) => {
     cy.setCookie('imcrm_session', session)
     cy.setCookie('XSRF-TOKEN', token)
