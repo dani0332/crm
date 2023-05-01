@@ -34,6 +34,7 @@
         "@inertiajs/vue3": "^1.0.2",
         "@vuepic/vue-datepicker": "^4.2.1",
         "@vueuse/core": "^9.13.0",
+        "cypress-file-upload": "^5.0.8",
         "vue": "^3.2.45",
         "vue3-dropzone": "^2.0.1",
         "vue3-easy-data-table": "^1.5.42",

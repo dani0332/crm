@@ -1304,6 +1304,29 @@ onMounted(() => {
       </x-form>
     </div>
 
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
+      </div>
+      <DataTable
+        table-class-name="tablefixed compact"
+        :headers="emailStatusesTableColumns"
+        :items="emailStatuses || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+      >
+        <template #item-email_status="item">
+          <span class="text-primary-600">{{
+            item.email_status.toUpperCase()
+          }}</span>
+        </template>
+        <template #item-reason="item">
+          <span class="text-primary-600">{{ item.reason.toUpperCase() }}</span>
+        </template>
+      </DataTable>
+    </div>
+
     <div
       class="p-4 rounded shadow mb-6 bg-white"
       v-if="permissions.isQuoteDocumentEnabled"
@@ -1784,29 +1807,6 @@ onMounted(() => {
         :rows-per-page="15"
         :hide-footer="historyData.length < 15"
       />
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Email Status</h3>
-      </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="emailStatusesTableColumns"
-        :items="emailStatuses || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-      >
-        <template #item-email_status="item">
-          <span class="text-primary-600">{{
-            item.email_status.toUpperCase()
-          }}</span>
-        </template>
-        <template #item-reason="item">
-          <span class="text-primary-600">{{ item.reason.toUpperCase() }}</span>
-        </template>
-      </DataTable>
     </div>
 
     <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" />
