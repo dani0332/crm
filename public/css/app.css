@@ -3867,10 +3867,6 @@ label{
     display: flex;
   }
 
-  .md\:grid{
-    display: grid;
-  }
-
   .md\:w-1\/2{
     width: 50%;
   }
