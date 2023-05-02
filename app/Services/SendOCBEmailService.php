@@ -117,8 +117,6 @@ class SendOCBEmailService
                 }
             }
 
-
-
             $body = [
                 'sender' => [
                     'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
@@ -156,8 +154,6 @@ class SendOCBEmailService
                 ],
                 'attachment' => $attachments ?? null,
             ];
-
-
 
             $ccAdvisor = [];
             if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
@@ -198,7 +194,6 @@ class SendOCBEmailService
 
             $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
             $responseCode = $clientRequest->getStatusCode();
-
 
             if ($responseCode == 201) {
                 $isEmailSent = 1;
