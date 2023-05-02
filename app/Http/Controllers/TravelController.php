@@ -56,6 +56,9 @@ class TravelController extends Controller
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
+        $isManager = auth()->user()->isManagerOrDeputy();
+        $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
+
         return inertia('TravelQuote/Index', [
             'quotes' => $quotes,
             'dropdownSource' => $dropdownSource,
@@ -64,9 +67,9 @@ class TravelController extends Controller
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'travelAdvisor' => auth()->user()->hasRole(RolesEnum::TravelAdvisor),
-                'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
+                'isManualAllocationAllowed' => $isManualAllocationAllowed,
                 'isLeadPool' => auth()->user()->isLeadPool(),
-                'isManagerORDeputy' => auth()->user()->isManagerOrDeputy(),
+                'isManagerORDeputy' => $isManager,
             ],
         ]);
     }
