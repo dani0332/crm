@@ -9,7 +9,7 @@ class CentralController extends Controller
 {
     public function createDuplicate(DuplicateLobRequest $request)
     {
-        $quoteType = 'App\\Repositories\\'.strtoupper(request()->modelType).'QuoteRepository';
+        $quoteType = 'App\\Repositories\\'.ucfirst(request()->modelType).'QuoteRepository';
         $quoteType::saveDuplicateLeads($request->validated());
     }
 }

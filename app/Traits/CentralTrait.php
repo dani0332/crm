@@ -35,7 +35,7 @@ trait CentralTrait
             if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
                 $leadType = 'Business';
             }
-            $repository = 'App\\Repositories\\'.strtoupper($leadType).'QuoteRepository';
+            $repository = 'App\\Repositories\\'.ucfirst($leadType).'QuoteRepository';
             $duplicateRecord = $repository::where('code', $leadCode)->first();
             if ($duplicateRecord) {
                 $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
@@ -56,7 +56,7 @@ trait CentralTrait
         if (strtolower($parentType) == strtolower(quoteTypeCode::CORPLINE) || strtolower($parentType) == strtolower(quoteTypeCode::GroupMedical)) {
             $parentType = 'Business';
         }
-        $repository = 'App\\Repositories\\'.strtoupper($parentType).'QuoteRepository';
+        $repository = 'App\\Repositories\\'.ucfirst($parentType).'QuoteRepository';
         $parentRecord = $repository::where('id', $entityId)->first();
 
         if (! empty($data['lob_team_sub_selection'])) {
@@ -75,7 +75,7 @@ trait CentralTrait
                 'source' => config('constants.SOURCE_NAME'),
             ];
             foreach ($lobTeams as $lob) {
-                $repository = 'App\\Repositories\\'.strtoupper($lob).'QuoteRepository';
+                $repository = 'App\\Repositories\\'.ucfirst($lob).'QuoteRepository';
 
                 if (! class_exists($repository)) {
                     return false;
