@@ -102,7 +102,7 @@ const onTogglePlans = () => {
   axios
     .post('/quotes/health/manual-plan-toggle', {
       modelType: 'Health',
-      plan_ids: [props.plan.id],
+      planIds: [props.plan.id],
       quote_uuid: usePage().props.quote.uuid,
       toggle: hidePlan.value,
     })
@@ -110,6 +110,10 @@ const onTogglePlans = () => {
       notification.success({
         title: 'Plan has been updated',
         position: 'top',
+      });
+      router.reload({
+        preserveScroll: true,
+        preserveState: true,
       });
     })
     .catch(error => {
