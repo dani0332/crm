@@ -25,7 +25,7 @@ trait GetUserTreeTrait
                 array_push($childUserIds, $teamMateId);
             }
         } else {
-            $carUserIds = $this->getUsersByTeamId(@$carTeam->id)->pluck('id');
+            $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
             $teamMates = DB::table('user_manager')->where('manager_id', $userId)->whereIn('user_id', $carUserIds)->pluck('user_id');
             foreach ($teamMates as $teamMateId) {
                 $carUserIds = $this->getUsersByTeamId($carTeam->id)->pluck('id');
