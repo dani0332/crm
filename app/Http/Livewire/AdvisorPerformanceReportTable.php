@@ -70,8 +70,8 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             ->map(fn ($users) => $users->name)
             ->toArray();
 
-        if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
+        if (! $this->getAppliedFilterWithValue('advisor_assigned_date')) {
+            $this->setFilter('advisor_assigned_date', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
