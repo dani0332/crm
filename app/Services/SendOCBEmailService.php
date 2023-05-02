@@ -42,7 +42,7 @@ class SendOCBEmailService
     public function processOCBEmail($quoteUuid)
     {
         Log::info('OCB Email Process START');
-        $carQuote = CarQuote::find($quoteUuid);
+        $carQuote = CarQuote::where('uuid', $quoteUuid)->firstOrFail();
 
         if ($carQuote->previous_quote_policy_number != null) {
             // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
@@ -84,7 +84,6 @@ class SendOCBEmailService
             ];
 
             $responseCode = $this->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
-
             if ($responseCode == 201) {
                 Log::info('OCB EmailSent: '.$responseCode);
             } else {
@@ -117,6 +116,8 @@ class SendOCBEmailService
                     ];
                 }
             }
+
+
 
             $body = [
                 'sender' => [
@@ -156,6 +157,8 @@ class SendOCBEmailService
                 'attachment' => $attachments ?? null,
             ];
 
+
+
             $ccAdvisor = [];
             if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
                 $ccAdvisor = [[
@@ -169,6 +172,7 @@ class SendOCBEmailService
             }
 
             $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
+
             $ccAdditional = [];
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
@@ -194,6 +198,7 @@ class SendOCBEmailService
 
             $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
             $responseCode = $clientRequest->getStatusCode();
+
 
             if ($responseCode == 201) {
                 $isEmailSent = 1;
