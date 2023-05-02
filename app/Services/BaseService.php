@@ -159,6 +159,8 @@ class BaseService
                         $fields[$property]['value'] = $quote->$property == 1 ? 'Yes' : 'No';
                     } elseif ($option['text'] == $quote->$property) {
                         $fields[$property]['value'] = $option['text'];
+                    } elseif ($property == 'is_ecommerce') {
+                        $fields[$property]['value'] = $quote->$property == 1 ? 'Yes' : 'No';
                     }
                 }
             } elseif (str_contains($field, 'select')) {
@@ -263,5 +265,24 @@ class BaseService
         if (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
             return $crudService->fillNewBusinessData($this->genericModel);
         }
+    }
+
+    public function sortMetaArray($sourceArray, $token)
+    {
+        $sorted = [];
+        foreach ($sourceArray as $key => $value) {
+            if (preg_match('/'.$token.'(\d+)/', $value, $matches)) {
+                $sorted[$key] = $matches[1];
+            } else {
+                $sorted[$key] = PHP_INT_MAX;
+            }
+        }
+        asort($sorted);
+        $result = [];
+        foreach ($sorted as $key => $value) {
+            $result[$key] = $sourceArray[$key];
+        }
+
+        return $result;
     }
 }

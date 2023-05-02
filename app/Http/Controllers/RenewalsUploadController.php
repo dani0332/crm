@@ -24,6 +24,7 @@ use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -232,8 +233,8 @@ class RenewalsUploadController extends Controller
                 'users.name as uploaded_by',
                 'renewals_upload_leads.skip_plans'
             )
-            ->leftjoin('users', 'users.id', 'renewals_upload_leads.created_by_id')
-            ->orderBy('renewals_upload_leads.created_at', 'desc');
+                ->leftjoin('users', 'users.id', 'renewals_upload_leads.created_by_id')
+                ->orderBy('renewals_upload_leads.created_at', 'desc');
 
             return $datatables::of($dataRenewalUpload)
                 ->addIndexColumn()
@@ -249,8 +250,8 @@ class RenewalsUploadController extends Controller
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
         $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', RenewalsUploadType::CREATE_LEADS)
-        ->where('renewal_import_code', '!=', '')
-        ->orderBy('created_at', 'desc')->get();
+            ->where('renewal_import_code', '!=', '')
+            ->orderBy('created_at', 'desc')->get();
 
         return view('renewals.update', compact('azureStorageUrl', 'azureStorageContainer', 'renewalsUploads'));
     }
@@ -295,6 +296,12 @@ class RenewalsUploadController extends Controller
     {
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
+        }
+
+        $lastBatchProcess = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
+
+        if($lastBatchProcess && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastBatchProcess->created_at) <= 5) {
+            return redirect('renewals/batches/'.$batch)->with('error', 'Batch process is already created, next can be created after 5 minutes ' );
         }
 
         Log::info('runBatchProcess START');

@@ -70,14 +70,14 @@ class LookupService extends BaseService
     public function getLeadStatuses()
     {
         return QuoteStatus::select('id', 'text')
-        ->whereNotIn('id', [
-            QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
-            QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyInvoiced,
-            QuoteStatusEnum::Issued,
-        ])
-        ->where('is_active', true)
-        ->orderBy('sort_order', 'asc')
-        ->get();
+            ->whereNotIn('id', [
+                QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::Draft, QuoteStatusEnum::Cancelled, QuoteStatusEnum::AMLScreeningFailed,
+                QuoteStatusEnum::TransactionDeclined, QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::PolicyInvoiced,
+                QuoteStatusEnum::Issued,
+            ])
+            ->where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->get();
     }
 
     public function getPaymentMethods()
@@ -88,7 +88,7 @@ class LookupService extends BaseService
     public function getActiveInsuranceProviders()
     {
         return InsuranceProvider::select('id', 'text')
-        ->where('is_active', true)->orderBy('text', 'asc')->get();
+            ->where('is_active', true)->orderBy('text', 'asc')->get();
     }
 
     public function getCarMake($id)
@@ -104,8 +104,8 @@ class LookupService extends BaseService
     public function getTierR()
     {
         return Tier::select('id', 'name')
-        ->where(['is_active' => true, 'name' => TiersEnum::TIER_R])
-        ->orderBy('name', 'asc')->get();
+            ->where(['is_active' => true, 'name' => TiersEnum::TIER_R])
+            ->orderBy('name', 'asc')->get();
     }
 
     public function getNationality($id)

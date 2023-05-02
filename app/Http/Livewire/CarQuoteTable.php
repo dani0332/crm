@@ -164,11 +164,11 @@ class CarQuoteTable extends DataTableComponent
                 ->options(
                     ['' => 'Select Insurance Provider'] +
                         InsuranceProvider::query()
-                        ->select('id', 'text')
-                        ->orderBy('text')
-                        ->get()
-                        ->pluck('text', 'text')
-                        ->toArray(),
+                            ->select('id', 'text')
+                            ->orderBy('text')
+                            ->get()
+                            ->pluck('text', 'text')
+                            ->toArray(),
                 )->filter(function (Builder $builder, string $value) {
                     $builder->where('car_quote_request.currently_insured_with', $value);
                 }),
@@ -177,12 +177,12 @@ class CarQuoteTable extends DataTableComponent
                 ->options(
                     ['' => 'Select Vehicle Type'] +
                         VehicleType::query()
-                        ->where('is_active', true)
-                        ->select('id', 'text')
-                        ->orderBy('text')
-                        ->get()
-                        ->pluck('text', 'id')
-                        ->toArray(),
+                            ->where('is_active', true)
+                            ->select('id', 'text')
+                            ->orderBy('text')
+                            ->get()
+                            ->pluck('text', 'id')
+                            ->toArray(),
                 )->filter(function (Builder $builder, string $value) {
                     $builder->where('car_quote_request.vehicle_type_id', $value);
                 }),
