@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Controllers\API\V1\SendOCBEmailController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,4 +28,5 @@ Route::prefix('v1')->group(function () {
     Route::delete('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'destroy']);
     Route::get('quotes/{quoteType}/document-types', [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
     Route::post('quotes/{quoteType}/export-plans-pdf', [GenericLobController::class, 'exportPlansPdf'])->name('exportPlansPdf');
+    Route::post('quotes/send-ocb-email', [SendOCBEmailController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
 });
