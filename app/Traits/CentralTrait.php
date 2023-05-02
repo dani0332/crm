@@ -2,7 +2,9 @@
 
 namespace App\Traits;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
+use App\Facades\Capi;
 use App\Models\LifeQuote;
 
 trait CentralTrait
@@ -11,8 +13,8 @@ trait CentralTrait
 
     public function fetchDuplicateAllowedLobsList($leadCode)
     {
-       // dd($this->limit(10)->get()->toArray(), $this->model() == LifeQuote::class);
-        return [
+        $modelType= $this->model();
+        $allowedLeadTypes= [
             quoteTypeCode::Home,
             quoteTypeCode::Health,
             quoteTypeCode::Life,
@@ -22,15 +24,32 @@ trait CentralTrait
             quoteTypeCode::Car,
             quoteTypeCode::Pet,
         ];
+
+        if (strtolower($modelType) == 'business') {
+            $modelType = 'Corpline';
+        }
+        $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
+            return $item;
+        });
+        foreach ($allowedLeadTypes as $leadType) {
+            $leadType = strtolower($leadType);
+            if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
+                $leadType = 'Business';
+            }
+            $repository = 'App\\Repositories\\'.$leadType. 'QuoteRepository';
+            $duplicateRecord = $repository::where('code', $leadCode)->first();
+            if ($duplicateRecord) {
+                $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
+                    return $item;
+                });
+            }
+        }
+        return $allowedLeadTypes;
     }
 
     public function fetchSaveDuplicateLeads($data)
     {
-        dd($data, $this->save($data));
-        return ;
-
-        $quote = $this->where('uuid', $data['uuid'])->first();
-
+        
         $lobTeams = $data['lob_team'];
         $parentType = $data['parentType'];
         $entityId = $data['entityId'];
@@ -38,19 +57,85 @@ trait CentralTrait
         if (strtolower($parentType) == strtolower(quoteTypeCode::CORPLINE) || strtolower($parentType) == strtolower(quoteTypeCode::GroupMedical)) {
             $parentType = 'Business';
         }
+        $repository = 'App\\Repositories\\'.$parentType. 'QuoteRepository';
+        $parentRecord =  $repository::where('id', $entityId)->first();
 
-        $parentRecord= $this->getQuoteObject($parentType,   $entityId );
-
+      
         if (!empty($data['lob_team_sub_selection'])) {
             $parentRecord['enquiryType'] =$data['lob_team_sub_selection'];
         } else {
             $parentRecord['enquiryType'] = 'record_only';
         }
+
+    
         if (! empty($lobTeams)) {
-            foreach ($lobTeams as $lobTeam) {
-                $this->createDuplicateRecord($lobTeam, $parentRecord);
+            $dataArr = [
+                'firstName' => $parentRecord->first_name,
+                'lastName' => $parentRecord->last_name,
+                'email' => $parentRecord->email,
+                'mobileNo' => $parentRecord->mobile_no,
+                'referenceUrl' => config('constants.APP_URL'),
+                'source' => config('constants.SOURCE_NAME'),
+            ];
+            foreach ($lobTeams as $lob) {
+                dd($lob);
+                $repository = 'App\\Repositories\\'.$lob. 'QuoteRepository';
+                
+                if (! class_exists($repository)) {
+                    return false;
+                }
+                if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
+                    $dataArr['business_type_of_insurance_id'] = 5;
+                }
+
+                $response = Capi::request('/api/v1-save-'.strtolower($lob).'-quote','post', $dataArr);
+                if (isset($response->message) && str_contains($response->message, 'Error')) {
+                    return false;
+                } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
+                    $record = $repository::where('uuid', $response->quoteUID)->first();
+                    if ($record) {
+                        $update=[
+                            'parent_duplicate_quote_id' => $parentRecord->code,
+                            'advisor_id' => auth()->user()->id,
+                        ];
+                        if (strtolower($lob) == strtolower(quoteTypeCode::Health)) {
+                            $subTeam = null;
+                            if (auth()->user()->subTeam) {
+                                $subTeam = auth()->user()->subTeam->name;
+                            }
+                            $update['health_team_type'] = $subTeam;
+                        }
+                        $record->update($update);
+                    }
+                }
             }
         }
+
+
+
+
+    
+        // if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
+        //     $dataArr['business_type_of_insurance_id'] = 5;
+        // }
+        // $response = CapiRequestService::sendCAPIRequest('/api/v1-save-'.strtolower($lob).'-quote', $dataArr);
+        // if (isset($response->message) && str_contains($response->message, 'Error')) {
+        //     return false;
+        // } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
+        //     $record = $model::where('uuid', $response->quoteUID)->first();
+        //     if ($record) {
+        //         $record->parent_duplicate_quote_id = $parentRecord->code;
+        //         $record->advisor_id = auth()->user()->id;
+        //         if (strtolower($lob) == strtolower(quoteTypeCode::Health)) {
+        //             $subTeam = null;
+        //             if (auth()->user()->subTeam) {
+        //                 $subTeam = auth()->user()->subTeam->name;
+        //             }
+        //             $record->health_team_type = $subTeam;
+        //         }
+        //         $record->save();
+        //     }
+        // }
 
     }
 }

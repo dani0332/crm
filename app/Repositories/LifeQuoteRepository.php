@@ -101,9 +101,4 @@ class LifeQuoteRepository extends BaseRepository
 
         ];
     } 
-    
-    // public function fetchDuplicateAllowedLobsList($code)
-    // {
-    //    return $this->duplicateAllowedLobs(quoteTypeCode::Life,$code);
-    // }
 }

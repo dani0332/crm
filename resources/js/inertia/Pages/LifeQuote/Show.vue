@@ -111,7 +111,7 @@ const onCreateDuplicate = isValid => {
             label="LOBs"
             :options="
               allowedDuplicateLOB.map((lob, index) => ({
-                value: index,
+                value: lob,
                 label: lob,
               }))
             "
