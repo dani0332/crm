@@ -70,8 +70,8 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             ->map(fn ($users) => $users->name)
             ->toArray();
 
-        if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
+        if (! $this->getAppliedFilterWithValue('advisor_assigned_date')) {
+            $this->setFilter('advisor_assigned_date', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
@@ -147,7 +147,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
         return [
-            TextFilter::make('Advisor Assigned / Created Date', 'created_at')
+            TextFilter::make('Advisor Assigned', 'advisor_assigned_date')
                 ->config([
                     'placeholder' => 'Select Start & End Date',
                     'range' => true,
@@ -157,10 +157,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
                     $dates = explode('~', $value);
                     $dates[0] = Carbon::parse($dates[0])->startOfDay()->format($dateFormat);
                     $dates[1] = Carbon::parse($dates[1])->endOfDay()->format($dateFormat);
-                    $builder->where(function ($query) use ($dates) {
-                        $query->whereBetween('car_quote_request_detail.advisor_assigned_date', $dates)
-                            ->orWhereBetween('car_quote_request.created_at', $dates);
-                    });
+                    $builder->whereBetween('car_quote_request_detail.advisor_assigned_date', $dates);
                 }),
             MultiSelectFilter::make('Teams')->config([
                 'placeholder' => 'SELECT ALL TEAMS',
