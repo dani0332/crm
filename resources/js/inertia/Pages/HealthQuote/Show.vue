@@ -333,9 +333,9 @@ const memberForm = useForm({
   id: null,
   gender: null,
   dob: null,
-  nationality_id: null,
+  nationality_id: page.props.membersDetail.length ? null : page.props.quote.nationality_id,
   salary_band_id: null,
-  emirate_of_your_visa_id: null,
+  emirate_of_your_visa_id: page.props.membersDetail.length ? null : page.props.quote.emirate_of_your_visa_id,
   member_category_id: null,
   health_quote_request_id: page.props.quote.id,
 });
