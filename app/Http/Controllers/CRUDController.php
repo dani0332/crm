@@ -13,6 +13,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Http\Requests\ChangeInsurerRequest;
+use App\Exports\HealthQuotesExport;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -148,7 +149,7 @@ class CRUDController extends Controller
             $userRoles = Auth::user()->usersroles()->get();
             $isManager = false;
             foreach ($userRoles as $userRole) {
-                if (! str_contains(strtolower($userRole->name), 'deputy') && str_contains(strtolower($userRole->name), 'manager')) {
+                if (!str_contains(strtolower($userRole->name), 'deputy') && str_contains(strtolower($userRole->name), 'manager')) {
                     $isManager = true;
                 }
             }
@@ -160,7 +161,7 @@ class CRUDController extends Controller
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car) && auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $advisorAllocationRecord = LeadAllocation::where('user_id', auth()->user()->id)->first();
             $userMaxCap = $advisorAllocationRecord->max_capacity == -1 ? 'No Limit' : ($advisorAllocationRecord->max_capacity ?? 0);
-            $todayAssignmentCount = ''.($advisorAllocationRecord->auto_assignment_count ?? 0).' / '.$advisorAllocationRecord->manual_assignment_count ?? 0 .'';
+            $todayAssignmentCount = '' . ($advisorAllocationRecord->auto_assignment_count ?? 0) . ' / ' . $advisorAllocationRecord->manual_assignment_count ?? 0 . '';
         }
         $tiers = Tier::where('is_active', 1)->get();
         //Checking if the loggedIn user is Renewal User
@@ -299,7 +300,7 @@ class CRUDController extends Controller
         $validateArray = [];
         if ($modelType !== quoteTypeCode::Health && $modelType !== quoteTypeCode::Home) {
             foreach ($modelPropertiesList as $property => $value) {
-                if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
+                if (strpos($value, 'required') && $property != 'id' && !strpos($modelSkipPropertiesList['create'], $property)) {
                     $validateArray[$property] = 'required';
                 }
             }
@@ -361,10 +362,10 @@ class CRUDController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-            if (! isset($record->quoteUID)) {
-                return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
+            if (!isset($record->quoteUID)) {
+                return redirect('/quotes/' . strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))) . ' has been stored');
             } else {
-                return redirect('/quotes/'.strtolower($modelType).'/'.$record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : 'Lead'))).' has been created');
+                return redirect('/quotes/' . strtolower($modelType) . '/' . $record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : 'Lead'))) . ' has been created');
             }
         }
     }
@@ -385,20 +386,20 @@ class CRUDController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        if (! $record) {
+        if (!$record) {
             abort(404);
         }
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
         }
-        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType) . 'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
         $isRenewalUser = false;
         $isNewBusinessUser = false;
         $model = $this->genericModel;
-        $model_name = $this->genericModel->modelType.'Quote';
+        $model_name = $this->genericModel->modelType . 'Quote';
         $customTitles = $customTableList = [];
         if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
             $isRenewalUser = true;
@@ -433,7 +434,7 @@ class CRUDController extends Controller
             }
         }
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
-        $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType).'QuoteService' : lcfirst(ucwords($model->modelType)).'Service';
+        $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType) . 'QuoteService' : lcfirst(ucwords($model->modelType)) . 'Service';
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
         $activitiesData = $this->activityService->getActivityByLeadId($record->id, strtolower($model->modelType));
         $activities = [];
@@ -517,9 +518,9 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-            $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
-            $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
+            $notProductionApproval = !auth()->user()->hasRole(RolesEnum::PA);
 
             return inertia('HomeQuote/Show', [
                 'quote' => $record,
@@ -574,20 +575,20 @@ class CRUDController extends Controller
                 return $quoteDocument;
             });
 
-            $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+            $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
 
-            $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
+            $notProductionApproval = !auth()->user()->hasRole(RolesEnum::PA);
             $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod']);
             $paymentEntityModel->load(['plan.insuranceProvider']);
 
             $payments->each(function ($payment) {
-                $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
+                $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && !auth()->user()->hasRole(RolesEnum::PA);
                 $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
                 $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
                 $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
-                    && ! auth()->user()->hasRole(RolesEnum::PA);
+                    && !auth()->user()->hasRole(RolesEnum::PA);
 
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
@@ -636,7 +637,7 @@ class CRUDController extends Controller
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
-                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
+                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
                     'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
                 ],
@@ -722,7 +723,7 @@ class CRUDController extends Controller
         } else {
             $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
             foreach ($modelPropertiesList as $property => $value) {
-                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && ! strpos($modelSkipPropertiesList['update'], $property)) {
+                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && !strpos($modelSkipPropertiesList['update'], $property)) {
                     $validateArray[$property] = 'required';
                 }
             }
@@ -732,7 +733,7 @@ class CRUDController extends Controller
         // $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
-        return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
+        return redirect('/quotes/' . strtolower(str_replace('"', '', $request->modelType)) . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
     }
 
     /**
@@ -839,7 +840,7 @@ class CRUDController extends Controller
             $modelType = $request->get('modelType');
         }
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
-        $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
+        $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType) . 'QuoteService' : lcfirst(ucwords($modelType)) . 'Service';
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
         $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
         $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
@@ -958,15 +959,15 @@ class CRUDController extends Controller
         if (count($result) > 0) {
             $msg = '';
             foreach ($result as $item) {
-                $msg = $msg.'Lead with CDBID '.$item['leadId'].' is not assigned. <span style="color:black;">Reason : '.$item['msg'].'</span> <br>';
+                $msg = $msg . 'Lead with CDBID ' . $item['leadId'] . ' is not assigned. <span style="color:black;">Reason : ' . $item['msg'] . '</span> <br>';
             }
-            Log::warning('WCU Assignment Failed for '.$request->modelType.' Quote , selected id was '.$request->selectTmLeadId);
+            Log::warning('WCU Assignment Failed for ' . $request->modelType . ' Quote , selected id was ' . $request->selectTmLeadId);
 
             return Redirect::back()->with('message', $msg);
         }
         $assignedUserName = $this->userService->getUserNameById((int) $request->assigned_to_id_new);
 
-        return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUserName);
+        return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUserName);
     }
 
     public function manualLeadAssign(Request $request)
@@ -976,20 +977,20 @@ class CRUDController extends Controller
             return redirect()->back()->with('message', $isValidRequest);
         }
         $assignedUser = $this->userService->getUserById((int) $request->assigned_to_id_new);
-        if (! $assignedUser) {
+        if (!$assignedUser) {
             return Redirect::back()->with('message', 'Selected advisor does not exist in the system!');
         }
-        $assignmentResult = $this->{strtolower($request->modelType).'QuoteService'}->processManualLeadAssignment($request);
+        $assignmentResult = $this->{strtolower($request->modelType) . 'QuoteService'}->processManualLeadAssignment($request);
         if (count($assignmentResult) > 0) {
             $msg = '';
             foreach ($assignmentResult as $assignmentResultItem) {
-                $msg = $msg.' Lead with CDBID'.$assignmentResultItem['leadId'].' is not assigned, Reason : '.$assignmentResultItem['msg'].' <br>';
+                $msg = $msg . ' Lead with CDBID' . $assignmentResultItem['leadId'] . ' is not assigned, Reason : ' . $assignmentResultItem['msg'] . ' <br>';
             }
-            Log::warning('Manual Lead Assignment Failed for '.$request->modelType.' Quote , selected id was '.$request->selectTmLeadId);
+            Log::warning('Manual Lead Assignment Failed for ' . $request->modelType . ' Quote , selected id was ' . $request->selectTmLeadId);
 
             return Redirect::back()->with('message', $msg);
         } else {
-            return Redirect::back()->with('success', $request->modelType.' Leads has been Assigned To '.$assignedUser->name);
+            return Redirect::back()->with('success', $request->modelType . ' Leads has been Assigned To ' . $assignedUser->name);
         }
     }
 
@@ -1008,11 +1009,11 @@ class CRUDController extends Controller
 
         $entityId = $request->get('entityId');
 
-        info('Inside Health Team Assign with team : '.$selectedTeam.'  and entity Id : '.$entityId);
+        info('Inside Health Team Assign with team : ' . $selectedTeam . '  and entity Id : ' . $entityId);
 
         $lead = $this->healthQuoteService->getEntityPlain($entityId);
 
-        if (! $lead || $lead == null) {
+        if (!$lead || $lead == null) {
             return redirect()->to('/quotes/health')->with('message', ' Lead not found. Please try again.');
         }
 
@@ -1026,18 +1027,18 @@ class CRUDController extends Controller
             return redirect()->to('/quotes/health')->with('success', ' Lead has been Converted And Assigned To Group Medical Team');
         }
         if ($selectedTeam != quoteTypeCode::GM && $isAssigned) {
-            return redirect()->to('/quotes/health/'.$lead->uuid)->with('success', ' Lead has been Assigned To '.strtoupper($selectedTeam).' Team');
+            return redirect()->to('/quotes/health/' . $lead->uuid)->with('success', ' Lead has been Assigned To ' . strtoupper($selectedTeam) . ' Team');
         }
     }
 
     public function updateLeadStatus(Request $request)
     {
-        if (! $request->leadStatus) {
+        if (!$request->leadStatus) {
             return redirect()->back()->with('message', 'Please select lead status and try again.');
         }
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
             $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
-            if (! $lead) {
+            if (!$lead) {
                 return redirect()->back()->with('message', 'Lead not found please try again.');
             }
             if (($lead->health_team_type == null || $lead->health_team_type == quoteTypeCode::WCU) && $request->leadStatus == QuoteStatusEnum::Qualified) {
@@ -1069,7 +1070,7 @@ class CRUDController extends Controller
                 $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
                 $this->validate($request, [
                     'next_followup_date' => 'required',
-                    'next_followup_date' => 'date_format:'.$dateFormat.'|after_or_equal:'.date($dateFormat),
+                    'next_followup_date' => 'date_format:' . $dateFormat . '|after_or_equal:' . date($dateFormat),
                     'notes' => 'required',
                 ]);
                 if (isset($request->quote_uuid)) {
@@ -1078,7 +1079,7 @@ class CRUDController extends Controller
                 }
             }
             if ($request->leadStatus == QuoteStatusEnum::IMRenewal) {
-                if (! isset($request->tier_id)) {
+                if (!isset($request->tier_id)) {
                     $this->validate($request, [
                         'tier_id' => 'required',
                     ]);
@@ -1095,7 +1096,7 @@ class CRUDController extends Controller
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
 
-        return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
+        return redirect()->to('/quotes/' . strtolower($request->modelType) . '/' . $entity->uuid)->with('success', ' Lead Status has been Updated');
     }
 
     public function carPlanManualProcess(Request $request)
@@ -1124,20 +1125,20 @@ class CRUDController extends Controller
                 foreach ($results['leads_list'] as $result) {
                     $html .= ' <li data-block-id="53" class="drag-item">
                     <div class="lead-block rotten">
-                        <div class="lead-title">'.$result->code.'</div>
+                        <div class="lead-title">' . $result->code . '</div>
                         <span class="float-right">
-                        <a target="_blank" href="/quotes/'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                        <a target="_blank" href="/quotes/' . strtolower($request->modelType) . '/' . $result->uuid . '"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                         </span>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
-                        '.$result->first_name.' '.$result->last_name.'
+                        ' . $result->first_name . ' ' . $result->last_name . '
                         </div>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-building font-1" aria-hidden="true"></i>
-                        '.$result->company_name.'
+                        ' . $result->company_name . '
                         </div>
                         <div class="pad-5"></div>
-                        <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;'.$result->premium.'
+                        <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;' . $result->premium . '
                         </div>
                     </div>
                 </li>';
@@ -1169,20 +1170,20 @@ class CRUDController extends Controller
                 foreach ($results['leads_list'] as $result) {
                     $html .= ' <li data-block-id="53" class="drag-item">
                     <div class="lead-block rotten">
-                        <div class="lead-title">'.$result->code.'</div>
+                        <div class="lead-title">' . $result->code . '</div>
                         <span class="float-right">
-                        <a target="_blank" href="/quotes/'.strtolower($request->modelType).'/'.$result->uuid.'"><i class="fa fa-pencil" aria-hidden="true"></i></a>
+                        <a target="_blank" href="/quotes/' . strtolower($request->modelType) . '/' . $result->uuid . '"><i class="fa fa-pencil" aria-hidden="true"></i></a>
                         </span>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-user font-1" aria-hidden="true"></i>
-                        '.$result->first_name.' '.$result->last_name.'
+                        ' . $result->first_name . ' ' . $result->last_name . '
                         </div>
                         <div class="pad-5"></div>
                         <div class="lead-person"><i class="fa fa-building font-1" aria-hidden="true"></i>
-                        '.$result->company_name.'
+                        ' . $result->company_name . '
                         </div>
                         <div class="pad-5"></div>
-                        <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;'.$result->premium.'
+                        <div class="lead-cost"><i class="fa fa-usd font-1"></i>&nbsp;' . $result->premium . '
                         </div>
                     </div>
                 </li>';
@@ -1197,18 +1198,18 @@ class CRUDController extends Controller
     {
         $this->crudService->createDuplicate($request);
 
-        return redirect()->to('/quotes/'.strtolower($request->parentType).'/'.$request->entityUId)->with('success', ' Lead has been Duplicated');
+        return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Lead has been Duplicated');
     }
 
     public function createActivity(Request $request)
     {
-        $record = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->entityId);
+        $record = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->entityId);
         $this->activityService->createActivity($request, $record);
         if (isset($request->isActivityView)) {
             return redirect()->to('/activities/')->with('success', ' Activity has been Created');
         }
 
-        return redirect()->to('/quotes/'.strtolower($request->parentType).'/'.$request->entityUId)->with('success', ' Activity has been Created');
+        return redirect()->to('/quotes/' . strtolower($request->parentType) . '/' . $request->entityUId)->with('success', ' Activity has been Created');
     }
 
     public function carAssumptionsUpdate(Request $request)
@@ -1242,9 +1243,9 @@ class CRUDController extends Controller
 
     public function updateQuotePolicy(Request $request)
     {
-        $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
+        $model = '\\App\\Models\\' . ucwords($request->modelType) . 'Quote';
         $quoteModel = $model::where('id', $request->quote_id)->first();
-        if (! $quoteModel) {
+        if (!$quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }
 
@@ -1261,7 +1262,8 @@ class CRUDController extends Controller
 
     public function manualPlanToggle(Request $request)
     {
-        $response = $this->carQuoteService->updateManualPlansBulk($request);
+        $response = $this->{strtolower($request->modelType) . 'QuoteService'}->updateManualPlansBulk($request);
+
         if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
             return redirect()->back()->with('success', 'Plan has been updated');
         } else {
@@ -1313,11 +1315,23 @@ class CRUDController extends Controller
         return $pdf->download($response['name']);
     }
 
+    /**
+     * export health leads to excel sheet.
+     *
+     * @param  Request  $request
+     */
+    public function exportHealthLeads(Request $request)
+    {
+        $query = $this->crudService->getGridData($this->genericModel, $request);
+
+        return (new HealthQuotesExport($query))->download('Health-List.xlsx');
+    }
+
     public function destroyDocument($quoteType, $quoteUuId, $id)
     {
         $document = QuoteDocument::find($id);
 
-        if (! $document) {
+        if (!$document) {
             return redirect()->back()->with('message', 'Document not found');
         }
 
@@ -1329,10 +1343,10 @@ class CRUDController extends Controller
     public function storePayment(Request $request)
     {
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
-        if (! $quoteModel) {
+        if (!$quoteModel) {
             return response()->json(['success' => false]);
         }
-        $code = 'P-'.strtoupper(substr(uniqid(''), 0, 8));
+        $code = 'P-' . strtoupper(substr(uniqid(''), 0, 8));
         $paymentInformation = [
             'code' => $code,
             'collection_type' => $request->collection_type,
@@ -1377,7 +1391,7 @@ class CRUDController extends Controller
             $paymentInformation['reference'] = $request->reference;
         }
         $payment = Payment::where('code', $request->paymentCode)->first();
-        if (! $payment) {
+        if (!$payment) {
             return back()->with('message', 'Payment record not found');
         }
         $payment->update($paymentInformation);
@@ -1410,9 +1424,9 @@ class CRUDController extends Controller
             'advisorEmailAddress' => $request->advisor_email,
             'advisorMobileNo' => $request->advisor_mobile_no,
             'advisorLandlineNo' => $request->advisor_landline_no,
-            'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$request->quote_uuid,
+            'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $request->quote_uuid,
             'listQuotePlans' => $listQuotePlans,
-            'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode=',
+            'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN') . '/car-insurance/quote/' . $request->quote_uuid . '/' . 'payment/?providerCode=',
             'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
         ];
 
@@ -1421,9 +1435,9 @@ class CRUDController extends Controller
         if ($responseCode == 201) {
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
-            Log::info('sendEmailOneClickBuy ('.$request->quote_cdb_id.') OCB email sending failed Error Code: '.$responseCode);
+            Log::info('sendEmailOneClickBuy (' . $request->quote_cdb_id . ') OCB email sending failed Error Code: ' . $responseCode);
 
-            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
+            return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: ' . $responseCode], 500);
         }
     }
 
@@ -1432,7 +1446,7 @@ class CRUDController extends Controller
         $selectedLeadId = $request->selectedLeadId;
         $selectedTierId = $request->selectedTierId;
         $entityCode = $request->entityCode;
-        info('manualTierAssignment  -- selected Tier Id : '.$selectedLeadId.' , selected Lead is : '.$entityCode.', requested by '.auth()->user()->email);
+        info('manualTierAssignment  -- selected Tier Id : ' . $selectedLeadId . ' , selected Lead is : ' . $entityCode . ', requested by ' . auth()->user()->email);
         CarQuote::where('id', $selectedLeadId)->update([
             'tier_id' => $selectedTierId,
             'cost_per_lead' => Tier::where('id', $selectedTierId)->get()->first()->cost_per_lead,

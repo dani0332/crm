@@ -99,6 +99,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 									</div>
 								</div>
 							</div>
+							<input type="hidden" id="modelType" name="modelType" value="Car">
 							<input type="hidden" id="planIds" name="planIds" value="">
 							<input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{$record->uuid}}">
 						</form>
