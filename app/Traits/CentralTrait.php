@@ -5,7 +5,6 @@ namespace App\Traits;
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Facades\Capi;
-use App\Models\LifeQuote;
 
 trait CentralTrait
 {
@@ -13,8 +12,8 @@ trait CentralTrait
 
     public function fetchDuplicateAllowedLobsList($leadCode)
     {
-        $modelType= $this->model();
-        $allowedLeadTypes= [
+        $modelType = $this->model();
+        $allowedLeadTypes = [
             quoteTypeCode::Home,
             quoteTypeCode::Health,
             quoteTypeCode::Life,
@@ -36,7 +35,7 @@ trait CentralTrait
             if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
                 $leadType = 'Business';
             }
-            $repository = 'App\\Repositories\\'.$leadType. 'QuoteRepository';
+            $repository = 'App\\Repositories\\'.$leadType.'QuoteRepository';
             $duplicateRecord = $repository::where('code', $leadCode)->first();
             if ($duplicateRecord) {
                 $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
@@ -44,12 +43,12 @@ trait CentralTrait
                 });
             }
         }
+
         return $allowedLeadTypes;
     }
 
     public function fetchSaveDuplicateLeads($data)
     {
-        
         $lobTeams = $data['lob_team'];
         $parentType = $data['parentType'];
         $entityId = $data['entityId'];
@@ -57,17 +56,15 @@ trait CentralTrait
         if (strtolower($parentType) == strtolower(quoteTypeCode::CORPLINE) || strtolower($parentType) == strtolower(quoteTypeCode::GroupMedical)) {
             $parentType = 'Business';
         }
-        $repository = 'App\\Repositories\\'.$parentType. 'QuoteRepository';
-        $parentRecord =  $repository::where('id', $entityId)->first();
+        $repository = 'App\\Repositories\\'.$parentType.'QuoteRepository';
+        $parentRecord = $repository::where('id', $entityId)->first();
 
-      
-        if (!empty($data['lob_team_sub_selection'])) {
-            $parentRecord['enquiryType'] =$data['lob_team_sub_selection'];
+        if (! empty($data['lob_team_sub_selection'])) {
+            $parentRecord['enquiryType'] = $data['lob_team_sub_selection'];
         } else {
             $parentRecord['enquiryType'] = 'record_only';
         }
 
-    
         if (! empty($lobTeams)) {
             $dataArr = [
                 'firstName' => $parentRecord->first_name,
@@ -79,8 +76,8 @@ trait CentralTrait
             ];
             foreach ($lobTeams as $lob) {
                 dd($lob);
-                $repository = 'App\\Repositories\\'.$lob. 'QuoteRepository';
-                
+                $repository = 'App\\Repositories\\'.$lob.'QuoteRepository';
+
                 if (! class_exists($repository)) {
                     return false;
                 }
@@ -88,13 +85,13 @@ trait CentralTrait
                     $dataArr['business_type_of_insurance_id'] = 5;
                 }
 
-                $response = Capi::request('/api/v1-save-'.strtolower($lob).'-quote','post', $dataArr);
+                $response = Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
                 if (isset($response->message) && str_contains($response->message, 'Error')) {
                     return false;
                 } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
                     $record = $repository::where('uuid', $response->quoteUID)->first();
                     if ($record) {
-                        $update=[
+                        $update = [
                             'parent_duplicate_quote_id' => $parentRecord->code,
                             'advisor_id' => auth()->user()->id,
                         ];
@@ -111,10 +108,6 @@ trait CentralTrait
             }
         }
 
-
-
-
-    
         // if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
         //     $dataArr['business_type_of_insurance_id'] = 5;
         // }
@@ -136,6 +129,5 @@ trait CentralTrait
         //         $record->save();
         //     }
         // }
-
     }
 }

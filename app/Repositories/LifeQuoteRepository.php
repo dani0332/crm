@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Facades\Capi;
 use App\Models\LifeNumberOfYears;
 use App\Models\LifeQuote;
@@ -100,5 +99,5 @@ class LifeQuoteRepository extends BaseRepository
             'numberOfYears' => LifeNumberOfYears::withActive()->get(),
 
         ];
-    } 
+    }
 }

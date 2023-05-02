@@ -72,7 +72,7 @@ class LifeQuoteController extends Controller
     {
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
 
-        $duplicateAllowedLobs=  LifeQuoteRepository::duplicateAllowedLobsList($quote->code);
+        $duplicateAllowedLobs = LifeQuoteRepository::duplicateAllowedLobsList($quote->code);
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
@@ -91,7 +91,7 @@ class LifeQuoteController extends Controller
             'quote' => $quote,
             'activities' => $activities,
             'advisors' => $advisors,
-            'allowedDuplicateLOB' =>  $duplicateAllowedLobs,
+            'allowedDuplicateLOB' => $duplicateAllowedLobs,
             'lostReasons' => $lostReasons,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);

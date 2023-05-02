@@ -7,11 +7,9 @@ use App\Http\Requests\DuplicateLobRequest;
 
 class CentralController extends Controller
 {
-   public function createDuplicate(DuplicateLobRequest $request){
-      
-    $quoteType = 'App\\Repositories\\'.request()->modelType. 'QuoteRepository';
-    $quoteType::saveDuplicateLeads($request->validated());
-
-
-   }
+    public function createDuplicate(DuplicateLobRequest $request)
+    {
+        $quoteType = 'App\\Repositories\\'.request()->modelType.'QuoteRepository';
+        $quoteType::saveDuplicateLeads($request->validated());
+    }
 }
