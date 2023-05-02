@@ -33,8 +33,8 @@ return [
     'MAIL_FROM_ADDRESS_AML' => env('MAIL_FROM_ADDRESS_AML'),
     'MAIL_FROM_NAME_AML' => env('MAIL_FROM_NAME_AML'),
     // ftc-form-delete schedule on 7th June 2023
-//    'MAIL_NOTIFICATION_FTC' => env('MAIL_FROM_ADDRESS'),
-//    'FTC_EMAIL_FORMAT' => 'd F Y g:i A',
+    //    'MAIL_NOTIFICATION_FTC' => env('MAIL_FROM_ADDRESS'),
+    //    'FTC_EMAIL_FORMAT' => 'd F Y g:i A',
     'ECOM_CAR_INSURANCE_QUOTE_URL' => env('ECOM_CAR_INSURANCE_QUOTE_URL'),
     'CONFIRM_EMAIL_LINK' => env('CONFIRM_EMAIL_LINK'),
     'AZURE_STORAGE_CONTAINER' => env('AZURE_STORAGE_CONTAINER'),
