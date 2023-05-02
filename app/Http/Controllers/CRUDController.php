@@ -12,6 +12,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Exports\HealthQuotesExport;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -1311,6 +1312,18 @@ class CRUDController extends Controller
         $pdf = $response['pdf'];
 
         return $pdf->download($response['name']);
+    }
+
+    /**
+     * export health leads to excel sheet.
+     *
+     * @param  Request  $request
+     */
+    public function exportHealthLeads(Request $request)
+    {
+        $query = $this->crudService->getGridData($this->genericModel, $request);
+
+        return (new HealthQuotesExport($query))->download('Health-List.xlsx');
     }
 
     public function destroyDocument($quoteType, $quoteUuId, $id)

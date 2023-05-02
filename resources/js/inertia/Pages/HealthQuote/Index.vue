@@ -156,7 +156,12 @@ const objToUrl = obj => {
     key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
   );
   return Object.keys(obj)
-    .map(key => `${key}=${obj[key]}`)
+    .map(key => {
+      if (Array.isArray(obj[key])) {
+        return obj[key].map(value => `${key}=${value}`).join('&');
+      }
+      return `${key}=${obj[key]}`;
+    })
     .join('&');
 };
 
@@ -172,7 +177,6 @@ function setQueryStringFilters() {
         params[key].length == 1
           ? params[key]
           : params[key].map(status => parseInt(status));
-      console.log(filters.advisors);
     } else {
       filters[key] = params[key];
     }
@@ -185,7 +189,12 @@ const permissionsEnum = page.props.permissionsEnum;
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if (
+      filters.created_at_start &&
+      filters.created_at_end &&
+      params?.created_at_start &&
+      params?.created_at_end
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -317,7 +326,7 @@ onMounted(() => {
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/quotes/health-export?${objToUrl(filters)}`"
+            :href="`/quotes/health-export?${objToUrl(params)}`"
             class="justify-self-start"
           >
             Export
