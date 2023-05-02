@@ -35,7 +35,7 @@ trait CentralTrait
             if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
                 $leadType = 'Business';
             }
-            $repository = 'App\\Repositories\\'.$leadType.'QuoteRepository';
+            $repository = 'App\\Repositories\\'.strtoupper($leadType).'QuoteRepository';
             $duplicateRecord = $repository::where('code', $leadCode)->first();
             if ($duplicateRecord) {
                 $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
@@ -56,7 +56,7 @@ trait CentralTrait
         if (strtolower($parentType) == strtolower(quoteTypeCode::CORPLINE) || strtolower($parentType) == strtolower(quoteTypeCode::GroupMedical)) {
             $parentType = 'Business';
         }
-        $repository = 'App\\Repositories\\'.$parentType.'QuoteRepository';
+        $repository = 'App\\Repositories\\'.strtoupper($parentType).'QuoteRepository';
         $parentRecord = $repository::where('id', $entityId)->first();
 
         if (! empty($data['lob_team_sub_selection'])) {
@@ -75,8 +75,7 @@ trait CentralTrait
                 'source' => config('constants.SOURCE_NAME'),
             ];
             foreach ($lobTeams as $lob) {
-                dd($lob);
-                $repository = 'App\\Repositories\\'.$lob.'QuoteRepository';
+                $repository = 'App\\Repositories\\'.strtoupper($lob).'QuoteRepository';
 
                 if (! class_exists($repository)) {
                     return false;
@@ -107,27 +106,5 @@ trait CentralTrait
                 }
             }
         }
-
-        // if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
-        //     $dataArr['business_type_of_insurance_id'] = 5;
-        // }
-        // $response = CapiRequestService::sendCAPIRequest('/api/v1-save-'.strtolower($lob).'-quote', $dataArr);
-        // if (isset($response->message) && str_contains($response->message, 'Error')) {
-        //     return false;
-        // } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
-        //     $record = $model::where('uuid', $response->quoteUID)->first();
-        //     if ($record) {
-        //         $record->parent_duplicate_quote_id = $parentRecord->code;
-        //         $record->advisor_id = auth()->user()->id;
-        //         if (strtolower($lob) == strtolower(quoteTypeCode::Health)) {
-        //             $subTeam = null;
-        //             if (auth()->user()->subTeam) {
-        //                 $subTeam = auth()->user()->subTeam->name;
-        //             }
-        //             $record->health_team_type = $subTeam;
-        //         }
-        //         $record->save();
-        //     }
-        // }
     }
 }

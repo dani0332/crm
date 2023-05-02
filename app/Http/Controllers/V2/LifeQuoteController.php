@@ -76,10 +76,7 @@ class LifeQuoteController extends Controller
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-
-        // $quoteType = 'Life';
-        // $quoteType = 'App\\Repositories\\'. $quoteType . 'QuoteRepository';
-
+        
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::LIFE->id(),
             'quote_request_id' => $quote->id,
