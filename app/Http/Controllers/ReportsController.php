@@ -6,10 +6,10 @@ use App\Services\AdvisorConversionReportService;
 
 class ReportsController extends Controller
 {
-    public function renderAdvisorConversionReport(AdvisorConversionReportService $reportService)
+    public function renderAdvisorConversionReport(AdvisorConversionReportService $advisorConversionReportService)
     {
         return inertia('Reports/AdvisorConversion', [
-            'data' => $reportService->getReportData(),
+            'data' => $advisorConversionReportService->getReportData(),
         ]);
     }
 
