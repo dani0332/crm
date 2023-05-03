@@ -102,6 +102,7 @@ class AdvisorConversionReportService extends BaseService
             ->keyBy('name')
             ->map(fn ($users) => $users->name)
             ->toArray();
+
         return [
             'maxDays' => $maxDays,
             'batches' => $batches,
@@ -126,7 +127,7 @@ class AdvisorConversionReportService extends BaseService
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) :
             Carbon::parse(now())->endOfDay()->format($dateFormat);
 
-        $batch = QuoteBatches::where('id' , $filters->quoteBatchId)->first();
+        $batch = QuoteBatches::where('id', $filters->quoteBatchId)->first();
 
         $query = CarQuote::query()
             ->select(
