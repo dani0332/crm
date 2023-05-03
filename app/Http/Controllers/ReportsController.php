@@ -2,14 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Enums\RolesEnum;
-use App\Models\CarQuote;
 use App\Services\AdvisorConversionReportService;
 use App\Services\ReportService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ReportsController extends Controller
 {
