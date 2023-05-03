@@ -14,15 +14,15 @@ const totalLeads = reactive({
   tableHeader: [
     {
       text: 'CDB Id',
-      value: 'code',
+      value: 'cdbId',
     },
     {
       text: 'Customer Name',
-      value: 'name',
+      value: 'fullName',
     },
     {
       text: 'Lead Status',
-      value: 'lead_status',
+      value: 'quoteStatusName',
     },
   ],
 });
@@ -129,7 +129,7 @@ function calculateNetConversion(row) {
 }
 
 const filters = reactive({
-  advisor_assigned_dates: [],
+    advisorAssignedDates: [],
   is_ecommerce: '',
   batches: [],
   tiers: [],
@@ -177,6 +177,8 @@ function onFetchAdvisorAssignedLeads(item, type) {
     .post(`/reports/fetch-advisor-assigned-leads-data`, {
       ...filters,
       leadType: type,
+      quote_batch_id: item.quote_batch_id,
+      advisorId : item.advisorId
     })
     .then(response => {
       totalLeads.data = response.data;
@@ -186,8 +188,8 @@ function onFetchAdvisorAssignedLeads(item, type) {
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-      if (key == 'advisor_assigned_dates[]') {
-        filters.advisor_assigned_dates = params[key];
+      if (key == 'advisorAssignedDates[]') {
+        filters.advisorAssignedDates = params[key];
       } else {
         filters[key] = params[key];
       }
@@ -202,6 +204,7 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
+  filters.advisorAssignedDates = [new Date(), new Date()];
 });
 </script>
 
@@ -216,7 +219,7 @@ onMounted(() => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
-          v-model="filters.advisor_assigned_dates"
+          v-model="filters.advisorAssignedDates"
           label="Advisor Assigned Date"
           placeholder="Select Start & End Date"
           range
@@ -261,7 +264,7 @@ onMounted(() => {
           "
         />
 
-        <ComboBox
+        <!-- <ComboBox
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
@@ -271,7 +274,7 @@ onMounted(() => {
               label: leadSource.name,
             }))
           "
-        />
+        /> -->
 
         <ComboBox
           v-model="filters.teams"
@@ -304,7 +307,7 @@ onMounted(() => {
       :loading="loaders.table"
       :headers="tableHeader"
       :items="reportData.data || []"
-      :rows-per-page="15"
+      :rows-per-page="10"
       border-cell
       hide-rows-per-page
       hide-footer
