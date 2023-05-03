@@ -1,5 +1,4 @@
 <script setup>
-
 defineProps({
   quotes: Object,
   dropdownSource: Object,
@@ -10,6 +9,20 @@ const page = usePage();
 
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
+
+const created_at_rule = v => {
+  if (filters.created_at_end) {
+    return isRequired(v);
+  }
+  return true;
+};
+
+const created_at_end_rule = v => {
+  if (filters.created_at) {
+    return isRequired(v);
+  }
+  return true;
+};
 
 const quotesSelected = ref([]);
 
@@ -29,6 +42,7 @@ const filters = reactive({
   quote_status_id: '',
   advisor_id: '',
   insurance_type: '',
+  company_name: '',
   page: 1,
 });
 
@@ -79,7 +93,18 @@ function resetFilters() {
   for (const key in filters) {
     filters[key] = '';
   }
-  filterQuotes(true);
+  router.visit('/quotes/business', {
+    method: 'get',
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => {
+      loader.table = false;
+    },
+    onBefore: () => {
+      filters.page = 1;
+      loader.table = true;
+    },
+  });
 }
 
 function filterQuotes(isValid) {
@@ -91,11 +116,16 @@ function filterQuotes(isValid) {
       delete filters[key];
     }
   }
+  if (filters.created_at) {
+    filters.created_at = filters.created_at.split('T')[0];
+  }
+  if (filters.created_at_end) {
+    filters.created_at_end = filters.created_at_end.split('T')[0];
+  }
+
   router.visit('/quotes/business', {
     method: 'get',
-    data: {
-      ...filters,
-    },
+    data: filters,
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -145,21 +175,14 @@ function displayNotification() {
 }
 
 function setQueryFilters() {
-  let query = router.page.url.split('?')[1];
-  if (query) {
-    query = query.split('&');
-    query.forEach(item => {
-      const [key, value] = item.split('=');
-
-      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
-        let id = key.slice(0, -2);
-        if (filters[id]) {
-          filters[id].push(parseInt(value));
-        }
-      } else {
-        filters[key] = value;
-      }
-    });
+  let urlParams = new URLSearchParams(window.location.search);
+  for (const [key, value] of urlParams) {
+    if (key.includes('[')) {
+      let index = key.replace('[]', '');
+      filters[index] = urlParams.getAll(key).map(item => parseInt(item));
+    } else {
+      filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
+    }
   }
 }
 
@@ -175,10 +198,10 @@ onMounted(() => {
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
         <Link href="/quotes/business/cards">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+          <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
         </Link>
         <Link href="/quotes/business/create">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead</x-button>
         </Link>
       </div>
     </div>
@@ -225,15 +248,27 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Mobile Number"
         />
+
+        <x-input
+          v-model="filters.company_name"
+          type="search"
+          name="company_name"
+          label="Company Name"
+          class="w-full"
+          placeholder="Search by Company Name"
+        />
+
         <DatePicker
           v-model="filters.created_at"
           name="created_at"
           label="Created Date Start"
+          :rules="[created_at_rule]"
         />
         <DatePicker
           v-model="filters.created_at_end"
           name="created_at_end"
           label="Created Date End"
+          :rules="[created_at_end_rule]"
         />
 
         <x-select
@@ -320,12 +355,13 @@ onMounted(() => {
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <Link
+        <a
           :href="`/quotes/business/${uuid}`"
+          target="_blank"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </Link>
+        </a>
       </template>
 
       <template #item-source="{ source }">

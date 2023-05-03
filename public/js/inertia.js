@@ -1773,13 +1773,15 @@ function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArra
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
 function _iterableToArrayLimit(arr, i) { var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]; if (_i == null) return; var _arr = []; var _n = true; var _d = false; var _s, _e; try { for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e2) { throw _e2; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e3) { didErr = true; err = _e3; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
@@ -1803,6 +1805,22 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     var _useRules = (0,C_Users_ranam_code_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__.useRules)(),
         isRequired = _useRules.isRequired;
 
+    var created_at_rule = function created_at_rule(v) {
+      if (filters.created_at_end) {
+        return isRequired(v);
+      }
+
+      return true;
+    };
+
+    var created_at_end_rule = function created_at_end_rule(v) {
+      if (filters.created_at) {
+        return isRequired(v);
+      }
+
+      return true;
+    };
+
     var quotesSelected = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)([]);
     var loader = (0,vue__WEBPACK_IMPORTED_MODULE_2__.reactive)({
       table: false,
@@ -1819,6 +1837,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       quote_status_id: '',
       advisor_id: '',
       insurance_type: '',
+      company_name: '',
       page: 1
     });
     var leadStatusOptions = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
@@ -1894,7 +1913,18 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         filters[key] = '';
       }
 
-      filterQuotes(true);
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router.visit('/quotes/business', {
+        method: 'get',
+        preserveState: true,
+        preserveScroll: true,
+        onFinish: function onFinish() {
+          loader.table = false;
+        },
+        onBefore: function onBefore() {
+          filters.page = 1;
+          loader.table = true;
+        }
+      });
     }
 
     function filterQuotes(isValid) {
@@ -1908,9 +1938,17 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       }
 
+      if (filters.created_at) {
+        filters.created_at = filters.created_at.split('T')[0];
+      }
+
+      if (filters.created_at_end) {
+        filters.created_at_end = filters.created_at_end.split('T')[0];
+      }
+
       _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router.visit('/quotes/business', {
         method: 'get',
-        data: _objectSpread({}, filters),
+        data: filters,
         preserveState: true,
         preserveScroll: true,
         onFinish: function onFinish() {
@@ -1961,26 +1999,30 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }
 
     function setQueryFilters() {
-      var query = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router.page.url.split('?')[1];
+      var urlParams = new URLSearchParams(window.location.search);
 
-      if (query) {
-        query = query.split('&');
-        query.forEach(function (item) {
-          var _item$split = item.split('='),
-              _item$split2 = _slicedToArray(_item$split, 2),
-              key = _item$split2[0],
-              value = _item$split2[1];
+      var _iterator = _createForOfIteratorHelper(urlParams),
+          _step;
 
-          if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
-            var id = key.slice(0, -2);
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var _step$value = _slicedToArray(_step.value, 2),
+              key = _step$value[0],
+              value = _step$value[1];
 
-            if (filters[id]) {
-              filters[id].push(parseInt(value));
-            }
+          if (key.includes('[')) {
+            var index = key.replace('[]', '');
+            filters[index] = urlParams.getAll(key).map(function (item) {
+              return parseInt(item);
+            });
           } else {
-            filters[key] = value;
+            filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
           }
-        });
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
       }
     }
 
@@ -1991,6 +2033,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       page: page,
       notification: notification,
       isRequired: isRequired,
+      created_at_rule: created_at_rule,
+      created_at_end_rule: created_at_end_rule,
       quotesSelected: quotesSelected,
       loader: loader,
       filters: filters,
@@ -12053,13 +12097,15 @@ function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArra
 
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
 function _iterableToArrayLimit(arr, i) { var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"]; if (_i == null) return; var _arr = []; var _n = true; var _d = false; var _s, _e; try { for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e2) { throw _e2; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e3) { didErr = true; err = _e3; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
@@ -12211,7 +12257,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
       _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.visit('/quotes/travel', {
         method: 'get',
-        data: _objectSpread({}, filters),
+        data: filters,
         preserveState: true,
         preserveScroll: true,
         onFinish: function onFinish() {
@@ -12292,26 +12338,30 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     }
 
     function setQueryFilters() {
-      var query = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.page.url.split('?')[1];
+      var urlParams = new URLSearchParams(window.location.search);
 
-      if (query) {
-        query = query.split('&');
-        query.forEach(function (item) {
-          var _item$split = item.split('='),
-              _item$split2 = _slicedToArray(_item$split, 2),
-              key = _item$split2[0],
-              value = _item$split2[1];
+      var _iterator = _createForOfIteratorHelper(urlParams),
+          _step;
 
-          if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
-            var id = key.slice(0, -2);
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var _step$value = _slicedToArray(_step.value, 2),
+              key = _step$value[0],
+              value = _step$value[1];
 
-            if (filters[id]) {
-              filters[id].push(parseInt(value));
-            }
+          if (key.includes('[')) {
+            var index = key.replace('[]', '');
+            filters[index] = urlParams.getAll(key).map(function (item) {
+              return parseInt(item);
+            });
           } else {
-            filters[key] = value;
+            filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
           }
-        });
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
       }
     }
 
@@ -16974,7 +17024,8 @@ var _hoisted_9 = {
 var _hoisted_10 = {
   "class": "lining-nums"
 };
-var _hoisted_11 = ["href", "target"];
+var _hoisted_11 = ["href"];
+var _hoisted_12 = ["href", "target"];
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.Head;
 
@@ -17010,7 +17061,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         tag: "div"
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Cards View ")];
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Cards View")];
         }),
         _: 1
         /* STABLE */
@@ -17030,7 +17081,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         tag: "div"
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Create Lead ")];
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Create Lead")];
         }),
         _: 1
         /* STABLE */
@@ -17107,27 +17158,41 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         placeholder: "Search by Mobile Number"
       }, null, 8
       /* PROPS */
+      , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_input, {
+        modelValue: $setup.filters.company_name,
+        "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
+          return $setup.filters.company_name = $event;
+        }),
+        type: "search",
+        name: "company_name",
+        label: "Company Name",
+        "class": "w-full",
+        placeholder: "Search by Company Name"
+      }, null, 8
+      /* PROPS */
       , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_DatePicker, {
         modelValue: $setup.filters.created_at,
-        "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
+        "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
           return $setup.filters.created_at = $event;
         }),
         name: "created_at",
-        label: "Created Date Start"
+        label: "Created Date Start",
+        rules: [$setup.created_at_rule]
       }, null, 8
       /* PROPS */
-      , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_DatePicker, {
+      , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_DatePicker, {
         modelValue: $setup.filters.created_at_end,
-        "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
+        "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
           return $setup.filters.created_at_end = $event;
         }),
         name: "created_at_end",
-        label: "Created Date End"
+        label: "Created Date End",
+        rules: [$setup.created_at_end_rule]
       }, null, 8
       /* PROPS */
-      , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+      , ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
         modelValue: $setup.filters.quote_status_id,
-        "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
+        "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
           return $setup.filters.quote_status_id = $event;
         }),
         label: "Lead Status",
@@ -17138,7 +17203,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       /* PROPS */
       , ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
         modelValue: $setup.filters.insurance_type,
-        "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
+        "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
           return $setup.filters.insurance_type = $event;
         }),
         label: "BUSINESS INSURANCE TYPE",
@@ -17148,7 +17213,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       /* PROPS */
       , ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
         modelValue: $setup.filters.advisor_id,
-        "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
+        "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
           return $setup.filters.advisor_id = $event;
         }),
         label: "Advisor",
@@ -17196,7 +17261,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_8, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
             modelValue: $setup.assignForm.assigned_to_id_new,
-            "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
+            "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
               return $setup.assignForm.assigned_to_id_new = $event;
             }),
             label: "Assign Advisor",
@@ -17258,7 +17323,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
   }), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_DataTable, {
     "items-selected": $setup.quotesSelected,
-    "onUpdate:items-selected": _cache[11] || (_cache[11] = function ($event) {
+    "onUpdate:items-selected": _cache[12] || (_cache[12] = function ($event) {
       return $setup.quotesSelected = $event;
     }),
     loading: $setup.loader.table,
@@ -17272,21 +17337,13 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "item-code": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (_ref) {
       var code = _ref.code,
           uuid = _ref.uuid;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_Link, {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("a", {
         href: "/quotes/business/".concat(uuid),
+        target: "_blank",
         "class": "text-primary-500 hover:underline"
-      }, {
-        "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(code), 1
-          /* TEXT */
-          )];
-        }),
-        _: 2
-        /* DYNAMIC */
-
-      }, 1032
-      /* PROPS, DYNAMIC_SLOTS */
-      , ["href"])];
+      }, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(code), 9
+      /* TEXT, PROPS */
+      , _hoisted_11)];
     }),
     "item-source": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (_ref2) {
       var source = _ref2.source;
@@ -17296,7 +17353,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "class": "text-primary-500 hover:underline"
       }, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(source), 9
       /* TEXT, PROPS */
-      , _hoisted_11)];
+      , _hoisted_12)];
     }),
     _: 1
     /* STABLE */
