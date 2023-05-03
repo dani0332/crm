@@ -50,7 +50,7 @@ class CustomerAdditionalContactRequest extends FormRequest
             $customer = CustomerRepository::where(request()->key, request()->value)->first();
             $additionalContacts = AdditionalContactRepository::where([['key', request()->key], ['value', request()->value]])->first();
 
-            $genericLobs = [quoteTypeCode::Life,quoteTypeCode::Travel];
+            $genericLobs = [quoteTypeCode::Life, quoteTypeCode::Travel];
             if (in_array(request()->quote_type, $genericLobs)) {
                 $quote = $this->getQuoteObject(request()->quote_type, request()->quote_id);
             } else {

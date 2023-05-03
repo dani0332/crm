@@ -5,12 +5,10 @@ namespace App\Repositories;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
-use App\Models\LifeNumberOfYears;
 use App\Models\LifeQuote;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class LifeQuoteRepository extends BaseRepository
 {
@@ -59,14 +57,14 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchUpdate($uuid, $data)
     {
-            $quote = $this->where('uuid', $uuid)->firstOrFail();
+        $quote = $this->where('uuid', $uuid)->firstOrFail();
 
-            $quoteData = Arr::only($data, [
-                'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'sum_insured_value', 'nationality_id', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'children_id', 'premium', 'tenure_of_insurance_id', 'number_of_years_id', 'is_smoker', 'gender', 'others_info',
-            ]);
-            $quote->update($quoteData);
+        $quoteData = Arr::only($data, [
+            'first_name', 'last_name', 'email', 'mobile_no', 'dob', 'sum_insured_value', 'nationality_id', 'sum_insured_currency_id', 'marital_status_id', 'purpose_of_insurance_id', 'children_id', 'premium', 'tenure_of_insurance_id', 'number_of_years_id', 'is_smoker', 'gender', 'others_info',
+        ]);
+        $quote->update($quoteData);
 
-            return $quote;
+        return $quote;
     }
 
     public function fetchGetData()
