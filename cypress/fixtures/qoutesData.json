@@ -1,12 +1,37 @@
 {
   "personalInfo": {
-    "firstName":"Muhammad",
-    "lastName":"Abdullah",
-    "phoneNumber":"0501234567",
-    "email":"muhammad.abdullah@insurancemarket.ae",
-    "day":"25",
-    "month":"Jan",
-    "year":"2000"
-
+    "firstName": "Muhammad",
+    "lastName": "Abdullah",
+    "phoneNumber": "0501234567",
+    "email": "muhammad.abdullah@insurancemarket.ae",
+    "day": "25",
+    "month": "Jan",
+    "year": "2000"
+  },
+  "carQouteData": {
+    "emirateOfRegistrationId": "2",
+    "yearOfManufacture": "2015",
+    "carTrimId": "-1",
+    "carModelId": "2023",
+    "carMakeId": "2",
+    "uaeLicenseHeldForId": "13",
+    "hasNcdSupportingDocuments": "0",
+    "currentlyInsuredWith": "Royal & Sun Alliance Insurance (RSA)",
+    "carValue": "1000",
+    "carTypeInsuranceId": "2",
+    "claimHistoryId": "3",
+    "nationalityId": "1",
+    "mobileNo": "0509876543",
+    "email": "im.automation4@gmail.com ",
+    "lastName": "Tester",
+    "firstName": "Abdullah",
+    "dob": "1999-07-11",
+    "lang": "EN",
+    "device": "DESKTOP",
+    "source": "https://staging.alfred.ae/car-insurance/",
+    "referenceUrl": "https://staging.alfred.ae/car-insurance/",
+    "utmSource": "",
+    "utmMedium": "",
+    "utmCampaign": ""
   }
 }
