@@ -138,7 +138,7 @@ class CarLeadPage{
   }
 
   getNotesDescription(){
-    return cy.get('textarea#txtDescription').should("be.visible").click()
+    return cy.get('textarea[id="txtDescription"]').should("be.visible").type("Test Description")
   }
 
   getSendNotesToCustomerSubmitButton(){
@@ -146,16 +146,16 @@ class CarLeadPage{
   }
 
   //Upload Documents
-  getUploadDocButton(){
-    return cy.get('a[href="https://crmstage.alfred.ae/quotes/car/LH7BWTM4/documents"]').click()
+  getUploadDocButton(quoteID){
+    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car/${quoteID}/documents"]`).click()
   }
 
   getUploadFile(){
     return cy.get('#DL').attachFile('correct.xlsx')
   }
 
-  getBackButton(){
-    return cy.get('a[href="https://crmstage.alfred.ae/quotes/car/LH7BWTM4"]').click()
+  getBackButton(quoteID){
+    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car/${quoteID}"]`).click()
   }
 
   //Add Activity
@@ -214,7 +214,7 @@ class CarLeadPage{
   }
 
   getAddContactSubmitButton(){
-    return cy.get('button#additional-contact-modal-add-btn').should("be.visible").click()
+    return cy.get('button[id="additional-contact-modal-add-btn"]').should("be.visible").click()
   }
 
   // delete Additional Contact
