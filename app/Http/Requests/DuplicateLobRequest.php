@@ -24,13 +24,13 @@ class DuplicateLobRequest extends FormRequest
     public function rules()
     {
         return [
-            'modelType' => 'nullable',
-            'parentType' => 'nullable',
-            'entityId' => 'nullable',
-            'entityCode' => 'nullable',
-            'entityUId' => 'nullable',
-            'lob_team' => 'nullable',
-            'lob_team_sub_selection' => 'nullable',
+            'modelType' => 'required',
+            'parentType' => 'required',
+            'entityId' => 'required',
+            'entityCode' => 'required',
+            'entityUId' => 'required',
+            'lob_team' => 'required',
+            'lob_team_sub_selection' => 'required',
         ];
     }
 }

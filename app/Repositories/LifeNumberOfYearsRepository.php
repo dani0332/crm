@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\LifeNumberOfYears;
 
-class MaritalStatusRepository extends BaseRepository
+class LifeNumberOfYearsRepository extends BaseRepository
 {
     public function model()
     {

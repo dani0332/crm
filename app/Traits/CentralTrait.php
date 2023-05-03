@@ -24,8 +24,8 @@ trait CentralTrait
             quoteTypeCode::Pet,
         ];
 
-        if (strtolower($modelType) == 'business') {
-            $modelType = 'Corpline';
+        if (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
+            $modelType = quoteTypeCode::CORPLINE;
         }
         $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
             return $item;
@@ -33,7 +33,7 @@ trait CentralTrait
         foreach ($allowedLeadTypes as $leadType) {
             $leadType = strtolower($leadType);
             if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
-                $leadType = 'Business';
+                $leadType = quoteTypeCode::Business;
             }
             $repository = 'App\\Repositories\\'.ucfirst($leadType).'QuoteRepository';
             $duplicateRecord = $repository::where('code', $leadCode)->first();

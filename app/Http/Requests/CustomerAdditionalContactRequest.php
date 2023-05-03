@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\quoteTypeCode;
 use App\Repositories\AdditionalContactRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PersonalQuoteRepository;
@@ -49,7 +50,7 @@ class CustomerAdditionalContactRequest extends FormRequest
             $customer = CustomerRepository::where(request()->key, request()->value)->first();
             $additionalContacts = AdditionalContactRepository::where([['key', request()->key], ['value', request()->value]])->first();
 
-            $genericLobs = ['Life', 'Travel'];
+            $genericLobs = [quoteTypeCode::Life,quoteTypeCode::Travel];
             if (in_array(request()->quote_type, $genericLobs)) {
                 $quote = $this->getQuoteObject(request()->quote_type, request()->quote_id);
             } else {

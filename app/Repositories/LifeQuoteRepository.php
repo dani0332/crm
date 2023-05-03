@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\LifeNumberOfYears;
 use App\Models\LifeQuote;
@@ -42,7 +43,7 @@ class LifeQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
         ];
-        if (! Auth::user()->hasRole('ADMIN')) {
+        if (! Auth::user()->hasRole(RolesEnum::Admin)) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
         $response = Capi::request('/api/v1-save-life-quote', 'post', $dataArr);
@@ -58,7 +59,6 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchUpdate($uuid, $data)
     {
-        return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->where('uuid', $uuid)->firstOrFail();
 
             $quoteData = Arr::only($data, [
@@ -67,7 +67,6 @@ class LifeQuoteRepository extends BaseRepository
             $quote->update($quoteData);
 
             return $quote;
-        });
     }
 
     public function fetchGetData()
@@ -96,7 +95,7 @@ class LifeQuoteRepository extends BaseRepository
             'maritalStatus' => MaritalStatusRepository::withActive()->get(),
             'childern' => ChildernRepository::withActive()->get(),
             'typeOfInsurance' => LifeInsuranceTenureRepository::withActive()->get(),
-            'numberOfYears' => LifeNumberOfYears::withActive()->get(),
+            'numberOfYears' => LifeNumberOfYearsRepository::withActive()->get(),
 
         ];
     }
