@@ -108,9 +108,9 @@ class SendOCBEmailJob implements ShouldQueue
             $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
             if (in_array($responseCode, [200, 201])) {
-                Log::info('OCB EmailSent: '.$responseCode.' Customer Email Address: '.$carQuote->email.' Quote UuId: '. $this->quoteUuid);
+                Log::info('SendOCBEmailJob - OCB Email Sent: '.$responseCode.' Customer Email Address: '.$carQuote->email.' Quote UuId: '. $this->quoteUuid);
             } else {
-                Log::error('OCB EmailNotSent: '.$responseCode.' Customer EmailAddress:'.$carQuote->email);
+                Log::error('SendOCBEmailJob - OCB Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$carQuote->email);
             }
         } catch (Exception $e) {
             Log::info('OCB Email Process Error: '.$e->getMessage());
@@ -119,6 +119,6 @@ class SendOCBEmailJob implements ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        info('CL: '.get_class().' FN: failed. Job Failed. quoteUuid: '.$this->quoteUuid.' Error: '.$exception->getMessage());
+        info('SendOCBEmailJob -: '.$this->quoteUuid.' Error: '.$exception->getMessage());
     }
 }

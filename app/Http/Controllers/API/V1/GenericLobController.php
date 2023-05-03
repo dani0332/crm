@@ -46,6 +46,6 @@ class GenericLobController extends Controller
     {
         dispatch(new SendOCBEmailJob($OCBEmailRequest->quoteUuId));
 
-        return response()->json(['message' => 'OCB Email job start running against Quote UuId : '. $OCBEmailRequest->quoteUuId]);
+        return response()->json(['message' => 'OCB Email Job dispatched against UUID: '. $OCBEmailRequest->quoteUuId]);
     }
 }
