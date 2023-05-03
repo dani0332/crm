@@ -3,14 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Services\AdvisorConversionReportService;
+use Illuminate\Http\Request;
 
 class ReportsController extends Controller
 {
-    public function renderAdvisorConversionReport(AdvisorConversionReportService $advisorConversionReportService)
+    public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
         return inertia('Reports/AdvisorConversion', [
-            'data' => $advisorConversionReportService->getReportData(),
+            'reportData' => $advisorConversionReportService->getReportData(),
+            'filterOptions' => $advisorConversionReportService->getFilterOptions(),
         ]);
+    }
+
+    public function fetchAdvisorAssignedLeadsData(Request $request, AdvisorConversionReportService $advisorConversionReportService)
+    {
+        $filters = [
+            'advisorId' => $request->advisorId,
+            'leadType' => $request->leadType,
+            'advisorAssignedDates' => $request->advisor_assigned_dates,
+            'createdAtFilter' => $request->createdAtFilter,
+            'ecommerceFilter' => $request->is_ecommerce,
+            'excludeCreatedLeadsFilter' => $request->excludeCreatedLeadsFilter,
+            'batchNumberFilter' => $request->batches,
+            'tiersFilter' => $request->tiers,
+            'leadSourceFilter' => $request->leadSources,
+            'teamsFilter' => $request->teams,
+            'advisorsFilter' => $request->advisors,
+        ];
+
+        return $advisorConversionReportService->getAdvisorsAssignedLeads($filters);
     }
 
     public function renderLeadDistributionReport()
