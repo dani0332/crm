@@ -37,5 +37,6 @@ describe('Car qoutes', () => {
     carLeadPage.getCreateButton().click()
     commonPage.verifyURL('/quotes/car')
 
+
   })
 })
