@@ -3,7 +3,6 @@
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
-use App\Http\Controllers\API\V1\SendOCBEmailController;
 use Illuminate\Support\Facades\Route;
 
 /*

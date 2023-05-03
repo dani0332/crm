@@ -8,7 +8,6 @@ use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\SendOCBEmailJob;
 use App\Services\CarQuoteService;
 use App\Services\HealthQuoteService;
-use Illuminate\Http\Request;
 
 class GenericLobController extends Controller
 {
@@ -46,6 +45,6 @@ class GenericLobController extends Controller
     {
         dispatch(new SendOCBEmailJob($OCBEmailRequest->quoteUuId));
 
-        return response()->json(['message' => 'OCB Email Job dispatched against UUID: '. $OCBEmailRequest->quoteUuId]);
+        return response()->json(['message' => 'OCB Email Job dispatched against UUID: '.$OCBEmailRequest->quoteUuId]);
     }
 }

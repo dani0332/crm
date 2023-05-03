@@ -26,7 +26,7 @@ class OCBEmailRequest extends FormRequest
     public function rules()
     {
         return [
-            'quoteUuId' => 'required|string'
+            'quoteUuId' => 'required|string',
         ];
     }
 
