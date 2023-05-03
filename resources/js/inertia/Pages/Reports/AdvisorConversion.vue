@@ -10,7 +10,9 @@ const loaders = reactive({
 
 const totalLeads = reactive({
   modal: false,
+  loader: false,
   data: {},
+  current: '',
   tableHeader: [
     {
       text: 'CDB Id',
@@ -129,7 +131,7 @@ function calculateNetConversion(row) {
 }
 
 const filters = reactive({
-    advisorAssignedDates: [],
+  advisorAssignedDates: [],
   is_ecommerce: '',
   batches: [],
   tiers: [],
@@ -170,18 +172,67 @@ function onReset() {
   });
 }
 
+const currentTypeTitle = computed(() => {
+  if (totalLeads.current == 'new_leads') {
+    return 'New Leads';
+  } else if (totalLeads.current == 'not_interested') {
+    return 'Not Interested';
+  } else if (totalLeads.current == 'in_progress') {
+    return 'In Progress';
+  } else if (totalLeads.current == 'bad_leads') {
+    return 'Bad Leads';
+  } else if (totalLeads.current == 'sale_leads') {
+    return 'Sale Leads';
+  } else if (totalLeads.current == 'created_sale') {
+    return 'Created Sale Leads';
+  } else if (totalLeads.current == 'afia_renewals') {
+    return 'IM Renewals';
+  } else if (totalLeads.current == 'manual_created') {
+    return 'Manual Created';
+  } else {
+    return 'Total Leads';
+  }
+});
+
 function onFetchAdvisorAssignedLeads(item, type) {
+  totalLeads.current = type;
   totalLeads.modal = true;
 
-  axios
-    .post(`/reports/fetch-advisor-assigned-leads-data`, {
-      ...filters,
-      leadType: type,
-      quote_batch_id: item.quote_batch_id,
-      advisorId : item.advisorId
+  Object.keys(filters).forEach(
+    key =>
+      (filters[key] === '' || filters[key].length === 0) && delete filters[key],
+  );
+
+  let query = {
+    ...filters,
+    leadType: type,
+    quote_batch_id: item.quote_batch_id,
+    advisorId: item.advisorId,
+  };
+
+  let queryString = Object.keys(query)
+    .map(key => {
+      if (Array.isArray(query[key])) {
+        return query[key].map(value => `${key}=${value}`).join('&');
+      } else {
+        return `${key}=${query[key]}`;
+      }
     })
+    .join('&');
+
+  totalLeads.loader = true;
+  totalLeads.data = {};
+
+  axios
+    .get(`/reports/fetch-advisor-assigned-leads-data?${queryString}`)
     .then(response => {
       totalLeads.data = response.data;
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      totalLeads.loader = false;
     });
 }
 
@@ -420,25 +471,33 @@ onMounted(() => {
     />
 
     <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
-      <template #header> Total Leads Modal </template>
-      <DataTable
-        table-class-name="tablefixed"
-        :loading="loaders.table"
-        :headers="totalLeads.tableHeader"
-        :items="totalLeads.data.data || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-      ></DataTable>
-      <Pagination
-        :links="{
-          next: totalLeads.data.next_page_url,
-          prev: totalLeads.data.prev_page_url,
-          current: totalLeads.data.current_page,
-          from: totalLeads.data.from,
-          to: totalLeads.data.to,
-        }"
-      />
+      <template #header>
+        {{ currentTypeTitle }}
+        <span class="lining-nums">{{ totalLeads.data?.total }}</span>
+      </template>
+      <section>
+        <DataTable
+          table-class-name="tablefixed"
+          :loading="totalLeads.loader"
+          :headers="totalLeads.tableHeader"
+          :items="totalLeads.data.data || []"
+          border-cell
+          :rows-per-page="10"
+          hide-rows-per-page
+          hide-footer
+        ></DataTable>
+        <!-- TODO: Add new pagination -->
+        <Pagination
+          v-show="totalLeads.data?.total > 10"
+          :links="{
+            next: totalLeads.data.next_page_url,
+            prev: totalLeads.data.prev_page_url,
+            current: totalLeads.data.current_page,
+            from: totalLeads.data.from,
+            to: totalLeads.data.to,
+          }"
+        />
+      </section>
     </x-modal>
   </div>
 </template>

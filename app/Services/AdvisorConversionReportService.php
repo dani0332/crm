@@ -189,10 +189,8 @@ class AdvisorConversionReportService extends BaseService
         if ($filters->advisorsFilter != '' && count($filters->advisorsFilter) > 0) {
             info('advisorsFilter are : '.json_encode($filters->advisorsFilter));
             $query->whereIn('car_quote_request.advisor_id', $filters->advisorsFilter);
-
         }
         if ($filters->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
-
             info('inside lead type new');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::NewLead);
         }
