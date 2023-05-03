@@ -86,7 +86,7 @@ class Teams extends BaseModel
 
     private function validateUser($userId, $quoteId)
     {
-        $response = Teams::where([
+        $response = self::where([
             ['lead_id', '=', Auth::user()->id],
             ['user_id', '=', $userId],
         ])
@@ -103,14 +103,16 @@ class Teams extends BaseModel
             if ($request->form_id) {
                 $quoteId = $request->form_id;
                 $user = $request->input('user');
-                $notes = '';
+                // ftc-form-delete schedule on 7th June 2023
+//                $notes = '';
                 $modelInstance = CarQuote::where('id', $quoteId)->first();
 
                 if ($request->action === 'assignme' && $modelInstance) {
                     if (! self::where('user_id', Auth::user()->id)->exists()) {
-                        $notes = 'assign me production agent';
+                        // ftc-form-delete schedule on 7th June 2023
+//                        $notes = 'assign me production agent';
 
-                        $newTeamObj = new Teams;
+                        $newTeamObj = new self;
                         $newTeamObj->user_id = Auth::user()->id;
                         $newTeamObj->lead_id = Auth::user()->id;
                         $newTeamObj->save();
@@ -121,29 +123,33 @@ class Teams extends BaseModel
                 } elseif ($this->validateUser($user, $quoteId)) {
                     switch ($request->action) {
                         case 'unassign':
-                            $notes = 'Unassign production agent';
+                            // ftc-form-delete schedule on 7th June 2023
+//                            $notes = 'Unassign production agent';
                             $modelInstance->pa_id = null;
                             $modelInstance->save();
                             break;
-                        case 'reassign':
-                            $notes = 'reassign  production agent';
-                            break;
+                            // ftc-form-delete schedule on 7th June 2023
+//                        case 'reassign':
+//                            $notes = 'reassign  production agent';
+//                            break;
                         default:
                             break;
                     }
                 }
 
-                $ftcModel = new FtcQuoteStatusHistory;
-                $ftcModel->quote_status_id = $modelInstance->quote_status_id;
-                $ftcModel->car_quote_id = $modelInstance->id;
-                $ftcModel->notes = $notes;
-
-                return $ftcModel->save();
+            // ftc-form-delete schedule on 7th June 2023
+//                $ftcModel = new FtcQuoteStatusHistory;
+//                $ftcModel->quote_status_id = $modelInstance->quote_status_id;
+//                $ftcModel->car_quote_id = $modelInstance->id;
+//                $ftcModel->notes = $notes;
+//
+//                return $ftcModel->save();
             } else {
                 $userId = $request->input('user_id');
                 if (! self::where('user_id', $userId)->exists()) {
                     $getUser = User::select(['id', 'name'])->whereHas(
-                        'roles', function ($q) {
+                        'roles',
+                        function ($q) {
                             $q->where('name', 'pa');
                         }
                     )

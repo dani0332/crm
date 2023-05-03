@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
+            'baseUrl' => url('/'),
         ]);
     }
 
@@ -399,10 +400,14 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess()) {
-            $nav = $nav->add('Policy Issuance', url('ftcform'));
-        }
+        // ftc-form-delete schedule on 7th June 2023
+        // if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess()) {
+        //     $nav = $nav->add('Policy Issuance', url('ftcform'));
+        // }
+        if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
 
+            $nav = $nav->add('Embedded Products', url('embedded-products'));
+        }
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
                 $section

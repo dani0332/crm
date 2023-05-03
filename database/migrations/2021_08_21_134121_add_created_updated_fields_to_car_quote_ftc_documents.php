@@ -1,5 +1,6 @@
 <?php
 
+//ftc-form-delete scheduled on 7th June 2023
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

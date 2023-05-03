@@ -1590,9 +1590,7 @@ class RenewalsUploadService
 
     public function updateRenewalQuoteEmailSent($batch, $quoteId)
     {
-        Log::info('updateRenewalQuoteEmailSent START');
-        Log::info('updateRenewalQuoteEmailSent batch: '.$batch);
-        Log::info('updateRenewalQuoteEmailSent quoteId: '.$quoteId);
+        info('updateRenewalQuoteEmailSent START batch: '.$batch.' quoteId: '.$quoteId);
         $emailSent = RenewalQuoteProcess::where([
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
@@ -1602,9 +1600,10 @@ class RenewalsUploadService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
             'quote_id' => $quoteId,
         ])->first();
-        $emailSent->email_sent = 1;
-        $emailSent->save();
-        Log::info('updateRenewalQuoteEmailSent emailSent->id: '.$emailSent->id);
-        Log::info('updateRenewalQuoteEmailSent END');
+        if ($emailSent) {
+            $emailSent->email_sent = 1;
+            $emailSent->save();
+        }
+        info('updateRenewalQuoteEmailSent END emailSent->id: '.$emailSent->id);
     }
 }

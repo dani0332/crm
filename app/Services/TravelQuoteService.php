@@ -355,7 +355,6 @@ class TravelQuoteService extends BaseService
         if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
-            $this->query->whereNull('tqr.previous_quote_policy_number');
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
             $this->query->where('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
