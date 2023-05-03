@@ -30,6 +30,8 @@ class SendOCBEmailJob implements ShouldQueue
     protected $lookupService;
     protected $sendEmailCustomerService;
     public $tries = 3;
+    public $timeout = 30;
+    public $backoff = 10;
 
     /**
      * Create a new job instance.
@@ -56,7 +58,6 @@ class SendOCBEmailJob implements ShouldQueue
        RenewalsUploadService $renewalsUploadFileService
     )
     {
-        Log::info('OCB Email Process START');
 
         $this->carQuoteService = $carQuoteService;
         $this->crudService = $crudService;
@@ -105,19 +106,9 @@ class SendOCBEmailJob implements ShouldQueue
             ];
 
             $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
-            if(!in_array($responseCode, [200, 201]))
-            {
-                while ($this->tries >= 1)
-                {
-                    $this->tries--;
-                    $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
-                    if($responseCode == 201)
-                        break;
-                }
-            }
 
-            if ($responseCode == 201) {
-                Log::info('OCB EmailSent: '.$responseCode);
+            if (in_array($responseCode, [200, 201])) {
+                Log::info('OCB EmailSent: '.$responseCode.' Customer Email Address: '.$carQuote->email.' Quote UuId: '. $this->quoteUuid);
             } else {
                 Log::error('OCB EmailNotSent: '.$responseCode.' Customer EmailAddress:'.$carQuote->email);
             }
