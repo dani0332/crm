@@ -1598,7 +1598,7 @@ class RenewalsUploadService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
             'quote_id' => $quoteId,
         ])->first();
-        if($emailSent) {
+        if ($emailSent) {
             $emailSent->email_sent = 1;
             $emailSent->save();
         }
