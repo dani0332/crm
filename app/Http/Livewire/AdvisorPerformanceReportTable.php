@@ -71,7 +71,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('advisor_assigned_date')) {
-            $this->setFilter('advisor_assigned_date', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
+            $this->setFilter('advisor_assigned_date', now()->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
@@ -129,7 +129,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
-            ->whereNull('car_quote_request.renewal_import_code')
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('car_quote_request.advisor_id')
             ->orderBy('users.email');
 
