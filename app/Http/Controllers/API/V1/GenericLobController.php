@@ -4,8 +4,11 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\OCBEmailRequest;
+use App\Jobs\SendOCBEmailJob;
 use App\Services\CarQuoteService;
 use App\Services\HealthQuoteService;
+use Illuminate\Http\Request;
 
 class GenericLobController extends Controller
 {
@@ -37,5 +40,12 @@ class GenericLobController extends Controller
 
         //encode PDF as base64 and return
         return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => $response['name']]);
+    }
+
+    public function getQuoteForOCBEmail(OCBEmailRequest $OCBEmailRequest)
+    {
+        dispatch(new SendOCBEmailJob($OCBEmailRequest->quoteUuId));
+
+        return response()->json(['message' => 'OCB Email job start running against Quote UuId : '. $OCBEmailRequest->quoteUuId]);
     }
 }
