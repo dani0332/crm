@@ -112,7 +112,7 @@ class SendOCBEmailJob implements ShouldQueue
                 Log::error('SendOCBEmailJob - OCB Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$carQuote->email);
             }
         } catch (Exception $e) {
-            Log::info('OCB Email Process Error: '.$e->getMessage());
+            Log::info('SendOCBEmailJob - Error: '.$e->getMessage());
         }
     }
 
