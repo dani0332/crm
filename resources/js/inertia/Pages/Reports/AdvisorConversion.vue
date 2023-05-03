@@ -10,19 +10,19 @@ const totalLeadsModal = reactive({
 });
 
 const tableHeader = [
-  { text: 'Batch Number', value: '' },
-  { text: 'Start Date', value: '' },
-  { text: 'Stop Date', value: '' },
-  { text: 'Advisor Name', value: 'advisorId' },
+  { text: 'Batch Number', value: 'batch_name' },
+  { text: 'Start Date', value: 'start_date' },
+  { text: 'Stop Date', value: 'end_date' },
+  { text: 'Advisor Name', value: 'advisor_name' },
   { text: 'Total Leads', value: 'total_leads' },
-  { text: 'New Leads', value: '' },
-  { text: 'Not Interested', value: '' },
-  { text: 'In Progress', value: '' },
-  { text: 'Bad Leads', value: '' },
-  { text: 'Sale Leads', value: '' },
-  { text: 'Created Sale Leads', value: '' },
-  { text: 'IM Renewals', value: '' },
-  { text: 'Manual Created', value: '' },
+  { text: 'New Leads', value: 'new_leads' },
+  { text: 'Not Interested', value: 'not_interested' },
+  { text: 'In Progress', value: 'in_progress' },
+  { text: 'Bad Leads', value: 'bad_leads' },
+  { text: 'Sale Leads', value: 'sale_leads' },
+  { text: 'Created Sale Leads', value: 'created_sale_leads' },
+  { text: 'IM Renewals', value: 'afia_renewals_count' },
+  { text: 'Manual Created', value: 'manual_created_bad_leads' },
   { text: 'Gross Conversion', value: '' },
   { text: 'Net Conversion', value: '' },
 ];
@@ -45,7 +45,7 @@ const tableHeader = [
       hide-footer
     >
       <template #item-total_leads="{ total_leads }">
-        <button @click="totalLeadsModal.show = true">{{ total_leads }}</button>
+        <a @click="totalLeadsModal.show = true" class="text-primary-500 underline">{{ total_leads }}</a>
       </template>
     </DataTable>
 
