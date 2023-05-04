@@ -472,13 +472,18 @@ onMounted(() => {
         current: reportData.current_page,
         from: reportData.from,
         to: reportData.to,
+        total: reportData.total,
+        last: reportData.last_page,
       }"
     />
 
     <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
       <template #header>
         {{ currentTypeTitle }}
-        <span class="lining-nums">{{ totalLeads.data?.total }}</span>
+        <span v-if="totalLeads.data?.total" class="lining-nums">{{
+          totalLeads.data?.total
+        }}</span>
+        <x-spinner v-else size="xs" class="ml-1" />
       </template>
       <section>
         <DataTable
@@ -500,6 +505,8 @@ onMounted(() => {
             current: totalLeads.data.current_page,
             from: totalLeads.data.from,
             to: totalLeads.data.to,
+            total: totalLeads.data.total,
+            last: totalLeads.data.last_page,
           }"
           @update="setPageTable"
         />

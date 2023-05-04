@@ -34,7 +34,15 @@ router.on('finish', event => {
     </x-button>
 
     <div class="text-xs lining-nums font-medium text-center">
-      Page {{ links.current }} ~ [{{ links.from }} - {{ links.to }}]
+      <span v-if="links.last">
+        <p>Page {{ links.current }} of {{ links.last }}</p>
+        <p v-if="links.total" class="mt-1 text-gray-500">
+          Total Records {{ links.total }}
+        </p>
+      </span>
+      <span v-else>
+        Page {{ links.current }} ~ [{{ links.from }} - {{ links.to }}]
+      </span>
     </div>
 
     <Link
