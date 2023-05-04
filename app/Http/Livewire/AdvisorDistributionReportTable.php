@@ -3,6 +3,7 @@
 namespace App\Http\Livewire;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
@@ -58,7 +59,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
+            $this->setFilter('created_at', now()->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
@@ -143,6 +144,7 @@ class AdvisorDistributionReportTable extends DataTableComponent
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('users.email')
             ->orderBy('users.name');
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {

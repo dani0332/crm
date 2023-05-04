@@ -27,4 +27,5 @@ Route::prefix('v1')->group(function () {
     Route::delete('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'destroy']);
     Route::get('quotes/{quoteType}/document-types', [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
     Route::post('quotes/{quoteType}/export-plans-pdf', [GenericLobController::class, 'exportPlansPdf'])->name('exportPlansPdf');
+    Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
 });

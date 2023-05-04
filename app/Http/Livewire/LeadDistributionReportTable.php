@@ -53,7 +53,7 @@ class LeadDistributionReportTable extends DataTableComponent
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
+            $this->setFilter('created_at', now()->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
