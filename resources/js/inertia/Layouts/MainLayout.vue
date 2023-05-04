@@ -101,7 +101,7 @@ const onLogout = () => {
               :href="link.url"
               class="pl-3 py-2.5 flex gap-2 items-center hover:bg-black/10"
               :class="{
-                '!bg-primary-800': $page.url.startsWith(link.url),
+                '!bg-primary-800': $page.props.baseUrl + $page.url == link.url,
               }"
             >
               <x-icon
@@ -182,6 +182,7 @@ const onLogout = () => {
       </header>
       <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
         <XNotifications inject-key="toast">
+          <ToastArea />
           <slot />
         </XNotifications>
       </div>

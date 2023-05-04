@@ -1,5 +1,4 @@
 <script setup>
-
 defineProps({
   quotes: Object,
   dropdownSource: Object,
@@ -56,6 +55,7 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
@@ -372,13 +372,20 @@ onMounted(() => {
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <Link
+        <a
           :href="`/quotes/travel/${uuid}`"
+          target="_blank"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </Link>
+        </a>
       </template>
+        <template #item-dob="{ dob }">
+            <div class="text-center">
+            {{ dob == '00-00-0000' ? '' : dob }}
+            </div>
+        </template>
+
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
