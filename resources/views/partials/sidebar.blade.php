@@ -297,17 +297,18 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess())
+{{--                ftc-form-delete schedule on 7th June 2023--}}
+                <!-- @if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess())
                 <ul class="nav side-menu">
                     <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
                 </ul>
-                @endif 
+                @endif  -->
                 @hasanyrole(RolesEnum::BetaUser.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
                 <ul class="nav side-menu">
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
                 @endhasanyrole
-              
+
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
                     <li><a href="{{ url('assignOE') }}"><i></i> Assign OE </a>
