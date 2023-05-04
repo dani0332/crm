@@ -51,6 +51,11 @@ const {
   isEmail,
 } = useRules();
 
+const isMobileNo = v => {
+    const regex = /^\+?\d{1,3}\d{9}$/;
+    return regex.test(v) || 'Invalid mobile number';
+};
+
 const confirmDeleteData = reactive({
   docs: null,
   member: null,
@@ -1702,7 +1707,7 @@ onMounted(() => {
               v-if="additionalContact.additional_contact_type === 'mobile_no'"
               v-model="additionalContact.additional_contact_val"
               label="Value"
-              :rules="[isRequired]"
+              :rules="[isRequired, isMobileNo]"
               class="w-full"
             />
 

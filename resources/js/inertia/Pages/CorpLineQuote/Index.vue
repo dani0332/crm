@@ -41,7 +41,7 @@ const filters = reactive({
   created_at_end: '',
   quote_status_id: '',
   advisor_id: '',
-  insurance_type: '',
+  business_type_of_insurance_id: '',
   company_name: '',
   page: 1,
 });
@@ -280,7 +280,7 @@ onMounted(() => {
         />
 
         <x-select
-          v-model="filters.insurance_type"
+          v-model="filters.business_type_of_insurance_id"
           label="BUSINESS INSURANCE TYPE"
           placeholder="INSURANCE TYPE"
           :options="insuranceTypeOptions"
