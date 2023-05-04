@@ -196,31 +196,31 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::CarQuotesList),
                         'Car Quotes',
-                        '/quotes/car',
+                        url('/quotes/car'),
                         fn ($s) => $s->attributes(['icon' => 'car'])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::HealthQuotesList),
                         'Health Quotes',
-                        '/quotes/health',
+                        url('/quotes/health'),
                         fn ($s) => $s->attributes(['icon' => 'health'])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TravelQuotesList),
                         'Travel Quotes',
-                        '/quotes/travel',
+                        url('/quotes/travel'),
                         fn ($s) => $s->attributes(['icon' => 'travel'])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::LifeQuotesList),
                         'Life Quotes',
-                        '/quotes/life',
+                        url('/quotes/life'),
                         fn ($s) => $s->attributes(['icon' => 'life'])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::HomeQuotesList),
                         'Home Quotes',
-                        '/quotes/home',
+                        url('/quotes/home'),
                         fn ($s) => $s->attributes(['icon' => 'home'])
                     )
                     ->addIf(in_array(quoteTypeCode::Pet, newUi()) && auth()->user()->can(PermissionsEnum::PetQuotesList), 'Pet Quotes', '/personal-quotes/pet', fn ($s) => $s->attributes(['icon' => 'pet']))
@@ -240,13 +240,13 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::GMQuotesList),
                         'Group Medical Quotes',
-                        '/medical/amt',
+                        url('/medical/amt'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::CorpLineQuotesList),
                         'CorpLine Quotes',
-                        '/quotes/business',
+                        url('/quotes/business'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
@@ -405,7 +405,6 @@ class HandleInertiaRequests extends Middleware
         //     $nav = $nav->add('Policy Issuance', url('ftcform'));
         // }
         if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
-
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {

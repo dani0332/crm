@@ -227,6 +227,10 @@ transition duration-300 cursor-pointer;
   @apply rotate-[-45deg];
 }
 
+.show-shadow {
+  box-shadow: inset 3px 0px 15px 0px hsl(0deg 0% 0% / 15%);
+}
+
 /* Check box */
 .easy-checkbox
   input[type='checkbox'].allSelected

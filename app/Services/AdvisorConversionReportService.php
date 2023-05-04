@@ -47,7 +47,7 @@ class AdvisorConversionReportService extends BaseService
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email')
-            ->paginate(10)
+            ->paginate(15)
             ->withQueryString();
 
         if (! auth()->user()->hasRole(RolesEnum::Admin)) {
@@ -223,6 +223,6 @@ class AdvisorConversionReportService extends BaseService
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])->where('source', LeadSourceEnum::IMCRM);
         }
 
-        return $query->paginate(10)->withQueryString();
+        return $query->paginate(15);
     }
 }

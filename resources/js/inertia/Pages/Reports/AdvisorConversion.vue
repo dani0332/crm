@@ -183,9 +183,9 @@ const currentTypeTitle = computed(() => {
     return 'Bad Leads';
   } else if (totalLeads.current == 'sale_leads') {
     return 'Sale Leads';
-  } else if (totalLeads.current == 'created_sale') {
+  } else if (totalLeads.current == 'created_sale_leads') {
     return 'Created Sale Leads';
-  } else if (totalLeads.current == 'afia_renewals') {
+  } else if (totalLeads.current == 'afia_renewals_count') {
     return 'IM Renewals';
   } else if (totalLeads.current == 'manual_created') {
     return 'Manual Created';
@@ -209,6 +209,7 @@ function onFetchAdvisorAssignedLeads(item, type) {
   axios
     .post(`/reports/fetch-advisor-assigned-leads-data`, {
       ...filters,
+      page: 1,
       leadType: type,
       quote_batch_id: item.quote_batch_id,
       advisorId: item.advisorId,
@@ -303,17 +304,17 @@ onMounted(() => {
           "
         />
 
-        <!-- <ComboBox
+        <ComboBox
           v-model="filters.leadSources"
           label="Lead Source"
           placeholder="Search by Lead Source"
           :options="
-            filterOptions.leadSources.map(leadSource => ({
-              value: leadSource.id,
-              label: leadSource.name,
+            Object.keys(filterOptions.leadSources).map(key => ({
+              value: key,
+              label: filterOptions.leadSources[key],
             }))
           "
-        /> -->
+        />
 
         <ComboBox
           v-model="filters.teams"
@@ -342,11 +343,12 @@ onMounted(() => {
     </x-form>
 
     <DataTable
+      ref="dataTable"
       table-class-name="tablefixed"
       :loading="loaders.table"
       :headers="tableHeader"
       :items="reportData.data || []"
-      :rows-per-page="10"
+      :rows-per-page="15"
       border-cell
       hide-rows-per-page
       hide-footer
@@ -470,7 +472,7 @@ onMounted(() => {
           :headers="totalLeads.tableHeader"
           :items="totalLeads.data.data || []"
           border-cell
-          :rows-per-page="10"
+          :rows-per-page="15"
           hide-rows-per-page
           hide-footer
         ></DataTable>
