@@ -479,24 +479,9 @@ onMounted(() => {
 
     <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
       <template #header>
-        {{ currentTypeTitle }}
-        <span v-if="totalLeads.data?.total" class="lining-nums">{{
-          totalLeads.data?.total
-        }}</span>
-        <x-spinner v-else size="xs" class="ml-1" />
+        <div class="text-center">{{ currentTypeTitle }}</div>
       </template>
       <section>
-        <DataTable
-          table-class-name="tablefixed"
-          :loading="totalLeads.loader"
-          :headers="totalLeads.tableHeader"
-          :items="totalLeads.data.data || []"
-          border-cell
-          :rows-per-page="15"
-          hide-rows-per-page
-          hide-footer
-        ></DataTable>
-
         <PaginateClient
           v-show="totalLeads.data?.total > 15"
           :links="{
@@ -510,6 +495,16 @@ onMounted(() => {
           }"
           @update="setPageTable"
         />
+        <DataTable
+          table-class-name="tablefixed"
+          :loading="totalLeads.loader"
+          :headers="totalLeads.tableHeader"
+          :items="totalLeads.data.data || []"
+          border-cell
+          :rows-per-page="15"
+          hide-rows-per-page
+          hide-footer
+        ></DataTable>
       </section>
     </x-modal>
   </div>
