@@ -1387,7 +1387,7 @@ class HealthQuoteService extends BaseService
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
         if ($request->planIds) {
-            $data = explode(',', $request->planIds);
+            $data = $request->planIds;
             $isDisabled = $request->toggle;
             $plansArray = [];
             for ($i = 0; $i < count($data); $i++) {

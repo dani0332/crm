@@ -78,7 +78,7 @@ const onMemberUpdate = member => {
     .then(res => {
       if (res.data == 'Plan has been updated') {
         notification.success({
-          title: 'Plan has been updated',
+          title: res.data,
           position: 'top',
         });
       } else {
@@ -102,7 +102,7 @@ const onTogglePlans = () => {
   axios
     .post('/quotes/health/manual-plan-toggle', {
       modelType: 'Health',
-      plan_ids: [props.plan.id],
+      planIds: [props.plan.id],
       quote_uuid: usePage().props.quote.uuid,
       toggle: hidePlan.value,
     })
@@ -110,6 +110,9 @@ const onTogglePlans = () => {
       notification.success({
         title: 'Plan has been updated',
         position: 'top',
+      });
+      router.reload({
+        preserveScroll: true,
       });
     })
     .catch(error => {
