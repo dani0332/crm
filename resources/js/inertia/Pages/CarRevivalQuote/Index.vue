@@ -1,101 +1,141 @@
 <script setup>
 import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-import { useHasRole } from '../../Composables/can';
-
-// defineProps({
+// import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
+// import { useNotifications } from '@indielayer/ui';
+// import { useHasRole } from '../../Composables/can';
+//
+defineProps({
 //     quotes: Object,
-//     leadStatuses: Array,
-//     advisors: Array,
-// });
-
-const page = usePage();
-const notification = useNotifications('toast');
-
-const loader = reactive({
-    table: false,
-    export: false,
+    leadStatuses: Array,
+    advisors: Array,
 });
-
-const quotesSelected = ref([]),
-    assignAdvisor = ref(null),
-    assignmentType = ref(null),
-    isDisabled = ref(false);
-
-const tableHeader = [
-    { text: 'CDB ID', value: 'code' },
-    { text: 'FIRST NAME', value: 'first_name' },
-    { text: 'LAST NAME', value: 'last_name' },
-    { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-    { text: 'ADVISOR', value: 'advisor_id_text' },
-    { text: 'CREATED DATE', value: 'created_at' },
-    { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-    { text: 'TRANSAPP CODE', value: 'transapp_code' },
-    { text: 'SOURCE', value: 'source' },
-    { text: 'LOST REASON', value: 'lost_reason' },
-    { text: 'PREMIUM', value: 'premium' },
-    { text: 'POLICY NUMBER', value: 'policy_number' },
-];
-
+//
+const page = usePage();
+// const notification = useNotifications('toast');
+//
+// const loader = reactive({
+//     table: false,
+//     export: false,
+// });
+//
+// const quotesSelected = ref([]),
+//     assignAdvisor = ref(null),
+//     assignmentType = ref(null),
+//     isDisabled = ref(false);
+//
+// const tableHeader = [
+//     { text: 'CDB ID', value: 'code' },
+//     { text: 'FIRST NAME', value: 'first_name' },
+//     { text: 'LAST NAME', value: 'last_name' },
+//     { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+//     { text: 'ADVISOR', value: 'advisor_id_text' },
+//     { text: 'CREATED DATE', value: 'created_at' },
+//     { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+//     { text: 'TRANSAPP CODE', value: 'transapp_code' },
+//     { text: 'SOURCE', value: 'source' },
+//     { text: 'LOST REASON', value: 'lost_reason' },
+//     { text: 'PREMIUM', value: 'premium' },
+//     { text: 'POLICY NUMBER', value: 'policy_number' },
+// ];
+//
 const filters = reactive({
     code: '',
+    batch: [],
     first_name: '',
     last_name: '',
     email: '',
     mobile_no: '',
     created_at_start: '',
     created_at_end: '',
+    advisor_date_start: '',
+    advisor_date_end: '',
+    payment_status: '',
+    is_ecommerce: '',
     quote_status: [],
+    tier: [],
+    viehicle_type: '',
+    car_type_insurance: '',
+    currently_insured_with: '',
+    renewal_batch: '',
+    renewal_expiry_date_start: '',
+    renewal_expiry_date_end: '',
+    policy_number: '',
     advisors: [],
-    is_renewal: '',
     page: 1,
 });
 
-// const leadStatusOptions = computed(() => {
-//     return page.props.leadStatuses.map(status => ({
-//         value: status.id,
-//         label: status.text,
-//     }));
-// });
+const batchOptions = computed(() => {
+   return page.props.leadStatuses.map(status => ({
+       value : status.id,
+       label: status.text,
+   }))
+});
 
-// const advisorOptions = computed(() => {
-//     return page.props.advisors.map(advisor => ({
-//         value: advisor.id,
-//         label: advisor.name,
-//     }));
-// });
+const paymentStatusOptions = computed(() => {
+    return page.props.leadStatuses.map(status => ({
+        value : status.id,
+        label: status.text,
+    }))
+});
 
-// function onSubmit(isValid) {
-//     if (isValid) {
-//         filters.page = 1;
-//         Object.keys(filters).forEach(
-//             key =>
-//                 (filters[key] === '' || filters[key].length === 0) &&
-//                 delete filters[key],
-//         );
-//         router.visit('/quotes/home', {
-//             method: 'get',
-//             data: filters,
-//             preserveState: true,
-//             preserveScroll: true,
-//             onBefore: () => (loader.table = true),
-//             onFinish: () => (loader.table = false),
-//         });
-//     } else {
-//         console.log('Invalid');
-//     }
-// }
+const leadStatusOptions = computed(() => {
+    return page.props.leadStatuses.map(status => ({
+        value: status.id,
+        label: status.text,
+    }));
+});
 
-// function onReset() {
-//     router.visit('/quotes/home', {
-//         method: 'get',
-//         data: { page: 1 },
-//         preserveScroll: true,
-//         onBefore: () => (loader.table = true),
-//         onSuccess: () => (loader.table = false),
-//     });
-// }
+const tierOptions = computed(() => {
+    return page.props.leadStatuses.map(status => ({
+        value: status.id,
+        label: status.text,
+    }));
+});
+
+const vehicleTypeOptions = computed(() => {
+    return page.props.leadStatuses.map(status => ({
+        value: status.id,
+        label: status.text,
+    }));
+});
+
+const advisorOptions = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
+});
+
+function onSubmit(isValid) {
+    if (isValid) {
+        filters.page = 1;
+        Object.keys(filters).forEach(
+            key =>
+                (filters[key] === '' || filters[key].length === 0) &&
+                delete filters[key],
+        );
+        // router.visit('/quotes/home', {
+        //     method: 'get',
+        //     data: filters,
+        //     preserveState: true,
+        //     preserveScroll: true,
+        //     onBefore: () => (loader.table = true),
+        //     onFinish: () => (loader.table = false),
+        // });
+    } else {
+        console.log('Invalid');
+    }
+}
+
+function onReset() {
+    router.visit('/quotes/car-revival', {
+        method: 'get',
+        data: { page: 1 },
+        preserveScroll: true,
+        onBefore: () => (loader.table = true),
+        onSuccess: () => (loader.table = false),
+    });
+}
 
 // function setQueryStringFilters() {
 //     let queryString = window.location.search;
@@ -140,13 +180,13 @@ const filters = reactive({
 // const rules = {
 //     isRequired: v => !!v || 'Please select this option',
 // };
-
+//
 // const assignForm = useForm({
 //     assigned_to_id_new: null,
 //     modelType: 'Home',
 //     selectTmLeadId: '',
 // });
-
+//
 // function onAssignLead(isValid) {
 //     if (isValid) {
 //         const selected = quotesSelected.value.map(e => e.id);
@@ -168,7 +208,7 @@ const filters = reactive({
 //             });
 //     }
 // }
-
+//
 // const hasRole = role => useHasRole(role);
 // const rolesEnum = page.props.rolesEnum;
 // onMounted(() => {
@@ -178,9 +218,9 @@ const filters = reactive({
 
 <template>
     <div>
-        <Head title="Home List" />
+        <Head title="Car Revival List" />
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Home List</h2>
+            <h2 class="text-xl font-semibold">Car Revival List</h2>
             <div class="space-x-3">
                 <Link href="/quotes/home-cards">
                     <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
@@ -201,6 +241,13 @@ const filters = reactive({
                     label="CDB ID"
                     class="w-full"
                     placeholder="Search by CDB ID"
+                />
+                <ComboBox
+                    v-model="filters.batch"
+                    label="Batch"
+                    name="quote_batch_id"
+                    placeholder="Search by Batch"
+                    :options="batchOptions"
                 />
                 <x-input
                     v-model="filters.first_name"
@@ -244,6 +291,33 @@ const filters = reactive({
                     name="created_at_end"
                     label="Created Date End"
                 />
+                <DatePicker
+                    v-model="filters.advisor_date_start"
+                    name="advisor_assigned_date"
+                    label="Advisor Assign Date Start"
+                />
+                <DatePicker
+                    v-model="filters.advisor_date_end"
+                    name="advisor_assigned_date_end"
+                    label="Advisor Assign Date End"
+                />
+                <ComboBox
+                    v-model="filters.payment_status"
+                    label="Payment Status"
+                    name="payment_status_id"
+                    placeholder="Search by Payment Status"
+                    :options="paymentStatusOptions"
+                />
+                <x-select
+                    v-model="filters.is_ecommerce"
+                    label="Ecommerce"
+                    placeholder="Search by Ecommerce"
+                    :options="[
+                        { value: 'Yes', label: 'Yes' },
+                        { value: 'No', label: 'No' },
+                    ]"
+                    class="w-full"
+                />
                 <ComboBox
                     v-model="filters.quote_status"
                     label="Lead Status"
@@ -252,23 +326,36 @@ const filters = reactive({
                     :options="leadStatusOptions"
                 />
                 <ComboBox
-                    v-if="!hasRole(rolesEnum.Advisor)"
-                    v-model="filters.advisors"
-                    label="Advisor"
-                    placeholder="Search by Advisor"
-                    :options="advisorOptions"
+                    v-model="filters.tier"
+                    label="Tier Name"
+                    name="tier_id"
+                    placeholder="Search by Tier"
+                    :options="tierOptions"
                 />
                 <x-select
-                    v-model="filters.is_renewal"
-                    label="Is Renewal"
-                    placeholder="Search by Renewal"
-                    :options="[
-            { value: '', label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
+                    v-model="filters.viehicle_type"
+                    label="Vehicle Type"
+                    placeholder="Search by Vehicle Type"
+                    :options="vehicleTypeOptions"
                     class="w-full"
                 />
+                <x-select
+                    v-model="filters.car_type_insurance"
+                    label="Type of Car Insurance"
+                    placeholder="Search by Type of Car Insurance"
+                    :options="[
+                        { value: '1', label: 'Comprehensive (full insurance)' },
+                        { value: '2', label: 'Third Party Only' },
+                    ]"
+                    class="w-full"
+                />
+<!--                <ComboBox-->
+<!--                    v-if="!hasRole(rolesEnum.Advisor)"-->
+<!--                    v-model="filters.advisors"-->
+<!--                    label="Advisor"-->
+<!--                    placeholder="Search by Advisor"-->
+<!--                    :options="advisorOptions"-->
+<!--                />-->
             </div>
             <div class="flex justify-end gap-3 mb-4">
                 <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
@@ -278,34 +365,34 @@ const filters = reactive({
             </div>
         </x-form>
 
-        <section v-if="quotesSelected.length > 0" class="mb-4">
-            <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
-                <h3 class="font-semibold text-primary-800">Assign Leads</h3>
-                <x-divider class="mb-4 mt-1" />
-                <x-form @submit="onAssignLead" :auto-focus="false">
-                    <div class="w-full flex flex-col md:flex-row gap-4">
-                        <x-select
-                            v-model="assignForm.assigned_to_id_new"
-                            label="Assign Advisor"
-                            :options="advisorOptions"
-                            placeholder="Select Advisor"
-                            class="flex-1 w-auto"
-                            :rules="[rules.isRequired]"
-                        />
-                        <div class="mb-3 md:pt-6">
-                            <x-button
-                                color="orange"
-                                size="sm"
-                                type="submit"
-                                :loading="assignForm.processing"
-                            >
-                                Assign
-                            </x-button>
-                        </div>
-                    </div>
-                </x-form>
-            </div>
-        </section>
+<!--        <section v-if="quotesSelected.length > 0" class="mb-4">-->
+<!--            <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">-->
+<!--                <h3 class="font-semibold text-primary-800">Assign Leads</h3>-->
+<!--                <x-divider class="mb-4 mt-1" />-->
+<!--                <x-form @submit="onAssignLead" :auto-focus="false">-->
+<!--                    <div class="w-full flex flex-col md:flex-row gap-4">-->
+<!--                        <x-select-->
+<!--                            v-model="assignForm.assigned_to_id_new"-->
+<!--                            label="Assign Advisor"-->
+<!--                            :options="advisorOptions"-->
+<!--                            placeholder="Select Advisor"-->
+<!--                            class="flex-1 w-auto"-->
+<!--                            :rules="[rules.isRequired]"-->
+<!--                        />-->
+<!--                        <div class="mb-3 md:pt-6">-->
+<!--                            <x-button-->
+<!--                                color="orange"-->
+<!--                                size="sm"-->
+<!--                                type="submit"-->
+<!--                                :loading="assignForm.processing"-->
+<!--                            >-->
+<!--                                Assign-->
+<!--                            </x-button>-->
+<!--                        </div>-->
+<!--                    </div>-->
+<!--                </x-form>-->
+<!--            </div>-->
+<!--        </section>-->
 
 <!--        <Transition name="fade">-->
 <!--            <div v-if="quotesSelected.length > 0" class="mb-4">-->
