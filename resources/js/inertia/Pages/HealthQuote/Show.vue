@@ -433,10 +433,9 @@ const memberDeleteConfirmed = () => {
 
 const memberDataDocs = membersDetail => {
   return membersDetail
-    .map((member, index) => ({
+    .map((member) => ({
       id: member.id,
       name: memberCategoryText(member.member_category_id).value,
-    member_index : index
     }))
     .filter(member => member.name !== undefined);
 };
@@ -1301,7 +1300,7 @@ onMounted(() => {
 
         <x-form @submit="onMemberSubmit" :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4">
-              <input type="hidden" :value="memberForm.id" />
+            <input type="hidden" :value="memberForm.id" />
 
             <ComboBox
               v-model="memberForm.nationality_id"
