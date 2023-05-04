@@ -1321,6 +1321,13 @@ class CRUDController extends Controller
      */
     public function exportHealthLeads(Request $request)
     {
+        $created_at_start = $request->created_at_start;
+        $created_at_end = $request->created_at_end;
+
+        if (Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end)) > 120) {
+            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+        }
+
         $query = $this->crudService->getGridData($this->genericModel, $request);
 
         return (new HealthQuotesExport($query))->download('Health-List.xlsx');
