@@ -195,6 +195,7 @@ class CustomerController extends Controller
                 if ($request->isInertia) {
                     return redirect()->back()->withErrors(['Email Address already in use for a customer.']);
                 }
+
                 return response()->json(['data' => [
                     'message' => 'Email Address already in use for a customer.',
                 ]]);
