@@ -338,6 +338,7 @@ const memberForm = useForm({
   emirate_of_your_visa_id: page.props.membersDetail.length ? null : page.props.quote.emirate_of_your_visa_id,
   member_category_id: null,
   health_quote_request_id: page.props.quote.id,
+    update_lead_against_member: null
 });
 
 function onEditMember(data) {
@@ -351,6 +352,7 @@ function onEditMember(data) {
   memberForm.emirate_of_your_visa_id = data.emirate_of_your_visa_id;
   memberForm.member_category_id = data.member_category_id;
   memberForm.salary_band_id = data.salary_band_id;
+  memberForm.update_lead_against_member = data.index === 1;
 }
 
 const onAddMemberModal = () => {
@@ -427,9 +429,10 @@ const memberDeleteConfirmed = () => {
 
 const memberDataDocs = membersDetail => {
   return membersDetail
-    .map(member => ({
+    .map((member, index) => ({
       id: member.id,
       name: memberCategoryText(member.member_category_id).value,
+    member_index : index
     }))
     .filter(member => member.name !== undefined);
 };
@@ -1292,7 +1295,7 @@ onMounted(() => {
 
         <x-form @submit="onMemberSubmit" :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4">
-            <input type="hidden" :value="memberForm.id" />
+              <input type="hidden" :value="memberForm.id" />
 
             <ComboBox
               v-model="memberForm.nationality_id"
