@@ -2,42 +2,42 @@
 import { reactive, computed, onMounted, ref } from 'vue';
 // import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
 // import { useNotifications } from '@indielayer/ui';
-// import { useHasRole } from '../../Composables/can';
+import { useHasRole } from '../../Composables/can';
 //
 defineProps({
-//     quotes: Object,
+    quotes: Object,
     leadStatuses: Array,
     advisors: Array,
 });
 //
 const page = usePage();
-// const notification = useNotifications('toast');
-//
-// const loader = reactive({
-//     table: false,
-//     export: false,
-// });
-//
-// const quotesSelected = ref([]),
-//     assignAdvisor = ref(null),
-//     assignmentType = ref(null),
-//     isDisabled = ref(false);
-//
-// const tableHeader = [
-//     { text: 'CDB ID', value: 'code' },
-//     { text: 'FIRST NAME', value: 'first_name' },
-//     { text: 'LAST NAME', value: 'last_name' },
-//     { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-//     { text: 'ADVISOR', value: 'advisor_id_text' },
-//     { text: 'CREATED DATE', value: 'created_at' },
-//     { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-//     { text: 'TRANSAPP CODE', value: 'transapp_code' },
-//     { text: 'SOURCE', value: 'source' },
-//     { text: 'LOST REASON', value: 'lost_reason' },
-//     { text: 'PREMIUM', value: 'premium' },
-//     { text: 'POLICY NUMBER', value: 'policy_number' },
-// ];
-//
+const notification = useNotifications('toast');
+
+const loader = reactive({
+    table: false,
+    export: false,
+});
+
+const quotesSelected = ref([]),
+    assignAdvisor = ref(null),
+    assignmentType = ref(null),
+    isDisabled = ref(false);
+
+const tableHeader = [
+    { text: 'CDB ID', value: 'code' },
+    { text: 'FIRST NAME', value: 'first_name' },
+    { text: 'LAST NAME', value: 'last_name' },
+    { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+    { text: 'ADVISOR', value: 'advisor_id_text' },
+    { text: 'CREATED DATE', value: 'created_at' },
+    { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+    { text: 'TRANSAPP CODE', value: 'transapp_code' },
+    { text: 'SOURCE', value: 'source' },
+    { text: 'LOST REASON', value: 'lost_reason' },
+    { text: 'PREMIUM', value: 'premium' },
+    { text: 'POLICY NUMBER', value: 'policy_number' },
+];
+
 const filters = reactive({
     code: '',
     batch: [],
@@ -93,6 +93,13 @@ const tierOptions = computed(() => {
 });
 
 const vehicleTypeOptions = computed(() => {
+    return page.props.leadStatuses.map(status => ({
+        value: status.id,
+        label: status.text,
+    }));
+});
+
+const currentlyInsuredWith = computed(() => {
     return page.props.leadStatuses.map(status => ({
         value: status.id,
         label: status.text,
@@ -209,8 +216,8 @@ function onReset() {
 //     }
 // }
 //
-// const hasRole = role => useHasRole(role);
-// const rolesEnum = page.props.rolesEnum;
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 // onMounted(() => {
 //     setQueryStringFilters();
 // });
@@ -349,13 +356,46 @@ function onReset() {
                     ]"
                     class="w-full"
                 />
-<!--                <ComboBox-->
-<!--                    v-if="!hasRole(rolesEnum.Advisor)"-->
-<!--                    v-model="filters.advisors"-->
-<!--                    label="Advisor"-->
-<!--                    placeholder="Search by Advisor"-->
-<!--                    :options="advisorOptions"-->
-<!--                />-->
+                <x-select
+                    v-model="filters.currently_insured_with"
+                    label="Currently Insured With"
+                    placeholder="Search by Currently Insured With"
+                    :options="currentlyInsuredWith"
+                    class="w-full"
+                />
+                <x-input
+                    v-model="filters.renewal_batch"
+                    type="search"
+                    name="renewal_batch"
+                    label="Renewal Batch #"
+                    class="w-full"
+                    placeholder="Search by Renewal Batch #"
+                />
+                <DatePicker
+                    v-model="filters.renewal_expiry_date_start"
+                    name="renewal_expiry_date"
+                    label="Renewal Expiry Date Start"
+                />
+                <DatePicker
+                    v-model="filters.renewal_expiry_date_end"
+                    name="renewal_expiry_date_end"
+                    label="Renewal Expiry Date End"
+                />
+                <x-input
+                    v-model="filters.policy_number"
+                    type="search"
+                    name="previous_quote_policy_number"
+                    label="Previous Policy Number"
+                    class="w-full"
+                    placeholder="Search by Previous Policy Number"
+                />
+                <ComboBox
+                    v-if="!hasRole(rolesEnum.Advisor)"
+                    v-model="filters.advisors"
+                    label="Advisor"
+                    placeholder="Search by Advisor"
+                    :options="advisorOptions"
+                />
             </div>
             <div class="flex justify-end gap-3 mb-4">
                 <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
@@ -411,35 +451,35 @@ function onReset() {
 <!--                </ExportExcel>-->
 <!--            </div>-->
 <!--        </Transition>-->
-<!--        <DataTable-->
-<!--            v-model:items-selected="quotesSelected"-->
-<!--            table-class-name="tablefixed"-->
-<!--            :loading="loader.table"-->
-<!--            :headers="tableHeader"-->
-<!--            :items="quotes.data || []"-->
-<!--            border-cell-->
-<!--            hide-rows-per-page-->
-<!--            hide-footer-->
-<!--            fixed-checkbox-->
-<!--        >-->
-<!--            <template #item-code="{ code, uuid }">-->
-<!--                <Link-->
-<!--                    :href="`/quotes/home/${uuid}`"-->
-<!--                    class="text-primary-500 hover:underline"-->
-<!--                >-->
-<!--                    {{ code }}-->
-<!--                </Link>-->
-<!--            </template>-->
-<!--        </DataTable>-->
+        <DataTable
+            v-model:items-selected="quotesSelected"
+            table-class-name="tablefixed"
+            :loading="loader.table"
+            :headers="tableHeader"
+            :items="quotes.data || []"
+            border-cell
+            hide-rows-per-page
+            hide-footer
+            fixed-checkbox
+        >
+            <template #item-code="{ code, uuid }">
+                <Link
+                    :href="`/quotes/home/${uuid}`"
+                    class="text-primary-500 hover:underline"
+                >
+                    {{ code }}
+                </Link>
+            </template>
+        </DataTable>
 
-<!--        <Pagination-->
-<!--            :links="{-->
-<!--        next: quotes.next_page_url,-->
-<!--        prev: quotes.prev_page_url,-->
-<!--        current: quotes.current_page,-->
-<!--        from: quotes.from,-->
-<!--        to: quotes.to,-->
-<!--      }"-->
-<!--        />-->
+        <Pagination
+            :links="{
+        next: quotes.next_page_url,
+        prev: quotes.prev_page_url,
+        current: quotes.current_page,
+        from: quotes.from,
+        to: quotes.to,
+      }"
+        />
     </div>
 </template>

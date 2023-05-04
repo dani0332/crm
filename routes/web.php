@@ -12,6 +12,7 @@ use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CarQuoteController;
+use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\ClaimController;
@@ -124,6 +125,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         if (in_array(quoteTypeCode::Jetski, newUi())) {
             Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
         }
+
+        Route::group(['prefix' => 'quotes'], function () {
+            Route::resource('car-revivals', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'));
+        });
+
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
@@ -241,7 +247,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
-        Route::resource('car-revivals', CRUDController::class);
 
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView']);
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);

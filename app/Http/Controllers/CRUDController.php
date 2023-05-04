@@ -224,20 +224,6 @@ class CRUDController extends Controller
             ]);
         }
 
-        // inertia rendering for car-revival quote
-        if (//$this->genericModel->modelType
-            'CarRevival' == quoteTypeCode::Car_Revival) {
-            $gridData = $gridData->simplePaginate(10)->withQueryString();
-
-            $quote_status = $dropdownSource['quote_status_id'];
-
-            return inertia('CarRevivalQuote/Index', [
-                'quotes' => $gridData,
-                'leadStatuses' => $quote_status,
-                'advisors' => $advisors,
-            ]);
-        }
-
         if ($request->ajax()) {
             return DataTables::of($gridData)
                 ->addIndexColumn()
