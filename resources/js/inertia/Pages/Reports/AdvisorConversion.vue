@@ -11,6 +11,11 @@ const loaders = reactive({
 const totalLeads = reactive({
   modal: false,
   loader: false,
+  filters: {
+    leadType: '',
+    quote_batch_id: null,
+    advisorId: null,
+  },
   data: {},
   current: '',
   tableHeader: [
@@ -194,12 +199,20 @@ const currentTypeTitle = computed(() => {
   }
 });
 
-function onFetchAdvisorAssignedLeads(item, type) {
+function onFetchAdvisorAssignedLeads(item, type, page) {
   totalLeads.current = type;
   totalLeads.modal = true;
 
   totalLeads.loader = true;
   totalLeads.data = {};
+
+  if (item) {
+    totalLeads.filters = {
+      leadType: type,
+      quote_batch_id: item.quote_batch_id,
+      advisorId: item.advisorId,
+    };
+  }
 
   Object.keys(filters).forEach(
     key =>
@@ -209,10 +222,10 @@ function onFetchAdvisorAssignedLeads(item, type) {
   axios
     .post(`/reports/fetch-advisor-assigned-leads-data`, {
       ...filters,
-      page: 1,
-      leadType: type,
-      quote_batch_id: item.quote_batch_id,
-      advisorId: item.advisorId,
+      page: page,
+      leadType: totalLeads.filters.leadType,
+      quote_batch_id: totalLeads.filters.quote_batch_id,
+      advisorId: totalLeads.filters.advisorId,
     })
     .then(response => {
       totalLeads.data = response.data;
@@ -241,6 +254,11 @@ function setQueryStringFilters() {
 
 // const can = permission => useCan(permission);
 // const permissionsEnum = page.props.permissionsEnum;
+
+const setPageTable = page => {
+  console.log(page);
+  onFetchAdvisorAssignedLeads(null, totalLeads.current, page);
+};
 
 onMounted(() => {
   setQueryStringFilters();
@@ -476,9 +494,9 @@ onMounted(() => {
           hide-rows-per-page
           hide-footer
         ></DataTable>
-        <!-- TODO: Add new pagination -->
-        <!-- <Pagination
-          v-show="totalLeads.data?.total > 10"
+
+        <PaginateClient
+          v-show="totalLeads.data?.total > 15"
           :links="{
             next: totalLeads.data.next_page_url,
             prev: totalLeads.data.prev_page_url,
@@ -486,7 +504,8 @@ onMounted(() => {
             from: totalLeads.data.from,
             to: totalLeads.data.to,
           }"
-        /> -->
+          @update="setPageTable"
+        />
       </section>
     </x-modal>
   </div>
