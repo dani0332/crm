@@ -2,6 +2,7 @@
 defineProps({
   reportData: Object,
   filterOptions: Object,
+  defaultFilters: Object,
 });
 
 const loaders = reactive({
@@ -149,14 +150,10 @@ const filters = reactive({
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
-    Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
-    );
+
     router.visit('/reports/advisor-conversion', {
       method: 'get',
-      data: filters,
+      data: cleanFilters(filters),
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loaders.table = true),
@@ -199,7 +196,7 @@ const currentTypeTitle = computed(() => {
   }
 });
 
-function onFetchAdvisorAssignedLeads(item, type, page) {
+function onFetchAdvisorAssignedLeads(item, type, page = 1) {
   totalLeads.current = type;
   totalLeads.modal = true;
 
@@ -214,14 +211,9 @@ function onFetchAdvisorAssignedLeads(item, type, page) {
     };
   }
 
-  Object.keys(filters).forEach(
-    key =>
-      (filters[key] === '' || filters[key].length === 0) && delete filters[key],
-  );
-
   axios
     .post(`/reports/fetch-advisor-assigned-leads-data`, {
-      ...filters,
+      ...cleanFilters(filters),
       page: page,
       leadType: totalLeads.filters.leadType,
       quote_batch_id: totalLeads.filters.quote_batch_id,
@@ -238,14 +230,17 @@ function onFetchAdvisorAssignedLeads(item, type, page) {
     });
 }
 
+const cleanFilters = filters => {
+  Object.keys(filters).forEach(
+    key => (filters[key] === '' || filters[key] == null) && delete filters[key],
+  );
+  return filters;
+};
+
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
-      if (key == 'advisorAssignedDates[]') {
-        filters.advisorAssignedDates = params[key];
-      } else {
-        filters[key] = params[key];
-      }
+      filters[key.substring(0, key.length - 2)] = params[key];
     } else {
       filters[key] = params[key];
     }
@@ -256,13 +251,15 @@ function setQueryStringFilters() {
 // const permissionsEnum = page.props.permissionsEnum;
 
 const setPageTable = page => {
-  console.log(page);
   onFetchAdvisorAssignedLeads(null, totalLeads.current, page);
 };
 
 onMounted(() => {
+  if (page.props.defaultFilters) {
+    params.advisorAssignedDates =
+      page.props.defaultFilters.advisorAssignedDates;
+  }
   setQueryStringFilters();
-  filters.advisorAssignedDates = [new Date(), new Date()];
 });
 </script>
 

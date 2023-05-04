@@ -55,6 +55,17 @@ class AdvisorConversionReportService extends BaseService
             $data = $data->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
+        // apply default filters
+        // $defaultFilter = $this->getDefaultFilters();
+
+        // if (isset($defaultFilter['advisorAssignedDates']) && ! empty($defaultFilter['advisorAssignedDates'])) {
+        //     $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        //     $dates[0] = Carbon::parse($defaultFilter['advisorAssignedDates'][0])->startOfDay()->format($dateFormat);
+        //     $dates[1] = Carbon::parse($defaultFilter['advisorAssignedDates'][1])->endOfDay()->format($dateFormat);
+
+        //     $data = $data->whereBetween('car_quote_request_detail.advisor_assigned_date', $dates);
+        // }
+
         return $data;
     }
 
@@ -110,6 +121,18 @@ class AdvisorConversionReportService extends BaseService
             'leadSources' => $leadSources,
             'advisors' => $advisors,
             'teams' => $teams,
+        ];
+    }
+
+    public function getDefaultFilters()
+    {
+        $advisorAssignedDates = [
+            Carbon::parse(now())->startOfDay()->format('Y-m-d'),
+            Carbon::parse(now())->endOfDay()->format('Y-m-d'),
+        ];
+
+        return [
+            'advisorAssignedDates' => $advisorAssignedDates,
         ];
     }
 

@@ -12,6 +12,7 @@ class ReportsController extends Controller
         return inertia('Reports/AdvisorConversion', [
             'reportData' => $advisorConversionReportService->getReportData(),
             'filterOptions' => $advisorConversionReportService->getFilterOptions(),
+            'defaultFilters' => $advisorConversionReportService->getDefaultFilters(),
         ]);
     }
 
