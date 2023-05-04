@@ -67,7 +67,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							<input type="hidden" id="plan_ids" name="plan_ids" value="">
 							<input type="hidden" id="quote_uuid" name="quote_uuid" value="{{$record->uuid}}">
 						</form>
-						<form method="post" action="{{route('manualPlanToggle')}}" class="form-horizontal form-label-left"
+						<form method="post" action="{{route('manualPlanToggle', $quoteType)}}" class="form-horizontal form-label-left"
 							role="form" id="togglePlanForm" data-parsley-validate="" novalidate="" autocomplete="off">
 							{{ csrf_field() }}
 							<div class="row" id="toggle-plans-div">

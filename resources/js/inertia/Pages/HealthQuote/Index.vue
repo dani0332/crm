@@ -158,7 +158,7 @@ const objToUrl = obj => {
   return Object.keys(obj)
     .map(key => {
       if (Array.isArray(obj[key])) {
-        return obj[key].map(value => `${key}=${value}`).join('&');
+        return obj[key].map(value => `${key}[]=${value}`).join('&');
       }
       return `${key}=${obj[key]}`;
     })
@@ -189,18 +189,13 @@ const permissionsEnum = page.props.permissionsEnum;
 watch(
   () => filters,
   () => {
-    if (
-      filters.created_at_start &&
-      filters.created_at_end &&
-      params?.created_at_start &&
-      params?.created_at_end
-    ) {
+    if (filters.created_at_start && filters.created_at_end) {
       canExport.value = true;
     } else {
       canExport.value = false;
     }
   },
-  { deep: true },
+  { deep: true, immediate: true },
 );
 
 onMounted(() => {
@@ -326,7 +321,7 @@ onMounted(() => {
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/quotes/health-export?${objToUrl(params)}`"
+            :href="`/quotes/health-export?${objToUrl(filters)}`"
             class="justify-self-start"
           >
             Export

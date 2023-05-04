@@ -527,19 +527,23 @@ const onExportPlans = () => {
 
 const onTogglePlans = toggle => {
   toggleLoader.value = true;
-  const planIds = selectedPlans.value.map(p => {
-    return p.id;
-  });
+
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
+
   axios
     .post('/quotes/health/manual-plan-toggle', {
       modelType: 'Health',
-      plan_ids: planIds,
+      planIds: planIds,
       quote_uuid: page.props.quote.uuid,
       toggle: toggle,
     })
     .then(response => {
       notification.success({
-        title: 'Plan has been updated',
+        title: 'Plans has been updated',
         position: 'top',
       });
       router.reload({
@@ -554,6 +558,7 @@ const onTogglePlans = toggle => {
     })
     .finally(() => {
       toggleLoader.value = false;
+      selectedPlans.value = [];
     });
 };
 
