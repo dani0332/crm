@@ -433,7 +433,7 @@ const memberDeleteConfirmed = () => {
 
 const memberDataDocs = membersDetail => {
   return membersDetail
-    .map((member) => ({
+    .map(member => ({
       id: member.id,
       name: memberCategoryText(member.member_category_id).value,
     }))
