@@ -18,7 +18,7 @@ class LifeQuote extends Model implements AuditableContract
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
-        'last_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::EXACT,
         'uuid' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,

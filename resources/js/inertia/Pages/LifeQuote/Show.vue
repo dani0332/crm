@@ -63,6 +63,12 @@ const onCreateDuplicate = isValid => {
   if (!isValid) return;
   leadDuplicateForm.post('/quotes/createDuplicate', {
     preserveScroll: true,
+    onError: function onError(errors) {
+      notification.error({
+        title: errors[0],
+        position: 'top',
+      });
+    },
     onSuccess: () => {
       notification.success({
         title: 'Quote duplicated successfully',

@@ -28,7 +28,7 @@ class DuplicateLobRequest extends FormRequest
             'parentType' => 'required',
             'entityId' => 'required',
             'entityCode' => 'required',
-            'entityUId' => 'required',
+            'entityUId' => 'nullable',
             'lob_team' => 'required',
             'lob_team_sub_selection' => 'required',
         ];

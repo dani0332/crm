@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\LifeChildren;
 
-class ChildernRepository extends BaseRepository
+class LifeChildernRepository extends BaseRepository
 {
     public function model()
     {

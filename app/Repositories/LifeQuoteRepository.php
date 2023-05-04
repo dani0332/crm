@@ -91,7 +91,7 @@ class LifeQuoteRepository extends BaseRepository
             'currency' => CurrencyTypeRepository::withActive()->get(),
             'purposeOfInsurance' => PurposeOfInsuranceRepository::withActive()->get(),
             'maritalStatus' => MaritalStatusRepository::withActive()->get(),
-            'childern' => ChildernRepository::withActive()->get(),
+            'childern' => LifeChildernRepository::withActive()->get(),
             'typeOfInsurance' => LifeInsuranceTenureRepository::withActive()->get(),
             'numberOfYears' => LifeNumberOfYearsRepository::withActive()->get(),
 

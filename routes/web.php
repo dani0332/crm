@@ -246,7 +246,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView']);
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);
 
-        Route::resource('life', CRUDController::class);
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
         if (in_array(quoteTypeCode::Business, newUi())) {
@@ -292,7 +291,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('travel', TravelController::class);
             Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
 
-            Route::get('life-cards', [LifeQuoteController::class, 'cardsView'])->name('life.cards');
+            Route::get('life/cards', [LifeQuoteController::class, 'cardsView'])->name('life.cards');
             Route::resource('life', LifeQuoteController::class);
         } else {
             Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
