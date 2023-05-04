@@ -198,33 +198,21 @@ function onFetchAdvisorAssignedLeads(item, type) {
   totalLeads.current = type;
   totalLeads.modal = true;
 
+  totalLeads.loader = true;
+  totalLeads.data = {};
+
   Object.keys(filters).forEach(
     key =>
       (filters[key] === '' || filters[key].length === 0) && delete filters[key],
   );
 
-  let query = {
-    ...filters,
-    leadType: type,
-    quote_batch_id: item.quote_batch_id,
-    advisorId: item.advisorId,
-  };
-
-  let queryString = Object.keys(query)
-    .map(key => {
-      if (Array.isArray(query[key])) {
-        return query[key].map(value => `${key}=${value}`).join('&');
-      } else {
-        return `${key}=${query[key]}`;
-      }
-    })
-    .join('&');
-
-  totalLeads.loader = true;
-  totalLeads.data = {};
-
   axios
-    .get(`/reports/fetch-advisor-assigned-leads-data?${queryString}`)
+    .post(`/reports/fetch-advisor-assigned-leads-data`, {
+      ...filters,
+      leadType: type,
+      quote_batch_id: item.quote_batch_id,
+      advisorId: item.advisorId,
+    })
     .then(response => {
       totalLeads.data = response.data;
     })
@@ -487,7 +475,7 @@ onMounted(() => {
           hide-footer
         ></DataTable>
         <!-- TODO: Add new pagination -->
-        <Pagination
+        <!-- <Pagination
           v-show="totalLeads.data?.total > 10"
           :links="{
             next: totalLeads.data.next_page_url,
@@ -496,7 +484,7 @@ onMounted(() => {
             from: totalLeads.data.from,
             to: totalLeads.data.to,
           }"
-        />
+        /> -->
       </section>
     </x-modal>
   </div>
