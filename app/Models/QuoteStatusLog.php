@@ -11,7 +11,7 @@ class QuoteStatusLog extends Model
     use HasFactory;
 
     protected $table = 'quote_status_log';
-    protected $fillable = ['quote_type_id', 'quote_request_id', 'current_quote_status_id', 'created_at', 'updated_at', 'previous_quote_status_id'];
+    protected $fillable = ['quote_type_id', 'quote_request_id', 'current_quote_status_id', 'created_at', 'updated_at', 'previous_quote_status_id', 'notes', 'created_by'];
 
     public function getCreatedAtAttribute($table)
     {
@@ -25,5 +25,29 @@ class QuoteStatusLog extends Model
         $date_time_format = Config::get('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function previousQuoteStatus()
+    {
+        return $this->belongsTo(QuoteStatus::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function currentQuoteStatus()
+    {
+        return $this->belongsTo(QuoteStatus::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }
