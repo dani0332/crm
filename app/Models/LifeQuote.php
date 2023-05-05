@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Traits\QuoteModelTrait;
 use App\Traits\FilterCriteria;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class LifeQuote extends Model implements AuditableContract
 {
-    use HasFactory, FilterCriteria,Auditable;
+    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
 
     protected $table = 'life_quote_request';
     protected $guarded = [];
@@ -29,19 +30,7 @@ class LifeQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
     ];
 
-    public function getCreatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
 
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
-
-    public function getUpdatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
      public function getDobAttribute($table)
      {
          $date_format = Config::get('constants.DATE_FORMAT');

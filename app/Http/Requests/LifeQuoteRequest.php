@@ -36,7 +36,7 @@ class LifeQuoteRequest extends FormRequest
             'marital_status_id' => 'nullable|exists:marital_status,id',
             'purpose_of_insurance_id' => 'nullable|exists:life_insurance_purpose,id',
             'children_id' => 'nullable|exists:life_children,id',
-            'premium' => 'nullable',
+            'premium' => 'nullable|numeric',
             'tenure_of_insurance_id' => 'nullable|exists:life_insurance_tenure,id',
             'number_of_years_id' => 'nullable|exists:life_number_of_year,id',
             'is_smoker' => 'nullable',
