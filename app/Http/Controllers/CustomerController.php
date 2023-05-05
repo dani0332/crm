@@ -191,6 +191,11 @@ class CustomerController extends Controller
                 Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
                 $quoteObject->customer->update(['email' => $request->value]);
             } else {
+
+                if ($request->isInertia) {
+                    return redirect()->back()->withErrors(['Email Address already in use for a customer.']);
+                }
+
                 return response()->json(['data' => [
                     'message' => 'Email Address already in use for a customer.',
                 ]]);
