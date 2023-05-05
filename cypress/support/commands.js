@@ -29,6 +29,20 @@ Cypress.Commands.add('loginByCookies', (session, token) => {
     cy.setCookie('XSRF-TOKEN', token)
  })
 
+ Cypress.Commands.add('generate_CDBID', (token,data) => {
+   cy.request({
+      method: `POST`,
+      url: `${Cypress.env('Base_Url_Staging')}/api/v1-save-car-quote`,
+      headers:{
+         "x-api-token":token
+      },
+      body:data
+   }).then((response)=>{
+      expect(response.status).to.eq(200)
+      return response.body.quoteUID
+   })
+})
+
  Cypress.Commands.add('runRoutes', () => {
     cy.intercept(`GET`,`Request URL: https://crmstage.alfred.ae/quotes/car/*`).as('createLead')
  })

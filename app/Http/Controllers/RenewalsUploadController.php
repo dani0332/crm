@@ -24,6 +24,7 @@ use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -295,6 +296,12 @@ class RenewalsUploadController extends Controller
     {
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
+        }
+
+        $lastBatchProcess = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
+
+        if ($lastBatchProcess && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastBatchProcess->created_at) <= 5) {
+            return redirect('renewals/batches/'.$batch)->with('error', 'Batch process is already created, next can be created after 5 minutes ');
         }
 
         Log::info('runBatchProcess START');

@@ -1378,4 +1378,43 @@ class HealthQuoteService extends BaseService
             ->whereNotIn('id', $quotePlanId)
             ->get();
     }
+
+    public function updateManualPlansBulk($request)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plans';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+        if ($request->planIds) {
+            $data = $request->planIds;
+            $isDisabled = $request->toggle;
+            $plansArray = [];
+            for ($i = 0; $i < count($data); $i++) {
+                $apiArray = [
+                    'planId' => (int) $data[$i],
+                    'isHidden' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
+                    'isManualUpdate' => true,
+                ];
+                array_push($plansArray, $apiArray);
+            }
+
+            $dataArray = [
+                'quoteUID' => $request->quote_uuid,
+                'update' => true,
+                'plans' => $plansArray,
+            ];
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+
+            return $response;
+        }
+    }
 }
