@@ -281,6 +281,10 @@ const onActivitySubmit = isValid => {
   }
 };
 
+const confirmDeleteData = reactive({
+  activity: null,
+});
+
 const activityDelete = id => {
   modals.activityConfirm = true;
   confirmDeleteData.activity = id;
@@ -718,6 +722,7 @@ onMounted(() => {});
               :rules="[isRequired]"
               class="w-full"
               withTime
+              :min-date="new Date()"
             />
           </div>
 
