@@ -147,6 +147,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
             ->whereNull('car_quote_request.renewal_import_code')
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
         info('ajax filters : '.json_encode($filters));
         $query = $this->applyFilters($query, $filters);
