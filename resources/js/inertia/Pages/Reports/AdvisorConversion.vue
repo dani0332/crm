@@ -488,7 +488,7 @@ onMounted(() => {
       </template>
       <section>
         <PaginateClient
-          v-show="totalLeads.data?.total > 10"
+
           :links="{
             next: totalLeads.data.next_page_url,
             prev: totalLeads.data.prev_page_url,

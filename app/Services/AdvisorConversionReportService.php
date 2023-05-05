@@ -55,9 +55,23 @@ class AdvisorConversionReportService extends BaseService
             $userIds = $this->walkTree(auth()->user()->id);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
-
-        $query = $this->applyFilters($query, $request->all());
-
+        $filters = [
+            'advisorId' => $request->advisorId,
+            'leadType' => $request->leadType,
+            'advisorAssignedDates' => $request->advisorAssignedDates,
+            'createdAtFilter' => $request->createdAtFilter,
+            'ecommerceFilter' => $request->is_ecommerce,
+            'excludeCreatedLeadsFilter' => $request->excludeCreatedLeadsFilter,
+            'batchNumberFilter' => $request->batches,
+            'tiersFilter' => $request->tiers,
+            'leadSourceFilter' => $request->leadSources,
+            'teamsFilter' => $request->teams,
+            'advisorsFilter' => $request->advisors,
+            'quoteBatchId' => $request->quote_batch_id,
+        ];
+        $query = $this->applyFilters($query, $filters);
+        info('query : '. $query->toSql());
+        info('data : '. json_encode($query->getBindings()));
         return $query->paginate(10)
             ->withQueryString();
     }
@@ -166,9 +180,12 @@ class AdvisorConversionReportService extends BaseService
             $batch = QuoteBatches::where('id', $filters->quoteBatchId)->first();
         }
 
-        if ($batch != null) {
-            info('batch : '.json_encode($batch->id));
-            $query->where('quote_batch_id', $batch->id);
+        if (isset($filters->batchNumberFilter) && count($filters->batchNumberFilter) > 0) {
+            $query = $query->whereIn('car_quote_request.quote_batch_id', $filters->batchNumberFilter)->first();
+        }
+
+        if ($batch) {
+            $query = $query->where('car_quote_request.quote_batch_id', $batch->id);
         }
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         info('date : '.json_encode($filters));

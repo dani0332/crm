@@ -12167,7 +12167,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
     (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
       if (page.props.defaultFilters) {
-        params.advisorAssignedDates = page.props.defaultFilters.advisorAssignedDates;
+        filters.advisorAssignedDates = page.props.defaultFilters.advisorAssignedDates;
       }
 
       setQueryStringFilters();
@@ -38011,7 +38011,6 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     loading: $setup.loaders.table,
     headers: $setup.tableHeader,
     items: $props.reportData.data || [],
-    "rows-per-page": 15,
     "border-cell": "",
     "hide-rows-per-page": "",
     "hide-footer": ""
@@ -38162,9 +38161,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       )];
     }),
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_5__.withCtx)(function () {
-      var _$setup$totalLeads$da;
-
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementVNode)("section", null, [(0,vue__WEBPACK_IMPORTED_MODULE_5__.withDirectives)((0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_PaginateClient, {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementVNode)("section", null, [(0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_PaginateClient, {
         links: {
           next: $setup.totalLeads.data.next_page_url,
           prev: $setup.totalLeads.data.prev_page_url,
@@ -38177,13 +38174,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         onUpdate: $setup.setPageTable
       }, null, 8
       /* PROPS */
-      , ["links"]), [[vue__WEBPACK_IMPORTED_MODULE_5__.vShow, ((_$setup$totalLeads$da = $setup.totalLeads.data) === null || _$setup$totalLeads$da === void 0 ? void 0 : _$setup$totalLeads$da.total) > 10]]), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_DataTable, {
+      , ["links"]), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_DataTable, {
         "table-class-name": "tablefixed compact",
         loading: $setup.totalLeads.loader,
         headers: $setup.totalLeads.tableHeader,
         items: $setup.totalLeads.data.data || [],
         "border-cell": "",
-        "rows-per-page": 15,
         "hide-rows-per-page": "",
         "hide-footer": ""
       }, null, 8
