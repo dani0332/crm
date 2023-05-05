@@ -2,11 +2,9 @@
 
 namespace App\Repositories;
 
-use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\LifeQuote;
-use App\Services\CentralService;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;

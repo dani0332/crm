@@ -74,7 +74,7 @@ trait CentralTrait
                 'referenceUrl' => config('constants.APP_URL'),
                 'source' => config('constants.SOURCE_NAME'),
             ];
-            $resp=[];
+            $resp = [];
             foreach ($lobTeams as $lob) {
                 $repository = 'App\\Repositories\\'.ucfirst($lob).'QuoteRepository';
 
@@ -87,8 +87,7 @@ trait CentralTrait
 
                 $response = Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
                 if (isset($response->message) && str_contains($response->message, 'Error')) {
-                    $resp['errors'][]='Something went wrong while duplicating '.$lob.' quotes';
-                    
+                    $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
                 } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
                     $record = $repository::where('uuid', $response->quoteUID)->first();
                     if ($record) {
@@ -107,6 +106,7 @@ trait CentralTrait
                     }
                 }
             }
+
             return $resp;
         }
     }

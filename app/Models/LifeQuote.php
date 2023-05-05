@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Traits\QuoteModelTrait;
 use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,13 +30,12 @@ class LifeQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
     ];
 
+    public function getDobAttribute($table)
+    {
+        $date_format = Config::get('constants.DATE_FORMAT');
 
-     public function getDobAttribute($table)
-     {
-         $date_format = Config::get('constants.DATE_FORMAT');
-
-         return $this->asDate($table)->timezone(config('app.timezone'))->format($date_format);
-     }
+        return $this->asDate($table)->timezone(config('app.timezone'))->format($date_format);
+    }
 
     public function quoteStatus()
     {
@@ -55,10 +54,10 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Nationality::class);
     }
-     public function purposeOfInsurance()
-     {
-         return $this->belongsTo(LifePurposeOfInsurance::class, 'purpose_of_insurance_id', 'id');
-     }
+    public function purposeOfInsurance()
+    {
+        return $this->belongsTo(LifePurposeOfInsurance::class, 'purpose_of_insurance_id', 'id');
+    }
     public function childern()
     {
         return $this->belongsTo(LifeChildren::class, 'children_id', 'id');

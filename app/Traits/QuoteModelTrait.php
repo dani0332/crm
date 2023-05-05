@@ -7,22 +7,21 @@ use Illuminate\Support\Facades\Config;
 
 trait QuoteModelTrait
 {
-
     /**
-     * @param $query
      * @return mixed|void
      */
     public function scopeWithFakeLeadCriteria($query)
     {
-        if((!empty(request()->quote_status_id) && request()->quote_status_id != QuoteStatusEnum::Fake)) return;
+        if ((! empty(request()->quote_status_id) && request()->quote_status_id != QuoteStatusEnum::Fake)) {
+            return;
+        }
 
-        if (!request()->hasAny(['code', 'mobile_no', 'email', 'first_name', 'last_name'])  ) {
+        if (! request()->hasAny(['code', 'mobile_no', 'email', 'first_name', 'last_name'])) {
             return $query->where('quote_status_id', '<>', QuoteStatusEnum::Fake);
         }
     }
 
     /**
-     * @param $table
      * @return string
      */
     public function getCreatedAtAttribute($table)
@@ -31,12 +30,10 @@ trait QuoteModelTrait
     }
 
     /**
-     * @param $table
      * @return string
      */
     public function getUpdatedAtAttribute($table)
     {
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
     }
-
 }

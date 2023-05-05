@@ -9,13 +9,13 @@ class CentralController extends Controller
 {
     public function createDuplicate(DuplicateLobRequest $request)
     {
-
         $quoteType = 'App\\Repositories\\'.ucfirst(request()->modelType).'QuoteRepository';
-       $response= $quoteType::saveDuplicateLeads($request->validated());
+        $response = $quoteType::saveDuplicateLeads($request->validated());
 
-       if(!empty($response['errors'])){
-        return redirect()->back()->withErrors($response['errors']);
-       }
+        if (! empty($response['errors'])) {
+            return redirect()->back()->withErrors($response['errors']);
+        }
+
         return back()->with('message', 'Quote is created successfully.');
     }
 }
