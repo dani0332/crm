@@ -29362,7 +29362,7 @@ var _hoisted_72 = {
 
 var _hoisted_73 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "Previous Policy Nnumber", -1
+}, "Previous Policy Number", -1
 /* HOISTED */
 );
 
