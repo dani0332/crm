@@ -311,11 +311,11 @@ class HealthQuoteService extends BaseService
             $this->query->where('hqr.health_team_type', $request->sub_team);
         }
         // quote_status filter
-        if (isset($request->quote_status) && $request->quote_status != '') {
+        if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
             $this->query->whereIn('quote_status_id', $request->quote_status);
         }
         // advisors filter
-        if (isset($request->advisors) && $request->advisors != '') {
+        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0) {
             $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
         }
         // is_renewal filter
