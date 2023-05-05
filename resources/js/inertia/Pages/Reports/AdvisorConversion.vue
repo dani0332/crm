@@ -256,7 +256,7 @@ const setPageTable = page => {
 
 onMounted(() => {
   if (page.props.defaultFilters) {
-    params.advisorAssignedDates =
+    filters.advisorAssignedDates =
       page.props.defaultFilters.advisorAssignedDates;
   }
   setQueryStringFilters();
@@ -369,7 +369,6 @@ onMounted(() => {
       :loading="loaders.table"
       :headers="tableHeader"
       :items="reportData.data || []"
-      :rows-per-page="15"
       border-cell
       hide-rows-per-page
       hide-footer
@@ -507,7 +506,6 @@ onMounted(() => {
           :headers="totalLeads.tableHeader"
           :items="totalLeads.data.data || []"
           border-cell
-          :rows-per-page="15"
           hide-rows-per-page
           hide-footer
         ></DataTable>
