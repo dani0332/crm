@@ -341,7 +341,7 @@ onMounted(() => {
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-      </Link>
+        </Link>
       </template>
     </DataTable>
 
