@@ -12,6 +12,7 @@ use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\CentralService;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
@@ -72,7 +73,8 @@ class LifeQuoteController extends Controller
     {
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
 
-        $duplicateAllowedLobs = LifeQuoteRepository::duplicateAllowedLobsList($quote->code);
+        $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
+
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
