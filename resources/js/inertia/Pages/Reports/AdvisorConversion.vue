@@ -335,6 +335,12 @@ onMounted(() => {
           v-model="filters.teams"
           label="Teams"
           placeholder="Search by Teams"
+          :options="
+            Object.keys(filterOptions.teams).map(key => ({
+              value: key,
+              label: filterOptions.teams[key],
+            }))
+          "
         />
 
         <ComboBox

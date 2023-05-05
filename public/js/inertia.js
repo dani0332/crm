@@ -37952,10 +37952,16 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.filters.teams = $event;
         }),
         label: "Teams",
-        placeholder: "Search by Teams"
+        placeholder: "Search by Teams",
+        options: Object.keys($props.filterOptions.teams).map(function (key) {
+          return {
+            value: key,
+            label: $props.filterOptions.teams[key]
+          };
+        })
       }, null, 8
       /* PROPS */
-      , ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_ComboBox, {
+      , ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_ComboBox, {
         modelValue: $setup.filters.advisors,
         "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
           return $setup.filters.advisors = $event;
