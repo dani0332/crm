@@ -125,14 +125,12 @@ class LifeQuoteController extends Controller
 
     public function cardsView(Request $request)
     {
-        $leadStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
-        $leadStatuses = $leadStatuses->filter(function ($item) {
-            return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION;
-        })->toArray();
+        $leadStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())
+            ->whereIn('text', [quoteStatusCode::NEWLEAD, quoteStatusCode::QUOTED, quoteStatusCode::FOLLOWEDUP, quoteStatusCode::NEGOTIATION])
+            ->get()->toArray();
 
         $leadStatuses = array_map(function ($item) {
             $item['data'] = getDataAgainstStatus(QuoteTypes::LIFE->value, $item['id']);
-
             return $item;
         }, $leadStatuses);
 
