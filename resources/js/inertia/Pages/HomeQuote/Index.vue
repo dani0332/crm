@@ -336,13 +336,12 @@ onMounted(() => {
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <a
-          target="_blank"
+        <Link
           :href="`/quotes/home/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </a>
+      </Link>
       </template>
     </DataTable>
 
