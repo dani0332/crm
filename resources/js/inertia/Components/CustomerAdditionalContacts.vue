@@ -158,7 +158,6 @@ const additionalContactPrimaryConfirmed = () => {
   );
 };
 
-onMounted(() => {});
 </script>
 
 <template>

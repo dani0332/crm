@@ -74,9 +74,15 @@ class MembersDetailController extends Controller
 
         if ($memberDetail) {
             $memberDetail->update($data);
-            HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+
             unset($data['health_quote_request_id']);
             HealthQuote::where('primary_member_id', $memberDetail->id)->update($data);
+
+            $updateHealthLeadData = ['quote_updated_at' => Carbon::now()];
+            if($request->update_lead_against_member)
+                $updateHealthLeadData = array_merge($updateHealthLeadData, $data);
+
+            HealthQuote::find($request->health_quote_request_id)->update($updateHealthLeadData);
         }
 
         return redirect()->back();
