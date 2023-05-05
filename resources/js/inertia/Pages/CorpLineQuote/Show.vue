@@ -347,7 +347,6 @@ const onAssignLead = () => {
   );
 };
 
-onMounted(() => {});
 </script>
 <template>
   <div>
