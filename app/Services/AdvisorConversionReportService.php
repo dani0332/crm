@@ -57,9 +57,6 @@ class AdvisorConversionReportService extends BaseService
         }
 
         $query = $this->applyFilters($query, $request->all());
-        info('query : '.$query->toSql());
-        info('data : '.json_encode($query->getBindings()));
-
         return $query->paginate(10)
             ->withQueryString();
     }
@@ -149,24 +146,22 @@ class AdvisorConversionReportService extends BaseService
             ->whereNull('car_quote_request.renewal_import_code')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
-        info('ajax filters : '.json_encode($filters));
-        $query = $this->applyFilters($query, $filters);
-        info('ajax query : '.$query->toSql());
-        info('ajax data : '.json_encode($query->getBindings()));
 
+        $query = $this->applyFilters($query, $filters);
         return $query->paginate(10);
     }
 
     public function applyFilters($query, $filters)
     {
-        if (isset($filters['advisorId'])) {
-            $query = $query->where('car_quote_request.advisor_id', $filters['advisorId']);
+        $filters = (object) $filters;
+        if (isset($filters->advisorId)) {
+            $query = $query->where('car_quote_request.advisor_id', $filters->advisorId);
         }
 
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $batch = null;
-        if (isset($filters['quoteBatchId'])) {
-            $batch = QuoteBatches::where('id', $filters['quoteBatchId'])->first();
+        if (isset($filters->quoteBatchId)) {
+            $batch = QuoteBatches::where('id', $filters->quoteBatchId)->first();
         }
 
         if ($batch != null) {
@@ -175,16 +170,16 @@ class AdvisorConversionReportService extends BaseService
         }
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         info('date : '.json_encode($filters));
-        $startDate = isset($filters['advisorAssignedDates']) ?
-            Carbon::parse($filters['advisorAssignedDates'][0])->startOfDay()->format($dateFormat) :
+        $startDate = isset($filters->advisorAssignedDates) ?
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
             Carbon::parse(now())->startOfDay()->format($dateFormat);
 
-        $endDate = isset($filters['advisorAssignedDates']) ?
-            Carbon::parse($filters['advisorAssignedDates'][1])->endOfDay()->format($dateFormat) :
+        $endDate = isset($filters->advisorAssignedDates) ?
+            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) :
             Carbon::parse(now())->endOfDay()->format($dateFormat);
 
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
-        if (isset($filters->ecommerceFilter) && $fitlers->ecommerceFilter != 'All') {
+        if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
             info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
             $query->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter == 'Yes' ? 1 : 0);
         }
