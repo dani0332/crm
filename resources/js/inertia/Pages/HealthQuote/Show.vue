@@ -39,7 +39,7 @@ defineProps({
 
 const page = usePage();
 
-const notification = useNotifications('toast');
+const notification = useToast();
 const hasRole = role => useHasRole(role);
 
 const dateFormat = date =>
@@ -333,9 +333,13 @@ const memberForm = useForm({
   id: null,
   gender: null,
   dob: null,
-  nationality_id: page.props.membersDetail.length ? null : page.props.quote.nationality_id,
+  nationality_id: page.props.membersDetail.length
+    ? null
+    : page.props.quote.nationality_id,
   salary_band_id: null,
-  emirate_of_your_visa_id: page.props.membersDetail.length ? null : page.props.quote.emirate_of_your_visa_id,
+  emirate_of_your_visa_id: page.props.membersDetail.length
+    ? null
+    : page.props.quote.emirate_of_your_visa_id,
   member_category_id: null,
   health_quote_request_id: page.props.quote.id,
 });
@@ -521,39 +525,41 @@ const onExportPlans = () => {
     });
 };
 
-const onTogglePlans = () => {
-  notification.error({
-    title: 'API not available.',
-    position: 'top',
-  });
-  // toggleLoader.value = true;
-  // const planIds = selectedPlans.value.map(p => {
-  //   return p.id;
-  // });
-  // axios
-  //   .post(
-  //     '/quotes/health/manual-plan-toggle',
-  //     {
-  //       plan_ids: planIds,
-  //       quote_uuid: page.props.quote.uuid,
-  //     },
-  //     {
-  //       responseType: 'json',
-  //     },
-  //   )
-  //   .then(response => {
-  //     console.log(response);
-  //     notification.success({
-  //       title: 'Plans Updated',
-  //       position: 'top',
-  //     });
-  //   })
-  //   .catch(error => {
-  //     console.log(error);
-  //   })
-  //   .finally(() => {
-  //     toggleLoader.value = false;
-  //   });
+const onTogglePlans = toggle => {
+  toggleLoader.value = true;
+
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
+
+  axios
+    .post('/quotes/health/manual-plan-toggle', {
+      modelType: 'Health',
+      planIds: planIds,
+      quote_uuid: page.props.quote.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
 };
 
 const onCreatePlan = () => {
@@ -1589,14 +1595,20 @@ onMounted(() => {
           <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
-          <!-- <x-button-group v-if="selectedPlans.length > 0" size="sm">
-            <x-button @click.prevent="onTogglePlans" :loading="toggleLoader">
+          <x-button-group v-if="selectedPlans.length > 0" size="sm">
+            <x-button
+              @click.prevent="onTogglePlans(false)"
+              :loading="toggleLoader"
+            >
               Show
             </x-button>
-            <x-button @click.prevent="onTogglePlans" :loading="toggleLoader">
+            <x-button
+              @click.prevent="onTogglePlans(true)"
+              :loading="toggleLoader"
+            >
               Hide
             </x-button>
-          </x-button-group> -->
+          </x-button-group>
 
           <!-- <x-button
             v-if="selectedPlans.length > 0"
@@ -1640,16 +1652,26 @@ onMounted(() => {
         :rows-per-page="15"
         :hide-footer="listQuotePlans.length < 15"
       >
-        <template #item-providerName="{ providerName, isManualPlan }">
+        <template #item-providerName="{ providerName, isManualPlan, isHidden }">
           <p>{{ providerName }}</p>
-          <x-tag
-            v-if="isManualPlan"
-            size="xs"
-            color="primary"
-            class="mt-0.5 text-[10px]"
-          >
-            Manual Plan
-          </x-tag>
+          <div class="flex gap-1">
+            <x-tag
+              v-if="isManualPlan"
+              size="xs"
+              color="primary"
+              class="mt-0.5 text-[10px]"
+            >
+              Manual Plan
+            </x-tag>
+            <x-tag
+              v-if="isHidden"
+              size="xs"
+              color="error"
+              class="mt-0.5 text-[10px]"
+            >
+              Hidden
+            </x-tag>
+          </div>
         </template>
         <template #item-total="{ actualPremium, vat, basmah }">
           {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
