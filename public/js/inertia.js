@@ -37889,7 +37889,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         label: "Is Ecommerce",
         placeholder: "Search by Ecommerce",
         options: [{
-          value: '',
+          value: 'All',
           label: 'All'
         }, {
           value: 'Yes',
@@ -38177,7 +38177,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         onUpdate: $setup.setPageTable
       }, null, 8
       /* PROPS */
-      , ["links"]), [[vue__WEBPACK_IMPORTED_MODULE_5__.vShow, ((_$setup$totalLeads$da = $setup.totalLeads.data) === null || _$setup$totalLeads$da === void 0 ? void 0 : _$setup$totalLeads$da.total) > 15]]), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_DataTable, {
+      , ["links"]), [[vue__WEBPACK_IMPORTED_MODULE_5__.vShow, ((_$setup$totalLeads$da = $setup.totalLeads.data) === null || _$setup$totalLeads$da === void 0 ? void 0 : _$setup$totalLeads$da.total) > 10]]), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_DataTable, {
         "table-class-name": "tablefixed compact",
         loading: $setup.totalLeads.loader,
         headers: $setup.totalLeads.tableHeader,

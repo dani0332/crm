@@ -158,8 +158,8 @@ class AdvisorConversionReportService extends BaseService
 
     public function applyFilters($query, $filters)
     {
-        if (isset($filters->advisorId)) {
-            $query = $query->where('car_quote_request.advisor_id', $filters->advisorId);
+        if (isset($filters['advisorId'])) {
+            $query = $query->where('car_quote_request.advisor_id', $filters['advisorId']);
         }
 
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
@@ -183,7 +183,7 @@ class AdvisorConversionReportService extends BaseService
             Carbon::parse(now())->endOfDay()->format($dateFormat);
 
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
-        if (isset($filters->ecommerceFilter)) {
+        if (isset($filters->ecommerceFilter) && $fitlers->ecommerceFilter != 'All') {
             info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
             $query->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter == 'Yes' ? 1 : 0);
         }
