@@ -34,15 +34,15 @@ class AdvisorConversionReportService extends BaseService
                 'users.name as advisor_name',
                 'quote_batches.id as quote_batch_id',
                 DB::raw('count(car_quote_request.id) as total_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = ' . QuoteStatusEnum::NewLead . ' THEN 1 ELSE 0 END) as new_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::PriceTooHigh . ', ' . QuoteStatusEnum::PolicyPurchasedBeforeFirstCall . ', ' . QuoteStatusEnum::NotInterested . ', ' . QuoteStatusEnum::NotEligibleForInsurance . ', ' . QuoteStatusEnum::NotLookingForMotorInsurance . ', ' . QuoteStatusEnum::NonGccSpec . ',' . QuoteStatusEnum::AMLScreeningFailed . ') THEN 1 ELSE 0 END) as not_interested'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::NotContactablePe . ', ' . QuoteStatusEnum::FollowupCall . ', ' . QuoteStatusEnum::Interested . ', ' . QuoteStatusEnum::NoAnswer . ', ' . QuoteStatusEnum::Quoted . ', ' . QuoteStatusEnum::PaymentPending . ',' . QuoteStatusEnum::AMLScreeningCleared . ',' . QuoteStatusEnum::PendingQuote . ') THEN 1 ELSE 0 END) as in_progress'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as manual_created'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::Duplicate . ',' . QuoteStatusEnum::Fake . ') THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ',' . QuoteStatusEnum::PolicyIssued . ') THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "' . LeadSourceEnum::IMCRM . '" and car_quote_request.quote_status_id in (' . QuoteStatusEnum::TransactionApproved . ',' . QuoteStatusEnum::PolicyIssued . ') THEN 1 ELSE 0 END) as created_sale_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = ' . QuoteStatusEnum::IMRenewal . ' THEN 1 ELSE 0 END) as afia_renewals_count'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in (' . QuoteStatusEnum::Duplicate . ',' . QuoteStatusEnum::Fake . ') and car_quote_request.source = "' . LeadSourceEnum::IMCRM . '" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) as new_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.') THEN 1 ELSE 0 END) as not_interested'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.') THEN 1 ELSE 0 END) as in_progress'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) as bad_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END) as afia_renewals_count'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
@@ -51,14 +51,15 @@ class AdvisorConversionReportService extends BaseService
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
-        if (!auth()->user()->hasRole(RolesEnum::Admin)) {
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
         $query = $this->applyFilters($query, $request->all());
-        info('query : ' . $query->toSql());
-        info('data : ' . json_encode($query->getBindings()));
+        info('query : '.$query->toSql());
+        info('data : '.json_encode($query->getBindings()));
+
         return $query->paginate(10)
             ->withQueryString();
     }
@@ -78,20 +79,20 @@ class AdvisorConversionReportService extends BaseService
         // TODO: add teams logic
         $teamIds = $this->getUserTeams($loginUserId);
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
-                ->select('name', 'id')
-                ->orderBy('name')
-                ->where('is_active', 1)
-                ->get()
-                ->keyBy('id')
-                ->map(fn ($users) => $users->name)
-                ->toArray();
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->keyBy('id')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
 
         $batches = QuoteBatches::query()
             ->select('name', 'start_date', 'end_date', 'id')
             ->orderBy('id')
             ->get()
             ->keyBy('id')
-            ->map(fn ($batch) => $batch->name . '-(' . $batch->start_date . ' to ' . $batch->end_date . ')')
+            ->map(fn ($batch) => $batch->name.'-('.$batch->start_date.' to '.$batch->end_date.')')
             ->toArray();
         $tiers = Tier::query()
             ->select('name', 'id')
@@ -110,6 +111,7 @@ class AdvisorConversionReportService extends BaseService
             ->keyBy('name')
             ->map(fn ($users) => $users->name)
             ->toArray();
+
         return [
             'maxDays' => $maxDays,
             'batches' => $batches,
@@ -126,11 +128,11 @@ class AdvisorConversionReportService extends BaseService
             Carbon::parse(now())->startOfDay()->format('Y-m-d'),
             Carbon::parse(now())->endOfDay()->format('Y-m-d'),
         ];
+
         return [
             'advisorAssignedDates' => $advisorAssignedDates,
         ];
     }
-
 
     public function getAdvisorsAssignedLeads($filters)
     {
@@ -146,14 +148,13 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
             ->whereNull('car_quote_request.renewal_import_code')
             ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
-        info('ajax filters : ' . json_encode($filters));
+        info('ajax filters : '.json_encode($filters));
         $query = $this->applyFilters($query, $filters);
-        info('ajax query : ' . $query->toSql());
-        info('ajax data : ' . json_encode($query->getBindings()));
+        info('ajax query : '.$query->toSql());
+        info('ajax data : '.json_encode($query->getBindings()));
+
         return $query->paginate(10);
     }
-
-
 
     public function applyFilters($query, $filters)
     {
@@ -168,11 +169,11 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if ($batch != null) {
-            info('batch : ' . json_encode($batch->id));
+            info('batch : '.json_encode($batch->id));
             $query->where('quote_batch_id', $batch->id);
         }
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        info('date : ' . json_encode($filters));
+        info('date : '.json_encode($filters));
         $startDate = isset($filters['advisorAssignedDates']) ?
             Carbon::parse($filters['advisorAssignedDates'][0])->startOfDay()->format($dateFormat) :
             Carbon::parse(now())->startOfDay()->format($dateFormat);
@@ -183,26 +184,26 @@ class AdvisorConversionReportService extends BaseService
 
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
         if (isset($filters->ecommerceFilter)) {
-            info('ecommerceFilter are : ' . json_encode($filters->ecommerceFilter));
+            info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
             $query->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter == 'Yes' ? 1 : 0);
         }
         if (isset($filters->excludeCreatedLeadsFilter)) {
-            info('excludeCreatedLeadsFilter are : ' . json_encode($filters->excludeCreatedLeadsFilter));
+            info('excludeCreatedLeadsFilter are : '.json_encode($filters->excludeCreatedLeadsFilter));
             if ($filters->excludeCreatedLeadsFilter == 'yes') {
                 info('inside excludeCreatedLeadsFilter');
                 $query->where('car_quote_request.source', '!=', 'IMCRM');
             }
         }
         if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
-            info('tiersFilter are : ' . json_encode($filters->tiersFilter));
+            info('tiersFilter are : '.json_encode($filters->tiersFilter));
             $query->whereIn('car_quote_request.tier_id', $filters->tiersFilter);
         }
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
-            info('leadSourceFilter are : ' . json_encode($filters->leadSourceFilter));
+            info('leadSourceFilter are : '.json_encode($filters->leadSourceFilter));
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         }
         if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
-            info('teamsFilter are : ' . json_encode($filters->teamsFilter));
+            info('teamsFilter are : '.json_encode($filters->teamsFilter));
             $value = $filters->teamsFilter;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
@@ -214,7 +215,7 @@ class AdvisorConversionReportService extends BaseService
             });
         }
         if (isset($filters->advisorsFilter) && count($filters->advisorsFilter) > 0) {
-            info('advisorsFilter are : ' . json_encode($filters->advisorsFilter));
+            info('advisorsFilter are : '.json_encode($filters->advisorsFilter));
             $query->whereIn('car_quote_request.advisor_id', $filters->advisorsFilter);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
