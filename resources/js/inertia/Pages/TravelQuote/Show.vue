@@ -49,6 +49,7 @@ const {
   renewal_expiry_date,
   policy_start_date,
   isEmail,
+  isMobileNo,
 } = useRules();
 
 const confirmDeleteData = reactive({
@@ -1218,6 +1219,7 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+        03
         <x-divider class="mb-4 mt-1" />
       </div>
       <x-form @submit="submitPolicyDetails" :auto-focus="false">
@@ -1702,7 +1704,7 @@ onMounted(() => {
               v-if="additionalContact.additional_contact_type === 'mobile_no'"
               v-model="additionalContact.additional_contact_val"
               label="Value"
-              :rules="[isRequired]"
+              :rules="[isRequired, isMobileNo]"
               class="w-full"
             />
 
