@@ -38,6 +38,8 @@ const totalLeads = reactive({
 const page = usePage();
 const params = useUrlSearchParams('history');
 
+const tableData = ref(page.props.reportData.data);
+
 const tableHeader = [
   {
     text: 'Batch Number',
@@ -254,12 +256,34 @@ const setPageTable = page => {
   onFetchAdvisorAssignedLeads(null, totalLeads.current, page);
 };
 
+const bodyRowClassNameFunction = (item, rowNumber) => {
+  if (item.batch_name == 'Total') return 'total-row';
+  return;
+};
+
 onMounted(() => {
   if (page.props.defaultFilters) {
     filters.advisorAssignedDates =
       page.props.defaultFilters.advisorAssignedDates;
   }
   setQueryStringFilters();
+
+  tableData.value.push({
+    id: 0,
+    batch_name: 'Total',
+    total_leads: 0,
+    new_leads: 0,
+    not_interested: 0,
+    in_progress: 0,
+    bad_leads: 0,
+    sale_leads: 0,
+    created_sale_leads: 0,
+    afia_renewals_count: 0,
+    manual_created: 0,
+    manual_created_bad_leads: 0,
+    gross_conversion: 0,
+    net_conversion: 0,
+  });
 });
 </script>
 
@@ -368,7 +392,8 @@ onMounted(() => {
       table-class-name="tablefixed"
       :loading="loaders.table"
       :headers="tableHeader"
-      :items="reportData.data || []"
+      :items="tableData"
+      :body-row-class-name="bodyRowClassNameFunction"
       border-cell
       hide-rows-per-page
       hide-footer
@@ -488,7 +513,6 @@ onMounted(() => {
       </template>
       <section>
         <PaginateClient
-
           :links="{
             next: totalLeads.data.next_page_url,
             prev: totalLeads.data.prev_page_url,

@@ -148,6 +148,13 @@ transition duration-300 cursor-pointer;
 
 /* Footer */
 
+.total-row {
+  @apply bg-[#e2e8f0];
+}
+.total-row td {
+  @apply !font-bold !border-r-0;
+}
+
 .vue3-easy-data-table__footer {
   @apply flex flex-col items-start gap-5 lg:flex-row lg:items-center w-full p-3 text-sm border-t;
 }
