@@ -49,12 +49,8 @@ const {
   renewal_expiry_date,
   policy_start_date,
   isEmail,
+  isMobileNo,
 } = useRules();
-
-const isMobileNo = v => {
-    const regex = /^\+?\d{1,3}\d{9}$/;
-    return regex.test(v) || 'Invalid mobile number';
-};
 
 const confirmDeleteData = reactive({
   docs: null,
@@ -1222,7 +1218,8 @@ onMounted(() => {
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>03
+        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+        03
         <x-divider class="mb-4 mt-1" />
       </div>
       <x-form @submit="submitPolicyDetails" :auto-focus="false">

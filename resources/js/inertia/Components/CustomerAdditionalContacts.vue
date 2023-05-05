@@ -16,12 +16,7 @@ const props = defineProps({
   },
 });
 
-const { isRequired, isEmail } = useRules();
-
-const isMobileNo = v => {
-    const regex = /^\+?\d{1,3}\d{9}$/;
-    return regex.test(v) || 'Invalid mobile number';
-};
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 const notification = useNotifications('toast');
 
