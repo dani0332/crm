@@ -57,6 +57,7 @@ class AdvisorConversionReportService extends BaseService
         }
 
         $query = $this->applyFilters($query, $request->all());
+
         return $query->paginate(10)
             ->withQueryString();
     }
@@ -148,6 +149,7 @@ class AdvisorConversionReportService extends BaseService
             ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
 
         $query = $this->applyFilters($query, $filters);
+
         return $query->paginate(10);
     }
 
