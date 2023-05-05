@@ -496,7 +496,7 @@ onMounted(() => {
           @update="setPageTable"
         />
         <DataTable
-          table-class-name="tablefixed"
+          table-class-name="tablefixed compact"
           :loading="totalLeads.loader"
           :headers="totalLeads.tableHeader"
           :items="totalLeads.data.data || []"
