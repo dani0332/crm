@@ -10,7 +10,7 @@ class ReportsController extends Controller
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
         return inertia('Reports/AdvisorConversion', [
-            'reportData' => $advisorConversionReportService->getReportData(),
+            'reportData' => $advisorConversionReportService->getReportData($request),
             'filterOptions' => $advisorConversionReportService->getFilterOptions(),
             'defaultFilters' => $advisorConversionReportService->getDefaultFilters(),
         ]);
@@ -21,7 +21,7 @@ class ReportsController extends Controller
         $filters = [
             'advisorId' => $request->advisorId,
             'leadType' => $request->leadType,
-            'advisorAssignedDates' => $request->advisor_assigned_dates,
+            'advisorAssignedDates' => $request->advisorAssignedDates,
             'createdAtFilter' => $request->createdAtFilter,
             'ecommerceFilter' => $request->is_ecommerce,
             'excludeCreatedLeadsFilter' => $request->excludeCreatedLeadsFilter,
