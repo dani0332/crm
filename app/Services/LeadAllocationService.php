@@ -345,6 +345,13 @@ class LeadAllocationService extends BaseService
 
             info('Current time before unavailable is '.$dateTimeNow);
 
+            $currentDayUsers = LeadAllocation::join('users', 'users.id', 'lead_allocation.user_id')
+                ->where('allocation_count', '>', 1)->get();
+
+            foreach ($currentDayUsers as $currentDayUser) {
+                info(' Current Time is : '.now().' user : '.$currentDayUser->name.' allocation_count :'.$currentDayUser->allocation_count.' , manual_allocation : '.$currentDayUser->manual_allocation.' , auto_allocation : '.$currentDayUser->auto_allocation);
+            }
+
             LeadAllocation::whereNotNull('is_available')->update([
                 'is_available' => 0,
                 'allocation_count' => 0,
