@@ -70,8 +70,9 @@ class AdvisorConversionReportService extends BaseService
             'quoteBatchId' => $request->quote_batch_id,
         ];
         $query = $this->applyFilters($query, $filters);
-        info('query : '. $query->toSql());
-        info('data : '. json_encode($query->getBindings()));
+        info('query : '.$query->toSql());
+        info('data : '.json_encode($query->getBindings()));
+
         return $query->paginate(10)
             ->withQueryString();
     }
