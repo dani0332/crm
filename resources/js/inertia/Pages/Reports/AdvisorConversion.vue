@@ -176,23 +176,23 @@ function onReset() {
 
 const currentTypeTitle = computed(() => {
   if (totalLeads.current == 'new_leads') {
-    return 'New Leads';
+    return 'Advisor Assigned : New Leads';
   } else if (totalLeads.current == 'not_interested') {
-    return 'Not Interested';
+    return 'Advisor Assigned : Not Interested';
   } else if (totalLeads.current == 'in_progress') {
-    return 'In Progress';
+    return 'Advisor Assigned : In Progress';
   } else if (totalLeads.current == 'bad_leads') {
-    return 'Bad Leads';
+    return 'Advisor Assigned : Bad Leads';
   } else if (totalLeads.current == 'sale_leads') {
-    return 'Sale Leads';
+    return 'Advisor Assigned : Sale Leads';
   } else if (totalLeads.current == 'created_sale_leads') {
-    return 'Created Sale Leads';
+    return 'Advisor Assigned : Created Sale Leads';
   } else if (totalLeads.current == 'afia_renewals_count') {
-    return 'IM Renewals';
+    return 'Advisor Assigned : IM Renewals';
   } else if (totalLeads.current == 'manual_created') {
-    return 'Manual Created';
+    return 'Advisor Assigned : Manual Created';
   } else {
-    return 'Total Leads';
+    return 'Advisor Assigned : Total Leads';
   }
 });
 
