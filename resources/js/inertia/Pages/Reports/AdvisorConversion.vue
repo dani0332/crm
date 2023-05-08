@@ -340,6 +340,7 @@ onMounted(() => {
               label: filterOptions.leadSources[key],
             }))
           "
+          :max-limit="5"
           deselect-all
         />
 
@@ -387,7 +388,7 @@ onMounted(() => {
       :items="reportData || []"
       border-cell
       :rows-per-page-message="'Records per page'"
-      :rows-items="[10, 25, ,50,100]"
+      :rows-items="[10, 25, 50, 100]"
       :rows-per-page="10"
       :empty-message="'No Records Available'"
     >

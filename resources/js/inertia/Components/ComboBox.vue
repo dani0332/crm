@@ -36,6 +36,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  maxLimit: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -49,11 +53,16 @@ const selectedValue = computed({
     );
   },
   set(newValue) {
-    if (props.single) {
+    const { single, maxLimit, selectAll } = props;
+    if (single) {
       emit('update:modelValue', newValue.value);
       return;
     }
     const values = newValue.map(item => item.value);
+
+    if (maxLimit > 0 && values.length > maxLimit && !selectAll) {
+      values.splice(0, values.length - maxLimit);
+    }
     emit('update:modelValue', values);
   },
 });
@@ -67,10 +76,13 @@ const filteredList = computed(() => {
       });
 });
 
-const { list, containerProps, wrapperProps } = useVirtualList(filteredList, {
-  itemHeight: 34,
-  overscan: 10,
-});
+const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(
+  filteredList,
+  {
+    itemHeight: 34,
+    overscan: 10,
+  },
+);
 
 const onSelectAll = () => {
   const values = props.options.map(item => item.value);
@@ -106,7 +118,11 @@ const onDeselectAll = () => {
           props.single
             ? props.options.find(option => option.value === props.modelValue)
                 ?.label
-            : `${selectedValue.length} Selected`
+            : `${selectedValue.length} Selected ${
+                props.maxLimit && !props.selectAll
+                  ? '| max: ' + props.maxLimit
+                  : ''
+              }`
         "
         readonly
       />
@@ -124,7 +140,7 @@ const onDeselectAll = () => {
             <x-input
               size="xs"
               v-model="query"
-              :placeholder="props.searchPlaceholder"
+              :placeholder="`${props.searchPlaceholder} (${props.options.length})`"
               class="w-full"
             />
           </li>
