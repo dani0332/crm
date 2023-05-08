@@ -156,15 +156,11 @@
         // global app configuration object
         var config = {
             routes: {
-                partner_datatable_route: "{{ route('partner.index') }}",
                 user_datatable_route: "{{ route('users.index') }}",
                 role_datatable_route: "{{ route('roles.index') }}",
                 carquote_datatable_route: "{{ route('carquotes.index') }}",
                 carquote_resubmitap_route: "{{ url('quotes/carquotes/resubmit_api') }}",
                 healthquote_datatable_route: "{{ route('healthquotes.index') }}",
-                reward_datatable_route: "{{ route('reward.index') }}",
-                reward_categories_datatable_route: "{{ route('reward-categories.index') }}",
-                reward_tags_datatable_route: "{{ route('reward-tags.index') }}",
                 claim_datatable_route: "{{ route('claims.index') }}",
                 typeofinsurance_datatable_route: "{{ route('typeofinsurance.index') }}",
                 vehicledepreciation_datatable_route: "{{ route('vehicledepreciation.index') }}",
@@ -195,7 +191,6 @@
                 age_discount_datatable_route: "{{ route('age.index') }}",
                 renewals_leads_datatable_route: "{{ route('uploaded-leads.index') }}",
                 sanction_list_downloads_datatable_route: "{{ url('kyc/aml/download/history') }}",
-                reward_sliders_datatable_route: "{{ route('reward-sliders.index') }}",
                 searchLeadsDataTable: "{{ route('leadsearch.index') }}",
                 leadassignmentDataTable: "{{ route('leadassignment.index') }}",
                 amtDataTable: "{{ route('amt.index') }}",
@@ -208,9 +203,7 @@
                 advisor_conversion_report_route: "{{ url('reports/advisor-conversion')  }}",
                 teams_datatable_route: "{{ route('team.index') }}",
             },
-            _token: "{{ csrf_token() }}",
-            image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}",
-            image_path_rewards_slider: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/rewards-slider/' }}"
+            _token: "{{ csrf_token() }}"
         };
         // TM Leads: Expost data into csv
         function newexportaction(e, dt, button, config) {

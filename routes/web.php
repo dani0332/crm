@@ -221,14 +221,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
-    Route::group(['prefix' => 'rewards'], function () {
-        Route::resource('partner', PartnerController::class);
-        Route::resource('reward', RewardController::class);
-        Route::resource('reward-categories', RewardCategoryController::class);
-        Route::resource('reward-tags', RewardTagController::class);
-        Route::resource('reward.reward-translation', RewardTranslationController::class);
-        Route::resource('reward-sliders', RewardSliderController::class)->middleware('permission:reward-sliders-list|reward-sliders-create|reward-sliders-edit|reward-sliders-delete');
-    });
 
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
