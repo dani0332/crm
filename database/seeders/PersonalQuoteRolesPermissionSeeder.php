@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Permission;
 use App\Models\Role;
@@ -29,5 +30,7 @@ class PersonalQuoteRolesPermissionSeeder extends Seeder
                 Permission::findOrCreate(strtolower($lob).$permission, 'web');
             }
         }
+
+        Permission::findOrCreate(PermissionsEnum::TravelQuotesShow, 'web');
     }
 }
