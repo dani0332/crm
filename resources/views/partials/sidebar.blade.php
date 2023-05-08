@@ -345,12 +345,6 @@ use App\Enums\PermissionsEnum;
                                 </ul>
                             </li>
                             @endcanany
-                            @can(PermissionsEnum::InsuranceProviderList)
-                            <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
-                            @endcan
-                            @can(PermissionsEnum::ApplicationStorageList)
-                            <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li>
-                            @endcan
                         </ul>
                     </li>
                 </ul>

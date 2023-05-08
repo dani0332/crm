@@ -37,6 +37,7 @@ class GenericCrudController extends Controller
     protected $tierService;
     protected $quadrantService;
     protected $ruleService;
+    protected $crudService;
 
     public function __construct(
         InsuranceProviderService $insuranceProviderService,

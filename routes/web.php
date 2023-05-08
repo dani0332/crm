@@ -299,14 +299,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'generic'], function () {
-        Route::resource('insuranceprovider', GenericCrudController::class);
-        Route::resource('carplan', GenericCrudController::class);
-        Route::resource('carplancoverage', GenericCrudController::class);
-        Route::resource('carplanaddon', GenericCrudController::class);
-        Route::resource('carplanaddonoption', GenericCrudController::class);
-        Route::resource('applicationstorage', GenericCrudController::class);
         Route::resource('team', TeamController::class);
-        Route::resource('leadstatus', GenericCrudController::class);
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);
         Route::resource('rule', GenericCrudController::class);
