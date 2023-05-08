@@ -379,8 +379,9 @@ onMounted(() => {
       :items="reportData || []"
       border-cell
       :rows-per-page-message="'Records per page'"
-      :rows-items="[10, 25, 50]"
+      :rows-items="[10, 25, ,50,100]"
       :rows-per-page="10"
+      :empty-message="'No Records Available'"
     >
       <template #item-gross_conversion="item">
         {{ calculateGrossConversion(item) }}
