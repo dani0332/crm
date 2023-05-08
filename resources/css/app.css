@@ -45,7 +45,7 @@ label {
 
 /* Table container */
 .vue3-easy-data-table__main {
-  @apply overflow-x-auto;
+  @apply overflow-x-auto relative;
 }
 
 /* Scrollbar styles */
@@ -342,9 +342,28 @@ transition duration-300 cursor-pointer;
 }
 
 /* Table default loader */
-.loading-entity {
-  @apply cursor-wait text-center py-10 flex flex-col gap-5 items-center after:content-['Loading...'] after:text-slate-500;
+
+.vue3-easy-data-table__loading {
+  z-index: 3;
+  overflow: hidden;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0px;
+  left: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
+
+.vue3-easy-data-table__loading .loading-entity {
+  @apply cursor-wait z-10;
+}
+
+.vue3-easy-data-table__loading-mask {
+  @apply bg-white/50 absolute w-full h-full top-0 left-0 z-10;
+}
+
 .lds-ring {
   @apply inline-block relative h-16 w-16;
 }

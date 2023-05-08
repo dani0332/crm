@@ -232,7 +232,11 @@ function onFetchAdvisorAssignedLeads(item, type, page = 1) {
 
 const cleanFilters = filters => {
   Object.keys(filters).forEach(
-    key => (filters[key] === '' || filters[key] == null) && delete filters[key],
+    key =>
+      (filters[key] === '' ||
+        filters[key] == null ||
+        filters[key].length == 0) &&
+      delete filters[key],
   );
   return filters;
 };
@@ -475,7 +479,7 @@ onMounted(() => {
       </template>
 
       <template #body-append>
-        <tr class="total-row">
+        <tr v-if="reportData.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td></td>
           <td></td>

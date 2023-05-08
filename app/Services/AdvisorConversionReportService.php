@@ -55,6 +55,7 @@ class AdvisorConversionReportService extends BaseService
             $userIds = $this->walkTree(auth()->user()->id);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
+
         $filters = [
             'advisorId' => $request->advisorId,
             'leadType' => $request->leadType,
@@ -69,7 +70,9 @@ class AdvisorConversionReportService extends BaseService
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
         ];
+
         $query = $this->applyFilters($query, $filters);
+
         info('query : '.$query->toSql());
         info('data : '.json_encode($query->getBindings()));
 
@@ -170,6 +173,7 @@ class AdvisorConversionReportService extends BaseService
     public function applyFilters($query, $filters)
     {
         $filters = (object) $filters;
+
         if (isset($filters->advisorId)) {
             $query = $query->where('car_quote_request.advisor_id', $filters->advisorId);
         }
@@ -177,11 +181,11 @@ class AdvisorConversionReportService extends BaseService
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $batch = null;
         if (isset($filters->quoteBatchId)) {
-            $batch = QuoteBatches::where('id', $filters->quoteBatchId)->first();
+            $batch = QuoteBatches::where('id', $filters->quoteBatchId);
         }
 
         if (isset($filters->batchNumberFilter) && count($filters->batchNumberFilter) > 0) {
-            $query = $query->whereIn('car_quote_request.quote_batch_id', $filters->batchNumberFilter)->first();
+            $query = $query->whereIn('car_quote_request.quote_batch_id', $filters->batchNumberFilter);
         }
 
         if ($batch) {
@@ -198,6 +202,7 @@ class AdvisorConversionReportService extends BaseService
             Carbon::parse(now())->endOfDay()->format($dateFormat);
 
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+
         if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
             info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
             $query->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter == 'Yes' ? 1 : 0);
