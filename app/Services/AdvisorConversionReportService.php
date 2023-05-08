@@ -73,8 +73,7 @@ class AdvisorConversionReportService extends BaseService
         info('query : '.$query->toSql());
         info('data : '.json_encode($query->getBindings()));
 
-        return $query->paginate(10)
-            ->withQueryString();
+        return $query->get();
     }
 
     public function getFilterOptions()

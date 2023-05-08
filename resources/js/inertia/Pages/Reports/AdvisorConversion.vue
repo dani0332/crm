@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  reportData: Object,
+  reportData: Array,
   filterOptions: Object,
   defaultFilters: Object,
 });
@@ -37,8 +37,6 @@ const totalLeads = reactive({
 
 const page = usePage();
 const params = useUrlSearchParams('history');
-
-const tableData = ref(page.props.reportData.data);
 
 const tableHeader = [
   {
@@ -256,9 +254,8 @@ const setPageTable = page => {
   onFetchAdvisorAssignedLeads(null, totalLeads.current, page);
 };
 
-const bodyRowClassNameFunction = (item, rowNumber) => {
-  if (item.batch_name == 'Total') return 'total-row';
-  return;
+const calculateTotalSum = (data, key) => {
+  return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
 };
 
 onMounted(() => {
@@ -267,23 +264,6 @@ onMounted(() => {
       page.props.defaultFilters.advisorAssignedDates;
   }
   setQueryStringFilters();
-
-  tableData.value.push({
-    id: 0,
-    batch_name: 'Total',
-    total_leads: 0,
-    new_leads: 0,
-    not_interested: 0,
-    in_progress: 0,
-    bad_leads: 0,
-    sale_leads: 0,
-    created_sale_leads: 0,
-    afia_renewals_count: 0,
-    manual_created: 0,
-    manual_created_bad_leads: 0,
-    gross_conversion: 0,
-    net_conversion: 0,
-  });
 });
 </script>
 
@@ -392,11 +372,11 @@ onMounted(() => {
       table-class-name="tablefixed"
       :loading="loaders.table"
       :headers="tableHeader"
-      :items="tableData"
-      :body-row-class-name="bodyRowClassNameFunction"
+      :items="reportData || []"
       border-cell
-      hide-rows-per-page
-      hide-footer
+      :rows-per-page-message="'Records per page'"
+      :rows-items="[10, 25, 50]"
+      :rows-per-page="10"
     >
       <template #item-gross_conversion="item">
         {{ calculateGrossConversion(item) }}
@@ -493,19 +473,45 @@ onMounted(() => {
           {{ item.manual_created }}
         </button>
       </template>
-    </DataTable>
 
-    <Pagination
-      :links="{
-        next: reportData.next_page_url,
-        prev: reportData.prev_page_url,
-        current: reportData.current_page,
-        from: reportData.from,
-        to: reportData.to,
-        total: reportData.total,
-        last: reportData.last_page,
-      }"
-    />
+      <template #body-append>
+        <tr class="total-row">
+          <td class="direction-left">Total</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'total_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'new_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'not_interested') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'in_progress') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'bad_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'sale_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'created_sale_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'afia_renewals_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData, 'manual_created') }}
+          </td>
+          <td class="direction-center"></td>
+          <td class="direction-center"></td>
+        </tr>
+      </template>
+    </DataTable>
 
     <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
       <template #header>
