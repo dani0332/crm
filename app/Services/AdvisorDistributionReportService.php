@@ -137,6 +137,7 @@ class AdvisorDistributionReportService extends BaseService
                     ->whereIn('teams.id', $value);
             });
         }
+
         return $query;
     }
 }
