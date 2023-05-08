@@ -109,7 +109,6 @@ class AdvisorDistributionReportService extends BaseService
     public function applyFilters($query, $filters)
     {
         $filters = (object) $filters;
-        info('filters : '.json_encode($filters));
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
         $startDate = isset($filters->advisorAssignedDates) ?
@@ -138,10 +137,6 @@ class AdvisorDistributionReportService extends BaseService
                     ->whereIn('teams.id', $value);
             });
         }
-
-        info('query : '.$query->toSql());
-        info('query bindings : '.json_encode($query->getBindings()));
-
         return $query;
     }
 }
