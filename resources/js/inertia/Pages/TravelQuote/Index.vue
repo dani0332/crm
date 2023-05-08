@@ -107,9 +107,8 @@ function filterQuotes(isValid) {
 
   router.visit('/quotes/travel', {
     method: 'get',
-    data: {
-      ...filters,
-    },
+    data: filters,
+
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -182,21 +181,14 @@ function onAssignLead(isValid) {
 }
 
 function setQueryFilters() {
-  let query = router.page.url.split('?')[1];
-  if (query) {
-    query = query.split('&');
-    query.forEach(item => {
-      const [key, value] = item.split('=');
-
-      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
-        let id = key.slice(0, -2);
-        if (filters[id]) {
-          filters[id].push(parseInt(value));
-        }
-      } else {
-        filters[key] = value;
-      }
-    });
+  let urlParams = new URLSearchParams(window.location.search);
+  for (const [key, value] of urlParams) {
+    if (key.includes('[')) {
+      let index = key.replace('[]', '');
+      filters[index] = urlParams.getAll(key).map(item => parseInt(item));
+    } else {
+      filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
+    }
   }
 }
 
@@ -380,11 +372,11 @@ onMounted(() => {
           {{ code }}
         </a>
       </template>
-        <template #item-dob="{ dob }">
-            <div class="text-center">
-            {{ dob == '00-00-0000' ? '' : dob }}
-            </div>
-        </template>
+      <template #item-dob="{ dob }">
+        <div class="text-center">
+          {{ dob == '00-00-0000' ? '' : dob }}
+        </div>
+      </template>
 
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
