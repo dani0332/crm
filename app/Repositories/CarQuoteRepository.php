@@ -26,7 +26,8 @@ class CarQuoteRepository extends BaseRepository
         $requestData = [
             'quoteUuid' => $data['uuid'],
             'providerId' => $provider->id,
-            'planId' => $data['plan_id']
+            'planId' => $data['plan_id'],
+            'userId' => strval(auth()->id()),
         ];
 
         info('fn: changeInsurer sending change insurer request for quote UUID: ' . $data['uuid'] . ' providerCode: ' . $data['provider_code'] . ' planId: ' . $data['plan_id']);
