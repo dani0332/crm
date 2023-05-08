@@ -1,15 +1,15 @@
-import CarLeadPage from '../../pageObjects/CarLeadPage';
-import CommonPage from '../../pageObjects/CommonPage';
-let personalInfo=require('../../fixtures/qoutesData')
-let carLeadData=require('../../fixtures/carLeadData')
-let qouteData=require('../../fixtures/qoutesData')
+import CarLeadPage from '../../../pageObjects/CarLeadPage';
+import CommonPage from '../../../pageObjects/CommonPage';
+let carLeadData = require('../../../fixtures/carLeadData')
+let qouteData = require('../../../fixtures/qoutesData')
+
 describe('Car qoutes', () => {
 
-  const commonPage=new CommonPage()
+  const commonPage = new CommonPage()
   const carLeadPage = new CarLeadPage()
 
-  beforeEach(()=>{
-    cy.loginByCookies(Cypress.env('imcrm_session'),Cypress.env('XSRF-TOKEN'))
+  beforeEach(() => {
+    cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
     cy.runRoutes()
   })
 
