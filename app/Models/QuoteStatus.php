@@ -46,4 +46,9 @@ class QuoteStatus extends BaseModel
     {
         return $this->hasMany(QuoteStatusMap::class);
     }
+
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
 }
