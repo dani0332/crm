@@ -78,7 +78,7 @@ const onMemberUpdate = member => {
     .then(res => {
       if (res.data == 'Plan has been updated') {
         notification.success({
-          title: 'Plan has been updated',
+          title: res.data,
           position: 'top',
         });
       } else {

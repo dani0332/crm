@@ -191,6 +191,11 @@ class CustomerController extends Controller
                 Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
                 $quoteObject->customer->update(['email' => $request->value]);
             } else {
+
+                if ($request->isInertia) {
+                    return redirect()->back()->withErrors(['Email Address already in use for a customer.']);
+                }
+
                 return response()->json(['data' => [
                     'message' => 'Email Address already in use for a customer.',
                 ]]);
@@ -248,7 +253,12 @@ class CustomerController extends Controller
             $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
 
             if ($isAdditionalEmailExist) {
-                vAbort('Email Address already in use for a customer. Please try another.');
+                if ($request->isInertia) {
+                    vAbort('Email Address already in use for a customer. Please try another.');
+                }
+                return response()->json(['error' => [
+                    'message' => 'Email Address already in use for a customer. Please try another.',
+                ]]);
             }
         }
 
@@ -256,7 +266,12 @@ class CustomerController extends Controller
             $isAdditionalMobileNoExist = $this->customerService->checkAdditionalMobileNoExist($quoteObject, $value);
 
             if ($isAdditionalMobileNoExist) {
-                vAbort('Mobile Number already in use for a customer. Please try another.');
+                if ($request->isInertia) {
+                    vAbort('Mobile Number already in use for a customer. Please try another.');
+                }
+                return response()->json(['error' => [
+                    'message' => 'Mobile Number already in use for a customer. Please try another.',
+                ]]);
             }
         }
 

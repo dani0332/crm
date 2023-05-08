@@ -1,17 +1,30 @@
 <script setup>
-
 defineProps({
   model: String,
   leadStatuses: Array,
   advisors: Array,
   isManagerORDeputy: Boolean,
   quotes: Object,
+  isManualAllocationAllowed: Boolean,
 });
 
 const page = usePage();
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
-const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY');
+
+const created_at_rule = v => {
+  if (filters.created_at_end) {
+    return isRequired(v);
+  }
+  return true;
+};
+
+const created_at_end_rule = v => {
+  if (filters.created_at_start) {
+    return isRequired(v);
+  }
+  return true;
+};
 
 const quotesSelected = ref([]);
 
@@ -57,15 +70,26 @@ const tableHeader = [
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'Updated Date', value: 'updated_at' },
+  { text: 'CREATED AT', value: 'created_at' },
+  { text: 'Updated AT', value: 'updated_at' },
 ];
 
 function resetFilters() {
   for (const key in filters) {
     filters[key] = '';
   }
-  filterQuotes(true);
+  router.visit('/medical/amt', {
+    method: 'get',
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => {
+      loader.table = false;
+    },
+    onBefore: () => {
+      filters.page = 1;
+      loader.table = true;
+    },
+  });
 }
 
 function filterQuotes(isValid) {
@@ -76,6 +100,12 @@ function filterQuotes(isValid) {
     if (filters[key] === '') {
       delete filters[key];
     }
+  }
+  if (filters.created_at_start) {
+    filters.created_at_start = filters.created_at_start.split('T')[0];
+  }
+  if (filters.created_at_end) {
+    filters.created_at_end = filters.created_at_end.split('T')[0];
   }
   router.visit('/medical/amt', {
     method: 'get',
@@ -131,21 +161,14 @@ function displayNotification() {
 }
 
 function setQueryFilters() {
-  let query = router.page.url.split('?')[1];
-  if (query) {
-    query = query.split('&');
-    query.forEach(item => {
-      const [key, value] = item.split('=');
-
-      if (key === 'advisor_id') {
-        let id = key.slice(0, -2);
-        if (filters[id]) {
-          filters[id].push(parseInt(value));
-        }
-      } else {
-        filters[key] = value;
-      }
-    });
+  let urlParams = new URLSearchParams(window.location.search);
+  for (const [key, value] of urlParams) {
+    if (key.includes('[')) {
+      let index = key.replace('[]', '');
+      filters[index] = urlParams.getAll(key).map(item => parseInt(item));
+    } else {
+      filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
+    }
   }
 }
 
@@ -216,11 +239,13 @@ onMounted(() => {
           v-model="filters.created_at_start"
           name="created_at_start"
           label="Created Date Start"
+          :rules="[created_at_rule]"
         />
         <DatePicker
           v-model="filters.created_at_end"
           name="created_at_end"
           label="Created Date End"
+          :rules="[created_at_end_rule]"
         />
 
         <x-select
@@ -248,7 +273,10 @@ onMounted(() => {
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
-        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
+        <div
+          class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
+          v-if="isManualAllocationAllowed == true"
+        >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
               <x-select
@@ -301,12 +329,13 @@ onMounted(() => {
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <Link
+        <a
           :href="`/medical/amt/${uuid}`"
+          target="_blank"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </Link>
+        </a>
       </template>
 
       <template #item-source="{ source }">

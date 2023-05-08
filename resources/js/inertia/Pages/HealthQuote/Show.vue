@@ -342,6 +342,7 @@ const memberForm = useForm({
     : page.props.quote.emirate_of_your_visa_id,
   member_category_id: null,
   health_quote_request_id: page.props.quote.id,
+    update_lead_against_member: null
 });
 
 function onEditMember(data) {
@@ -355,6 +356,7 @@ function onEditMember(data) {
   memberForm.emirate_of_your_visa_id = data.emirate_of_your_visa_id;
   memberForm.member_category_id = data.member_category_id;
   memberForm.salary_band_id = data.salary_band_id;
+  memberForm.update_lead_against_member = data.index === 1;
 }
 
 const onAddMemberModal = () => {
@@ -527,9 +529,13 @@ const onExportPlans = () => {
 
 const onTogglePlans = toggle => {
   toggleLoader.value = true;
-  const planIds = selectedPlans.value.map(p => {
-    return p.id;
-  });
+
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
+
   axios
     .post('/quotes/health/manual-plan-toggle', {
       modelType: 'Health',
@@ -554,6 +560,7 @@ const onTogglePlans = toggle => {
     })
     .finally(() => {
       toggleLoader.value = false;
+      selectedPlans.value = [];
     });
 };
 

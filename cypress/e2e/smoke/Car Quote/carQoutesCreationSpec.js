@@ -1,7 +1,8 @@
-import CarLeadPage from '../../pageObjects/CarLeadPage';
-import CommonPage from '../../pageObjects/CommonPage';
-let qouteData=require('../../fixtures/qoutesData')
-let carLeadData=require('../../fixtures/carLeadData')
+
+import CarLeadPage from '../../../pageObjects/CarLeadPage';
+import CommonPage from '../../../pageObjects/CommonPage';
+let carLeadData=require('../../../fixtures/carLeadData')
+let qouteData=require('../../../fixtures/qoutesData')
 describe('Car qoutes', () => {
 
   const commonPage=new CommonPage()
@@ -36,6 +37,7 @@ describe('Car qoutes', () => {
     carLeadPage.getClaimHistory(carLeadData.carLeadData.claimHistory)
     carLeadPage.getCreateButton().click()
     commonPage.verifyURL('/quotes/car')
+
 
   })
 })

@@ -300,8 +300,8 @@ class RenewalsUploadController extends Controller
 
         $lastBatchProcess = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
 
-        if($lastBatchProcess && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastBatchProcess->created_at) <= 5) {
-            return redirect('renewals/batches/'.$batch)->with('error', 'Batch process is already created, next can be created after 5 minutes ' );
+        if ($lastBatchProcess && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastBatchProcess->created_at) <= 5) {
+            return redirect('renewals/batches/'.$batch)->with('error', 'Batch process is already created, next can be created after 5 minutes ');
         }
 
         Log::info('runBatchProcess START');
