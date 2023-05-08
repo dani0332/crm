@@ -16,28 +16,28 @@ class AssignPermissionsToQuoteRoles extends Seeder
      */
     public function run()
     {
-        if(($role = Role::where('name', RolesEnum::LifeAdvisor)->first())) {
-            $role->syncPermissions([PermissionsEnum::LifeQuotesShow]);
+        if(($role = Role::where('name', RolesEnum::LifeAdvisor)->first()) && !$role->hasPermissionTo(PermissionsEnum::LifeQuotesShow)) {
+            $role->givePermissionTo(PermissionsEnum::LifeQuotesShow);
         }
 
-        if(($role = Role::where('name', RolesEnum::LifeManager)->first())) {
-            $role->syncPermissions([PermissionsEnum::LifeQuotesShow]);
+        if(($role = Role::where('name', RolesEnum::LifeManager)->first()) && !$role->hasPermissionTo(PermissionsEnum::LifeQuotesShow) ) {
+            $role->givePermissionTo([PermissionsEnum::LifeQuotesShow]);
         }
 
-        if(($role = Role::where('name', RolesEnum::TravelAdvisor)->first())) {
-            $role->syncPermissions([PermissionsEnum::TravelQuotesShow]);
+        if(($role = Role::where('name', RolesEnum::TravelAdvisor)->first()) && !$role->hasPermissionTo(PermissionsEnum::TravelQuotesShow) ) {
+            $role->givePermissionTo([PermissionsEnum::TravelQuotesShow]);
         }
 
-        if(($role = Role::where('name', RolesEnum::TravelManager)->first())) {
-            $role->syncPermissions([PermissionsEnum::TravelQuotesShow]);
+        if(($role = Role::where('name', RolesEnum::TravelManager)->first()) && !$role->hasPermissionTo(PermissionsEnum::TravelQuotesShow)) {
+            $role->givePermissionTo([PermissionsEnum::TravelQuotesShow]);
         }
 
-        if(($role = Role::where('name', RolesEnum::PetAdvisor)->first())) {
-            $role->syncPermissions([PermissionsEnum::PetQuotesShow]);
+        if(($role = Role::where('name', RolesEnum::PetAdvisor)->first()) && !$role->hasPermissionTo(PermissionsEnum::PetQuotesShow)) {
+            $role->givePermissionTo([PermissionsEnum::PetQuotesShow]);
         }
 
-        if(($role = Role::where('name', RolesEnum::PetManager)->first())) {
-            $role->syncPermissions([PermissionsEnum::PetQuotesShow]);
+        if(($role = Role::where('name', RolesEnum::PetManager)->first()) && !$role->hasPermissionTo(PermissionsEnum::PetQuotesShow)) {
+            $role->givePermissionTo([PermissionsEnum::PetQuotesShow]);
         }
     }
 }
