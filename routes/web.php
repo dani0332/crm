@@ -125,7 +125,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         if (in_array(quoteTypeCode::Jetski, newUi())) {
             Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
         }
-        
+
         if (in_array(quoteTypeCode::Life, newUi())) {
             Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-list');
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
