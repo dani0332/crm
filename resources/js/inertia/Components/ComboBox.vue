@@ -28,7 +28,11 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  selections: {
+  selectAll: {
+    type: Boolean,
+    default: false,
+  },
+  deselectAll: {
     type: Boolean,
     default: false,
   },
@@ -67,6 +71,15 @@ const { list, containerProps, wrapperProps } = useVirtualList(filteredList, {
   itemHeight: 34,
   overscan: 10,
 });
+
+const onSelectAll = () => {
+  const values = props.options.map(item => item.value);
+  emit('update:modelValue', values);
+};
+
+const onDeselectAll = () => {
+  emit('update:modelValue', []);
+};
 </script>
 
 <template>
@@ -159,6 +172,28 @@ const { list, containerProps, wrapperProps } = useVirtualList(filteredList, {
                   </span>
                 </li>
               </ComboboxOption>
+            </div>
+          </div>
+          <div v-if="props.selectAll || props.deselectAll" class="p-2">
+            <div class="flex flex-row justify-between gap-2">
+              <x-button
+                v-if="props.selectAll"
+                size="xs"
+                color="primary"
+                light
+                @click="onSelectAll"
+              >
+                Select All
+              </x-button>
+              <x-button
+                v-if="props.deselectAll"
+                size="xs"
+                color="error"
+                light
+                @click="onDeselectAll"
+              >
+                Deselect All
+              </x-button>
             </div>
           </div>
         </ComboboxOptions>

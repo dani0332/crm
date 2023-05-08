@@ -313,6 +313,7 @@ onMounted(() => {
               label: filterOptions.batches[key],
             }))
           "
+          deselect-all
         />
 
         <ComboBox
@@ -325,6 +326,8 @@ onMounted(() => {
               label: filterOptions.tiers[key],
             }))
           "
+          select-all
+          deselect-all
         />
 
         <ComboBox
@@ -337,6 +340,7 @@ onMounted(() => {
               label: filterOptions.leadSources[key],
             }))
           "
+          deselect-all
         />
 
         <ComboBox
@@ -349,6 +353,8 @@ onMounted(() => {
               label: filterOptions.teams[key],
             }))
           "
+          select-all
+          deselect-all
         />
 
         <ComboBox
@@ -361,6 +367,8 @@ onMounted(() => {
               label: filterOptions.advisors[key],
             }))
           "
+          select-all
+          deselect-all
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
@@ -522,28 +530,34 @@ onMounted(() => {
       <template #header>
         <div class="text-center">{{ currentTypeTitle }}</div>
       </template>
-      <section>
-        <PaginateClient
-          :links="{
-            next: totalLeads.data.next_page_url,
-            prev: totalLeads.data.prev_page_url,
-            current: totalLeads.data.current_page,
-            from: totalLeads.data.from,
-            to: totalLeads.data.to,
-            total: totalLeads.data.total,
-            last: totalLeads.data.last_page,
-          }"
-          @update="setPageTable"
-        />
-        <DataTable
-          table-class-name="tablefixed compact"
-          :loading="totalLeads.loader"
-          :headers="totalLeads.tableHeader"
-          :items="totalLeads.data.data || []"
-          border-cell
-          hide-rows-per-page
-          hide-footer
-        ></DataTable>
+      <section class="min-h-[70vh]">
+        <div v-if="totalLeads.data.data?.length > 0">
+          <PaginateClient
+            :links="{
+              next: totalLeads.data.next_page_url,
+              prev: totalLeads.data.prev_page_url,
+              current: totalLeads.data.current_page,
+              from: totalLeads.data.from,
+              to: totalLeads.data.to,
+              total: totalLeads.data.total,
+              last: totalLeads.data.last_page,
+            }"
+            @update="setPageTable"
+          />
+          <DataTable
+            table-class-name="tablefixed compact"
+            :loading="totalLeads.loader"
+            :headers="totalLeads.tableHeader"
+            :items="totalLeads.data.data || []"
+            border-cell
+            hide-rows-per-page
+            hide-footer
+          ></DataTable>
+        </div>
+        <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
+          <x-spinner size="lg" color="#1d83bc" />
+          <p class="text-sm">Fetching records...</p>
+        </div>
       </section>
     </x-modal>
   </div>
