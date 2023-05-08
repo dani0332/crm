@@ -302,7 +302,7 @@ onMounted(() => {
           label="Advisor Assigned Date"
           placeholder="Select Start & End Date"
           range
-          :max-range="365"
+          :max-range="92"
           size="sm"
           model-type="yyyy-MM-dd"
         />

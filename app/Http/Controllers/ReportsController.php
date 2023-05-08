@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\AdvisorConversionReportService;
+use App\Services\AdvisorDistributionReportService;
 use Illuminate\Http\Request;
 
 class ReportsController extends Controller
@@ -41,9 +42,13 @@ class ReportsController extends Controller
         return view('reports.lead-distribution-report');
     }
 
-    public function renderAdvisorDistributionReport()
+    public function renderAdvisorDistributionReport(Request $request, AdvisorDistributionReportService $advisorDistributionReportService)
     {
-        return view('reports.advisor-distribution-report');
+        return inertia('Reports/AdvisorDistribution', [
+            'reportData' => $advisorDistributionReportService->getReportData($request),
+            'filterOptions' => $advisorDistributionReportService->getFilterOptions(),
+            'defaultFilters' => $advisorDistributionReportService->getDefaultFilters(),
+        ]);
     }
 
     public function renderAdvisorPerformanceReport()
