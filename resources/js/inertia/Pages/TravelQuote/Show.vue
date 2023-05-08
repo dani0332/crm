@@ -40,6 +40,11 @@ const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY');
 };
 
+const dateTimeFormat = date => {
+  if (!date) return '';
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss');
+};
+
 const notification = useNotifications('toast');
 
 const {
@@ -1125,11 +1130,11 @@ onMounted(() => {
         <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
 
         <template #item-created_at="{ created_at }">
-          {{ dateFormat(created_at).value }}
+          {{ dateTimeFormat(created_at).value }}
         </template>
 
         <template #item-updated_at="{ updated_at }">
-          {{ dateFormat(updated_at).value }}
+          {{ dateTimeFormat(updated_at).value }}
         </template>
 
         <template #item-action="item">
