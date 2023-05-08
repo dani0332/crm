@@ -1,4 +1,6 @@
 <script setup>
+import { usePagination, useRowsPerPage } from 'use-vue3-easy-data-table';
+
 defineProps({
   reportData: Array,
   filterOptions: Object,
@@ -9,34 +11,9 @@ const loaders = reactive({
   table: false,
 });
 
-const totalLeads = reactive({
-  modal: false,
-  loader: false,
-  filters: {
-    leadType: '',
-    quote_batch_id: null,
-    advisorId: null,
-  },
-  data: {},
-  current: '',
-  tableHeader: [
-    {
-      text: 'CDB Id',
-      value: 'cdbId',
-    },
-    {
-      text: 'Customer Name',
-      value: 'fullName',
-    },
-    {
-      text: 'Lead Status',
-      value: 'quoteStatusName',
-    },
-  ],
-});
-
 const page = usePage();
 const params = useUrlSearchParams('history');
+const dataTableRef = ref();
 
 const tableHeader = [
   {
@@ -100,6 +77,32 @@ const tableHeader = [
     value: 'net_conversion',
   },
 ];
+
+const totalLeads = reactive({
+  modal: false,
+  loader: false,
+  filters: {
+    leadType: '',
+    quote_batch_id: null,
+    advisorId: null,
+  },
+  data: {},
+  current: '',
+  tableHeader: [
+    {
+      text: 'CDB Id',
+      value: 'cdbId',
+    },
+    {
+      text: 'Customer Name',
+      value: 'fullName',
+    },
+    {
+      text: 'Lead Status',
+      value: 'quoteStatusName',
+    },
+  ],
+});
 
 function calculateGrossConversion(item) {
   if (item) {
@@ -262,6 +265,26 @@ const calculateTotalSum = (data, key) => {
   return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
 };
 
+const {
+  currentPageFirstIndex,
+  currentPageLastIndex,
+  clientItemsLength,
+  isFirstPage,
+  isLastPage,
+  nextPage,
+  prevPage,
+} = usePagination(dataTableRef);
+
+const {
+  rowsPerPageOptions,
+  rowsPerPageActiveOption,
+  updateRowsPerPageActiveOption,
+} = useRowsPerPage(dataTableRef);
+
+const updateRowsPerPageSelect = e => {
+  updateRowsPerPageActiveOption(Number(e.target.value));
+};
+
 onMounted(() => {
   if (page.props.defaultFilters) {
     filters.advisorAssignedDates =
@@ -381,7 +404,7 @@ onMounted(() => {
     </x-form>
 
     <DataTable
-      ref="dataTable"
+      ref="dataTableRef"
       table-class-name="tablefixed"
       :loading="loaders.table"
       :headers="tableHeader"
@@ -391,6 +414,7 @@ onMounted(() => {
       :rows-items="[10, 25, 50, 100]"
       :rows-per-page="10"
       :empty-message="'No Records Available'"
+      hide-footer
     >
       <template #item-gross_conversion="item">
         {{ calculateGrossConversion(item) }}
@@ -526,6 +550,48 @@ onMounted(() => {
         </tr>
       </template>
     </DataTable>
+
+    <div class="flex flex-wrap justify-between items-center gap-2 py-6">
+      <div>
+        <select
+          class="form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400"
+          @change="updateRowsPerPageSelect"
+        >
+          <option
+            v-for="item in rowsPerPageOptions"
+            :key="item"
+            :selected="item === rowsPerPageActiveOption"
+            :value="item"
+          >
+            {{ item }} rows per page
+          </option>
+        </select>
+      </div>
+
+      <div class="text-xs lining-nums">
+        Now displaying: {{ currentPageFirstIndex }} ~
+        {{ currentPageLastIndex }} of {{ clientItemsLength }}
+      </div>
+
+      <div class="flex gap-2">
+        <x-button
+          size="sm"
+          icon-left="prev"
+          :disabled="isFirstPage"
+          @click="prevPage"
+        >
+          Prev
+        </x-button>
+        <x-button
+          size="sm"
+          icon-right="next"
+          :disabled="isLastPage"
+          @click="nextPage"
+        >
+          Next
+        </x-button>
+      </div>
+    </div>
 
     <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
       <template #header>
