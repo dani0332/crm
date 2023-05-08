@@ -22,11 +22,10 @@ const dateFormat = (date, with_time = true) => {
     return useDateFormat(date, date_time_format);
 };
 
-//
-// const quotesSelected = ref([]),
-//     assignAdvisor = ref(null),
-//     assignmentType = ref(null),
-//     isDisabled = ref(false);
+const quotesSelected = ref([]),
+    assignAdvisor = ref(null),
+    assignmentType = ref(null),
+    isDisabled = ref(false);
 
 const tableHeader = [
     { text: 'CDB ID', value: 'code' },
@@ -69,38 +68,37 @@ const tableHeader = [
 ];
 
 
-// const rules = {
-//     isRequired: v => !!v || 'Please select this option',
-// };
-//
-// const assignForm = useForm({
-//     assigned_to_id_new: null,
-//     modelType: 'Home',
-//     selectTmLeadId: '',
-// });
-//
-// function onAssignLead(isValid) {
-//     if (isValid) {
-//         const selected = quotesSelected.value.map(e => e.id);
-//         assignForm
-//             .transform(data => ({
-//                 ...data,
-//                 selectTmLeadId: `${selected}`,
-//             }))
-//             .post('/quotes/home/manualLeadAssign', {
-//                 preserveScroll: true,
-//                 preserveState: true,
-//                 onSuccess: () => {
-//                     quotesSelected.value = [];
-//                     notification.success({
-//                         title: 'Home Leads Assigned',
-//                         position: 'top',
-//                     });
-//                 },
-//             });
-//     }
-// }
-//
+const rules = {
+    isRequired: v => !!v || 'Please select this option',
+};
+
+const assignForm = useForm({
+    assigned_to_id_new: null,
+    modelType: 'Home',
+    selectTmLeadId: '',
+});
+
+function onAssignLead(isValid) {
+    if (isValid) {
+        const selected = quotesSelected.value.map(e => e.id);
+        assignForm
+            .transform(data => ({
+                ...data,
+                selectTmLeadId: `${selected}`,
+            }))
+            .post('/quotes/home/manualLeadAssign', {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    quotesSelected.value = [];
+                    notification.success({
+                        title: 'Home Leads Assigned',
+                        position: 'top',
+                    });
+                },
+            });
+    }
+}
 
 </script>
 
@@ -110,6 +108,28 @@ const tableHeader = [
         :lead-statuses="leadStatuses"
         :advisors="advisors"
     ></QuoteFilters>
+
+    <Transition name="fade">
+        <div v-if="quotesSelected.length > 0" class="mb-4">
+            <LeadAssignment
+                :selected="quotesSelected.map(e => e.id)"
+                :advisors="advisors"
+            />
+            <ExportExcel
+                :data="quotesSelected"
+                :columns="tableHeader"
+                :filename="'Home-List'"
+                :sheetname="'Leads'"
+            >
+                <x-button size="sm" color="emerald">
+                    Export -
+                    <span class="lining-nums">
+              Selected: {{ quotesSelected.length }}
+            </span>
+                </x-button>
+            </ExportExcel>
+        </div>
+    </Transition>
 
     <DataTable
         v-model:items-selected="quotesSelected"
