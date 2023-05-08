@@ -253,7 +253,7 @@ class CustomerController extends Controller
             $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
 
             if ($isAdditionalEmailExist) {
-                if ($request->isInertia == true) {
+                if ($request->isInertia) {
                     vAbort('Email Address already in use for a customer. Please try another.');
                 }
                 return response()->json(['error' => [
@@ -266,7 +266,7 @@ class CustomerController extends Controller
             $isAdditionalMobileNoExist = $this->customerService->checkAdditionalMobileNoExist($quoteObject, $value);
 
             if ($isAdditionalMobileNoExist) {
-                if ($request->isInertia == true) {
+                if ($request->isInertia) {
                     vAbort('Mobile Number already in use for a customer. Please try another.');
                 }
                 return response()->json(['error' => [
