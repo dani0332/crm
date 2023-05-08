@@ -181,7 +181,7 @@ class AdvisorConversionReportService extends BaseService
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $batch = null;
         if (isset($filters->quoteBatchId)) {
-            $batch = QuoteBatches::where('id', $filters->quoteBatchId);
+            $batch = QuoteBatches::where('id', $filters->quoteBatchId)->first();
         }
 
         if (isset($filters->batchNumberFilter) && count($filters->batchNumberFilter) > 0) {
