@@ -5,14 +5,10 @@ namespace App\Services;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\ReportsLeadTypeEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
-use App\Models\LeadSource;
-use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\Tier;
-use App\Models\User;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -90,6 +86,7 @@ class AdvisorDistributionReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
+
         return [
             'maxDays' => $maxDays,
             'tiers' => $tiers,
@@ -112,7 +109,7 @@ class AdvisorDistributionReportService extends BaseService
     public function applyFilters($query, $filters)
     {
         $filters = (object) $filters;
-        info('filters : '. json_encode($filters));
+        info('filters : '.json_encode($filters));
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
         $startDate = isset($filters->advisorAssignedDates) ?
@@ -142,8 +139,9 @@ class AdvisorDistributionReportService extends BaseService
             });
         }
 
-        info('query : '. $query->toSql());
-        info('query bindings : '. json_encode($query->getBindings()));
+        info('query : '.$query->toSql());
+        info('query bindings : '.json_encode($query->getBindings()));
+
         return $query;
     }
 }
