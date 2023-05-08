@@ -249,6 +249,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('car', CRUDController::class);
 
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView']);
+        Route::get('health-export', [CRUDController::class, 'exportHealthLeads']);
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);
 
         Route::resource('life', CRUDController::class);
@@ -287,7 +288,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('car/addNoteForCustomer', [CRUDController::class, 'addNoteForCustomer']);
         Route::post('car/sendNotesToCustomer', [CRUDController::class, 'sendNotesToCustomer']);
         Route::post('{quoteType}/update-quote-policy', [CRUDController::class, 'updateQuotePolicy']);
-        Route::post('car/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
+        Route::post('{quoteType}/manual-plan-toggle', [CRUDController::class, 'manualPlanToggle'])->name('manualPlanToggle');
         Route::post('{quoteType}/export-car-pdf', [CRUDController::class, 'exportCarPdf'])->name('exportCarPdf');
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');

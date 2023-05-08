@@ -57,8 +57,9 @@ class BusinessQuoteController extends Controller
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $gridData = $this->businessQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
-
-        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource'));
+        $isManagerORDeputy = auth()->user()->isManagerORDeputy();
+        $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
+        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed'));
     }
 
     private function parseDate($date, $isStartOfDay)
