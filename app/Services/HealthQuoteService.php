@@ -311,11 +311,11 @@ class HealthQuoteService extends BaseService
             $this->query->where('hqr.health_team_type', $request->sub_team);
         }
         // quote_status filter
-        if (isset($request->quote_status) && $request->quote_status != '') {
+        if (isset($request->quote_status) && is_array($request->quote_status) && count($request->quote_status) > 0) {
             $this->query->whereIn('quote_status_id', $request->quote_status);
         }
         // advisors filter
-        if (isset($request->advisors) && $request->advisors != '') {
+        if (isset($request->advisors) && is_array($request->advisors) && count($request->advisors) > 0) {
             $this->query->whereIn('advisor_id', $request->advisors)->orWhereIn('wcu_id', $request->advisors);
         }
         // is_renewal filter
@@ -494,11 +494,25 @@ class HealthQuoteService extends BaseService
         //check if salary band ,member category ,gender or emirates of your visa is updated we need to update quote_updated_at for latest ratings
         if ($healthQuote->salary_band_id != $request->salary_band_id || $healthQuote->member_category_id != $request->member_category_id || $healthQuote->emirate_of_your_visa_id != $request->emirate_of_your_visa_id || $healthQuote->gender != $request->gender || $healthQuote->currently_insured_with_id != $request->currently_insured_with_id || $healthQuote->dob != $request->dob) {
             $healthQuote->quote_updated_at = Carbon::now();
+            $updateMemberDetails = [
+                'member_category_id' => $request->member_category_id,
+                'salary_band_id' => $request->salary_band_id,
+                'gender' => $request->gender,
+                'dob' => $request->dob,
+            ];
+
+            $healthQuoteFirstMember = HealthMemberDetail::where('health_quote_request_id', $healthQuote->id)->first();
+            if($healthQuoteFirstMember)
+            {
+                $healthQuoteFirstMember->update(array_merge(
+                    $updateMemberDetails, [
+                    'nationality_id' => $request->nationality_id,
+                    'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id
+                ]));
+            }
+
             if ($healthQuote->primary_member_id) {
-                $healthQuote->memberDetails()->update([
-                    'member_category_id' => $request->member_category_id,
-                    'salary_band_id' => $request->salary_band_id, 'gender' => $request->gender, 'dob' => $request->dob,
-                ]);
+                $healthQuote->memberDetails()->update($updateMemberDetails);
             }
         }
         $healthQuote->salary_band_id = $request->salary_band_id;
