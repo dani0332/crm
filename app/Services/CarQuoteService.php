@@ -1222,7 +1222,7 @@ class CarQuoteService extends BaseService
         }
 
         if ($quote->payment_status_id == PaymentStatusEnum::CANCELLED && Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
-            info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid . ' payment status ' . $quote->paymentStatus->text . ' and paid days diff is ' . $paidAtDays . ' to ' . RolesEnum::CarAdvisor);
+            info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid . ' payment status ' . $quote->paymentStatus->text . ' to role ' . RolesEnum::CarAdvisor);
             return true;
         }
 
