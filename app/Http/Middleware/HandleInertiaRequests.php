@@ -151,37 +151,6 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('My Leads', url('/myleads'));
         }
 
-        if (auth()->user()->can(PermissionsEnum::RewardList)) {
-            $nav = $nav->add('Rewards', '', function (Section $section) {
-                $section
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::PartnersList),
-                        'Partners List',
-                        url('rewards/partner'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->add('Rewards List', url('rewards/reward'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::RewardCategoriesList),
-                        'Reward Categories',
-                        url('rewards/reward-categories'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::RewardTagsList),
-                        'Reward Tags',
-                        url('rewards/reward-tags'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::RewardSliderList),
-                        'Reward Slider',
-                        url('rewards/reward-sliders'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    );
-            });
-        }
-
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
             $nav = $nav->add('Activities', url('/activities'));
         }
@@ -405,7 +374,6 @@ class HandleInertiaRequests extends Middleware
         //     $nav = $nav->add('Policy Issuance', url('ftcform'));
         // }
         if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
-
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
