@@ -31,7 +31,6 @@ use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\MyLeadsController;
-use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\ReasonController;
@@ -39,11 +38,6 @@ use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
-use App\Http\Controllers\RewardCategoryController;
-use App\Http\Controllers\RewardController;
-use App\Http\Controllers\RewardSliderController;
-use App\Http\Controllers\RewardTagController;
-use App\Http\Controllers\RewardTranslationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
@@ -227,14 +221,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
-    Route::group(['prefix' => 'rewards'], function () {
-        Route::resource('partner', PartnerController::class);
-        Route::resource('reward', RewardController::class);
-        Route::resource('reward-categories', RewardCategoryController::class);
-        Route::resource('reward-tags', RewardTagController::class);
-        Route::resource('reward.reward-translation', RewardTranslationController::class);
-        Route::resource('reward-sliders', RewardSliderController::class)->middleware('permission:reward-sliders-list|reward-sliders-create|reward-sliders-edit|reward-sliders-delete');
-    });
 
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
@@ -322,14 +308,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'generic'], function () {
-        Route::resource('insuranceprovider', GenericCrudController::class);
-        Route::resource('carplan', GenericCrudController::class);
-        Route::resource('carplancoverage', GenericCrudController::class);
-        Route::resource('carplanaddon', GenericCrudController::class);
-        Route::resource('carplanaddonoption', GenericCrudController::class);
-        Route::resource('applicationstorage', GenericCrudController::class);
         Route::resource('team', TeamController::class);
-        Route::resource('leadstatus', GenericCrudController::class);
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);
         Route::resource('rule', GenericCrudController::class);
