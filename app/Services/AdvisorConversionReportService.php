@@ -211,7 +211,7 @@ class AdvisorConversionReportService extends BaseService
             info('excludeCreatedLeadsFilter are : '.json_encode($filters->excludeCreatedLeadsFilter));
             if ($filters->excludeCreatedLeadsFilter == 'yes') {
                 info('inside excludeCreatedLeadsFilter');
-                $query->where('car_quote_request.source', '!=', 'IMCRM');
+                $query->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
             }
         }
         if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
