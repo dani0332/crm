@@ -16,7 +16,7 @@ class JetskiLookupsSeeder extends Seeder
      */
     public function run()
     {
-        if ((! $exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_MATERIALS)->first())) {
+        if (! $exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_MATERIALS)->first()) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_MATERIALS, 'code' => 'matFrp', 'text' => 'FRP', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_MATERIALS, 'code' => 'matGrp', 'text' => 'GRP', 'created_at' => now(), 'updated_at' => now()],
@@ -24,21 +24,21 @@ class JetskiLookupsSeeder extends Seeder
             ]);
         }
 
-        if ((! $exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_USES)->first())) {
+        if (! $exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_USES)->first()) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_USES, 'code' => 'commercialUse', 'text' => 'Commercial use (Rental business)', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_USES, 'code' => 'privateUse', 'text' => 'Private use', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
 
-        if ((! $exists = DB::table('lookups')->where('key', LookupsEnum::PET_TYPES)->first())) {
+        if (! $exists = DB::table('lookups')->where('key', LookupsEnum::PET_TYPES)->first()) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_TYPES, 'code' => 'dog', 'text' => 'Dog', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_TYPES, 'code' => 'cat', 'text' => 'Cat', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
 
-        if ((! $exists = DB::table('lookups')->where('key', LookupsEnum::PET_AGES)->first())) {
+        if (! $exists = DB::table('lookups')->where('key', LookupsEnum::PET_AGES)->first()) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_AGES, 'code' => 'lessThan1Year', 'text' => 'Less than 1 year old', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_AGES, 'code' => '1yearOld', 'text' => '1 year old', 'created_at' => now(), 'updated_at' => now()],

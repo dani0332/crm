@@ -256,6 +256,7 @@ class CustomerController extends Controller
                 if ($request->isInertia) {
                     vAbort('Email Address already in use for a customer. Please try another.');
                 }
+
                 return response()->json(['error' => [
                     'message' => 'Email Address already in use for a customer. Please try another.',
                 ]]);
@@ -269,6 +270,7 @@ class CustomerController extends Controller
                 if ($request->isInertia) {
                     vAbort('Mobile Number already in use for a customer. Please try another.');
                 }
+
                 return response()->json(['error' => [
                     'message' => 'Mobile Number already in use for a customer. Please try another.',
                 ]]);

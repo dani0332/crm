@@ -68,7 +68,6 @@ class ActivitiesService extends BaseService
                     $activities = $activities->whereBetween('due_date', [Carbon::now()->startOfMonth()->startOfDay()->toDateTimeString(), Carbon::now()->endOfMonth()->endOfDay()->toDateTimeString()]);
                     break;
                 default:
-                    $activities = $activities;
                     break;
             }
         }
@@ -147,10 +146,10 @@ class ActivitiesService extends BaseService
             case 'business':
                 $quoteTypeId = QuoteTypeId::Business;
                 break;
-            default:
-                break;
             case 'pet':
                 $quoteTypeId = QuoteTypeId::Pet;
+                break;
+            default:
                 break;
         }
 
@@ -173,7 +172,6 @@ class ActivitiesService extends BaseService
                 $activities = $activities->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])->orWhereBetween('updated_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
                 break;
             default:
-                $activities = $activities;
                 break;
         }
     }

@@ -94,10 +94,7 @@ class CentralService
 
                 if (isset($response->message) && str_contains($response->message, 'Error')) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
-                }
-
-                elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE)
-                {
+                } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
                     $record = $repository::where('uuid', $response->quoteUID)->first();
                     if ($record) {
                         $update = [
