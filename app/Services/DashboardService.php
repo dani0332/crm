@@ -92,8 +92,8 @@ class DashboardService extends BaseService
             DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
             DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
         )
-        ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
-        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
 
         return $query->get();
     }
@@ -104,9 +104,9 @@ class DashboardService extends BaseService
             DB::raw('distinct(source) as sourceName'),
             DB::raw('count(*) as sourceCount'),
         )
-        ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
-        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-        ->groupBy('source');
+            ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->groupBy('source');
 
         return $query->get();
     }
