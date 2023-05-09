@@ -244,7 +244,7 @@ const historyDataTable = [
       :personal-plans="personalPlans"
     />
 
-    <AdditionalContacts :quote="quote" />
+    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <QuoteStatus
       :quote="quote"
@@ -292,9 +292,6 @@ const historyDataTable = [
       />
     </div>
 
-    <AuditLogs
-      :quote-type="quoteType"
-      :id="$page.props.quote.id"
-    />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
   </div>
 </template>
