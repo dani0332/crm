@@ -55,13 +55,7 @@ class CustomerController extends Controller
                 $data->where($request->searchtype, $request->searchfield);
             }
 
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('customers.actions', compact('row'))->render();
-                })
-                ->rawColumns(['action'])
-                ->make(true);
+            return DataTables::of($data)->addIndexColumn()->make(true);
         }
 
         return view('customers.view');
