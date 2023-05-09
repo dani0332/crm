@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
 use App\Models\Permission;
 use App\Models\Role;
@@ -17,8 +18,8 @@ class PersonalQuoteRolesPermissionSeeder extends Seeder
     public function run()
     {
         $roles = ['_ADVISOR', '_MANAGER'];
-        $lobs = [QuoteTypes::BIKE->value, QuoteTypes::CYCLE->value, QuoteTypes::YACHT->value, QuoteTypes::JETSKI->value];
-        $permissions = ['-quotes-list', '-quotes-show', '-quotes-create', '-quotes-edit', '-quotes-delete'];
+        $lobs = [QuoteTypes::BIKE->value, QuoteTypes::CYCLE->value, QuoteTypes::YACHT->value, QuoteTypes::JETSKI->value, QuoteTypes::LIFE->value, QuoteTypes::PET->value];
+        $permissions = ['-quotes-list', '-quotes-show', '-quotes-create', '-quotes-edit'];
 
         foreach ($lobs as $lob) {
             foreach ($roles as $role) {
@@ -29,5 +30,7 @@ class PersonalQuoteRolesPermissionSeeder extends Seeder
                 Permission::findOrCreate(strtolower($lob).$permission, 'web');
             }
         }
+
+        Permission::findOrCreate(PermissionsEnum::TravelQuotesShow, 'web');
     }
 }

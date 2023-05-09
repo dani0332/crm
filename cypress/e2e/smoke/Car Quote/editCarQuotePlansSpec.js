@@ -10,7 +10,7 @@ describe('Car qoutes', () => {
     const carLeadPage = new CarLeadPage()
     before(() => {
         //Creating Quote using API
-        cy.generate_CDBID(Cypress.env('Capi_X_Api_Token'), qouteData.carQouteData).then((data) => {
+        cy.generate_CDBID(Cypress.env('Capi_X_Api_Token'), qouteData.carQouteData, carLeadData.carLeadData.endPoint).then((data) => {
             // cy.log(JSON.stringify(data))
             CDBID = data
             cy.log(CDBID)

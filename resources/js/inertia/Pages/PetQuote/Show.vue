@@ -322,7 +322,7 @@ const onCreateDuplicate = isValid => {
       :personal-plans="personalPlans"
     />
 
-    <AdditionalContacts :quote="quote" />
+    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <QuoteStatus
       :quote="quote"

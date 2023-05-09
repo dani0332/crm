@@ -6,7 +6,7 @@ import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
-import {useCan} from "../../Composables/can";
+import { useCan } from '../../Composables/can';
 
 defineProps({
   quote: Object,
@@ -51,7 +51,6 @@ const historyDataTable = [
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-
 </script>
 
 <template>
@@ -61,11 +60,18 @@ const permissionsEnum = page.props.permissionsEnum;
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Cycle Detail</h2>
       <div class="flex gap-2">
-        <Link v-if="can(permissionsEnum.CycleQuotesEdit)" :href="`/personal-quotes/cycle/${quote.uuid}/edit`">
+        <Link
+          v-if="can(permissionsEnum.CycleQuotesEdit)"
+          :href="`/personal-quotes/cycle/${quote.uuid}/edit`"
+        >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
-        <Link v-if="can(permissionsEnum.CycleQuotesList)" href="/personal-quotes/cycle" preserve-scroll>
+        <Link
+          v-if="can(permissionsEnum.CycleQuotesList)"
+          href="/personal-quotes/cycle"
+          preserve-scroll
+        >
           <x-button size="sm" color="primary" tag="div">
             Cycle Quotes
           </x-button>
@@ -281,7 +287,7 @@ const permissionsEnum = page.props.permissionsEnum;
       :personal-plans="personalPlans"
     />
 
-    <AdditionalContacts :quote="quote" />
+    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <QuoteStatus
       :quote="quote"
@@ -304,10 +310,7 @@ const permissionsEnum = page.props.permissionsEnum;
       :quoteStatusesEnum="quoteStatusesEnum"
     />
 
-    <AuditLogs
-      :quote-type="quoteType"
-      :id="$page.props.quote.id"
-    />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
 
     <LeadHistory :quote="$page.props.quote" />
   </div>
