@@ -56,21 +56,16 @@ const tableHeader = [
     { text: 'LAST MODIFIED DATE', value: 'updated_at' },
     { text: 'UPDATED BY', value: 'updated_by' },
     { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
-    // { text: 'ADVISOR', value: 'advisor_id_text' },
+    { text: 'ADVISOR', value: 'advisor' },
     { text: 'POLICY NUMBER', value: 'policy_number' },
     { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
     { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
-    { text: 'IS VEHICLE MODIFIED', value: '---' },
+    // { text: 'IS VEHICLE MODIFIED', value: '---' },
     { text: 'PREMIUM', value: 'premium' },
     { text: 'LOST REASON', value: 'lost_reason' },
     { text: 'QUOTE LINK', value: 'quote_link' },
 
 ];
-
-
-const rules = {
-    isRequired: v => !!v || 'Please select this option',
-};
 
 const assignForm = useForm({
     assigned_to_id_new: null,
@@ -104,7 +99,7 @@ function onAssignLead(isValid) {
 
 <template>
     <QuoteFilters
-        :dynamic_route="car-revival"
+        dynamic_route="car-revival"
         :lead-statuses="leadStatuses"
         :advisors="advisors"
     ></QuoteFilters>
@@ -202,6 +197,9 @@ function onAssignLead(isValid) {
         </template>
         <template #item-follow_up_date="{ car_quote_request_detail }">
             {{ car_quote_request_detail?.next_followup_date }}
+        </template>
+        <template #item-advisor="{ advisor }">
+            {{ advisor?.name }}
         </template>
         <template #item-lost_reason="{ car_quote_request_detail }">
             {{ car_quote_request_detail?.lost_reason?.text }}

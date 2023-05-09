@@ -1,20 +1,22 @@
 <script setup>
-import {computed, onMounted, reactive} from "vue";
-import {useHasRole} from "@/inertia/Composables/can";
 
 const page = usePage();
 const notification = useNotifications('toast');
+const comp_for_car_revival = "car-revival";
+const comp_for_car = "car";
 
 const loader = reactive({
     table: false,
     export: false,
 });
 
-
 defineProps({
     dynamic_route: String,
-    leadStatuses: Array,
-    advisors: Array,
+    leadStatuses: {
+        type: Object,
+        default: {}
+    },
+    advisors: Object,
 });
 
 const batchOptions = computed(() => {
@@ -153,18 +155,37 @@ function setQueryStringFilters() {
             .getAll('tier[]')
             .map(status => parseInt(status));
     }
-
     if (urlParams.has('advisors[]')) {
         filters.advisors = urlParams
             .getAll('advisors[]')
             .map(status => parseInt(status));
     }
-    if (urlParams.has('is_renewal')) {
-        filters.is_renewal = urlParams.get('is_renewal');
+    if (urlParams.has('vehicle_type')) {
+        filters.viehicle_type = urlParams.get('vehicle_type');
+    }
+    if (urlParams.has('type_of_car_insurance')) {
+        filters.car_type_insurance = urlParams.get('type_of_car_insurance');
+    }
+    if (urlParams.has('currently_insured_with')) {
+        filters.currently_insured_with = urlParams.get('currently_insured_with');
+    }
+    if (urlParams.has('renewal_batch')) {
+        filters.renewal_batch = urlParams.get('renewal_batch');
+    }
+    if (urlParams.has('renewal_expiry_date_start')) {
+        filters.renewal_expiry_date_start = urlParams.get('renewal_expiry_date_start');
+    }
+    if (urlParams.has('renewal_expiry_date_end')) {
+        filters.renewal_expiry_date_end = urlParams.get('renewal_expiry_date_end');
+    }
+    if (urlParams.has('policy_number')) {
+        filters.policy_number = urlParams.get('policy_number');
     }
 }
 
 function onSubmit(isValid) {
+    console.log(page.props.dynamic_route);
+    return false;
     if (isValid) {
         filters.page = 1;
         Object.keys(filters).forEach(
@@ -172,7 +193,7 @@ function onSubmit(isValid) {
                 (filters[key] === '' || filters[key].length === 0) &&
                 delete filters[key],
         );
-        router.visit('/quotes/car-revivals', {
+        router.visit(`/quotes/${page.props.dynamic_route}`, {
             method: 'get',
             data: filters,
             preserveState: true,
@@ -186,7 +207,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-    router.visit('/quotes/car-revival', {
+    router.visit('/quotes/' + props.dynamic_route, {
         method: 'get',
         data: { page: 1 },
         preserveScroll: true,
@@ -208,10 +229,10 @@ onMounted(() => {
     <div>
         <Head title="Car Revival List" />
         <div class="flex justify-between items-center">
-            <h2 v-if="dynamic_route === car" class="text-xl font-semibold">Car List</h2>
+            <h2 v-if="dynamic_route === comp_for_car" class="text-xl font-semibold">Car List</h2>
             <h2 v-else class="text-xl font-semibold">Car Revival List</h2>
 
-            <div v-if="dynamic_route === car" class="space-x-3">
+            <div v-if="dynamic_route === comp_for_car" class="space-x-3">
                 <Link  href="/quotes/home-cards">
                     <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
                 </Link>
@@ -299,6 +320,7 @@ onMounted(() => {
                 />
                 <x-select
                     v-model="filters.is_ecommerce"
+                    name="is_ecommerce"
                     label="Ecommerce"
                     placeholder="Search by Ecommerce"
                     :options="[
@@ -325,6 +347,7 @@ onMounted(() => {
                 <x-select
                     v-model="filters.viehicle_type"
                     label="Vehicle Type"
+                    name="vehicle_type"
                     placeholder="Search by Vehicle Type"
                     :options="vehicleTypeOptions"
                     class="w-full"
@@ -332,6 +355,7 @@ onMounted(() => {
                 <x-select
                     v-model="filters.car_type_insurance"
                     label="Type of Car Insurance"
+                    name="type_of_car_insurance"
                     placeholder="Search by Type of Car Insurance"
                     :options="typeOfInsuranceOptions"
                     class="w-full"
@@ -339,6 +363,7 @@ onMounted(() => {
                 <x-select
                     v-model="filters.currently_insured_with"
                     label="Currently Insured With"
+                    name="currently_insured_with"
                     placeholder="Search by Currently Insured With"
                     :options="currentlyInsuredWith"
                     class="w-full"

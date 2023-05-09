@@ -416,7 +416,6 @@ if (! function_exists('newUi')) {
     {
         return [
             quoteTypeCode::Health,
-            quoteTypeCode::Car_Revival,
         ];
     }
 }

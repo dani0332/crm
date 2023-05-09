@@ -18,8 +18,8 @@ class CarRevivalQuoteController extends Controller
      */
     public function index()
     {
-        $carRevivalQuotes = CarRevivalQuoteRepository::getData();
         $formOptionsData = CarQuoteRepository::getFormOptions();
+        $carRevivalQuotes = CarRevivalQuoteRepository::getData();
 
         return inertia('CarRevivalQuote/Index', [
             'quotes' => $carRevivalQuotes,

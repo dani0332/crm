@@ -127,7 +127,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         Route::group(['prefix' => 'quotes'], function () {
-            Route::resource('car-revivals', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'));
+            Route::resource('car-revival', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'));
         });
 
     });

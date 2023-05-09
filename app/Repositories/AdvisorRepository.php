@@ -16,10 +16,19 @@ class AdvisorRepository extends BaseRepository
 
     public function fetchGetList($modelType)
     {
-        $query = $this->join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
-            ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->select('users.id as id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
+        $advisorType = strtoupper(explode('/', request()->path())[1]);
 
+        if (auth()->user()->isRenewalUser() || auth()->user()->isRenewalManager() || auth()->user()->isRenewalAdvisor()) {
+            $advisorType = $advisorType.'_RENEWAL';
+        }
+
+        if (auth()->user()->isNewBusinessManager() || auth()->user()->isNewBusinessAdvisor()) {
+            $advisorType = $advisorType.'_NEW_BUSINESS_';
+        }
+
+        $query = $this->join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
+        ->join('roles as r', 'r.id', '=', 'mr.role_id')
+        ->select('users.id as id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
 
         switch (strtolower($modelType)){
             case strtolower(quoteTypeCode::Car):
@@ -48,9 +57,10 @@ class AdvisorRepository extends BaseRepository
 
             default:
                 $query->whereIn('r.name', [
-                    strtoupper($modelType).'_ADVISOR',
-                    strtoupper($modelType).'_RENEWAL_ADVISOR',
-                    strtoupper($modelType).'_NEW_BUSINESS_ADVISOR'
+                    strtoupper($advisorType).'_ADVISOR',
+                    strtoupper($advisorType).'_RENEWAL_ADVISOR',
+                    strtoupper($advisorType).'_NEW_BUSINESS_ADVISOR',
+                    strtoupper($advisorType).'_DEPUTY_MANAGER',
                 ]);
         }
 

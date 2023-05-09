@@ -53,6 +53,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(UAELicenseHeldFor::class, 'id', 'uae_license_held_for_id');
     }
 
+    public function uaeLicenseHeldForBackHome()
+    {
+        return $this->hasOne(UAELicenseHeldFor::class, 'id', 'back_home_license_held_for_id');
+    }
+
     public function carMake()
     {
         return $this->hasOne(CarMake::class, 'id', 'car_make_id');

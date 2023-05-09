@@ -32,6 +32,8 @@ class CarRevivalQuoteRepository extends BaseRepository
             },
             'carMake',
             'uaeLicenseHeldFor',
+            'uaeLicenseHeldForBackHome',
+            'advisor',
             'carModel',
             'emirate',
             'carTypeInsurance',
@@ -53,10 +55,6 @@ class CarRevivalQuoteRepository extends BaseRepository
                 $quoteViewCount->where('quote_type_id', QuoteTypeId::Car);
             }
         ])->filter();
-        // Custom Filters
-//        $query->when(\Request::get('quote_status'), function ($query){
-//            $query->whereIn('quote_status_id', \Request::get('quote_status'));
-//        });
         $query->orderBy('created_at', 'desc');
 
         return $query->simplePaginate();

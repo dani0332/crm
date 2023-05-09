@@ -36,7 +36,7 @@ class CarQuoteRepository extends BaseRepository
             'vehicle_types' => VehicleTypeRepository::withActive()->get(),
             'types_of_insurance' => CarTypeInsuranceRepository::withActive()->get(),
             'currently_insured_with_options' => InsuranceProviderRepository::select('id', 'text')->orderBy('text', 'asc')->withActive()->get(),
-            'advisors' => AdvisorRepository::getList(quoteTypeCode::Car)
+            'advisors' => AdvisorRepository::getList(quoteTypeCode::Car_Revival)
         ];
     }
 
