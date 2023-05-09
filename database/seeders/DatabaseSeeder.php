@@ -50,6 +50,7 @@ class DatabaseSeeder extends Seeder
             addBusinessAsProduct::class,
             addHealthManualAssignmentByPassUsers::class,
             AssignPermissionsToQuoteRoles::class,
+            addPermissionForCustomer::class,
         ]);
     }
 }
