@@ -399,8 +399,6 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
             PermissionsEnum::TeamsList,
-            PermissionsEnum::InsuranceProviderList,
-            PermissionsEnum::ApplicationStorageList,
             PermissionsEnum::RULE_CONFIG_LIST,
             PermissionsEnum::QUAD_CONFIG_LIST,
             PermissionsEnum::TIER_CONFIG_LIST,
@@ -441,18 +439,6 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
                         'Rules (Allocation)',
                         url('generic/rule'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::InsuranceProviderList),
-                        'Insurance Providers',
-                        url('generic/insuranceprovider'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::ApplicationStorageList),
-                        'Application Storage',
-                        url('generic/applicationstorage'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
