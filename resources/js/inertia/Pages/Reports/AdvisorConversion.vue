@@ -336,6 +336,7 @@ onMounted(() => {
               label: filterOptions.batches[key],
             }))
           "
+          :max-limit="3"
           deselect-all
         />
 
@@ -363,7 +364,6 @@ onMounted(() => {
               label: filterOptions.leadSources[key],
             }))
           "
-          :max-limit="5"
           deselect-all
         />
 
