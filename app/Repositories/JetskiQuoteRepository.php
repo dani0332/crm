@@ -110,6 +110,7 @@ class JetskiQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
             ->filter()
+            ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
     }
