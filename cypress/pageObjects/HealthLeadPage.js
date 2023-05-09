@@ -78,7 +78,11 @@ class HealthLeadPage {
     }
 
     getNationalityValue(value) {
-        return cy.get('.flex-1.truncate.py-px').contains(value).click()
+        return cy.get('[role="none"] input[type="text"] ').type(value)
+    }
+
+    selectNationality() {
+        return cy.get('span.flex-1.truncate.py-px').click()
     }
 
     getEmirateOfVisaValue() {

@@ -57,6 +57,7 @@ describe('Health qoutes', () => {
         healthLeadPage.getAddMemberButton()
         healthLeadPage.getAddMemberNationalityDropdown("Nationality")
         healthLeadPage.getNationalityValue("Pakistani")
+        healthLeadPage.selectNationality()
         healthLeadPage.getAddMemberDropdown("Emirate of Visa")
         healthLeadPage.getAddMemberDropdownVisa("Dubai")
         healthLeadPage.getAddMemberDropdown("Gender")
