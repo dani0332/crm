@@ -1454,7 +1454,15 @@ onMounted(() => {
         </x-button>
       </div>
 
-      <div v-if="listQuotePlans.length > 0">
+      <div v-if="listQuotePlans && typeof listQuotePlans == 'string'">
+        <p
+          class="text-center text-primary-600"
+          v-if="typeof listQuotePlans == 'string'"
+        >
+          {{ listQuotePlans?.toUpperCase() }}
+        </p>
+      </div>
+      <div v-else>
         <DataTable
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
@@ -1489,14 +1497,6 @@ onMounted(() => {
             </div>
           </template>
         </DataTable>
-      </div>
-      <div v-else>
-        <p
-          class="text-center text-primary-600"
-          v-if="typeof listQuotePlans == 'string'"
-        >
-          {{ listQuotePlans?.toUpperCase() }}
-        </p>
       </div>
 
       <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>

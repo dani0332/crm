@@ -32045,20 +32045,20 @@ var _hoisted_72 = {
   key: 0
 };
 var _hoisted_73 = {
-  "class": "text-primary-600"
+  key: 0,
+  "class": "text-center text-primary-600"
 };
 var _hoisted_74 = {
-  "class": "text-primary-600"
+  key: 1
 };
 var _hoisted_75 = {
   "class": "text-primary-600"
 };
 var _hoisted_76 = {
-  key: 1
+  "class": "text-primary-600"
 };
 var _hoisted_77 = {
-  key: 0,
-  "class": "text-center text-primary-600"
+  "class": "text-primary-600"
 };
 var _hoisted_78 = {
   "class": "p-4 rounded shadow mb-6 bg-white"
@@ -32737,7 +32737,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" Copy Link ")];
     }),
     _: 1 /* STABLE */
-  })) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true)]), $props.listQuotePlans.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("div", _hoisted_72, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_DataTable, {
+  })) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true)]), $props.listQuotePlans && typeof $props.listQuotePlans == 'string' ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("div", _hoisted_72, [typeof $props.listQuotePlans == 'string' ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("p", _hoisted_73, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((_$props$listQuotePlan = $props.listQuotePlans) === null || _$props$listQuotePlan === void 0 ? void 0 : _$props$listQuotePlan.toUpperCase()), 1 /* TEXT */)) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true)])) : ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("div", _hoisted_74, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_DataTable, {
     "table-class-name": "tablefixed compact",
     headers: $setup.availablePlansTable.columns,
     items: $props.listQuotePlans || [],
@@ -32747,16 +32747,16 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, {
     "item-providerName": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function (item) {
       var _item$providerName;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("span", _hoisted_73, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((_item$providerName = item.providerName) === null || _item$providerName === void 0 ? void 0 : _item$providerName.toUpperCase()), 1 /* TEXT */)];
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("span", _hoisted_75, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((_item$providerName = item.providerName) === null || _item$providerName === void 0 ? void 0 : _item$providerName.toUpperCase()), 1 /* TEXT */)];
     }),
 
     "item-name": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function (item) {
       var _item$name;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("span", _hoisted_74, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((_item$name = item.name) === null || _item$name === void 0 ? void 0 : _item$name.toUpperCase()), 1 /* TEXT */)];
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("span", _hoisted_76, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((_item$name = item.name) === null || _item$name === void 0 ? void 0 : _item$name.toUpperCase()), 1 /* TEXT */)];
     }),
 
     "item-discountPremium": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function (item) {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("span", _hoisted_75, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.discountPremium + item.vat), 1 /* TEXT */)];
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("span", _hoisted_77, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.discountPremium + item.vat), 1 /* TEXT */)];
     }),
 
     "item-action": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function (item) {
@@ -32775,7 +32775,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["onClick"])])];
     }),
     _: 1 /* STABLE */
-  }, 8 /* PROPS */, ["headers", "items"])])) : ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("div", _hoisted_76, [typeof $props.listQuotePlans == 'string' ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("p", _hoisted_77, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((_$props$listQuotePlan = $props.listQuotePlans) === null || _$props$listQuotePlan === void 0 ? void 0 : _$props$listQuotePlan.toUpperCase()), 1 /* TEXT */)) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true)])), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_modal, {
+  }, 8 /* PROPS */, ["headers", "items"])])), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.planDetails,
     "onUpdate:modelValue": _cache[22] || (_cache[22] = function ($event) {
       return $setup.modals.planDetails = $event;
