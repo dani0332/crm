@@ -315,7 +315,7 @@
    $(function(){
         setTimeout(function() {
             window.location.reload(1);
-        }, 80000);
+        }, 180000);
         const picker = new easepick.create({
             element: document.getElementById('reloadDailyStatsDate'),
             css: [
@@ -342,16 +342,19 @@
         picker.setEndDate(new Date());
         $('#reloadDailyStats').on('click', function(){
             var selectedDate = $('#reloadDailyStatsDate').val();
-            $.get('/get-recent-daily-stats?range=' + selectedDate , function (data) {
+            var teamFilterValue = $('#team-filter').val();
+            $.get('/get-recent-daily-stats?range=' + selectedDate + "&teamFilter[]="+ teamFilterValue, function (data) {
                if (data) {
+                debugger;
                  $('#totalLeadsReceived').text(data['totalLeadsReceived']);
                  $('#totalLeadsReceivedEcommerce').text(data['totalLeadsReceivedEcommerce']);
                  $('#totalUnAssignedLeadsReceived').text(data['totalUnAssignedLeadsReceived']);
                  $('#totalUnAssignedLeadsReceivedEcommerce').text(data['totalUnAssignedLeadsReceivedEcommerce']);
                  $('#totalUnAssignedRevivalLeads').text(data['totalUnAssignedRevivalLeads']);
                  for (let index = 0; index < data['teamWiseLeadsAssignedAverage'].length; index++) {
-                    const teamName = data['teamWiseLeadsAssignedAverage'][index]['teamName'];
-                    $('#'+ teamName.replace(/ /g,'')).text(data['stats']);
+                    const teamName = data['teamWiseLeadsAssignedAverage'][index]['teamName'].replace(/ /g,'');
+                    var stat = data['teamWiseLeadsAssignedAverage'][index]['stats'];
+                    $('#'+ teamName).text(stat);
                  }
                  leadRcdSummaryByTierPieChart.destroy();
                  var leadRcdSummaryByTierPieChartData = [];
@@ -366,6 +369,22 @@
                  var revivalLeadsCountChartData = [{name : 'Revival Leads', y: parseInt(data['revivalLeadsCount'][0]['revival_leads']) },
                     {name : 'Non Revival Leads', y: parseInt(data['revivalLeadsCount'][0]['non_revival_leads']) }];
                  createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCountChartData);
+                 debugger;
+                 var cData = [];
+                for (let index = 0; index < data.advisorLeadsAssignedData.length; index++) {
+                    var node = data.advisorLeadsAssignedData[index];
+                    console.log('node');
+                    console.log(node);
+                    cData.push({name: node.name, y: parseFloat( node.total_leads )});
+                    console.log('cData');
+                    console.log(cData);
+                }
+                if(cData.length > 0 ){
+                    createLeadAssignCountSummaryByAdvisorChart(cData);
+                }else{
+                    createLeadAssignCountSummaryByAdvisorChart([{name: '', y: 0}]);
+                }
+
                }
             });
         });
