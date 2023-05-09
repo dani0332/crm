@@ -111,7 +111,7 @@ class DashboardService extends BaseService
         return $query->get();
     }
 
-    public function getAdvisorLeadAssignedData($teamIds, $filters = null)
+    public function getAdvisorLeadAssignedData($filters = null)
     {
         $query = CarQuote::select(
             'users.name',
@@ -128,9 +128,9 @@ class DashboardService extends BaseService
 
             $query = $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$filters['startDate'], $filters['endDate']]);
         }
-        if (isset($teamIds)) {
+        if (isset($filters['teamIds'])) {
 
-            $query->whereIn('teams.id', $teamIds);
+            $query->whereIn('teams.id', $filters['teamIds']);
         }
         if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);

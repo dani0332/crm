@@ -69,7 +69,7 @@ class DashboardController extends Controller
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
         $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
         $assignedLeadsBySource = $this->dashboardService->getAssignedLeadsCountBySource($filters);
-        $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData(null, $filters);
+        $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
             'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
@@ -98,7 +98,7 @@ class DashboardController extends Controller
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
         $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
 
-        $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData(null, $filters);
+        $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
         return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
@@ -348,7 +348,7 @@ class DashboardController extends Controller
 
     public function getTeamAdvisorConversionStats(Request $request)
     {
-        return $this->dashboardService->getAdvisorLeadAssignedData($request->teamFilter);
+        return $this->dashboardService->getAdvisorLeadAssignedData(['teamIds' => $request->teamFilter]);
     }
 
     public function getUsersByTeam(Request $request)
