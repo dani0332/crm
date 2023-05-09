@@ -137,8 +137,8 @@ class AdvisorConversionReportService extends BaseService
     public function getDefaultFilters()
     {
         $advisorAssignedDates = [
-            Carbon::parse(now())->startOfDay()->format(getDateFormat('DATE_FORMAT_ONLY')),
-            Carbon::parse(now())->endOfDay()->format(getDateFormat('DATE_FORMAT_ONLY')),
+            Carbon::parse(now())->startOfDay()->format(config('DATE_FORMAT_ONLY')),
+            Carbon::parse(now())->endOfDay()->format(config('DATE_FORMAT_ONLY')),
         ];
 
         return [

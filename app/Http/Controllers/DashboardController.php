@@ -43,8 +43,9 @@ class DashboardController extends Controller
     public function renderMainDashboard(Request $request)
     {
         $loggedInUserId = auth()->user()->id;
-        $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
-        $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $startDate = now()->startOfDay()->format($dateFormat);
+        $endDate = now()->endOfDay()->format($dateFormat);
         $filters = [
             'startDate' => $startDate,
             'endDate' => $endDate,

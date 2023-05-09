@@ -419,8 +419,3 @@ if (! function_exists('newUi')) {
         ];
     }
 }
-
-function getDateFormat($keyName)
-{
-    return isset($keyName) ? env($keyName) : env('CU_DATETIME_FORMAT');
-}
