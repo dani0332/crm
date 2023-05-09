@@ -340,6 +340,7 @@
         });
         picker.setStartDate(new Date());
         picker.setEndDate(new Date());
+
         $('#reloadDailyStats').on('click', function(){
             var selectedDate = $('#reloadDailyStatsDate').val();
             var teamFilterValue = $('#team-filter').val();
@@ -350,38 +351,29 @@
                  $('#totalUnAssignedLeadsReceived').text(data['totalUnAssignedLeadsReceived']);
                  $('#totalUnAssignedLeadsReceivedEcommerce').text(data['totalUnAssignedLeadsReceivedEcommerce']);
                  $('#totalUnAssignedRevivalLeads').text(data['totalUnAssignedRevivalLeads']);
+
                  for (let index = 0; index < data['teamWiseLeadsAssignedAverage'].length; index++) {
                     const teamName = data['teamWiseLeadsAssignedAverage'][index]['teamName'].replace(/ /g,'');
                     var stat = data['teamWiseLeadsAssignedAverage'][index]['stats'];
                     $('#'+ teamName).text(stat);
                  }
+
                  leadRcdSummaryByTierPieChart.destroy();
-                 var leadRcdSummaryByTierPieChartData = [];
-                 for (let index = 0; index < data['leadsCountByTier'].length; index++) {
-                    const name = data['leadsCountByTier'][index]['tierNames'];
-                    const count = data['leadsCountByTier'][index]['leadCount'];
-                    leadRcdSummaryByTierPieChartData.push({ name: name, y: count });
-                 }
+                 var leadRcdSummaryByTierPieChartData = prepareGraphData(data['leadsCountByTier'], 'tierNames', 'leadCount');
                  createLeadRcdSummaryByTierPieChart(leadRcdSummaryByTierPieChartData);
 
                  revivalLeadsCountChart.destroy();
-                 var revivalLeadsCountChartData = [{name : 'Revival Leads', y: parseInt(data['revivalLeadsCount'][0]['revival_leads']) },
+                 var revivalLeadsCountChartData = [
+                    {name : 'Revival Leads', y: parseInt(data['revivalLeadsCount'][0]['revival_leads']) },
                     {name : 'Non Revival Leads', y: parseInt(data['revivalLeadsCount'][0]['non_revival_leads']) }];
                  createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCountChartData);
-                 var cData = [];
-                for (let index = 0; index < data.advisorLeadsAssignedData.length; index++) {
-                    var node = data.advisorLeadsAssignedData[index];
-                    cData.push({name: node.name, y: parseFloat( node.total_leads )});
-                }
-                if(cData.length > 0 ){
-                    createLeadAssignCountSummaryByAdvisorChart(cData);
-                }else{
-                    createLeadAssignCountSummaryByAdvisorChart([{name: '', y: 0}]);
-                }
 
+                 var advisorLeadsAssignedSummaryData = prepareGraphData(data.advisorLeadsAssignedData, 'name', 'total_leads');
+                 createLeadAssignCountSummaryByAdvisorChart(advisorLeadsAssignedSummaryData.length > 0 ? advisorLeadsAssignedSummaryData : [{name: '', y: 0}]);
                }
             });
         });
+
         $('#team-filter').on('change', function (e) {
             var teamFilteValue = $('#team-filter').val();
             leadAssignCountByAdvisorChart.showLoading();
@@ -415,43 +407,36 @@
                 }
             });
         });
-        var cData = [];
-        for (let index = 0; index < leadsCountByTier.length; index++) {
-            cData.push({name: leadsCountByTier[index]['tierNames'], y: parseFloat(leadsCountByTier[index]['leadCount'])});
-        }
-        createLeadRcdSummaryByTierPieChart(cData);
 
+        var leadsCountByTierData = prepareGraphData(leadsCountByTier, 'tierNames', 'leadCount');
+        createLeadRcdSummaryByTierPieChart(leadsCountByTierData);
 
-        var cData = [];
-        for (let index = 0; index < unAssignedLeadsByTier.length; index++) {
-            cData.push({name: unAssignedLeadsByTier[index]['tierNames'], y: parseFloat(unAssignedLeadsByTier[index]['leadCount'])});
-        }
-        createUnAssignedLeadRcdSummaryByTierChart(cData);
+        var unAssignedLeadsByTierData = prepareGraphData(unAssignedLeadsByTier, 'tierNames', 'leadCount');
+        createUnAssignedLeadRcdSummaryByTierChart(unAssignedLeadsByTierData);
 
-
-        var cData = [{name : 'Revival Leads', y: parseInt(revivalLeadsCount[0]['revival_leads']) },
+        var revivalLeadsCountData = [{name : 'Revival Leads', y: parseInt(revivalLeadsCount[0]['revival_leads']) },
         {name : 'Non Revival Leads', y: parseInt(revivalLeadsCount[0]['non_revival_leads']) }];
-        createUnAssignedLeadRcdSummaryByLeadSourceChart(cData);
+        createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCountData);
 
+        var assignedLeadsBySourceData = prepareGraphData(unAssignedLeadsByTier, 'sourceName', 'sourceCount');
+        createAssignedLeadRcdSummaryByLeadSourceChart(assignedLeadsBySourceData);
 
-
-        var cData = [];
-        for (let index = 0; index < assignedLeadsBySource.length; index++) {
-            cData.push({name: assignedLeadsBySource[index]['sourceName'], y: parseFloat(assignedLeadsBySource[index]['sourceCount'])});
-        }
-        createAssignedLeadRcdSummaryByLeadSourceChart(cData);
-
-        var cData = [];
-        for (let index = 0; index < advisorLeadsAssignedData.length; index++) {
-            var node = advisorLeadsAssignedData[index];
-            cData.push({name: node['name'], y: parseFloat( node['total_leads'] )});
-        }
-        createLeadAssignCountSummaryByAdvisorChart(cData);
+        var advisorLeadsAssignedSummaryData =  prepareGraphData(advisorLeadsAssignedData, 'name', 'total_leads');
+        createLeadAssignCountSummaryByAdvisorChart(advisorLeadsAssignedSummaryData);
 
    });
+
+   function prepareGraphData(source, xAxisName, yAxisName)
+   {
+        var graphData = [];
+        for (let index = 0; index < source.length; index++) {
+            var node = source[index];
+            graphData.push({name: node[xAxisName], y: parseFloat( node[yAxisName] )});
+        }
+        return cData;
+   }
    function createLeadRcdSummaryByTierPieChart(data)
    {
-
         leadRcdSummaryByTierPieChart = Highcharts.chart('LeadRcdSummaryByTier', {
             chart: {
                 plotBackgroundColor: null,
@@ -568,9 +553,9 @@
         });
     }
 
-    function createAssignedLeadRcdSummaryByLeadSourceChart(data)
+   function createAssignedLeadRcdSummaryByLeadSourceChart(data)
    {
-    assignedLeadsBySourceChart = Highcharts.chart('AssignedLeadRcdSummaryByLeadSource', {
+        assignedLeadsBySourceChart = Highcharts.chart('AssignedLeadRcdSummaryByLeadSource', {
             chart: {
                 plotBackgroundColor: null,
                 plotBorderWidth: null,
@@ -605,7 +590,7 @@
                 data: data
             }]
         });
-    }
+    };
 
     function createLeadAssignCountSummaryByAdvisorChart(data)
     {
@@ -625,7 +610,6 @@
                 title: {
                     text: 'Number of Leads Assigned'
                 }
-
             },
             legend: {
                 enabled: false
@@ -651,11 +635,7 @@
                 }
             ]
         });
-    }
-    function createColumnChart(dataSource, titleText, leftTitle, toolTipHeading, chartVariable)
-    {
-
-    }
+    };
 
     new SlimSelect({
         select: '#team-filter',
