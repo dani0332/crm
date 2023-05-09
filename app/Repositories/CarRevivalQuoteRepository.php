@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -50,7 +51,9 @@ class CarRevivalQuoteRepository extends BaseRepository
             'quoteViewCount' => function($quoteViewCount){
                 $quoteViewCount->where('quote_type_id', QuoteTypeId::Car);
             }
-        ])->filter();
+        ])
+        ->where('source', LeadSourceEnum::REVIVAL)
+        ->filter();
         // Custom Filters
         $query->when(\Request::get('batch'), function ($query){
             $query->whereHas('batch', function ($batch){
