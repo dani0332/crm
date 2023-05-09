@@ -28,9 +28,7 @@ function addContactModal() {
   modals.addContact = true;
 }
 
-const rules = {
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 // additional contact
 const additionalContactTable = [
@@ -196,16 +194,27 @@ const additionalContactPrimaryConfirmed = () => {
               { value: 'email', label: 'Email' },
               { value: 'mobile_no', label: 'Mobile Number' },
             ]"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             placeholder="Select Type"
             class="w-full"
             :error="contactForm.errors.key"
           />
 
           <x-input
+            v-if="contactForm.key === 'email'"
             v-model="contactForm.value"
             label="Value"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired, isEmail]"
+            :error="contactForm.errors.value"
+            class="w-full"
+          />
+
+          <x-input
+            v-if="contactForm.key === 'mobile_no'"
+            type="text"
+            v-model="contactForm.value"
+            label="Value"
+            :rules="[isRequired, isMobileNo]"
             :error="contactForm.errors.value"
             class="w-full"
           />

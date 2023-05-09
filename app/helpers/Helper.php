@@ -416,6 +416,7 @@ if (! function_exists('newUi')) {
     {
         return [
             quoteTypeCode::Health,
+            quoteTypeCode::Pet,
         ];
     }
 }
