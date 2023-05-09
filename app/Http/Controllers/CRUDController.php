@@ -1314,8 +1314,6 @@ class CRUDController extends Controller
 
     /**
      * export health leads to excel sheet.
-     *
-     * @param  Request  $request
      */
     public function exportHealthLeads(Request $request)
     {

@@ -82,6 +82,7 @@ class HealthAvailablePlan extends Model
                 ];
             })->toArray();
         }
+
         return $responseData;
     }
 }

@@ -133,6 +133,7 @@ class LifeQuoteController extends Controller
 
         $leadStatuses = array_map(function ($item) {
             $item['data'] = getDataAgainstStatus(QuoteTypes::LIFE->value, $item['id']);
+
             return $item;
         }, $leadStatuses);
 

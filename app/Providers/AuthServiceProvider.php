@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\Team;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 

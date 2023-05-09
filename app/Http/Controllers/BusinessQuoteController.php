@@ -59,6 +59,7 @@ class BusinessQuoteController extends Controller
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
+
         return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed'));
     }
 

@@ -278,7 +278,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
 
-        if(!in_array(quoteTypeCode::Life, newUi())) {
+        if (! in_array(quoteTypeCode::Life, newUi())) {
             Route::resource('life', CRUDController::class);
         }
 
@@ -286,8 +286,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('trave.cards');
             Route::resource('travel', TravelController::class);
             Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
-
-
 
         } else {
             Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
