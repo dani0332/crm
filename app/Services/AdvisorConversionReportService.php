@@ -73,9 +73,6 @@ class AdvisorConversionReportService extends BaseService
 
         $query = $this->applyFilters($query, $filters);
 
-        info('query : '.$query->toSql());
-        info('data : '.json_encode($query->getBindings()));
-
         return $query->get();
     }
 
@@ -140,8 +137,8 @@ class AdvisorConversionReportService extends BaseService
     public function getDefaultFilters()
     {
         $advisorAssignedDates = [
-            Carbon::parse(now())->startOfDay()->format('Y-m-d'),
-            Carbon::parse(now())->endOfDay()->format('Y-m-d'),
+            Carbon::parse(now())->startOfDay()->format(getDateFormat('DATE_FORMAT_ONLY')),
+            Carbon::parse(now())->endOfDay()->format(getDateFormat('DATE_FORMAT_ONLY')),
         ];
 
         return [
