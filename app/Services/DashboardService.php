@@ -120,7 +120,7 @@ class DashboardService extends BaseService
         return $query->get();
     }
 
-    public function getAdvisorLeadAssignedData($teamIds, $startDate , $endDate)
+    public function getAdvisorLeadAssignedData($teamIds, $startDate, $endDate)
     {
         $query = CarQuote::select(
             'users.name',
@@ -133,7 +133,7 @@ class DashboardService extends BaseService
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->groupBy('users.name');
 
-        if(isset($startDate) && isset($endDate)){
+        if (isset($startDate) && isset($endDate)) {
             $query = $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
         }
         if (isset($teamIds)) {

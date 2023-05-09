@@ -345,7 +345,6 @@
             var teamFilterValue = $('#team-filter').val();
             $.get('/get-recent-daily-stats?range=' + selectedDate + "&teamFilter[]="+ teamFilterValue, function (data) {
                if (data) {
-                debugger;
                  $('#totalLeadsReceived').text(data['totalLeadsReceived']);
                  $('#totalLeadsReceivedEcommerce').text(data['totalLeadsReceivedEcommerce']);
                  $('#totalUnAssignedLeadsReceived').text(data['totalUnAssignedLeadsReceived']);
@@ -369,15 +368,10 @@
                  var revivalLeadsCountChartData = [{name : 'Revival Leads', y: parseInt(data['revivalLeadsCount'][0]['revival_leads']) },
                     {name : 'Non Revival Leads', y: parseInt(data['revivalLeadsCount'][0]['non_revival_leads']) }];
                  createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCountChartData);
-                 debugger;
                  var cData = [];
                 for (let index = 0; index < data.advisorLeadsAssignedData.length; index++) {
                     var node = data.advisorLeadsAssignedData[index];
-                    console.log('node');
-                    console.log(node);
                     cData.push({name: node.name, y: parseFloat( node.total_leads )});
-                    console.log('cData');
-                    console.log(cData);
                 }
                 if(cData.length > 0 ){
                     createLeadAssignCountSummaryByAdvisorChart(cData);
