@@ -13,6 +13,7 @@ const props = defineProps({
   dynamic_route: {
     type: String,
     default: '',
+    required: true
   },
 });
 
@@ -185,8 +186,6 @@ function setQueryStringFilters() {
 }
 
 function onSubmit(isValid) {
-  console.log(props.dynamic_route);
-  return false;
   if (isValid) {
     filters.page = 1;
     Object.keys(filters).forEach(
@@ -208,7 +207,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit('/quotes/' + props.dynamic_route, {
+  router.visit(`/quotes/${props.dynamic_route}`, {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,

@@ -189,7 +189,7 @@ function onAssignLead(isValid) {
       </div>
     </template>
     <template #item-tier="{ tier }">
-      {{ tier?.text }}
+      {{ tier?.name }}
     </template>
     <template #item-quote_view_count="{ quote_view_count }">
       {{ quote_view_count?.visit_count }}
