@@ -30317,6 +30317,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             label: $props.filterOptions.leadSources[key]
           };
         }),
+        "max-limit": 3,
         "deselect-all": ""
       }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
         modelValue: $setup.filters.teams,

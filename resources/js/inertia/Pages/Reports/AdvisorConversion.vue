@@ -364,6 +364,7 @@ onMounted(() => {
               label: filterOptions.leadSources[key],
             }))
           "
+          :max-limit="3"
           deselect-all
         />
 
