@@ -433,7 +433,7 @@
             var node = source[index];
             graphData.push({name: node[xAxisName], y: parseFloat( node[yAxisName] )});
         }
-        return cData;
+        return graphData;
    }
    function createLeadRcdSummaryByTierPieChart(data)
    {
