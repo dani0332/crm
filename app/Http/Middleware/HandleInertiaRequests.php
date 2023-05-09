@@ -205,13 +205,13 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::GMQuotesList),
                         'Group Medical Quotes',
-                        '/medical/amt',
+                        url('/medical/amt'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::CorpLineQuotesList),
                         'CorpLine Quotes',
-                        '/quotes/business',
+                        url('/quotes/business'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
