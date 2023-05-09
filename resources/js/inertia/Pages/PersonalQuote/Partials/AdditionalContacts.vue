@@ -4,6 +4,7 @@ const notification = useNotifications('toast');
 
 defineProps({
   quote: Object,
+  quoteType: Object,
 });
 
 const modals = reactive({
@@ -45,6 +46,7 @@ const contactForm = useForm({
   key: '',
   value: '',
   quote_id: page.props.quote.id,
+  quote_type: page.props.quoteType,
   customer_id: page.props.quote.customer_id,
 });
 

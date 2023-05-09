@@ -70,6 +70,13 @@ class CommonPage {
     })
   }
 
+  getVerifyHealthQuote() {
+    cy.get('.grid').containsx(dropdownName).parent().within(() => {
+      cy.get('button[id="headlessui-combobox-button-2"]').should('be.visible').click()
+      cy.get('span.flex-1.truncate').contains(value).should('be.visible').click()
+    })
+  }
+
 
 }
 export default CommonPage;

@@ -1,0 +1,11 @@
+{
+  "healthData": {
+    "endPoint": "/api/v1-save-health-quote",
+    "premium": "No Premium",
+    "policyNumber": "12345",
+    "reference": "No Reference",
+    "details": "Test Details",
+    "healthCDBID": "HEA-7G94MWVL",
+    "mobileNumber": "0509876543"
+  }
+}

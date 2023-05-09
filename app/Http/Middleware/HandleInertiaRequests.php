@@ -186,50 +186,46 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Activities', url('/activities'));
         }
 
-        if (auth()->user()->hasAnyPermission([
-            PermissionsEnum::CarQuotesList, PermissionsEnum::HealthQuotesList,
-            PermissionsEnum::TravelQuotesList, PermissionsEnum::LifeQuotesList,
-            PermissionsEnum::HomeQuotesList, PermissionsEnum::PetQuotesList,
-        ])) {
-            $nav = $nav->add('Personal Quotes', '', function (Section $section) {
-                $section
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CarQuotesList),
-                        'Car Quotes',
-                        '/quotes/car',
-                        fn ($s) => $s->attributes(['icon' => 'car'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::HealthQuotesList),
-                        'Health Quotes',
-                        '/quotes/health',
-                        fn ($s) => $s->attributes(['icon' => 'health'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::TravelQuotesList),
-                        'Travel Quotes',
-                        '/quotes/travel',
-                        fn ($s) => $s->attributes(['icon' => 'travel'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::LifeQuotesList),
-                        'Life Quotes',
-                        '/quotes/life',
-                        fn ($s) => $s->attributes(['icon' => 'life'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::HomeQuotesList),
-                        'Home Quotes',
-                        '/quotes/home',
-                        fn ($s) => $s->attributes(['icon' => 'home'])
-                    )
-                    ->addIf(in_array(quoteTypeCode::Pet, newUi()) && auth()->user()->can(PermissionsEnum::PetQuotesList), 'Pet Quotes', '/personal-quotes/pet', fn ($s) => $s->attributes(['icon' => 'pet']))
-                    ->addIf(in_array(quoteTypeCode::Bike, newUi()) && auth()->user()->can(PermissionsEnum::BikeQuotesList), 'Bike Quotes', '/personal-quotes/bike', fn ($s) => $s->attributes(['icon' => 'bike']))
-                    ->addIf(in_array(quoteTypeCode::Cycle, newUi()) && auth()->user()->can(PermissionsEnum::CycleQuotesList), 'Cycle Quotes', '/personal-quotes/cycle', fn ($s) => $s->attributes(['icon' => 'cycle']))
-                    ->addIf(in_array(quoteTypeCode::Yacht, newUi()) && auth()->user()->can(PermissionsEnum::YachtQuotesList), 'Yacht Quotes', '/personal-quotes/yacht', fn ($s) => $s->attributes(['icon' => 'yacht']))
-                    ->addIf(in_array(quoteTypeCode::Jetski, newUi()) && auth()->user()->can(PermissionsEnum::JetskiQuotesList), 'Jetski Quotes', '/personal-quotes/jetski', fn ($s) => $s->attributes(['icon' => 'jetski']));
-            });
-        }
+        /* personal quotes section */
+        $nav = $nav->add('Personal Quotes', '', function (Section $section) {
+            $section
+                ->addIf(
+                    auth()->user()->can(PermissionsEnum::CarQuotesList),
+                    'Car Quotes',
+                    '/quotes/car',
+                    fn ($s) => $s->attributes(['icon' => 'car'])
+                )
+                ->addIf(
+                    auth()->user()->can(PermissionsEnum::HealthQuotesList),
+                    'Health Quotes',
+                    '/quotes/health',
+                    fn ($s) => $s->attributes(['icon' => 'health'])
+                )
+                ->addIf(
+                    auth()->user()->can(PermissionsEnum::TravelQuotesList),
+                    'Travel Quotes',
+                    '/quotes/travel',
+                    fn ($s) => $s->attributes(['icon' => 'travel'])
+                )
+                ->addIf(
+                    auth()->user()->can(PermissionsEnum::LifeQuotesList),
+                    'Life Quotes',
+                    '/quotes/life',
+                    fn ($s) => $s->attributes(['icon' => 'life'])
+                )
+                ->addIf(
+                    auth()->user()->can(PermissionsEnum::HomeQuotesList),
+                    'Home Quotes',
+                    '/quotes/home',
+                    fn ($s) => $s->attributes(['icon' => 'home'])
+                )
+                ->addIf(in_array(quoteTypeCode::Pet, newUi()) && auth()->user()->can(PermissionsEnum::PetQuotesList), 'Pet Quotes', '/personal-quotes/pet', fn ($s) => $s->attributes(['icon' => 'pet']))
+                ->addIf(in_array(quoteTypeCode::Bike, newUi()) && auth()->user()->can(PermissionsEnum::BikeQuotesList), 'Bike Quotes', '/personal-quotes/bike', fn ($s) => $s->attributes(['icon' => 'bike']))
+                ->addIf(in_array(quoteTypeCode::Cycle, newUi()) && auth()->user()->can(PermissionsEnum::CycleQuotesList), 'Cycle Quotes', '/personal-quotes/cycle', fn ($s) => $s->attributes(['icon' => 'cycle']))
+                ->addIf(in_array(quoteTypeCode::Yacht, newUi()) && auth()->user()->can(PermissionsEnum::YachtQuotesList), 'Yacht Quotes', '/personal-quotes/yacht', fn ($s) => $s->attributes(['icon' => 'yacht']))
+                ->addIf(in_array(quoteTypeCode::Jetski, newUi()) && auth()->user()->can(PermissionsEnum::JetskiQuotesList), 'Jetski Quotes', '/personal-quotes/jetski', fn ($s) => $s->attributes(['icon' => 'jetski']));
+        });
+        /* personal quotes section end */
 
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::GMQuotesList,
@@ -405,7 +401,6 @@ class HandleInertiaRequests extends Middleware
         //     $nav = $nav->add('Policy Issuance', url('ftcform'));
         // }
         if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
-
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
