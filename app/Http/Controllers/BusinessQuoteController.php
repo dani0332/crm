@@ -105,7 +105,7 @@ class BusinessQuoteController extends Controller
      */
     public function store(StoreBusinessQuoteRequest $request)
     {
-        $record = $this->businessQuoteService->saveBusinessQuote($request);
+        $this->businessQuoteService->saveBusinessQuote($request);
 
         redirect('/quotes/business')->with('message', 'Record created successfully');
     }

@@ -33,5 +33,26 @@
     "utmSource": "",
     "utmMedium": "",
     "utmCampaign": ""
+  },
+  "healthQuoteData": {
+    "emirateOfYourVisaId": "2",
+    "gender": "M",
+    "coverForId": "2",
+    "dob": "2009-06-16",
+    "hasDental": false,
+    "hasWorldwideCover": false,
+    "hasHome": false,
+    "nationalityId": "1",
+    "mobileNo": "0509876543",
+    "email": "im.automation4@gmail.com",
+    "lastName": "new",
+    "firstName": "first",
+    "lang": "EN",
+    "device": "DESKTOP",
+    "source": "https://staging.alfred.ae/health-insurance/",
+    "referenceUrl": "https://staging.alfred.ae/health-insurance/",
+    "utmSource": "",
+    "utmMedium": "",
+    "utmCampaign": ""
   }
 }

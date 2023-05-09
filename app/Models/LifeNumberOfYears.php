@@ -12,4 +12,9 @@ class LifeNumberOfYears extends Model implements AuditableContract
     use HasFactory, Auditable;
 
     protected $table = 'life_number_of_year';
+
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
 }

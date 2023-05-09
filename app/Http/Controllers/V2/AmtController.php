@@ -324,8 +324,6 @@ class AmtController extends Controller
             'gmTypes' => $gmTypes,
             'selectedGmType' => $selectedGmType,
         ]);
-
-        return view('amt.edit', compact('businessInsuranceType', 'record', 'gmTypes', 'selectedGmType'));
     }
 
     /**

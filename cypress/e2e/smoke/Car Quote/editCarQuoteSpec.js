@@ -1,34 +1,34 @@
 import CarLeadPage from '../../../pageObjects/CarLeadPage';
 import CommonPage from '../../../pageObjects/CommonPage';
-let carLeadData=require('../../../fixtures/carLeadData')
-let qouteData=require('../../../fixtures/qoutesData')
+let carLeadData = require('../../../fixtures/carLeadData')
+let qouteData = require('../../../fixtures/qoutesData')
 
 let CDBID
 describe('Car qoutes', () => {
 
-  const commonPage=new CommonPage()
+  const commonPage = new CommonPage()
   const carLeadPage = new CarLeadPage()
-  before(()=>{
+  before(() => {
     //Creating Quote using API
-    cy.generate_CDBID(Cypress.env('Capi_X_Api_Token'),qouteData.carQouteData).then((data)=>{
+    cy.generate_CDBID(Cypress.env('Capi_X_Api_Token'), qouteData.carQouteData, carLeadData.carLeadData.endPoint).then((data) => {
       // cy.log(JSON.stringify(data))
-      CDBID=data
+      CDBID = data
       cy.log(CDBID)
     })
   })
-  beforeEach(()=>{
-    cy.loginByCookies(Cypress.env('imcrm_session'),Cypress.env('XSRF-TOKEN'))
+  beforeEach(() => {
+    cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
     cy.runRoutes()
   })
   it('Should edit car qoute details', () => {
-      cy.visit(`/quotes/car/${CDBID}`)
+    cy.visit(`/quotes/car/${CDBID}`)
     Cypress.on('uncaught:exception', (err, runnable) => {
-        // returning false here prevents Cypress from
-        // failing the test
-        return false
+      // returning false here prevents Cypress from
+      // failing the test
+      return false
     })
 
-    commonPage.getEditButton()  
+    commonPage.getEditButton()
     commonPage.getFirstNameField("Muhammad Updated")
     commonPage.getLastNameField("Abdullah Updated")
     commonPage.getDOB("Feb", "1999", "15")

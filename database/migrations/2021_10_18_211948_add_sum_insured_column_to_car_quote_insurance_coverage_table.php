@@ -28,6 +28,9 @@ class AddSumInsuredColumnToCarQuoteInsuranceCoverageTable extends Migration
     public function down()
     {
         Schema::table('car_quote_insurance_coverage', function (Blueprint $table) {
+            if (Schema::hasColumn('car_quote_insurance_coverage', 'sum_insured')) {
+                $table->dropColumn('sum_insured');
+            }
         });
     }
 }
