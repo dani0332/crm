@@ -4,31 +4,34 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const loading = ref(false);
+const emit = defineEmits(['update']);
 
-router.on('start', event => {
-  loading.value = true;
-});
+const page = ref(1);
 
-router.on('finish', event => {
-  loading.value = false;
-});
+const setPage = newPage => {
+  page.value = newPage;
+  emit('update', newPage);
+};
 </script>
 
 <template>
   <div class="flex justify-between items-center gap-2 py-6">
-    <Link
+    <x-button
       v-if="links.current !== 1"
-      :href="props.links.prev"
-      preserve-scroll
-      preserve-state
+      size="sm"
+      icon-left="prev"
+      :loading="loading"
+      @click="setPage(links.current - 1)"
     >
-      <x-button tag="div" size="sm" icon-left="prev" :loading="loading">
-        Previous
-      </x-button>
-    </Link>
+      Previous
+    </x-button>
+
     <x-button v-else tag="div" size="sm" icon-left="prev" disabled>
       Previous
     </x-button>
@@ -45,16 +48,17 @@ router.on('finish', event => {
       </span>
     </div>
 
-    <Link
+    <x-button
       v-if="props.links.next !== null"
-      :href="props.links.next ? props.links.next : '#'"
-      preserve-scroll
-      preserve-state
+      size="sm"
+      icon-right="next"
+      :loading="loading"
+      :disabled="props.links.next === null"
+      @click="setPage(links.current + 1)"
     >
-      <x-button tag="div" size="sm" icon-right="next" :loading="loading">
-        Next
-      </x-button>
-    </Link>
+      Next
+    </x-button>
+
     <x-button v-else tag="div" size="sm" icon-right="next" disabled>
       Next
     </x-button>

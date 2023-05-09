@@ -57,7 +57,7 @@ class DashboardService extends BaseService
         return 'Week : '.$pastDate->startOfWeek()->format('d M Y').' - '.$pastDate->endOfWeek()->format('d M Y');
     }
 
-    public function getLeadsCountByTier($startDate, $endDate)
+    public function getLeadsCountByTier($filters)
     {
         $query = CarQuote::select(
             'tiers.name as tierNames',
@@ -65,17 +65,13 @@ class DashboardService extends BaseService
         )
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
             ->groupBy('tiers.name');
-        if ($startDate == null && $endDate == null) {
-            $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
-        } else {
-            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
-        }
 
         return $query->get();
     }
 
-    public function getUnAssignedLeadsCountByTier($request)
+    public function getUnAssignedLeadsCountByTier($filters)
     {
         return
         CarQuote::select(
@@ -85,42 +81,37 @@ class DashboardService extends BaseService
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->whereNull('car_quote_request.advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()])
+            ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
             ->groupBy('tiers.name')
             ->get();
     }
 
-    public function getLeadsCountRevival($startDate, $endDate)
+    public function getLeadsCountRevival($filters)
     {
         $query = CarQuote::select(
             DB::raw('sum(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as revival_leads'),
             DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
-        )->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-        if ($startDate == null && $endDate == null) {
-            $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
-        } else {
-            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
-        }
+        )
+            ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
 
         return $query->get();
     }
 
-    public function getAssignedLeadsCountBySource($startDate, $endDate)
+    public function getAssignedLeadsCountBySource($filters)
     {
         $query = CarQuote::select(
             DB::raw('distinct(source) as sourceName'),
             DB::raw('count(*) as sourceCount'),
-        )->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->groupBy('source');
-        if ($startDate == null && $endDate == null) {
-            $query->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->endOfDay()]);
-        } else {
-            $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
-        }
+        )
+            ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->groupBy('source');
 
         return $query->get();
     }
 
-    public function getAdvisorLeadAssignedData($teamIds)
+    public function getAdvisorLeadAssignedData($filters = null)
     {
         $query = CarQuote::select(
             'users.name',
@@ -131,10 +122,15 @@ class DashboardService extends BaseService
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereBetween('car_quote_request_detail.advisor_assigned_date', [now()->startOfDay(), now()->endOfDay()])
             ->groupBy('users.name');
-        if (isset($teamIds)) {
-            $query->whereIn('teams.id', $teamIds);
+
+        if (isset($filters['startDate']) && isset($filters['endDate'])) {
+
+            $query = $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$filters['startDate'], $filters['endDate']]);
+        }
+        if (isset($filters['teamIds'])) {
+
+            $query->whereIn('teams.id', $filters['teamIds']);
         }
         if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $userIds = $this->walkTree(auth()->user()->id);
