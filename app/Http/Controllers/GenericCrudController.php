@@ -37,6 +37,7 @@ class GenericCrudController extends Controller
     protected $tierService;
     protected $quadrantService;
     protected $ruleService;
+    protected $crudService;
 
     public function __construct(
         InsuranceProviderService $insuranceProviderService,
@@ -279,27 +280,6 @@ class GenericCrudController extends Controller
         $url = strpos($request->fullUrl(), '?') ? explode('?', $request->fullUrl())[0] : $request->fullUrl();
         $modelType = '';
         switch ($url) {
-            case str_contains($url, GenericModelTypeEnum::INSURANCE_PROVIDER):
-                $modelType = 'InsuranceProvider';
-                break;
-            case str_contains($url, GenericModelTypeEnum::CAR_PLAN):
-                $modelType = 'CarPlan';
-                break;
-            case str_contains($url, GenericModelTypeEnum::CAR_PLAN_COVERAGE):
-                $modelType = 'CarPlanCoverage';
-                break;
-            case str_contains($url, GenericModelTypeEnum::CAR_PLAN_ADDON):
-                $modelType = 'CarPlanAddOn';
-                break;
-            case str_contains($url, GenericModelTypeEnum::CAR_PLAN_ADDON_OPTION):
-                $modelType = 'CarPlanAddOnOption';
-                break;
-            case str_contains($url, GenericModelTypeEnum::APPLICATION_STORAGE):
-                $modelType = 'ApplicationStorage';
-                break;
-            case str_contains($url, GenericModelTypeEnum::LEAD_STATUS):
-                $modelType = 'LeadStatus';
-                break;
             case str_contains($url, GenericModelTypeEnum::TEAMS):
                 $modelType = 'Team';
                 break;

@@ -1,48 +1,82 @@
-class CommonPage{
+class CommonPage {
 
-    verifyURL(endPoint){
-      return cy.url().should('include',endPoint)
-    }
-
-    getApiIntercept(interceptName,responseCode){
-      cy.wait(interceptName).its('response.statusCode').should('eq', responseCode);
-    }
-
-    getFirstNameField(first_name){
-      return cy.get('input[name="first_name"]').should('be.visible').clear().type(first_name)
-    }
-
-    getLastNameField(last_name){
-      return cy.get('input#last_name').should('be.visible').clear().type(last_name)
-    }
-
-    //Get date of birth
-    getDOB(month,year,day){
-      cy.get('input#dob').click()
-      cy.get('select.ui-datepicker-month').should('be.visible').select(month)
-      cy.get('select.ui-datepicker-year').should('be.visible').select(year)
-      cy.get('[data-handler="selectDay"]').should('be.visible').eq(day).click()
-    }
-
-    getMobileNumber(phoneNumber){
-      return cy.get("input#mobile_no").should('be.visible').type(phoneNumber)
-    }
-
-    getEmail(email){
-     return cy.get('input#email').type(email)
-    }
-
-    getNationalityId(nationality){
-      return cy.get('select#nationality_id').should('be.visible').select(nationality)
-    }
-
-    getSuccessAssertion(){
-      return cy.get("div#vehicle_assumptions_success_msg").should("have.text","Vehicle Assumptions Data Found")
-    }
-    
-    getEditButton(){
-      return cy.get('a#texta').should("be.visible").click()
-    }
+  verifyURL(endPoint) {
+    return cy.url().should('include', endPoint)
   }
-  export default CommonPage;
-  
+
+  getApiIntercept(interceptName, responseCode) {
+    cy.wait(interceptName).its('response.statusCode').should('eq', responseCode);
+  }
+
+  getFirstNameField(first_name) {
+    return cy.get('input[name="first_name"]').should('be.visible').clear().type(first_name)
+  }
+
+  getLastNameField(last_name) {
+    return cy.get('input#last_name').should('be.visible').clear().type(last_name)
+  }
+
+  //Get date of birth
+  getDOB(month, year, day) {
+    cy.get('input#dob').click()
+    cy.get('select.ui-datepicker-month').should('be.visible').select(month)
+    cy.get('select.ui-datepicker-year').should('be.visible').select(year)
+    cy.get('[data-handler="selectDay"]').should('be.visible').eq(day).click()
+  }
+
+  getMobileNumber(phoneNumber) {
+    return cy.get("input#mobile_no").should('be.visible').type(phoneNumber)
+  }
+
+  getEmail(email) {
+    return cy.get('input#email').type(email)
+  }
+
+  getNationalityId(nationality) {
+    return cy.get('select#nationality_id').should('be.visible').select(nationality)
+  }
+
+  getSuccessAssertion() {
+    return cy.get("div#vehicle_assumptions_success_msg").should("have.text", "Vehicle Assumptions Data Found")
+  }
+
+  getEditButton() {
+    return cy.get('a#texta').should("be.visible").click()
+  }
+
+  getTextFieldByName(fieldName, text) {
+    cy.get('h4.text-sm').contains(fieldName).parent().within(() => {
+      cy.get('input[type="text"]').should('be.visible').type(text)
+    })
+  }
+
+  getDropdownByName(dropdownName, value) {
+    cy.get('h4.text-sm').contains(dropdownName).parent().within(() => {
+      cy.get('.w-full.border.border-gray-300').should('be.visible').click()
+      cy.get('span.flex-1.truncate').contains(value).should('be.visible').click()
+    })
+  }
+
+  getDateTimeDropdown() {
+    cy.get('h4.text-sm').contains("DATE OF BIRTH ").parent().within(() => {
+      cy.get('svg').should('be.visible').click()
+    })
+  }
+
+  getNationality(dropdownName, value) {
+    cy.get('h4.text-sm').contains(dropdownName).parent().within(() => {
+      cy.get('button[id="headlessui-combobox-button-2"]').should('be.visible').click()
+      cy.get('span.flex-1.truncate').contains(value).should('be.visible').click()
+    })
+  }
+
+  getVerifyHealthQuote() {
+    cy.get('.grid').containsx(dropdownName).parent().within(() => {
+      cy.get('button[id="headlessui-combobox-button-2"]').should('be.visible').click()
+      cy.get('span.flex-1.truncate').contains(value).should('be.visible').click()
+    })
+  }
+
+
+}
+export default CommonPage;

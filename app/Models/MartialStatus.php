@@ -12,4 +12,9 @@ class MartialStatus extends Model implements AuditableContract
     use HasFactory, Auditable;
 
     protected $table = 'marital_status';
+
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
 }

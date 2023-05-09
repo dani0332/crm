@@ -76,29 +76,6 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @can(PermissionsEnum::RewardList)
-                <ul class="nav side-menu">
-                    <li><a><i class="fa fa-gift"></i> Rewards <span class="fa fa-chevron-down"></span></a>
-                        <ul class="nav child_menu">
-                            @can(PermissionsEnum::PartnersList)
-                            <li><a href="{{ url('rewards/partner') }}">Partners</a></li>
-                            @endcan
-                            @can(PermissionsEnum::RewardList)
-                            <li><a href="{{ url('rewards/reward') }}">Rewards</a></li>
-                            @endcan
-                            @can(PermissionsEnum::RewardCategoriesList)
-                            <li><a href="{{ url('rewards/reward-categories') }}">Reward Categories</a></li>
-                            @endcan
-                            @can(PermissionsEnum::RewardTagsList)
-                            <li><a href="{{ url('rewards/reward-tags') }}">Reward Tags</a></li>
-                            @endcan
-                            @can(PermissionsEnum::RewardSliderList)
-                            <li><a href="{{ url('rewards/reward-sliders') }}">Reward Slider</a></li>
-                            @endcan
-                        </ul>
-                    </li>
-                </ul>
-                @endcan
                 @can(PermissionsEnum::ActivitiesList)
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/activities') }}"> <i class="fa fa-list-alt" aria-hidden="true"></i>
@@ -368,12 +345,6 @@ use App\Enums\PermissionsEnum;
                                 </ul>
                             </li>
                             @endcanany
-                            @can(PermissionsEnum::InsuranceProviderList)
-                            <li><a href="{{ url('generic/insuranceprovider') }}">Insurance Providers</a></li>
-                            @endcan
-                            @can(PermissionsEnum::ApplicationStorageList)
-                            <li><a href="{{ url('generic/applicationstorage') }}">Application Storage</a></li>
-                            @endcan
                         </ul>
                     </li>
                 </ul>

@@ -62,6 +62,11 @@ export const useRules = () => {
   const emptyOrDecimal = v =>
     !v || /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal';
 
+  const isMobileNo = v => {
+    const regex = /^\+?\d{1,3}\d{9}$/;
+    return regex.test(v) || 'Invalid mobile number';
+  };
+
   return {
     isEmail,
     isMobile,
@@ -74,5 +79,6 @@ export const useRules = () => {
     premium,
     isDecimal,
     emptyOrDecimal,
+    isMobileNo,
   };
 };

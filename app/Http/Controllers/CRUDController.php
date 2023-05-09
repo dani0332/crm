@@ -12,6 +12,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Exports\HealthQuotesExport;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -1258,7 +1259,8 @@ class CRUDController extends Controller
 
     public function manualPlanToggle(Request $request)
     {
-        $response = $this->carQuoteService->updateManualPlansBulk($request);
+        $response = $this->{strtolower($request->modelType).'QuoteService'}->updateManualPlansBulk($request);
+
         if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
             return redirect()->back()->with('success', 'Plan has been updated');
         } else {
@@ -1308,6 +1310,25 @@ class CRUDController extends Controller
         $pdf = $response['pdf'];
 
         return $pdf->download($response['name']);
+    }
+
+    /**
+     * export health leads to excel sheet.
+     *
+     * @param  Request  $request
+     */
+    public function exportHealthLeads(Request $request)
+    {
+        $created_at_start = $request->created_at_start;
+        $created_at_end = $request->created_at_end;
+
+        if (Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end)) > 120) {
+            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+        }
+
+        $query = $this->crudService->getGridData($this->genericModel, $request);
+
+        return (new HealthQuotesExport($query))->download('Health-List.xlsx');
     }
 
     public function destroyDocument($quoteType, $quoteUuId, $id)
