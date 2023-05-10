@@ -47,6 +47,6 @@ class GoogleSocialiteController extends Controller
             return redirect()->intended('/quotes/car');
         }
 
-        return redirect()->intended('/leadsearch');
+        return redirect()->intended('/home');
     }
 }

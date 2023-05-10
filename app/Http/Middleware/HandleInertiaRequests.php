@@ -78,7 +78,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         $nav = app(Navigation::class)
-            ->add('Home', url('/leadsearch'));
+            ->add('Home', url('/home'));
 
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::DashboardView,
