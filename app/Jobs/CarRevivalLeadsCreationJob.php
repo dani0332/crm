@@ -82,7 +82,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
         Log::info('capiResponse: '.json_encode($capiResponse));
 
-        if (! isset($capiResponse->errors)) {
+        if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
             $plansDataArr = $this->payLoadForPlans($capiResponse->quoteUID);
 
             Log::info('kenPayload: '.json_encode($plansDataArr));
