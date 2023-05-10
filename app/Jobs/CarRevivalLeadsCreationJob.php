@@ -44,7 +44,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
-        Log::info('Car Lead id: '.$this->lead->id);
+        Log::info('************* Car Lead id: '.$this->lead->id.'*************');
 
         $dataArr = [
             'firstName' => $this->lead->first_name,
@@ -76,24 +76,24 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'referenceUrl' => config('constants.APP_URL'),
         ];
 
-        Log::info('Car Lead Data: '.json_encode($dataArr));
-
         $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-        Log::info('capiResponse: '.json_encode($capiResponse));
+        Log::info('************* capiResponse: '.json_encode($capiResponse));
 
         if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
             $plansDataArr = $this->payLoadForPlans($capiResponse->quoteUID);
 
-            Log::info('kenPayload: '.json_encode($plansDataArr));
+            Log::info('************* kenPayload: '.json_encode($plansDataArr));
 
             Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
 
             dispatch(new SendOCBEmailJob($capiResponse->quoteUID));
 
-            Log::info('OCB Email Job Dispatched for customer having '.$capiResponse->quoteUID);
+            Log::info('************* OCB Email Job Dispatched for customer having '.$capiResponse->quoteUID.'*************');
 
             CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+
+            Log::info('************* Quote is revived updated '.$this->lead->id.'*************');
         }
     }
 
