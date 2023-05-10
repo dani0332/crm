@@ -761,10 +761,9 @@ class LeadAllocationService extends BaseService
 
         info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
 
-        info('First tier after filtration is : '.json_encode($tiers->first()->name));
-
         $tiers = $tiers->get();
         if ($tiers != null) {
+            info('First tier after filtration is : '.json_encode($tiers->first()->name));
             return $tiers->first();
         }
 
