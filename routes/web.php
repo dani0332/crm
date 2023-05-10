@@ -122,17 +122,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('personal-quotes/jetski', JetskiQuoteController::class)->names(generateRouteNames('jetski-quotes'));
         }
 
-<<<<<<< HEAD
         if (in_array(quoteTypeCode::Life, newUi())) {
             Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-list');
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
-=======
+
         Route::group(['prefix' => 'quotes'], function () {
             Route::resource('car-revival', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'));
         });
-
->>>>>>> feat/new-ui-car-revival
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
