@@ -126,14 +126,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-list');
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
-<<<<<<< HEAD
 
         Route::group(['prefix' => 'quotes'], function () {
             Route::resource('car-revival', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'));
         });
-=======
+        
         Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
->>>>>>> 8833b27fe3a412f19345a93b2697faff12287ef9
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
