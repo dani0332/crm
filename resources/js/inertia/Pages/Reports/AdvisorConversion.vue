@@ -336,7 +336,7 @@ onMounted(() => {
               label: filterOptions.batches[key],
             }))
           "
-          :max-limit="3"
+          :max-limit="5"
           deselect-all
         />
 
