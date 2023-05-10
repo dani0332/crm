@@ -2,19 +2,35 @@
 
 namespace App\Models;
 
+use App\Enums\FilterTypes;
+use App\Traits\FilterCriteria;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use LookUpModel;
 
 class CarQuote extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, FilterCriteria;
 
     protected $table = 'car_quote_request';
     protected $casts = [
         'dob' => 'datetime',
     ];
     protected $guarded = [];
+
+    public $filterables = [
+        'code' => FilterTypes::EXACT,
+        'first_name' => FilterTypes::EXACT,
+        'last_name' => FilterTypes::FREE,
+        'email' => FilterTypes::EXACT,
+        'mobile_no' => FilterTypes::EXACT,
+        'created_at' => FilterTypes::DATE_BETWEEN,
+        'payment_status_id' => FilterTypes::IN,
+        'is_ecommerce' => FilterTypes::EXACT,
+        'renewal_batch' => FilterTypes::EXACT,
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'policy_number' => FilterTypes::NULL_CHECK,
+    ];
 
     public function fullName()
     {
@@ -26,6 +42,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(UAELicenseHeldFor::class, 'id', 'uae_license_held_for_id');
     }
 
+    public function uaeLicenseHeldForBackHome()
+    {
+        return $this->hasOne(UAELicenseHeldFor::class, 'id', 'back_home_license_held_for_id');
+    }
+
     public function carMake()
     {
         return $this->hasOne(CarMake::class, 'id', 'car_make_id');
@@ -34,6 +55,11 @@ class CarQuote extends BaseModel
     public function carModel()
     {
         return $this->hasOne(CarModel::class, 'id', 'car_model_id');
+    }
+
+    public function carModelDetail()
+    {
+        return $this->hasOne(CarModelDetail::class, 'id', 'car_model_detail_id');
     }
 
     public function emirate()
@@ -220,6 +246,11 @@ class CarQuote extends BaseModel
     public function tier()
     {
         return $this->hasOne(Tier::class, 'id', 'tier_id')->select(['id', 'name', 'min_price', 'max_price', 'cost_per_lead']);
+    }
+
+    public function quoteViewCount()
+    {
+        return $this->hasMany(QuoteViewCount::class, 'id', 'quote_id');
     }
 
     public function scopeRelationWhere($query, $isGetList, $filters)
@@ -462,5 +493,15 @@ class CarQuote extends BaseModel
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by', 'id');
     }
 }

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\quoteTypeCode;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
@@ -18,7 +19,7 @@ class PersonalQuoteRolesPermissionSeeder extends Seeder
     public function run()
     {
         $roles = ['_ADVISOR', '_MANAGER'];
-        $lobs = [QuoteTypes::BIKE->value, QuoteTypes::CYCLE->value, QuoteTypes::YACHT->value, QuoteTypes::JETSKI->value, QuoteTypes::LIFE->value, QuoteTypes::PET->value];
+        $lobs = [QuoteTypes::BIKE->value, QuoteTypes::CYCLE->value, QuoteTypes::YACHT->value, QuoteTypes::JETSKI->value, QuoteTypes::LIFE->value, QuoteTypes::PET->value, quoteTypeCode::Car_Revival];
         $permissions = ['-quotes-list', '-quotes-show', '-quotes-create', '-quotes-edit'];
 
         foreach ($lobs as $lob) {

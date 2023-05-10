@@ -11,4 +11,9 @@ class PaymentStatus extends Model
 
     protected $hidden = ['text_ar'];
     protected $table = 'payment_status';
+
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
 }

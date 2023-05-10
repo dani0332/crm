@@ -188,6 +188,11 @@ class HandleInertiaRequests extends Middleware
                     '/quotes/home',
                     fn ($s) => $s->attributes(['icon' => 'home'])
                 )
+                ->addIf(
+                    auth()->user()->can(PermissionsEnum::CarRevivalQuoteList),
+                    'Car Revival Quotes', '/quotes/car-revival',
+                    fn ($s) => $s->attributes(['icon' => 'car'])
+                )
                 ->addIf(in_array(quoteTypeCode::Pet, newUi()) && auth()->user()->can(PermissionsEnum::PetQuotesList), 'Pet Quotes', '/personal-quotes/pet', fn ($s) => $s->attributes(['icon' => 'pet']))
                 ->addIf(in_array(quoteTypeCode::Bike, newUi()) && auth()->user()->can(PermissionsEnum::BikeQuotesList), 'Bike Quotes', '/personal-quotes/bike', fn ($s) => $s->attributes(['icon' => 'bike']))
                 ->addIf(in_array(quoteTypeCode::Cycle, newUi()) && auth()->user()->can(PermissionsEnum::CycleQuotesList), 'Cycle Quotes', '/personal-quotes/cycle', fn ($s) => $s->attributes(['icon' => 'cycle']))

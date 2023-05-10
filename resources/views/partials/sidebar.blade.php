@@ -103,6 +103,9 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::HomeQuotesList)
                             <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
                             @endcan
+                            @can(PermissionsEnum::CarRevivalQuoteList)
+                                <li><a href="{{ url('quotes/car-revival') }}">Car Revival Quotes</a></li>
+                            @endcan
                             @can(PermissionsEnum::PetQuotesList)
                                 @if(in_array(quoteTypeCode::Pet, newUi()))
                                 <li><a href="{{ url('personal-quotes/pet') }}">Pet Quotes</a></li>

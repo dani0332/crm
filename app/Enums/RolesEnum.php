@@ -93,4 +93,6 @@ final class RolesEnum extends Enum
     public const YachtManager = 'YACHT_MANAGER';
     public const JetskiAdvisor = 'JETSKI_ADVISOR';
     public const JetskiManager = 'JETSKI_MANAGER';
+    public const CarRevivalAdvisor = 'CAR-REVIVAL_ADVISOR';
+    public const CarRevivalManager = 'CAR-REVIVAL_MANAGER';
 }
