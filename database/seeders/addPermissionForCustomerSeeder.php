@@ -16,8 +16,8 @@ class addPermissionForCustomerSeeder extends Seeder
      */
     public function run()
     {
-        $customerShowrPermission = Permission::where('name', 'customers-show')->first();
-        if ($customerShowrPermission == null) {
+        $customerShowPermission = Permission::where('name', 'customers-show')->first();
+        if ($customerShowPermission == null) {
             DB::table('permissions')->insert([
                 'name' => 'customers-show',
                 'guard_name' => 'web',
@@ -25,14 +25,14 @@ class addPermissionForCustomerSeeder extends Seeder
                 'updated_at' => now(),
             ]);
 
-            $customerShowrPermissionId = Permission::where('name', 'customers-show')->first()->id;
+            $customerShowPermissionId = Permission::where('name', 'customers-show')->first()->id;
 
-            if ($customerShowrPermissionId) {
+            if ($customerShowPermissionId) {
                 $adminRoleId = Role::where('name', 'ADMIN')->first()->id;
                 DB::table('role_has_permissions')->insert(
                     [
                         'role_id' => $adminRoleId,
-                        'permission_id' => $customerShowrPermissionId,
+                        'permission_id' => $customerShowPermissionId,
                     ]
                 );
             }
