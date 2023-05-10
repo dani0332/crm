@@ -136,7 +136,7 @@ function onAssignLead(isValid) {
   >
     <template #item-code="{ code, uuid }">
       <Link
-        :href="`/quotes/car-revivals/${uuid}`"
+        :href="`/quotes/car-revival/${uuid}`"
         class="text-primary-500 hover:underline"
       >
         {{ code }}
