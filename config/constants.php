@@ -98,5 +98,5 @@ return [
     'CAMMY_END_POINT' => env('CAMMY_END_POINT', null),
     'CAMMY_BASIC_AUTH_TOKEN' => env('CAMMY_BASIC_AUTH_TOKEN', null),
     'DATE_FORMAT_ONLY' => env('DATE_FORMAT_ONLY', null),
-    'DATE_FORMAT_ONLY' => env('DATE_FORMAT_ONLY', null),
+    'CU_DATETIME_FORMAT' => env('CU_DATETIME_FORMAT', null),
 ];

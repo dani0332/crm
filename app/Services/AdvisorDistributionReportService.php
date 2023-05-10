@@ -96,9 +96,10 @@ class AdvisorDistributionReportService extends BaseService
 
     public function getDefaultFilters()
     {
+        $dateFormat = config('constants.DATE_FORMAT_ONLY');
         $advisorAssignedDates = [
-            Carbon::parse(now())->startOfDay()->format('Y-m-d'),
-            Carbon::parse(now())->endOfDay()->format('Y-m-d'),
+            Carbon::parse(now())->startOfDay()->format($dateFormat),
+            Carbon::parse(now())->endOfDay()->format($dateFormat),
         ];
 
         return [
