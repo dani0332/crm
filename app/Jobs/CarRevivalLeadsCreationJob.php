@@ -23,7 +23,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     use Stackable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $timeout = 15;
+    public $timeout = 60;
     public $backoff = 300;
     private $lead = null;
 
