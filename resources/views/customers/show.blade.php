@@ -116,7 +116,7 @@
                 <div class="col-auto mr-auto"></div>
                     <div class="col-auto">
                         @can('customers-edit')
-                            <a href="{{ route('customers-edit', ['customer' => $customer->id])}}" class='btn btn-warning btn-sm'>Edit</a>
+                            <a href="{{ route('customers-edit', ['customer' => $customer->uuid])}}" class='btn btn-warning btn-sm'>Edit</a>
                         @endcan
                     </div>
                 </div>

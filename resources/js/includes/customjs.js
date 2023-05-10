@@ -1061,7 +1061,7 @@ $(document).ready(function () {
             "<a href='" +
             config.routes.customer_data_table_route +
             '/' +
-            row.id +
+            row.uuid +
             "'>" +
             row.id +
             '</a>'
