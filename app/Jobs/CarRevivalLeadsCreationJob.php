@@ -72,7 +72,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'carMakeId' => CarMake::where('code', $this->lead->car_make_id)->first() ? CarMake::where('code', $this->lead->car_make_id)->first()->id : null, // ID
             'carModelId' => $this->lead->car_model_id, // ID
             'currentlyInsuredWith' => $this->lead->currently_insured_with,
-            'source' =>LeadSourceEnum::REVIVAL,
+            'source' => LeadSourceEnum::REVIVAL,
             'referenceUrl' => config('constants.APP_URL'),
         ];
 
@@ -101,13 +101,13 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     {
         return [
 
-                'quoteUID' => $quoteUuId,
-                'getLatestRating' => false,
-                'filters' => [[
-                    'field' => 'isRenewalSort',
-                    'value' => false,
-                ]],
-            ];
+            'quoteUID' => $quoteUuId,
+            'getLatestRating' => false,
+            'filters' => [[
+                'field' => 'isRenewalSort',
+                'value' => false,
+            ]],
+        ];
     }
 
     public function failed(Throwable $exception)

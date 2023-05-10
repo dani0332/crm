@@ -44,6 +44,7 @@ class Dtt extends Command
     /**
      * Execute the console command.
      *f.
+     *
      * @return int
      */
     public function handle()
