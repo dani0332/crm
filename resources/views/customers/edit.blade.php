@@ -7,7 +7,7 @@
             <div class="x_title">
                 <h2>Edit Customer</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('customer.index') }}" class="btn btn-warning btn-sm">Customer List</a></li>
+                    <li><a href="{{ route('customers-list') }}" class="btn btn-warning btn-sm">Customer List</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -16,7 +16,7 @@
                 @if(session()->has('success'))
                 <div class="alert alert-success">{{ session()->get('success') }}</div>
                 @endif
-                <form id="demo-form2" method='post' action="{{ route('customer.update', ['customer' => $customer->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                <form id="demo-form2" method='post' action="{{ route('customers-update', ['customer' => $customer->uuid]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                 {{csrf_field()}}
                 @method('PUT')
 
