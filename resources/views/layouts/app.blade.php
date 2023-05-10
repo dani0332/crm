@@ -191,7 +191,6 @@
                 age_discount_datatable_route: "{{ route('age.index') }}",
                 renewals_leads_datatable_route: "{{ route('uploaded-leads.index') }}",
                 sanction_list_downloads_datatable_route: "{{ url('kyc/aml/download/history') }}",
-                searchLeadsDataTable: "{{ route('leadsearch.index') }}",
                 leadassignmentDataTable: "{{ route('leadassignment.index') }}",
                 amtDataTable: "{{ route('amt.index') }}",
                 activitiesDataTable: "{{ route('activities.index') }}",
