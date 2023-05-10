@@ -49,6 +49,7 @@ class DashboardController extends Controller
         $filters = [
             'startDate' => $startDate,
             'endDate' => $endDate,
+            'teams' => $this->getCurrentUserTeamsAndSubTeams($loggedInUserId),
         ];
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
@@ -57,7 +58,7 @@ class DashboardController extends Controller
         $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
 
         $carAdvisors = $this->getUsersByTeamId(count($teamIds->toArray()) > 0 ? $teamIds->toArray() : []);
-        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($teams);
+        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
 
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
@@ -84,11 +85,11 @@ class DashboardController extends Controller
         $filters = [
             'startDate' => $startDate,
             'endDate' => $endDate,
+            'teams' => $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id),
         ];
         $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
-        $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
 
-        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($teams);
+        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
 
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
