@@ -169,7 +169,7 @@
                 carrepaircoverage_datatable_route: "{{ route('carrepaircoverage.index') }}",
                 carrepairtype_datatable_route: "{{ route('carrepairtype.index') }}",
                 rentacar_datatable_route: "{{ route('rentacar.index') }}",
-                customer_data_table_route: "{{ route('customer.index') }}",
+                customer_data_table_route: "{{ route('customers-list') }}",
                 discount_base_data_table_route: "{{ route('base.index') }}",
                 load_auditable: "{{ url('auditable') }}",
                 load_dashboard_stats: "{{ url('dashboard-stats') }}",

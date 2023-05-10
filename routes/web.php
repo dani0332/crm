@@ -126,10 +126,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-list');
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
+<<<<<<< HEAD
 
         Route::group(['prefix' => 'quotes'], function () {
             Route::resource('car-revival', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'));
         });
+=======
+        Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
+>>>>>>> 8833b27fe3a412f19345a93b2697faff12287ef9
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
@@ -179,7 +183,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('get-team-managers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
     Route::post('get-sub-teams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
     Route::post('get-product-teams', [UserController::class, 'getProductTeams'])->name('getProductTeams');
-    Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerUpload']);
     Route::post('/customer-additional-contact/{id}/delete', [CustomerController::class, 'deleteAdditionalContact']);
@@ -292,7 +295,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('trave.cards');
             Route::resource('travel', TravelController::class);
             Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
-
         } else {
             Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
         }
