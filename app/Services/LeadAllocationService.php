@@ -764,6 +764,7 @@ class LeadAllocationService extends BaseService
         $tiers = $tiers->get();
         if ($tiers != null) {
             info('First tier after filtration is : '.json_encode($tiers->first()->name));
+
             return $tiers->first();
         }
 
