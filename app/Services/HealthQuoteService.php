@@ -502,13 +502,12 @@ class HealthQuoteService extends BaseService
             ];
 
             $healthQuoteFirstMember = HealthMemberDetail::where('health_quote_request_id', $healthQuote->id)->first();
-            if($healthQuoteFirstMember)
-            {
+            if ($healthQuoteFirstMember) {
                 $healthQuoteFirstMember->update(array_merge(
                     $updateMemberDetails, [
-                    'nationality_id' => $request->nationality_id,
-                    'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id
-                ]));
+                        'nationality_id' => $request->nationality_id,
+                        'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
+                    ]));
             }
 
             if ($healthQuote->primary_member_id) {
