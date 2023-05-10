@@ -32,6 +32,12 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(1);
 
         $schedule
+        ->command('Dtt')
+        ->everyFifteenMinutes()
+        ->onOneServer()
+        ->withoutOverlapping(1);
+
+        $schedule
             ->command('AddBatchNumber:cron')
             ->timezone('Asia/Dubai')
             ->weeklyOn(1, '0:00')

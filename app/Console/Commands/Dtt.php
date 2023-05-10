@@ -48,66 +48,70 @@ class Dtt extends Command
      */
     public function handle()
     {
-        $date = Carbon::now()->subYear(1)->subDays(15)->toDateString();
+        try {
+            $date = Carbon::now()->subYear(1)->subDays(15)->toDateString();
 
-        $datethirtyDaysBefore = Carbon::now()->addDays(-30)->toDateString();
+            $datethirtyDaysBefore = Carbon::now()->addDays(-30)->toDateString();
 
-        $jobs = [];
+            $jobs = [];
 
-        $leads = CarQuote::where('created_at', '>=', $date)
-        ->where('is_revived', '=', false)
+            $leads = CarQuote::where('created_at', '>=', $date)
+            ->where('is_revived', '=', false)
 
-        ->whereNotNull(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture', 'payment_status_id'])
+            ->whereNotNull(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture', 'payment_status_id'])
 
-        ->where(function ($q) use ($datethirtyDaysBefore) {
-            $q->where('source', '!=', LeadSourceEnum::REVIVAL)
-            ->where('created_at', '<=', $datethirtyDaysBefore);
-        })
+            ->where(function ($q) use ($datethirtyDaysBefore) {
+                $q->where('source', '!=', LeadSourceEnum::REVIVAL)
+                ->where('created_at', '<=', $datethirtyDaysBefore);
+            })
 
-        ->where(function ($q) {
-            $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-            ->orWhereNotNull('renewal_batch')
-            ->orWhereNotNull('previous_quote_policy_number')
-            ->orWhereNotNull('mobile_no');
-        })
+            ->where(function ($q) {
+                $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                ->orWhereNotNull('renewal_batch')
+                ->orWhereNotNull('previous_quote_policy_number')
+                ->orWhereNotNull('mobile_no');
+            })
 
-        ->where(function ($q) {
-            $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
-            ->orWhere('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
-        })
+            ->where(function ($q) {
+                $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
+                ->orWhere('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
+            })
 
-        ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
+            ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
 
-        ->take(2)
+            ->take(10)
+            ->orderBy('id', 'DESC')->get();
 
-        ->get();
+            foreach ($leads as $carLead) {
+                $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
 
-        foreach ($leads as $carLead) {
-            $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
-
-            if (! $isTierR) {
-                $jobs[] = new CarRevivalLeadsCreationJob($carLead);
+                if (! $isTierR) {
+                    $jobs[] = new CarRevivalLeadsCreationJob($carLead);
+                }
             }
-        }
-        $logPrefix = 'fn: createRevivedQuotes ';
-        info($logPrefix.' QuoteCreation started');
 
-        if ($jobs != null && count($jobs)) {
-            Haystack::build()
-                ->addJobs($jobs)
+            $logPrefix = 'fn: createRevivedQuotes ';
+            info($logPrefix.' QuoteCreation started');
 
-                ->then(function () use ($logPrefix) {
-                    info($logPrefix.' all jobs completed successfully');
-                })
-                ->catch(function () use ($logPrefix) {
-                    info($logPrefix.' one of batch is failed. ');
-                })
-                ->finally(function () use ($logPrefix) {
-                    info($logPrefix.' everything done');
-                })
-                ->allowFailures()
-                ->withDelay(2)
-                ->dispatch();
+            if ($jobs != null && count($jobs)) {
+                Haystack::build()
+                    ->addJobs($jobs)
+
+                    ->then(function () use ($logPrefix) {
+                        info($logPrefix.' all jobs completed successfully');
+                    })
+                    ->catch(function () use ($logPrefix) {
+                        info($logPrefix.' one of batch is failed. ');
+                    })
+                    ->finally(function () use ($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->allowFailures()
+                    ->withDelay(2)
+                    ->dispatch();
+            }
+        } catch (\Exception $exception) {
+            info('DTT Exception : '.$exception->getMessage());
         }
     }
 }

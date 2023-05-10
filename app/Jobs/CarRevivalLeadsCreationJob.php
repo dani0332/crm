@@ -16,6 +16,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
+use Throwable;
 
 class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 {
@@ -43,6 +44,8 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
+        Log::info('Car Lead id: '.$this->lead->id);
+
         $dataArr = [
             'firstName' => $this->lead->first_name,
             'lastName' => $this->lead->last_name,
@@ -84,15 +87,13 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
             Log::info('kenPayload: '.json_encode($plansDataArr));
 
-            $kenResponse = Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
-            if (! isset($kenResponse->errors)) {
-                Log::info('Updating is_revived of quote : '.$this->lead->id);
+            Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
 
+            dispatch(new SendOCBEmailJob($capiResponse->quoteUID));
 
+            Log::info('OCB Email Job Dispatched for customer having '.$capiResponse->quoteUID);
 
-                
-                CarQuote::find($this->lead->id)->update(['is_revived' => true]);
-            }
+            CarQuote::find($this->lead->id)->update(['is_revived' => true]);
         }
     }
 
@@ -107,5 +108,10 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     'value' => false,
                 ]],
             ];
+    }
+
+    public function failed(Throwable $exception)
+    {
+        info('CarRevivalLeadsCreationJob -: '.$this->lead->id.' Error: '.$exception->getMessage());
     }
 }
