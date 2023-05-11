@@ -54,5 +54,25 @@
     "utmSource": "",
     "utmMedium": "",
     "utmCampaign": ""
+  },
+  "travelQuoteData": {
+    "destinationId": "4",
+    "daysCoverFor": "5",
+    "regionCoverForId": "2",
+    "travelCoverForId": "1",
+    "currentlyLocatedInId": "2",
+    "nationalityId": "3",
+    "mobileNo": "+97123456778",
+    "email": "{{USER_EMAIL}}",
+    "lastName": "new",
+    "firstName": "Abdullah",
+    "dob": "1989-07-08",
+    "lang": "EN",
+    "device": "DESKTOP",
+    "source": "https://staging.alfred.ae/travel-insurance/",
+    "referenceUrl": "https://staging.alfred.ae/travel-insurance/",
+    "utmSource": "",
+    "utmMedium": "",
+    "utmCampaign": ""
   }
 }

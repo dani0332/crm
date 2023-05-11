@@ -55,45 +55,79 @@ describe('Health qoutes', () => {
         travelPage.getNotesField(travelLeadData.travelLeadData.leadStatusNotes)
         travelPage.getCreateButton('Change Status')
         travelPage.getPopUpAssertion(" Lead Status has been Updated")
-
-
-        //Add Member
-        // travelPage.getAddMemberButton()
-        // travelPage.getAddMemberPopUpAssertion()
-        // travelPage.getMemberDOB()
     })
 
-    it.skip('Should Add Member', () => {
+    it('Should Add Member,Add Activity, Delete Activity, Add Additional Contact, Delete Additional Contact and Fetch&View available plans', () => {
         Cypress.on('uncaught:exception', err => {
             if (resizeObserverLoopErrRe.test(err.message)) {
                 return false
             }
         })
-        // cy.visit(leadUrl)
-        cy.visit('/quotes/travel/HFLWTV3Y')
+        cy.visit(leadUrl)
         commonPage.verifyURL('/quotes/travel')
         //Add Member
         travelPage.getAddMemberButton()
         travelPage.getAddMemberPopUpAssertion()
         travelPage.getCreateButton('Save')
         travelPage.getDeleteButton()
+        commonPage.getApiIntercept('@deleteTraveler', 302)
+        cy.wait(4000)
+
         //Available plan
         travelPage.getPanelAssertion('Available Plans')
         travelPage.getCoopyLinkButton()
         travelPage.getCopiedAssertion()
-
-        //Add Activity
         travelPage.getActivityButton()
-        cy.get('input#email').should('be.visible').type("Test Title")
-        // commonPage.getTitleField()
-        // commonPage.getDescriptionField()
-        // commonPage.getSelectAssigneeDropDown()
-        // commonPage.getModalSubmitButton()
+        travelPage.getModalAssertion()
+        travelPage.getTitleField("Test title")
+        travelPage.getActivityDescriptionField(travelLeadData.travelLeadData.details)
+        travelPage.getAsigneeDropdown('Sanya Garg - TRAVEL_ADVISOR')
+        travelPage.getDueDateField()
+        travelPage.selectDate("22")
+        travelPage.getApplyButton()
+        travelPage.getCreateButton('Add Activity')
+        travelPage.getPopUpAssertion("Activity has been Created")
 
-        // //Edit Activity Button
-        // commonPage.editActivityButton()
-        // commonPage.editDescription()
-        // commonPage.getModalUpdateButton()
-        // commonPage.deleteActivityButton()
+        //Delete Activity
+        travelPage.getDeleteActivityButton()
+        commonPage.getApiIntercept('@deleteActivity', 302)
+        cy.wait(3000)
+
+        //Add Additional Contact
+        travelPage.getAdditionalContactButton()
+        travelPage.getAdditionalContactType("Email")
+        travelPage.getValueField("muhammad.abdull@insurancemarket.ae")
+        travelPage.getCreateButton('Add Contact')
+
+        //Delete Additional Contact
+        travelPage.getDeleteAdditionalContactButton()
+
     })
+
+    it('Should edit quote Details', () => {
+        Cypress.on('uncaught:exception', err => {
+            if (resizeObserverLoopErrRe.test(err.message)) {
+                return false
+            }
+        })
+        // cy.visit(leadUrl)
+        cy.visit('/quotes/travel/hflwtv3y')
+        commonPage.verifyURL('/quotes/travel')
+        travelPage.getEditButton()
+        commonPage.getFirstNameField(quoteData.personalInfo.firstName)
+        commonPage.getLastNameField(quoteData.personalInfo.lastName)
+        commonPage.getDOB(quoteData.personalInfo.month, quoteData.personalInfo.year, quoteData.personalInfo.day)
+        travelPage.getPremiumField(travelLeadData.travelLeadData.premium)
+        travelPage.getDaysCoverForField(travelLeadData.travelLeadData.daysForCover)
+        commonPage.getNationalityId(travelLeadData.travelLeadData.nationality)
+        travelPage.getDestinationId(travelLeadData.travelLeadData.destination)
+        travelPage.getRegionsCoverFor(travelLeadData.travelLeadData.regionCoverFor)
+        travelPage.getTravelCoverFor(travelLeadData.travelLeadData.travelCoverFor)
+        travelPage.getDescriptionField(travelLeadData.travelLeadData.details)
+        travelPage.getCurrentlyLocated(travelLeadData.travelLeadData.currentlyLocated)
+        travelPage.getCreateButton("Update")
+        travelPage.getPopUpAssertion("Travel has been updated")
+    })
+
+
 })
