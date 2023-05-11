@@ -247,7 +247,7 @@ class HealthQuoteService extends BaseService
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$request->created_at, $request->created_at_end]);
+            $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
@@ -465,9 +465,6 @@ class HealthQuoteService extends BaseService
             case 'emirates':
                 return 'e';
                 break;
-            case 'advisor':
-                return 'u';
-                break;
             default:
                 return 'hqr';
                 break;
@@ -502,13 +499,12 @@ class HealthQuoteService extends BaseService
             ];
 
             $healthQuoteFirstMember = HealthMemberDetail::where('health_quote_request_id', $healthQuote->id)->first();
-            if($healthQuoteFirstMember)
-            {
+            if ($healthQuoteFirstMember) {
                 $healthQuoteFirstMember->update(array_merge(
                     $updateMemberDetails, [
-                    'nationality_id' => $request->nationality_id,
-                    'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id
-                ]));
+                        'nationality_id' => $request->nationality_id,
+                        'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
+                    ]));
             }
 
             if ($healthQuote->primary_member_id) {

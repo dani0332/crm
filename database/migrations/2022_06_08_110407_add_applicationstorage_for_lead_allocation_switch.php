@@ -13,6 +13,8 @@ class AddApplicationstorageForLeadAllocationSwitch extends Migration
     public function up()
     {
         $datetime = date('Y-m-d H:i:s');
+        $dateTimeFormat = config('constants.DB_DATE_FORMAT_MATCH');
+
         DB::table('application_storage')->insert(
             [
                 'key_name' => 'LEAD_ALLOCATION_JOB_SWITCH',
@@ -26,20 +28,20 @@ class AddApplicationstorageForLeadAllocationSwitch extends Migration
         DB::table('application_storage')->insert(
             [
                 'key_name' => 'LEAD_ALLOCATION_START_DATE_FOR_LEADS',
-                'value' => Carbon::now()->endOfDay()->format('Y-m-d H:i:s'),
+                'value' => Carbon::now()->endOfDay()->format($dateTimeFormat),
                 'is_active' => 1,
-                'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                'created_at' => Carbon::now()->format($dateTimeFormat),
+                'updated_at' => Carbon::now()->format($dateTimeFormat),
             ]
         );
 
         DB::table('application_storage')->insert(
             [
                 'key_name' => 'LEAD_ALLOCATION_UNAVAILABILITY_TIME',
-                'value' => Carbon::now()->endOfDay()->format('Y-m-d H:i:s'),
+                'value' => Carbon::now()->endOfDay()->format($dateTimeFormat),
                 'is_active' => 1,
-                'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                'updated_at' => Carbon::now()->format('Y-m-d H:i:s'),
+                'created_at' => Carbon::now()->format($dateTimeFormat),
+                'updated_at' => Carbon::now()->format($dateTimeFormat),
             ]
         );
     }

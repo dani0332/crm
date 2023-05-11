@@ -60,7 +60,7 @@ trait GenericQueriesAllLobs
 
     public function getRepositoryObject($quoteType)
     {
-        $repository = '\\App\\Repositories\\' . ucwords($quoteType) . 'QuoteRepository';
+        $repository = '\\App\\Repositories\\'.ucwords($quoteType).'QuoteRepository';
 
         if (! class_exists($repository)) {
             return false;

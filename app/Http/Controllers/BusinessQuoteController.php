@@ -59,6 +59,7 @@ class BusinessQuoteController extends Controller
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $isManagerORDeputy = auth()->user()->isManagerORDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
+
         return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed'));
     }
 
@@ -104,7 +105,7 @@ class BusinessQuoteController extends Controller
      */
     public function store(StoreBusinessQuoteRequest $request)
     {
-        $record = $this->businessQuoteService->saveBusinessQuote($request);
+        $this->businessQuoteService->saveBusinessQuote($request);
 
         redirect('/quotes/business')->with('message', 'Record created successfully');
     }

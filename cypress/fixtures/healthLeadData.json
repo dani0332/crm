@@ -5,7 +5,8 @@
     "policyNumber": "12345",
     "reference": "No Reference",
     "details": "Test Details",
-    "healthCDBID": "HEA-7G94MWVL",
-    "mobileNumber": "0509876543"
+    "healthCDBID": "HEA-GVMSBC8N",
+    "mobileNumber": "0509876543",
+    "dummyText": "Lorem Ipsum is simply dummy text of the printing and typesetting industry"
   }
 }

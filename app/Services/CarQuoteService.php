@@ -454,6 +454,7 @@ class CarQuoteService extends BaseService
                 $title = 'Car Model';
                 break;
             case 'trim':
+            case 'car_model_detail_id':
                 $title = 'Trim';
                 break;
             case 'nationality_id':
@@ -504,9 +505,6 @@ class CarQuoteService extends BaseService
             case 'promo_code':
                 $title = 'Advisor/Promo Code';
                 break;
-            case 'quote_status_id':
-                $title = 'Quote Status';
-                break;
             case 'device':
                 $title = 'Device';
                 break;
@@ -552,9 +550,6 @@ class CarQuoteService extends BaseService
             case 'has_ncd_supporting_documents':
                 $title = 'Can you provide no-claims letter from your previous insurers?';
                 break;
-            case 'car_model_detail_id':
-                $title = 'Trim';
-                break;
             case 'parent_duplicate_quote_id':
                 $title = 'Parent CDB ID';
                 break;
@@ -578,9 +573,6 @@ class CarQuoteService extends BaseService
                 break;
             case 'cost_per_lead':
                 $title = 'Lead Cost';
-                break;
-            case 'quote_batch_id':
-                $title = 'Quote Batch';
                 break;
             case 'show_renewal_upload_leads':
                 $title = 'Show Renewal Upload';
@@ -937,9 +929,6 @@ class CarQuoteService extends BaseService
                 break;
             case 'car_plan_provider':
                 return 'cpip';
-                break;
-            case 'quote_status':
-                return 'qs';
                 break;
             default:
                 return 'cqr';

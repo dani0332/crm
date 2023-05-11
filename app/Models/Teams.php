@@ -86,7 +86,7 @@ class Teams extends BaseModel
 
     private function validateUser($userId, $quoteId)
     {
-        $response = Teams::where([
+        $response = self::where([
             ['lead_id', '=', Auth::user()->id],
             ['user_id', '=', $userId],
         ])
@@ -112,7 +112,7 @@ class Teams extends BaseModel
                         // ftc-form-delete schedule on 7th June 2023
 //                        $notes = 'assign me production agent';
 
-                        $newTeamObj = new Teams;
+                        $newTeamObj = new self;
                         $newTeamObj->user_id = Auth::user()->id;
                         $newTeamObj->lead_id = Auth::user()->id;
                         $newTeamObj->save();
@@ -128,14 +128,16 @@ class Teams extends BaseModel
                             $modelInstance->pa_id = null;
                             $modelInstance->save();
                             break;
-                        // ftc-form-delete schedule on 7th June 2023
+                            // ftc-form-delete schedule on 7th June 2023
 //                        case 'reassign':
 //                            $notes = 'reassign  production agent';
 //                            break;
+                        default:
+                            break;
                     }
                 }
 
-                // ftc-form-delete schedule on 7th June 2023
+            // ftc-form-delete schedule on 7th June 2023
 //                $ftcModel = new FtcQuoteStatusHistory;
 //                $ftcModel->quote_status_id = $modelInstance->quote_status_id;
 //                $ftcModel->car_quote_id = $modelInstance->id;
@@ -146,7 +148,8 @@ class Teams extends BaseModel
                 $userId = $request->input('user_id');
                 if (! self::where('user_id', $userId)->exists()) {
                     $getUser = User::select(['id', 'name'])->whereHas(
-                        'roles', function ($q) {
+                        'roles',
+                        function ($q) {
                             $q->where('name', 'pa');
                         }
                     )
