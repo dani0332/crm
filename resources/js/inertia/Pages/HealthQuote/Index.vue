@@ -98,7 +98,7 @@ function onSubmit(isValid) {
         (filters[key] === '' || filters[key].length === 0) &&
         delete filters[key],
     );
-    router.visit('/quotes/health', {
+    router.visit(route('health.index'), {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -112,7 +112,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit('/quotes/health', {
+  router.visit(route('health.index'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -201,7 +201,7 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/health-cards">
+        <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
 
@@ -392,7 +392,7 @@ onMounted(() => {
     >
       <template #item-code="{ code, uuid }">
         <Link
-          :href="`/quotes/health/${uuid}`"
+          :href="route('health.show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
