@@ -599,7 +599,6 @@ onMounted(() => {
         <select
           class="form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
           @change="updateRowsPerPageSelect"
-          :disabled="isFirstPage && isLastPage"
         >
           <option
             v-for="item in rowsPerPageOptions"
