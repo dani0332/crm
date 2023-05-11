@@ -167,16 +167,8 @@ const objToUrl = obj => {
 
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
-    if (key === 'quote_status[]') {
-      filters.quote_status =
-        params[key].length == 1
-          ? params[key]
-          : params[key].map(status => parseInt(status));
-    } else if (key === 'advisors[]') {
-      filters.advisors =
-        params[key].length == 1
-          ? params[key]
-          : params[key].map(status => parseInt(status));
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
     } else {
       filters[key] = params[key];
     }
