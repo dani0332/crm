@@ -2,10 +2,10 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-class AddUuidToCustomerTable extends Migration
+class AddUuidColumnToCustomerTable extends Migration
 {
     /**
      * Run the migrations.
@@ -16,7 +16,8 @@ class AddUuidToCustomerTable extends Migration
     {
         Schema::table('customer', function (Blueprint $table) {
             if (! Schema::hasColumn('customer', 'uuid')) {
-                $table->uuid('uuid')->default(DB::raw('(LEFT(UUID(), 8))'))->after('id');
+                $table->string('uuid', 45)->default(DB::raw('UUID()'))->after('id');
+                $table->index('uuid', 'idx_uuid');
             }
         });
     }
