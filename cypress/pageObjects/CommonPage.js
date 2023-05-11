@@ -9,7 +9,7 @@ class CommonPage {
   }
 
   getFirstNameField(first_name) {
-    return cy.get('input[name="first_name"]').should('be.visible').clear().type(first_name)
+    return cy.get('input#first_name').should('be.visible').clear().type(first_name)
   }
 
   getLastNameField(last_name) {
