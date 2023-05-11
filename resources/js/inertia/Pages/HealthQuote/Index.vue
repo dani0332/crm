@@ -213,7 +213,7 @@ onMounted(() => {
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
 
-        <Link href="/quotes/health/create">
+        <Link :href="route('health.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
