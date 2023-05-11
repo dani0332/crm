@@ -90,7 +90,6 @@ class Dtt extends Command
                     $jobs[] = new CarRevivalLeadsCreationJob($carLead);
                 }
             }
-
             $logPrefix = '************* fn: createRevivedQuotes ';
             info($logPrefix.' QuoteCreation started');
 

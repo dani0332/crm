@@ -49,7 +49,8 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
         $dataArr = [
             'firstName' => $this->lead->first_name,
             'lastName' => $this->lead->last_name,
-            'email' => $this->lead->email,
+            // 'email' => $this->lead->email,
+            'email' => 'nouman.hussain@insurancemarket.ae',
             'address' => $this->lead->address,
             'mobileNo' => $this->lead->mobile_no,
             'dob' => $this->lead->dob,
@@ -87,9 +88,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
             Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
 
-            dispatch(new SendOCBEmailJob($capiResponse->quoteUID));
+            // dispatch(new SendOCBEmailJob($capiResponse->quoteUID));
 
-            Log::info('************* OCB Email Job Dispatched for customer having '.$capiResponse->quoteUID.'*************');
+            // Log::info('************* OCB Email Job Dispatched for customer having '.$capiResponse->quoteUID.'*************');
 
             CarQuote::find($this->lead->id)->update(['is_revived' => true]);
 
