@@ -1131,7 +1131,9 @@ class CRUDController extends Controller
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
 
-        return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
+        if(!isset($request->is_car_revival)){
+            return redirect()->to('/quotes/'.strtolower($request->modelType).'/'.$entity->uuid)->with('success', ' Lead Status has been Updated');
+        }
     }
 
     public function carPlanManualProcess(Request $request)

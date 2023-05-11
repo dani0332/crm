@@ -56,9 +56,9 @@ const fixedValue = number => {
         return number.toFixed(2);
     }
 };
-
+console.log(page.props.quote);
 const modals = reactive({
-    duplicate: false,
+    // duplicate: false,
     // member: false,
     // memberConfirm: false,
     doc: false,
@@ -71,37 +71,6 @@ const modals = reactive({
     // contactDeleteConfirm: false,
     // contactPrimaryConfirm: false,
 });
-
-const leadDuplicateForm = useForm({
-    modelType: 'car',
-    parentType: 'car',
-    entityId: page.props.quote.id,
-    entityCode: page.props.quote.code,
-    entityUId: page.props.quote.uid,
-    lob_team: [],
-    lob_team_sub_selection: null,
-});
-
-const openDuplicate = () => {
-    modals.duplicate = true;
-    leadDuplicateForm.reset();
-};
-
-const onCreateDuplicate = isValid => {
-    if (!isValid) return;
-    leadDuplicateForm.post('/quotes/createDuplicate', {
-        preserveScroll: true,
-        onSuccess: () => {
-            notification.success({
-                title: 'Quote duplicated successfully',
-                position: 'top',
-            });
-        },
-        onFinish: () => {
-            modals.duplicate = false;
-        },
-    });
-};
 
 const advisorOptions = computed(() => {
     return page.props.advisors.map(advisor => ({
@@ -188,35 +157,6 @@ const leadStatusOptions = computed(() => {
     }));
 });
 
-//
-// const nationalityOptions = computed(() => {
-//     return page.props.nationalities.map(nat => ({
-//         value: nat.id,
-//         label: nat.text,
-//     }));
-// });
-//
-// const memberCategoriesOptions = computed(() => {
-//     return page.props.memberCategories.map(cat => ({
-//         value: cat.id,
-//         label: cat.text,
-//     }));
-// });
-//
-// const emiratesOptions = computed(() => {
-//     return page.props.emirates.map(em => ({
-//         value: em.id,
-//         label: em.text,
-//     }));
-// });
-//
-// const salaryBandsOptions = computed(() => {
-//     return page.props.salaryBands.map(sal => ({
-//         value: sal.id,
-//         label: sal.text,
-//     }));
-// });
-//
 // const onTeamAssign = () => {
 //     if (!assignSubteam.value) {
 //         notification.error({
@@ -284,7 +224,7 @@ const leadStatusOptions = computed(() => {
 // };
 //
 const leadStatusForm = useForm({
-    modelType: 'car',
+    modelType: 'Car',
     leadId: page.props.quote.id,
     quote_uuid: page.props.quote.uuid,
     assigned_to_user_id: page.props.quote.advisor_id,
@@ -292,11 +232,12 @@ const leadStatusForm = useForm({
     notes: page.props.quote.notes || null,
     trans_code: page.props.quote.transapp_code || null,
     lostReason: page.props.quote.lost_reason_id || null,
+    is_car_revival: true
 });
 
 const onLeadStatus = () => {
     leadStatusForm.post(
-        `/quotes/car-revival/${page.props.quote.id}/update-lead-status`,
+        `/quotes/car/${page.props.quote.id}/update-lead-status`,
         {
             preserveScroll: true,
             onError: errors => {
@@ -312,147 +253,6 @@ const onLeadStatus = () => {
     );
 };
 
-// const memberDetailsTable = reactive({
-//     isLoading: false,
-//     columns: [
-//         {
-//             text: 'Gender',
-//             value: 'gender',
-//         },
-//         {
-//             text: 'DOB',
-//             value: 'dob',
-//         },
-//         {
-//             text: 'Nationality',
-//             value: 'nationality',
-//         },
-//         {
-//             text: 'Emirate of Visa',
-//             value: 'emirate',
-//         },
-//         {
-//             text: 'Member Category',
-//             value: 'member_category_id',
-//         },
-//         {
-//             text: 'Action',
-//             value: 'action',
-//         },
-//     ],
-// });
-//
-// const memberForm = useForm({
-//     id: null,
-//     gender: null,
-//     dob: null,
-//     nationality_id: page.props.membersDetail.length
-//         ? null
-//         : page.props.quote.nationality_id,
-//     salary_band_id: null,
-//     emirate_of_your_visa_id: page.props.membersDetail.length
-//         ? null
-//         : page.props.quote.emirate_of_your_visa_id,
-//     member_category_id: null,
-//     health_quote_request_id: page.props.quote.id,
-//     update_lead_against_member: null
-// });
-//
-// function onEditMember(data) {
-//     memberActionEdit.value = true;
-//     modals.member = true;
-//
-//     memberForm.id = data.id;
-//     memberForm.gender = data.gender;
-//     memberForm.dob = data.dob;
-//     memberForm.nationality_id = data.nationality_id;
-//     memberForm.emirate_of_your_visa_id = data.emirate_of_your_visa_id;
-//     memberForm.member_category_id = data.member_category_id;
-//     memberForm.salary_band_id = data.salary_band_id;
-//     memberForm.update_lead_against_member = data.index === 1;
-// }
-//
-// const onAddMemberModal = () => {
-//     memberForm.reset();
-//     memberActionEdit.value = false;
-//     modals.member = true;
-// };
-//
-// const memberFieldReq = reactive({
-//     nationality: false,
-//     dob: false,
-// });
-// const onMemberSubmit = isValid => {
-//     if (memberForm.nationality_id == null) {
-//         memberFieldReq.nationality = true;
-//     } else {
-//         memberFieldReq.nationality = false;
-//     }
-//     if (memberForm.dob == null) {
-//         memberFieldReq.dob = true;
-//     } else {
-//         memberFieldReq.dob = false;
-//     }
-//     if (!isValid) return;
-//     if (memberActionEdit.value) {
-//         memberForm.put(`/members/${memberForm.id}`, {
-//             preserveScroll: true,
-//             onSuccess: () => {
-//                 notification.success({
-//                     title: 'Member Updated',
-//                     position: 'top',
-//                 });
-//                 memberForm.reset();
-//             },
-//             onFinish: () => {
-//                 modals.member = false;
-//             },
-//         });
-//     } else {
-//         memberForm.post(`/members`, {
-//             preserveScroll: true,
-//             onSuccess: () => {
-//                 notification.success({
-//                     title: 'Member Added',
-//                     position: 'top',
-//                 });
-//             },
-//             onFinish: () => {
-//                 modals.member = false;
-//             },
-//         });
-//     }
-// };
-//
-// const memberDelete = id => {
-//     modals.memberConfirm = true;
-//     confirmDeleteData.member = id;
-// };
-//
-// const memberDeleteConfirmed = () => {
-//     memberForm.delete(`/members/${confirmDeleteData.member}`, {
-//         preserveScroll: true,
-//         onSuccess: () => {
-//             notification.success({
-//                 title: 'Member Deleted',
-//                 position: 'top',
-//             });
-//         },
-//         onFinish: () => {
-//             modals.memberConfirm = false;
-//         },
-//     });
-// };
-//
-// const memberDataDocs = membersDetail => {
-//     return membersDetail
-//         .map(member => ({
-//             id: member.id,
-//             name: memberCategoryText(member.member_category_id).value,
-//         }))
-//         .filter(member => member.name !== undefined);
-// };
-//
 // plans
 const plansTable = reactive({
     isLoading: false,
@@ -550,7 +350,7 @@ const onTogglePlans = toggle => {
     ).value;
 
     axios
-        .post('/quotes/car-revival/manual-plan-toggle', {
+        .post('/quotes/car/manual-plan-toggle', {
             modelType: 'Car',
             planIds: planIds,
             quote_uuid: page.props.quote.uuid,
@@ -971,10 +771,6 @@ const sendPolicyToClient = () => {
         <div class="flex justify-between items-center flex-wrap gap-2">
             <h2 class="text-xl font-semibold">Car Revival Detail</h2>
             <div class="flex gap-2">
-                <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-                    Duplicate Lead
-                </x-button>
-
                 <Link href="/quotes/car-revival" preserve-scroll>
                     <x-button size="sm" color="primary" tag="div"> Car Revival List </x-button>
                 </Link>
@@ -984,45 +780,6 @@ const sendPolicyToClient = () => {
                 </Link>
             </div>
         </div>
-
-        <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-            <template #header> Duplicate Lead </template>
-            <x-form @submit="onCreateDuplicate" :auto-focus="false">
-                <div class="grid gap-4">
-                    <x-select
-                        v-model="leadDuplicateForm.lob_team"
-                        label="LOBs"
-                        :options="
-                              allowedDuplicateLOB.map(lob => ({
-                                value: lob,
-                                label: lob,
-                              }))
-                            "
-                        :rules="[isRequired]"
-                        placeholder="Select LOB For Duplication"
-                        class="w-full"
-                        multiple
-                    />
-                    <x-select
-                        v-model="leadDuplicateForm.lob_team_sub_selection"
-                        label="Reason"
-                        :rules="[isRequired]"
-                        class="w-full"
-                        :options="[
-                          { value: 'new_enquiry', label: 'New enquiry' },
-                          { value: 'record_only', label: 'Record purposes only' },
-                        ]"
-                    />
-                    <x-button
-                        color="orange"
-                        type="submit"
-                        :loading="leadDuplicateForm.processing"
-                    >
-                        Create Duplicate
-                    </x-button>
-                </div>
-            </x-form>
-        </x-modal>
 
         <x-divider class="my-4" />
         <div
@@ -1086,7 +843,7 @@ const sendPolicyToClient = () => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">ADVISOR</dt>
-                        <dd>{{ quote.advisor?.name }}</dd>
+                        <dd>{{ quote.advisor_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">SOURCE</dt>
@@ -1098,7 +855,7 @@ const sendPolicyToClient = () => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">PARENT CDB ID</dt>
-                        <!--                        <dd>{{ quote.parent_duplicate_quote_id }}</dd>-->
+                        <dd>{{ quote.parent_duplicate_quote_id }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">IS ECOMMERCE</dt>
@@ -1106,11 +863,11 @@ const sendPolicyToClient = () => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">BATCH</dt>
-                        <dd>{{ quote.batch?.name }}</dd>
+                        <dd>{{ quote.quote_batch_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">LOST REASON</dt>
-                        <dd>{{ quote.car_quote_request_detail?.lost_reason?.text }}</dd>
+                        <dd>{{ quote.lost_reason }}</dd>
                     </div>
                 </dl>
             </div>
@@ -1139,12 +896,8 @@ const sendPolicyToClient = () => {
                         <dd>{{ quote.email }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">CUSTOMER AGE</dt>
-                        <!--                        <dd>{{ quote.gender }}</dd>-->
-                    </div>
-                    <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">NATIONALITY</dt>
-                        <dd>{{ quote.nationality?.text }}</dd>
+                        <dd>{{ quote.nationality_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">DATE OF BIRTH</dt>
@@ -1152,7 +905,7 @@ const sendPolicyToClient = () => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">EMIRATE OF REGISTRATION</dt>
-                        <!--                        <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>-->
+                        <dd>{{ quote.emirate_of_registration_id_text }}</dd>
                     </div>
                 </dl>
             </div>
@@ -1166,100 +919,100 @@ const sendPolicyToClient = () => {
                 <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">UAE LISENCE HELD FOR</dt>
-                        <dd>{{ quote.uae_license_held_for?.text }}</dd>
+                        <dd>{{ quote.uae_license_held_for_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">HOME COUNTRY DRIVING LISENCE HELD FOR</dt>
-                        <!--                        <dd>{{ quote.cover_for_id_text }}</dd>-->
+                        <dd>{{ quote.back_home_license_held_for_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CURRENTLY INSURED WITH</dt>
-                        <dd>{{ quote.currently_insured_with?.text }}</dd>
+                        <dd>{{ quote.currently_insured_with_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CAR MAKE</dt>
-                        <dd>{{ quote.car_make?.text }}</dd>
+                        <dd>{{ quote.car_make_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CAR MODEL</dt>
-                        <dd>{{ quote.car_model?.text }}</dd>
+                        <dd>{{ quote.car_model_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CYLINDER</dt>
-                        <!--                        <dd>{{ quote.currently_insured_with_id_text }}</dd>-->
+                        <dd>{{ quote.cylinder }}</dd>
                     </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">TRIM</dt>
-                        <!--                        <dd>{{ quote.currently_insured_with_id_text }}</dd>-->
-                    </div>
+<!--                    <div class="grid sm:grid-cols-2">-->
+<!--                        <dt class="font-medium">TRIM</dt>-->
+<!--                        <dd>{{ quote.currently_insured_with_id_text }}</dd>-->
+<!--                    </div>-->
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CAR MODEL YEAR</dt>
-                        <!--                        <dd>{{ quote.currently_insured_with_id_text }}</dd>-->
+                        <dd>{{ quote.year_of_manufacture_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">FIRST REGISTRATION DATE</dt>
-                        <!--                        <dd>{{ quote.currently_insured_with_id_text }}</dd>-->
+                        <dd>{{ quote.year_of_first_registration }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CAR VALUE</dt>
-                        <!--                        <dd>{{ quote.currently_insured_with_id_text }}</dd>-->
+                        <dd>{{ quote.car_value }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CAR VALUE (AT ENQUIRY)</dt>
-                        <!--                        <dd>{{ quote.currently_insured_with_id_text }}</dd>-->
+                        <dd>{{ quote.car_value_tier }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">VEHICLE TYPE</dt>
-                        <dd>{{ quote.vehicle_type?.text }}</dd>
+                        <dd>{{ quote.vehicle_type_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">SEAT CAPACITY</dt>
-                        <!--                        <dd>{{ quote.currently_insured_with_id_text }}</dd>-->
+                        <dd>{{ quote.seat_capacity }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">TYPE OF CAR INSURANCE</dt>
-                        <dd>{{ quote.car_type_insurance?.text }}</dd>
+                        <dd>{{ quote.car_type_insurance_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-                        <dd>{{ dateFormat(quote.car_quote_request_detail?.next_followup_date) }}</dd>
+                        <dd>{{ dateFormat(quote.next_followup_date) }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CLAIM HISTORY</dt>
-                        <dd>{{ quote.claim_history?.text }}</dd>
+                        <dd>{{ quote.claim_history_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">ADVISOR ASSIGN DATE</dt>
-                        <dd>{{ dateFormat(quote.car_quote_request_detail?.advisor_assigned_date) }}</dd>
+                        <dd>{{ dateFormat(quote.advisor_assigned_date) }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">LEAD COST</dt>
-                        <!--                        <dd>{{ quote.details }}</dd>-->
+                        <dd>{{ quote.cost_per_lead }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">UPDATED BY</dt>
-                        <!--                        <dd>{{ dateFormat(quote.next_followup_date) }}</dd>-->
+                        <dd>{{ quote.updated_by }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">ADDITIONAL NOTES</dt>
-                        <!--                        <dd>{{ quote.details }}</dd>-->
+                        <dd>{{ quote.additional_notes }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">ADVISOR/PROMO CODE</dt>
-                        <dd>{{ quote.details }}</dd>
+                        <dd>{{ quote.promo_code }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CALCULATED VALUE</dt>
-                        <!--                        <dd>{{ quote.details }}</dd>-->
+                        <dd>{{ quote.calculated_value }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CREATED BY</dt>
-                        <!--                        <dd>{{ quote.details }}</dd>-->
+                        <dd>{{ quote.created_by }}</dd>
                     </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">CAN YOU PROVIDE NO-CLAIM LETTER FROM YOUR PREVIOUS INSURERS?</dt>
-                        <!--                        <dd>{{ quote.details }}</dd>-->
-                    </div>
+<!--                    <div class="grid sm:grid-cols-2">-->
+<!--                        <dt class="font-medium">CAN YOU PROVIDE NO-CLAIM LETTER FROM YOUR PREVIOUS INSURERS?</dt>-->
+<!--                        <dd>{{ quote.details }}</dd>-->
+<!--                    </div>-->
                 </dl>
             </div>
             <div class="mt-6">
@@ -1273,7 +1026,7 @@ const sendPolicyToClient = () => {
                 <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">Renewal Batch#</dt>
-                        <dd>{{ quote.previous_quote_policy_number }}</dd>
+                        <dd>{{ quote.renewal_batch }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
@@ -1289,181 +1042,19 @@ const sendPolicyToClient = () => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">Previous Import Code</dt>
-                        <dd>{{ quote.previous_quote_policy_number }}</dd>
+<!--                        <dd>{{ quote.previous_quote_policy_number }}</dd>-->
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">Policy Number</dt>
-                        <dd>{{ quote.previous_quote_policy_premium }}</dd>
+                        <dd>{{ quote.policy_number }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">Renewal Expiry Date</dt>
-                        <dd>{{ dateFormat(quote.previous_policy_expiry_date) }}</dd>
+                        <dd>{{ dateFormat(quote.renewal_expiry_date) }}</dd>
                     </div>
                 </dl>
             </div>
         </div>
-
-<!--        <div class="p-4 rounded shadow mb-6 bg-white">-->
-<!--            <div class="flex justify-between items-center mb-4">-->
-<!--                <h3 class="font-semibold text-primary-800 text-lg">-->
-<!--                    Member Details-->
-<!--                    <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>-->
-<!--                </h3>-->
-<!--                <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">-->
-<!--                    Add Member-->
-<!--                </x-button>-->
-<!--            </div>-->
-
-<!--            <DataTable-->
-<!--                table-class-name="tablefixed compact"-->
-<!--                :headers="memberDetailsTable.columns"-->
-<!--                :items="membersDetail || []"-->
-<!--                show-index-->
-<!--                border-cell-->
-<!--                hide-rows-per-page-->
-<!--                hide-footer-->
-<!--            >-->
-<!--                <template #item-index="{ index }">-->
-<!--                    <div>Member {{ index }}</div>-->
-<!--                </template>-->
-<!--                <template #item-gender="{ gender }">-->
-<!--                    {{ genderText(gender).value }}-->
-<!--                </template>-->
-<!--                <template #item-dob="{ dob }">-->
-<!--                    {{ dateFormat(dob) }}-->
-<!--                </template>-->
-<!--                <template #item-nationality="{ nationality }">-->
-<!--                    {{ nationality?.text }}-->
-<!--                </template>-->
-<!--                <template #item-emirate="{ emirate }">-->
-<!--                    {{ emirate?.text }}-->
-<!--                </template>-->
-<!--                <template #item-member_category_id="{ member_category_id }">-->
-<!--                    {{ memberCategoryText(member_category_id).value }}-->
-<!--                </template>-->
-<!--                <template #item-action="item">-->
-<!--                    <div class="flex gap-2">-->
-<!--                        <x-button-->
-<!--                            size="xs"-->
-<!--                            color="primary"-->
-<!--                            outlined-->
-<!--                            @click.prevent="onEditMember(item)"-->
-<!--                        >-->
-<!--                            Edit-->
-<!--                        </x-button>-->
-<!--                        <x-button-->
-<!--                            size="xs"-->
-<!--                            color="error"-->
-<!--                            outlined-->
-<!--                            @click.prevent="memberDelete(item.id)"-->
-<!--                        >-->
-<!--                            Delete-->
-<!--                        </x-button>-->
-<!--                    </div>-->
-<!--                </template>-->
-<!--            </DataTable>-->
-
-<!--            <x-modal v-model="modals.member" size="lg" show-close backdrop>-->
-<!--                <template #header>-->
-<!--                    {{ memberActionEdit ? 'Edit' : 'Add' }} Member-->
-<!--                </template>-->
-
-<!--                <x-form @submit="onMemberSubmit" :auto-focus="false">-->
-<!--                    <div class="grid md:grid-cols-2 gap-4">-->
-<!--                        <input type="hidden" :value="memberForm.id" />-->
-
-<!--                        <ComboBox-->
-<!--                            v-model="memberForm.nationality_id"-->
-<!--                            label="Nationality"-->
-<!--                            :options="nationalityOptions"-->
-<!--                            placeholder="Select Nationality"-->
-<!--                            :single="true"-->
-<!--                            :hasError="memberFieldReq.nationality"-->
-<!--                        />-->
-
-<!--                        <x-select-->
-<!--                            v-model="memberForm.emirate_of_your_visa_id"-->
-<!--                            label="Emirate of Visa"-->
-<!--                            :options="emiratesOptions"-->
-<!--                            :rules="[isRequired]"-->
-<!--                            placeholder="Select Emirate of Visa"-->
-<!--                            class="w-full"-->
-<!--                        />-->
-
-<!--                        <x-select-->
-<!--                            v-model="memberForm.gender"-->
-<!--                            label="Gender"-->
-<!--                            :options="genderSelect"-->
-<!--                            :rules="[isRequired]"-->
-<!--                            placeholder="Select Gender"-->
-<!--                            class="w-full"-->
-<!--                        />-->
-
-<!--                        <DatePicker-->
-<!--                            v-model="memberForm.dob"-->
-<!--                            label="DOB"-->
-<!--                            :hasError="memberFieldReq.dob"-->
-<!--                        />-->
-
-<!--                        <x-select-->
-<!--                            v-model="memberForm.member_category_id"-->
-<!--                            label="Member Category"-->
-<!--                            :options="memberCategoriesOptions"-->
-<!--                            :rules="[isRequired]"-->
-<!--                            placeholder="Select Member Category"-->
-<!--                            class="w-full"-->
-<!--                        />-->
-
-<!--                        <x-select-->
-<!--                            v-model="memberForm.salary_band_id"-->
-<!--                            label="Salary Band"-->
-<!--                            :options="salaryBandsOptions"-->
-<!--                            placeholder="Select Salary Band"-->
-<!--                            class="w-full"-->
-<!--                        />-->
-<!--                    </div>-->
-
-<!--                    <div class="text-right space-x-4 mt-8">-->
-<!--                        <x-button size="sm" @click.prevent="modals.member = false">-->
-<!--                            Cancel-->
-<!--                        </x-button>-->
-
-<!--                        <x-button-->
-<!--                            size="sm"-->
-<!--                            color="emerald"-->
-<!--                            :loading="memberForm.processing"-->
-<!--                            type="submit"-->
-<!--                        >-->
-<!--                            {{ memberActionEdit ? 'Update' : 'Save' }}-->
-<!--                        </x-button>-->
-<!--                    </div>-->
-<!--                </x-form>-->
-<!--            </x-modal>-->
-
-<!--            <x-modal v-model="modals.memberConfirm" show-close backdrop>-->
-<!--                <template #header> Delete Member Detail </template>-->
-<!--                <p>Are you sure you want to delete this?</p>-->
-<!--                <template #actions>-->
-<!--                    <div class="text-right space-x-4">-->
-<!--                        <x-button-->
-<!--                            size="sm"-->
-<!--                            ghost-->
-<!--                            @click.prevent="modals.memberConfirm = false"-->
-<!--                        >-->
-<!--                            Cancel-->
-<!--                        </x-button>-->
-<!--                        <x-button-->
-<!--                            size="sm"-->
-<!--                            color="error"-->
-<!--                            @click.prevent="memberDeleteConfirmed"-->
-<!--                            :loading="memberForm.processing"-->
-<!--                        >-->
-<!--                            Delete-->
-<!--                        </x-button>-->
-<!--                    </div>-->
-<!--                </template>-->
-<!--            </x-modal>-->
-<!--        </div>-->
 
         <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
             <div>
@@ -1539,24 +1130,24 @@ const sendPolicyToClient = () => {
                 <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">PLAN NAME</dt>
-                        <dd>{{ quote.planName }}</dd>
+                        <dd>{{ quote.plan_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">PROVIDER NAME</dt>
-                        <dd>{{ quote.providerName }}</dd>
+                        <dd>{{ quote.car_plan_provider_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">PAYMENT STATUS</dt>
-                        <dd>{{ quote.paymentStatus }}</dd>
+                        <dd>{{ quote.payment_status_id_text }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">PAID AT</dt>
-                        <dd>{{ quote.paidAt }}</dd>
+                        <dd>{{ quote.paid_at }}</dd>
                     </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">NETWORK</dt>
-                        <dd>{{ quote.network }}</dd>
-                    </div>
+<!--                    <div class="grid sm:grid-cols-2">-->
+<!--                        <dt class="font-medium">NETWORK</dt>-->
+<!--                        <dd>{{ quote.network }}</dd>-->
+<!--                    </div>-->
                 </dl>
             </div>
         </div>
@@ -1570,95 +1161,6 @@ const sendPolicyToClient = () => {
           :paymentMethods="paymentMethods"
           :quote="quote"
         />
-
-<!--        &lt;!&ndash; <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">-->
-<!--          <div>-->
-<!--            <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>-->
-<!--            <x-divider class="mb-4 mt-1" />-->
-<!--          </div>-->
-<!--          <x-form @submit="submitPolicyDetails" :auto-focus="false">-->
-<!--            <div class="flex gap-6 w-full">-->
-<!--              <div class="w-full md:w-1/2">-->
-<!--                <x-input-->
-<!--                  v-model="policyDetails.policy_number"-->
-<!--                  :disabled="!policyDetails.editMode"-->
-<!--                  label="Policy Number"-->
-<!--                  :rules="[isRequired, policyDetailRules.policy_number]"-->
-<!--                  class="w-full"-->
-<!--                />-->
-<!--              </div>-->
-<!--              <div class="w-full md:w-1/2">-->
-<!--                <x-input-->
-<!--                  v-model="policyDetails.policy_issuance_date"-->
-<!--                  :disabled="!policyDetails.editMode"-->
-<!--                  type="date"-->
-<!--                  label="Issuance Date"-->
-<!--                  :rules="[isRequired]"-->
-<!--                  class="w-full"-->
-<!--                />-->
-<!--              </div>-->
-<!--            </div>-->
-<!--            <div class="flex gap-6 w-full">-->
-<!--              <div class="w-full md:w-1/2">-->
-<!--                <x-input-->
-<!--                  v-model="policyDetails.policy_start_date"-->
-<!--                  :disabled="!policyDetails.editMode"-->
-<!--                  type="date"-->
-<!--                  label="Start Date"-->
-<!--                  :rules="[isRequired, policyDetailRules.policy_start_date]"-->
-<!--                  class="w-full"-->
-<!--                />-->
-<!--              </div>-->
-<!--              <div class="w-full md:w-1/2">-->
-<!--                <x-input-->
-<!--                  v-model="policyDetails.renewal_expiry_date"-->
-<!--                  :disabled="!policyDetails.editMode"-->
-<!--                  type="date"-->
-<!--                  label="Expiry Date"-->
-<!--                  :rules="[isRequired, policyDetailRules.renewal_expiry_date]"-->
-<!--                  class="w-full"-->
-<!--                />-->
-<!--              </div>-->
-<!--            </div>-->
-<!--            <div class="flex gap-6 w-full">-->
-<!--              <div class="w-full md:w-1/2">-->
-<!--                <x-input-->
-<!--                  v-model="policyDetails.premium"-->
-<!--                  :disabled="!policyDetails.editMode"-->
-<!--                  label="Premium"-->
-<!--                  :rules="[isRequired, policyDetailRules.premium]"-->
-<!--                  class="w-full"-->
-<!--                />-->
-<!--              </div>-->
-<!--              <div class="w-full md:w-1/2"></div>-->
-<!--            </div>-->
-
-<!--            <div class="text-right space-x-4 mt-12" v-if="policyDetails.canEdit">-->
-<!--              <x-button-->
-<!--                color="#007bff"-->
-<!--                size="sm"-->
-<!--                v-show="policyDetails.editMode"-->
-<!--                @click.prevent="cancelPolicyFrom"-->
-<!--                >Cancel</x-button-->
-<!--              >-->
-<!--              <x-button-->
-<!--                color="#26B99A"-->
-<!--                type="submit"-->
-<!--                size="sm"-->
-<!--                v-show="policyDetails.editMode"-->
-<!--                >Update</x-button-->
-<!--              >-->
-<!--              <x-button-->
-<!--                color="#007bff"-->
-<!--                size="sm"-->
-<!--                type="submit"-->
-<!--                v-show="!policyDetails.editMode"-->
-<!--                @click.prevent="policyDetails.editMode = true"-->
-<!--                >Edit</x-button-->
-<!--              >-->
-<!--            </div>-->
-<!--          </x-form>-->
-<!--        </div> &ndash;&gt;-->
 
         <div class="p-4 rounded shadow mb-6 bg-white">
             <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
@@ -1692,23 +1194,11 @@ const sendPolicyToClient = () => {
                       Download PDF
                     </x-button> -->
 
-                    <!-- hide create quote button for rm deployment -->
-                    <x-button
-                        size="sm"
-                        color="primary"
-                        v-show="false"
-                        @click.prevent="modals.createPlan = true"
-                    >
-                        Create Quote
-                    </x-button>
-
                     <x-button
                         v-if="listQuotePlans.length > 0"
                         size="sm"
                         color="orange"
-                        @click.prevent="
-                            onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)
-                        "
+                        @click.prevent="onCopyText(ecomHealthInsuranceQuoteUrl + quote.uuid)"
                     >
                         Copy Link
                     </x-button>
@@ -1806,368 +1296,281 @@ const sendPolicyToClient = () => {
             :quote="quote"
         />
 
-<!--        <div class="p-4 rounded shadow mb-6 bg-white">-->
-<!--          <div class="flex justify-between items-center mb-4">-->
-<!--            <h3 class="font-semibold text-primary-800 text-lg">-->
-<!--              Documents-->
-<!--              <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>-->
-<!--            </h3>-->
-<!--            <div class="flex gap-2">-->
-<!--              <x-button @click.prevent="modals.doc = true" size="sm" color="orange">-->
-<!--                Upload Documents-->
-<!--              </x-button>-->
-<!--              <x-button-->
-<!--                size="sm"-->
-<!--                color="red"-->
-<!--                v-if="sendPolicy"-->
-<!--                @click="sendPolicyToClient"-->
-<!--              >-->
-<!--                Send Policy-->
-<!--              </x-button>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--          <DataTable-->
-<!--            table-class-name="compact"-->
-<!--            :headers="quoteDocumentsTable.columns"-->
-<!--            :items="quoteDocuments || []"-->
-<!--            border-cell-->
-<!--            hide-rows-per-page-->
-<!--            :rows-per-page="15"-->
-<!--            :hide-footer="quoteDocuments.length < 15"-->
-<!--          >-->
-<!--            <template #item-original_name="item">-->
-<!--              <a-->
-<!--                :href="cdnPath + item.doc_url"-->
-<!--                target="_blank"-->
-<!--                class="text-primary-600"-->
-<!--              >-->
-<!--                {{ item.original_name }}-->
-<!--              </a>-->
-<!--            </template>-->
-<!--            <template #item-action="{ doc_name }">-->
-<!--              <div>-->
-<!--                <x-button-->
-<!--                  size="xs"-->
-<!--                  color="error"-->
-<!--                  outlined-->
-<!--                  @click.prevent="onDocDelete(doc_name)"-->
-<!--                >-->
-<!--                  Delete-->
-<!--                </x-button>-->
-<!--              </div>-->
-<!--            </template>-->
-<!--          </DataTable>-->
-
-<!--          <x-modal v-model="modals.doc" size="xl" show-close backdrop>-->
-<!--            <template #header> Upload Documents </template>-->
-<!--            <LazyDocumentUploader-->
-<!--              :members="memberDataDocs(membersDetail)"-->
-<!--              :doc-types="documentTypes"-->
-<!--              :docs="quoteDocuments || []"-->
-<!--              :cdn="cdnPath"-->
-<!--            />-->
-<!--          </x-modal>-->
-<!--          <x-modal v-model="modals.docConfirm" show-close backdrop>-->
-<!--            <template #header> Delete Document </template>-->
-<!--            <p>Are you sure you want to delete this document?</p>-->
-<!--            <template #actions>-->
-<!--              <div class="text-right space-x-4">-->
-<!--                <x-button-->
-<!--                  size="sm"-->
-<!--                  ghost-->
-<!--                  @click.prevent="modals.docConfirm = false"-->
-<!--                >-->
-<!--                  Cancel-->
-<!--                </x-button>-->
-<!--                <x-button-->
-<!--                  size="sm"-->
-<!--                  color="error"-->
-<!--                  @click.prevent="confirmDeleteDoc"-->
-<!--                  :loading="quoteDocumentsTable.isLoading"-->
-<!--                >-->
-<!--                  Delete-->
-<!--                </x-button>-->
-<!--              </div>-->
-<!--            </template>-->
-<!--          </x-modal>-->
-<!--        </div>-->
-
-            <div class="p-4 rounded shadow mb-6 bg-white">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-semibold text-primary-800 text-lg">
-                        Lead Activities
-                        <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-                    </h3>
-                    <x-button size="sm" color="orange" @click.prevent="addActivity">
-                        Add Activity
-                    </x-button>
-                </div>
-                <x-divider class="my-4" />
-
-                <DataTable
-                    table-class-name="compact"
-                    :headers="activityTable"
-                    :items="activities"
-                    border-cell
-                    hide-rows-per-page
-                    :rows-per-page="15"
-                    :hide-footer="activities.length < 15"
-                >
-                    <template #item-status="{ status, id }">
-                        <x-checkbox
-                            color="emerald"
-                            size="xl"
-                            :modelValue="status === 1"
-                            :disabled="status === 1"
-                            @change="onActivityStatusUpdate(id)"
-                        />
-                    </template>
-                    <template #item-action="item">
-                        <div class="space-x-4">
-                            <x-button
-                                size="xs"
-                                color="primary"
-                                outlined
-                                :disabled="item.status === 1"
-                                @click.prevent="activityEdit(item)"
-                            >
-                                Edit
-                            </x-button>
-                            <x-button
-                                size="xs"
-                                color="error"
-                                :disabled="item.status === 1"
-                                outlined
-                                @click.prevent="activityDelete(item.id)"
-                            >
-                                Delete
-                            </x-button>
-                        </div>
-                    </template>
-                </DataTable>
-                <x-modal v-model="modals.activity" size="lg" show-close backdrop>
-                    <template #header>
-                        {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
-                    </template>
-
-                    <x-form @submit="onActivitySubmit" :auto-focus="false">
-                        <div class="grid gap-4">
-                            <x-input
-                                v-model="activityForm.title"
-                                label="Title"
-                                :rules="[isRequired]"
-                                class="w-full"
-                            />
-
-                            <x-textarea
-                                v-model="activityForm.description"
-                                label="Description"
-                                :adjust-to-text="false"
-                                class="w-full"
-                            />
-
-                            <x-select
-                                v-model="activityForm.assignee_id"
-                                label="Assignee"
-                                :options="advisorOptions"
-                                :rules="[isRequired]"
-                                placeholder="Select Assignee"
-                                class="w-full"
-                            />
-
-                            <date-picker
-                                v-model="activityForm.due_date"
-                                label="Due Date"
-                                :rules="[isRequired]"
-                                class="w-full"
-                                withTime
-                                :timezone="'UTC'"
-                            />
-                        </div>
-
-                        <div class="text-right space-x-4 mt-12">
-                            <x-button size="sm" @click.prevent="modals.activity = false">
-                                Cancel
-                            </x-button>
-
-                            <x-button
-                                size="sm"
-                                color="emerald"
-                                :loading="activityForm.processing"
-                                type="submit"
-                            >
-                                {{ activityActionEdit ? 'Update' : 'Save' }}
-                            </x-button>
-                        </div>
-                    </x-form>
-                </x-modal>
-                <x-modal v-model="modals.activityConfirm" show-close backdrop>
-                    <template #header> Delete Activity </template>
-                    <p>Are you sure you want to delete this activity?</p>
-                    <template #actions>
-                        <div class="text-right space-x-4">
-                            <x-button
-                                size="sm"
-                                ghost
-                                @click.prevent="modals.activityConfirm = false"
-                            >
-                                Cancel
-                            </x-button>
-                            <x-button
-                                size="sm"
-                                color="error"
-                                :loading="activityForm.processing"
-                                @click.prevent="activityDeleteConfirmed"
-                            >
-                                Delete
-                            </x-button>
-                        </div>
-                    </template>
-                </x-modal>
+        <div class="p-4 rounded shadow mb-6 bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-semibold text-primary-800 text-lg">
+                    Lead Activities
+                    <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+                </h3>
+                <x-button size="sm" color="orange" @click.prevent="addActivity">
+                    Add Activity
+                </x-button>
             </div>
+            <x-divider class="my-4" />
 
-            <div class="p-4 rounded shadow mb-6 bg-white">
-                <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-                    <h3 class="font-semibold text-primary-800 text-lg">
-                        Customer Additional Contacts
-                        <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
-                    </h3>
-                    <x-button
-                        size="sm"
-                        color="orange"
-                        @click.prevent="
-                            additionalContact.reset();
-                            modals.addContact = true;
-                          "
-                        >
-                        Add Additional Contacts
-                    </x-button>
-                </div>
-
-                <DataTable
-                    table-class-name="compact"
-                    :headers="additionalContactTable"
-                    :items="customerAdditionalContacts || []"
-                    border-cell
-                    hide-rows-per-page
-                    hide-footer
-                >
-                    <template #item-key="{ key }">
-                        <span v-if="key === 'email'"> Email Address </span>
-                        <span v-else> Mobile Number </span>
-                    </template>
-                    <template #item-action="item">
+            <DataTable
+                table-class-name="compact"
+                :headers="activityTable"
+                :items="activities"
+                border-cell
+                hide-rows-per-page
+                :rows-per-page="15"
+                :hide-footer="activities.length < 15"
+            >
+                <template #item-status="{ status, id }">
+                    <x-checkbox
+                        color="emerald"
+                        size="xl"
+                        :modelValue="status === 1"
+                        :disabled="status === 1"
+                        @change="onActivityStatusUpdate(id)"
+                    />
+                </template>
+                <template #item-action="item">
+                    <div class="space-x-4">
                         <x-button
                             size="xs"
-                            color="emerald"
+                            color="primary"
                             outlined
-                            @click.prevent="additionalContactPrimary(item)"
+                            :disabled="item.status === 1"
+                            @click.prevent="activityEdit(item)"
                         >
-                            Make Primary
+                            Edit
                         </x-button>
-                    </template>
-                </DataTable>
+                        <x-button
+                            size="xs"
+                            color="error"
+                            :disabled="item.status === 1"
+                            outlined
+                            @click.prevent="activityDelete(item.id)"
+                        >
+                            Delete
+                        </x-button>
+                    </div>
+                </template>
+            </DataTable>
+            <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+                <template #header>
+                    {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+                </template>
 
-                <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-                    <template #header> Add Additional Contacts </template>
+                <x-form @submit="onActivitySubmit" :auto-focus="false">
+                    <div class="grid gap-4">
+                        <x-input
+                            v-model="activityForm.title"
+                            label="Title"
+                            :rules="[isRequired]"
+                            class="w-full"
+                        />
 
-                    <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
-                        <div class="grid gap-4">
-                            <x-select
-                                v-model="additionalContact.additional_contact_type"
-                                label="Type"
-                                :options="[
-                                    { value: 'email', label: 'Email' },
-                                    { value: 'mobile_no', label: 'Mobile Number' },
-                                  ]"
-                                :rules="[isRequired]"
-                                placeholder="Select Type"
-                                class="w-full"
-                            />
+                        <x-textarea
+                            v-model="activityForm.description"
+                            label="Description"
+                            :adjust-to-text="false"
+                            class="w-full"
+                        />
 
-                            <x-input
-                                v-model="additionalContact.additional_contact_val"
-                                label="Value"
-                                :rules="[
-                                    isRequired,
-                                    additionalContact.additional_contact_type === 'email'
-                                      ? isEmail
-                                      : isNumber,
-                                  ]"
-                                class="w-full"
-                            />
-                        </div>
+                        <x-select
+                            v-model="activityForm.assignee_id"
+                            label="Assignee"
+                            :options="advisorOptions"
+                            :rules="[isRequired]"
+                            placeholder="Select Assignee"
+                            class="w-full"
+                        />
 
-                        <div class="text-right space-x-4 mt-12">
-                            <x-button size="sm" @click.prevent="modals.addContact = false">
-                                Cancel
-                            </x-button>
+                        <date-picker
+                            v-model="activityForm.due_date"
+                            label="Due Date"
+                            :rules="[isRequired]"
+                            class="w-full"
+                            withTime
+                            :timezone="'UTC'"
+                        />
+                    </div>
 
-                            <x-button
-                                size="sm"
-                                color="emerald"
-                                :loading="additionalContact.processing"
-                                type="submit"
-                            >
-                                Save
-                            </x-button>
-                        </div>
-                    </x-form>
-                </x-modal>
+                    <div class="text-right space-x-4 mt-12">
+                        <x-button size="sm" @click.prevent="modals.activity = false">
+                            Cancel
+                        </x-button>
 
-                <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-                    <template #header> Primary Additional Contact </template>
-                    <p>Are you sure you want to make this information as Primary?</p>
-                    <template #actions>
-                        <div class="text-right space-x-4">
-                            <x-button
-                                size="sm"
-                                ghost
-                                @click.prevent="modals.contactPrimaryConfirm = false"
-                            >
-                                Cancel
-                            </x-button>
-                            <x-button
-                                size="sm"
-                                color="emerald"
-                                @click.prevent="additionalContactPrimaryConfirmed"
-                                :loading="contactLoader"
-                            >
-                                Confirm
-                            </x-button>
-                        </div>
-                    </template>
-                </x-modal>
-            </div>
+                        <x-button
+                            size="sm"
+                            color="emerald"
+                            :loading="activityForm.processing"
+                            type="submit"
+                        >
+                            {{ activityActionEdit ? 'Update' : 'Save' }}
+                        </x-button>
+                    </div>
+                </x-form>
+            </x-modal>
+            <x-modal v-model="modals.activityConfirm" show-close backdrop>
+                <template #header> Delete Activity </template>
+                <p>Are you sure you want to delete this activity?</p>
+                <template #actions>
+                    <div class="text-right space-x-4">
+                        <x-button
+                            size="sm"
+                            ghost
+                            @click.prevent="modals.activityConfirm = false"
+                        >
+                            Cancel
+                        </x-button>
+                        <x-button
+                            size="sm"
+                            color="error"
+                            :loading="activityForm.processing"
+                            @click.prevent="activityDeleteConfirmed"
+                        >
+                            Delete
+                        </x-button>
+                    </div>
+                </template>
+            </x-modal>
+        </div>
 
-            <div class="p-4 rounded shadow mb-6 bg-white">
-                <div>
-                    <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-                    <x-divider class="mb-4 mt-1" />
-                </div>
-                <div v-if="historyData === null" class="text-center py-3">
-                    <x-button
-                        size="sm"
-                        color="primary"
-                        outlined
-                        @click.prevent="onLoadHistoryData"
-                        :loading="historyLoading"
+        <div class="p-4 rounded shadow mb-6 bg-white">
+            <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+                <h3 class="font-semibold text-primary-800 text-lg">
+                    Customer Additional Contacts
+                    <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
+                </h3>
+                <x-button
+                    size="sm"
+                    color="orange"
+                    @click.prevent="
+                        additionalContact.reset();
+                        modals.addContact = true;
+                      "
                     >
-                        Load History Data
-                    </x-button>
-                </div>
-                <DataTable
-                    v-else
-                    table-class-name="compact"
-                    :headers="historyDataTable"
-                    :items="historyData || []"
-                    border-cell
-                    hide-rows-per-page
-                    :rows-per-page="15"
-                    :hide-footer="historyData.length < 15"
-                />
+                    Add Additional Contacts
+                </x-button>
             </div>
 
-            <AuditLogs :type="'App\\Models\\CarQuote'" :id="quote.id" />
+            <DataTable
+                table-class-name="compact"
+                :headers="additionalContactTable"
+                :items="customerAdditionalContacts || []"
+                border-cell
+                hide-rows-per-page
+                hide-footer
+            >
+                <template #item-key="{ key }">
+                    <span v-if="key === 'email'"> Email Address </span>
+                    <span v-else> Mobile Number </span>
+                </template>
+                <template #item-action="item">
+                    <x-button
+                        size="xs"
+                        color="emerald"
+                        outlined
+                        @click.prevent="additionalContactPrimary(item)"
+                    >
+                        Make Primary
+                    </x-button>
+                </template>
+            </DataTable>
+
+            <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
+                <template #header> Add Additional Contacts </template>
+
+                <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+                    <div class="grid gap-4">
+                        <x-select
+                            v-model="additionalContact.additional_contact_type"
+                            label="Type"
+                            :options="[
+                                { value: 'email', label: 'Email' },
+                                { value: 'mobile_no', label: 'Mobile Number' },
+                              ]"
+                            :rules="[isRequired]"
+                            placeholder="Select Type"
+                            class="w-full"
+                        />
+
+                        <x-input
+                            v-model="additionalContact.additional_contact_val"
+                            label="Value"
+                            :rules="[
+                                isRequired,
+                                additionalContact.additional_contact_type === 'email'
+                                  ? isEmail
+                                  : isNumber,
+                              ]"
+                            class="w-full"
+                        />
+                    </div>
+
+                    <div class="text-right space-x-4 mt-12">
+                        <x-button size="sm" @click.prevent="modals.addContact = false">
+                            Cancel
+                        </x-button>
+
+                        <x-button
+                            size="sm"
+                            color="emerald"
+                            :loading="additionalContact.processing"
+                            type="submit"
+                        >
+                            Save
+                        </x-button>
+                    </div>
+                </x-form>
+            </x-modal>
+
+            <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
+                <template #header> Primary Additional Contact </template>
+                <p>Are you sure you want to make this information as Primary?</p>
+                <template #actions>
+                    <div class="text-right space-x-4">
+                        <x-button
+                            size="sm"
+                            ghost
+                            @click.prevent="modals.contactPrimaryConfirm = false"
+                        >
+                            Cancel
+                        </x-button>
+                        <x-button
+                            size="sm"
+                            color="emerald"
+                            @click.prevent="additionalContactPrimaryConfirmed"
+                            :loading="contactLoader"
+                        >
+                            Confirm
+                        </x-button>
+                    </div>
+                </template>
+            </x-modal>
+        </div>
+
+        <div class="p-4 rounded shadow mb-6 bg-white">
+            <div>
+                <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+                <x-divider class="mb-4 mt-1" />
+            </div>
+            <div v-if="historyData === null" class="text-center py-3">
+                <x-button
+                    size="sm"
+                    color="primary"
+                    outlined
+                    @click.prevent="onLoadHistoryData"
+                    :loading="historyLoading"
+                >
+                    Load History Data
+                </x-button>
+            </div>
+            <DataTable
+                v-else
+                table-class-name="compact"
+                :headers="historyDataTable"
+                :items="historyData || []"
+                border-cell
+                hide-rows-per-page
+                :rows-per-page="15"
+                :hide-footer="historyData.length < 15"
+            />
+        </div>
+        <AuditLogs :type="'App\\Models\\CarQuote'" :id="quote.id" />
     </div>
 </template>
