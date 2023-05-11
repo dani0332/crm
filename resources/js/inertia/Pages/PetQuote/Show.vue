@@ -22,6 +22,7 @@ defineProps({
   advisors: Object,
   lostReasons: Object,
   quoteStatusEnum: Object,
+  duplicateAllowedLobs: Array,
 });
 
 const page = usePage();
@@ -30,13 +31,15 @@ const permissionsEnum = page.props.permissionsEnum;
 
 const historyLoading = ref(false);
 
+const { isRequired } = useRules();
+const notification = useNotifications('toast');
 // history data
 const historyData = ref(null);
 
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`,
+    `/personal-quotes/getLeadHistory/${page.props.quote.id}`,
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -44,11 +47,23 @@ const onLoadHistoryData = async () => {
 };
 
 const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
+  { text: 'Modified At', value: 'updated_at' },
   { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
+  { text: 'Notes', value: 'notes' },
+  { text: 'Lead Status', value: 'quote_status' },
 ];
+
+const computedHistoryData = computed(() => {
+  if (!historyData.value) return [];
+  return historyData.value.lead_history.map(item => {
+    return {
+      updated_at: item.updated_at,
+      ModifiedBy: '',
+      notes: item.notes,
+      quote_status: item.quote_status.text,
+    };
+  });
+});
 
 const modals = reactive({
   duplicate: false,
@@ -120,7 +135,7 @@ const onCreateDuplicate = isValid => {
               v-model="leadDuplicateForm.lob_team"
               label="LOBs"
               :options="
-                allowedDuplicateLOB.map(lob => ({
+                duplicateAllowedLobs.map(lob => ({
                   value: lob,
                   label: lob,
                 }))
@@ -362,12 +377,16 @@ const onCreateDuplicate = isValid => {
         v-else
         table-class-name="compact"
         :headers="historyDataTable"
-        :items="historyData || []"
+        :items="computedHistoryData || []"
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
-        :hide-footer="historyData.length < 15"
-      />
+        :hide-footer="computedHistoryData.length < 15"
+      >
+        <template #item-lead_history="{ item }">
+          {{ item }}
+        </template>
+      </DataTable>
     </div>
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />

@@ -5,7 +5,6 @@ defineProps({
   genderOptions: Object,
   assignedGMType: String,
   allowedDuplicateLOB: Array,
-  isDuplicateAllowed: Boolean,
   quoteDetails: Object,
   customerAdditionalContacts: Array,
   enums: Object,
@@ -138,6 +137,10 @@ const historyDataTable = [
   { text: 'Notes', value: 'NewNotes' },
   { text: 'Lead Status', value: 'NewStatus' },
 ];
+
+const isDuplicateAllowed = computed(() => {
+    return page.props.allowedDuplicateLOB.includes('Group Medical');
+});
 
 </script>
 <template>

@@ -63,7 +63,7 @@ export const useRules = () => {
     !v || /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal';
 
   const isMobileNo = v => {
-    const regex = /^\+?\d{1,3}\d{10}$/;
+    const regex = /^(\+?\d{1,3})?\d{10}$/;
     return regex.test(v) || 'Invalid mobile number';
   };
 

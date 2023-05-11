@@ -135,6 +135,14 @@ const additionalContactPrimaryConfirmed = () => {
     },
   );
 };
+
+const additionalContact = computed(() => {
+    if (page.props.quote?.customer?.additional_contact_info) {
+      return page.props.quote?.customer?.additional_contact_info;
+    }
+    return [];
+});
+
 </script>
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
@@ -142,7 +150,7 @@ const additionalContactPrimaryConfirmed = () => {
       <h3 class="font-semibold text-primary-800 text-lg">
         Customer Additional Contacts
         <x-tag size="sm">{{
-          quote.customer.additional_contact_info?.length || 0
+            additionalContact.length > 0 ? additionalContact.length : 0
         }}</x-tag>
       </h3>
       <x-button size="sm" color="orange" @click="addContactModal">
@@ -153,7 +161,7 @@ const additionalContactPrimaryConfirmed = () => {
     <DataTable
       table-class-name="compact"
       :headers="additionalContactTable"
-      :items="quote.customer.additional_contact_info || []"
+      :items="additionalContact ?? []"
       border-cell
       hide-rows-per-page
       hide-footer

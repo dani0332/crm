@@ -312,6 +312,9 @@ const activityDeleteConfirmed = () => {
   );
 };
 
+const isDuplicateAllowed = computed(() => {
+    return page.props.allowedDuplicateLOB.includes('Corpline');
+});
 
 
 const onAssignLead = () => {
@@ -355,7 +358,7 @@ const onAssignLead = () => {
       <h2 class="text-xl font-semibold">Business Quote Detail</h2>
       <div class="flex gap-2">
         <x-button
-          v-if="allowedDuplicateLOB"
+          v-if="isDuplicateAllowed"
           size="sm"
           color="#ff5e00"
           @click.prevent="openDuplicate"
