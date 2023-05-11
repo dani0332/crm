@@ -18,53 +18,23 @@
                     <div class="col-md-12">
                         <fieldset id="tickLabels">
                             <legend>Select reason to create manual lead<span class="required">*</span></legend>
-                                <div class="row">
-                                    <div class="col-1">
-                                        <input type="radio" data-confirmation="true" name="reason-manual-lead" value="referral" />
-                                    </div>
+                            <div class="row">
+                                <div class="col-1">
+                                    <input type="radio" data-confirmation="true" name="reason-manual-lead" value="referral" />
+                                </div>
                                     <span class="col-form-label col-md-3 col-sm-3">Referral</span>
                                 </div>
                                 <div class="row">
                                     <div class="col-1">
-                                        <input type="radio" data-confirmation="true" name="reason-manual-lead" value="renewal-allocation" />
+                                        <input type="radio" name="reason-manual-lead" value="early-renewal" />
                                     </div>
-                                    <span class="col-form-label col-md-3 col-sm-3">Advance Renewal Allocation</span>
+                                    <span class="col-form-label col-md-3 col-sm-3">Early Renewal</span>
                                 </div>
                                 <div class="row">
                                     <div class="col-1">
-                                        <input type="radio" name="reason-manual-lead" value="ps-pending" />
+                                        <input type="radio" name="reason-manual-lead" value="payment-status" />
                                     </div>
-                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Pending</span>
-                                </div>
-                                <div class="row">
-                                    <div class="col-1">
-                                        <input type="radio" name="reason-manual-lead" value="ps-authorized" />
-                                    </div>
-                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Authorized </span>
-                                </div>
-                                <div class="row">
-                                    <div class="col-1">
-                                        <input type="radio" name="reason-manual-lead" value="ps-declined" />
-                                    </div>
-                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Declined </span>
-                                </div>
-                                <div class="row">
-                                    <div class="col-1">
-                                        <input type="radio" name="reason-manual-lead" value="ps-failed" />
-                                    </div>
-                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Failed </span>
-                                </div>
-                                <div class="row">
-                                    <div class="col-1">
-                                        <input type="radio" name="reason-manual-lead" value="ps-captured" />
-                                    </div>
-                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Captured </span>
-                                </div>
-                                <div class="row">
-                                    <div class="col-1">
-                                        <input type="radio" name="reason-manual-lead" value="ps-cancelled" />
-                                    </div>
-                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status: Cancelled </span>
+                                    <span class="col-form-label col-md-3 col-sm-3">Payment Status</span>
                                 </div>
                         </fieldset>
                         <p class="red const-lead-err-msg d-none">Unable to create manual lead, you can edit the same lead.</p>
