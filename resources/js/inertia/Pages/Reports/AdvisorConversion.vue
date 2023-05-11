@@ -122,6 +122,47 @@ function calculateGrossConversion(item) {
   }
 }
 
+function calculateTotalNetConversion(data) {
+  let totalLeads = 0;
+  let manualCreated = 0;
+  let badLeads = 0;
+  let manualCreatedBadLeads = 0;
+  let saleLeads = 0;
+  let createdSaleLeads = 0;
+  data.forEach(row => {
+    totalLeads += Number(row.total_leads);
+    manualCreated += Number(row.manual_created);
+    saleLeads += Number(row.sale_leads);
+    createdSaleLeads += Number(row.created_sale_leads);
+    badLeads += Number(row.bad_leads);
+    manualCreatedBadLeads += Number(row.manual_created_bad_leads);
+  });
+  const numerator = saleLeads - createdSaleLeads;
+  const denominator =
+    totalLeads - manualCreated - (badLeads - manualCreatedBadLeads);
+  return denominator > 0
+    ? ((numerator / denominator) * 100).toFixed(2) + ' %'
+    : 'NaN';
+}
+
+function calculateTotalGrossConversion(data) {
+  let totalLeads = 0;
+  let manualCreated = 0;
+  let saleLeads = 0;
+  let createdSaleLeads = 0;
+  data.forEach(row => {
+    totalLeads += Number(row.total_leads);
+    manualCreated += Number(row.manual_created);
+    saleLeads += Number(row.sale_leads);
+    createdSaleLeads += Number(row.created_sale_leads);
+  });
+  const numerator = saleLeads - createdSaleLeads;
+  const denominator = totalLeads - manualCreated;
+  return denominator > 0
+    ? ((numerator / denominator) * 100).toFixed(2) + ' %'
+    : 'NaN';
+}
+
 function calculateNetConversion(row) {
   const totalLeads = row.total_leads;
   const manualCreated = row.manual_created;
@@ -253,9 +294,6 @@ function setQueryStringFilters() {
     }
   }
 }
-
-// const can = permission => useCan(permission);
-// const permissionsEnum = page.props.permissionsEnum;
 
 const setPageTable = page => {
   onFetchAdvisorAssignedLeads(null, totalLeads.current, page);
@@ -546,8 +584,12 @@ onMounted(() => {
           <td class="direction-center">
             {{ calculateTotalSum(reportData, 'manual_created') }}
           </td>
-          <td class="direction-center"></td>
-          <td class="direction-center"></td>
+          <td class="direction-center">
+            {{ calculateTotalGrossConversion(reportData) }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalNetConversion(reportData) }}
+          </td>
         </tr>
       </template>
     </DataTable>
@@ -555,8 +597,9 @@ onMounted(() => {
     <div class="flex flex-wrap justify-between items-center gap-2 py-6">
       <div>
         <select
-          class="form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400"
+          class="form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
           @change="updateRowsPerPageSelect"
+          :disabled="isFirstPage && isLastPage"
         >
           <option
             v-for="item in rowsPerPageOptions"
