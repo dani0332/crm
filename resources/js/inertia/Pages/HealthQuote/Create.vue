@@ -52,7 +52,7 @@ function onSubmit(isValid) {
     isEmptyField.value = false;
   }
   if (isValid) {
-    quoteForm.post(`/quotes/save`, {
+    quoteForm.post(route('health.store'), {
       onError: errors => {
         quoteForm.setError(errors);
       },
@@ -74,8 +74,8 @@ function onSubmit(isValid) {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Create Health</h2>
       <div>
-        <Link href="/quotes/health">
-          <x-button size="sm" color="#ff5e00" tag="div"> Health List </x-button>
+        <Link :href="route('health.index')">
+          <x-button size="sm" color="#1d83bc" tag="div"> Health List </x-button>
         </Link>
       </div>
     </div>
