@@ -28,8 +28,7 @@ class CarRevivalQuoteController extends Controller
 
         return inertia('CarRevivalQuote/Index', [
             'quotes' => $carRevivalQuotes,
-            'leadStatuses' => $formOptionsData,
-            'advisors' => []
+            'leadStatuses' => $formOptionsData
         ]);
     }
 
@@ -113,6 +112,11 @@ class CarRevivalQuoteController extends Controller
 //            'paymentMethods' => [],
 //            'sendPolicy' => true,
         ]);
+    }
+
+    public function manualLeadAssign()
+    {
+
     }
 
 }

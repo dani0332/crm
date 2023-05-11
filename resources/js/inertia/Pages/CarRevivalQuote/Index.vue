@@ -1,14 +1,16 @@
 <script setup>
-import QuoteFilters from '@/inertia/Pages/CarShared/QuoteFilters.vue';
+
+import QuoteFilters from "@/inertia/Pages/CarShared/QuoteFilters.vue";
+import LeadAssignment from "@/inertia/Pages/PersonalQuote/Partials/LeadAssignment.vue";
+import ExportExcel from "@/inertia/Components/ExportExcel.vue";
 
 defineProps({
   quotes: Object,
   leadStatuses: Object,
-  advisors: Array,
 });
 
 const page = usePage();
-const notification = useNotifications('toast');
+const toast = useToast();
 
 const loader = reactive({
   table: false,
@@ -22,9 +24,9 @@ const dateFormat = (date, with_time = true) => {
 };
 
 const quotesSelected = ref([]),
-  assignAdvisor = ref(null),
-  assignmentType = ref(null),
-  isDisabled = ref(false);
+assignAdvisor = ref(null),
+assignmentType = ref(null),
+isDisabled = ref(false);
 
 const tableHeader = [
   { text: 'CDB ID', value: 'code' },
@@ -59,58 +61,37 @@ const tableHeader = [
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
-  // { text: 'IS VEHICLE MODIFIED', value: '---' },
   { text: 'PREMIUM', value: 'premium' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'QUOTE LINK', value: 'quote_link' },
 ];
 
-const assignForm = useForm({
-  assigned_to_id_new: null,
-  modelType: 'Home',
-  selectTmLeadId: '',
+const advisorOptions = computed(() => {
+    return page.props.leadStatuses.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
 });
 
-function onAssignLead(isValid) {
-  if (isValid) {
-    const selected = quotesSelected.value.map(e => e.id);
-    assignForm
-      .transform(data => ({
-        ...data,
-        selectTmLeadId: `${selected}`,
-      }))
-      .post('/quotes/home/manualLeadAssign', {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          quotesSelected.value = [];
-          notification.success({
-            title: 'Home Leads Assigned',
-            position: 'top',
-          });
-        },
-      });
-  }
-}
 </script>
 
 <template>
   <QuoteFilters
     dynamic_route="car-revival"
     :lead-statuses="leadStatuses"
-    :advisors="advisors"
   />
 
   <Transition name="fade">
     <div v-if="quotesSelected.length > 0" class="mb-4">
       <LeadAssignment
         :selected="quotesSelected.map(e => e.id)"
-        :advisors="advisors"
+        :advisors="advisorOptions"
+        model_type="car"
       />
       <ExportExcel
         :data="quotesSelected"
         :columns="tableHeader"
-        :filename="'Home-List'"
+        :filename="'Car-Revival-List'"
         :sheetname="'Leads'"
       >
         <x-button size="sm" color="emerald">
