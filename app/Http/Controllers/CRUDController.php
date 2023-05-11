@@ -464,6 +464,42 @@ class CRUDController extends Controller
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $tiers = $this->lookupService->getTierR();
 
+        if($this->genericModel->modelType == quoteTypeCode::Car && str_contains(request()->url(), 'car-revival')){
+
+            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
+            $documentTypes = collect($documentTypes)->groupBy('category');
+            $listQuotePlans = $this->carQuoteService->getPlans($id);
+            $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+
+            return inertia('CarRevivalQuote/Show', [
+                'quote' => $record,
+                'leadStatuses' => array_values($leadStatuses->toArray()),
+                'advisors' => $advisors,
+                'documentTypes' => $documentTypes,
+                'lostReasons' => $lostReasons,
+                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'quoteType' => quoteTypeCode::Car,
+                'can' => [
+                    'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
+                    'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
+                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
+                    'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+                    'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::CarRevivalAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
+                ],
+                'allowedDuplicateLOB' => $allowedDuplicateLOB,
+                'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+                'payments' => $payments,
+                'quoteRequest' => $paymentEntityModel,
+                'paymentMethods' => $paymentMethods,
+                'listQuotePlans' => $listQuotePlans,
+                'quoteDocuments' => $quoteDocuments,
+                'sendPolicy' => (boolean) $displaySendPolicyButton,
+                'cdnPath' => $cdnPath,
+                'activities' => $activities,
+                'customerAdditionalContacts' => $customerAdditionalContacts,
+            ]);
+        }
+
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = null;

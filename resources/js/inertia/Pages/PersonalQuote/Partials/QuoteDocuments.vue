@@ -125,7 +125,7 @@ const uploadFile = (doc, files) => {
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">
         Documents
-        <x-tag size="sm">{{ quote.documents.length || 0 }}</x-tag>
+        <x-tag size="sm">{{ quote.documents?.length || 0 }}</x-tag>
       </h3>
       <div class="flex gap-2">
         <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
@@ -141,7 +141,7 @@ const uploadFile = (doc, files) => {
       border-cell
       hide-rows-per-page
       :rows-per-page="15"
-      :hide-footer="quote.documents.length < 15"
+      :hide-footer="quote.documents?.length < 15"
     >
       <template #item-original_name="item">
         <a

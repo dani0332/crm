@@ -83,37 +83,9 @@ class CarQuoteRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchEcomDetails()
+    public function fetchgetDuplicateEntityByCode($code)
     {
-//        $response['providerName'] = '';
-//        $response['network'] = '';
-//        $response['paymentStatus'] = '';
-//        $response['paidAt'] = '';
-//        $response['planName'] = '';
-//
-//        $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
-//        if ($planData) {
-//            $planPayload = json_decode($planData->plan_payload, true);
-//            if (isset($planPayload['plans'])) {
-//                foreach ($planPayload['plans'] as $plan) {
-//                    if ($plan['id'] == $data->plan_id) {
-//                        $response['providerName'] = $plan['providerName'];
-//                        $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
-//                        $response['paidAt'] = GenericRequestEnum::NotApplicable;
-//                        $response['planName'] = $plan['name'];
-//                        if (isset($plan['benefits'], $plan['benefits']['feature'])) {
-//                            foreach ($plan['benefits']['feature'] as $value) {
-//                                if ($value['code'] == GenericRequestEnum::TPA_Code) {
-//                                    $response['network'] = $value['value'];
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//        return $response;
+        return $this->where('parent_duplicate_quote_id', $code)->first();
     }
 
 }

@@ -153,7 +153,7 @@ const additionalContactPrimaryConfirmed = () => {
     <DataTable
       table-class-name="compact"
       :headers="additionalContactTable"
-      :items="quote.customer.additional_contact_info || []"
+      :items="quote.customer?.additional_contact_info || []"
       border-cell
       hide-rows-per-page
       hide-footer
