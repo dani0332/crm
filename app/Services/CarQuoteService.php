@@ -306,7 +306,7 @@ class CarQuoteService extends BaseService
             $childRecord = $this->createDetailEntity($id);
         }
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
-        info('before update - Old advisor assigned date is : '. $oldAdvisorAssignedDate);
+        info('before update - Old advisor assigned date is : '.$oldAdvisorAssignedDate);
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
@@ -1241,7 +1241,7 @@ class CarQuoteService extends BaseService
 
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
 
-            info('after update Old advisor assigned date is : '. $oldAdvisorAssignedDate);
+            info('after update Old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
 
