@@ -108,6 +108,7 @@ class AdvisorConversionReportService extends BaseService
                 $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
                 $start_date = Carbon::parse($batch->start_date)->format($dateFormat);
                 $end_date = Carbon::parse($batch->end_date)->format($dateFormat);
+
                 return $batch->name.'-('.$start_date.' to '.$end_date.')';
             })
             ->toArray();
