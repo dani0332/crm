@@ -29,7 +29,7 @@ class QuoteDocumentController extends Controller
      */
     public function index($quoteType, $quoteUuid)
     {
-        if (($quote = $this->getQuoteObject($quoteType, $quoteUuid))) {
+        if ($quote = $this->getQuoteObject($quoteType, $quoteUuid)) {
             return QuoteDocumentResource::collection($quote->documents);
         }
 

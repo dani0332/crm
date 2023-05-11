@@ -43,6 +43,14 @@ class DashboardController extends Controller
     public function renderMainDashboard(Request $request)
     {
         $loggedInUserId = auth()->user()->id;
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $startDate = now()->startOfDay()->format($dateFormat);
+        $endDate = now()->endOfDay()->format($dateFormat);
+        $filters = [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'teams' => $this->getCurrentUserTeamsAndSubTeams($loggedInUserId),
+        ];
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $car = $this->getProductByName(quoteTypeCode::Car);
@@ -50,7 +58,7 @@ class DashboardController extends Controller
         $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
 
         $carAdvisors = $this->getUsersByTeamId(count($teamIds->toArray()) > 0 ? $teamIds->toArray() : []);
-        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($teams);
+        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
 
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
@@ -58,11 +66,11 @@ class DashboardController extends Controller
         $totalUnAssignedLeadsReceivedEcommerce = count($todaysLeads->whereNull('advisor_id')->where('is_ecommerce', 1));
         $totalUnAssignedRevivalLeads = count($todaysLeads->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
 
-        $leadsCountByTier = $this->dashboardService->getLeadsCountByTier(null, null);
-        $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($request);
-        $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival(null, null);
-        $assignedLeadsBySource = $this->dashboardService->getAssignedLeadsCountBySource(null, null);
-        $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData(null);
+        $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
+        $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
+        $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
+        $assignedLeadsBySource = $this->dashboardService->getAssignedLeadsCountBySource($filters);
+        $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
         return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
             'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
@@ -74,22 +82,28 @@ class DashboardController extends Controller
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
         $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
+        $filters = [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'teams' => $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id),
+        ];
         $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
-        $teams = $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id);
 
-        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($teams);
+        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
 
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
         $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
         $totalUnAssignedLeadsReceivedEcommerce = count($todaysLeads->whereNull('advisor_id')->where('is_ecommerce', 1));
         $totalUnAssignedRevivalLeads = count($todaysLeads->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
-        $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($startDate, $endDate);
-        $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($startDate, $endDate);
+        $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
+        $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
+
+        $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
         return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
-            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, ];
+            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData];
     }
 
     public function renderTplDashboard(Request $request)
@@ -335,7 +349,7 @@ class DashboardController extends Controller
 
     public function getTeamAdvisorConversionStats(Request $request)
     {
-        return $this->dashboardService->getAdvisorLeadAssignedData($request->teamFilter);
+        return $this->dashboardService->getAdvisorLeadAssignedData(['teamIds' => $request->teamFilter]);
     }
 
     public function getUsersByTeam(Request $request)

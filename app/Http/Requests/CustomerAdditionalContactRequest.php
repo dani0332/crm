@@ -3,13 +3,16 @@
 namespace App\Http\Requests;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\quoteTypeCode;
 use App\Repositories\AdditionalContactRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PersonalQuoteRepository;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CustomerAdditionalContactRequest extends FormRequest
 {
+    use GenericQueriesAllLobs;
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -47,7 +50,12 @@ class CustomerAdditionalContactRequest extends FormRequest
             $customer = CustomerRepository::where(request()->key, request()->value)->first();
             $additionalContacts = AdditionalContactRepository::where([['key', request()->key], ['value', request()->value]])->first();
 
-            $quote = PersonalQuoteRepository::where('id', request()->quote_id)->first();
+            $genericLobs = [quoteTypeCode::Life, quoteTypeCode::Travel];
+            if (in_array(request()->quote_type, $genericLobs)) {
+                $quote = $this->getQuoteObject(request()->quote_type, request()->quote_id);
+            } else {
+                $quote = PersonalQuoteRepository::where('id', request()->quote_id)->first();
+            }
             /**
              * check if email/mobile already exists in customer, quote or additional contact info
              */

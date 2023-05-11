@@ -113,6 +113,7 @@ class BikeQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
             ->filter()
+            ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
     }
