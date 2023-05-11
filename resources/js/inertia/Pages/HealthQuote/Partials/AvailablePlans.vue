@@ -4,7 +4,7 @@ const props = defineProps({
   genders: Object,
 });
 
-const notification = useNotifications('toast');
+const notification = useToast();
 
 const genderText = v => {
   return props.genders[v];
@@ -19,10 +19,12 @@ const ipmiBenefits = reactive({
   motherBaby: false,
 });
 
-const hidePlan = ref(false),
+const hidePlan = ref(props.plan.isHidden),
   isManual = ref(false),
   memberFormLoader = ref(false),
   newPremiums = ref([]);
+
+const toggleLoader = ref(false);
 
 const canUpdate = computed(() => {
   return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
@@ -76,7 +78,7 @@ const onMemberUpdate = member => {
     .then(res => {
       if (res.data == 'Plan has been updated') {
         notification.success({
-          title: 'Plan has been updated',
+          title: res.data,
           position: 'top',
         });
       } else {
@@ -91,6 +93,36 @@ const onMemberUpdate = member => {
     })
     .finally(() => {
       memberFormLoader.value = false;
+    });
+};
+
+const onTogglePlans = () => {
+  toggleLoader.value = true;
+
+  axios
+    .post('/quotes/health/manual-plan-toggle', {
+      modelType: 'Health',
+      planIds: [props.plan.id],
+      quote_uuid: usePage().props.quote.uuid,
+      toggle: hidePlan.value,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plan has been updated',
+        position: 'top',
+      });
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
     });
 };
 </script>
@@ -125,7 +157,13 @@ const onMemberUpdate = member => {
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             <div class="md:col-span-2 text-right select-none border-b pb-2">
-              <x-toggle v-model="hidePlan" color="error" label="Hide Plan" />
+              <x-toggle
+                v-model="hidePlan"
+                color="error"
+                label="Hide Plan"
+                @change="onTogglePlans"
+                :loading="toggleLoader"
+              />
             </div>
             <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Code</dt>
