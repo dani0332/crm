@@ -1337,9 +1337,9 @@ class CarQuoteService extends BaseService
             $newAdvisorAllocationRecord->save();
         }
         info('new advisor after update is : '.json_encode($newAdvisorAllocationRecord));
-        info('previous id check is : '.  $previousAdvisorId != null . ' , oldAdvisorAssignDate check is : '. (Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()));
+        info('previous id check is : '.$previousAdvisorId != null.' , oldAdvisorAssignDate check is : '.(Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()));
         if ($previousAdvisorId != null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
-            info('lead auto assigned field is : '. $lead->auto_assigned);
+            info('lead auto assigned field is : '.$lead->auto_assigned);
             if ($lead->auto_assigned) {
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
