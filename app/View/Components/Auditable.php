@@ -31,12 +31,11 @@ class Auditable extends Component
      */
     public function render()
     {
-
         $auditableId = $this->auditableId;
 
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
-            ->join('users', 'audits.user_id', 'users.id')
+            ->leftJoin('users', 'audits.user_id', 'users.id')
             ->where('auditable_id', $this->auditableId)
             ->where('auditable_type', $this->auditableType);
 
