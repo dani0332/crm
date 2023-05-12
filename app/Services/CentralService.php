@@ -117,32 +117,4 @@ class CentralService
             return $resp;
         }
     }
-
-    public function getLeadAuditHistory($auditable, $leadId)
-    {
-        $audits = DB::table('audits as a')
-        ->select(
-            DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
-            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
-            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
-            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
-            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
-        )
-            ->where(function ($query) {
-                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
-                ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
-                ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
-            })
-            ->where(function ($query) use ($leadId, $auditable) {
-                $query->where('a.auditable_type', $auditable)
-                ->where('a.auditable_id', $leadId);
-            })
-            ->orWhere(function ($query) use ($auditable, $leadId) {
-                $query->where('a.auditable_id', $leadId)
-                    ->where('a.auditable_type', $auditable . 'QuoteRequestDetail');
-            })
-            ->orderBy('a.created_at', 'DESC')->get();
-
-        return $audits;
-    }
 }

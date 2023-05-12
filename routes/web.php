@@ -105,7 +105,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport'])->name('advisor-performance-report-view');
 
         if (in_array(quoteTypeCode::Pet, newUi())) {
-            Route::get('personal-quotes/getLeadHistory/{id}', [PetQuoteController::class, 'getLeadHistory'])->name('pet-quotes.getLeadHistory');
             Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
         }
         if (in_array(quoteTypeCode::Bike, newUi())) {

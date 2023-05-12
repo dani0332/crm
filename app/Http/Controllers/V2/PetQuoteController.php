@@ -145,10 +145,4 @@ class PetQuoteController extends Controller
 
         return back()->with('message', 'Quote is updated successfully.');
     }
-
-    public function getLeadHistory($id)
-    {
-        $quote = PetQuoteRepository::getBy('id', $id);
-        return (new CentralService())->getLeadAuditHistory(PersonalQuote::class, $quote->id);
-    }
 }
