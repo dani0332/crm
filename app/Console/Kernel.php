@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
     protected $commands = [
         Commands\LeadAllocation::class,
         Commands\AddBatchNumber::class,
+        Commands\Dtt::class,
     ];
 
     /**
