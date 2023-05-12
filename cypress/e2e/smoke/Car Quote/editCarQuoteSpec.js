@@ -87,7 +87,7 @@ describe('Car qoutes', () => {
     // Delete Activity
     carLeadPage.deleteActivityButton()
 
-    // Add Additional Contact commented for now because it is not responding
+    // Add Additional Contact 
     carLeadPage.getAdditionalContactButton()
     carLeadPage.getContactType()
     carLeadPage.getContactValue()

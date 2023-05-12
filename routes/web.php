@@ -28,10 +28,8 @@ use App\Http\Controllers\HealthQuoteController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
-use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\MyLeadsController;
-use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\ReasonController;
@@ -39,11 +37,6 @@ use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
-use App\Http\Controllers\RewardCategoryController;
-use App\Http\Controllers\RewardController;
-use App\Http\Controllers\RewardSliderController;
-use App\Http\Controllers\RewardTagController;
-use App\Http\Controllers\RewardTranslationController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
@@ -101,6 +94,7 @@ Route::middleware(['auth', 'last_login_check'])->get('/home', function () {
 });
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+    Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
         Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard'])->name('tpl-dashboard-view');
@@ -130,6 +124,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-list');
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
+        Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
@@ -144,15 +139,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::get('getOverDueFollowupLeads', [MyLeadsController::class, 'getOverDueFollowupLeads'])->name('getOverDueFollowupLeads');
 
-    Route::resource('leadsearch', LeadSearchController::class)->names([
-        'index' => 'leadsearch.index',
-        'create' => 'leadsearch.create',
-        'store' => 'leadsearch.store',
-        'show' => 'leadsearch.show',
-        'edit' => 'leadsearch.edit',
-        'update' => 'leadsearch.update',
-        'destroy' => 'leadsearch.destroy',
-    ]);
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
         'create' => 'leadassignment.create',
@@ -179,7 +165,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('get-team-managers', [UserController::class, 'getTeamManagers'])->name('getTeamManagers');
     Route::post('get-sub-teams', [UserController::class, 'getSubTeams'])->name('getSubTeams');
     Route::post('get-product-teams', [UserController::class, 'getProductTeams'])->name('getProductTeams');
-    Route::resource('customer', CustomerController::class);
     Route::get('/customer-upload', [CustomerController::class, 'uploadCustomers']);
     Route::post('/customer-process', [CustomerController::class, 'processCustomerUpload']);
     Route::post('/customer-additional-contact/{id}/delete', [CustomerController::class, 'deleteAdditionalContact']);
@@ -227,14 +212,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
-    Route::group(['prefix' => 'rewards'], function () {
-        Route::resource('partner', PartnerController::class);
-        Route::resource('reward', RewardController::class);
-        Route::resource('reward-categories', RewardCategoryController::class);
-        Route::resource('reward-tags', RewardTagController::class);
-        Route::resource('reward.reward-translation', RewardTranslationController::class);
-        Route::resource('reward-sliders', RewardSliderController::class)->middleware('permission:reward-sliders-list|reward-sliders-create|reward-sliders-edit|reward-sliders-delete');
-    });
 
     Route::group(['prefix' => 'admin'], function () {
         Route::resource('users', UserController::class);
@@ -248,8 +225,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
 
-        Route::get('health-cards', [HealthQuoteController::class, 'cardsView']);
-        Route::get('health-export', [CRUDController::class, 'exportHealthLeads']);
+        Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
+        Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
+
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);
 
         Route::resource('home', CRUDController::class);
@@ -292,7 +270,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
 
-        if(!in_array(quoteTypeCode::Life, newUi())) {
+        if (! in_array(quoteTypeCode::Life, newUi())) {
             Route::resource('life', CRUDController::class);
         }
 
@@ -300,9 +278,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('trave.cards');
             Route::resource('travel', TravelController::class);
             Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
-
-
-
         } else {
             Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
         }
@@ -322,14 +297,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'generic'], function () {
-        Route::resource('insuranceprovider', GenericCrudController::class);
-        Route::resource('carplan', GenericCrudController::class);
-        Route::resource('carplancoverage', GenericCrudController::class);
-        Route::resource('carplanaddon', GenericCrudController::class);
-        Route::resource('carplanaddonoption', GenericCrudController::class);
-        Route::resource('applicationstorage', GenericCrudController::class);
         Route::resource('team', TeamController::class);
-        Route::resource('leadstatus', GenericCrudController::class);
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);
         Route::resource('rule', GenericCrudController::class);

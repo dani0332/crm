@@ -78,7 +78,7 @@ class HandleInertiaRequests extends Middleware
         }
 
         $nav = app(Navigation::class)
-            ->add('Home', url('/leadsearch'));
+            ->add('Home', url('/home'));
 
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::DashboardView,
@@ -119,10 +119,10 @@ class HandleInertiaRequests extends Middleware
         ])) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
-                    ->add('Advisor Conversion', url('reports/advisor-conversion'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Advisor Performance', url('reports/advisor-performance'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Advisor Distribution', url('reports/advisor-distribution'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Lead Distribution', url('reports/lead-distribution'), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->add('Advisor Conversion', route('advisor-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->add('Advisor Performance', route('advisor-performance-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->add('Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->add('Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
@@ -149,37 +149,6 @@ class HandleInertiaRequests extends Middleware
 
         if (auth()->check() && auth()->user()->hasMyLeadAccess()) {
             $nav = $nav->add('My Leads', url('/myleads'));
-        }
-
-        if (auth()->user()->can(PermissionsEnum::RewardList)) {
-            $nav = $nav->add('Rewards', '', function (Section $section) {
-                $section
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::PartnersList),
-                        'Partners List',
-                        url('rewards/partner'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->add('Rewards List', url('rewards/reward'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::RewardCategoriesList),
-                        'Reward Categories',
-                        url('rewards/reward-categories'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::RewardTagsList),
-                        'Reward Tags',
-                        url('rewards/reward-tags'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::RewardSliderList),
-                        'Reward Slider',
-                        url('rewards/reward-sliders'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    );
-            });
         }
 
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
@@ -236,13 +205,13 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::GMQuotesList),
                         'Group Medical Quotes',
-                        '/medical/amt',
+                        url('/medical/amt'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::CorpLineQuotesList),
                         'CorpLine Quotes',
-                        '/quotes/business',
+                        url('/quotes/business'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
@@ -430,8 +399,6 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
             PermissionsEnum::TeamsList,
-            PermissionsEnum::InsuranceProviderList,
-            PermissionsEnum::ApplicationStorageList,
             PermissionsEnum::RULE_CONFIG_LIST,
             PermissionsEnum::QUAD_CONFIG_LIST,
             PermissionsEnum::TIER_CONFIG_LIST,
@@ -472,18 +439,6 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
                         'Rules (Allocation)',
                         url('generic/rule'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::InsuranceProviderList),
-                        'Insurance Providers',
-                        url('generic/insuranceprovider'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::ApplicationStorageList),
-                        'Application Storage',
-                        url('generic/applicationstorage'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

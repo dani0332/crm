@@ -53,11 +53,7 @@ function onSubmit(isValid) {
     isEmptyField.value = false;
   }
   if (isValid) {
-    quoteForm.put(`/quotes/health/${props.quote.uuid}`, {
-      onSuccess: () => {
-        router.get(`/quotes/health/${props.quote.uuid}`);
-      },
-    });
+    quoteForm.put(route('health.update', props.quote.uuid));
   }
 }
 </script>
@@ -67,12 +63,12 @@ function onSubmit(isValid) {
     <Head title="Edit Health" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Edit Health</h2>
-      <div class="space-x-4">
-        <Link :href="`/quotes/health/${props.quote.uuid}`">
+      <div class="space-x-2">
+        <Link :href="route('health.show', props.quote.uuid)">
           <x-button size="sm" tag="div"> View </x-button>
         </Link>
-        <Link href="/quotes/health">
-          <x-button size="sm" color="#ff5e00" tag="div"> Health List </x-button>
+        <Link :href="route('health.index')" preserve-scroll>
+          <x-button size="sm" color="#1d83bc" tag="div"> Health List </x-button>
         </Link>
       </div>
     </div>

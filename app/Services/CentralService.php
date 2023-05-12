@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Facades\Capi;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Support\Facades\DB;
 
 class CentralService
 {
@@ -94,10 +95,7 @@ class CentralService
 
                 if (isset($response->message) && str_contains($response->message, 'Error')) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
-                }
-
-                elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE)
-                {
+                } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
                     $record = $repository::where('uuid', $response->quoteUID)->first();
                     if ($record) {
                         $update = [

@@ -25,6 +25,7 @@
         "tailwindcss": "^3.3.2",
         "unplugin-auto-import": "^0.15.3",
         "unplugin-vue-components": "^0.24.1",
+        "use-vue3-easy-data-table": "^0.1.4",
         "vue-loader": "^17.0.1"
     },
     "dependencies": {
