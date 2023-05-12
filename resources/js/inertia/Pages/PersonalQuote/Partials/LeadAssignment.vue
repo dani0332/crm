@@ -1,4 +1,7 @@
 <script setup>
+
+const toast = useToast();
+
 const props = defineProps({
   selected: {
     type: Array,
@@ -8,6 +11,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+    model_type: {
+      type: String,
+        default: () => 'Home'
+    },
 });
 
 const { isRequired } = useRules();
@@ -15,7 +22,7 @@ const { isRequired } = useRules();
 const assignForm = useForm({
   assigned_to_id_new: null,
   manual_assignment_email_flag: '1',
-  modelType: 'Home',
+  modelType: props.model_type,
   selectTmLeadId: '',
 });
 
@@ -26,13 +33,13 @@ function onAssignLead(isValid) {
         ...data,
         selectTmLeadId: `${props.selected}`,
       }))
-      .post('/quotes/home/manualLeadAssign', {
+      .post(`/quotes/${props.model_type}/manualLeadAssign`, {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
           quotesSelected.value = [];
-          notification.success({
-            title: 'Home Leads Assigned',
+            toast.success({
+            title: `${props.model_type} Leads Assigned`,
             position: 'top',
           });
         },

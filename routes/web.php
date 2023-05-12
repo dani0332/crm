@@ -127,11 +127,12 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         Route::group(['prefix' => 'quotes'], function () {
-            Route::resource('car-revival', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'));
+            Route::resource('car-revival', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'))->except('show');
         });
         
         Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
     });
+
 
     Route::resource('embedded-products', EmbeddedProductController::class);
     Route::get('/clear-cache', function () {
@@ -230,6 +231,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
+        Route::get('car-revival/{uuid}', [CRUDController::class, 'show']);
+
 
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
         Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');

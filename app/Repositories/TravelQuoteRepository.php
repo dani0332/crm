@@ -3,13 +3,17 @@
 namespace App\Repositories;
 
 use App\Models\TravelQuote;
-use App\Traits\CentralTrait;
 
 class TravelQuoteRepository extends BaseRepository
 {
-    use CentralTrait;
     public function model()
     {
         return TravelQuote::class;
     }
+
+    public function fetchgetDuplicateEntityByCode($code)
+    {
+        return $this->where('parent_duplicate_quote_id', $code)->first();
+    }
+
 }

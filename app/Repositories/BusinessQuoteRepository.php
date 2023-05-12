@@ -3,13 +3,17 @@
 namespace App\Repositories;
 
 use App\Models\BusinessQuote;
-use App\Traits\CentralTrait;
 
 class BusinessQuoteRepository extends BaseRepository
 {
-    use CentralTrait;
     public function model()
     {
         return BusinessQuote::class;
     }
+
+    public function fetchgetDuplicateEntityByCode($code)
+    {
+        return $this->where('parent_duplicate_quote_id', $code)->first();
+    }
+
 }

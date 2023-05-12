@@ -1,5 +1,5 @@
 <script setup>
-import EditForm from "@/inertia/Pages/CarShared/EditForm.vue";
+import QuoteForm from "@/inertia/Pages/CarShared/QuoteForm.vue";
 
 defineProps({
     quote: Object
@@ -8,7 +8,7 @@ defineProps({
 </script>
 
 <template>
-    <EditForm
+    <QuoteForm
         dynamic_route="car-revival"
         :quote="quote"
     />

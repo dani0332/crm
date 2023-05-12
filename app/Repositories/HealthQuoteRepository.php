@@ -3,13 +3,17 @@
 namespace App\Repositories;
 
 use App\Models\HealthQuote;
-use App\Traits\CentralTrait;
 
 class HealthQuoteRepository extends BaseRepository
 {
-    use CentralTrait;
     public function model()
     {
         return HealthQuote::class;
     }
+
+    public function fetchgetDuplicateEntityByCode($code)
+    {
+        return $this->where('parent_duplicate_quote_id', $code)->first();
+    }
+
 }

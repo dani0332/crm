@@ -3,13 +3,17 @@
 namespace App\Repositories;
 
 use App\Models\HomeQuote;
-use App\Traits\CentralTrait;
 
 class HomeQuoteRepository extends BaseRepository
 {
-    use CentralTrait;
     public function model()
     {
         return HomeQuote::class;
     }
+
+    public function fetchgetDuplicateEntityByCode($code)
+    {
+        return $this->where('parent_duplicate_quote_id', $code)->first();
+    }
+
 }

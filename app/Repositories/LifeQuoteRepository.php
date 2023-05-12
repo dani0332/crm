@@ -102,4 +102,10 @@ class LifeQuoteRepository extends BaseRepository
 
         ];
     }
+    
+    public function fetchgetDuplicateEntityByCode($code)
+    {
+        return $this->where('parent_duplicate_quote_id', $code)->first();
+    }
+
 }

@@ -8,6 +8,7 @@ use App\Facades\Capi;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
+use App\Models\PetQuote;
 use Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -113,5 +114,10 @@ class PetQuoteRepository extends BaseRepository
             'accomodation_types' => HomeAccomodationType::all(),
             'possession_types' => HomePossessionType::all(),
         ];
+    }
+
+    public function fetchgetDuplicateEntityByCode($code)
+    {
+        return PetQuote::where('parent_duplicate_quote_id', $code)->first();
     }
 }

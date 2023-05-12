@@ -161,7 +161,7 @@ const additionalContact = computed(() => {
     <DataTable
       table-class-name="compact"
       :headers="additionalContactTable"
-      :items="additionalContact ?? []"
+      :items="quote.customer?.additional_contact_info || []"
       border-cell
       hide-rows-per-page
       hide-footer

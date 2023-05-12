@@ -383,3 +383,7 @@ border-primary animate-spin;
 .bg-vtd-primary-100 {
   @apply bg-primary-100;
 }
+
+.group-focus\:outline-\[color\:var\(--x-select-border\)\] {
+  min-height: 38px;
+}
