@@ -28,6 +28,10 @@ const tableHeader = [
     value: 'total_leads',
   },
   {
+    text: 'UNASSIGNED LEADS',
+    value: 'unassigned_leads',
+  },
+  {
     text: 'AUTO ASSIGNED',
     value: 'auto_assigned',
   },
@@ -38,7 +42,7 @@ const tableHeader = [
 ];
 
 const filters = reactive({
-  advisorAssignedDates: [],
+  createdAtDates: [],
   tiers: [],
   page: 1,
 });
@@ -90,8 +94,8 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   if (page.props.defaultFilters) {
-    filters.advisorAssignedDates =
-      page.props.defaultFilters.advisorAssignedDates;
+    filters.createdAtDates =
+      page.props.defaultFilters.createdAtDates;
   }
   setQueryStringFilters();
 });
@@ -108,8 +112,8 @@ onMounted(() => {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
-          v-model="filters.advisorAssignedDates"
-          label="Advisor Assigned Date"
+          v-model="filters.createdAtDates"
+          label="Created Date"
           placeholder="Select Start & End Date"
           range
           :max-range="92"
