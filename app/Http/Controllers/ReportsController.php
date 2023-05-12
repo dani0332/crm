@@ -44,7 +44,7 @@ class ReportsController extends Controller
             'filterOptions' => $advisorDistributionReportService->getFilterOptions(),
             'defaultFilters' => $advisorDistributionReportService->getDefaultFilters(),
         ]);
-        
+
         return view('reports.lead-distribution-report');
     }
 
