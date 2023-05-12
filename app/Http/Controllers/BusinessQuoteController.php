@@ -175,6 +175,7 @@ class BusinessQuoteController extends Controller
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
+            'typeCode' => quoteTypeCode::CORPLINE,
         ]);
     }
 

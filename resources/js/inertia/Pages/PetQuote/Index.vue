@@ -69,16 +69,13 @@ const tableHeader = [
   { text: 'CDB ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DOB', value: 'dob_formatted' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'PREMIUM', value: 'premium' },
-  { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'PREMIUM', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'TYPE OF PET', value: 'type_of_pet' },
   { text: 'BREED OF PET', value: 'breed_of_pet1' },
@@ -90,6 +87,8 @@ const tableHeader = [
   { text: 'HAS INJURY', value: 'has_injury' },
   { text: 'ACCOMMODATION TYPE', value: 'accommodation_type' },
   { text: 'POSSESION TYPE', value: 'possesion_type' },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'TRANSAPP CODE', value: 'transapp_code' },
 ];
 
 const can = permission => useCan(permission);
@@ -311,13 +310,14 @@ function onAssignLead(isValid) {
       fixed-checkbox
     >
       <template #item-uuid="{ code, uuid }">
-        <Link
+        <a
+          target="_blank"
           v-if="can(permissionsEnum.PetQuotesView)"
           :href="`/personal-quotes/pet/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </Link>
+        </a>
         <span v-else>{{ code }}</span>
       </template>
 
@@ -331,14 +331,6 @@ function onAssignLead(isValid) {
 
       <template #item-currently_insured_with="{ currently_insured_with }">
         {{ currently_insured_with?.text }}
-      </template>
-
-      <template #item-is_ecommerce="{ is_ecommerce }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
-            {{ is_ecommerce ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
       </template>
 
       <template #item-policy_number="{ pet_quote }">
