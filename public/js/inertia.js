@@ -10871,6 +10871,40 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         return 'undefined';
       }
     }
+    function calculateTotalNetConversion(data) {
+      var totalLeads = 0;
+      var manualCreated = 0;
+      var badLeads = 0;
+      var manualCreatedBadLeads = 0;
+      var saleLeads = 0;
+      var createdSaleLeads = 0;
+      data.forEach(function (row) {
+        totalLeads += Number(row.total_leads);
+        manualCreated += Number(row.manual_created);
+        saleLeads += Number(row.sale_leads);
+        createdSaleLeads += Number(row.created_sale_leads);
+        badLeads += Number(row.bad_leads);
+        manualCreatedBadLeads += Number(row.manual_created_bad_leads);
+      });
+      var numerator = saleLeads - createdSaleLeads;
+      var denominator = totalLeads - manualCreated - (badLeads - manualCreatedBadLeads);
+      return denominator > 0 ? (numerator / denominator * 100).toFixed(2) + ' %' : 'NaN';
+    }
+    function calculateTotalGrossConversion(data) {
+      var totalLeads = 0;
+      var manualCreated = 0;
+      var saleLeads = 0;
+      var createdSaleLeads = 0;
+      data.forEach(function (row) {
+        totalLeads += Number(row.total_leads);
+        manualCreated += Number(row.manual_created);
+        saleLeads += Number(row.sale_leads);
+        createdSaleLeads += Number(row.created_sale_leads);
+      });
+      var numerator = saleLeads - createdSaleLeads;
+      var denominator = totalLeads - manualCreated;
+      return denominator > 0 ? (numerator / denominator * 100).toFixed(2) + ' %' : 'NaN';
+    }
     function calculateNetConversion(row) {
       var totalLeads = row.total_leads;
       var manualCreated = row.manual_created;
@@ -11035,6 +11069,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       tableHeader: tableHeader,
       totalLeads: totalLeads,
       calculateGrossConversion: calculateGrossConversion,
+      calculateTotalNetConversion: calculateTotalNetConversion,
+      calculateTotalGrossConversion: calculateTotalGrossConversion,
       calculateNetConversion: calculateNetConversion,
       filters: filters,
       onSubmit: onSubmit,
@@ -30340,12 +30376,12 @@ var _hoisted_32 = {
 var _hoisted_33 = {
   "class": "direction-center"
 };
-var _hoisted_34 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", {
+var _hoisted_34 = {
   "class": "direction-center"
-}, null, -1 /* HOISTED */);
-var _hoisted_35 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", {
+};
+var _hoisted_35 = {
   "class": "direction-center"
-}, null, -1 /* HOISTED */);
+};
 var _hoisted_36 = {
   "class": "flex flex-wrap justify-between items-center gap-2 py-6"
 };
@@ -30613,7 +30649,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.manual_created), 9 /* TEXT, PROPS */, _hoisted_19))];
     }),
     "body-append": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-      return [$props.reportData.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("tr", _hoisted_20, [_hoisted_21, _hoisted_22, _hoisted_23, _hoisted_24, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_25, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'total_leads')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_26, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'new_leads')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_27, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'not_interested')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_28, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'in_progress')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_29, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'bad_leads')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'sale_leads')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_31, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'created_sale_leads')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'afia_renewals_count')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'manual_created')), 1 /* TEXT */), _hoisted_34, _hoisted_35])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)];
+      return [$props.reportData.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("tr", _hoisted_20, [_hoisted_21, _hoisted_22, _hoisted_23, _hoisted_24, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_25, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'total_leads')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_26, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'new_leads')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_27, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'not_interested')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_28, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'in_progress')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_29, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'bad_leads')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'sale_leads')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_31, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'created_sale_leads')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'afia_renewals_count')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalSum($props.reportData, 'manual_created')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_34, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalGrossConversion($props.reportData)), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_35, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateTotalNetConversion($props.reportData)), 1 /* TEXT */)])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)];
     }),
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["loading", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_36, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("select", {
