@@ -1342,6 +1342,7 @@ class CarQuoteService extends BaseService
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
                     $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
+                    $lead->auto_assigned = false;
                 }
             } else {
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
@@ -1356,9 +1357,6 @@ class CarQuoteService extends BaseService
                 $previousAdvisorAllocationRecord->save();
                 info('previous advisor after update is : '.json_encode($previousAdvisorAllocationRecord));
             }
-        }
-        if ($lead->auto_assigned) {
-            $lead->auto_assigned = false;
         }
         info('new advisor alloc. count :'.$newAdvisorAllocationRecord->allocation_count.', manual count :'.$newAdvisorAllocationRecord->manual_assignment_count.', auto count :'.$newAdvisorAllocationRecord->auto_assignment_count);
         if ($previousAdvisorAllocationRecord != null) {
