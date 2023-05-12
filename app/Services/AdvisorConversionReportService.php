@@ -51,7 +51,7 @@ class AdvisorConversionReportService extends BaseService
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+        if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
             $userIds = $this->walkTree(auth()->user()->id);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
