@@ -13,6 +13,9 @@
     text-decoration-line: underline;
     text-decoration-style: dotted;
 }
+.modal-content {
+    width: 80%;
+}
 </style>
 <div class="modal fade" id="createCarLeadModal" name="createCarLeadModal" tabindex="-1" role="dialog"
      aria-labelledby="createCarLeadModalLabel" aria-hidden="true">
@@ -60,12 +63,10 @@
                                         the client to retry the payment using the<br/>same or a different card.</div>">Payment Status</span>
                                 </div>
                         </fieldset>
-                        <p class="red const-lead-err-msg d-none">Unable to create manual lead, you can edit the same lead.</p>
                     </div>
                 </div>
-                <div class="modal-footer" style="justify-content: center;">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-sm btn-success const-car-lead-cnfrm-btn">Confirm</button>
-                    <button type="button" data-dismiss="modal" class="btn btn-sm btn-danger">Cancel</button>
                 </div>
             </form>
         </div>
