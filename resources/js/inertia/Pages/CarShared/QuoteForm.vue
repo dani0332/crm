@@ -8,6 +8,9 @@ const notification = useNotifications('toast');
 const comp_for_car_revival = 'car-revival';
 const comp_for_car = 'car';
 
+const dateFormat = date =>
+    date ? useDateFormat(date, 'Y-m-d').value : '-';
+
 const props = defineProps({
     dynamic_route: {
         type: String,
@@ -76,10 +79,30 @@ const carMakes = computed(() => {
 const yearOfManufacture = computed(() => {
     return page.props.form_options.year_of_manufacture.map(
         year_of_manufacture => ({
-            value: year_of_manufacture.id,
+            value: year_of_manufacture.text,
             label: year_of_manufacture.text,
         }),
     );
+});
+
+
+const claimHistory = computed(() => {
+    return page.props.form_options.claim_history.map(
+        claim_history => ({
+            value: claim_history.id,
+            label: claim_history.text,
+        }),
+    );
+});
+
+const carFetchModel = ref('');
+const carModel = computed(() => {
+    // return carFetchModel.map(
+    //     carFetchModel => ({
+    //         value: carFetchModel.id,
+    //         label: carFetchModel.text,
+    //     }),
+    // );
 });
 
 console.log(page.props.form_options);
@@ -89,8 +112,8 @@ const conditionallyTitle = computed(() => {
     return props.dynamic_route === comp_for_car ? 'Car' : 'Car Revival';
 });
 
+
 const quoteForm = useForm({
-    // model: props.model,
     renewal_batch: page.props.quote?.renewal_batch || '',
     first_name: page.props.quote?.first_name || '',
     last_name: page.props.quote?.last_name || '',
@@ -111,13 +134,19 @@ const quoteForm = useForm({
     seat_capacity : page.props.quote?.seat_capacity || '',
     emirate_of_registration_id : page.props.quote?.emirate_of_registration_id || null,
     car_type_insurance_id : page.props.quote?.car_type_insurance_id || null,
-    currently_insured_with : page.props.quote?.currently_insured_with_id || null,
+    currently_insured_with : page.props.quote?.currently_insured_with || null,
     claim_history_id : page.props.quote?.claim_history_id || null,
     // prevous_insurer :
     previous_quote_policy_number : page.props.quote?.previous_quote_policy_number || '',
     previous_policy_expiry_date : page.props.quote?.previous_policy_expiry_date || '',
     additional_notes : page.props.quote?.additional_notes || ''
 });
+
+// const carModel = fetch(`/car-model-by-id?id=${quoteForm.car_make_id}`).then(cars => {
+//     return cars;
+// });
+//
+// console.log(carModel);
 
 const { isRequired, isEmail } = useRules();
 
@@ -187,6 +216,15 @@ function onSubmit(isValid) {
         });
     }
 }
+
+onMounted(() => {
+    fetch(`/car-model-by-id?id=${quoteForm.car_make_id}`).
+    then(carModel => {
+         fetchCarModel.value = carModel;
+    });
+
+    // console.log(this.fetchCarModel);
+})
 </script>
 
 <template>
@@ -303,7 +341,7 @@ function onSubmit(isValid) {
                     v-model="quoteForm.car_model_id"
                     label="CAR MODEL*"
                     :rules="[isRequired]"
-                    :options="[]"
+                    :options="carModel"
                     class="w-full"
                     :error="quoteForm.errors.car_model_id"
                 />
@@ -317,11 +355,11 @@ function onSubmit(isValid) {
                 />
 
                 <x-select
-                    v-model="quoteForm.uae_license_held_for_id"
+                    v-model="quoteForm.year_of_manufacture"
                     label="TRIM"
                     :options="[]"
                     class="w-full"
-                    :error="quoteForm.errors.uae_license_held_for_id"
+                    :error="quoteForm.errors.cylinder"
                 />
 
                 <x-select
@@ -397,7 +435,7 @@ function onSubmit(isValid) {
                     v-model="quoteForm.claim_history_id"
                     label="CLAIM HISTORY*"
                     :rules="[isRequired]"
-                    :options="[]"
+                    :options="claimHistory"
                     class="w-full"
                     :error="quoteForm.errors.claim_history_id"
                 />
@@ -405,7 +443,10 @@ function onSubmit(isValid) {
                 <x-select
                     v-model="quoteForm.uae_license_held_for_id"
                     label="CAN YOU PROVIDE NO-CLAIMS LETTER FROM YOUR PREVIOUS INSURERS?"
-                    :options="[]"
+                    :options="[
+                        { value: 1, label: 'Yes' },
+                        { value: 0, label: 'No' },
+                    ]"
                     class="w-full"
                     :error="quoteForm.errors.uae_license_held_for_id"
                 />

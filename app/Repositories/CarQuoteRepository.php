@@ -68,6 +68,7 @@ class CarQuoteRepository extends BaseRepository
             'emirate_of_visa' => EmirateRepository::withActive()->get(),
             'car_make' => CarMakeRepository::active()->get(),
             'year_of_manufacture' => YearOfManufactureRepository::get(),
+            'claim_history' => ClaimHistoryRepository::withActive()->get()
         ];
 
         if($is_for_listview){
