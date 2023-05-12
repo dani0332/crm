@@ -2,18 +2,20 @@
 
 namespace App\Models;
 
-use App\Enums\FilterTypes;
-use App\Traits\FilterCriteria;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Config;
+use App\Enums\FilterTypes;
+use App\Models\QuoteStatusLog;
+use App\Traits\FilterCriteria;
 use OwenIt\Auditing\Auditable;
+use App\Traits\QuoteModelTrait;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PersonalQuote extends Model implements AuditableContract
 {
-    use HasFactory, FilterCriteria, Auditable;
+    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
 
     protected $appends = ['dob_formatted'];
     protected $guarded = [];
@@ -231,5 +233,10 @@ class PersonalQuote extends Model implements AuditableContract
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function leadHistory()
+    {
+        return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
     }
 }

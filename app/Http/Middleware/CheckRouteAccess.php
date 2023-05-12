@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\RolesEnum;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,10 @@ class CheckRouteAccess
      */
     public function handle(Request $request, Closure $next)
     {
+        if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering])) {
+        return $next($request);
+        }
+
         $routeName = $request->route()->getName();
         $methodName = $request->route()->getActionMethod();
 
@@ -22,7 +27,7 @@ class CheckRouteAccess
             'store' => 'create',
             'update' => 'edit',
             'destroy' => 'delete',
-            'show' => 'view',
+            'show' => 'show',
             'index' => 'list',
         ];
 

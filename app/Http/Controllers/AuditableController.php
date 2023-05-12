@@ -28,7 +28,7 @@ class AuditableController extends Controller
 
     public function loadAuditLogs(Request $request)
     {
-        $audits = DB::table('audits')
+        return DB::table('audits')
             ->select('audits.*', 'users.name')
             ->join('users', 'audits.user_id', 'users.id')
             ->where('auditable_id', $request->auditableId)
@@ -36,7 +36,6 @@ class AuditableController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return $audits;
     }
 
     /**

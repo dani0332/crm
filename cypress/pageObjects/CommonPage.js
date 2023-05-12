@@ -9,7 +9,7 @@ class CommonPage {
   }
 
   getFirstNameField(first_name) {
-    return cy.get('input[name="first_name"]').should('be.visible').clear().type(first_name)
+    return cy.get('input#first_name').should('be.visible').clear().type(first_name)
   }
 
   getLastNameField(last_name) {
@@ -65,6 +65,13 @@ class CommonPage {
 
   getNationality(dropdownName, value) {
     cy.get('h4.text-sm').contains(dropdownName).parent().within(() => {
+      cy.get('button[id="headlessui-combobox-button-2"]').should('be.visible').click()
+      cy.get('span.flex-1.truncate').contains(value).should('be.visible').click()
+    })
+  }
+
+  getVerifyHealthQuote() {
+    cy.get('.grid').containsx(dropdownName).parent().within(() => {
       cy.get('button[id="headlessui-combobox-button-2"]').should('be.visible').click()
       cy.get('span.flex-1.truncate').contains(value).should('be.visible').click()
     })

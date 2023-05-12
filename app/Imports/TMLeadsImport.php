@@ -92,14 +92,6 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
             $yearsOfDrivingId = UAELicenseHeldFor::where('code', '=', $yearsOfDriving)->value('id');
             $emiratesOfRegistrationId = Emirate::where('code', '=', $emiratesOfRegistration)->value('id');
 
-            $yearOfManufacture = $yearOfManufacture;
-            $carValue = $carValue;
-            $carModelId = $carModelId;
-            $carMakeId = $carMakeId;
-            $nationalityId = $nationalityId;
-            $yearsOfDrivingId = $yearsOfDrivingId;
-            $emiratesOfRegistrationId = $emiratesOfRegistrationId;
-
             // Get Car Type of Insurance > Get string after hiphen '-'
             $tmCarInsuranceType = substr($insuranceType, strpos($insuranceType, '-') + 2);
 
@@ -112,7 +104,6 @@ class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStar
                 }
 
                 $tmCarInsuranceTypeId = CarTypeInsurance::where('code', '=', $tmCarInsuranceTypeCode)->value('id');
-                $tmCarInsuranceTypeId = $tmCarInsuranceTypeId;
             }
         }
 

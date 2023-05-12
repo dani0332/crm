@@ -57,6 +57,7 @@ class CycleQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
             ->filter()
+            ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
     }

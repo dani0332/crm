@@ -34,12 +34,13 @@ router.on('finish', event => {
     </x-button>
 
     <div class="text-xs lining-nums font-medium text-center">
-      Page {{ links.current }} ~ [{{ links.from }} - {{ links.to }}]
+      Now displaying: {{ links.from }} ~ {{ links.to }}
+      <span v-if="links.total"> of {{ links.total }} </span>
     </div>
 
     <Link
       v-if="props.links.next !== null"
-      :href="props.links.next ? props.links.next : '#'"
+      :href="props.links.next"
       preserve-scroll
       preserve-state
     >
