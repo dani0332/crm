@@ -10,6 +10,7 @@ defineProps({
   activities: Array,
   advisors: Array,
   permissions: Object,
+  typeCode: String,
 });
 
 const { isRequired } = useRules();
@@ -313,9 +314,8 @@ const activityDeleteConfirmed = () => {
 };
 
 const isDuplicateAllowed = computed(() => {
-    return page.props.allowedDuplicateLOB.includes('Corpline');
+  return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
 });
-
 
 const onAssignLead = () => {
   if (!assignLead.value) {
@@ -349,7 +349,6 @@ const onAssignLead = () => {
     },
   );
 };
-
 </script>
 <template>
   <div>
@@ -770,7 +769,12 @@ const onAssignLead = () => {
     </div>
 
     <!-- Additional Contact -->
-    <customerAdditionalContacts quoteType="Business" :customerId="quote.customer_id" :quoteId="quote.id"  :contacts="customerAdditionalContacts" />
+    <customerAdditionalContacts
+      quoteType="Business"
+      :customerId="quote.customer_id"
+      :quoteId="quote.id"
+      :contacts="customerAdditionalContacts"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

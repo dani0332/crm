@@ -2372,7 +2372,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     enums: Object,
     activities: Array,
     advisors: Array,
-    permissions: Object
+    permissions: Object,
+    typeCode: String
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -2682,7 +2683,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       });
     };
     var isDuplicateAllowed = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
-      return page.props.allowedDuplicateLOB.includes('Corpline');
+      return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
     });
     var onAssignLead = function onAssignLead() {
       if (!assignLead.value) {
@@ -4086,7 +4087,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     quoteDetails: Object,
     customerAdditionalContacts: Array,
     enums: Object,
-    permissions: Object
+    permissions: Object,
+    typeCode: String
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -4229,7 +4231,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       value: 'NewStatus'
     }];
     var isDuplicateAllowed = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
-      return page.props.allowedDuplicateLOB.includes('Group Medical');
+      return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
     });
     var __returned__ = {
       page: page,

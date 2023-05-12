@@ -1,5 +1,4 @@
 <script setup>
-
 defineProps({
   quote: Object,
   genderOptions: Object,
@@ -9,12 +8,12 @@ defineProps({
   customerAdditionalContacts: Array,
   enums: Object,
   permissions: Object,
+  typeCode: String,
 });
 
 const page = usePage();
 
 const notification = useNotifications('toast');
-
 
 const { isRequired } = useRules();
 
@@ -139,9 +138,8 @@ const historyDataTable = [
 ];
 
 const isDuplicateAllowed = computed(() => {
-    return page.props.allowedDuplicateLOB.includes('Group Medical');
+  return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
 });
-
 </script>
 <template>
   <div>
@@ -208,7 +206,7 @@ const isDuplicateAllowed = computed(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div class="grid sm:grid-cols-2">
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ID</dt>
             <dd>{{ quote.id }}</dd>
           </div>
@@ -418,9 +416,13 @@ const isDuplicateAllowed = computed(() => {
         </div>
       </div>
 
-
-    <!-- Additional Contact -->
-    <customerAdditionalContacts quoteType="Business" :customerId="quote.customer_id" :quoteId="quote.id"  :contacts="customerAdditionalContacts" />
+      <!-- Additional Contact -->
+      <customerAdditionalContacts
+        quoteType="Business"
+        :customerId="quote.customer_id"
+        :quoteId="quote.id"
+        :contacts="customerAdditionalContacts"
+      />
 
       <div class="p-4 rounded shadow mb-6 bg-white">
         <div>
