@@ -28,6 +28,7 @@ mix
     resolve: {
       alias: {
         '@': path.resolve('./resources/js'),
+        ziggy: path.resolve('./vendor/tightenco/ziggy/dist/vue.es.js'),
       },
       extensions: ['.js', '.vue', '.json'],
     },

@@ -17,7 +17,7 @@ use App\Enums\PermissionsEnum;
             <div class="menu_section">
 
                 <ul class="nav side-menu">
-                    <li> <a href="{{ url('/leadsearch') }}"><i class="fa fa-home"></i> Home</a></li>
+                    <li> <a href="{{ url('/home') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
             @canany([PermissionsEnum::DashboardView, PermissionsEnum::TPL_DASHBOARD_VIEW, PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW, PermissionsEnum::MAIN_DASHBOARD_VIEW])
                 <ul class="nav side-menu">

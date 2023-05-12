@@ -16,6 +16,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\CentralService;
 
 class PetQuoteController extends Controller
 {
@@ -93,6 +94,8 @@ class PetQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
+        $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
+
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
@@ -107,6 +110,7 @@ class PetQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'duplicateAllowedLobs' => $duplicateAllowedLobs,
         ]);
     }
 

@@ -2,8 +2,6 @@
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
-const permissionsEnum = computed(() => page.props.permissionsEnum);
-const permissions = computed(() => page.props.permissions);
 const openSidebar = ref(false);
 
 router.on('navigate', () => {
@@ -68,9 +66,7 @@ const onLogout = () => {
             <x-collapse
               show-icon
               :expanded="
-                link.children.some(
-                  child => $page.props.baseUrl + $page.url == child.url,
-                )
+                link.children.some(child => $page.url.startsWith(child.url))
               "
             >
               <template #default>
@@ -85,8 +81,7 @@ const onLogout = () => {
                     :href="child.url"
                     class="pl-3 py-2 flex gap-2 items-center hover:bg-black/10"
                     :class="{
-                      '!bg-primary-800':
-                        $page.props.baseUrl + $page.url == child.url,
+                      '!bg-primary-800': $page.url.startsWith(child.url),
                     }"
                   >
                     <x-icon
@@ -105,7 +100,7 @@ const onLogout = () => {
               :href="link.url"
               class="pl-3 py-2.5 flex gap-2 items-center hover:bg-black/10"
               :class="{
-                '!bg-primary-800': $page.props.baseUrl + $page.url == link.url,
+                '!bg-primary-800': $page.url.startsWith(link.url),
               }"
             >
               <x-icon

@@ -40,6 +40,7 @@
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-navigation": "^1.2",
         "spatie/laravel-permission": "^4.0",
+        "tightenco/ziggy": "^1.5",
         "yajra/laravel-datatables-oracle": "^9.18"
     },
     "require-dev": {

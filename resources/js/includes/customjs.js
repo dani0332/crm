@@ -2087,56 +2087,6 @@ $(document).ready(function () {
     columns: [{ data: 'batch', name: 'batch' }],
   });
 
-  var searchLeadsTable = $('.leadSearch-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: {
-      url: config.routes.searchLeadsDataTable,
-      data: function (d) {
-        d.leadType = $('#leadType').val();
-        d.cdbID = $('#cdbID').val();
-        d.email = $('#email').val();
-        d.phnNumber = $('#phnNumber').val();
-      },
-    },
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          if (row.access) {
-            return (
-              "<a href='" +
-              config.routes.searchLeadsDataTable +
-              '/' +
-              row.id +
-              "'>" +
-              row.id +
-              '</a>'
-            );
-          } else {
-            return row.id;
-          }
-        },
-      },
-
-      { data: 'created_at', name: 'created_at' },
-      { data: 'first_name', name: 'first_name' },
-      { data: 'last_name', name: 'last_name' },
-      { data: 'advisor_name', name: 'advisor_name' },
-    ],
-  });
-  $('#search-leads').submit(function (e) {
-    e.preventDefault();
-    $('.loader').show();
-    searchLeadsTable.draw();
-    setTimeout(() => {
-      $('.loader').hide();
-    }, 1000);
-  });
   $('#car_make_value').on('change', function (e) {
     var make_code = $('#car_make_value option:selected').attr('data-id');
     $.get('/valuation/car-models?make_code=' + make_code, function (data) {

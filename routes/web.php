@@ -29,7 +29,6 @@ use App\Http\Controllers\HealthQuoteController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
-use App\Http\Controllers\LeadSearchController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\MyLeadsController;
 use App\Http\Controllers\PaymentModeController;
@@ -146,15 +145,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
     Route::get('getOverDueFollowupLeads', [MyLeadsController::class, 'getOverDueFollowupLeads'])->name('getOverDueFollowupLeads');
 
-    Route::resource('leadsearch', LeadSearchController::class)->names([
-        'index' => 'leadsearch.index',
-        'create' => 'leadsearch.create',
-        'store' => 'leadsearch.store',
-        'show' => 'leadsearch.show',
-        'edit' => 'leadsearch.edit',
-        'update' => 'leadsearch.update',
-        'destroy' => 'leadsearch.destroy',
-    ]);
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
         'create' => 'leadassignment.create',
@@ -241,8 +231,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
 
-        Route::get('health-cards', [HealthQuoteController::class, 'cardsView']);
-        Route::get('health-export', [CRUDController::class, 'exportHealthLeads']);
+        Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
+        Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
+
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);
 
         Route::resource('home', CRUDController::class);
