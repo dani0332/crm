@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Facades\Capi;
 use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Support\Facades\DB;
 
 class CentralService
 {
@@ -115,5 +116,37 @@ class CentralService
 
             return $resp;
         }
+    }
+
+    public function getLeadAuditHistory($leadType, $leadId)
+    {
+        $leadType = ucwords($leadType);
+        $audits = DB::table('audits as a')
+        ->select(
+            DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
+            DB::raw('(SELECT name from users where id = a.user_id) as ModifiedBy'),
+            DB::raw("(SELECT TEXT FROM quote_status WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.quote_status_id'))) AS NewStatus"),
+            DB::raw("(SELECT NAME FROM users WHERE id = JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.advisor_id'))) AS NewAdvisor"),
+            DB::raw("JSON_UNQUOTE(JSON_EXTRACT(a.new_values, '$.notes')) AS NewNotes")
+        )
+            ->where(function ($query) {
+                $query->whereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.quote_status_id')"))
+                ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
+                ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
+            })
+            ->where(function ($query) use ($leadId, $leadType) {
+                $query->where('a.auditable_type', 'App\Models\\'.$leadType.'Quote')
+                ->where('a.auditable_id', $leadId);
+            })
+            ->orWhere(function ($query) use ($leadType, $leadId) {
+                $entityDetail = $this->{strtolower($leadType).'QuoteService'}->getDetailEntity($leadId);
+                if ($entityDetail) {
+                    $query->where('a.auditable_id', $entityDetail->id)
+                        ->where('a.auditable_type', 'App\Models\\'.$leadType.'QuoteRequestDetail');
+                }
+            })
+            ->orderBy('a.created_at', 'DESC')->get();
+
+        return $audits;
     }
 }

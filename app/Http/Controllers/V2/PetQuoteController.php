@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -146,6 +147,8 @@ class PetQuoteController extends Controller
 
     public function getLeadHistory($id)
     {
-        return PetQuoteRepository::getLeadHistory($id);
+        $logs = (new CentralService())->getLeadAuditHistory(quoteTypeCode::Pet, $id);
+        dd($logs);
+        // return PetQuoteRepository::getLeadHistory($id);
     }
 }

@@ -38,7 +38,8 @@ const historyData = ref(null);
 
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
-  const res = await fetch(
+    const res = await fetch(
+    // `quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`
     `/personal-quotes/getLeadHistory/${page.props.quote.id}`,
   );
   const finalRes = await res.json();
