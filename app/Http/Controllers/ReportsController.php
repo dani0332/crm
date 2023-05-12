@@ -39,6 +39,12 @@ class ReportsController extends Controller
 
     public function renderLeadDistributionReport()
     {
+        return inertia('Reports/AdvisorDistribution', [
+            'reportData' => $advisorDistributionReportService->getReportData($request),
+            'filterOptions' => $advisorDistributionReportService->getFilterOptions(),
+            'defaultFilters' => $advisorDistributionReportService->getDefaultFilters(),
+        ]);
+        
         return view('reports.lead-distribution-report');
     }
 
