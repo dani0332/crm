@@ -84,7 +84,7 @@ describe('Life qoutes', () => {
 
     })
 
-    it('Should Update Lead Status, Add Activity, Delete Activity', () => {
+    it('Should Update Lead Status, Add Activity, Delete Activity, Add/Delete Additional Contact', () => {
         Cypress.on('uncaught:exception', err => {
             if (resizeObserverLoopErrRe.test(err.message)) {
                 return false
