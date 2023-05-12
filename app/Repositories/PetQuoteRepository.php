@@ -114,10 +114,4 @@ class PetQuoteRepository extends BaseRepository
             'possession_types' => HomePossessionType::all(),
         ];
     }
-    public function fetchGetLeadHistory($id)
-    {
-        return $this->byQuoteTypeId(QuoteTypes::PET->id())->where('id', $id)->with(['leadHistory' => function ($q) {
-            $q->with('quoteStatus')->orderBy('created_at', 'desc');
-        }])->firstOrFail()->toArray();
-    }
 }
