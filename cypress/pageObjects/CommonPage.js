@@ -50,6 +50,10 @@ class CommonPage {
     })
   }
 
+  getHeadingAssertion(heading) {
+    return cy.get('.x_title').contains(heading).should('be.visible')
+  }
+
   getDropdownByName(dropdownName, value) {
     cy.get('h4.text-sm').contains(dropdownName).parent().within(() => {
       cy.get('.w-full.border.border-gray-300').should('be.visible').click()
