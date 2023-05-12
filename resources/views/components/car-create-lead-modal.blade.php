@@ -3,6 +3,8 @@
     max-width: 400px;
     text-align: left;
     padding: 0.9rem;
+    opacity: 0.9;
+    border-radius: 25px;
 }
 .radio-reason-manual-lead {
     margin-left: 25px;
