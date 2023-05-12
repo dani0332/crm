@@ -26,7 +26,7 @@ class Auditable extends Component
 
     /**
      * Get the view / contents that represent the component.
-     * 
+     *
      *
      * @return \Illuminate\Contracts\View\View|\Closure|string
      */
@@ -41,6 +41,12 @@ class Auditable extends Component
             ->where('auditable_type', $this->auditableType);
 
         if ($this->auditableType == CarQuote::class) {
+
+            $query->addSelect('car_quote_plan_details.plan_name', 'car_quote_plan_details.provider_name')
+                ->leftJoin('car_quote_plan_details', function($join) {
+                    $join->on('audits.auditable_id', '=' , 'car_quote_plan_details.id')
+                        ->where('audits.auditable_type',  CarQuotePlanDetail::class);
+                });
 
             $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $auditableId)->with('carQuote')->first();
 
