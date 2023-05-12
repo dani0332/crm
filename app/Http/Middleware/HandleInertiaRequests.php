@@ -119,10 +119,10 @@ class HandleInertiaRequests extends Middleware
         ])) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
-                    ->add('Advisor Conversion', url('reports/advisor-conversion'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Advisor Performance', url('reports/advisor-performance'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Advisor Distribution', url('reports/advisor-distribution'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Lead Distribution', url('reports/lead-distribution'), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->add('Advisor Conversion', route('advisor-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->add('Advisor Performance', route('advisor-performance-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->add('Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->add('Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 

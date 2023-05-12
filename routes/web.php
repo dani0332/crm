@@ -225,8 +225,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
 
-        Route::get('health-cards', [HealthQuoteController::class, 'cardsView']);
-        Route::get('health-export', [CRUDController::class, 'exportHealthLeads']);
+        Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
+        Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
+
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);
 
         Route::resource('home', CRUDController::class);

@@ -306,6 +306,7 @@ class CarQuoteService extends BaseService
             $childRecord = $this->createDetailEntity($id);
         }
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
+        info('before update - Old advisor assigned date is : '.$oldAdvisorAssignedDate);
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
@@ -1240,6 +1241,8 @@ class CarQuoteService extends BaseService
 
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
 
+            info('after update Old advisor assigned date is : '.$oldAdvisorAssignedDate);
+
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate); // update new and previous (if applicable) advisor counts in lead allocation table
@@ -1335,7 +1338,7 @@ class CarQuoteService extends BaseService
         }
         info('new advisor after update is : '.json_encode($newAdvisorAllocationRecord));
         if ($previousAdvisorId != null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
-            if ($lead->auto_assigned) {
+            if ($lead->auto_assigned || $lead->auto_assigned == null) {
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
                     $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;

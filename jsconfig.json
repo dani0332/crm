@@ -1,9 +1,12 @@
 {
   "compilerOptions": {
       "baseUrl": ".",
-      "paths": {
-          "@/*": ["resources/js/*"]
-      },
+      "checkJs": false,
+      "target": "es6",
+      "module": "es2015",
+      "moduleResolution": "node",
+      "sourceMap": true,
+      "allowSyntheticDefaultImports": true,
       "jsx": "preserve"
   },
   "exclude": ["node_modules", "public"]
