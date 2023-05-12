@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
+use App\Models\PersonalQuote;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -147,8 +148,7 @@ class PetQuoteController extends Controller
 
     public function getLeadHistory($id)
     {
-        $logs = (new CentralService())->getLeadAuditHistory(quoteTypeCode::Pet, $id);
-        dd($logs);
-        // return PetQuoteRepository::getLeadHistory($id);
+        $quote = PetQuoteRepository::getBy('id', $id);
+        return (new CentralService())->getLeadAuditHistory(PersonalQuote::class, $quote->id);
     }
 }

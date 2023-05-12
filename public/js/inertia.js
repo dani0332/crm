@@ -10616,8 +10616,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
               case 0:
                 historyLoading.value = true;
                 _context.next = 3;
-                return fetch( // `quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`
-                "/personal-quotes/getLeadHistory/".concat(page.props.quote.id));
+                return fetch("/personal-quotes/getLeadHistory/".concat(page.props.quote.id));
               case 3:
                 res = _context.sent;
                 _context.next = 6;
@@ -10639,28 +10638,17 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     }();
     var historyDataTable = [{
       text: 'Modified At',
-      value: 'updated_at'
+      value: 'ModifiedAt'
     }, {
       text: 'Modified By',
       value: 'ModifiedBy'
     }, {
       text: 'Notes',
-      value: 'notes'
+      value: 'NewNotes'
     }, {
       text: 'Lead Status',
-      value: 'quote_status'
+      value: 'NewStatus'
     }];
-    var computedHistoryData = (0,vue__WEBPACK_IMPORTED_MODULE_8__.computed)(function () {
-      if (!historyData.value) return [];
-      return historyData.value.lead_history.map(function (item) {
-        return {
-          updated_at: item.updated_at,
-          ModifiedBy: '',
-          notes: item.notes,
-          quote_status: item.quote_status.text
-        };
-      });
-    });
     var modals = (0,vue__WEBPACK_IMPORTED_MODULE_8__.reactive)({
       duplicate: false
     });
@@ -10702,7 +10690,6 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       historyData: historyData,
       onLoadHistoryData: onLoadHistoryData,
       historyDataTable: historyDataTable,
-      computedHistoryData: computedHistoryData,
       modals: modals,
       leadDuplicateForm: leadDuplicateForm,
       openDuplicate: openDuplicate,
@@ -30257,11 +30244,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     key: 1,
     "table-class-name": "compact",
     headers: $setup.historyDataTable,
-    items: $setup.computedHistoryData || [],
+    items: $setup.historyData || [],
     "border-cell": "",
     "hide-rows-per-page": "",
     "rows-per-page": 15,
-    "hide-footer": $setup.computedHistoryData.length < 15
+    "hide-footer": $setup.historyData.length < 15
   }, {
     "item-lead_history": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref) {
       var item = _ref.item;

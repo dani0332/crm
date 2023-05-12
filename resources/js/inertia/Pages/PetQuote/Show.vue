@@ -39,7 +39,6 @@ const historyData = ref(null);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
     const res = await fetch(
-    // `quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`
     `/personal-quotes/getLeadHistory/${page.props.quote.id}`,
   );
   const finalRes = await res.json();
@@ -48,23 +47,12 @@ const onLoadHistoryData = async () => {
 };
 
 const historyDataTable = [
-  { text: 'Modified At', value: 'updated_at' },
+  { text: 'Modified At', value: 'ModifiedAt' },
   { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'notes' },
-  { text: 'Lead Status', value: 'quote_status' },
+  { text: 'Notes', value: 'NewNotes' },
+  { text: 'Lead Status', value: 'NewStatus' },
 ];
 
-const computedHistoryData = computed(() => {
-  if (!historyData.value) return [];
-  return historyData.value.lead_history.map(item => {
-    return {
-      updated_at: item.updated_at,
-      ModifiedBy: '',
-      notes: item.notes,
-      quote_status: item.quote_status.text,
-    };
-  });
-});
 
 const modals = reactive({
   duplicate: false,
@@ -378,11 +366,11 @@ const onCreateDuplicate = isValid => {
         v-else
         table-class-name="compact"
         :headers="historyDataTable"
-        :items="computedHistoryData || []"
+        :items="historyData || []"
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
-        :hide-footer="computedHistoryData.length < 15"
+        :hide-footer="historyData.length < 15"
       >
         <template #item-lead_history="{ item }">
           {{ item }}

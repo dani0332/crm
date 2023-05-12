@@ -118,9 +118,8 @@ class CentralService
         }
     }
 
-    public function getLeadAuditHistory($leadType, $leadId)
+    public function getLeadAuditHistory($auditable, $leadId)
     {
-        $leadType = ucwords($leadType);
         $audits = DB::table('audits as a')
         ->select(
             DB::raw('DATE_FORMAT(a.created_at, "%d-%m-%Y %H:%i:%s") as ModifiedAt'),
@@ -134,16 +133,13 @@ class CentralService
                 ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.notes')"))
                 ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
             })
-            ->where(function ($query) use ($leadId, $leadType) {
-                $query->where('a.auditable_type', 'App\Models\\'.$leadType.'Quote')
+            ->where(function ($query) use ($leadId, $auditable) {
+                $query->where('a.auditable_type', $auditable)
                 ->where('a.auditable_id', $leadId);
             })
-            ->orWhere(function ($query) use ($leadType, $leadId) {
-                $entityDetail = $this->{strtolower($leadType).'QuoteService'}->getDetailEntity($leadId);
-                if ($entityDetail) {
-                    $query->where('a.auditable_id', $entityDetail->id)
-                        ->where('a.auditable_type', 'App\Models\\'.$leadType.'QuoteRequestDetail');
-                }
+            ->orWhere(function ($query) use ($auditable, $leadId) {
+                $query->where('a.auditable_id', $leadId)
+                    ->where('a.auditable_type', $auditable . 'QuoteRequestDetail');
             })
             ->orderBy('a.created_at', 'DESC')->get();
 
