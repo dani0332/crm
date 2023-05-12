@@ -1,0 +1,15 @@
+{
+    "travelLeadData": {
+        "travelEndPoint": "/v1-save-travel-quote",
+        "premium": "2",
+        "daysForCover": "7",
+        "nationality": "Pakistani",
+        "destination": "Canada",
+        "regionCoverFor": "UAE",
+        "travelCoverFor": "Just me",
+        "details": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s",
+        "currentlyLocated": "Outside UAE",
+        "leadStatus": "New Lead",
+        "leadStatusNotes": "Lorem Ipsum is simply dummy text"
+    }
+}

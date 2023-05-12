@@ -37,15 +37,8 @@ const setPage = newPage => {
     </x-button>
 
     <div class="text-xs lining-nums font-medium text-center">
-      <span v-if="links.last">
-        <p>Page {{ links.current }} of {{ links.last }}</p>
-        <p v-if="links.total" class="mt-1 text-gray-500">
-          Total Records {{ links.total }}
-        </p>
-      </span>
-      <span v-else>
-        Page {{ links.current }} ~ [{{ links.from }} - {{ links.to }}]
-      </span>
+      Now displaying: {{ links.from }} ~ {{ links.to }}
+      <span v-if="links.total"> of {{ links.total }} </span>
     </div>
 
     <x-button

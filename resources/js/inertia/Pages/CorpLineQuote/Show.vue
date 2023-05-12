@@ -10,6 +10,7 @@ defineProps({
   activities: Array,
   advisors: Array,
   permissions: Object,
+  typeCode: String,
 });
 
 const { isRequired } = useRules();
@@ -312,7 +313,9 @@ const activityDeleteConfirmed = () => {
   );
 };
 
-
+const isDuplicateAllowed = computed(() => {
+  return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
+});
 
 const onAssignLead = () => {
   if (!assignLead.value) {
@@ -346,7 +349,6 @@ const onAssignLead = () => {
     },
   );
 };
-
 </script>
 <template>
   <div>
@@ -355,7 +357,7 @@ const onAssignLead = () => {
       <h2 class="text-xl font-semibold">Business Quote Detail</h2>
       <div class="flex gap-2">
         <x-button
-          v-if="allowedDuplicateLOB"
+          v-if="isDuplicateAllowed"
           size="sm"
           color="#ff5e00"
           @click.prevent="openDuplicate"
@@ -767,7 +769,12 @@ const onAssignLead = () => {
     </div>
 
     <!-- Additional Contact -->
-    <customerAdditionalContacts quoteType="Business" :customerId="quote.customer_id" :quoteId="quote.id"  :contacts="customerAdditionalContacts" />
+    <customerAdditionalContacts
+      quoteType="Business"
+      :customerId="quote.customer_id"
+      :quoteId="quote.id"
+      :contacts="customerAdditionalContacts"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
