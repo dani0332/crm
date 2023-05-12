@@ -41,7 +41,7 @@ const typeOfInsuranceOptions = computed(() => {
 const currentlyInsuredWith = computed(() => {
   return page.props.form_options.currently_insured_with_options.map(
     currently_insured_with => ({
-      value: currently_insured_with.text,
+      value: currently_insured_with.id,
       label: currently_insured_with.text,
     }),
   );
@@ -194,15 +194,6 @@ function onSubmit(isValid) {
     });
   }
 }
-
-const saadOptions = computed(() => {
-  return Array.from({ length: 20 }, (_, i) => {
-    return {
-      value: i,
-      label: i + '%',
-    };
-  });
-});
 
 const carModel = reactive({
   loading: false,
