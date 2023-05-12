@@ -294,6 +294,7 @@ class AmtController extends Controller
             'permissions' => [
                 'canEditQuote' => auth()->user()->can('corpline-quotes-edit'),
             ],
+            'typeCode' => quoteTypeCode::GroupMedical,
         ]);
     }
 
