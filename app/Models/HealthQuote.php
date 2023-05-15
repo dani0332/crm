@@ -111,4 +111,14 @@ class HealthQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(HealthPlan::class, 'plan_id');
     }
+
+    public function lostReason()
+    {
+        return $this->belongsTo(LostReason::class, 'lost_reason_id');
+    }
+
+    public function healthLeadType()
+    {
+        return $this->belongsTo(HealthLeadType::class, 'lead_type_id');
+    }
 }

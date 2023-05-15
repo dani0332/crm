@@ -7,7 +7,7 @@
             <div class="x_title">
                 <h2>Customer</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('customer.index') }}" class="btn btn-warning btn-sm">Customers List</a></li>
+                    <li><a href="{{ route('customers-list') }}" class="btn btn-warning btn-sm">Customers List</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -116,7 +116,7 @@
                 <div class="col-auto mr-auto"></div>
                     <div class="col-auto">
                         @can('customers-edit')
-                            <a href="{{ route('customer.edit', ['customer' => $customer->id])}}" class='btn btn-warning btn-sm'>Edit</a>
+                            <a href="{{ route('customers-edit', ['customer' => $customer->uuid])}}" class='btn btn-warning btn-sm'>Edit</a>
                         @endcan
                     </div>
                 </div>

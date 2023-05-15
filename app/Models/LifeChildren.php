@@ -12,4 +12,9 @@ class LifeChildren extends Model implements AuditableContract
     use HasFactory, Auditable;
 
     protected $table = 'life_children';
+
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
 }

@@ -33,6 +33,5 @@ class AddSkipPlansToRenewalsUpload extends Migration
      */
     public function down()
     {
-
     }
 }

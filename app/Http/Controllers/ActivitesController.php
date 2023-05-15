@@ -233,6 +233,8 @@ class ActivitesController extends Controller
             case 8:
                 $quotetypename = 'travel';
                 break;
+            default:
+                break;
         }
 
         return $quotetypename;
