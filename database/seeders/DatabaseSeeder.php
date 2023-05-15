@@ -40,7 +40,7 @@ class DatabaseSeeder extends Seeder
             addCostPerLeadForExistingLeads::class,
             addLMSIntroEmailTemplateId::class,
             addPermissionsForReportsAndDashbords::class,
-            JetskiLookupsSeeder::class,
+            LookupSeeder::class,
             PersonalQuoteRolesPermissionSeeder::class,
             addSystemUser::class,
             addCarDripListKey::class,

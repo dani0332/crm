@@ -7,7 +7,7 @@ use App\Enums\QuoteTypes;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class JetskiLookupsSeeder extends Seeder
+class LookupSeeder extends Seeder
 {
     /**
      * Run the database seeds.
