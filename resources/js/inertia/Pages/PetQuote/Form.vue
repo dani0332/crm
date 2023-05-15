@@ -51,7 +51,7 @@ function onSubmit(isValid) {
       onError: errors => {
         console.log(quoteForm.setError(errors));
       },
-      onSuccess: response => {
+      onSuccess: () => {
         notification.success({
           title: title,
           position: 'top',
