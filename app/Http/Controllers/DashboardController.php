@@ -354,18 +354,19 @@ class DashboardController extends Controller
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $startDate = null;
         $endDate = null;
-       if(isset($request->range)){
+        if (isset($request->range)) {
             $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
             $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
-       }else{
+        } else {
             $startDate = now()->startOfDay()->format($dateFormat);
             $endDate = now()->endOfDay()->format($dateFormat);
-       }
+        }
         $filters = [
             'startDate' => $startDate,
             'endDate' => $endDate,
             'teamIds' => $request->teamFilter,
         ];
+
         return $this->dashboardService->getAdvisorLeadAssignedData($filters);
     }
 

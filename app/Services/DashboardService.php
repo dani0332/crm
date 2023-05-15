@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -131,6 +130,7 @@ class DashboardService extends BaseService
         if (isset($filters['teamIds'])) {
             $query->whereIn('teams.id', $filters['teamIds']);
         }
+
         return $query->get();
     }
 
