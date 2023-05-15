@@ -129,15 +129,8 @@ class DashboardService extends BaseService
             $query = $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$filters['startDate'], $filters['endDate']]);
         }
         if (isset($filters['teamIds'])) {
-
             $query->whereIn('teams.id', $filters['teamIds']);
         }
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-            $userIds = $this->walkTree(auth()->user()->id);
-            info('user ids for advisor conversion report are : '.json_encode($userIds));
-            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
-        }
-
         return $query->get();
     }
 

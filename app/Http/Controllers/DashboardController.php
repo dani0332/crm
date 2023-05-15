@@ -46,20 +46,21 @@ class DashboardController extends Controller
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $startDate = now()->startOfDay()->format($dateFormat);
         $endDate = now()->endOfDay()->format($dateFormat);
-        $filters = [
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'teams' => $this->getCurrentUserTeamsAndSubTeams($loggedInUserId),
-        ];
+
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
         $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
         $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
-
         $carAdvisors = $this->getUsersByTeamId(count($teamIds->toArray()) > 0 ? $teamIds->toArray() : []);
-        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
 
+        $filters = [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'teams' => $this->getCurrentUserTeamsAndSubTeams($loggedInUserId),
+            'teamIds' => $teamIds,
+        ];
+        $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
         $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
@@ -349,7 +350,23 @@ class DashboardController extends Controller
 
     public function getTeamAdvisorConversionStats(Request $request)
     {
-        return $this->dashboardService->getAdvisorLeadAssignedData(['teamIds' => $request->teamFilter]);
+
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $startDate = null;
+        $endDate = null;
+       if(isset($request->range)){
+            $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
+       }else{
+            $startDate = now()->startOfDay()->format($dateFormat);
+            $endDate = now()->endOfDay()->format($dateFormat);
+       }
+        $filters = [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'teamIds' => $request->teamFilter,
+        ];
+        return $this->dashboardService->getAdvisorLeadAssignedData($filters);
     }
 
     public function getUsersByTeam(Request $request)
