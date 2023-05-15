@@ -1,0 +1,9 @@
+{
+    "homeData": {
+        "endPoint": "/api/v1-save-home-quote",
+        "mobileNumber": "0509876543",
+        "dummyText": "Lorem Ipsum is simply dummy text of the printing and typesetting industry",
+        "dummyAddress": "Australia Melbourne 123 Collins Street Victoria",
+        "title": "Test Title"
+    }
+}
