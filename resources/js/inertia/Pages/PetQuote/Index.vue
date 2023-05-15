@@ -363,6 +363,11 @@ function onAssignLead(isValid) {
       <template #item-possesion_type="{ pet_quote }">
         {{ pet_quote?.possession_type?.text }}
       </template>
+      <template #item-is_ecommerce="{ is_ecommerce }">
+        <div class="text-center">
+            {{ is_ecommerce ? 'Yes' : 'No' }}
+        </div>
+      </template>
     </DataTable>
 
     <Pagination

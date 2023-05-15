@@ -54,7 +54,7 @@ class PetQuoteController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
      */
     public function store(PetQuoteRequest $request)
     {
@@ -64,7 +64,7 @@ class PetQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Quote is created successfully.');
+        return back()->with('message', 'Quote is created successfully.')->with('uid', data_get($response, 'quoteUID'));
     }
 
     /**
