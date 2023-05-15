@@ -146,4 +146,9 @@ class CustomerService extends BaseService
     {
         return CustomerAdditionalContact::where(['customer_id' => $customerId, 'key' => $key])->get();
     }
+
+    public static function getCustomerByUuid($uuid)
+    {
+        return Customer::where('uuid', $uuid)->first();
+    }
 }

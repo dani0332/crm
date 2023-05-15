@@ -229,8 +229,6 @@ class CRUDController extends Controller
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
-
-            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'userMaxCap', 'todayAssignmentCount'));
         }
 
         return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'userMaxCap', 'todayAssignmentCount'));

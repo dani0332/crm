@@ -6,10 +6,10 @@ use App\Enums\GenericRequestEnum;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
-use App\Models\Nationality;
 use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
+use App\Services\LookupService;
 use App\Services\TransAppService;
 use App\Traits\GenericQueriesAllLobs;
 use DataTables;
@@ -25,17 +25,20 @@ class CustomerController extends Controller
     private $transAppService;
     private $berlinService;
     private $customerService;
+    private $lookupService;
 
     public function __construct(
         CustomerUploadService $customerUploadFileService,
         TransAppService $transAppService,
         BerlinService $berlinService,
-        CustomerService $customerService
+        CustomerService $customerService,
+        LookupService $lookupService
     ) {
         $this->customerUploadFileService = $customerUploadFileService;
         $this->transAppService = $transAppService;
         $this->berlinService = $berlinService;
         $this->customerService = $customerService;
+        $this->lookupService = $lookupService;
         $this->middleware('permission:customers-list', ['only' => ['index', 'store']]);
         $this->middleware('permission:customers-edit', ['only' => ['edit', 'update']]);
     }
@@ -55,13 +58,7 @@ class CustomerController extends Controller
                 $data->where($request->searchtype, $request->searchfield);
             }
 
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('customers.actions', compact('row'))->render();
-                })
-                ->rawColumns(['action'])
-                ->make(true);
+            return DataTables::of($data)->addIndexColumn()->make(true);
         }
 
         return view('customers.view');
@@ -73,8 +70,10 @@ class CustomerController extends Controller
      * @param  \App\Customer  $carquote
      * @return \Illuminate\Http\Response
      */
-    public function show(Customer $customer)
+    public function show($uuid)
     {
+        $customer = $this->customerService->getCustomerByUuid($uuid);
+
         return view('customers.show', compact('customer'));
     }
 
@@ -84,9 +83,10 @@ class CustomerController extends Controller
      * @param  \App\Customer  $customer
      * @return \Illuminate\Http\Response
      */
-    public function edit(Customer $customer)
+    public function edit($uuid)
     {
-        $nationalities = Nationality::all();
+        $customer = $this->customerService->getCustomerByUuid($uuid);
+        $nationalities = $this->lookupService->getNationalities();
 
         return view('customers.edit', compact('customer', 'nationalities'));
     }
@@ -97,12 +97,14 @@ class CustomerController extends Controller
      * @param  \App\Customer  $customer
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Customer $customer)
+    public function update(Request $request, $uuid)
     {
+        $customer = $this->customerService->getCustomerByUuid($uuid);
+
         $this->validate($request, [
             'first_name' => 'required|max:120',
             'last_name' => 'required|max:120',
-            'email' => 'required|email',
+            'email' => 'required|email:rfc,dns|max:150',
 
         ]);
         $existingCustomer = $customer;
@@ -123,7 +125,7 @@ class CustomerController extends Controller
             dispatch(new MAWelcomeJob($customer, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
         }
 
-        return redirect('customer/'.$customer->id)->with('success', 'Customer has been Updated');
+        return redirect('customer/'.$customer->uuid)->with('success', 'Customer information has been updated.');
     }
 
     /**
@@ -191,7 +193,6 @@ class CustomerController extends Controller
                 Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
                 $quoteObject->customer->update(['email' => $request->value]);
             } else {
-
                 if ($request->isInertia) {
                     return redirect()->back()->withErrors(['Email Address already in use for a customer.']);
                 }
