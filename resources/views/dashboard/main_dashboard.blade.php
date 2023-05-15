@@ -376,11 +376,15 @@
 
         $('#team-filter').on('change', function (e) {
             var teamFilteValue = $('#team-filter').val();
+            var selectedDate = $('#reloadDailyStatsDate').val();
             leadAssignCountByAdvisorChart.showLoading();
             $.ajax({
                 url: "/get-team-conversion-stats",
                 type: "post",
-                data: { 'teamFilter' : teamFilteValue} ,
+                data: {
+                    'teamFilter' : teamFilteValue,
+                    'range' : selectedDate
+                } ,
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
