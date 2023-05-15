@@ -76,6 +76,7 @@ class LifeQuoteController extends Controller
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
 
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
+        dd($advisors);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 

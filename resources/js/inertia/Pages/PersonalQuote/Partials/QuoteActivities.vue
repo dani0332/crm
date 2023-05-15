@@ -52,6 +52,7 @@ const activityForm = useForm({
 });
 
 const addActivity = () => {
+console.log(page.props.advisors);
   activityForm.reset();
   activityActionEdit.value = false;
   modals.activity = true;
@@ -144,7 +145,7 @@ const onDeleteConfirmation = () => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">
-        Lead Activities
+        New Lead Activity
         <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
       </h3>
       <x-button size="sm" color="orange" @click.prevent="addActivity">
