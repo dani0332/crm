@@ -70,7 +70,8 @@ function onSubmit(isValid) {
     <Head title="Pet Quote" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">
-        Pet Quote <span v-if="quote">{{ quote?.uuid }}</span>
+        <span v-if="quote">Edit Pet</span>
+        <span v-else>Create Pet</span>
       </h2>
       <div>
         <Link href="/personal-quotes/pet">
@@ -88,7 +89,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.first_name"
           type="text"
-          label="First Name*"
+          label="FIRST NAME *"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.first_name"
@@ -97,7 +98,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.last_name"
           type="text"
-          label="Last Name*"
+          label="LAST NAME *"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.last_name"
@@ -106,7 +107,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.email"
           type="email"
-          label="Email*"
+          label="EMAIL  *"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.email"
@@ -115,7 +116,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.mobile_no"
           type="tel"
-          label="Phone Number*"
+          label="MOBILE NUMBER *"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
@@ -140,7 +141,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.pet_type_id"
           type="text"
           maxlength="3"
-          label="TYPE OF PET*"
+          label="TYPE OF PET *"
           :rules="[isRequired]"
           :options="
             pet_types.map(item => ({
@@ -154,7 +155,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.breed_of_pet1"
           type="tel"
-          label="BREED OF PET*"
+          label="BREED OF PET *"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.breed_of_pet1"
@@ -163,7 +164,7 @@ function onSubmit(isValid) {
         <x-select
           v-model="quoteForm.pet_age_id"
           type="number"
-          label="AGE OF PET*"
+          label="AGE OF PET *"
           :rules="[isRequired]"
           :options="
             pet_ages.map(item => ({
@@ -223,7 +224,7 @@ function onSubmit(isValid) {
         />
         <x-select
           v-model="quoteForm.gender"
-          label="GENDER*"
+          label="GENDER *"
           :rules="[isRequired]"
           :options="[
             { value: 'Male', label: 'Male' },
@@ -234,7 +235,7 @@ function onSubmit(isValid) {
         />
         <x-select
           v-model="quoteForm.ilivein_accommodation_type_id"
-          label="ACCOMMODATION TYPE*"
+          label="ACCOMMODATION TYPE *"
           :rules="[isRequired]"
           :options="
             accomodation_types.map(item => ({
@@ -247,7 +248,7 @@ function onSubmit(isValid) {
         />
         <x-select
           v-model="quoteForm.iam_possesion_type_id"
-          label="POSSESION TYPE *"
+          label="POSSESION TYPE  *"
           :rules="[isRequired]"
           :options="
             possession_types.map(item => ({

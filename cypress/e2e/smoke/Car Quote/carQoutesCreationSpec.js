@@ -1,15 +1,14 @@
-
 import CarLeadPage from '../../../pageObjects/CarLeadPage';
 import CommonPage from '../../../pageObjects/CommonPage';
-let carLeadData=require('../../../fixtures/carLeadData')
-let qouteData=require('../../../fixtures/qoutesData')
+let carLeadData = require('../../../fixtures/carLeadData')
+let qouteData = require('../../../fixtures/qoutesData')
 describe('Car qoutes', () => {
 
-  const commonPage=new CommonPage()
+  const commonPage = new CommonPage()
   const carLeadPage = new CarLeadPage()
 
-  beforeEach(()=>{
-    cy.loginByCookies(Cypress.env('imcrm_session'),Cypress.env('XSRF-TOKEN'))
+  beforeEach(() => {
+    cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
     cy.runRoutes()
   })
 
@@ -19,10 +18,10 @@ describe('Car qoutes', () => {
 
     commonPage.getFirstNameField(qouteData.personalInfo.firstName)
     commonPage.getLastNameField(qouteData.personalInfo.lastName)
-    commonPage.getDOB(qouteData.personalInfo.month,qouteData.personalInfo.year,qouteData.personalInfo.day)
+    commonPage.getDOB(qouteData.personalInfo.month, qouteData.personalInfo.year, qouteData.personalInfo.day)
     commonPage.getMobileNumber(qouteData.personalInfo.phoneNumber)
     commonPage.getEmail(qouteData.personalInfo.email)
-    commonPage.getNationalityId(carLeadData.carLeadData.nationality)  
+    commonPage.getNationalityId(carLeadData.carLeadData.nationality)
     carLeadPage.getUaeLicenseHeldFor(carLeadData.carLeadData.licenseHeldFor)
     carLeadPage.getBackHomeLicense(carLeadData.carLeadData.backHome)
     carLeadPage.getCarMakeId(carLeadData.carLeadData.carMakeId)

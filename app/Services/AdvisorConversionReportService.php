@@ -28,8 +28,8 @@ class AdvisorConversionReportService extends BaseService
         $query = CarQuote::query()
             ->select(
                 'users.id as advisorId',
-                'quote_batches.start_date as start_date',
-                'quote_batches.end_date as end_date',
+                DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
+                DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
                 'quote_batches.name as batch_name',
                 'users.name as advisor_name',
                 'quote_batches.id as quote_batch_id',
@@ -51,7 +51,7 @@ class AdvisorConversionReportService extends BaseService
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+        if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
             $userIds = $this->walkTree(auth()->user()->id);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
@@ -104,7 +104,13 @@ class AdvisorConversionReportService extends BaseService
             ->orderBy('id')
             ->get()
             ->keyBy('id')
-            ->map(fn ($batch) => $batch->name.'-('.$batch->start_date.' to '.$batch->end_date.')')
+            ->map(function ($batch) {
+                $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+                $start_date = Carbon::parse($batch->start_date)->format($dateFormat);
+                $end_date = Carbon::parse($batch->end_date)->format($dateFormat);
+
+                return $batch->name.'-('.$start_date.' to '.$end_date.')';
+            })
             ->toArray();
         $tiers = Tier::query()
             ->select('name', 'id')

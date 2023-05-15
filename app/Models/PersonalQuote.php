@@ -233,4 +233,9 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Customer::class);
     }
+
+    public function leadHistory()
+    {
+        return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
+    }
 }

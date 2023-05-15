@@ -9,7 +9,7 @@ class CommonPage {
   }
 
   getFirstNameField(first_name) {
-    return cy.get('input[name="first_name"]').should('be.visible').clear().type(first_name)
+    return cy.get('input#first_name').should('be.visible').clear().type(first_name)
   }
 
   getLastNameField(last_name) {
@@ -50,6 +50,10 @@ class CommonPage {
     })
   }
 
+  getHeadingAssertion(heading) {
+    return cy.get('.x_title').contains(heading).should('be.visible')
+  }
+
   getDropdownByName(dropdownName, value) {
     cy.get('h4.text-sm').contains(dropdownName).parent().within(() => {
       cy.get('.w-full.border.border-gray-300').should('be.visible').click()
@@ -75,6 +79,89 @@ class CommonPage {
       cy.get('button[id="headlessui-combobox-button-2"]').should('be.visible').click()
       cy.get('span.flex-1.truncate').contains(value).should('be.visible').click()
     })
+  }
+
+  getButtonByName(name) {
+    return cy.get('button[type="submit"]').contains(name).should('be.visible').click()
+  }
+
+  getPopUpAssertion(text) {
+    return cy.get('div.alert.alert-success').contains(text).should('be.visible')
+  }
+
+  //Lead Status
+  getLeadStatus(leadStatus) {
+    return cy.get('select#leadStatus').should('be.visible').select(leadStatus)
+  }
+
+  getNotesField(notes) {
+    return cy.get('textarea#notes').should('be.visible').clear().type(notes)
+  }
+
+  //Add Activity
+  getModalAssertion() {
+    return cy.get('div.modal-header').contains('New Lead Activity').should('be.visible')
+  }
+
+  getTitleField(title) {
+    return cy.get('input#email').should('be.visible').type(title, { force: true })
+  }
+
+  getActivityDescriptionField(description) {
+    return cy.get('textarea#description').should('be.visible').type(description, { force: true })
+  }
+
+  getAsigneeDropdown(assignee) {
+    return cy.get('select#activity-assignee').should('be.visible').select(assignee)
+  }
+
+  getDueDateField() {
+    return cy.get('input#due_date').should('be.visible').click()
+  }
+
+  selectDate(date) {
+    return cy.get('.available').eq(date).click()
+  }
+
+  getApplyButton() {
+    return cy.get('button[type="button"]').contains('Apply').should('be.visible').click()
+  }
+
+  //Delete Activity
+  getDeleteActivityButton() {
+    return cy.get('button#activity-edit-btn').contains('Delete').should('be.visible').click()
+  }
+
+  //Add Additional Contact
+  getAdditionalContactButton() {
+    return cy.get('button#additional-contact-add-btn').should('be.visible').click()
+  }
+
+  getContactType(type) {
+    return cy.get('select#additional_contact_type').should('be.visible').select(type)
+  }
+
+  getContactFeild(value) {
+    return cy.get('input#additional_contact').should('be.visible').type(value)
+  }
+
+  getAddContactButton() {
+    return cy.get('button#additional-contact-modal-add-btn').should('be.visible').click()
+  }
+
+  //Delete Additional Contact
+  getDeleteAdditionalContactButton() {
+    return cy.get('button.btn.btn-danger.btn-sm').should('be.visible').click()
+  }
+
+  //Load History Data 
+  getLoadHistoryDataButton() {
+    return cy.get('button#loadHistoryDataBtn').should('be.visible').click()
+  }
+
+  //View Audit Logs
+  getViewAuditLogsButton() {
+    return cy.get('button#auditablebtn').should('be.visible').click()
   }
 
 

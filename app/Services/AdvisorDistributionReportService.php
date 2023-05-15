@@ -52,7 +52,7 @@ class AdvisorDistributionReportService extends BaseService
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             $query->where('users.id', auth()->user()->id);
         } else {
-            if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+            if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
                 $userIds = $this->walkTree(auth()->user()->id);
                 info('user ids for advisor conversion report are : '.json_encode($userIds));
                 $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
