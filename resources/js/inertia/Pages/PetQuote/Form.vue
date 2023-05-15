@@ -7,6 +7,7 @@ const props = defineProps({
   pet_types: Object,
   accomodation_types: Object,
   possession_types: Object,
+  flash: Object,
 });
 
 const quoteForm = useForm({
@@ -57,6 +58,10 @@ function onSubmit(isValid) {
         });
 
         setTimeout(function () {
+          const uuid = props.flash?.uid;
+          if (uuid) {
+            redirectUrl = `/personal-quotes/pet/${uuid}`;
+          }
           router.get(redirectUrl);
         }, 500);
       },
