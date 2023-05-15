@@ -25,7 +25,7 @@ steps:
 #  name: privkey
 #  displayName: 'Download cert file'
 #  inputs:
-#    secureFile: 'imcrm_privkey.pem'
+#    secureFile: 'imcrm_privkey.pem'    
 #- script: |
 #    cp $(fullchain.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
 #    cp $(privkey.secureFilePath) $(System.DefaultWorkingDirectory)/docker/
