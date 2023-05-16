@@ -1,23 +1,10 @@
 <style>
-.tooltip-inner:has(> .wide-tip) {
-    max-width: 400px;
-    text-align: left;
-    padding: 0.9rem;
-    opacity: 0.9;
-    border-radius: 25px;
-    background-color: #FFF;
-    color: #73879C;
-    border: 1px solid #73879C;
-}
 .radio-reason-manual-lead {
     margin-left: 25px;
 }
 .reason-manual-lead-label {
     text-decoration-line: underline;
     text-decoration-style: dotted;
-}
-.modal-content {
-    width: 80%;
 }
 </style>
 <div class="modal fade" id="createCarLeadModal" name="createCarLeadModal" tabindex="-1" role="dialog"
