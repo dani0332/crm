@@ -89,11 +89,14 @@ Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTie
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
-Route::middleware(['auth', 'last_login_check'])->get('/home', function () {
-    return view('home');
-});
-
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+    Route::get('leadsearch', function () {
+        return redirect('home');
+    });
+
+    Route::get('home', function () {
+        return view('home');
+    });
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
