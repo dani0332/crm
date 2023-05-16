@@ -63,28 +63,28 @@ class CarQuotePayment extends BaseModel
                 if ($carQuote) {
                     if (parent::saveForm($request, $update)) {
                         // ftc-form-delete schedule on 7th June 2023
-//                        $advisorEmail = $carQuote->advisor_id()->first()->email;
-//                        $templateParams = [
-//                            'notes' => $request->input('comment', ''),
-//                            'first_name' => $carQuote->first_name,
-//                            'last_name' => $carQuote->last_name,
-//                            'code' => $carQuote->code,
-//                        ];
-//                        if ($advisorEmail) {
-//                            $params = [
-//                                'to' => $advisorEmail,
-//                                'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
-//                                'templateName' => 'notification',
-//                                'templateParams' => $templateParams,
-//                            ];
-//
-//                            $oeId = $carQuote->oe_id()->first();
-//                            if ($oeId && $oeId->email) {
-//                                $params['cc'] = $oeId->email;
-//                            }
-//
-//                            dispatch(new FTCMailServiceJob($params));
-//                        }
+                        //                        $advisorEmail = $carQuote->advisor_id()->first()->email;
+                        //                        $templateParams = [
+                        //                            'notes' => $request->input('comment', ''),
+                        //                            'first_name' => $carQuote->first_name,
+                        //                            'last_name' => $carQuote->last_name,
+                        //                            'code' => $carQuote->code,
+                        //                        ];
+                        //                        if ($advisorEmail) {
+                        //                            $params = [
+                        //                                'to' => $advisorEmail,
+                        //                                'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
+                        //                                'templateName' => 'notification',
+                        //                                'templateParams' => $templateParams,
+                        //                            ];
+                        //
+                        //                            $oeId = $carQuote->oe_id()->first();
+                        //                            if ($oeId && $oeId->email) {
+                        //                                $params['cc'] = $oeId->email;
+                        //                            }
+                        //
+                        //                            dispatch(new FTCMailServiceJob($params));
+                        //                        }
 
                         // when transaction declined
                         $transcDeclinedId = LookUpModel::getLookModel('QuoteStatus', ['code', '=', 'transaction_declined']);
