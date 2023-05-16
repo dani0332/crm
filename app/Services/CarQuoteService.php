@@ -1249,6 +1249,8 @@ class CarQuoteService extends BaseService
 
             $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
 
+            $lead->auto_assigned = false;
+
             $lead->save();
 
             if (isset($request->assignment_type) && $request->assignment_type == GenericRequestEnum::ASSIGN_WITH_EMAIL) {
@@ -1342,7 +1344,6 @@ class CarQuoteService extends BaseService
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
                     $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                    $lead->auto_assigned = false;
                 }
             } else {
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {

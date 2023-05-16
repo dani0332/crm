@@ -541,7 +541,7 @@ class LeadAllocationService extends BaseService
                             $carQuote->advisor_id = $userId;
                             $carQuote->tier_id = $selectedTier->id;
                             $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
-
+                            $carQuote->auto_assigned = true;
                             if ($carQuote->quote_batch_id == null) {
                                 $quoteBatch = QuoteBatches::latest()->first();
                                 info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$carLead->uuid);
