@@ -469,7 +469,7 @@ class CRUDController extends Controller
             $listQuotePlans = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             //$listQuotePlans = $this->carQuoteService->getPlans($id);
-            $listQuotePlans = [];
+            $listQuotePlans = [];//todo: remove this
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
