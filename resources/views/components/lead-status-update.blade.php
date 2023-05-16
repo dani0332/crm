@@ -331,7 +331,37 @@ use App\Enums\LeadSourceEnum;
                     </div>
                 </form>
 
-                
+                <h2>Car Sold / Uncontactable Logs</h2>
+                <div id="lead-history-div">
+                    <table id="carLostQuoteLogsTable" class="table table-striped jambo_table" style="width:100%">
+                        <thead>
+                        <tr>
+                            <th>Modified At</th>
+                            <th>Modified By</th>
+                            <th>Notes</th>
+                            <th>Lead Status</th>
+                            <th>Approval Status</th>
+                            <th>Documents</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($paymentEntityModel->carLostQuoteLogs as $carLostQuoteLog)
+                            <tr>
+                                <td>{{$carLostQuoteLog->created_at}}</td>
+                                <td>{{$carLostQuoteLog->advisor->email}}</td>
+                                <td>{{$carLostQuoteLog->notes}}</td>
+                                <td>{{$carLostQuoteLog->quoteStatus->text}}</td>
+                                <td>{{$carLostQuoteLog->status}}</td>
+                                <td>
+                                    @foreach($carLostQuoteLog->documents as $document)
+                                        <p><a href="{{$document->path}}">Document</a></p>
+                                    @endforeach
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
 
             </div>
         </div>
