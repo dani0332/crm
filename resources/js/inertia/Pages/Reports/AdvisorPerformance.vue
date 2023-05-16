@@ -17,15 +17,15 @@ const tableHeader = [
   },
   {
     text: 'CREATED MANUALLY',
-    value: 'total_leads',
+    value: 'manual_created',
   },
   {
     text: 'AUTO ASSIGNED',
-    value: 'tier_0_lead_count',
+    value: 'auto_assigned',
   },
   {
     text: 'MANUALLY ASSIGNED',
-    value: 'tier_1_lead_count',
+    value: 'manually_assigned',
   },
   {
     text: 'TOTAL LEADS',
@@ -33,23 +33,23 @@ const tableHeader = [
   },
   {
     text: 'VIEW COUNT',
-    value: 'tier_3_lead_count',
+    value: 'view_count',
   },
   {
     text: 'NI',
-    value: 'tier_4_lead_count',
+    value: 'not_interested',
   },
   {
     text: 'IN PROGRESS',
-    value: 'tier_5_lead_count',
+    value: 'in_progress',
   },
   {
     text: 'BAD LEAD',
-    value: 'tier_l_lead_count',
+    value: 'bad_leads',
   },
   {
     text: 'SALE',
-    value: 'tier_h_lead_count',
+    value: 'sale_leads',
   },
 ];
 
@@ -59,6 +59,10 @@ const filters = reactive({
   teams: [],
   page: 1,
 });
+
+const calculateTotalSum = (data, key) => {
+  return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
+};
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -189,6 +193,39 @@ onMounted(() => {
       <template #item-advisor_name="item">
         <span class="font-bold"> {{ item.advisor_name }} </span>
       </template>
+      <template #body-append>
+        <tr v-if="reportData.data.length > 0" class="total-row">
+          <td class="direction-left">Total</td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'manual_created') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'auto_assigned') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'manually_assigned') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'total_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'view_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'not_interested') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'in_progress') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'bad_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'sale_leads') }}
+          </td>
+        </tr>
+      </template>
+
     </DataTable>
 
     <Pagination
