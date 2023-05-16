@@ -6,7 +6,8 @@
     "email": "im.automation4@gmail.com",
     "day": "25",
     "month": "Jan",
-    "year": "2000"
+    "year": "2000",
+    "dummyText": "Lorem Ipsum is simply dummy text of the printing and typesetting industry"
   },
   "carQouteData": {
     "emirateOfRegistrationId": "2",

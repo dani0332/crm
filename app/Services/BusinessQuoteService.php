@@ -364,7 +364,7 @@ class BusinessQuoteService extends BaseService
             $this->query->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
         }
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
-                // if user has advisor Role then fetch leads assigned to the user only
+            // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
         if (isset($request->code) && $request->code != '') {
