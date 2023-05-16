@@ -114,7 +114,7 @@ class DashboardService extends BaseService
     {
         $query = CarQuote::select(
             'users.name',
-            DB::raw('COUNT(car_quote_request.id) AS total_leads'),
+            DB::raw('CAST(COUNT(car_quote_request.id) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as total_leads'),
         )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('user_team', 'users.id', 'user_team.user_id')
