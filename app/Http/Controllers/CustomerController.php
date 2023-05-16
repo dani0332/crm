@@ -73,6 +73,9 @@ class CustomerController extends Controller
     public function show($uuid)
     {
         $customer = $this->customerService->getCustomerByUuid($uuid);
+        if (! $customer) {
+            return abort(404);
+        }
 
         return view('customers.show', compact('customer'));
     }
