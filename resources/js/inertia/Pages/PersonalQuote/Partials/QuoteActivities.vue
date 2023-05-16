@@ -54,7 +54,6 @@ const activityForm = useForm({
 });
 
 const addActivity = () => {
-console.log(page.props.advisors);
   activityForm.reset();
   activityActionEdit.value = false;
   modals.activity = true;

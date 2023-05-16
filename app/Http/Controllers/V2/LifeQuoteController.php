@@ -31,7 +31,7 @@ class LifeQuoteController extends Controller
         return inertia('LifeQuote/Index', [
             'quotes' => $lifeQuotes,
             'quoteStatuses' => $quoteStatuses,
-            'advisors' => $advisors->toArray(),
+            'advisors' => $advisors,
         ]);
     }
 
