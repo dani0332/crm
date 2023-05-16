@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\GenericRequestEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use LookUpModel;
@@ -462,5 +463,18 @@ class CarQuote extends BaseModel
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function carLostQuoteLogs()
+    {
+        return $this->hasMany(CarLostQuoteLog::class, 'car_quote_request_id');
+    }
+
+    public function pendingLostQuoteLog()
+    {
+        return $this->hasOne(CarLostQuoteLog::class, 'car_quote_request_id')->where('status' , GenericRequestEnum::PENDING);
     }
 }
