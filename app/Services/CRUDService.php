@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Models\CarLostQuoteLog;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
@@ -250,6 +251,69 @@ class CRUDService extends BaseService
         //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP) {
             SyncSIBContactJob::dispatch($entity);
+        }
+
+        if(strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+            && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable) {
+
+            if(!empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations))
+            {
+                //perform approval or rejection
+                $carLostQuoteLog = CarLostQuoteLog::where([
+                    'car_quote_request_id' => $entity->id,
+                    'id' => $request->car_lost_quote_log_id
+                ])->firstOrFail();
+
+                $lostQuoteLogData = [
+                    'status' => $request->lost_approval_status,
+                    'reason_id' => ($request->lost_approval_status == GenericRequestEnum::APPROVED) ? $request->approve_reason_id : $request->reject_reason_id,
+                    'notes' => $request->lost_notes
+                ];
+
+                $carLostQuoteLog->update($lostQuoteLogData);
+
+                if($request->lost_approval_status == GenericRequestEnum::APPROVED)
+                {
+                    //todo: remove duplicate code for file uploading
+                    $fileName = $request->mo_proof_document->getClientOriginalName();
+
+                    $azureFileName = get_guid() . '_' . $fileName;
+                    $azureFilePath = $request->file('mo_proof_document')
+                        ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
+
+                    $carLostQuoteLog->documents()->create([
+                        'name' => $fileName,
+                        'path' => $azureFilePath,
+                        'mime_type' => $request->mo_proof_document->getClientMimeType(),
+                        'created_by_id' => auth()->user()->id
+                    ]);
+                }
+            }
+            else if(auth()->user()->hasRole(RolesEnum::CarAdvisor))
+            {
+                //store request of car sold/uncontactable with proof
+                //todo: transaction handling
+                $carLostQuoteLog = $entity->carLostQuoteLogs()->create([
+                    'advisor_id' => auth()->user()->id,
+                    'quote_status_id' => $request->leadStatus,
+                    'status'          => GenericRequestEnum::PENDING
+                ]);
+
+                $fileName = $request->proof_document->getClientOriginalName();
+
+                $azureFileName = get_guid() . '_' . $fileName;
+                $azureFilePath = $request->file('proof_document')
+                    ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
+
+                $carLostQuoteLog->documents()->create([
+                    'name' => $fileName,
+                    'path' => $azureFilePath,
+                    'mime_type' => $request->proof_document->getClientMimeType(),
+                    'created_by_id' => auth()->user()->id
+                ]);
+            }
+
+
         }
 
         //Disabling - Enable for RM Deployment

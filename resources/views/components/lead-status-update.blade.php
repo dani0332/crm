@@ -40,6 +40,7 @@ use App\Enums\LeadSourceEnum;
                 format: 'DD-MM-YYYY HH:mm:ss'
             }
         });
+
         $('#leadStatus').on('change', function() {
             var lead_status_code = $(this).val();
             if (showFollowupStatuses.find((str) => str == $('#leadStatus option:selected').text())) {
@@ -56,6 +57,12 @@ use App\Enums\LeadSourceEnum;
             } else {
                 $('#lost-reason-div').hide();
                 $('#trans-div').hide();
+            }
+
+            if($(this).val() == '{{QuoteStatusEnum::CarSold}}' || $(this).val() == '{{QuoteStatusEnum::Uncontactable}}') {
+               $('.div-proof-document').show();
+            } else {
+                $('.div-proof-document').hide();
             }
 
             // Car Quote: on lead_status change hideshow next_followup_date conditionally
@@ -100,6 +107,21 @@ use App\Enums\LeadSourceEnum;
             var lead_status_code = $('#leadStatus option:selected').val();
             next_followup_date_visibility(lead_status_code);
         }
+
+        $('#lostApprovalStatus').on('change', function()
+        {
+            $('.div-approve-reasons, .div-reject-reasons, .div-mo-proof-document').hide();
+
+            if($(this).val() == '{{GenericRequestEnum::APPROVED}}') {
+                $('.div-approve-reasons').show();
+                $('.div-mo-proof-document').show();
+            }
+            else if($(this).val() == '{{GenericRequestEnum::REJECTED}}') {
+                $('.div-reject-reasons').show();
+            }
+        });
+
+        $('#leadStatus').trigger('change');
     });
 
     function next_followup_date_visibility(lead_status_code) {
@@ -117,6 +139,8 @@ use App\Enums\LeadSourceEnum;
         }
         return false;
     }
+
+
 </script>
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -126,7 +150,7 @@ use App\Enums\LeadSourceEnum;
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
-                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/update-lead-status" id="lead-status-form">
+                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/update-lead-status" id="lead-status-form" enctype="multipart/form-data">
                     {{csrf_field()}}
                     <input type="hidden" value="{{$lead->id}}" name="leadId">
                     <input type="hidden" value="{{$modeltype}}" name="modelType">
@@ -138,7 +162,9 @@ use App\Enums\LeadSourceEnum;
                             <div class="col-md-6 col-sm-6">
                                 <select @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved ||
                                     ($quoteTypeId == QuoteTypeId::Car && ($lead->quote_status_id == QuoteStatusEnum::Duplicate || $lead->quote_status_id == QuoteStatusEnum::Fake)
-                                    && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])))
+                                    && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) ||
+                                    ( ($lead->quote_status_id == QuoteStatusEnum::CarSold || $lead->quote_status_id == QuoteStatusEnum::Uncontactable) && !auth()->user()->hasRole(RolesEnum::MarketingOperations))
+                                    )
                                     disabled
                                     @endif
                                     class="form-control" id="leadStatus" name="leadStatus">
@@ -154,6 +180,60 @@ use App\Enums\LeadSourceEnum;
                             </div>
                         </div>
                         <div class="col">
+
+                            <!--               todo: check request is pending then only show form             -->
+                            @if( ($lead->quote_status_id == QuoteStatusEnum::CarSold || $lead->quote_status_id == QuoteStatusEnum::Uncontactable) && auth()->user()->hasRole(RolesEnum::MarketingOperations))
+                                <div class="col-sm-12 mb-3">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Approval Status</b> <span class='required'>*</span></label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <select class="form-control" id="lostApprovalStatus" name="lost_approval_status" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
+                                            <option @if($lead->lost_approval_status == GenericRequestEnum::PENDING) selected @endif value="{{ GenericRequestEnum::PENDING }}">{{ GenericRequestEnum::PENDING }}</option>
+                                            <option @if($lead->lost_approval_status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
+                                            <option @if($lead->lost_approval_status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 mb-3 div-reject-reasons" style="display: none;">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Rejection Reasons</b> <span class='required'>*</span></label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <select class="form-control" name="approve_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
+                                            @foreach($lostRejectReasons as $lostRejectReason)
+                                                <option value="{{$lostRejectReason->id}}">{{$lostRejectReason->text}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 mb-3 div-approve-reasons" style="display: none;">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Approval Reasons</b> <span class='required'>*</span></label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <select class="form-control" name="reject_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
+                                            @foreach($lostApproveReasons as $lostApproveReason)
+                                                <option value="{{$lostApproveReason->id}}">{{$lostApproveReason->text}}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 mb-3">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Notes</b> <span class='required'>*</span></label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <input type="text" id="lost_notes" name="lost_notes"  class="form-control">
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12 mb-3 div-mo-proof-document" style="display: none;">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Car Sold / Uncontactable Proof</b></label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <input class="form-control hide" type="file" name="mo_proof_document" id="moProofDocument" />
+                                    </div>
+                                </div>
+
+                                <input type="hidden" name="car_lost_quote_log_id" value="{{$paymentEntityModel->pendingLostQuoteLog->id}}">
+
+                            @endif
+
                             <div id="quote-next-followup-date" style="display: none;">
                                 <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Followup Date</b> <span class='required'>*</span></label>
                                 <div class="col-md-6 col-sm-6">
@@ -191,21 +271,7 @@ use App\Enums\LeadSourceEnum;
                                     @endif
                                 </div>
                                 @if($modeltype == quoteTypeCode::Car && isset($selectedlostreason) && ($lostreasons->where('id', $selectedlostreason)->first()?->text == 'Car sold' || $lostreasons->where('id', $selectedlostreason)->first()?->text == 'Uncontactable'))
-                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Approval Status</b> <span class='required'>*</span></label>
-                                <div class="col-md-6 col-sm-6">
-                                    <select class="form-control" name="lost_approval_status" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
-                                        <option @if($lead->lost_approval_status == GenericRequestEnum::PENDING) selected @endif value="{{ GenericRequestEnum::PENDING }}">{{ GenericRequestEnum::PENDING }}</option>
-                                        <option @if($lead->lost_approval_status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
-                                        <option @if($lead->lost_approval_status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
-                                    </select>
-                                </div>
-                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Rejection Reason</b><span class='required'>*</span></label>
-                                <div class="col-md-6 col-sm-6">
-                                    <input class="form-control" type="text" name="lost_approval_reason" value="{{ $lead->lost_approval_reason ?? null }}" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @else required @endif>
-                                    @if ($errors->has('lostReason'))
-                                    <span class="text-danger">{{ $errors->first('lostReason') }}</span>
-                                    @endif
-                                </div>
+
                                 @endif
                             </div>
                             <div id="trans-div" style="display: none;">
@@ -232,21 +298,43 @@ use App\Enums\LeadSourceEnum;
 
                         </div>
                     </div>
+
+                    <div class="item form-group div-proof-document" style="display: none;" >
+                        <div class="col">
+                            <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Car Sold / Uncontactable Proof</b></label>
+                            <div class="col-md-6 col-sm-6">
+                                <input class="form-control hide" type="file" name="proof_document" id="proofDocument" />
+                            </div>
+                        </div>
+                        <div class="col">
+
+                        </div>
+                    </div>
+
                     <div class="item form-group">
                         <div class="col">
 
                         </div>
                         <div class="col">
                             @cannot(PermissionsEnum::ApprovePayments)
-                            <button type="submit" style="float: right;" @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved
-                                || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
-                                || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)) disabled @endif class="btn btn-success
+                            <button type="submit" style="float: right;"
+                                    @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved
+                                    || (
+                                        ($lead->quote_status_id == QuoteStatusEnum::CarSold || $lead->quote_status_id == QuoteStatusEnum::Uncontactable) && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
+                                        )
+//                                || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
+//                                || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
+                                ) disabled @endif class="btn btn-success
                                 btn-sm" id="lead-change-status-btn">Change Status</button>
                             @endcannot
                         </div>
                     </div>
                 </form>
+
+                
+
             </div>
         </div>
     </div>
+
 </div>
