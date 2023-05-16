@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -115,7 +114,7 @@ class DashboardService extends BaseService
     {
         $query = CarQuote::select(
             'users.name',
-            DB::raw('COUNT(car_quote_request.id) AS total_leads'),
+            DB::raw('CAST(COUNT(car_quote_request.id) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as total_leads'),
         )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('user_team', 'users.id', 'user_team.user_id')
@@ -129,13 +128,7 @@ class DashboardService extends BaseService
             $query = $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$filters['startDate'], $filters['endDate']]);
         }
         if (isset($filters['teamIds'])) {
-
             $query->whereIn('teams.id', $filters['teamIds']);
-        }
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-            $userIds = $this->walkTree(auth()->user()->id);
-            info('user ids for advisor conversion report are : '.json_encode($userIds));
-            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
         return $query->get();

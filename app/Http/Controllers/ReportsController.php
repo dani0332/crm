@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
+use App\Services\AdvisorPerformanceReportService;
+use App\Services\LeadDistributionReportService;
 use Illuminate\Http\Request;
 
 class ReportsController extends Controller
@@ -37,9 +39,13 @@ class ReportsController extends Controller
         return $advisorConversionReportService->getAdvisorsAssignedLeads($filters);
     }
 
-    public function renderLeadDistributionReport()
+    public function renderLeadDistributionReport(Request $request, LeadDistributionReportService $leadDistributionReportService)
     {
-        return view('reports.lead-distribution-report');
+        return inertia('Reports/LeadDistribution', [
+            'reportData' => $leadDistributionReportService->getReportData($request),
+            'filterOptions' => $leadDistributionReportService->getFilterOptions(),
+            'defaultFilters' => $leadDistributionReportService->getDefaultFilters(),
+        ]);
     }
 
     public function renderAdvisorDistributionReport(Request $request, AdvisorDistributionReportService $advisorDistributionReportService)
@@ -51,9 +57,13 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function renderAdvisorPerformanceReport()
+    public function renderAdvisorPerformanceReport(Request $request, AdvisorPerformanceReportService $advisorPerformanceReportService)
     {
-        return view('reports.advisor-performance-report');
+        return inertia('Reports/AdvisorPerformance', [
+            'reportData' => $advisorPerformanceReportService->getReportData($request),
+            'filterOptions' => $advisorPerformanceReportService->getFilterOptions(),
+            'defaultFilters' => $advisorPerformanceReportService->getDefaultFilters(),
+        ]);
     }
 
     public function renderLeadListReport()
