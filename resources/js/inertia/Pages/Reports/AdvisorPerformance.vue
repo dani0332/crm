@@ -16,64 +16,40 @@ const tableHeader = [
     value: 'advisor_name',
   },
   {
-    text: 'Total Leads',
+    text: 'CREATED MANUALLY',
+    value: 'manual_created',
+  },
+  {
+    text: 'AUTO ASSIGNED',
+    value: 'auto_assigned',
+  },
+  {
+    text: 'MANUALLY ASSIGNED',
+    value: 'manually_assigned',
+  },
+  {
+    text: 'TOTAL LEADS',
     value: 'total_leads',
   },
   {
-    text: 'TIER 0',
-    value: 'tier_0_lead_count',
+    text: 'VIEW COUNT',
+    value: 'view_count',
   },
   {
-    text: 'TIER 1',
-    value: 'tier_1_lead_count',
+    text: 'NI',
+    value: 'not_interested',
   },
   {
-    text: 'TIER 2',
-    value: 'tier_2_lead_count',
+    text: 'IN PROGRESS',
+    value: 'in_progress',
   },
   {
-    text: 'TIER 3',
-    value: 'tier_3_lead_count',
+    text: 'BAD LEAD',
+    value: 'bad_leads',
   },
   {
-    text: 'TIER 4',
-    value: 'tier_4_lead_count',
-  },
-  {
-    text: 'TIER 5',
-    value: 'tier_5_lead_count',
-  },
-  {
-    text: 'TIER L',
-    value: 'tier_l_lead_count',
-  },
-  {
-    text: 'TIER H',
-    value: 'tier_h_lead_count',
-  },
-  {
-    text: 'TIER R',
-    value: 'tier_r_lead_count',
-  },
-  {
-    text: 'TIER 6 NON-ECOM',
-    value: 'tier_6_lead_count',
-  },
-  {
-    text: 'TIER 6 ECOM',
-    value: 'tier_6_lead_count_e',
-  },
-  {
-    text: 'TIER TR ECOM',
-    value: 'tier_tr_lead_count_e',
-  },
-  {
-    text: 'TIER TR NON-ECOM',
-    value: 'tier_tr_lead_count',
-  },
-  {
-    text: 'TOTAL LEAD COST',
-    value: 'total_lead_cost',
+    text: 'SALE',
+    value: 'sale_leads',
   },
 ];
 
@@ -84,10 +60,14 @@ const filters = reactive({
   page: 1,
 });
 
+const calculateTotalSum = (data, key) => {
+  return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
+};
+
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
-    router.visit('/reports/advisor-distribution', {
+    router.visit('/reports/advisor-performance', {
       method: 'get',
       data: cleanFilters(filters),
       preserveState: true,
@@ -103,7 +83,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit('/reports/advisor-distribution', {
+  router.visit('/reports/advisor-performance', {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -136,17 +116,13 @@ onMounted(() => {
   }
   setQueryStringFilters();
 });
-
-const calculateTotalSum = (data, key) => {
-  return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
-};
 </script>
 
 <template>
   <div>
-    <Head title="Advisor Distribution Report" />
+    <Head title="Advisor Performance Report" />
     <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
-      Advisor Distribution Report
+      Advisor Performance Report
     </h1>
 
     <x-divider class="my-4" />
@@ -183,6 +159,19 @@ const calculateTotalSum = (data, key) => {
             }))
           "
         />
+        <ComboBox
+          v-model="filters.leadSources"
+          label="Lead Source"
+          placeholder="Search by Lead Source"
+          :options="
+            Object.keys(filterOptions.leadSources).map(key => ({
+              value: key,
+              label: filterOptions.leadSources[key],
+            }))
+          "
+          :max-limit="3"
+          deselect-all
+        />
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
@@ -208,49 +197,31 @@ const calculateTotalSum = (data, key) => {
         <tr v-if="reportData.data.length > 0" class="total-row">
           <td class="direction-left">Total</td>
           <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'manual_created') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'auto_assigned') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'manually_assigned') }}
+          </td>
+          <td class="direction-center">
             {{ calculateTotalSum(reportData.data, 'total_leads') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_0_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'view_count') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_1_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'not_interested') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_2_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'in_progress') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_3_lead_count') }}
+            {{ calculateTotalSum(reportData.data, 'bad_leads') }}
           </td>
           <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_4_lead_count') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_5_lead_count') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_l_lead_count') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_h_lead_count') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_r_lead_count') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_6_lead_count') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_6_lead_count_e') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_tr_lead_count_e') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'tier_tr_lead_count') }}
-          </td>
-          <td class="direction-center">
-            {{ calculateTotalSum(reportData.data, 'total_lead_cost') }}
+            {{ calculateTotalSum(reportData.data, 'sale_leads') }}
           </td>
         </tr>
       </template>
