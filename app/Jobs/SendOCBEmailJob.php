@@ -50,12 +50,12 @@ class SendOCBEmailJob implements ShouldQueue
      * @return void
      */
     public function handle(
-       CarQuoteService $carQuoteService,
-       CRUDService $crudService,
-       UserService $userService,
-       LookupService $lookupService,
-       SendEmailCustomerService $sendEmailCustomerService,
-       RenewalsUploadService $renewalsUploadFileService
+        CarQuoteService $carQuoteService,
+        CRUDService $crudService,
+        UserService $userService,
+        LookupService $lookupService,
+        SendEmailCustomerService $sendEmailCustomerService,
+        RenewalsUploadService $renewalsUploadFileService
     ) {
 
         $this->carQuoteService = $carQuoteService;

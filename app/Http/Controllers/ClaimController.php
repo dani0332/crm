@@ -205,7 +205,7 @@ class ClaimController extends Controller
     public function show(Claim $claim)
     {
         if (Auth::user()->hasRole('CLAIMS_ADVISOR') && Auth::user()->id != $claim->assigned_to_id) {
-                return redirect()->route('claims.index')->with('message', 'Access Forbidden');
+            return redirect()->route('claims.index')->with('message', 'Access Forbidden');
         }
 
         return view('claim.show', compact('claim'));
