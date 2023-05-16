@@ -5,6 +5,7 @@ import {TabPanel} from "@headlessui/vue";
 const props = defineProps({
     plan: Object,
     genders: Object,
+    quote: Object
 });
 
 const notification = useToast();
@@ -151,7 +152,7 @@ const onTogglePlans = () => {
         .post('/quotes/car/manual-plan-toggle', {
             modelType: 'Car',
             planIds: [props.plan.id],
-            quote_uuid: usePage().props.quote.uuid,
+            quote_uuid: props.quote.uuid,
             toggle: hidePlan.value,
         })
         .then(response => {
@@ -210,12 +211,12 @@ const onTogglePlans = () => {
                                 @change="onTogglePlans"
                                 :loading="toggleLoader"
                             />
-                            <x-toggle
-                                v-model="isManual"
-                                color="success"
-                                label="Manual"
-                                :loading="toggleLoader"
-                            />
+<!--                            <x-toggle-->
+<!--                                v-model="isManual"-->
+<!--                                color="success"-->
+<!--                                label="Manual"-->
+<!--                                :loading="toggleLoader"-->
+<!--                            />-->
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">Provider Name</dt>

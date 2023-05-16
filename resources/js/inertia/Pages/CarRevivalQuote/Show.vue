@@ -16,7 +16,6 @@ defineProps({
     lostReasons: Array,
     advisors: Array,
     leadStatuses: Array,
-    quoteStatusEnum: Object,
     isBetaUser: Boolean,
     payments: Array,
     quoteRequest: Object,
@@ -33,14 +32,12 @@ defineProps({
     memberCategories: Array,
     ecomCarInsuranceQuoteUrl: String,
     genderOptions: Object,
+    quoteStatusEnum: Array
 });
 
 const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
-const dateFormat = date =>
-    date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
-
 const fixedValue = number => {
     if (number == Math.floor(number)) {
         return number;
@@ -48,7 +45,7 @@ const fixedValue = number => {
         return number.toFixed(2);
     }
 };
-console.log(page.props.quote);
+
 const modals = reactive({
     doc: false,
     docConfirm: false,
@@ -80,8 +77,6 @@ const confirmData = reactive({
 });
 
 const
-    // assignSubteam = ref(page.props.quote.health_team_type || ''),
-    assignLead = ref(null),
     activityActionEdit = ref(false),
     selectedPlan = ref(null),
     selectedPlans = ref([]),
@@ -110,14 +105,6 @@ const memberCategoryText = memberCategoryId =>
             category => category.id === memberCategoryId,
         )?.text;
     });
-
-const subTeamOptions = [
-    {value: 'RM-NB', label: 'RM-NB'},
-    {value: 'RM-Speed', label: 'RM-Speed'},
-    {value: 'EBP', label: 'EBP'},
-    {value: 'Wow-Call', label: 'Wow-Call'},
-    {value: 'No-Type', label: 'No-Type'},
-];
 
 const leadStatusOptions = computed(() => {
     return page.props.leadStatuses.map(status => ({
@@ -178,24 +165,48 @@ const plansTable = reactive({
             value: 'name',
         },
         {
-            text: 'Network Provider',
-            value: 'eligibilityName',
+            text: 'Repair Type',
+            value: 'repairType',
         },
         {
-            text: 'Base Premium',
+            text: 'Insurer Quote No.',
+            value: 'insurerQuoteNo',
+        },
+        {
+            text: 'TPL Limit',
+            value: 'tplLimit',
+        },
+        {
+            text: 'Car Trim',
+            value: 'insurerTrimText',
+        },
+        {
+            text: 'PAB cover',
+            value: 'providerName',
+        },
+        {
+            text: 'Roadside assistance',
+            value: 'providerName',
+        },
+        {
+            text: 'Oman cover TPL',
+            value: 'providerName',
+        },
+        {
+            text: 'Actual Premium',
             value: 'actualPremium',
         },
         {
-            text: 'Basmah',
-            value: 'basmah',
+            text: 'Discounted Premium',
+            value: 'discountPremium',
         },
         {
-            text: 'Policy Fee (if applicable)',
-            value: 'policyFee',
-        },
-        {
-            text: 'Total Indicative Premium (with VAT)',
+            text: 'Premium with VAT.',
             value: 'total',
+        },
+        {
+            text: 'Excess',
+            value: 'excess',
         },
         {
             text: 'Action',
@@ -208,6 +219,8 @@ const planClicked = plan => {
     selectedPlan.value = plan;
     modals.plan = true;
 };
+
+console.log(selectedPlan);
 
 const onExportPlans = () => {
     if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
@@ -390,7 +403,8 @@ const activityForm = useForm({
     status: null,
     activity_id: null,
     uuid: null,
-    isInertia: true
+    isInertia: true,
+    is_car_revival: true
 });
 
 const addActivity = () => {
@@ -613,12 +627,12 @@ const sendPolicyToClient = () => {
     }
 };
 
-onMounted(() => {
-    const isCarRevivalAdvisor = page.props.advisors.find(
-        a => a.id == page.props.quote.advisor_id,
-    );
-    if (isCarRevivalAdvisor) assignLead.value = isCarRevivalAdvisor.id;
-});
+// onMounted(() => {
+//     const isCarRevivalAdvisor = page.props.advisors.find(
+//         a => a.id == page.props.quote.advisor_id,
+//     );
+//     if (isCarRevivalAdvisor) assignLead.value = isCarRevivalAdvisor.id;
+// });
 </script>
 <template>
     <div>
@@ -637,53 +651,6 @@ onMounted(() => {
         </div>
 
         <x-divider class="my-4"/>
-        <div
-            class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
-        >
-            <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-                <div class="w-full md:w-1/2 flex gap-2 items-end">
-                    <x-select
-                        v-model="assignSubteam"
-                        label="Assign Subteam"
-                        :options="subTeamOptions"
-                        placeholder="Select Subteam"
-                        class="w-auto flex-1"
-                    />
-                    <div>
-                        <x-button
-                            color="orange"
-                            size="sm"
-                            @click.prevent="onTeamAssign"
-                            :loading="isDisabled"
-                        >
-                            Assign Team
-                        </x-button>
-                    </div>
-                </div>
-                <div
-                    v-if="!hasRole($page.props.rolesEnum.CarRevivalAdvisor)"
-                    class="w-full md:w-1/2 flex gap-2 items-end"
-                >
-                    <x-select
-                        v-model="assignLead"
-                        label="Assign Lead"
-                        :options="advisorOptions"
-                        placeholder="Select Lead"
-                        class="w-auto flex-1"
-                    />
-                    <div>
-                        <x-button
-                            color="orange"
-                            size="sm"
-                            @click.prevent="onAssignLead"
-                            :loading="isDisabled"
-                        >
-                            Assign
-                        </x-button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="p-4 rounded shadow mb-6 bg-white">
             <div class="text-sm">
@@ -830,7 +797,7 @@ onMounted(() => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-                        <dd>{{ dateFormat(quote.next_followup_date) }}</dd>
+                        <dd>{{ quote.next_followup_date }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CLAIM HISTORY</dt>
@@ -838,7 +805,7 @@ onMounted(() => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">ADVISOR ASSIGN DATE</dt>
-                        <dd>{{ dateFormat(quote.advisor_assigned_date) }}</dd>
+                        <dd>{{ quote.advisor_assigned_date }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">LEAD COST</dt>
@@ -893,7 +860,7 @@ onMounted(() => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
-                        <dd>{{ dateFormat(quote.previous_policy_expiry_date) }}</dd>
+                        <dd>{{ quote.previous_policy_expiry_date }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">Previous Import Code</dt>
@@ -905,7 +872,7 @@ onMounted(() => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">Renewal Expiry Date</dt>
-                        <dd>{{ dateFormat(quote.renewal_expiry_date) }}</dd>
+                        <dd>{{ quote.renewal_expiry_date }}</dd>
                     </div>
                 </dl>
             </div>
@@ -1090,6 +1057,15 @@ onMounted(() => {
                         </x-tag>
                     </div>
                 </template>
+                <template #item-repairType="{ repairType }">
+                    {{ repairType == 'COMP' ? 'NON-AGENCY' : repairType  }}
+                </template>
+<!--                <template #item-tplLimit="{ tplLimit }" v-for="feature in item.benefits.feature">-->
+<!--                    {{ feature.value}}-->
+<!--                </template>-->
+
+
+
                 <template #item-total="{ actualPremium, vat, basmah }">
                     {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
                 </template>
@@ -1122,7 +1098,7 @@ onMounted(() => {
                 <template #header>
                     {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
                 </template>
-                <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions"/>
+                <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" :quote="quote"/>
             </x-modal>
 
             <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
