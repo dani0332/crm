@@ -99,6 +99,10 @@ onMounted(() => {
   }
   setQueryStringFilters();
 });
+
+const calculateTotalSum = (data, key) => {
+  return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
+};
 </script>
 
 <template>
@@ -151,6 +155,30 @@ onMounted(() => {
     >
       <template #item-advisor_name="item">
         <span class="font-bold"> {{ item.advisor_name }} </span>
+      </template>
+
+      <template #body-append>
+        <tr v-if="reportData.data.length > 0" class="total-row">
+          <td class="direction-left">Total</td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'received_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'lead_created') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'total_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'unassigned_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'auto_assigned') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'manually_assigned') }}
+          </td>
+        </tr>
       </template>
     </DataTable>
 
