@@ -106,6 +106,7 @@ class LeadDistributionReportService extends BaseService
             info('tiersFilter are : '.json_encode($filters->tiers));
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
+
         return $query;
     }
 }
