@@ -27,9 +27,14 @@ class CarQuote extends BaseModel
         'created_at' => FilterTypes::DATE_BETWEEN,
         'payment_status_id' => FilterTypes::IN,
         'is_ecommerce' => FilterTypes::EXACT,
+        'quote_status_id' => FilterTypes::IN,
+        'tier_id' => FilterTypes::IN,
+        'vehicle_type_id' => FilterTypes::EXACT,
+        'car_type_insurance_id' => FilterTypes::EXACT,
         'renewal_batch' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'policy_number' => FilterTypes::NULL_CHECK,
+        'advisor_id' => FilterTypes::IN
     ];
 
     public function fullName()

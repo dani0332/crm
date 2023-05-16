@@ -3,16 +3,10 @@
 namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
-use App\Enums\LookupsEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Facades\Capi;
 use App\Models\CarQuote;
-use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\URL;
 
 class CarRevivalQuoteRepository extends BaseRepository
 {
@@ -55,36 +49,17 @@ class CarRevivalQuoteRepository extends BaseRepository
         ->where('source', LeadSourceEnum::REVIVAL)
         ->filter();
         // Custom Filters
-        $query->when(\Request::get('batch'), function ($query){
+        $query->when( request()->get('quote_batch_id'), function ($query){
             $query->whereHas('batch', function ($batch){
-                $batch->whereIn('id', \Request::get('batch'));
+                $batch->whereIn('id',  request()->get('quote_batch_id'));
             });
         });
-        $query->when(\Request::get('quote_status'), function ($query){
-            $query->whereHas('quoteStatus', function ($quoteStatus){
-                $quoteStatus->whereIn('id', \Request::get('quote_status'));
-            });
-        });
-        $query->when(\Request::get('tier'), function ($query){
-            $query->whereIn('tier_id', \Request::get('tier'));
-        });
-        $query->when(\Request::get('viehicle_type'), function ($query){
-            $query->where('vehicle_type_id', \Request::get('viehicle_type'));
-        });
-        $query->when(\Request::get('car_type_insurance'), function ($query){
-            $query->where('car_type_insurance_id', \Request::get('car_type_insurance'));
-        });
-        $query->when(\Request::get('currently_insured_with'), function ($query){
+        $query->when( request()->get('currently_insured_with'), function ($query){
             $query->whereHas('plan.insuranceProvider', function ($currentlyInsuredWith){
-                $currentlyInsuredWith->where('provider_id', \Request::get('currently_insured_with'));
+                $currentlyInsuredWith->where('provider_id',  request()->get('currently_insured_with'));
             });
         });
-        $query->when(\Request::get('advisors'), function ($query){
-            $query->whereHas('advisor', function ($currentlyInsuredWith){
-                $currentlyInsuredWith->where('advisor_id', \Request::get('advisors'));
-            });
-        });
-        $query->when(\Request::get('advisor_date_start'), function ($query){
+        $query->when( request()->get('advisor_date_start'), function ($query){
             $query->whereHas('carQuoteRequestDetail', function ($advisorAssignDate){
                 if (isset(request()->advisor_date_start) && isset(request()->advisor_date_end)) {
                     $startDate = date('Y-m-d 00:00:00', strtotime(request()->advisor_date_start));
@@ -96,6 +71,76 @@ class CarRevivalQuoteRepository extends BaseRepository
         $query->orderBy('created_at', 'desc');
 
         return $query->simplePaginate();
+    }
+
+    public function fetchGetBy($column, $value)
+    {
+        $quote = CarQuote::with([
+            'nationality',
+            'carQuoteRequestDetail' => function($carQuoteRequestDetail){
+                $carQuoteRequestDetail->with('lostReason');
+            },
+            'carMake',
+            'uaeLicenseHeldFor',
+            'carModel',
+            'emirate',
+            'carTypeInsurance',
+            'claimHistory',
+            'advisor',
+            'payments' => function($payments){
+                $payments->with('paymentStatus', 'paymentMethod');
+            },
+            'documents' => function($documents){
+                $documents->with('createdBy')->orderBy('created_at', 'DESC');
+            },
+            'vehicleType',
+            'carModelDetail',
+            'batch',
+            'tier',
+            'createdBy',
+            'updatedBy',
+            'customer' => function($customer){
+                $customer->with('additionalContactInfo');
+            },
+        ])
+            ->where([
+                $column => $value,
+                'source' => LeadSourceEnum::REVIVAL
+            ])->firstOrFail();
+
+        return $quote;
+    }
+
+    /**
+     * get all dropdown options required for form
+     *
+     * @return array
+     */
+    public function fetchGetFormOptions($isForListView = true)
+    {
+        $result = [
+            'vehicle_types' => VehicleTypeRepository::withActive()->get(),
+            'types_of_insurance' => CarTypeInsuranceRepository::withActive()->get(),
+            'currently_insured_with_options' => InsuranceProviderRepository::select('id', 'text')->orderBy('text', 'asc')->withActive()->get(),
+            'nationalities' => NationalityRepository::withActive()->get(),
+            'uae_license_help_for' => UaeLicenseHeldRepository::withActive()->get(),
+            'emirate_of_visa' => EmirateRepository::withActive()->get(),
+            'car_make' => CarMakeRepository::active()->get(),
+            'year_of_manufacture' => YearOfManufactureRepository::get(),
+            'claim_history' => ClaimHistoryRepository::withActive()->get()
+        ];
+
+        if($isForListView){
+            $result = array_merge($result, [
+                'batches' => QuoteBatchRepository::get(),
+                'payment_statuses' => PaymentStatusRepository::withActive()->get(),
+                'lead_statuses' => LeadStatusRepository::getList(QuoteTypeId::Car),
+                'tiers' => TierRepository::withActive()->get(),
+                'advisors' => AdvisorRepository::getList(quoteTypeCode::Car_Revival),
+            ]);
+        }
+
+        return $result;
     }
 
 }

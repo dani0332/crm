@@ -464,7 +464,7 @@ class CRUDController extends Controller
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $tiers = $this->lookupService->getTierR();
 
-        if($this->genericModel->modelType == quoteTypeCode::Car && str_contains(request()->url(), 'car-revival')){
+        if($this->genericModel->modelType == quoteTypeCode::Car && str_contains(request()->url(), 'carrevival')){
 
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
             $documentTypes = collect($documentTypes)->groupBy('category');

@@ -18,7 +18,7 @@ class PersonalQuoteRolesPermissionSeeder extends Seeder
     public function run()
     {
         $roles = ['_ADVISOR', '_MANAGER'];
-        $lobs = [QuoteTypes::BIKE->value, QuoteTypes::CYCLE->value, QuoteTypes::YACHT->value, QuoteTypes::JETSKI->value, quoteTypeCode::Car_Revival];
+        $lobs = [QuoteTypes::BIKE->value, QuoteTypes::CYCLE->value, QuoteTypes::YACHT->value, QuoteTypes::JETSKI->value, QuoteTypes::CAR_REVIVAL->value];
         $permissions = ['-quotes-list', '-quotes-show', '-quotes-create', '-quotes-edit', '-quotes-delete'];
 
         foreach ($lobs as $lob) {

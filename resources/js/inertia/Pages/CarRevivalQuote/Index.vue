@@ -77,7 +77,7 @@ const advisorOptions = computed(() => {
 
 <template>
   <QuoteFilters
-    dynamic_route="car-revival"
+    dynamic_route="carrevival"
     :lead-statuses="leadStatuses"
   />
 
@@ -91,10 +91,12 @@ const advisorOptions = computed(() => {
       <ExportExcel
         :data="quotesSelected"
         :columns="tableHeader"
-        :filename="'Car-Revival-List'"
+        :filename="'CarRevival-List'"
         :sheetname="'Leads'"
       >
-        <x-button size="sm" color="emerald">
+        <x-button
+
+            size="sm" color="emerald">
           Export -
           <span class="lining-nums">
             Selected: {{ quotesSelected.length }}
@@ -117,7 +119,7 @@ const advisorOptions = computed(() => {
   >
     <template #item-code="{ code, uuid }">
       <Link
-        :href="`/quotes/car-revival/${uuid}`"
+        :href="`/quotes/carrevival/${uuid}`"
         class="text-primary-500 hover:underline"
       >
         {{ code }}
