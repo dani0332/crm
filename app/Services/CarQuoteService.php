@@ -1245,6 +1245,8 @@ class CarQuoteService extends BaseService
 
             $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
 
+            $lead->auto_assigned = false;
+
             $lead->save();
 
             if (isset($request->assignment_type) && $request->assignment_type == GenericRequestEnum::ASSIGN_WITH_EMAIL) {
