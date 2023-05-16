@@ -53,7 +53,7 @@ jobs:
           CYPRESS_ECOM_OTP_EMAIL_DOMAIN_PROD: ${{ secrets.ECOM_OTP_EMAIL_DOMAIN_PROD }}
         with:
           install-command: yarn install --frozen-lockfile
-          start: yarn dev
+          # start: yarn prod
           browser: chrome
           record: true
           config-file: cypress.config.js
