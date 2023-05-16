@@ -85,7 +85,7 @@ class LifeQuoteRepository extends BaseRepository
     }
 
     /**
-     * get all dropdown options required for form
+     * get all dropdown options required for form.
      *
      * @return array
      */

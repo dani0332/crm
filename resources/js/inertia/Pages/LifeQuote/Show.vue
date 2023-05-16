@@ -1,7 +1,4 @@
 <script setup>
-import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
-import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
-
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 
 defineProps({
@@ -9,13 +6,34 @@ defineProps({
   quoteStatuses: Object,
   quoteType: String,
   activities: Object,
-  advisors: Object,
+  advisors: Array,
+  customerAdditionalContacts: Array,
   allowedDuplicateLOB: Array,
   lostReasons: Array,
   quoteStatusEnum: Object,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
+
+const modals = reactive({
+  duplicate: false,
+  activity: false,
+  activityConfirm: false,
+  addContact: false,
+  contactDeleteConfirm: false,
+  contactPrimaryConfirm: false,
+});
+
+const rules = {
+  isRequired: v => !!v || 'This field is required',
+};
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.roles[0].name ?? advisor.name + ' - ' + advisor.roles[0]?.name
+  }));
+});
 
 const page = usePage();
 const can = permission => useCan(permission);
@@ -52,6 +70,127 @@ const leadDuplicateForm = useForm({
   lob_team: [],
   lob_team_sub_selection: null,
 });
+
+
+//activities
+const activityActionEdit = ref(false);
+const activityTable = [
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Title', value: 'title' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee' },
+  { text: 'Action', value: 'action' },
+];
+
+const activityForm = useForm({
+  entityUId: page.props.quote.uuid,
+  entityId: page.props.quote.id,
+  modelType: 'Life',
+  parentType: 'Life',
+  quoteType: 2,
+  title: null,
+  description: null,
+  due_date: null,
+  assignee_id: null,
+  status: null,
+  activity_id: null,
+  uuid: null,
+});
+
+const addActivity = () => {
+  activityForm.reset();
+  activityActionEdit.value = false;
+  modals.activity = true;
+};
+
+const onActivityStatusUpdate = id => {
+  activityForm.activity_id = id;
+  activityForm.post(`/activities/updateStatus`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Lead Activity Done',
+        position: 'top',
+      });
+    },
+  });
+};
+
+const activityEdit = data => {
+  activityActionEdit.value = true;
+  modals.activity = true;
+  activityForm.activity_id = data.id;
+  activityForm.uuid = data.uuid;
+  activityForm.title = data.title;
+  activityForm.description = data.description;
+  activityForm.due_date = data.due_date
+    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
+      'T' +
+      data.due_date.split(' ')[1]
+    : null;
+  activityForm.assignee_id = data.assignee_id;
+  activityForm.status = data.status;
+};
+
+const onActivitySubmit = isValid => {
+  if (!isValid) return;
+  if (activityActionEdit.value) {
+    activityForm.post(`/activities/${activityForm.uuid}/update`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Activity Updated',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.activity = false;
+      },
+    });
+  } else {
+    activityForm.post(`/activities/create-activity`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        activityForm.reset();
+        notification.success({
+          title: 'Activity Added',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.activity = false;
+      },
+    });
+  }
+};
+
+const activityDelete = id => {
+  modals.activityConfirm = true;
+  confirmDeleteData.activity = id;
+};
+
+const activityDeleteConfirmed = () => {
+  router.post(
+    `/activities/${confirmDeleteData.activity}/delete`,
+    {
+      isInertia: true,
+      quote_uuid: page.props.quote.uuid,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.error({
+          title: 'Activity Deleted',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.activityConfirm = false;
+      },
+    },
+  );
+};
 
 const modalsDuplicate = ref(false);
 const openDuplicate = () => {
@@ -325,15 +464,139 @@ const onCreateDuplicate = isValid => {
       :lost-reasons="lostReasons"
       :quote-status-enum="quoteStatusEnum"
     />
-    <QuoteActivities
-      :can="can"
-      :quote="quote"
-      :activities="activities"
-      :advisors="advisors"
-      :quote-type="quoteType"
-    />
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Lead Activities
+          <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+        </h3>
+        <x-button size="sm" color="orange" @click.prevent="addActivity">
+          Add Activity
+        </x-button>
+      </div>
+      <x-divider class="my-4" />
 
-    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
+      <DataTable
+        table-class-name="compact"
+        :headers="activityTable"
+        :items="activities"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="activities.length < 15"
+      >
+        <template #item-status="{ status, id }">
+          <x-checkbox
+            color="emerald"
+            size="xl"
+            :modelValue="status === 1"
+            :disabled="status === 1"
+            @change="onActivityStatusUpdate(id)"
+          />
+        </template>
+        <template #item-action="item">
+          <div class="space-x-4">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              :disabled="item.status === 1"
+              @click.prevent="activityEdit(item)"
+            >
+              Edit
+            </x-button>
+            <x-button
+              size="xs"
+              color="error"
+              :disabled="item.status === 1"
+              outlined
+              @click.prevent="activityDelete(item.id)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
+      <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+        <template #header>
+          {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+        </template>
+
+        <x-form @submit="onActivitySubmit" :auto-focus="false">
+          <div class="grid gap-4">
+            <x-input
+              v-model="activityForm.title"
+              label="Title*"
+              :rules="[rules.isRequired]"
+              class="w-full"
+            />
+
+            <x-textarea
+              v-model="activityForm.description"
+              label="Description"
+              :adjust-to-text="false"
+              class="w-full"
+            />
+
+            <x-select
+              v-model="activityForm.assignee_id"
+              label="Assignee*"
+              :options="advisorOptions"
+              :rules="[rules.isRequired]"
+              placeholder="Select Assignee"
+              class="w-full"
+            />
+
+            <DatePicker
+              v-model="activityForm.due_date"
+              withTime
+              :rules="[rules.isRequired]"
+              label="Due Date*"
+            />
+          </div>
+
+          <div class="text-right space-x-4 mt-12">
+            <x-button size="sm" @click.prevent="modals.activity = false">
+              Cancel
+            </x-button>
+
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="activityForm.processing"
+              type="submit"
+            >
+              {{ activityActionEdit ? 'Update' : 'Save' }}
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
+      <x-modal v-model="modals.activityConfirm" show-close backdrop>
+        <template #header> Delete Activity </template>
+        <p>Are you sure you want to delete this activity?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.activityConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              :loading="activityForm.processing"
+              @click.prevent="activityDeleteConfirmed"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+    </div>
+
+    <customerAdditionalContacts quoteType="Life" :customerId="quote.customer_id" :quoteId="quote.id"  :contacts="customerAdditionalContacts" />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

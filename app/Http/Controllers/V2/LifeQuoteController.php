@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Repositories\ActivityRepository;
+use App\Repositories\CustomerRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
@@ -92,6 +93,7 @@ class LifeQuoteController extends Controller
             'activities' => $activities,
             'advisors' => $advisors,
             'allowedDuplicateLOB' => $duplicateAllowedLobs,
+            'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote),
             'lostReasons' => $lostReasons,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);
