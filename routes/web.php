@@ -90,6 +90,13 @@ Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redire
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+    Route::get('leadsearch', function () {
+        return redirect('home');
+    });
+
+    Route::get('home', function () {
+        return view('home');
+    });
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
@@ -121,14 +128,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
         Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
-
-        Route::get('/leadsearch', function () {
-            return redirect('/home');
-        });
-
-        Route::middleware(['auth', 'last_login_check'])->get('/home', function () {
-            return view('home');
-        });
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
