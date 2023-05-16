@@ -6,72 +6,74 @@ import PaymentTable from './Partials/PaymentTable.vue';
 import QuotePolicy from '@/inertia/Pages/PersonalQuote/Partials/QuotePolicy.vue';
 
 defineProps({
-  quote: Object,
-  allowedDuplicateLOB: Array,
-  lostReasons: Array,
-  advisors: Array,
-  leadStatuses: Array,
-  quoteStatusEnum: Array,
-  isBetaUser: Boolean,
-  payments: Array,
-  quoteRequest: Object,
-  can: Object,
-  paymentMethods: Object,
-  listQuotePlans: {
-    type: [Array, String],
-    default: () => [],
-  },
-  quoteDocuments: Object,
-  sendPolicy: Boolean,
-  cdnPath: String,
-  activities: Array,
-  documentTypes: Object,
-  customerAdditionalContacts: Array,
-  membersDetail: Array,
-  memberCategories: Array,
-  ecomCarInsuranceQuoteUrl: String,
-  genderOptions: Object,
+    quote: Object,
+    allowedDuplicateLOB: Array,
+    lostReasons: Array,
+    advisors: Array,
+    leadStatuses: Array,
+    quoteStatusEnum: Array,
+    isBetaUser: Boolean,
+    payments: Array,
+    quoteRequest: Object,
+    can: Object,
+    paymentMethods: Object,
+    listQuotePlans: {
+        type: [Array, String],
+        default: () => [],
+    },
+    quoteDocuments: Object,
+    sendPolicy: Boolean,
+    cdnPath: String,
+    activities: Array,
+    documentTypes: Object,
+    customerAdditionalContacts: Array,
+    membersDetail: Array,
+    memberCategories: Array,
+    ecomCarInsuranceQuoteUrl: String,
+    genderOptions: Object,
 });
 
 const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const fixedValue = number => {
-  if (number == Math.floor(number)) {
-    return number;
-  } else {
-    return number.toFixed(2);
-  }
+    if (number == Math.floor(number)) {
+        return number;
+    } else {
+        return number.toFixed(2);
+    }
 };
 
+console.log(page.props.listQuotePlans)
+
 const modals = reactive({
-  doc: false,
-  docConfirm: false,
-  plan: false,
-  createPlan: false,
-  activity: false,
-  activityConfirm: false,
-  addContact: false,
-  contactDeleteConfirm: false,
-  contactPrimaryConfirm: false,
+    doc: false,
+    docConfirm: false,
+    plan: false,
+    createPlan: false,
+    activity: false,
+    activityConfirm: false,
+    addContact: false,
+    contactDeleteConfirm: false,
+    contactPrimaryConfirm: false,
 });
 
 const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
 });
 
 const confirmDeleteData = reactive({
-  docs: null,
-  member: null,
-  activity: null,
-  contact: null,
+    docs: null,
+    member: null,
+    activity: null,
+    contact: null,
 });
 
 const confirmData = reactive({
-  contactPrimary: null,
+    contactPrimary: null,
 });
 
 const
@@ -84,67 +86,67 @@ const
     historyLoading = ref(false),
     isDisabled = ref(false);
 
-const { copy, copied } = useClipboard();
+const {copy, copied} = useClipboard();
 
-const { isRequired, isEmail, isNumber, isMobile } = useRules();
+const {isRequired, isEmail, isNumber, isMobile} = useRules();
 
 const onCopyText = text => {
-  copy(text);
-  if (copied)
-    notification.success({
-      title: 'Link copied to clipboard',
-      position: 'top',
-    });
+    copy(text);
+    if (copied)
+        notification.success({
+            title: 'Link copied to clipboard',
+            position: 'top',
+        });
 };
 
 const memberCategoryText = memberCategoryId =>
-  computed(() => {
-    return page.props.memberCategories.find(
-      category => category.id === memberCategoryId,
-    )?.text;
-  });
+    computed(() => {
+        return page.props.memberCategories.find(
+            category => category.id === memberCategoryId,
+        )?.text;
+    });
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
+    return page.props.leadStatuses.map(status => ({
+        value: status.id,
+        label: status.text,
+    }));
 });
 
 const leadStatusForm = useForm({
-  modelType: 'Car',
-  leadId: page.props.quote.id,
-  quote_uuid: page.props.quote.uuid,
-  assigned_to_user_id: page.props.quote.advisor_id,
-  leadStatus: page.props.quote.quote_status_id || null,
-  notes: page.props.quote.notes || null,
-  trans_code: page.props.quote.transapp_code || null,
-  lostReason: page.props.quote.lost_reason_id || null,
-  isInertia: true,
+    modelType: 'Car',
+    leadId: page.props.quote.id,
+    quote_uuid: page.props.quote.uuid,
+    assigned_to_user_id: page.props.quote.advisor_id,
+    leadStatus: page.props.quote.quote_status_id || null,
+    notes: page.props.quote.notes || null,
+    trans_code: page.props.quote.transapp_code || null,
+    lostReason: page.props.quote.lost_reason_id || null,
+    isInertia: true,
 });
 
 const onLeadStatus = () => {
-  leadStatusForm.post(`/quotes/car/${page.props.quote.id}/update-lead-status`, {
-    preserveScroll: true,
-    onError: errors => {
-      console.log(errors);
-    },
-    onSuccess: () => {
-      notification.success({
-        title: 'Lead Status Updated',
-        position: 'top',
-      });
-    },
-  });
+    leadStatusForm.post(`/quotes/car/${page.props.quote.id}/update-lead-status`, {
+        preserveScroll: true,
+        onError: errors => {
+            console.log(errors);
+        },
+        onSuccess: () => {
+            notification.success({
+                title: 'Lead Status Updated',
+                position: 'top',
+            });
+        },
+    });
 };
 
 const memberDataDocs = membersDetail => {
-  return membersDetail
-    .map(member => ({
-      id: member.id,
-      name: memberCategoryText(member.member_category_id).value,
-    }))
-    .filter(member => member.name !== undefined);
+    return membersDetail
+        .map(member => ({
+            id: member.id,
+            name: memberCategoryText(member.member_category_id).value,
+        }))
+        .filter(member => member.name !== undefined);
 };
 
 // plans
@@ -177,15 +179,15 @@ const plansTable = reactive({
         },
         {
             text: 'PAB cover',
-            value: 'providerName',
+            value: 'pab_cover',
         },
         {
             text: 'Roadside assistance',
-            value: 'providerName',
+            value: 'roadside_assistance',
         },
         {
             text: 'Oman cover TPL',
-            value: 'providerName',
+            value: 'oman_cover_tpl',
         },
         {
             text: 'Actual Premium',
@@ -211,176 +213,176 @@ const plansTable = reactive({
 });
 
 const planClicked = plan => {
-  selectedPlan.value = plan;
-  modals.plan = true;
+    selectedPlan.value = plan;
+    modals.plan = true;
 };
 
 const onExportPlans = () => {
-  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
-    notification.error({
-      title: 'Please select 3 to 5 plans to download PDF.',
-      position: 'top',
+    if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+        notification.error({
+            title: 'Please select 3 to 5 plans to download PDF.',
+            position: 'top',
+        });
+        return;
+    }
+    exportLoader.value = true;
+    const planIds = selectedPlans.value.map(p => {
+        return p.id;
     });
-    return;
-  }
-  exportLoader.value = true;
-  const planIds = selectedPlans.value.map(p => {
-    return p.id;
-  });
-  axios
-    .post(
-      '/api/v1/quotes/car/export-plans-pdf',
-      {
-        plan_ids: planIds,
-        quote_uuid: page.props.quote.uuid,
-      },
-      {
-        responseType: 'json',
-      },
-    )
-    .then(response => {
-      const link = document.createElement('a');
-      let fileName = response.data.name;
-      link.href = response.data.data;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      notification.success({
-        title: 'Plans Exported',
-        position: 'top',
-      });
-    })
-    .catch(error => {
-      console.log(error);
-    })
-    .finally(() => {
-      exportLoader.value = false;
-    });
+    axios
+        .post(
+            '/api/v1/quotes/car/export-plans-pdf',
+            {
+                plan_ids: planIds,
+                quote_uuid: page.props.quote.uuid,
+            },
+            {
+                responseType: 'json',
+            },
+        )
+        .then(response => {
+            const link = document.createElement('a');
+            let fileName = response.data.name;
+            link.href = response.data.data;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            notification.success({
+                title: 'Plans Exported',
+                position: 'top',
+            });
+        })
+        .catch(error => {
+            console.log(error);
+        })
+        .finally(() => {
+            exportLoader.value = false;
+        });
 };
 
 const onTogglePlans = toggle => {
-  toggleLoader.value = true;
+    toggleLoader.value = true;
 
-  const planIds = useArrayUnique(
-    selectedPlans.value.map(p => {
-      return p.id;
-    }),
-  ).value;
+    const planIds = useArrayUnique(
+        selectedPlans.value.map(p => {
+            return p.id;
+        }),
+    ).value;
 
-  axios
-    .post('/quotes/car/manual-plan-toggle', {
-      modelType: 'Car',
-      planIds: planIds,
-      quote_uuid: page.props.quote.uuid,
-      toggle: toggle,
-    })
-    .then(response => {
-      notification.success({
-        title: 'Plans has been updated',
-        position: 'top',
-      });
-      router.reload({
-        preserveScroll: true,
-      });
-    })
-    .catch(error => {
-      notification.error({
-        title: error,
-        position: 'top',
-      });
-    })
-    .finally(() => {
-      toggleLoader.value = false;
-      selectedPlans.value = [];
-    });
+    axios
+        .post('/quotes/car/manual-plan-toggle', {
+            modelType: 'Car',
+            planIds: planIds,
+            quote_uuid: page.props.quote.uuid,
+            toggle: toggle,
+        })
+        .then(response => {
+            notification.success({
+                title: 'Plans has been updated',
+                position: 'top',
+            });
+            router.reload({
+                preserveScroll: true,
+            });
+        })
+        .catch(error => {
+            notification.error({
+                title: error,
+                position: 'top',
+            });
+        })
+        .finally(() => {
+            toggleLoader.value = false;
+            selectedPlans.value = [];
+        });
 };
 
 const onCreatePlan = () => {
-  router.reload({
-    preserveState: true,
-    preserveScroll: true,
-    only: ['listQuotePlans'],
-    onStart: () => {
-      modals.createPlan = false;
-    },
-    onFinish: () => {
-      notification.success({
-        title: 'Plan Created',
-        position: 'top',
-      });
-    },
-  });
+    router.reload({
+        preserveState: true,
+        preserveScroll: true,
+        only: ['listQuotePlans'],
+        onStart: () => {
+            modals.createPlan = false;
+        },
+        onFinish: () => {
+            notification.success({
+                title: 'Plan Created',
+                position: 'top',
+            });
+        },
+    });
 };
 
 const onPlanError = () => {
-  modals.createPlan = false;
-  notification.error({
-    title: 'Plan Creation Failed',
-    position: 'top',
-  });
+    modals.createPlan = false;
+    notification.error({
+        title: 'Plan Creation Failed',
+        position: 'top',
+    });
 };
 
 const quoteDocumentsTable = reactive({
-  isLoading: false,
-  columns: [
-    {
-      text: 'Document Type',
-      value: 'document_type_text',
-    },
-    {
-      text: 'Document Name',
-      value: 'original_name',
-    },
-    {
-      text: 'Created At',
-      value: 'created_at',
-    },
-    {
-      text: 'Created By',
-      value: 'created_by_name',
-    },
-    {
-      text: 'Action',
-      value: 'action',
-    },
-  ],
+    isLoading: false,
+    columns: [
+        {
+            text: 'Document Type',
+            value: 'document_type_text',
+        },
+        {
+            text: 'Document Name',
+            value: 'original_name',
+        },
+        {
+            text: 'Created At',
+            value: 'created_at',
+        },
+        {
+            text: 'Created By',
+            value: 'created_by_name',
+        },
+        {
+            text: 'Action',
+            value: 'action',
+        },
+    ],
 });
 
 const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
+    modals.docConfirm = true;
+    confirmDeleteData.docs = name;
 };
 
 const confirmDeleteDoc = () => {
-  quoteDocumentsTable.isLoading = true;
-  router.post(
-    `/documents/delete`,
-    {
-      docName: confirmDeleteData.docs,
-      quoteId: page.props.quote.id,
-    },
-    {
-      preserveScroll: true,
-      onFinish: () => {
-        modals.docConfirm = false;
-        quoteDocumentsTable.isLoading = false;
-        notification.error({
-          title: 'File Deleted',
-          position: 'top',
-        });
-      },
-    },
-  );
+    quoteDocumentsTable.isLoading = true;
+    router.post(
+        `/documents/delete`,
+        {
+            docName: confirmDeleteData.docs,
+            quoteId: page.props.quote.id,
+        },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                modals.docConfirm = false;
+                quoteDocumentsTable.isLoading = false;
+                notification.error({
+                    title: 'File Deleted',
+                    position: 'top',
+                });
+            },
+        },
+    );
 };
 
 //activities
 const activityTable = [
-  { text: 'Done', value: 'status', width: 60, align: 'center' },
-  { text: 'Title', value: 'title' },
-  { text: 'Client Name', value: 'client_name' },
-  { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee' },
-  { text: 'Action', value: 'action' },
+    {text: 'Done', value: 'status', width: 60, align: 'center'},
+    {text: 'Title', value: 'title'},
+    {text: 'Client Name', value: 'client_name'},
+    {text: 'Followup Date', value: 'due_date'},
+    {text: 'Assigned To', value: 'assignee'},
+    {text: 'Action', value: 'action'},
 ];
 
 const activityForm = useForm({
@@ -401,243 +403,237 @@ const activityForm = useForm({
 });
 
 const addActivity = () => {
-  activityForm.reset();
-  activityActionEdit.value = false;
-  modals.activity = true;
+    activityForm.reset();
+    activityActionEdit.value = false;
+    modals.activity = true;
 };
 
 const onActivityStatusUpdate = id => {
-  activityForm.activity_id = id;
-  activityForm.post(`/activities/updateStatus`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Lead Activity Done',
-        position: 'top',
-      });
-    },
-  });
+    activityForm.activity_id = id;
+    activityForm.post(`/activities/updateStatus`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            notification.success({
+                title: 'Lead Activity Done',
+                position: 'top',
+            });
+        },
+    });
 };
 
 const activityEdit = data => {
-  activityActionEdit.value = true;
-  modals.activity = true;
-  activityForm.activity_id = data.id;
-  activityForm.uuid = data.uuid;
-  activityForm.title = data.title;
-  activityForm.description = data.description;
-  activityForm.due_date = data.due_date
-    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
-      'T' +
-      data.due_date.split(' ')[1]
-    : null;
-  activityForm.assignee_id = data.assignee_id;
-  activityForm.status = data.status;
+    activityActionEdit.value = true;
+    modals.activity = true;
+    activityForm.activity_id = data.id;
+    activityForm.uuid = data.uuid;
+    activityForm.title = data.title;
+    activityForm.description = data.description;
+    activityForm.due_date = data.due_date
+        ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
+        'T' +
+        data.due_date.split(' ')[1]
+        : null;
+    activityForm.assignee_id = data.assignee_id;
+    activityForm.status = data.status;
 };
 
 const onActivitySubmit = isValid => {
-  if (!isValid) return;
-  if (activityActionEdit.value) {
-    activityForm.post(`/activities/${activityForm.uuid}/update`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        activityForm.reset();
-        notification.success({
-          title: 'Activity Updated',
-          position: 'top',
+    if (!isValid) return;
+    if (activityActionEdit.value) {
+        activityForm.post(`/activities/${activityForm.uuid}/update`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                activityForm.reset();
+                notification.success({
+                    title: 'Activity Updated',
+                    position: 'top',
+                });
+            },
+            onFinish: () => {
+                modals.activity = false;
+            },
         });
-      },
-      onFinish: () => {
-        modals.activity = false;
-      },
-    });
-  } else {
-    activityForm.post(`/activities/create-activity`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        activityForm.reset();
-        notification.success({
-          title: 'Activity Added',
-          position: 'top',
+    } else {
+        activityForm.post(`/activities/create-activity`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                activityForm.reset();
+                notification.success({
+                    title: 'Activity Added',
+                    position: 'top',
+                });
+            },
+            onFinish: () => {
+                modals.activity = false;
+            },
         });
-      },
-      onFinish: () => {
-        modals.activity = false;
-      },
-    });
-  }
+    }
 };
 
 const activityDelete = id => {
-  modals.activityConfirm = true;
-  confirmDeleteData.activity = id;
+    modals.activityConfirm = true;
+    confirmDeleteData.activity = id;
 };
 
 const activityDeleteConfirmed = () => {
-  router.post(
-    `/activities/${confirmDeleteData.activity}/delete`,
-    {
-      isInertia: true,
-      quote_uuid: page.props.quote.uuid,
-    },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.error({
-          title: 'Activity Deleted',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.activityConfirm = false;
-      },
-    },
-  );
+    router.post(
+        `/activities/${confirmDeleteData.activity}/delete`,
+        {
+            isInertia: true,
+            quote_uuid: page.props.quote.uuid,
+        },
+        {
+            preserveScroll: true,
+            onSuccess: () => {
+                notification.error({
+                    title: 'Activity Deleted',
+                    position: 'top',
+                });
+            },
+            onFinish: () => {
+                modals.activityConfirm = false;
+            },
+        },
+    );
 };
 
 // additional contact
 
 const additionalContactTable = [
-  { text: 'Type', value: 'key' },
-  { text: 'Value', value: 'value' },
-  { text: 'Created At', value: 'created_at' },
-  { text: 'Action', value: 'action' },
+    {text: 'Type', value: 'key'},
+    {text: 'Value', value: 'value'},
+    {text: 'Created At', value: 'created_at'},
+    {text: 'Action', value: 'action'},
 ];
 
 const additionalContact = useForm({
-  id: null,
-  additional_contact_type: null,
-  additional_contact_val: null,
-  quote_id: page.props.quote.id,
-  customer_id: page.props.quote.customer_id,
-  quote_type: 'car',
+    id: null,
+    additional_contact_type: null,
+    additional_contact_val: null,
+    quote_id: page.props.quote.id,
+    customer_id: page.props.quote.customer_id,
+    quote_type: 'car',
 });
 
 const onAdditionalContactSubmit = isValid => {
-  if (!isValid) return;
-  additionalContact
-    .transform(data => ({
-      ...data,
-      isInertia: true,
-    }))
-    .post(`/customer-additional-contact/add`, {
-      preserveScroll: true,
-      onError: errors => {
-        notification.error({
-          title: errors.error || 'Data not saved',
-          position: 'top',
+    if (!isValid) return;
+    additionalContact
+        .transform(data => ({
+            ...data,
+            isInertia: true,
+        }))
+        .post(`/customer-additional-contact/add`, {
+            preserveScroll: true,
+            onError: errors => {
+                notification.error({
+                    title: errors.error || 'Data not saved',
+                    position: 'top',
+                });
+            },
+            onSuccess: () => {
+                additionalContact.reset();
+                notification.success({
+                    title: 'Additional Contact Added',
+                    position: 'top',
+                });
+            },
+            onFinish: () => {
+                modals.addContact = false;
+            },
         });
-      },
-      onSuccess: () => {
-        additionalContact.reset();
-        notification.success({
-          title: 'Additional Contact Added',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.addContact = false;
-      },
-    });
 };
 
 const additionalContactPrimary = data => {
-  modals.contactPrimaryConfirm = true;
-  confirmData.contactPrimary = data;
+    modals.contactPrimaryConfirm = true;
+    confirmData.contactPrimary = data;
 };
 
 const additionalContactPrimaryConfirmed = () => {
-  const isEmail = confirmData.contactPrimary.key === 'email';
-  router.post(
-    `/customer-additional-contact/${
-      isEmail ? confirmData.contactPrimary.id : 0
-    }/make-primary`,
-    {
-      isInertia: true,
-      quote_id: page.props.quote.id,
-      key: confirmData.contactPrimary.key,
-      value: confirmData.contactPrimary.value,
-      quote_type: 'car',
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Primary Contact Updated',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactPrimaryConfirm = false;
-      },
-    },
-  );
+    const isEmail = confirmData.contactPrimary.key === 'email';
+    router.post(
+        `/customer-additional-contact/${
+            isEmail ? confirmData.contactPrimary.id : 0
+        }/make-primary`,
+        {
+            isInertia: true,
+            quote_id: page.props.quote.id,
+            key: confirmData.contactPrimary.key,
+            value: confirmData.contactPrimary.value,
+            quote_type: 'car',
+        },
+        {
+            preserveScroll: true,
+            onBefore: () => {
+                contactLoader.value = true;
+            },
+            onSuccess: () => {
+                notification.success({
+                    title: 'Primary Contact Updated',
+                    position: 'top',
+                });
+            },
+            onFinish: () => {
+                contactLoader.value = false;
+                modals.contactPrimaryConfirm = false;
+            },
+        },
+    );
 };
 
 // history data
 const historyData = ref(null);
 
 const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    `/quotes/getLeadHistory?modelType=car&recordId=${page.props.quote.id}`,
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
+    historyLoading.value = true;
+    const res = await fetch(
+        `/quotes/getLeadHistory?modelType=car&recordId=${page.props.quote.id}`,
+    );
+    const finalRes = await res.json();
+    historyData.value = finalRes;
+    historyLoading.value = false;
 };
 
 const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
+    {text: 'Modified At', value: 'ModifiedAt'},
+    {text: 'Modified By', value: 'ModifiedBy'},
+    {text: 'Notes', value: 'NewNotes'},
+    {text: 'Lead Status', value: 'NewStatus'},
 ];
 
 const sendPolicyToClient = () => {
-  if (confirm('Are you sure you want to send documents to customer?')) {
-    let quoteType = page.props.modelType;
-    let quoteUuId = page.props.quote.uuid;
-    let url =
-      '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
-    axios.post(url).then(response => {
-      if (response.status == 200) {
-        notification.success({
-          title: 'Documents Sent',
-          position: 'top',
+    if (confirm('Are you sure you want to send documents to customer?')) {
+        let quoteType = page.props.modelType;
+        let quoteUuId = page.props.quote.uuid;
+        let url =
+            '/quotes/' + quoteType + '/' + quoteUuId + '/send-policy-documents';
+        axios.post(url).then(response => {
+            if (response.status == 200) {
+                notification.success({
+                    title: 'Documents Sent',
+                    position: 'top',
+                });
+            } else {
+                notification.error({
+                    title: 'Documents Sending Failed',
+                    position: 'top',
+                });
+            }
         });
-      } else {
-        notification.error({
-          title: 'Documents Sending Failed',
-          position: 'top',
-        });
-      }
-    });
-  }
+    }
 };
-
-// onMounted(() => {
-//     const isCarRevivalAdvisor = page.props.advisors.find(
-//         a => a.id == page.props.quote.advisor_id,
-//     );
-//     if (isCarRevivalAdvisor) assignLead.value = isCarRevivalAdvisor.id;
-// });
 </script>
 <template>
-  <div>
-    <Head title="Car Revival Detail" />
-    <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Car Revival Detail</h2>
-      <div class="flex gap-2">
-        <Link href="/quotes/carrevival" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div">
-            Car Revival List</x-button
-          >
-        </Link>
+    <div>
+        <Head title="Car Revival Detail"/>
+        <div class="flex justify-between items-center flex-wrap gap-2">
+            <h2 class="text-xl font-semibold">Car Revival Detail</h2>
+            <div class="flex gap-2">
+                <Link href="/quotes/carrevival" preserve-scroll>
+                    <x-button size="sm" color="primary" tag="div">
+                        Car Revival List
+                    </x-button
+                    >
+                </Link>
 
                 <Link :href="`${quote.uuid}/edit`">
                     <x-button size="sm" tag="div">Edit</x-button>
@@ -1002,13 +998,13 @@ const sendPolicyToClient = () => {
                     </x-button-group>
 
                     <x-button
-                      v-if="selectedPlans.length > 0"
-                      size="sm"
-                      color="emerald"
-                      @click.prevent="onExportPlans"
-                      :loading="exportLoader"
+                        v-if="selectedPlans.length > 0"
+                        size="sm"
+                        color="emerald"
+                        @click.prevent="onExportPlans"
+                        :loading="exportLoader"
                     >
-                      Download PDF
+                        Download PDF
                     </x-button>
 
                     <x-button
@@ -1053,11 +1049,103 @@ const sendPolicyToClient = () => {
                     </div>
                 </template>
                 <template #item-repairType="{ repairType }">
-                    {{ repairType == 'COMP' ? 'NON-AGENCY' : repairType  }}
+                    {{ repairType == 'COMP' ? 'NON-AGENCY' : repairType }}
                 </template>
-<!--                <template #item-tplLimit="{ tplLimit }" v-for="feature in item.benefits.feature">-->
-<!--                    {{ feature.value}}-->
-<!--                </template>-->
+                <template #item-tplLimit="{ benefits }">
+
+<!--                    @if(isset($quotePlanFeatures->code))-->
+<!--                    @if($quotePlanFeatures->code == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT || $quotePlanFeatures->code == CarPlanFeaturesCode::DAMAGE_LIMIT)-->
+<!--                    {{ $quotePlanFeatures->value }}-->
+<!--                    @endif-->
+<!--                    @else-->
+<!--                    @if(strtolower($quotePlanFeatures->text) == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT_TEXT)-->
+<!--                    {{ $quotePlanFeatures->value }}-->
+<!--                    @endif-->
+<!--                    @endif-->
+
+                    <p v-for="features in benefits.feature">
+                        {{ features.value }}
+                    </p>
+                </template>
+
+<!--                <table style="margin-left: -10px;margin-top: -10px !important;">-->
+<!--                    @php-->
+<!--                    $totalSelectedAddonsPriceWithVat = 0;-->
+<!--                    @endphp-->
+<!--                    @foreach ($quotePlan->addons as $quotePlanAddon)-->
+<!--                    @foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)-->
+<!--                    <?php-->
+<!--                                    if (isset($quotePlanOptions->isSelected)) {-->
+<!--                    if ($quotePlanOptions->isSelected == true && $quotePlanOptions->price != 0) {-->
+<!--                    $totalSelectedAddonsPriceWithVat += $quotePlanOptions->price + $quotePlanOptions->vat;-->
+<!--                    }-->
+<!--                    } else {-->
+<!--                    $totalSelectedAddonsPriceWithVat = 0;-->
+<!--                    }-->
+<!--                    ?>-->
+<!--                    @if(isset($quotePlanAddon->code))-->
+<!--                    @if(strtolower($quotePlanAddon->code) == strtolower(CarPlanAddonsCode::DRIVER_COVER)-->
+<!--                    ||-->
+<!--                    strtolower($quotePlanAddon->code) == strtolower(CarPlanAddonsCode::PASSENGER_COVER))-->
+<!--                    <tr style="background-color: transparent;">-->
+<!--                        <td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>-->
+<!--                        <td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>-->
+<!--                    </tr>-->
+<!--                    @endif-->
+<!--                    @elseif(strtolower($quotePlanAddon->text) == CarPlanAddonsCode::DRIVER_COVER_TEXT ||-->
+<!--                    strtolower($quotePlanAddon->text) == CarPlanAddonsCode::PASSENGER_COVER_TEXT)-->
+<!--                    <tr style="background-color: transparent;">-->
+<!--                        <td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>-->
+<!--                        <td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>-->
+<!--                    </tr>-->
+<!--                    @endif-->
+<!--                    @endforeach-->
+<!--                    @endforeach-->
+<!--                </table>-->
+
+
+                <template #item-pab_cover="{addons}">
+                    <p v-for="addon in addons">{{ addon.text }}</p>
+                </template>
+
+                <template #item-roadside_assistance="{benefits}">
+                    <p v-for="roadside_assist in benefits.roadSideAssistance">
+                        {{ roadside_assist.text + ':' + roadside_assist.value }}
+                    </p>
+                </template>
+
+<!--                <table style="margin-left: -10px;margin-top: -10px !important;">-->
+<!--                    @foreach ($quotePlan->benefits->exclusion as $key => $quotePlanExclusion)-->
+<!--                    @if(isset($quotePlanExclusion->code))-->
+<!--                    @if(strtolower($quotePlanExclusion->code) ==-->
+<!--                    strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) ||-->
+<!--                    strtolower($quotePlanExclusion->code) ==-->
+<!--                    strtolower(CarPlanExclusionsCode::OMAN_COVER))-->
+<!--                    <tr style="background-color: transparent;">-->
+<!--                        <td style="border-top: none !important;">{{ $quotePlanExclusion->text }}:</td>-->
+<!--                        <td style="border-top: none !important;">{{ $quotePlanExclusion->value }}</td>-->
+<!--                    </tr>-->
+<!--                    @endif-->
+<!--                    @endif-->
+<!--                    @endforeach-->
+<!--                    @foreach ($quotePlan->benefits->inclusion as $key => $quotePlanInclusion)-->
+<!--                    @if(isset($quotePlanInclusion->code) && (strtolower($quotePlanInclusion->code) ==-->
+<!--                    strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) ||-->
+<!--                    (strtolower($quotePlanInclusion->code) ==-->
+<!--                    strtolower(CarPlanExclusionsCode::OMAN_COVER))))-->
+<!--                    <tr style="background-color: transparent;">-->
+<!--                        <td style="border-top: none !important;">{{ $quotePlanInclusion->text }}:</td>-->
+<!--                        <td style="border-top: none !important;">{{ $quotePlanInclusion->value }}</td>-->
+<!--                    </tr>-->
+<!--                    @endif-->
+<!--                    @endforeach-->
+<!--                </table>-->
+
+                <template #item-oman_cover_tpl="{benefits}">
+                    <p v-for="oman_exclusion in benefits.exclusion">
+                        {{ oman_exclusion.text + ':' + oman_exclusion.value }}
+                    </p>
+                </template>
 
 
 
@@ -1197,14 +1285,6 @@ const sendPolicyToClient = () => {
                 </template>
             </x-modal>
         </div>
-
-
-        <!--        <QuoteDocuments-->
-        <!--            :document-types="documentTypes"-->
-        <!--            :quote-documents="quote.documents || []"-->
-        <!--            :storageUrl="storageUrl"-->
-        <!--            :quote="quote"-->
-        <!--        />-->
 
         <div class="p-4 rounded shadow mb-6 bg-white">
             <div class="flex justify-between items-center mb-4">
