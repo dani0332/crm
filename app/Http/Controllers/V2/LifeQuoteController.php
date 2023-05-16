@@ -31,7 +31,7 @@ class LifeQuoteController extends Controller
         return inertia('LifeQuote/Index', [
             'quotes' => $lifeQuotes,
             'quoteStatuses' => $quoteStatuses,
-            'advisors' => $advisors,
+            'advisors' => $advisors->toArray(),
         ]);
     }
 
@@ -76,7 +76,7 @@ class LifeQuoteController extends Controller
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
 
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
-        dd($advisors);
+
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 

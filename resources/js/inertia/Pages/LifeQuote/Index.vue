@@ -338,12 +338,13 @@ onMounted(() => {
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <Link
+        <a
+          target="_blank"
           :href="`/quotes/life/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </Link>
+        </a>
       </template>
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
