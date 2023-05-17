@@ -74,7 +74,7 @@ class Dtt extends Command
                         ->orWhere('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
                 })
                 ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
-                ->take(1)
+                ->take(10)
                 ->orderBy('id', 'DESC')->get();
 
             foreach ($leads as $carLead) {
