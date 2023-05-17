@@ -2,8 +2,6 @@
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
-const permissionsEnum = computed(() => page.props.permissionsEnum);
-const permissions = computed(() => page.props.permissions);
 const openSidebar = ref(false);
 
 router.on('navigate', () => {
@@ -182,6 +180,7 @@ const onLogout = () => {
       </header>
       <div class="flex-1 w-full p-4 mx-auto md:px-6 lg:px-8 max-w-full">
         <XNotifications inject-key="toast">
+          <ToastArea />
           <slot />
         </XNotifications>
       </div>

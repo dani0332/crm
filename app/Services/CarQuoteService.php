@@ -306,6 +306,7 @@ class CarQuoteService extends BaseService
             $childRecord = $this->createDetailEntity($id);
         }
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
+        info('before update - Old advisor assigned date is : '.$oldAdvisorAssignedDate);
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
@@ -454,6 +455,7 @@ class CarQuoteService extends BaseService
                 $title = 'Car Model';
                 break;
             case 'trim':
+            case 'car_model_detail_id':
                 $title = 'Trim';
                 break;
             case 'nationality_id':
@@ -504,9 +506,6 @@ class CarQuoteService extends BaseService
             case 'promo_code':
                 $title = 'Advisor/Promo Code';
                 break;
-            case 'quote_status_id':
-                $title = 'Quote Status';
-                break;
             case 'device':
                 $title = 'Device';
                 break;
@@ -552,9 +551,6 @@ class CarQuoteService extends BaseService
             case 'has_ncd_supporting_documents':
                 $title = 'Can you provide no-claims letter from your previous insurers?';
                 break;
-            case 'car_model_detail_id':
-                $title = 'Trim';
-                break;
             case 'parent_duplicate_quote_id':
                 $title = 'Parent CDB ID';
                 break;
@@ -578,9 +574,6 @@ class CarQuoteService extends BaseService
                 break;
             case 'cost_per_lead':
                 $title = 'Lead Cost';
-                break;
-            case 'quote_batch_id':
-                $title = 'Quote Batch';
                 break;
             case 'show_renewal_upload_leads':
                 $title = 'Show Renewal Upload';
@@ -735,11 +728,10 @@ class CarQuoteService extends BaseService
     private function parseDate($date, $isStartOfDay)
     {
         if ($date != '') {
-            $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
             if ($isStartOfDay) {
-                return Carbon::createFromFormat($dateFormat, $date)->startOfDay();
+                return Carbon::parse($date)->startOfDay()->toDateTimeString();
             } else {
-                return Carbon::createFromFormat($dateFormat, $date)->endOfDay();
+                return Carbon::parse($date)->endOfDay()->toDateTimeString();
             }
         }
     }
@@ -790,18 +782,18 @@ class CarQuoteService extends BaseService
             }
             if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
                 $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
-                $dateTo = $this->parseDate($request['renewal_expiry_date_end'], true);
+                $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
                 $this->query->whereBetween(DB::raw('DATE(cqr.previous_policy_expiry_date)'), [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
                 $dateFrom = $this->parseDate($request['next_followup_date'], true);
-                $dateTo = $this->parseDate($request['next_followup_date_end'], true);
+                $dateTo = $this->parseDate($request['next_followup_date_end'], false);
                 $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
                 $dateFrom = $this->parseDate($request['created_at'], true);
-                $dateTo = $this->parseDate($request['created_at_end'], true);
-                $this->query->whereBetween(DB::raw('DATE(cqr.created_at)'), [$dateFrom, $dateTo]);
+                $dateTo = $this->parseDate($request['created_at_end'], false);
+                $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
             }
 
             foreach ($searchProperties as $item) {
@@ -851,7 +843,7 @@ class CarQuoteService extends BaseService
 
     private function addLeadViewEligibilityCheck()
     {
-        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
+        if (Auth::user()->hasRole(RolesEnum::CarManager) || Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
             $this->walkTree(Auth::user()->id);
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
         } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
@@ -859,9 +851,6 @@ class CarQuoteService extends BaseService
             $this->query->where(function ($query) {
                 return $query->whereIn('cqr.advisor_id', $this->childUserIds)->OrWhereNull('cqr.advisor_id');
             });
-        } elseif (Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
-            $this->walkTree(Auth::user()->id);
-            $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
         } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
             $this->query->where('cqr.advisor_id', Auth::user()->id);
         }
@@ -937,9 +926,6 @@ class CarQuoteService extends BaseService
                 break;
             case 'car_plan_provider':
                 return 'cpip';
-                break;
-            case 'quote_status':
-                return 'qs';
                 break;
             default:
                 return 'cqr';
@@ -1251,11 +1237,15 @@ class CarQuoteService extends BaseService
 
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
 
+            info('after update Old advisor assigned date is : '.$oldAdvisorAssignedDate);
+
             info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate); // update new and previous (if applicable) advisor counts in lead allocation table
 
             $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
+
+            $lead->auto_assigned = false;
 
             $lead->save();
 
@@ -1346,7 +1336,7 @@ class CarQuoteService extends BaseService
         }
         info('new advisor after update is : '.json_encode($newAdvisorAllocationRecord));
         if ($previousAdvisorId != null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
-            if ($lead->auto_assigned) {
+            if ($lead->auto_assigned || $lead->auto_assigned == null) {
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
                     $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
@@ -1364,9 +1354,6 @@ class CarQuoteService extends BaseService
                 $previousAdvisorAllocationRecord->save();
                 info('previous advisor after update is : '.json_encode($previousAdvisorAllocationRecord));
             }
-        }
-        if ($lead->auto_assigned) {
-            $lead->auto_assigned = false;
         }
         info('new advisor alloc. count :'.$newAdvisorAllocationRecord->allocation_count.', manual count :'.$newAdvisorAllocationRecord->manual_assignment_count.', auto count :'.$newAdvisorAllocationRecord->auto_assignment_count);
         if ($previousAdvisorAllocationRecord != null) {

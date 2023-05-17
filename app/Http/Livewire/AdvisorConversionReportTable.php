@@ -112,7 +112,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
+            $this->setFilter('created_at', now()->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
@@ -204,7 +204,7 @@ class AdvisorConversionReportTable extends DataTableComponent
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-            ->whereNull('car_quote_request.renewal_import_code')
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
@@ -257,31 +257,31 @@ class AdvisorConversionReportTable extends DataTableComponent
         if (! auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             array_push($filters, MultiSelectFilter::make('Lead Source')
                 ->options($this->leadSources)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.source', $value);
-            }));
+                    $builder->whereIn('car_quote_request.source', $value);
+                }));
 
             array_push($filters, MultiSelectFilter::make('Teams')
                 ->config([
                     'placeholder' => 'SELECT ALL TEAMS',
                 ])
                 ->options($this->teams)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('users.id', function ($query) use ($value) {
-                    $query->distinct()
-                        ->select('users.id')
-                        ->from('users')
-                        ->join('user_team', 'user_team.user_id', 'users.id')
-                        ->join('teams', 'teams.id', 'user_team.team_id')
-                        ->whereIn('teams.id', $value);
-                });
-            }));
+                    $builder->whereIn('users.id', function ($query) use ($value) {
+                        $query->distinct()
+                            ->select('users.id')
+                            ->from('users')
+                            ->join('user_team', 'user_team.user_id', 'users.id')
+                            ->join('teams', 'teams.id', 'user_team.team_id')
+                            ->whereIn('teams.id', $value);
+                    });
+                }));
 
             array_push($filters, MultiSelectFilter::make('Advisors')
                 ->config([
                     'placeholder' => 'SELECT ALL ADVISORS',
                 ])
                 ->options($this->advisors)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.advisor_id', $value);
-            }));
+                    $builder->whereIn('car_quote_request.advisor_id', $value);
+                }));
         }
 
         return $filters;

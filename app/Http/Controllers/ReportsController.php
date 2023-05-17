@@ -2,40 +2,68 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\ReportService;
+use App\Services\AdvisorConversionReportService;
+use App\Services\AdvisorDistributionReportService;
+use App\Services\AdvisorPerformanceReportService;
+use App\Services\LeadDistributionReportService;
 use Illuminate\Http\Request;
 
 class ReportsController extends Controller
 {
-    protected $reportService;
-
-    public function __construct(ReportService $reportService)
+    public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
-        $this->reportService = $reportService;
+        return inertia('Reports/AdvisorConversion', [
+            'reportData' => $advisorConversionReportService->getReportData($request),
+            'filterOptions' => $advisorConversionReportService->getFilterOptions(),
+            'defaultFilters' => $advisorConversionReportService->getDefaultFilters(),
+        ]);
     }
 
-    public function index(Request $request)
+    public function fetchAdvisorAssignedLeadsData(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
+        $filters = [
+            'advisorId' => $request->advisorId,
+            'leadType' => $request->leadType,
+            'advisorAssignedDates' => $request->advisorAssignedDates,
+            'createdAtFilter' => $request->createdAtFilter,
+            'ecommerceFilter' => $request->is_ecommerce,
+            'excludeCreatedLeadsFilter' => $request->excludeCreatedLeadsFilter,
+            'batchNumberFilter' => $request->batches,
+            'tiersFilter' => $request->tiers,
+            'leadSourceFilter' => $request->leadSources,
+            'teamsFilter' => $request->teams,
+            'advisorsFilter' => $request->advisors,
+            'quoteBatchId' => $request->quote_batch_id,
+        ];
+
+        return $advisorConversionReportService->getAdvisorsAssignedLeads($filters);
     }
 
-    public function renderAdvisorConversionReport()
+    public function renderLeadDistributionReport(Request $request, LeadDistributionReportService $leadDistributionReportService)
     {
-        return view('reports.advisor-conversion-report');
+        return inertia('Reports/LeadDistribution', [
+            'reportData' => $leadDistributionReportService->getReportData($request),
+            'filterOptions' => $leadDistributionReportService->getFilterOptions(),
+            'defaultFilters' => $leadDistributionReportService->getDefaultFilters(),
+        ]);
     }
 
-    public function renderLeadDistributionReport()
+    public function renderAdvisorDistributionReport(Request $request, AdvisorDistributionReportService $advisorDistributionReportService)
     {
-        return view('reports.lead-distribution-report');
+        return inertia('Reports/AdvisorDistribution', [
+            'reportData' => $advisorDistributionReportService->getReportData($request),
+            'filterOptions' => $advisorDistributionReportService->getFilterOptions(),
+            'defaultFilters' => $advisorDistributionReportService->getDefaultFilters(),
+        ]);
     }
 
-    public function renderAdvisorDistributionReport()
+    public function renderAdvisorPerformanceReport(Request $request, AdvisorPerformanceReportService $advisorPerformanceReportService)
     {
-        return view('reports.advisor-distribution-report');
-    }
-
-    public function renderAdvisorPerformanceReport()
-    {
-        return view('reports.advisor-performance-report');
+        return inertia('Reports/AdvisorPerformance', [
+            'reportData' => $advisorPerformanceReportService->getReportData($request),
+            'filterOptions' => $advisorPerformanceReportService->getFilterOptions(),
+            'defaultFilters' => $advisorPerformanceReportService->getDefaultFilters(),
+        ]);
     }
 
     public function renderLeadListReport()

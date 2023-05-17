@@ -763,10 +763,10 @@ class RenewalsUploadService
                 }
 
                 if (! empty($quoteData['car_model_id'])) {
-                    if (($carModelDetail = CarModelDetail::active()
+                    if ($carModelDetail = CarModelDetail::active()
                         ->where('is_default', 1)
                         ->where('car_model_id', $quoteData['car_model_id'])
-                        ->first())) {
+                        ->first()) {
                         $quoteData['cylinder'] = $carModelDetail->cylinder;
                         $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                         $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
@@ -784,7 +784,7 @@ class RenewalsUploadService
 
             //set business type insurance id
             if (! empty($data['product_type'] && $quoteType->code == quoteTypeCode::Business)) {
-                if (($businessSubline = $this->renewalsAddonService->getBusinessSublineInsurance($data['product_type']))) {
+                if ($businessSubline = $this->renewalsAddonService->getBusinessSublineInsurance($data['product_type'])) {
                     $quoteData['business_type_of_insurance_id'] = $businessSubline->id;
                 }
             }
@@ -932,7 +932,7 @@ class RenewalsUploadService
             $customerData = $this->buildCustomerData($data);
 
             //check if name is changed , then run AML again
-            if (($quote->first_name != $customerData['first_name'] || $quote->last_name != $customerData['last_name'])) {
+            if ($quote->first_name != $customerData['first_name'] || $quote->last_name != $customerData['last_name']) {
                 $isNameChanged = true;
             }
 
@@ -1121,7 +1121,7 @@ class RenewalsUploadService
 
         //trim is optional
         if (! empty($data['trim'])) {
-            if (($valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first())) {
+            if ($valuation = CarQuoteValuation::where('quote_request_id', $quote->id)->where('provider_id', $provider->id)->first()) {
                 if (! empty($valuation->insurer_available_trims)) {
                     $trims = collect($valuation->insurer_available_trims)->keyBy('description')->toArray();
                     if (! empty($trims[$data['trim']]['admeId'])) {
@@ -1280,7 +1280,7 @@ class RenewalsUploadService
         $quoteRequestField = strtolower($quoteType).'_quote_request_id';
 
         // check if record exists in model_detail table
-        if (($quoteDetail = $quoteRequestDetail::where($quoteRequestField, $quoteId)->first())) {
+        if ($quoteDetail = $quoteRequestDetail::where($quoteRequestField, $quoteId)->first()) {
             $quoteDetail->update([
                 'advisor_assigned_by_id' => $currentUserId,
                 'advisor_assigned_date' => Carbon::now(),
@@ -1511,6 +1511,8 @@ class RenewalsUploadService
                             }
                         }
                         break;
+                    default:
+                        break;
                 }
 
                 if ($leadValidationErrors->count() == 0) {
@@ -1588,9 +1590,7 @@ class RenewalsUploadService
 
     public function updateRenewalQuoteEmailSent($batch, $quoteId)
     {
-        Log::info('updateRenewalQuoteEmailSent START');
-        Log::info('updateRenewalQuoteEmailSent batch: '.$batch);
-        Log::info('updateRenewalQuoteEmailSent quoteId: '.$quoteId);
+        info('updateRenewalQuoteEmailSent START batch: '.$batch.' quoteId: '.$quoteId);
         $emailSent = RenewalQuoteProcess::where([
             'quote_type' => QuoteTypeShortCode::CAR,
             'batch' => $batch,
@@ -1600,9 +1600,10 @@ class RenewalsUploadService
             'fetch_plans_status' => FetchPlansStatuses::FETCHED,
             'quote_id' => $quoteId,
         ])->first();
-        $emailSent->email_sent = 1;
-        $emailSent->save();
-        Log::info('updateRenewalQuoteEmailSent emailSent->id: '.$emailSent->id);
-        Log::info('updateRenewalQuoteEmailSent END');
+        if ($emailSent) {
+            $emailSent->email_sent = 1;
+            $emailSent->save();
+        }
+        info('updateRenewalQuoteEmailSent END emailSent->id: '.$emailSent->id);
     }
 }

@@ -211,7 +211,7 @@ class LifeQuoteService extends BaseService
             $this->query->whereBetween(DB::raw('DATE(lqrd.next_followup_date)'), [$dateFrom, $dateTo]);
         }
         if (Auth::user()->isSpecificTeamAdvisor('Life')) {
-                // if user has advisor Role then fetch leads assigned to the user only
+            // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('lqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
         if (isset($request->code) && $request->code != '') {
@@ -636,9 +636,6 @@ class LifeQuoteService extends BaseService
                 break;
             case 'nationality_id':
                 $title = 'Nationality';
-                break;
-            case 'mobile_no':
-                $title = 'Mobile Number';
                 break;
             case 'sum_insured_value':
                 $title = 'Sum Insured Value';

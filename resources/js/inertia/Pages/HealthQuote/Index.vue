@@ -1,6 +1,4 @@
 <script setup>
-import { useNotifications } from '@indielayer/ui';
-
 defineProps({
   quotes: Object,
   leadStatuses: Array,
@@ -8,12 +6,16 @@ defineProps({
 });
 
 const page = usePage();
-const notification = useNotifications('toast');
+const notification = useToast();
+const params = useUrlSearchParams('history');
 
 const loader = reactive({
   table: false,
   export: false,
 });
+
+const canExport = ref(false);
+
 const quotesSelected = ref([]);
 
 const assignForm = useForm({
@@ -96,7 +98,7 @@ function onSubmit(isValid) {
         (filters[key] === '' || filters[key].length === 0) &&
         delete filters[key],
     );
-    router.visit('/quotes/health', {
+    router.visit(route('health.index'), {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -110,7 +112,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit('/quotes/health', {
+  router.visit(route('health.index'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -149,59 +151,48 @@ function onAssignLead(isValid) {
   }
 }
 
-function setQueryStringFilters() {
-  let queryString = window.location.search;
-  let urlParams = new URLSearchParams(queryString);
+const objToUrl = obj => {
+  Object.keys(obj).forEach(
+    key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
+  );
+  return Object.keys(obj)
+    .map(key => {
+      if (Array.isArray(obj[key])) {
+        return obj[key].map(value => `${key}[]=${value}`).join('&');
+      }
+      return `${key}=${obj[key]}`;
+    })
+    .join('&');
+};
 
-  if (urlParams.has('code')) {
-    filters.code = urlParams.get('code');
-  }
-  if (urlParams.has('first_name')) {
-    filters.first_name = urlParams.get('first_name');
-  }
-  if (urlParams.has('last_name')) {
-    filters.last_name = urlParams.get('last_name');
-  }
-  if (urlParams.has('email')) {
-    filters.email = urlParams.get('email');
-  }
-  if (urlParams.has('mobile_no')) {
-    filters.mobile_no = urlParams.get('mobile_no');
-  }
-  if (urlParams.has('created_at_start')) {
-    filters.created_at_start = urlParams.get('created_at_start');
-  }
-  if (urlParams.has('created_at_end')) {
-    filters.created_at_end = urlParams.get('created_at_end');
-  }
-  if (urlParams.has('sub_team')) {
-    filters.sub_team = urlParams.get('sub_team');
-  }
-  if (urlParams.has('quote_status[]')) {
-    filters.quote_status = urlParams
-      .getAll('quote_status[]')
-      .map(status => parseInt(status));
-  }
-  if (urlParams.has('advisors[]')) {
-    filters.advisors = urlParams
-      .getAll('advisors[]')
-      .map(status => parseInt(status));
-  }
-  if (urlParams.has('is_renewal')) {
-    filters.is_renewal = urlParams.get('is_renewal');
-  }
-  if (urlParams.has('is_ecommerce')) {
-    filters.is_ecommerce = urlParams.get('is_ecommerce');
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.substring(0, key.length - 2)] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
   }
 }
-
-onMounted(() => {
-  setQueryStringFilters();
-});
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+watch(
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
+
+onMounted(() => {
+  setQueryStringFilters();
+});
 </script>
 
 <template>
@@ -210,11 +201,11 @@ const permissionsEnum = page.props.permissionsEnum;
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/health-cards">
+        <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
 
-        <Link href="/quotes/health/create">
+        <Link :href="route('health.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
@@ -316,11 +307,33 @@ const permissionsEnum = page.props.permissionsEnum;
           class="w-full"
         />
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between gap-3 mb-4 mt-1">
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            :href="`/quotes/health-export?${objToUrl(filters)}`"
+            class="justify-self-start"
+          >
+            Export
+          </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
+        <div class="flex justify-self-end gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
     <Transition name="fade">
@@ -364,21 +377,6 @@ const permissionsEnum = page.props.permissionsEnum;
             </div>
           </x-form>
         </div>
-
-        <ExportExcel
-          :data="quotesSelected"
-          :columns="tableHeader"
-          :filename="'Health-List'"
-          :sheetname="'Leads'"
-          v-if="can(permissionsEnum.DATA_EXTRACTION)"
-        >
-          <x-button size="sm" color="emerald">
-            Export -
-            <span class="lining-nums">
-              Selected: {{ quotesSelected.length }}
-            </span>
-          </x-button>
-        </ExportExcel>
       </div>
     </Transition>
     <DataTable
@@ -394,7 +392,7 @@ const permissionsEnum = page.props.permissionsEnum;
     >
       <template #item-code="{ code, uuid }">
         <Link
-          :href="`/quotes/health/${uuid}`"
+          :href="route('health.show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}

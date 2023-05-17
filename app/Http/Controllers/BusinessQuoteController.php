@@ -57,8 +57,10 @@ class BusinessQuoteController extends Controller
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $gridData = $this->businessQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
+        $isManagerORDeputy = auth()->user()->isManagerORDeputy();
+        $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
 
-        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource'));
+        return inertia('CorpLineQuote/Index', compact('quotes', 'dropdownSource', 'isManualAllocationAllowed'));
     }
 
     private function parseDate($date, $isStartOfDay)
@@ -103,7 +105,7 @@ class BusinessQuoteController extends Controller
      */
     public function store(StoreBusinessQuoteRequest $request)
     {
-        $record = $this->businessQuoteService->saveBusinessQuote($request);
+        $this->businessQuoteService->saveBusinessQuote($request);
 
         redirect('/quotes/business')->with('message', 'Record created successfully');
     }
@@ -173,6 +175,7 @@ class BusinessQuoteController extends Controller
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
+            'typeCode' => quoteTypeCode::CORPLINE,
         ]);
     }
 

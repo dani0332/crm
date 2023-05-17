@@ -1,5 +1,4 @@
 <script setup>
-
 defineProps({
   quotes: Object,
   dropdownSource: Object,
@@ -56,6 +55,7 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  { text: 'DATE OF BIRTH', value: 'dob' },
   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
@@ -107,9 +107,8 @@ function filterQuotes(isValid) {
 
   router.visit('/quotes/travel', {
     method: 'get',
-    data: {
-      ...filters,
-    },
+    data: filters,
+
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -182,21 +181,14 @@ function onAssignLead(isValid) {
 }
 
 function setQueryFilters() {
-  let query = router.page.url.split('?')[1];
-  if (query) {
-    query = query.split('&');
-    query.forEach(item => {
-      const [key, value] = item.split('=');
-
-      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
-        let id = key.slice(0, -2);
-        if (filters[id]) {
-          filters[id].push(parseInt(value));
-        }
-      } else {
-        filters[key] = value;
-      }
-    });
+  let urlParams = new URLSearchParams(window.location.search);
+  for (const [key, value] of urlParams) {
+    if (key.includes('[')) {
+      let index = key.replace('[]', '');
+      filters[index] = urlParams.getAll(key).map(item => parseInt(item));
+    } else {
+      filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
+    }
   }
 }
 
@@ -372,13 +364,20 @@ onMounted(() => {
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <Link
+        <a
           :href="`/quotes/travel/${uuid}`"
+          target="_blank"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </Link>
+        </a>
       </template>
+      <template #item-dob="{ dob }">
+        <div class="text-center">
+          {{ dob == '00-00-0000' ? '' : dob }}
+        </div>
+      </template>
+
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">

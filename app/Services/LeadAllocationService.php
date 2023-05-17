@@ -258,7 +258,7 @@ class LeadAllocationService extends BaseService
             $byPassUsersForAssignment = $this->getAppStorageValueByKey(ApplicationStorageEnums::HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS);
 
             if (in_array($advisor->email, explode(',', $byPassUsersForAssignment))) {
-            return true;
+                return true;
             }
 
             info('checkIfAdvisorCanTakeLead -- started');
@@ -344,6 +344,13 @@ class LeadAllocationService extends BaseService
             $dateTimeNow = now()->toTimeString();
 
             info('Current time before unavailable is '.$dateTimeNow);
+
+            $currentDayUsers = LeadAllocation::join('users', 'users.id', 'lead_allocation.user_id')
+                ->where('allocation_count', '>', 1)->get();
+
+            foreach ($currentDayUsers as $currentDayUser) {
+                info(' Current Time is : '.now().' user : '.$currentDayUser->name.' allocation_count :'.$currentDayUser->allocation_count.' , manual_allocation : '.$currentDayUser->manual_allocation.' , auto_allocation : '.$currentDayUser->auto_allocation);
+            }
 
             LeadAllocation::whereNotNull('is_available')->update([
                 'is_available' => 0,
@@ -534,7 +541,7 @@ class LeadAllocationService extends BaseService
                             $carQuote->advisor_id = $userId;
                             $carQuote->tier_id = $selectedTier->id;
                             $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
-
+                            $carQuote->auto_assigned = true;
                             if ($carQuote->quote_batch_id == null) {
                                 $quoteBatch = QuoteBatches::latest()->first();
                                 info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$carLead->uuid);
@@ -754,10 +761,10 @@ class LeadAllocationService extends BaseService
 
         info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
 
-        info('First tier after filtration is : '.json_encode($tiers->first()->name));
-
         $tiers = $tiers->get();
         if ($tiers != null) {
+            info('First tier after filtration is : '.json_encode($tiers->first()->name));
+
             return $tiers->first();
         }
 

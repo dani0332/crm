@@ -96,8 +96,8 @@ class LeadListReportTable extends DataTableComponent
                         ->map(fn ($tier) => $tier->name)
                         ->toArray(),
                 )->filter(function (Builder $builder, $value) {
-                $builder->where('car_quote_request.tier_id', $value);
-            }),
+                    $builder->where('car_quote_request.tier_id', $value);
+                }),
             SelectFilter::make('Lead Source')
                 ->options(
                     LeadSource::query()
@@ -108,8 +108,8 @@ class LeadListReportTable extends DataTableComponent
                         ->map(fn ($source) => $source->name)
                         ->toArray(),
                 )->filter(function (Builder $builder, $value) {
-                $builder->where('car_quote_request.source', $value);
-            }),
+                    $builder->where('car_quote_request.source', $value);
+                }),
             SelectFilter::make('Team')
                 ->options(
                     Team::query()
@@ -119,17 +119,17 @@ class LeadListReportTable extends DataTableComponent
                         ->map(fn ($team) => $team->name)
                         ->toArray(),
                 )->filter(function (Builder $builder, $value) {
-                $builder->whereIn('advisor.team_id', $value);
-            }),
+                    $builder->whereIn('advisor.team_id', $value);
+                }),
             SelectFilter::make('Ecommerce')
                 ->setFilterPillTitle('ABC')
                 ->options([
-                    '' => 'All',
-                    'yes' => 'Yes',
-                    'no' => 'No',
-                ])->filter(function (Builder $builder, string $value) {
-                $builder->where('car_quote_request.is_ecommerce', $value == 'no' ? false : true);
-            }),
+                        '' => 'All',
+                        'yes' => 'Yes',
+                        'no' => 'No',
+                    ])->filter(function (Builder $builder, string $value) {
+                        $builder->where('car_quote_request.is_ecommerce', $value == 'no' ? false : true);
+                    }),
             SelectFilter::make('Payment Status')
                 ->options(
                     PaymentStatus::query()
@@ -140,8 +140,8 @@ class LeadListReportTable extends DataTableComponent
                         ->map(fn ($paymentStatus) => $paymentStatus->text)
                         ->toArray(),
                 )->filter(function (Builder $builder, $value) {
-                $builder->where('car_quote_request.payment_status_id', $value);
-            }),
+                    $builder->where('car_quote_request.payment_status_id', $value);
+                }),
         ];
     }
 }

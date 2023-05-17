@@ -28,7 +28,6 @@ const page = usePage();
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-
 </script>
 
 <template>
@@ -38,12 +37,21 @@ const permissionsEnum = page.props.permissionsEnum;
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Yacht Detail</h2>
       <div class="flex gap-2">
-        <Link v-if="can(permissionsEnum.YachtQuotesEdit)" :href="`/personal-quotes/yacht/${quote.uuid}/edit`">
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesEdit)"
+          :href="`/personal-quotes/yacht/${quote.uuid}/edit`"
+        >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
-        <Link v-if="can(permissionsEnum.YachtQuotesList)" href="/personal-quotes/yacht" preserve-scroll>
-          <x-button size="sm" color="primary" tag="div"> Yacht Quotes </x-button>
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesList)"
+          href="/personal-quotes/yacht"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div">
+            Yacht Quotes
+          </x-button>
         </Link>
       </div>
     </div>
@@ -256,7 +264,7 @@ const permissionsEnum = page.props.permissionsEnum;
       :personal-plans="personalPlans"
     />
 
-    <AdditionalContacts :quote="quote" />
+    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <QuoteStatus
       :quote="quote"
