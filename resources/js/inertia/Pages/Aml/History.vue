@@ -1,6 +1,4 @@
 <script setup>
-import { Link, router } from '@inertiajs/vue3';
-
 defineProps({
   url: String,
   sanctionListDownloads: Object,
@@ -39,29 +37,29 @@ const filters = reactive({
 const filterData = () => {
   loader.table = true;
   const url = page.url;
-    const params = {
-        ...serverOptions.value,
-        ...filters,
-    };
+  const params = {
+    ...serverOptions.value,
+    ...filters,
+  };
 
-    router.visit(url, {
-        method: 'get',
-        data: params,
-        preserveState: true,
-        preserveScroll: true,
-        onBefore: () => (loader.table = true),
-        onFinish: () => (loader.table = false),
-    });
+  router.visit(url, {
+    method: 'get',
+    data: params,
+    preserveState: true,
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onFinish: () => (loader.table = false),
+  });
 };
 
 const onReset = () => {
-    router.visit('/kyc/aml/download/history', {
-        method: 'get',
-        preserveState: true,
-        preserveScroll: true,
-        onBefore: () => (loader.table = true),
-        onFinish: () => (loader.table = false),
-    });
+  router.visit('/kyc/aml/download/history', {
+    method: 'get',
+    preserveState: true,
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onFinish: () => (loader.table = false),
+  });
 };
 
 watch(
@@ -157,7 +155,6 @@ onMounted(() => {});
         hide-rows-per-page
         hide-footer
         fixed-checkbox
-
       >
         <template #item-file_name="{ file_name }">
           <a
@@ -216,14 +213,14 @@ onMounted(() => {});
         </template>
       </DataTable>
       <Pagination
-      :links="{
-        next: sanctionListDownloads.next_page_url,
-        prev: sanctionListDownloads.prev_page_url,
-        current: sanctionListDownloads.current_page,
-        from: sanctionListDownloads.from,
-        to: sanctionListDownloads.to,
-      }"
-    />
+        :links="{
+          next: sanctionListDownloads.next_page_url,
+          prev: sanctionListDownloads.prev_page_url,
+          current: sanctionListDownloads.current_page,
+          from: sanctionListDownloads.from,
+          to: sanctionListDownloads.to,
+        }"
+      />
     </div>
   </div>
 </template>

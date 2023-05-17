@@ -1,6 +1,4 @@
 <script setup>
-import { router } from '@inertiajs/core';
-
 defineProps({ errors: Object });
 
 const notification = useNotifications('toast');
@@ -14,11 +12,11 @@ const uploadForm = useForm({
 function onSubmit(isValid) {
   if (isValid) {
     uploadForm.post(`/kyc/aml/upload/uae-list`, {
-        onError: errors => { },
-        onSuccess: () => {
-            displayNotification();
-            uploadForm.file_name = '';
-        },
+      onError: errors => {},
+      onSuccess: () => {
+        displayNotification();
+        uploadForm.file_name = '';
+      },
       onStart: () => {
         uploadForm.clearErrors();
       },
@@ -37,9 +35,7 @@ function displayNotification() {
   }
 }
 
-onMounted(() => {
-
-});
+onMounted(() => {});
 </script>
 
 <template>

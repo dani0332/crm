@@ -39,19 +39,6 @@ const props = defineProps({
   },
 });
 
-const format = date => {
-  if (!date) return '';
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
-  const year = date.getFullYear();
-  const hour = date.getHours();
-  const minute = date.getMinutes();
-
-  if (props.withTime) return `${year}-${month}-${day} ${hour}:${minute}`;
-
-  return `${year}-${month}-${day}`;
-};
-
 const selectedData = computed({
   get() {
     return props.modelValue;
