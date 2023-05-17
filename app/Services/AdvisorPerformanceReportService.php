@@ -7,6 +7,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
+use App\Models\LeadSource;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Traits\GetUserTreeTrait;
@@ -14,7 +15,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-class AdvisorDistributionReportService extends BaseService
+class AdvisorPerformanceReportService extends BaseService
 {
     use GetUserTreeTrait;
     use TeamHierarchyTrait;
@@ -23,40 +24,31 @@ class AdvisorDistributionReportService extends BaseService
     {
         $query = CarQuote::query()
             ->select(
-                DB::raw('count(DISTINCT car_quote_request.id) as total_leads'),
                 'users.name as advisor_name',
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 0' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_0_lead_count"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 1' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_1_lead_count"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 2' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_2_lead_count"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 3' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_3_lead_count"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 4' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_4_lead_count"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 5' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_5_lead_count"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 6 (non ecom)' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_6_lead_count"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier 6 (Ecom)' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_6_lead_count_e"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier L' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_l_lead_count"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier H' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_h_lead_count"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier R' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_r_lead_count"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier TR (Ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_tr_lead_count_e"),
-                DB::raw("CAST(SUM(CASE WHEN tiers.name = 'Tier TR (Non ecom)' AND tiers.is_active = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as tier_tr_lead_count"),
-                DB::raw('CAST(SUM(tiers.cost_per_lead) / COUNT(DISTINCT(user_team.team_id))  AS UNSIGNED) as total_lead_cost'),
+                DB::raw('count(DISTINCT car_quote_request.id) as total_leads'),
+                DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as new_leads'),
+                DB::raw('CAST(SUM(CASE WHEN car_quote_request.auto_assigned = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as auto_assigned'),
+                DB::raw('CAST(SUM(CASE WHEN (car_quote_request.auto_assigned = 0 and source != "'.LeadSourceEnum::IMCRM.'" ) THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as manually_assigned'),
+                DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as not_interested'),
+                DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as in_progress'),
+                DB::raw('CAST(SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as manual_created'),
+                DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as bad_leads'),
+                DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as sale_leads'),
+                DB::raw('IFNULL(CAST(SUM(quote_view_count.visit_count) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED), 0) as view_count'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
-            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-            ->groupBy('users.email')
-            ->orderBy('users.name');
-        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-            $query->where('users.id', auth()->user()->id);
-        } else {
-            if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
-                $userIds = $this->walkTree(auth()->user()->id);
-                info('user ids for advisor conversion report are : '.json_encode($userIds));
-                $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
-            }
+            ->groupBy('car_quote_request.advisor_id')
+            ->orderBy('users.email');
+
+        if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
+            $userIds = $this->walkTree(auth()->user()->id);
+            info('user ids for advisor performance report are : '.json_encode($userIds));
+            $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
 
         $query = $this->applyFilters($query, $request->all());
@@ -86,11 +78,21 @@ class AdvisorDistributionReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
+        $leadSources = LeadSource::query()
+            ->select('name')
+            ->where('is_active', 1)->where('is_applicable_for_rules', 0)
+            ->whereNotNull('name')
+            ->orderBy('name')
+            ->get()
+            ->keyBy('name')
+            ->map(fn ($users) => $users->name)
+            ->toArray();
 
         return [
             'maxDays' => $maxDays,
             'tiers' => $tiers,
             'teams' => $teams,
+            'leadSources' => $leadSources,
         ];
     }
 
@@ -137,6 +139,11 @@ class AdvisorDistributionReportService extends BaseService
                     ->join('teams', 'teams.id', 'user_team.team_id')
                     ->whereIn('teams.id', $value);
             });
+        }
+
+        if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
+            info('leadSourceFilter are : '.json_encode($filters->leadSourceFilter));
+            $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         }
 
         return $query;

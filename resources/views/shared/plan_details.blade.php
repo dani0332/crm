@@ -902,7 +902,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 							<tr>
 								<td>Provider Name:</td>
-								<td>{{ $providerName }}</td>
+								<td>{{ isset($providerName) ? $providerName : NULL }}</td>
 								<td>Repair Type:</td>
 								<td>{{ $repairType == CarPlanType::COMP ? 'NON-AGENCY' : $repairType }}</td>
 							</tr>
