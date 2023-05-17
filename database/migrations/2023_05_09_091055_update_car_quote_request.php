@@ -27,10 +27,5 @@ class UpdateCarQuoteRequest extends Migration
      */
     public function down()
     {
-        Schema::table('car_quote_request', function (Blueprint $table) {
-            if (Schema::hasColumn('car_quote_request', 'is_revived')) {
-                $table->dropColumn('is_revived');
-            }
-        });
     }
 }

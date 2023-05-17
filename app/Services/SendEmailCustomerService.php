@@ -203,7 +203,10 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-            $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
+            $cc = array_merge($ccAdditional, $ccAdvisor);
+            if (count($cc)) {
+                $body['cc'] = $cc;
+            }
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(

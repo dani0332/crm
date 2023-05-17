@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
 use Illuminate\Http\Request;
@@ -59,5 +60,14 @@ class ReportsController extends Controller
     public function renderLeadListReport()
     {
         return view('reports.lead-list-report');
+    }
+
+    public function renderRevivalConversionReport(Request $request)
+    {
+        $reportData = CarRevivalQuoteRepository::getReportsData();
+
+        return inertia('Reports/RevivalConversion', [
+            'reportData' => $reportData,
+        ]);
     }
 }

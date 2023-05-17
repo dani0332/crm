@@ -13,7 +13,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
@@ -44,8 +43,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      */
     public function handle()
     {
-        Log::info('************* Car Lead id: '.$this->lead->id.'*************');
-
         $dataArr = [
             'firstName' => $this->lead->first_name,
             'lastName' => $this->lead->last_name,
@@ -74,28 +71,28 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'carModelId' => $this->lead->car_model_id, // ID
             'currentlyInsuredWith' => $this->lead->currently_insured_with,
             'source' => LeadSourceEnum::REVIVAL,
+            'isEmailSkip' => true,
             'referenceUrl' => config('constants.APP_URL'),
         ];
 
         $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-        Log::info('************* capiResponse: '.json_encode($capiResponse));
+        if (! empty($capiResponse->quoteUID)) {
+            info('CarRevivalLeadsCreationJob - Lead Created -'.$capiResponse->quoteUID.' - CAPI Response:');
 
-        if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
-            $plansDataArr = $this->payLoadForPlans($capiResponse->quoteUID);
+            if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
+                $plansDataArr = $this->payLoadForPlans($capiResponse->quoteUID);
 
-            Log::info('************* kenPayload: '.json_encode($plansDataArr));
+                Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
 
-            Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
+                dispatch(new SendOCBEmailJob($capiResponse->quoteUID));
 
-            // dispatch(new SendOCBEmailJob($capiResponse->quoteUID));
+                info('CarRevivalLeadsCreationJob - UUID - '.$capiResponse->quoteUID.' - OCB Email Sent');
 
-            // Log::info('************* OCB Email Job Dispatched for customer having '.$capiResponse->quoteUID.'*************');
-
-            CarQuote::find($this->lead->id)->update(['is_revived' => true]);
-
-            Log::info('************* Quote is revived updated '.$this->lead->id.'*************');
+                CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+            }
         }
+        info('CarRevivalLeadsCreationJob - Lead Not generated - capi response'.json_encode($capiResponse));
     }
 
     private function payLoadForPlans($quoteUuId)

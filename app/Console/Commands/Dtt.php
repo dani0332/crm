@@ -57,31 +57,25 @@ class Dtt extends Command
             $jobs = [];
 
             $leads = CarQuote::where('created_at', '>=', $date)
-            ->where('is_revived', '=', false)
-
-            ->whereNotNull(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture', 'payment_status_id'])
-
-            ->where(function ($q) use ($datethirtyDaysBefore) {
-                $q->where('source', '!=', LeadSourceEnum::REVIVAL)
-                ->where('created_at', '<=', $datethirtyDaysBefore);
-            })
-
-            ->where(function ($q) {
-                $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-                ->orWhereNotNull('renewal_batch')
-                ->orWhereNotNull('previous_quote_policy_number')
-                ->orWhereNotNull('mobile_no');
-            })
-
-            ->where(function ($q) {
-                $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
-                ->orWhere('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
-            })
-
-            ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
-
-            ->take(10)
-            ->orderBy('id', 'DESC')->get();
+                ->where('is_revived', '=', false)
+                ->whereNotNull(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture', 'payment_status_id'])
+                ->where(function ($q) use ($datethirtyDaysBefore) {
+                    $q->where('source', '!=', LeadSourceEnum::REVIVAL)
+                        ->where('created_at', '<=', $datethirtyDaysBefore);
+                })
+                ->where(function ($q) {
+                    $q->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                        ->orWhereNotNull('renewal_batch')
+                        ->orWhereNotNull('previous_quote_policy_number')
+                        ->orWhereNotNull('mobile_no');
+                })
+                ->where(function ($q) {
+                    $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
+                        ->orWhere('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
+                })
+                ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
+                ->take(1)
+                ->orderBy('id', 'DESC')->get();
 
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
@@ -90,21 +84,21 @@ class Dtt extends Command
                     $jobs[] = new CarRevivalLeadsCreationJob($carLead);
                 }
             }
-            $logPrefix = '************* fn: createRevivedQuotes ';
-            info($logPrefix.' QuoteCreation started');
+            $logPrefix = '------fn: createRevivedQuotes QuoteCreation started------';
+            info($logPrefix);
 
             if ($jobs != null && count($jobs)) {
                 Haystack::build()
                     ->addJobs($jobs)
 
                     ->then(function () use ($logPrefix) {
-                        info('*************'.$logPrefix.' all jobs completed successfully *************');
+                        info('------'.$logPrefix.' all jobs completed successfully ------');
                     })
                     ->catch(function () use ($logPrefix) {
-                        info('************* '.$logPrefix.' one of batch is failed. ************* ');
+                        info('------'.$logPrefix.' one of batch is failed.------');
                     })
                     ->finally(function () use ($logPrefix) {
-                        info('*************'.$logPrefix.' everything done *************');
+                        info('------'.$logPrefix.' everything done ------');
                     })
                     ->allowFailures()
                     ->withDelay(2)

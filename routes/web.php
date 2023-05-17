@@ -12,7 +12,6 @@ use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CarQuoteController;
-use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\ClaimController;
@@ -56,6 +55,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
@@ -104,6 +104,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport'])->name('lead-distribution-report-view');
         Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
         Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport'])->name('advisor-performance-report-view');
+        Route::get('/reports/revival-conversion', [ReportsController::class, 'renderRevivalConversionReport'])->name('revival-conversion-report-view');
 
         if (in_array(quoteTypeCode::Pet, newUi())) {
             Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
@@ -129,7 +130,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::group(['prefix' => 'quotes'], function () {
             Route::resource('car-revival', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'))->except('show');
         });
-        
+
         Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
     });
 
@@ -417,8 +418,8 @@ Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'Proce
 
 Route::group(['middleware' => ['auth.rest']], function () {
     // ftc-form-delete schedule on 7th June 2023
-//    Route::resource('ftcform', FtcFormController::class);
-//    Route::resource('assignOE', FtcFormController::class);
+    //    Route::resource('ftcform', FtcFormController::class);
+    //    Route::resource('assignOE', FtcFormController::class);
     Route::group(['prefix' => 'form'], function () {
         Route::GET('/{form}', [FormController::class, 'index']);
         Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);

@@ -58,6 +58,10 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW)
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
                             @endcan
+                            @can(PermissionsEnum::CarRevivalQuoteList)
+                            <li><a href="{{ url('reports/revival-conversion') }}">Revival Conversion</a></li>
+                            @endcan
+                          
                         </ul>
                     </li>
                 </ul>

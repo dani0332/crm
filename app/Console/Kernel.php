@@ -33,10 +33,10 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(1);
 
         $schedule
-        ->command('Dtt')
-        ->everyFifteenMinutes()
-        ->onOneServer()
-        ->withoutOverlapping(1);
+            ->command('Dtt')
+            ->everyFifteenMinutes()
+            ->onOneServer()
+            ->withoutOverlapping(1);
 
         $schedule
             ->command('AddBatchNumber:cron')

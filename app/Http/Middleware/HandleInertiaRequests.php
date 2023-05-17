@@ -122,7 +122,8 @@ class HandleInertiaRequests extends Middleware
                     ->add('Advisor Conversion', route('advisor-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->add('Advisor Performance', route('advisor-performance-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->add('Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->add('Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->add('Revival Conversion', route('revival-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
@@ -190,7 +191,8 @@ class HandleInertiaRequests extends Middleware
                 )
                 ->addIf(
                     auth()->user()->can(PermissionsEnum::CarRevivalQuoteList),
-                    'Car Revival Quotes', '/quotes/car-revival',
+                    'Car Revival Quotes',
+                    '/quotes/car-revival',
                     fn ($s) => $s->attributes(['icon' => 'car'])
                 )
                 ->addIf(in_array(quoteTypeCode::Pet, newUi()) && auth()->user()->can(PermissionsEnum::PetQuotesList), 'Pet Quotes', '/personal-quotes/pet', fn ($s) => $s->attributes(['icon' => 'pet']))
