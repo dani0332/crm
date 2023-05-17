@@ -98,6 +98,14 @@ const activityForm = useForm({
   uuid: null,
 });
 
+
+const confirmDeleteData = reactive({
+  docs: null,
+  member: null,
+  activity: null,
+  contact: null,
+});
+
 const addActivity = () => {
   activityForm.reset();
   activityActionEdit.value = false;
