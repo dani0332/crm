@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use Illuminate\Support\Facades\DB;
@@ -99,8 +100,8 @@ class CarRevivalQuoteRepository extends BaseRepository
         $groups = $groups->groupBy('quote_batch_id');
 
         return $groups->map(function ($group) {
-            $capture = $group->where('payment_status_id', '=', PaymentStatusEnum::CAPTURED)->count();
-            $authorized = $group->where('payment_status_id', '=', PaymentStatusEnum::AUTHORISED)->count();
+            $capture = $group->where('payment_status_id', '=', PaymentStatusEnum::CAPTURED)->where('quote_status_id', '=', QuoteStatusEnum::TransactionApproved)->count();
+            $authorized = $group->where('payment_status_id', '=', PaymentStatusEnum::AUTHORISED)->where('quote_status_id', '=', QuoteStatusEnum::PaymentPending)->count();
 
             return [
                 'quote_batch_id' => $group->first()['quote_batch_id'],
