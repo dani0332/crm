@@ -4,7 +4,7 @@ const notification = useNotifications('toast');
 
 defineProps({
   quote: Object,
-  quoteType: Object,
+  quoteType: String,
 });
 
 const modals = reactive({

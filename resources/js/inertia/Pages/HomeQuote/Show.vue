@@ -837,7 +837,7 @@ const policyDetails = useForm({
       </x-modal>
     </div>
 
-    <customerAdditionalContacts quoteType="Business" :customerId="quote.customer_id" :quoteId="quote.id"  :contacts="customerAdditionalContacts" />
+    <customerAdditionalContacts quoteType="Home" :customerId="quote.customer_id" :quoteId="quote.id"  :contacts="customerAdditionalContacts" />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
