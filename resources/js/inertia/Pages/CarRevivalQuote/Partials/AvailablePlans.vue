@@ -1,7 +1,6 @@
 <script setup>
 const props = defineProps({
   plan: Object,
-  // genders: Object,
   quote: Object,
 });
 
@@ -26,13 +25,12 @@ const hidePlan = ref(props.plan.isDisabled),
   ancillaryExcess = ref(false),
   insurerAvailableTrims = ref(false);
 
-const ipmiBenefits = reactive({
-  region: '',
-  insurance: '',
-  payment: '',
-  network: '',
-  healthCare: false,
-  motherBaby: false,
+const addonFormData = reactive({
+    addonId: '',
+    addonOptionId: '',
+    price: '',
+    vat: '',
+    isSelected: false
 });
 
 const updatePlanForm = reactive({
@@ -49,8 +47,40 @@ const updatePlanForm = reactive({
   excess: props.plan.excess || null,
   ancillary_excess: props.plan.ancillaryExcess || null,
   insurerTrim: props.plan.insurerTrimId || null,
-  addons: {},
 });
+
+const setAddonsUpdate = (parentAddon, childAddonsOption) => {
+    // Only add last value of iteration in addonFormData but i need to pass every iteration data in addFormData
+    // Kindly console parentAddon or childAddonsOption
+    // Need data like this, below
+        // 0 => array:5 [
+        //     "addonId" => 38
+        //     "addonOptionId" => 45
+        //     "price" => 0
+        //     "vat" => 0
+        //     "isSelected" => true
+        // ]
+        // 1 => array:5 [
+        //     "addonId" => 76
+        //     "addonOptionId" => 87
+        //     "price" => 0
+        //     "vat" => 0
+        //     "isSelected" => true
+        // ]
+        // 2 => array:5 [
+        //     "addonId" => 3
+        //     "addonOptionId" => 6
+        //     "price" => 0
+        //     "vat" => 0
+        //     "isSelected" => true
+
+
+    addonFormData.addonId = parentAddon.id;
+    addonFormData.addonOptionId = childAddonsOption.id,
+    addonFormData.price = childAddonsOption.price,
+    addonFormData.vat = childAddonsOption.vat,
+    addonFormData.isSelected = childAddonsOption.isSelected
+};
 
 const insuranceAvailableTrim = computed(() => {
   return props.plan.insurerAvailableTrims.map(insuranceAvailableTrim => ({
@@ -113,17 +143,6 @@ const tabs = ref([
   { index: 5, label: 'Policy Detail' },
 ]);
 
-const onMemberPremiumUpdate = (member, premium) => {
-  const index = newPremiums.value.findIndex(m => m.memberId == member.memberId);
-  if (index > -1) {
-    newPremiums.value[index].premium = premium;
-  } else {
-    newPremiums.value.push({
-      memberId: member.memberId,
-      premium: premium,
-    });
-  }
-};
 
 const onPlanUpdate = planDetails => {
   planUpdateLoader.value = true;
@@ -131,11 +150,9 @@ const onPlanUpdate = planDetails => {
   const currentPlanURL = page.props.baseUrl+'/quotes/car/'+planDetails.car_quote_uuid+'/plan_details/'+planDetails.car_plan_id;
   const updatePlanData = {
       ...planDetails,
-      current_url: currentPlanURL
+      current_url: currentPlanURL,
+      addons: {}
   };
-  //
-  // console.log(updatePlanData);
-  // return false;
 
   axios
     .post('/car-plan-manual-update-process', updatePlanData)
@@ -160,45 +177,6 @@ const onPlanUpdate = planDetails => {
     });
 };
 
-const onMemberUpdate = member => {
-  const memberData = {
-    quoteUID: usePage().props.quote.uuid,
-    planId: props.plan.id,
-    planDetails: [
-      {
-        ...member,
-        premium:
-          Number(
-            newPremiums.value.find(m => m.memberId == member.memberId)?.premium,
-          ) || member.premium,
-      },
-    ],
-  };
-
-  memberFormLoader.value = true;
-
-  axios
-    .post('/car-plan-manual-update-process', memberData)
-    .then(res => {
-      if (res.data == 'Plan has been updated') {
-        notification.success({
-          title: res.data,
-          position: 'top',
-        });
-      } else {
-        notification.error({
-          title: res.data,
-          position: 'top',
-        });
-      }
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    .finally(() => {
-      memberFormLoader.value = false;
-    });
-};
 const onTogglePlans = () => {
   toggleLoader.value = true;
   axios
@@ -396,6 +374,7 @@ const onTogglePlans = () => {
                 :key="addonOptions.id"
                 class="flex gap-5 items-center justify-between font-medium"
               >
+                  <input type="hidden" :value="setAddonsUpdate(addons, addonOptions)">
                 <div class="w-1/4">{{ addons.text }}</div>
                 <div class="w-1/4">{{ addonOptions.value }}</div>
                 <div class="w-1/4">
@@ -417,7 +396,7 @@ const onTogglePlans = () => {
 
             <div class="flex justify-end">
               <x-button
-                  v-if="hasRole(page.props.RolesEnum.PA)"
+                  v-if="hasRole(page.props.rolesEnum.PA)"
                   color="primary" size="sm" outlined> Update </x-button>
             </div>
           </div>

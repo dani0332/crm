@@ -38,9 +38,6 @@ const hasRole = role => useHasRole(role);
 const hasPermission = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
-console.log(page.props.carPlanFeaturesCode)
-
-
 const fixedValue = number => {
     if (number == Math.floor(number)) {
         return number;
@@ -49,7 +46,11 @@ const fixedValue = number => {
     }
 };
 
-console.log(page.props.listQuotePlans)
+const calculateVAT = addonOption => {
+    if(addonOption.isSelected === true && addonOption.price !== 0){
+        totalVAT.value += (addonOption.price + addonOption.vat);
+    }
+}
 
 const modals = reactive({
     doc: false,
@@ -89,7 +90,8 @@ const
     toggleLoader = ref(false),
     contactLoader = ref(false),
     historyLoading = ref(false),
-    isDisabled = ref(false);
+    isDisabled = ref(false),
+    totalVAT = ref(false);
 
 const {copy, copied} = useClipboard();
 
@@ -1053,6 +1055,7 @@ const sendPolicyToClient = () => {
                 <template #item-pab_cover="{addons}">
                     <p v-for="addon in addons">
                         <p v-for="addonOptions in addon.carAddonOption">
+                            <input type="hidden" :value="calculateVAT(addonOptions)">
                             <span v-if="
                                 addon.code.toString().toLowerCase() == page.props.carPlanAddonsCode.DRIVER_COVER ||
                                 addon.code.toString().toLowerCase() == page.props.carPlanAddonsCode.PASSENGER_COVER
@@ -1088,9 +1091,20 @@ const sendPolicyToClient = () => {
                     </p>
                 </template>
 
-                <template #item-total="{ actualPremium, vat, basmah }">
-                    {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
+                <template #item-actualPremium="{ actualPremium }">
+                    {{ fixedValue( (actualPremium || 0)) }}
                 </template>
+                <template #item-discountPremium="{ discountPremium, vat }">
+                    {{ fixedValue( (discountPremium || 0)) }}
+                </template>
+                <template #item-excess="{ excess }">
+                    {{ fixedValue( (excess || 0) ) }}
+                </template>
+
+                <template #item-total="{ discountPremium, vat }">
+                    {{ fixedValue( (totalVAT || 0) +(vat || 0)  + (discountPremium || 0)) }}
+                </template>
+
                 <template #item-action="item">
                     <div class="flex gap-2 pr-2">
                         <x-button
