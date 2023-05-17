@@ -168,6 +168,11 @@ const onCreateDuplicate = isValid => {
           </div>
 
           <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ADVISOR</dt>
+            <dd>{{ quote?.advisor?.name }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED DATE</dt>
             <dd>{{ quote.created_at }}</dd>
           </div>

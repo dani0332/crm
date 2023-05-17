@@ -222,6 +222,7 @@ class CRUDController extends Controller
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
+                'isManualAllocationAllowed' => $isManualAllocationAllowed,
             ]);
         }
 

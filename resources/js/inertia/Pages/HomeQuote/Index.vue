@@ -8,6 +8,7 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  isManualAllocationAllowed: Boolean,
 });
 
 const page = usePage();
@@ -145,6 +146,7 @@ const assignForm = useForm({
   assigned_to_id_new: null,
   modelType: 'Home',
   selectTmLeadId: '',
+  isManualAllocationAllowed: page.props.isManualAllocationAllowed,
 });
 
 function onAssignLead(isValid) {
@@ -279,7 +281,10 @@ onMounted(() => {
     </x-form>
 
     <section v-if="quotesSelected.length > 0" class="mb-4">
-      <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
+      <div
+        class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
+        v-if="isManualAllocationAllowed == true"
+      >
         <h3 class="font-semibold text-primary-800">Assign Leads</h3>
         <x-divider class="mb-4 mt-1" />
         <x-form @submit="onAssignLead" :auto-focus="false">
