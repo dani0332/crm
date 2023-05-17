@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CarPlanAddonsCode;
+use App\Enums\CarPlanExclusionsCode;
+use App\Enums\CarPlanFeaturesCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
@@ -470,8 +473,6 @@ class CRUDController extends Controller
             $documentTypes = collect($documentTypes)->groupBy('category');
             $listQuotePlans = $this->carQuoteService->getPlans($id);
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-            $membersDetail = $this->healthQuoteService->getMembersDetail($record->id);
-            $memberCategories = $this->lookupService->getMemberCategories();
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
 
             return inertia('CarRevivalQuote/Show', [
@@ -481,16 +482,13 @@ class CRUDController extends Controller
                 'documentTypes' => $documentTypes,
                 'lostReasons' => $lostReasons,
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+                'carPlanFeaturesCode' => CarPlanFeaturesCode::asArray(),
+                'carPlanExclusionsCode' => CarPlanExclusionsCode::asArray(),
+                'carPlanAddonsCode' => CarPlanAddonsCode::asArray(),
                 'quoteType' => quoteTypeCode::Car,
                 'can' => [
-                    'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
-                    'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
                     'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
-                    'isPA' => auth()->user()->hasRole(RolesEnum::PA),
-                    'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::CarRevivalAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
                 ],
-                'allowedDuplicateLOB' => $allowedDuplicateLOB,
-                'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'payments' => $payments,
                 'quoteRequest' => $paymentEntityModel,
                 'paymentMethods' => $paymentMethods,
@@ -500,10 +498,7 @@ class CRUDController extends Controller
                 'cdnPath' => $cdnPath,
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
-                'membersDetail' => $membersDetail,
-                'memberCategories' => $memberCategories,
                 'ecomCarInsuranceQuoteUrl' => $ecomCarInsuranceQuoteUrl,
-                'genderOptions' => $this->crudService->getGenderOptions(),
             ]);
         }
 

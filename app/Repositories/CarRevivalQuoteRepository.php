@@ -119,10 +119,10 @@ class CarRevivalQuoteRepository extends BaseRepository
     public function fetchGetFormOptions($isForListView = true)
     {
         $result = [
+            'nationalities' => NationalityRepository::withActive()->get(),
             'vehicle_types' => VehicleTypeRepository::withActive()->get(),
             'types_of_insurance' => CarTypeInsuranceRepository::withActive()->get(),
             'currently_insured_with_options' => InsuranceProviderRepository::select('id', 'text')->orderBy('text', 'asc')->withActive()->get(),
-            'nationalities' => NationalityRepository::withActive()->get(),
             'uae_license_help_for' => UaeLicenseHeldRepository::withActive()->get(),
             'emirate_of_visa' => EmirateRepository::withActive()->get(),
             'car_make' => CarMakeRepository::active()->get(),
@@ -136,7 +136,7 @@ class CarRevivalQuoteRepository extends BaseRepository
                 'payment_statuses' => PaymentStatusRepository::withActive()->get(),
                 'lead_statuses' => LeadStatusRepository::getList(QuoteTypeId::Car),
                 'tiers' => TierRepository::withActive()->get(),
-                'advisors' => AdvisorRepository::getList(quoteTypeCode::Car_Revival),
+                'advisors' => UserRepository::getList(quoteTypeCode::Car_Revival),
             ]);
         }
 

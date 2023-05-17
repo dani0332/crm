@@ -4,15 +4,17 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import QuotePolicy from '@/inertia/Pages/PersonalQuote/Partials/QuotePolicy.vue';
+import {useCan} from "@/inertia/Composables/can";
 
 defineProps({
     quote: Object,
-    allowedDuplicateLOB: Array,
     lostReasons: Array,
     advisors: Array,
     leadStatuses: Array,
-    quoteStatusEnum: Array,
-    isBetaUser: Boolean,
+    quoteStatusEnum: Object,
+    carPlanFeaturesCode: Object,
+    carPlanExclusionsCode: Object,
+    carPlanAddonsCode: Object,
     payments: Array,
     quoteRequest: Object,
     can: Object,
@@ -27,15 +29,18 @@ defineProps({
     activities: Array,
     documentTypes: Object,
     customerAdditionalContacts: Array,
-    membersDetail: Array,
-    memberCategories: Array,
     ecomCarInsuranceQuoteUrl: String,
-    genderOptions: Object,
 });
 
 const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
+const hasPermission = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
+console.log(page.props.carPlanFeaturesCode)
+
+
 const fixedValue = number => {
     if (number == Math.floor(number)) {
         return number;
@@ -99,13 +104,6 @@ const onCopyText = text => {
         });
 };
 
-const memberCategoryText = memberCategoryId =>
-    computed(() => {
-        return page.props.memberCategories.find(
-            category => category.id === memberCategoryId,
-        )?.text;
-    });
-
 const leadStatusOptions = computed(() => {
     return page.props.leadStatuses.map(status => ({
         value: status.id,
@@ -138,15 +136,6 @@ const onLeadStatus = () => {
             });
         },
     });
-};
-
-const memberDataDocs = membersDetail => {
-    return membersDetail
-        .map(member => ({
-            id: member.id,
-            name: memberCategoryText(member.member_category_id).value,
-        }))
-        .filter(member => member.name !== undefined);
 };
 
 // plans
@@ -966,10 +955,10 @@ const sendPolicyToClient = () => {
         </div>
 
         <PaymentTable
-            v-if="isBetaUser"
+            v-if="hasRole(page.props.rolesEnum.BetaUser)"
             :payments="payments"
             :can="can"
-            :isBetaUser="isBetaUser"
+            :isBetaUser="hasRole(page.props.rolesEnum.BetaUser)"
             :quoteRequest="quoteRequest"
             :paymentMethods="paymentMethods"
             :quote="quote"
@@ -1051,61 +1040,29 @@ const sendPolicyToClient = () => {
                 <template #item-repairType="{ repairType }">
                     {{ repairType == 'COMP' ? 'NON-AGENCY' : repairType }}
                 </template>
+
                 <template #item-tplLimit="{ benefits }">
-
-<!--                    @if(isset($quotePlanFeatures->code))-->
-<!--                    @if($quotePlanFeatures->code == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT || $quotePlanFeatures->code == CarPlanFeaturesCode::DAMAGE_LIMIT)-->
-<!--                    {{ $quotePlanFeatures->value }}-->
-<!--                    @endif-->
-<!--                    @else-->
-<!--                    @if(strtolower($quotePlanFeatures->text) == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT_TEXT)-->
-<!--                    {{ $quotePlanFeatures->value }}-->
-<!--                    @endif-->
-<!--                    @endif-->
-
                     <p v-for="features in benefits.feature">
-                        {{ features.value }}
+                        <span v-if="features.code == page.props.carPlanFeaturesCode.TPL_DAMAGE_LIMIT || features.code == page.props.carPlanFeaturesCode.DAMAGE_LIMIT">{{ features.value}}</span>
+                        <span v-else>
+                            <span v-if="features.text.toString().toLowerCase() == page.props.carPlanFeaturesCode.TPL_DAMAGE_LIMIT_TEXT">{{ features.value }}</span>
+                        </span>
                     </p>
                 </template>
 
-<!--                <table style="margin-left: -10px;margin-top: -10px !important;">-->
-<!--                    @php-->
-<!--                    $totalSelectedAddonsPriceWithVat = 0;-->
-<!--                    @endphp-->
-<!--                    @foreach ($quotePlan->addons as $quotePlanAddon)-->
-<!--                    @foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)-->
-<!--                    <?php-->
-<!--                                    if (isset($quotePlanOptions->isSelected)) {-->
-<!--                    if ($quotePlanOptions->isSelected == true && $quotePlanOptions->price != 0) {-->
-<!--                    $totalSelectedAddonsPriceWithVat += $quotePlanOptions->price + $quotePlanOptions->vat;-->
-<!--                    }-->
-<!--                    } else {-->
-<!--                    $totalSelectedAddonsPriceWithVat = 0;-->
-<!--                    }-->
-<!--                    ?>-->
-<!--                    @if(isset($quotePlanAddon->code))-->
-<!--                    @if(strtolower($quotePlanAddon->code) == strtolower(CarPlanAddonsCode::DRIVER_COVER)-->
-<!--                    ||-->
-<!--                    strtolower($quotePlanAddon->code) == strtolower(CarPlanAddonsCode::PASSENGER_COVER))-->
-<!--                    <tr style="background-color: transparent;">-->
-<!--                        <td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>-->
-<!--                        <td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>-->
-<!--                    </tr>-->
-<!--                    @endif-->
-<!--                    @elseif(strtolower($quotePlanAddon->text) == CarPlanAddonsCode::DRIVER_COVER_TEXT ||-->
-<!--                    strtolower($quotePlanAddon->text) == CarPlanAddonsCode::PASSENGER_COVER_TEXT)-->
-<!--                    <tr style="background-color: transparent;">-->
-<!--                        <td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>-->
-<!--                        <td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>-->
-<!--                    </tr>-->
-<!--                    @endif-->
-<!--                    @endforeach-->
-<!--                    @endforeach-->
-<!--                </table>-->
-
-
                 <template #item-pab_cover="{addons}">
-                    <p v-for="addon in addons">{{ addon.text }}</p>
+                    <p v-for="addon in addons">
+                        <p v-for="addonOptions in addon.carAddonOption">
+                            <span v-if="
+                                addon.code.toString().toLowerCase() == page.props.carPlanAddonsCode.DRIVER_COVER ||
+                                addon.code.toString().toLowerCase() == page.props.carPlanAddonsCode.PASSENGER_COVER
+                            ">{{ addon.text + ':' + addonOptions.value }}</span>
+                            <span v-else-if="
+                                addon.text.toString().toLowerCase() == page.props.carPlanAddonsCode.DRIVER_COVER_TEXT ||
+                                addon.text.toString().toLowerCase() == page.props.carPlanAddonsCode.PASSENGER_COVER_TEXT
+                            ">{{ addon.text + ':' + addonOptions.value }}</span>
+                        </p>
+                    </p>
                 </template>
 
                 <template #item-roadside_assistance="{benefits}">
@@ -1114,40 +1071,22 @@ const sendPolicyToClient = () => {
                     </p>
                 </template>
 
-<!--                <table style="margin-left: -10px;margin-top: -10px !important;">-->
-<!--                    @foreach ($quotePlan->benefits->exclusion as $key => $quotePlanExclusion)-->
-<!--                    @if(isset($quotePlanExclusion->code))-->
-<!--                    @if(strtolower($quotePlanExclusion->code) ==-->
-<!--                    strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) ||-->
-<!--                    strtolower($quotePlanExclusion->code) ==-->
-<!--                    strtolower(CarPlanExclusionsCode::OMAN_COVER))-->
-<!--                    <tr style="background-color: transparent;">-->
-<!--                        <td style="border-top: none !important;">{{ $quotePlanExclusion->text }}:</td>-->
-<!--                        <td style="border-top: none !important;">{{ $quotePlanExclusion->value }}</td>-->
-<!--                    </tr>-->
-<!--                    @endif-->
-<!--                    @endif-->
-<!--                    @endforeach-->
-<!--                    @foreach ($quotePlan->benefits->inclusion as $key => $quotePlanInclusion)-->
-<!--                    @if(isset($quotePlanInclusion->code) && (strtolower($quotePlanInclusion->code) ==-->
-<!--                    strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) ||-->
-<!--                    (strtolower($quotePlanInclusion->code) ==-->
-<!--                    strtolower(CarPlanExclusionsCode::OMAN_COVER))))-->
-<!--                    <tr style="background-color: transparent;">-->
-<!--                        <td style="border-top: none !important;">{{ $quotePlanInclusion->text }}:</td>-->
-<!--                        <td style="border-top: none !important;">{{ $quotePlanInclusion->value }}</td>-->
-<!--                    </tr>-->
-<!--                    @endif-->
-<!--                    @endforeach-->
-<!--                </table>-->
-
                 <template #item-oman_cover_tpl="{benefits}">
                     <p v-for="oman_exclusion in benefits.exclusion">
-                        {{ oman_exclusion.text + ':' + oman_exclusion.value }}
+                        <span v-if="
+                        oman_exclusion.code.toString().toLowerCase() == page.props.carPlanExclusionsCode.TPL_OMAN_COVER.toString().toLowerCase() ||
+                        oman_exclusion.code.toString().toLowerCase() == page.props.carPlanExclusionsCode.OMAN_COVER.toString().toLowerCase()">
+                            {{ oman_exclusion.text + ':' + oman_exclusion.value }}
+                        </span>
+                    </p>
+                    <p v-for="oman_inclusion in benefits.inclusion">
+                        <span v-if="
+                        oman_inclusion.code.toString().toLowerCase() == page.props.carPlanExclusionsCode.TPL_OMAN_COVER.toString().toLowerCase() ||
+                        oman_inclusion.code.toString().toLowerCase() == page.props.carPlanExclusionsCode.OMAN_COVER.toString().toLowerCase()">
+                            {{ oman_inclusion.text + ':' + oman_inclusion.value }}
+                        </span>
                     </p>
                 </template>
-
-
 
                 <template #item-total="{ actualPremium, vat, basmah }">
                     {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
@@ -1181,7 +1120,7 @@ const sendPolicyToClient = () => {
                 <template #header>
                     {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
                 </template>
-                <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" :quote="quote"/>
+                <LazyAvailablePlan :plan="selectedPlan" :quote="quote"/>
             </x-modal>
 
             <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
@@ -1196,7 +1135,6 @@ const sendPolicyToClient = () => {
 
         <QuotePolicy
             :quote="quote"
-            :can="can"
             :quoteStatusEnum="quoteStatusEnum"
         />
 
@@ -1255,7 +1193,6 @@ const sendPolicyToClient = () => {
             <x-modal v-model="modals.doc" size="xl" show-close backdrop>
                 <template #header> Upload Documents</template>
                 <LazyDocumentUploader
-                    :members="memberDataDocs(membersDetail)"
                     :doc-types="documentTypes"
                     :docs="quoteDocuments || []"
                     :cdn="cdnPath"

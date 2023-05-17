@@ -1,7 +1,7 @@
 <script setup>
 const props = defineProps({
   plan: Object,
-  genders: Object,
+  // genders: Object,
   quote: Object,
 });
 
@@ -9,10 +9,6 @@ const notification = useToast();
 const page = usePage();
 
 const hasRole = role => useHasRole(role);
-
-const genderText = v => {
-  return props.genders[v];
-};
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
@@ -131,8 +127,18 @@ const onMemberPremiumUpdate = (member, premium) => {
 
 const onPlanUpdate = planDetails => {
   planUpdateLoader.value = true;
+
+  const currentPlanURL = page.props.baseUrl+'/quotes/car/'+planDetails.car_quote_uuid+'/plan_details/'+planDetails.car_plan_id;
+  const updatePlanData = {
+      ...planDetails,
+      current_url: currentPlanURL
+  };
+  //
+  // console.log(updatePlanData);
+  // return false;
+
   axios
-    .post('/car-plan-manual-update-process', planDetails)
+    .post('/car-plan-manual-update-process', updatePlanData)
     .then(res => {
       if (res.data == 'Plan has been updated') {
         notification.success({
@@ -410,8 +416,9 @@ const onTogglePlans = () => {
             </div>
 
             <div class="flex justify-end">
-              <!--                v-if="$page.props.permissions.pa"-->
-              <x-button color="primary" size="sm" outlined> Update </x-button>
+              <x-button
+                  v-if="hasRole(page.props.RolesEnum.PA)"
+                  color="primary" size="sm" outlined> Update </x-button>
             </div>
           </div>
         </TabPanel>
