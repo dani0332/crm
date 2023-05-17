@@ -10,6 +10,7 @@ enum QuoteTypes: string
     case PET = 'Pet';
     case YACHT = 'Yacht';
     case JETSKI = 'Jetski';
+    case CAR_REVIVAL = 'CarRevival';
 
     public function id(): string
     {

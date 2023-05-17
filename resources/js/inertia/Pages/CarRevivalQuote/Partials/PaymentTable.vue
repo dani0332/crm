@@ -1,4 +1,6 @@
 <script setup>
+import {useCan} from "@/inertia/Composables/can";
+
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -12,6 +14,9 @@ defineProps({
 });
 
 const createPaymentModal = ref(false);
+
+const hasPermission = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -230,7 +235,7 @@ const providerId = computed(() => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="can.create_payments && !can.approve_payments"
+        v-if="can.create_payments && !hasPermission(permissionsEnum.ApprovePayments)"
         size="sm"
         color="orange"
         @click="addPaymentModal"
@@ -251,7 +256,7 @@ const providerId = computed(() => {
       </template>
       <template #item-actions="item">
         <div class="flex gap-2">
-          <template v-if="can.approve_payments">
+          <template v-if="hasPermission(permissionsEnum.ApprovePayments)">
             <x-button
               size="xs"
               color="error"
@@ -281,7 +286,7 @@ const providerId = computed(() => {
             <x-button
               size="xs"
               color="emerald"
-              v-if="can.edit_payments && item.edit_button"
+              v-if="hasPermission(permissionsEnum.PaymentsEdit) && item.edit_button"
               @click="editPaymentModal(item)"
             >
               Edit

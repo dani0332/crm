@@ -1,7 +1,7 @@
 <script setup>
 const page = usePage();
 const toast = useToast();
-const comp_for_car_revival = 'car-revival';
+const comp_for_car_revival = 'carrevival';
 const comp_for_car = 'car';
 
 const loader = reactive({
@@ -77,7 +77,7 @@ const advisorOptions = computed(() => {
 
 const filters = reactive({
   code: '',
-  batch: [],
+    quote_batch_id: [],
   first_name: '',
   last_name: '',
   email: '',
@@ -89,15 +89,15 @@ const filters = reactive({
   payment_status_id: [],
   is_ecommerce: '',
   quote_status_id: [],
-  tier: [],
-  viehicle_type: '',
-  car_type_insurance: '',
+    tier_id: [],
+    vehicle_type_id: '',
+    car_type_insurance_id: '',
   currently_insured_with: '',
   renewal_batch: '',
   renewal_expiry_date_start: '',
   renewal_expiry_date_end: '',
   policy_number: '',
-  advisors: [],
+    advisor_id: [],
   page: 1,
 });
 
@@ -108,9 +108,9 @@ function setQueryStringFilters() {
   if (urlParams.has('code')) {
     filters.code = urlParams.get('code');
   }
-  if (urlParams.has('batch[]')) {
-    filters.batch = urlParams
-      .getAll('batch[]')
+  if (urlParams.has('quote_batch_id')) {
+    filters.quote_batch_id = urlParams
+      .getAll('quote_batch_id')
       .map(batch_code => parseInt(batch_code));
   }
   if (urlParams.has('first_name')) {
@@ -138,7 +138,7 @@ function setQueryStringFilters() {
     filters.created_at_end = urlParams.get('advisor_date_end');
   }
   if (urlParams.has('payment_status_id[]')) {
-    filters.payment_status = urlParams
+    filters.payment_status_id = urlParams
       .getAll('payment_status_id[]')
       .map(status => parseInt(status));
   }
@@ -150,21 +150,21 @@ function setQueryStringFilters() {
       .getAll('quote_status_id[]')
       .map(status => parseInt(status));
   }
-  if (urlParams.has('tier[]')) {
-    filters.quottiere_status = urlParams
-      .getAll('tier[]')
+  if (urlParams.has('tier_id[]')) {
+    filters.tier_id = urlParams
+      .getAll('tier_id[]')
       .map(status => parseInt(status));
   }
-  if (urlParams.has('advisors[]')) {
-    filters.advisors = urlParams
-      .getAll('advisors[]')
+  if (urlParams.has('advisor_id[]')) {
+    filters.advisor_id = urlParams
+      .getAll('advisor_id[]')
       .map(status => parseInt(status));
   }
-  if (urlParams.has('vehicle_type')) {
-    filters.viehicle_type = urlParams.get('vehicle_type');
+  if (urlParams.has('vehicle_type_id')) {
+    filters.vehicle_type_id = urlParams.get('vehicle_type_id');
   }
-  if (urlParams.has('type_of_car_insurance')) {
-    filters.car_type_insurance = urlParams.get('type_of_car_insurance');
+  if (urlParams.has('car_type_insurance_id')) {
+    filters.car_type_insurance_id = urlParams.get('car_type_insurance_id');
   }
   if (urlParams.has('currently_insured_with')) {
     filters.currently_insured_with = urlParams.get('currently_insured_with');
@@ -254,7 +254,7 @@ onMounted(() => {
           placeholder="Search by CDB ID"
         />
         <ComboBox
-          v-model="filters.batch"
+          v-model="filters.quote_batch_id"
           label="Batch"
           name="quote_batch_id"
           placeholder="Search by Batch"
@@ -332,31 +332,31 @@ onMounted(() => {
           class="w-full"
         />
         <ComboBox
-          v-model="filters.quote_status"
+          v-model="filters.quote_status_id"
           label="Lead Status"
           name="quote_status_id"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
         />
         <ComboBox
-          v-model="filters.tier"
+          v-model="filters.tier_id"
           label="Tier Name"
           name="tier_id"
           placeholder="Search by Tier"
           :options="tierOptions"
         />
         <x-select
-          v-model="filters.viehicle_type"
+          v-model="filters.vehicle_type_id"
           label="Vehicle Type"
-          name="vehicle_type"
+          name="vehicle_type_id"
           placeholder="Search by Vehicle Type"
           :options="vehicleTypeOptions"
           class="w-full"
         />
         <x-select
-          v-model="filters.car_type_insurance"
+          v-model="filters.car_type_insurance_id"
           label="Type of Car Insurance"
-          name="type_of_car_insurance"
+          name="car_type_insurance_id"
           placeholder="Search by Type of Car Insurance"
           :options="typeOfInsuranceOptions"
           class="w-full"
@@ -397,8 +397,8 @@ onMounted(() => {
         />
         <ComboBox
           v-if="!hasRole(rolesEnum.Advisor)"
-          v-model="filters.advisors"
-          name="advisor"
+          v-model="filters.advisor_id"
+          name="advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorOptions"

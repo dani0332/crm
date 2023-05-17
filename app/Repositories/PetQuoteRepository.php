@@ -115,9 +115,4 @@ class PetQuoteRepository extends BaseRepository
             'possession_types' => HomePossessionType::all(),
         ];
     }
-
-    public function fetchgetDuplicateEntityByCode($code)
-    {
-        return PetQuote::where('parent_duplicate_quote_id', $code)->first();
-    }
 }

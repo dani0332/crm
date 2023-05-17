@@ -128,7 +128,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         Route::group(['prefix' => 'quotes'], function () {
-            Route::resource('car-revival', CarRevivalQuoteController::class)->names(generateRouteNames('car-revival-quotes'))->except('show');
+            Route::resource('carrevival', CarRevivalQuoteController::class)->names(generateRouteNames('carrevival-quotes'))->except('show');
         });
 
         Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
@@ -232,7 +232,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
-        Route::get('car-revival/{uuid}', [CRUDController::class, 'show']);
+        Route::get('carrevival/{uuid}', [CRUDController::class, 'show']);
 
 
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');

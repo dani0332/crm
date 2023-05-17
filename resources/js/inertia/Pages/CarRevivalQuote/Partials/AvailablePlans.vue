@@ -1,486 +1,448 @@
 <script setup>
 const props = defineProps({
-    plan: Object,
-    genders: Object,
+  plan: Object,
+  quote: Object,
 });
 
 const notification = useToast();
+const page = usePage();
 
-const genderText = v => {
-    return props.genders[v];
+const hasRole = role => useHasRole(role);
+
+const fixedValue = number => {
+  if (number == Math.floor(number)) {
+    return number;
+  } else {
+    return number.toFixed(2);
+  }
 };
 
-const insurerAvailableTrims = ref(null);
+const hidePlan = ref(props.plan.isDisabled),
+  isManual = ref(false),
+  planUpdateLoader = ref(false),
+  newPremiums = ref([]),
+  toggleLoader = ref(false),
+  ancillaryExcess = ref(false),
+  insurerAvailableTrims = ref(false);
 
-const ipmiBenefits = reactive({
-    region: '',
-    insurance: '',
-    payment: '',
-    network: '',
-    healthCare: false,
-    motherBaby: false,
+const addonFormData = reactive({
+    addonId: '',
+    addonOptionId: '',
+    price: '',
+    vat: '',
+    isSelected: false
 });
+
+const updatePlanForm = reactive({
+  car_plan_id: props.plan.id,
+  car_quote_uuid: page.props.quote.uuid,
+  is_create: ref(false),
+  current_url: ref(null),
+  is_manual_update: props.plan.isManualUpdate,
+  insurer_quote_no: props.plan.insurerQuoteNo || null,
+  actual_premium: props.plan.actualPremium || null,
+  discounted_premium: props.plan.discountPremium || null,
+  premium_vat: props.plan.vat || null,
+  car_value: props.plan.carValue || null,
+  excess: props.plan.excess || null,
+  ancillary_excess: props.plan.ancillaryExcess || null,
+  insurerTrim: props.plan.insurerTrimId || null,
+});
+
+const setAddonsUpdate = (parentAddon, childAddonsOption) => {
+    // Only add last value of iteration in addonFormData but i need to pass every iteration data in addFormData
+    // Kindly console parentAddon or childAddonsOption
+    // Need data like this, below
+        // 0 => array:5 [
+        //     "addonId" => 38
+        //     "addonOptionId" => 45
+        //     "price" => 0
+        //     "vat" => 0
+        //     "isSelected" => true
+        // ]
+        // 1 => array:5 [
+        //     "addonId" => 76
+        //     "addonOptionId" => 87
+        //     "price" => 0
+        //     "vat" => 0
+        //     "isSelected" => true
+        // ]
+        // 2 => array:5 [
+        //     "addonId" => 3
+        //     "addonOptionId" => 6
+        //     "price" => 0
+        //     "vat" => 0
+        //     "isSelected" => true
+
+
+    addonFormData.addonId = parentAddon.id;
+    addonFormData.addonOptionId = childAddonsOption.id,
+    addonFormData.price = childAddonsOption.price,
+    addonFormData.vat = childAddonsOption.vat,
+    addonFormData.isSelected = childAddonsOption.isSelected
+};
 
 const insuranceAvailableTrim = computed(() => {
-    return prop.plan.insurerAvailableTrims.map(insuranceAvailableTrim => ({
-        value: insuranceAvailableTrim.admeId,
-        label: insuranceAvailableTrim.description
-    }))
+  return props.plan.insurerAvailableTrims.map(insuranceAvailableTrim => ({
+    value: insuranceAvailableTrim.admeId,
+    label: insuranceAvailableTrim.description,
+  }));
 });
 
-const hidePlan = ref(props.plan.isHidden),
-    isManual = ref(false),
-    memberFormLoader = ref(false),
-    newPremiums = ref([]);
-
-const toggleLoader = ref(false);
-
 const canUpdate = computed(() => {
-    return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
+  return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
+});
+
+const repairType = computed(() => {
+  return props.plan.repairType === 'COMP'
+    ? 'NON-AGENCY'
+    : props.plan.repairType;
+});
+
+const AncillaryExcessOptions = computed(() => {
+  return Array.from({ length: 20 }, (_, i) => {
+    return {
+      value: i,
+      label: i + '%',
+    };
+  });
+});
+
+const planFeatures = computed(() => {
+  return props.plan.benefits.feature;
+});
+
+const planAddons = computed(() => {
+  return props.plan.addons;
+});
+
+const planInclusion = computed(() => {
+  return props.plan.benefits.inclusion;
+});
+
+const planExclusion = computed(() => {
+  return props.plan.benefits.exclusion;
+});
+
+const roadSideAssistance = computed(() => {
+  return props.plan.benefits.roadSideAssistance;
+});
+
+const policyWordings = computed(() => {
+  return props.plan.policyWordings;
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 
 const tabs = ref([
-    {index: 0, label: 'General Info'},
-    {index: 1, label: 'Addons'},
-    {index: 2, label: 'Inclusions'},
-    {index: 3, label: 'Exclusions'},
-    {index: 4, label: 'Road Side Assistance'},
-    {index: 5, label: 'Policy Detail'},
-
+  { index: 0, label: 'General Info' },
+  { index: 1, label: 'Addons' },
+  { index: 2, label: 'Inclusions' },
+  { index: 3, label: 'Exclusions' },
+  { index: 4, label: 'Road Side Assistance' },
+  { index: 5, label: 'Policy Detail' },
 ]);
 
-const onMemberPremiumUpdate = (member, premium) => {
-    const index = newPremiums.value.findIndex(m => m.memberId == member.memberId);
-    if (index > -1) {
-        newPremiums.value[index].premium = premium;
-    } else {
-        newPremiums.value.push({
-            memberId: member.memberId,
-            premium: premium,
+
+const onPlanUpdate = planDetails => {
+  planUpdateLoader.value = true;
+
+  const currentPlanURL = page.props.baseUrl+'/quotes/car/'+planDetails.car_quote_uuid+'/plan_details/'+planDetails.car_plan_id;
+  const updatePlanData = {
+      ...planDetails,
+      current_url: currentPlanURL,
+      addons: {}
+  };
+
+  axios
+    .post('/car-plan-manual-update-process', updatePlanData)
+    .then(res => {
+      if (res.data == 'Plan has been updated') {
+        notification.success({
+          title: res.data,
+          position: 'top',
         });
-    }
-};
-
-const onMemberUpdate = member => {
-    const memberData = {
-        quoteUID: usePage().props.quote.uuid,
-        planId: props.plan.id,
-        planDetails: [
-            {
-                ...member,
-                premium:
-                    Number(
-                        newPremiums.value.find(m => m.memberId == member.memberId)?.premium,
-                    ) || member.premium,
-            },
-        ],
-    };
-
-    memberFormLoader.value = true;
-
-    axios
-        .post('/car-plan-manual-update-process', memberData)
-        .then(res => {
-            if (res.data == 'Plan has been updated') {
-                notification.success({
-                    title: res.data,
-                    position: 'top',
-                });
-            } else {
-                notification.error({
-                    title: res.data,
-                    position: 'top',
-                });
-            }
-        })
-        .catch(err => {
-            console.log(err);
-        })
-        .finally(() => {
-            memberFormLoader.value = false;
+      } else {
+        notification.error({
+          title: res.data,
+          position: 'top',
         });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    })
+    .finally(() => {
+      planUpdateLoader.value = false;
+    });
 };
 
 const onTogglePlans = () => {
-    toggleLoader.value = true;
-
-    axios
-        .post('/quotes/car/manual-plan-toggle', {
-            modelType: 'Car',
-            planIds: [props.plan.id],
-            quote_uuid: usePage().props.quote.uuid,
-            toggle: hidePlan.value,
-        })
-        .then(response => {
-            notification.success({
-                title: 'Plan has been updated',
-                position: 'top',
-            });
-            router.reload({
-                preserveScroll: true,
-            });
-        })
-        .catch(error => {
-            notification.error({
-                title: error,
-                position: 'top',
-            });
-        })
-        .finally(() => {
-            toggleLoader.value = false;
-        });
+  toggleLoader.value = true;
+  axios
+    .post('/quotes/car/manual-plan-toggle', {
+      modelType: 'Car',
+      planIds: [props.plan.id],
+      car_quote_uuid: page.props.quote.uuid,
+      toggle: hidePlan.value,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plan has been updated',
+        position: 'top',
+      });
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+    });
 };
 </script>
 
 <template>
-    <div class="w-full">
-        <TabGroup>
-            <TabList
-                class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
-            >
-                <Tab
-                    v-for="{ index, label } in tabs"
-                    as="template"
-                    :key="index"
-                    v-slot="{ selected }"
-                >
-                    <button
-                        :class="[
+  <div class="w-full">
+    <TabGroup>
+      <TabList
+        class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
+      >
+        <Tab
+          v-for="{ index, label } in tabs"
+          as="template"
+          :key="index"
+          v-slot="{ selected }"
+        >
+          <button
+            :class="[
               'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
               'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
               selected
                 ? 'bg-white shadow text-primary-600'
                 : 'hover:bg-white/50',
             ]"
-                    >
-                        {{ label }}
-                    </button>
-                </Tab>
-            </TabList>
+          >
+            {{ label }}
+          </button>
+        </Tab>
+      </TabList>
 
-            <TabPanels class="mt-2 text-sm min-h-[70vh]">
-                <TabPanel>
-                    <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
-                        <div class="md:col-span-2 text-right select-none border-b pb-2">
-                            <x-toggle
-                                v-model="hidePlan"
-                                color="error"
-                                label="Hide Plan"
-                                @change="onTogglePlans"
-                                :loading="toggleLoader"
-                            />
-                            <x-toggle
-                                v-model="isManual"
-                                color="success"
-                                label="Manual"
-                                :loading="toggleLoader"
-                            />
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Provider Name</dt>
-                            <dd>{{ props.plan.providerName }}</dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Repair Type</dt>
-                            <dd>{{ props.plan.repairType }}</dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Insurer Quote No</dt>
-                            <dd>{{ props.plan.insurerQuoteNo }}</dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Actual Premium</dt>
-                            <dd>{{ props.plan.actualPremium }}</dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Discounted Premium</dt>
-                            <dd>
-                                <x-input
-                                    v-model="props.plan.discountPremium"
-                                    class="w-full"
-                                />
-                            </dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Car value</dt>
-                            <dd>
-                                <x-input
-                                    v-model="props.plan.carValue"
-                                    class="w-full"
-                                    disabled:true
-                                />
-                            </dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Excess</dt>
-                            <dd>{{ props.plan.excess }}</dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Ancillary Excess</dt>
-                            <dd>
-                            </dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Car Trim</dt>
-                            <dd>
-                            </dd>
-                        </div>
-                    </dl>
-<!--                    <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">-->
-<!--                        <div class="mt-6">-->
-<!--                            <h3 class="font-semibold text-primary-800">Features</h3>-->
-<!--                            <x-divider class="mb-4 mt-1"/>-->
-<!--                        </div>-->
-<!--                        <div class="grid sm:grid-cols-2">-->
-<!--                            <dt class="font-medium">Third Party Damage Limit</dt>-->
-<!--                            <dd>{{ props.plan.eligibilityName }}</dd>-->
-<!--                        </div>-->
-<!--                        <div class="grid sm:grid-cols-2">-->
-<!--                            <dt class="font-medium">Third Party Liability</dt>-->
-<!--                            <dd>{{ props.plan.actualPremium }}</dd>-->
-<!--                        </div>-->
-<!--                    </dl>-->
-<!--                    <dl>-->
-<!--                        <x-divider class="mb-4 mt-1"/>-->
-<!--                        <div class="grid sm:grid-cols-2">-->
-<!--                            <dt class="font-medium">Total Premium with VAT</dt>-->
-<!--                            <dd>{{ props.plan.basmah }}</dd>-->
-<!--                        </div>-->
-<!--                    </dl>-->
-                </TabPanel>
+      <TabPanels class="mt-2 text-sm min-h-[70vh]">
+        <TabPanel>
+          <div class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
+            <div
+              class="md:col-span-2 flex gap-2 justify-end select-none border-b pb-2"
+            >
+              <x-toggle
+                v-model="hidePlan"
+                color="error"
+                label="Hide Plan"
+                @change="onTogglePlans"
+                :loading="toggleLoader"
+              />
+              <x-toggle
+                v-model="updatePlanForm.is_manual_update"
+                color="success"
+                label="Manual"
+              />
+            </div>
 
-                <!-- <TabPanel>
-                  <div class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
-                    <div class="md:col-span-2 text-right select-none border-b pb-2">
-                      <x-toggle
-                        v-model="isManual"
-                        color="success"
-                        label="Manual"
-                        :disabled="!canUpdate"
-                      />
-                    </div>
-                    <x-select
-                      v-model="ipmiBenefits.region"
-                      label="Region Coverage"
-                      placeholder="Select Option"
-                      :disabled="!isManual"
-                      :options="[
-                        { value: '0', label: 'Regional Middle East' },
-                        { value: '1', label: 'Worldwide excluding US' },
-                        { value: '2', label: 'Worldwide' },
-                      ]"
-                      class="w-full"
-                    />
-                    <x-select
-                      v-model="ipmiBenefits.insurance"
-                      label="OP Co-insurance"
-                      placeholder="Select Option"
-                      :disabled="!isManual"
-                      :options="[
-                        { value: '0', label: '0%' },
-                        { value: '1', label: '20%' },
-                        { value: '2', label: '10% up to AED 50/OP visit' },
-                        { value: '3', label: '20% up to AED 100/OP visit' },
-                      ]"
-                      class="w-full"
-                    />
-                    <x-select
-                      v-model="ipmiBenefits.payment"
-                      label="Payment Terms"
-                      placeholder="Select Option"
-                      :disabled="!isManual"
-                      :options="[
-                        { value: '0', label: 'Annual' },
-                        { value: '1', label: 'Quarterly' },
-                        { value: '2', label: 'Monthly' },
-                      ]"
-                      class="w-full"
-                    />
-                    <x-select
-                      v-model="ipmiBenefits.network"
-                      label="Network"
-                      placeholder="Select Option"
-                      :disabled="!isManual"
-                      :options="[
-                        { value: '0', label: 'General' },
-                        { value: '1', label: 'General Plus' },
-                        { value: '2', label: 'Comprehensive Excluding AH' },
-                        { value: '3', label: 'Comprehensive' },
-                      ]"
-                      class="w-full"
-                    />
-                    <x-checkbox
-                      v-model="ipmiBenefits.healthCare"
-                      label="Healthy Connect"
-                      :disabled="!isManual"
-                    />
-                    <x-checkbox
-                      v-model="ipmiBenefits.motherBaby"
-                      label="Mother and Baby Care"
-                      :disabled="!isManual"
-                    />
-                    <div v-if="isManual">
-                      <x-button color="emerald">Update</x-button>
-                    </div>
-                    <div class="md:col-span-2 text-right border-t pt-3 font-bold">
-                      Total Indicative Premium (with VAT):
-                      {{
-                        props.plan.actualPremium +
-                        (props.plan.vat || 0) +
-                        (props.plan.basmah || 0)
-                      }}
-                    </div>
-                  </div>
-                </TabPanel> -->
+            <div class="grid sm:grid-cols-2">
+              <div class="font-medium">Provider Name</div>
+              <div>{{ props.plan.providerName }}</div>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <div class="font-medium">Repair Type</div>
+              <div>{{ repairType }}</div>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <div class="font-medium">Insurer Quote No</div>
+              <div>
+                <x-input
+                  v-model="updatePlanForm.insurer_quote_no"
+                  class="w-full"
+                />
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <div class="font-medium">Actual Premium</div>
+              <div>
+                <x-input
+                  v-model="updatePlanForm.actual_premium"
+                  class="w-full"
+                />
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <div class="font-medium">Discounted Premium</div>
+              <div>
+                <x-input
+                  v-model="updatePlanForm.discounted_premium"
+                  class="w-full"
+                />
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <div class="font-medium">Car value</div>
+              <div>
+                <x-input
+                  v-model="updatePlanForm.car_value"
+                  class="w-full"
+                  disabled:true
+                />
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <div class="font-medium">Excess</div>
+              <div>
+                <x-input v-model="updatePlanForm.excess" class="w-full" />
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <div class="font-medium">Ancillary Excess</div>
+              <div>
+                <x-select
+                  v-model="updatePlanForm.ancillary_excess"
+                  placeholder="Select Option"
+                  :options="AncillaryExcessOptions"
+                  class="w-full"
+                />
+              </div>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <div class="font-medium">Car Trim</div>
+              <div>
+                <x-select
+                  v-model="updatePlanForm.insurerTrimId"
+                  placeholder="Select Option"
+                  :options="insuranceAvailableTrim"
+                  class="w-full"
+                />
+              </div>
+            </div>
 
-                <TabPanel>
-<!--                    <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">-->
-<!--                        <div class="flex gap-2">-->
-<!--                            <dt class="font-medium">Third Party Damage Limit</dt>-->
-<!--                            <dd>test</dd>-->
-<!--                        </div>-->
-<!--                        <div class="flex gap-2">-->
-<!--                            <dt class="font-medium">Third Party Damage Limit</dt>-->
-<!--                            <dd>test</dd>-->
-<!--                        </div>-->
-<!--                    </dl>-->
+            <div class="md:col-span-2">
+              <h3 class="font-semibold text-primary-800">Features</h3>
+              <x-divider class="mt-1" />
+            </div>
 
+            <div class="grid sm:grid-cols-2" v-for="feature in planFeatures">
+              <div class="font-medium">{{ feature.text }}</div>
+              <div>{{ feature.value }}</div>
+            </div>
 
+            <x-divider class="md:col-span-2" />
 
+            <div class="md:col-span-2 grid sm:grid-cols-2 font-bold">
+              <div>Total Premium with VAT</div>
+              <div class="lining-nums">
+                {{
+                  fixedValue(
+                    props.plan.actualPremium +
+                      (props.plan.vat || 0) +
+                      (props.plan.basmah || 0),
+                  )
+                }}
+              </div>
+            </div>
 
-<!--                        <x-table-->
-<!--                            :headers="[-->
-<!--                { text: 'Relationship', value: 'memberCategoryText' },-->
-<!--                { text: 'DOB', value: 'dob' },-->
-<!--                { text: 'Gender', value: 'gender' },-->
-<!--                { text: 'Premium', value: 'premium' },-->
-<!--              ]"-->
-<!--                            :items="props.plan.memberPremiumBreakdown || []"-->
-<!--                        >-->
-<!--                            <template #item-dob="{ item }">-->
-<!--                                {{ dateFormat(item.dob) }}-->
-<!--                            </template>-->
-<!--                            <template #item-gender="{ item }">-->
-<!--                                {{ genderText(item.gender) }}-->
-<!--                            </template>-->
-<!--                            <template #item-premium="{ item }">-->
-<!--                                <x-input-->
-<!--                                    :value="item.premium"-->
-<!--                                    :disabled="item.premium != 0 && !isManual"-->
-<!--                                    size="sm"-->
-<!--                                    @update:modelValue="onMemberPremiumUpdate(item, $event)"-->
-<!--                                />-->
-<!--                                <x-button-->
-<!--                                    v-if="$page.props.permissions.pa"-->
-<!--                                    color="primary"-->
-<!--                                    class="ml-2"-->
-<!--                                    size="sm"-->
-<!--                                    outlined-->
-<!--                                    :loading="memberFormLoader"-->
-<!--                                    @click.prevent="onMemberUpdate(item)"-->
-<!--                                >-->
-<!--                                    Update-->
-<!--                                </x-button>-->
-<!--                            </template>-->
-<!--                        </x-table>-->
-<!--                    </div>-->
-                </TabPanel>
+            <div class="md:col-span-2 flex justify-end">
+              <x-button
+                color="primary"
+                size="sm"
+                outlined
+                :loading="planUpdateLoader"
+                @click.prevent="onPlanUpdate(updatePlanForm)"
+              >
+                Update
+              </x-button>
+            </div>
+          </div>
+        </TabPanel>
 
-                <TabPanel>
-                    <dl class="grid md:grid-cols-2 gap-5 p-4">
-                        <div
-                            v-for="data in props.plan.benefits.inpatient || []"
-                            :key="data.code"
-                        >
-                            <dt class="font-medium mb-1">{{ data.text }}</dt>
-                            <dd>{{ data.value }}</dd>
-                        </div>
-                    </dl>
-                </TabPanel>
+        <TabPanel>
+          <div class="grid gap-x-6 gap-y-4 p-4">
+            <div v-for="addons in planAddons" :key="addons.id">
+              <div
+                v-for="addonOptions in addons.carAddonOption"
+                :key="addonOptions.id"
+                class="flex gap-5 items-center justify-between font-medium"
+              >
+                  <input type="hidden" :value="setAddonsUpdate(addons, addonOptions)">
+                <div class="w-1/4">{{ addons.text }}</div>
+                <div class="w-1/4">{{ addonOptions.value }}</div>
+                <div class="w-1/4">
+                  <x-input
+                    v-model="addonOptions.price"
+                    class="w-full"
+                    readonly
+                  />
+                </div>
+                <div class="w-1/5 text-center">
+                  <x-toggle
+                    v-model="addonOptions.isSelected"
+                    color="success"
+                    :loading="toggleLoader"
+                  />
+                </div>
+              </div>
+            </div>
 
-                <TabPanel>
-                    <dl class="grid md:grid-cols-2 gap-5 p-4">
-                        <div
-                            v-for="data in props.plan.benefits.outpatient || []"
-                            :key="data.code"
-                        >
-                            <dt class="font-medium mb-1">{{ data.text }}</dt>
-                            <dd>{{ data.value }}</dd>
-                        </div>
-                    </dl>
-                </TabPanel>
+            <div class="flex justify-end">
+              <x-button
+                  v-if="hasRole(page.props.rolesEnum.PA)"
+                  color="primary" size="sm" outlined> Update </x-button>
+            </div>
+          </div>
+        </TabPanel>
 
-                <TabPanel>
-                    <dl class="grid md:grid-cols-2 gap-5 p-4">
-                        <div
-                            v-for="data in props.plan.benefits.regionCover || []"
-                            :key="data.code"
-                        >
-                            <dt class="font-medium mb-1">{{ data.text }}</dt>
-                            <dd>{{ data.value }}</dd>
-                        </div>
-                        <div
-                            v-for="data in props.plan.benefits.networkList || []"
-                            :key="data.code"
-                        >
-                            <dt class="font-medium mb-1">{{ data.text }}</dt>
-                            <dd>{{ data.value }}</dd>
-                        </div>
-                    </dl>
-                </TabPanel>
+        <TabPanel>
+          <div class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
+            <div class="row" v-for="inclusion in planInclusion">
+              <div class="col-6">{{ inclusion.text }}</div>
+              <div class="col-6">{{ inclusion.value }}</div>
+            </div>
+          </div>
+        </TabPanel>
 
-                <TabPanel>
-                    <dl class="grid md:grid-cols-2 gap-5 p-4">
-                        <div
-                            v-for="data in props.plan.benefits.coInsurance || []"
-                            :key="data.code"
-                        >
-                            <dt class="font-medium mb-1">{{ data.text }}</dt>
-                            <dd>{{ data.value }}</dd>
-                        </div>
-                    </dl>
-                </TabPanel>
+        <TabPanel>
+          <div class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
+            <div class="row" v-for="exclusion in planExclusion">
+              <div class="col-6">{{ exclusion.text }}</div>
+              <div class="col-6">{{ exclusion.value }}</div>
+            </div>
+          </div>
+        </TabPanel>
 
-                <TabPanel>
-                    <dl class="grid md:grid-cols-2 gap-5 p-4">
-                        <div
-                            v-for="data in props.plan.benefits.maternityCover || []"
-                            :key="data.code"
-                        >
-                            <dt class="font-medium mb-1">{{ data.text }}</dt>
-                            <dd>{{ data.value }}</dd>
-                        </div>
-                    </dl>
-                </TabPanel>
+        <TabPanel>
+          <div class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
+            <div class="row" v-for="roadSideAssist in roadSideAssistance">
+              <div class="col-6">{{ roadSideAssist.text }}</div>
+              <div class="col-6">{{ roadSideAssist.value }}</div>
+            </div>
+          </div>
+        </TabPanel>
 
-                <!-- <TabPanel>
-                  <dl class="grid md:grid-cols-2 gap-5 p-4">
-                    <div
-                      v-for="data in props.plan.benefits.exclusion || []"
-                      :key="data.code"
-                    >
-                      <dt class="font-medium mb-1">{{ data.text }}</dt>
-                      <dd>{{ data.value }}</dd>
-                    </div>
-                  </dl>
-                </TabPanel>
-                <TabPanel>
-                  <dl class="grid md:grid-cols-2 gap-5 p-4">
-                    <x-link
-                      v-for="data in props.plan.benefits.networkLink || []"
-                      :key="data.code"
-                      :href="data.value"
-                      target="_blank"
-                      title="Open File"
-                      external
-                    >
-                      {{ data.text }}
-                    </x-link>
-                  </dl>
-                </TabPanel> -->
-            </TabPanels>
-        </TabGroup>
-    </div>
+        <TabPanel>
+          <div class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
+            <x-link
+              v-for="policyWording in policyWordings || []"
+              :href="policyWording.link"
+              target="_blank"
+              title="Open File"
+              external
+            >
+              {{ policyWording.text }}
+            </x-link>
+          </div>
+        </TabPanel>
+      </TabPanels>
+    </TabGroup>
+  </div>
 </template>

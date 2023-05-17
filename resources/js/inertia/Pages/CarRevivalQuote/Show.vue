@@ -3,43 +3,40 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
-import {computed} from "vue";
-import QuotePolicy from "@/inertia/Pages/PersonalQuote/Partials/QuotePolicy.vue";
-import QuoteDocuments from "@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue";
-import AdditionalContacts from "@/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue";
-import LeadHistory from "@/inertia/Pages/PersonalQuote/Partials/LeadHistory.vue";
-import AuditLogs from "@/inertia/Components/AuditLogs.vue";
+import QuotePolicy from '@/inertia/Pages/PersonalQuote/Partials/QuotePolicy.vue';
+import {useCan} from "@/inertia/Composables/can";
 
 defineProps({
     quote: Object,
-    allowedDuplicateLOB: Array,
     lostReasons: Array,
     advisors: Array,
     leadStatuses: Array,
     quoteStatusEnum: Object,
-    isBetaUser: Boolean,
+    carPlanFeaturesCode: Object,
+    carPlanExclusionsCode: Object,
+    carPlanAddonsCode: Object,
     payments: Array,
     quoteRequest: Object,
     can: Object,
     paymentMethods: Object,
-    listQuotePlans: Array,
+    listQuotePlans: {
+        type: [Array, String],
+        default: () => [],
+    },
     quoteDocuments: Object,
     sendPolicy: Boolean,
     cdnPath: String,
     activities: Array,
     documentTypes: Object,
     customerAdditionalContacts: Array,
-    membersDetail: Array,
-    memberCategories: Array,
     ecomCarInsuranceQuoteUrl: String,
-    genderOptions: Object,
 });
 
 const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
-const dateFormat = date =>
-    date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+const hasPermission = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const fixedValue = number => {
     if (number == Math.floor(number)) {
@@ -48,7 +45,13 @@ const fixedValue = number => {
         return number.toFixed(2);
     }
 };
-console.log(page.props.quote);
+
+const calculateVAT = addonOption => {
+    if(addonOption.isSelected === true && addonOption.price !== 0){
+        totalVAT.value += (addonOption.price + addonOption.vat);
+    }
+}
+
 const modals = reactive({
     doc: false,
     docConfirm: false,
@@ -66,7 +69,7 @@ const advisorOptions = computed(() => {
         value: advisor.id,
         label: advisor.name,
     }));
-})
+});
 
 const confirmDeleteData = reactive({
     docs: null,
@@ -80,8 +83,6 @@ const confirmData = reactive({
 });
 
 const
-    // assignSubteam = ref(page.props.quote.health_team_type || ''),
-    assignLead = ref(null),
     activityActionEdit = ref(false),
     selectedPlan = ref(null),
     selectedPlans = ref([]),
@@ -89,9 +90,10 @@ const
     toggleLoader = ref(false),
     contactLoader = ref(false),
     historyLoading = ref(false),
-    isDisabled = ref(false);
+    isDisabled = ref(false),
+    totalVAT = ref(false);
 
-const { copy, copied } = useClipboard();
+const {copy, copied} = useClipboard();
 
 const {isRequired, isEmail, isNumber, isMobile} = useRules();
 
@@ -103,21 +105,6 @@ const onCopyText = text => {
             position: 'top',
         });
 };
-
-const memberCategoryText = memberCategoryId =>
-    computed(() => {
-        return page.props.memberCategories.find(
-            category => category.id === memberCategoryId,
-        )?.text;
-    });
-
-const subTeamOptions = [
-    {value: 'RM-NB', label: 'RM-NB'},
-    {value: 'RM-Speed', label: 'RM-Speed'},
-    {value: 'EBP', label: 'EBP'},
-    {value: 'Wow-Call', label: 'Wow-Call'},
-    {value: 'No-Type', label: 'No-Type'},
-];
 
 const leadStatusOptions = computed(() => {
     return page.props.leadStatuses.map(status => ({
@@ -135,34 +122,22 @@ const leadStatusForm = useForm({
     notes: page.props.quote.notes || null,
     trans_code: page.props.quote.transapp_code || null,
     lostReason: page.props.quote.lost_reason_id || null,
-    isInertia: true
+    isInertia: true,
 });
 
 const onLeadStatus = () => {
-    leadStatusForm.post(
-        `/quotes/car/${page.props.quote.id}/update-lead-status`,
-        {
-            preserveScroll: true,
-            onError: errors => {
-                console.log(errors);
-            },
-            onSuccess: () => {
-                notification.success({
-                    title: 'Lead Status Updated',
-                    position: 'top',
-                });
-            },
+    leadStatusForm.post(`/quotes/car/${page.props.quote.id}/update-lead-status`, {
+        preserveScroll: true,
+        onError: errors => {
+            console.log(errors);
         },
-    );
-};
-
-const memberDataDocs = membersDetail => {
-    return membersDetail
-        .map(member => ({
-            id: member.id,
-            name: memberCategoryText(member.member_category_id).value,
-        }))
-        .filter(member => member.name !== undefined);
+        onSuccess: () => {
+            notification.success({
+                title: 'Lead Status Updated',
+                position: 'top',
+            });
+        },
+    });
 };
 
 // plans
@@ -178,24 +153,48 @@ const plansTable = reactive({
             value: 'name',
         },
         {
-            text: 'Network Provider',
-            value: 'eligibilityName',
+            text: 'Repair Type',
+            value: 'repairType',
         },
         {
-            text: 'Base Premium',
+            text: 'Insurer Quote No.',
+            value: 'insurerQuoteNo',
+        },
+        {
+            text: 'TPL Limit',
+            value: 'tplLimit',
+        },
+        {
+            text: 'Car Trim',
+            value: 'insurerTrimText',
+        },
+        {
+            text: 'PAB cover',
+            value: 'pab_cover',
+        },
+        {
+            text: 'Roadside assistance',
+            value: 'roadside_assistance',
+        },
+        {
+            text: 'Oman cover TPL',
+            value: 'oman_cover_tpl',
+        },
+        {
+            text: 'Actual Premium',
             value: 'actualPremium',
         },
         {
-            text: 'Basmah',
-            value: 'basmah',
+            text: 'Discounted Premium',
+            value: 'discountPremium',
         },
         {
-            text: 'Policy Fee (if applicable)',
-            value: 'policyFee',
-        },
-        {
-            text: 'Total Indicative Premium (with VAT)',
+            text: 'Premium with VAT.',
             value: 'total',
+        },
+        {
+            text: 'Excess',
+            value: 'excess',
         },
         {
             text: 'Action',
@@ -390,7 +389,8 @@ const activityForm = useForm({
     status: null,
     activity_id: null,
     uuid: null,
-    isInertia: true
+    isInertia: true,
+    is_car_revival: true
 });
 
 const addActivity = () => {
@@ -612,13 +612,6 @@ const sendPolicyToClient = () => {
         });
     }
 };
-
-onMounted(() => {
-    const isCarRevivalAdvisor = page.props.advisors.find(
-        a => a.id == page.props.quote.advisor_id,
-    );
-    if (isCarRevivalAdvisor) assignLead.value = isCarRevivalAdvisor.id;
-});
 </script>
 <template>
     <div>
@@ -626,8 +619,11 @@ onMounted(() => {
         <div class="flex justify-between items-center flex-wrap gap-2">
             <h2 class="text-xl font-semibold">Car Revival Detail</h2>
             <div class="flex gap-2">
-                <Link href="/quotes/car-revival" preserve-scroll>
-                    <x-button size="sm" color="primary" tag="div"> Car Revival List</x-button>
+                <Link href="/quotes/carrevival" preserve-scroll>
+                    <x-button size="sm" color="primary" tag="div">
+                        Car Revival List
+                    </x-button
+                    >
                 </Link>
 
                 <Link :href="`${quote.uuid}/edit`">
@@ -637,53 +633,6 @@ onMounted(() => {
         </div>
 
         <x-divider class="my-4"/>
-        <div
-            class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
-        >
-            <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-                <div class="w-full md:w-1/2 flex gap-2 items-end">
-                    <x-select
-                        v-model="assignSubteam"
-                        label="Assign Subteam"
-                        :options="subTeamOptions"
-                        placeholder="Select Subteam"
-                        class="w-auto flex-1"
-                    />
-                    <div>
-                        <x-button
-                            color="orange"
-                            size="sm"
-                            @click.prevent="onTeamAssign"
-                            :loading="isDisabled"
-                        >
-                            Assign Team
-                        </x-button>
-                    </div>
-                </div>
-                <div
-                    v-if="!hasRole($page.props.rolesEnum.CarRevivalAdvisor)"
-                    class="w-full md:w-1/2 flex gap-2 items-end"
-                >
-                    <x-select
-                        v-model="assignLead"
-                        label="Assign Lead"
-                        :options="advisorOptions"
-                        placeholder="Select Lead"
-                        class="w-auto flex-1"
-                    />
-                    <div>
-                        <x-button
-                            color="orange"
-                            size="sm"
-                            @click.prevent="onAssignLead"
-                            :loading="isDisabled"
-                        >
-                            Assign
-                        </x-button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div class="p-4 rounded shadow mb-6 bg-white">
             <div class="text-sm">
@@ -830,7 +779,7 @@ onMounted(() => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
-                        <dd>{{ dateFormat(quote.next_followup_date) }}</dd>
+                        <dd>{{ quote.next_followup_date }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CLAIM HISTORY</dt>
@@ -838,7 +787,7 @@ onMounted(() => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">ADVISOR ASSIGN DATE</dt>
-                        <dd>{{ dateFormat(quote.advisor_assigned_date) }}</dd>
+                        <dd>{{ quote.advisor_assigned_date }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">LEAD COST</dt>
@@ -893,7 +842,7 @@ onMounted(() => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
-                        <dd>{{ dateFormat(quote.previous_policy_expiry_date) }}</dd>
+                        <dd>{{ quote.previous_policy_expiry_date }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">Previous Import Code</dt>
@@ -905,7 +854,7 @@ onMounted(() => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">Renewal Expiry Date</dt>
-                        <dd>{{ dateFormat(quote.renewal_expiry_date) }}</dd>
+                        <dd>{{ quote.renewal_expiry_date }}</dd>
                     </div>
                 </dl>
             </div>
@@ -1008,10 +957,10 @@ onMounted(() => {
         </div>
 
         <PaymentTable
-            v-if="isBetaUser"
+            v-if="hasRole(page.props.rolesEnum.BetaUser)"
             :payments="payments"
             :can="can"
-            :isBetaUser="isBetaUser"
+            :isBetaUser="hasRole(page.props.rolesEnum.BetaUser)"
             :quoteRequest="quoteRequest"
             :paymentMethods="paymentMethods"
             :quote="quote"
@@ -1040,13 +989,13 @@ onMounted(() => {
                     </x-button-group>
 
                     <x-button
-                      v-if="selectedPlans.length > 0"
-                      size="sm"
-                      color="emerald"
-                      @click.prevent="onExportPlans"
-                      :loading="exportLoader"
+                        v-if="selectedPlans.length > 0"
+                        size="sm"
+                        color="emerald"
+                        @click.prevent="onExportPlans"
+                        :loading="exportLoader"
                     >
-                      Download PDF
+                        Download PDF
                     </x-button>
 
                     <x-button
@@ -1069,7 +1018,7 @@ onMounted(() => {
                 :rows-per-page="15"
                 :hide-footer="listQuotePlans.length < 15"
             >
-                <template #item-providerName="{ providerName, isManualPlan, isHidden }">
+                <template #item-providerName="{ providerName, isManualPlan, isDisabled }">
                     <p>{{ providerName }}</p>
                     <div class="flex gap-1">
                         <x-tag
@@ -1081,7 +1030,7 @@ onMounted(() => {
                             Manual Plan
                         </x-tag>
                         <x-tag
-                            v-if="isHidden"
+                            v-if="isDisabled"
                             size="xs"
                             color="error"
                             class="mt-0.5 text-[10px]"
@@ -1090,9 +1039,72 @@ onMounted(() => {
                         </x-tag>
                     </div>
                 </template>
-                <template #item-total="{ actualPremium, vat, basmah }">
-                    {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
+                <template #item-repairType="{ repairType }">
+                    {{ repairType == 'COMP' ? 'NON-AGENCY' : repairType }}
                 </template>
+
+                <template #item-tplLimit="{ benefits }">
+                    <p v-for="features in benefits.feature">
+                        <span v-if="features.code == page.props.carPlanFeaturesCode.TPL_DAMAGE_LIMIT || features.code == page.props.carPlanFeaturesCode.DAMAGE_LIMIT">{{ features.value}}</span>
+                        <span v-else>
+                            <span v-if="features.text.toString().toLowerCase() == page.props.carPlanFeaturesCode.TPL_DAMAGE_LIMIT_TEXT">{{ features.value }}</span>
+                        </span>
+                    </p>
+                </template>
+
+                <template #item-pab_cover="{addons}">
+                    <p v-for="addon in addons">
+                        <p v-for="addonOptions in addon.carAddonOption">
+                            <input type="hidden" :value="calculateVAT(addonOptions)">
+                            <span v-if="
+                                addon.code.toString().toLowerCase() == page.props.carPlanAddonsCode.DRIVER_COVER ||
+                                addon.code.toString().toLowerCase() == page.props.carPlanAddonsCode.PASSENGER_COVER
+                            ">{{ addon.text + ':' + addonOptions.value }}</span>
+                            <span v-else-if="
+                                addon.text.toString().toLowerCase() == page.props.carPlanAddonsCode.DRIVER_COVER_TEXT ||
+                                addon.text.toString().toLowerCase() == page.props.carPlanAddonsCode.PASSENGER_COVER_TEXT
+                            ">{{ addon.text + ':' + addonOptions.value }}</span>
+                        </p>
+                    </p>
+                </template>
+
+                <template #item-roadside_assistance="{benefits}">
+                    <p v-for="roadside_assist in benefits.roadSideAssistance">
+                        {{ roadside_assist.text + ':' + roadside_assist.value }}
+                    </p>
+                </template>
+
+                <template #item-oman_cover_tpl="{benefits}">
+                    <p v-for="oman_exclusion in benefits.exclusion">
+                        <span v-if="
+                        oman_exclusion.code.toString().toLowerCase() == page.props.carPlanExclusionsCode.TPL_OMAN_COVER.toString().toLowerCase() ||
+                        oman_exclusion.code.toString().toLowerCase() == page.props.carPlanExclusionsCode.OMAN_COVER.toString().toLowerCase()">
+                            {{ oman_exclusion.text + ':' + oman_exclusion.value }}
+                        </span>
+                    </p>
+                    <p v-for="oman_inclusion in benefits.inclusion">
+                        <span v-if="
+                        oman_inclusion.code.toString().toLowerCase() == page.props.carPlanExclusionsCode.TPL_OMAN_COVER.toString().toLowerCase() ||
+                        oman_inclusion.code.toString().toLowerCase() == page.props.carPlanExclusionsCode.OMAN_COVER.toString().toLowerCase()">
+                            {{ oman_inclusion.text + ':' + oman_inclusion.value }}
+                        </span>
+                    </p>
+                </template>
+
+                <template #item-actualPremium="{ actualPremium }">
+                    {{ fixedValue( (actualPremium || 0)) }}
+                </template>
+                <template #item-discountPremium="{ discountPremium, vat }">
+                    {{ fixedValue( (discountPremium || 0)) }}
+                </template>
+                <template #item-excess="{ excess }">
+                    {{ fixedValue( (excess || 0) ) }}
+                </template>
+
+                <template #item-total="{ discountPremium, vat }">
+                    {{ fixedValue( (totalVAT || 0) +(vat || 0)  + (discountPremium || 0)) }}
+                </template>
+
                 <template #item-action="item">
                     <div class="flex gap-2 pr-2">
                         <x-button
@@ -1122,7 +1134,7 @@ onMounted(() => {
                 <template #header>
                     {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
                 </template>
-                <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions"/>
+                <LazyAvailablePlan :plan="selectedPlan" :quote="quote"/>
             </x-modal>
 
             <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
@@ -1137,8 +1149,7 @@ onMounted(() => {
 
         <QuotePolicy
             :quote="quote"
-            :can="can"
-            :quoteStatusEnum="quoteStatusesEnum"
+            :quoteStatusEnum="quoteStatusEnum"
         />
 
         <div class="p-4 rounded shadow mb-6 bg-white">
@@ -1196,7 +1207,6 @@ onMounted(() => {
             <x-modal v-model="modals.doc" size="xl" show-close backdrop>
                 <template #header> Upload Documents</template>
                 <LazyDocumentUploader
-                    :members="memberDataDocs(membersDetail)"
                     :doc-types="documentTypes"
                     :docs="quoteDocuments || []"
                     :cdn="cdnPath"
@@ -1226,14 +1236,6 @@ onMounted(() => {
                 </template>
             </x-modal>
         </div>
-
-
-        <!--        <QuoteDocuments-->
-        <!--            :document-types="documentTypes"-->
-        <!--            :quote-documents="quote.documents || []"-->
-        <!--            :storageUrl="storageUrl"-->
-        <!--            :quote="quote"-->
-        <!--        />-->
 
         <div class="p-4 rounded shadow mb-6 bg-white">
             <div class="flex justify-between items-center mb-4">
@@ -1510,6 +1512,8 @@ onMounted(() => {
                 :hide-footer="historyData.length < 15"
             />
         </div>
+
         <AuditLogs :type="'App\\Models\\CarQuote'" :id="quote.id"/>
     </div>
+
 </template>

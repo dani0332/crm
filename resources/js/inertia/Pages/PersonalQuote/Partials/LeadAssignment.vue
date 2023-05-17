@@ -24,6 +24,7 @@ const assignForm = useForm({
   manual_assignment_email_flag: '1',
   modelType: props.model_type,
   selectTmLeadId: '',
+    isInertia: true
 });
 
 function onAssignLead(isValid) {
