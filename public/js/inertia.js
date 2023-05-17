@@ -7714,7 +7714,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
   props: {
     quotes: Object,
     leadStatuses: Array,
-    advisors: Array
+    advisors: Array,
+    isManualAllocationAllowed: Boolean
   },
   setup: function setup(__props, _ref) {
     var expose = _ref.expose;
@@ -7878,7 +7879,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     var assignForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
       assigned_to_id_new: null,
       modelType: 'Home',
-      selectTmLeadId: ''
+      selectTmLeadId: '',
+      isManualAllocationAllowed: page.props.isManualAllocationAllowed
     });
     function onAssignLead(isValid) {
       if (isValid) {
@@ -25549,6 +25551,7 @@ var _hoisted_6 = {
   "class": "mb-4"
 };
 var _hoisted_7 = {
+  key: 0,
   "class": "px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
 };
 var _hoisted_8 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("h3", {
@@ -25742,7 +25745,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, 8 /* PROPS */, ["onClick"])])];
     }),
     _: 1 /* STABLE */
-  }), $setup.quotesSelected.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("section", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_7, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_divider, {
+  }), $setup.quotesSelected.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("section", _hoisted_6, [$props.isManualAllocationAllowed == true ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", _hoisted_7, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
   }), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_form, {
     onSubmit: $setup.onAssignLead,
@@ -25772,7 +25775,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, 8 /* PROPS */, ["loading"])])])];
     }),
     _: 1 /* STABLE */
-  })])])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(vue__WEBPACK_IMPORTED_MODULE_4__.Transition, {
+  })])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(vue__WEBPACK_IMPORTED_MODULE_4__.Transition, {
     name: "fade"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
