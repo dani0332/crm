@@ -55,12 +55,14 @@ const setAddons = (parentAddon, childAddonsOption) => {
 
 const onAddonsUpdate = (event, addonId, addonOptionId) => {
   const { isSelected, price } = event;
-  const addon = addonFormData.value.find(
+  const addonIndex = addonFormData.value.findIndex(
     addon => addon.addonId == addonId && addon.addonOptionId == addonOptionId,
   );
-  if (addon) {
-    if (isSelected !== undefined) addon.isSelected = isSelected;
-    if (price !== undefined) addon.price = price;
+
+  if (addonIndex > -1) {
+    if (isSelected !== undefined)
+      addonFormData.value[addonIndex].isSelected = isSelected;
+    if (price !== undefined) addonFormData.value[addonIndex].price = price;
   }
 };
 
@@ -134,10 +136,21 @@ const onPlanUpdate = planDetails => {
     planDetails.car_quote_uuid +
     '/plan_details/' +
     planDetails.car_plan_id;
+
+  const uniqueAddons = addonFormData.value.filter(
+    (addon, index, self) =>
+      index ===
+      self.findIndex(
+        t =>
+          t.addonId === addon.addonId &&
+          t.addonOptionId === addon.addonOptionId,
+      ),
+  );
+
   const updatePlanData = {
     ...planDetails,
     current_url: currentPlanURL,
-    addons: addonFormData.value,
+    addons: uniqueAddons,
   };
 
   console.log(updatePlanData);
@@ -381,6 +394,7 @@ const onTogglePlans = () => {
                 </div>
                 <div class="w-1/5 text-center">
                   <x-toggle
+                    :modelValue="addonFormData[index].isSelected"
                     color="success"
                     @update:modelValue="
                       onAddonsUpdate(
