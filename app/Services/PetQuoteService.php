@@ -714,18 +714,15 @@ class PetQuoteService extends BaseService
         Log::info('Leads ids to assign: '.json_encode($leadsIds));
         $result = [];
         foreach ($leadsIds as $leadId) {
-            $lead = $this->getQuote($leadId);
-            $lead->advisor_id = $userId;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+            $lead = PersonalQuote::findOrfail($leadId);
+            if ($lead) {
+                $lead->advisor_id = $userId;
+                $lead->save();
+                $this->updateChildRecord($lead->id);
+            }
         }
 
         return $result;
-    }
-
-    public function getQuote($id)
-    {
-        return PersonalQuote::findOrfail($id);
     }
 
     public function getEntityPlainByUUID($uuid)
