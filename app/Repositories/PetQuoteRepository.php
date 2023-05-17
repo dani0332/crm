@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\LookupsEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\HomeAccomodationType;
@@ -10,6 +11,7 @@ use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use Config;
+use Faker\Provider\Person;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,7 @@ class PetQuoteRepository extends BaseRepository
 {
     public function model()
     {
-        return PetQuote::class;
+        return (in_array(quoteTypeCode::Pet, newUi())) ? PersonalQuote::class : PetQuote::class;
     }
 
     public function fetchCreate($request)
