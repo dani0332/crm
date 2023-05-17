@@ -31,7 +31,6 @@ class CentralService
             return $item;
         });
         foreach ($allowedLeadTypes as $leadType) {
-
             $leadType = strtolower($leadType);
 
             if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {

@@ -5,7 +5,7 @@ defineProps({
   quote: Object,
   quoteStatuses: Object,
   quoteType: String,
-  activities: Object,
+  activities: Array,
   advisors: Array,
   customerAdditionalContacts: Array,
   allowedDuplicateLOB: Array,
@@ -501,6 +501,9 @@ const onCreateDuplicate = isValid => {
             :disabled="status === 1"
             @change="onActivityStatusUpdate(id)"
           />
+        </template>
+        <template #item-advisor="{assignee}">
+            {{ assignee?.name }}
         </template>
         <template #item-action="item">
           <div class="space-x-4">

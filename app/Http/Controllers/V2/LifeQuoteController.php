@@ -103,6 +103,7 @@ class LifeQuoteController extends Controller
                 'status' => $activity->status,
             ];
         }
+
         return inertia('LifeQuote/Show', [
             'quoteType' => QuoteTypes::LIFE,
             'quoteStatuses' => $quoteStatuses,
