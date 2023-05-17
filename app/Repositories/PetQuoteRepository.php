@@ -8,6 +8,7 @@ use App\Facades\Capi;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
+use App\Models\PetQuote;
 use Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,7 @@ class PetQuoteRepository extends BaseRepository
 {
     public function model()
     {
-        return PersonalQuote::class;
+        return PetQuote::class;
     }
 
     public function fetchCreate($request)
