@@ -31068,7 +31068,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
     "item-advisor": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (_ref2) {
       var advisor = _ref2.advisor;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(advisor === null || advisor === void 0 ? void 0 : advisor.email), 1 /* TEXT */)];
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(advisor === null || advisor === void 0 ? void 0 : advisor.name), 1 /* TEXT */)];
     }),
 
     "item-quote_status": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (_ref3) {
@@ -31228,160 +31228,166 @@ var _hoisted_18 = {
 };
 var _hoisted_19 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "CREATED DATE", -1 /* HOISTED */);
+}, "ADVISOR", -1 /* HOISTED */);
 var _hoisted_20 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_21 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "LAST MODIFIED DATE", -1 /* HOISTED */);
+}, "CREATED DATE", -1 /* HOISTED */);
 var _hoisted_22 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_23 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "DEVICE", -1 /* HOISTED */);
+}, "LAST MODIFIED DATE", -1 /* HOISTED */);
 var _hoisted_24 = {
-  "class": "mt-6"
-};
-var _hoisted_25 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
-  "class": "font-semibold text-primary-800"
-}, "Quote Details", -1 /* HOISTED */);
-var _hoisted_26 = {
-  "class": "text-sm"
-};
-var _hoisted_27 = {
-  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
-};
-var _hoisted_28 = {
   "class": "grid sm:grid-cols-2"
 };
-var _hoisted_29 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
+var _hoisted_25 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "PREMIUM", -1 /* HOISTED */);
+}, "DEVICE", -1 /* HOISTED */);
+var _hoisted_26 = {
+  "class": "mt-6"
+};
+var _hoisted_27 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
+  "class": "font-semibold text-primary-800"
+}, "Quote Details", -1 /* HOISTED */);
+var _hoisted_28 = {
+  "class": "text-sm"
+};
+var _hoisted_29 = {
+  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
+};
 var _hoisted_30 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_31 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "POLICY NUMBER", -1 /* HOISTED */);
+}, "PREMIUM", -1 /* HOISTED */);
 var _hoisted_32 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_33 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "TYPE OF PET", -1 /* HOISTED */);
+}, "POLICY NUMBER", -1 /* HOISTED */);
 var _hoisted_34 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_35 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "BREED OF PET", -1 /* HOISTED */);
+}, "TYPE OF PET", -1 /* HOISTED */);
 var _hoisted_36 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_37 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "AGE OF PET", -1 /* HOISTED */);
+}, "BREED OF PET", -1 /* HOISTED */);
 var _hoisted_38 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_39 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "IS NEUTERED", -1 /* HOISTED */);
+}, "AGE OF PET", -1 /* HOISTED */);
 var _hoisted_40 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_41 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "IS MICROCHIPPED", -1 /* HOISTED */);
+}, "IS NEUTERED", -1 /* HOISTED */);
 var _hoisted_42 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_43 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "MICROCHIP NO", -1 /* HOISTED */);
+}, "IS MICROCHIPPED", -1 /* HOISTED */);
 var _hoisted_44 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_45 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "IS MIXED BREED", -1 /* HOISTED */);
+}, "MICROCHIP NO", -1 /* HOISTED */);
 var _hoisted_46 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_47 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "HAS INJURY", -1 /* HOISTED */);
+}, "IS MIXED BREED", -1 /* HOISTED */);
 var _hoisted_48 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_49 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "GENDER", -1 /* HOISTED */);
+}, "HAS INJURY", -1 /* HOISTED */);
 var _hoisted_50 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_51 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "ACCOMMODATION TYPE", -1 /* HOISTED */);
+}, "GENDER", -1 /* HOISTED */);
 var _hoisted_52 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_53 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "POSSESION TYPE", -1 /* HOISTED */);
+}, "ACCOMMODATION TYPE", -1 /* HOISTED */);
 var _hoisted_54 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_55 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "TRANSAPP CODE", -1 /* HOISTED */);
+}, "POSSESION TYPE", -1 /* HOISTED */);
 var _hoisted_56 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_57 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "LOST REASON", -1 /* HOISTED */);
+}, "TRANSAPP CODE", -1 /* HOISTED */);
 var _hoisted_58 = {
-  "class": "mt-6"
-};
-var _hoisted_59 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
-  "class": "font-semibold text-primary-800"
-}, " Last Year's Policy Details ", -1 /* HOISTED */);
-var _hoisted_60 = {
-  "class": "text-sm"
-};
-var _hoisted_61 = {
-  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
-};
-var _hoisted_62 = {
   "class": "grid sm:grid-cols-2"
 };
-var _hoisted_63 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
+var _hoisted_59 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "PREVIOUS POLICY NUMBER", -1 /* HOISTED */);
+}, "LOST REASON", -1 /* HOISTED */);
+var _hoisted_60 = {
+  "class": "mt-6"
+};
+var _hoisted_61 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
+  "class": "font-semibold text-primary-800"
+}, " Last Year's Policy Details ", -1 /* HOISTED */);
+var _hoisted_62 = {
+  "class": "text-sm"
+};
+var _hoisted_63 = {
+  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
+};
 var _hoisted_64 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_65 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "PREVIOUS POLICY EXPIRY DATE", -1 /* HOISTED */);
+}, "PREVIOUS POLICY NUMBER", -1 /* HOISTED */);
 var _hoisted_66 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_67 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "PREVIOUS POLICY PREMIUM", -1 /* HOISTED */);
+}, "PREVIOUS POLICY EXPIRY DATE", -1 /* HOISTED */);
 var _hoisted_68 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_69 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
+}, "PREVIOUS POLICY PREMIUM", -1 /* HOISTED */);
+var _hoisted_70 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_71 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
+  "class": "font-medium"
 }, "RENEWAL BATCH", -1 /* HOISTED */);
 
 function render(_ctx, _cache, $props, $setup, $data, $options) {
-  var _$props$quote, _$props$quote2, _$props$quote3, _$props$quote3$pet_qu, _$props$quote4, _$props$quote4$pet_qu, _$props$quote5, _$props$quote5$pet_qu, _$props$quote5$pet_qu2, _$props$quote6, _$props$quote6$pet_qu, _$props$quote7, _$props$quote7$pet_qu, _$props$quote7$pet_qu2, _$props$quote8, _$props$quote8$pet_qu, _$props$quote9, _$props$quote9$pet_qu, _$props$quote10, _$props$quote10$pet_q, _$props$quote11, _$props$quote11$pet_q, _$props$quote12, _$props$quote12$pet_q, _$props$quote13, _$props$quote13$pet_q, _$props$quote14, _$props$quote14$pet_q, _$props$quote14$pet_q2, _$props$quote15, _$props$quote15$pet_q, _$props$quote15$pet_q2, _$props$quote$quote_d, _$props$quote$quote_d2, _$props$quote$quote_d3;
+  var _$props$quote, _$props$quote2, _$props$quote3, _$props$quote3$adviso, _$props$quote4, _$props$quote4$pet_qu, _$props$quote5, _$props$quote5$pet_qu, _$props$quote6, _$props$quote6$pet_qu, _$props$quote6$pet_qu2, _$props$quote7, _$props$quote7$pet_qu, _$props$quote8, _$props$quote8$pet_qu, _$props$quote8$pet_qu2, _$props$quote9, _$props$quote9$pet_qu, _$props$quote10, _$props$quote10$pet_q, _$props$quote11, _$props$quote11$pet_q, _$props$quote12, _$props$quote12$pet_q, _$props$quote13, _$props$quote13$pet_q, _$props$quote14, _$props$quote14$pet_q, _$props$quote15, _$props$quote15$pet_q, _$props$quote15$pet_q2, _$props$quote16, _$props$quote16$pet_q, _$props$quote16$pet_q2, _$props$quote$quote_d, _$props$quote$quote_d2, _$props$quote$quote_d3;
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Head;
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-button");
   var _component_Link = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Link;
@@ -31502,11 +31508,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
 
     _: 1 /* STABLE */
-  }, 8 /* PROPS */, ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_7, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_8, [_hoisted_9, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_10, [_hoisted_11, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.first_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_12, [_hoisted_13, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.last_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_14, [_hoisted_15, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote = $props.quote) === null || _$props$quote === void 0 ? void 0 : _$props$quote.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_16, [_hoisted_17, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote2 = $props.quote) === null || _$props$quote2 === void 0 ? void 0 : _$props$quote2.mobile_no), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_18, [_hoisted_19, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.created_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_20, [_hoisted_21, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.updated_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_22, [_hoisted_23, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.device), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_24, [_hoisted_25, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
+  }, 8 /* PROPS */, ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_7, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_8, [_hoisted_9, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_10, [_hoisted_11, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.first_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_12, [_hoisted_13, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.last_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_14, [_hoisted_15, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote = $props.quote) === null || _$props$quote === void 0 ? void 0 : _$props$quote.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_16, [_hoisted_17, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote2 = $props.quote) === null || _$props$quote2 === void 0 ? void 0 : _$props$quote2.mobile_no), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_18, [_hoisted_19, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote3 = $props.quote) === null || _$props$quote3 === void 0 ? void 0 : (_$props$quote3$adviso = _$props$quote3.advisor) === null || _$props$quote3$adviso === void 0 ? void 0 : _$props$quote3$adviso.name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_20, [_hoisted_21, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.created_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_22, [_hoisted_23, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.updated_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_24, [_hoisted_25, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.device), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_26, [_hoisted_27, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_26, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_27, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_28, [_hoisted_29, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote3 = $props.quote) === null || _$props$quote3 === void 0 ? void 0 : (_$props$quote3$pet_qu = _$props$quote3.pet_quote) === null || _$props$quote3$pet_qu === void 0 ? void 0 : _$props$quote3$pet_qu.premium), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_30, [_hoisted_31, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote4 = $props.quote) === null || _$props$quote4 === void 0 ? void 0 : (_$props$quote4$pet_qu = _$props$quote4.pet_quote) === null || _$props$quote4$pet_qu === void 0 ? void 0 : _$props$quote4$pet_qu.policy_number), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_32, [_hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote5 = $props.quote) === null || _$props$quote5 === void 0 ? void 0 : (_$props$quote5$pet_qu = _$props$quote5.pet_quote) === null || _$props$quote5$pet_qu === void 0 ? void 0 : (_$props$quote5$pet_qu2 = _$props$quote5$pet_qu.pet_type) === null || _$props$quote5$pet_qu2 === void 0 ? void 0 : _$props$quote5$pet_qu2.text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_34, [_hoisted_35, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote6 = $props.quote) === null || _$props$quote6 === void 0 ? void 0 : (_$props$quote6$pet_qu = _$props$quote6.pet_quote) === null || _$props$quote6$pet_qu === void 0 ? void 0 : _$props$quote6$pet_qu.breed_of_pet1), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_36, [_hoisted_37, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote7 = $props.quote) === null || _$props$quote7 === void 0 ? void 0 : (_$props$quote7$pet_qu = _$props$quote7.pet_quote) === null || _$props$quote7$pet_qu === void 0 ? void 0 : (_$props$quote7$pet_qu2 = _$props$quote7$pet_qu.pet_age) === null || _$props$quote7$pet_qu2 === void 0 ? void 0 : _$props$quote7$pet_qu2.text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_38, [_hoisted_39, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote8 = $props.quote) !== null && _$props$quote8 !== void 0 && (_$props$quote8$pet_qu = _$props$quote8.pet_quote) !== null && _$props$quote8$pet_qu !== void 0 && _$props$quote8$pet_qu.is_neutered ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_40, [_hoisted_41, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote9 = $props.quote) !== null && _$props$quote9 !== void 0 && (_$props$quote9$pet_qu = _$props$quote9.pet_quote) !== null && _$props$quote9$pet_qu !== void 0 && _$props$quote9$pet_qu.is_microchipped ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_42, [_hoisted_43, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote10 = $props.quote) === null || _$props$quote10 === void 0 ? void 0 : (_$props$quote10$pet_q = _$props$quote10.pet_quote) === null || _$props$quote10$pet_q === void 0 ? void 0 : _$props$quote10$pet_q.microchip_no), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_44, [_hoisted_45, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote11 = $props.quote) !== null && _$props$quote11 !== void 0 && (_$props$quote11$pet_q = _$props$quote11.pet_quote) !== null && _$props$quote11$pet_q !== void 0 && _$props$quote11$pet_q.is_mixed_breed ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_46, [_hoisted_47, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote12 = $props.quote) !== null && _$props$quote12 !== void 0 && (_$props$quote12$pet_q = _$props$quote12.pet_quote) !== null && _$props$quote12$pet_q !== void 0 && _$props$quote12$pet_q.has_injury ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_48, [_hoisted_49, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote13 = $props.quote) === null || _$props$quote13 === void 0 ? void 0 : (_$props$quote13$pet_q = _$props$quote13.pet_quote) === null || _$props$quote13$pet_q === void 0 ? void 0 : _$props$quote13$pet_q.gender), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_50, [_hoisted_51, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote14 = $props.quote) === null || _$props$quote14 === void 0 ? void 0 : (_$props$quote14$pet_q = _$props$quote14.pet_quote) === null || _$props$quote14$pet_q === void 0 ? void 0 : (_$props$quote14$pet_q2 = _$props$quote14$pet_q.accomodation_type) === null || _$props$quote14$pet_q2 === void 0 ? void 0 : _$props$quote14$pet_q2.text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_52, [_hoisted_53, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote15 = $props.quote) === null || _$props$quote15 === void 0 ? void 0 : (_$props$quote15$pet_q = _$props$quote15.pet_quote) === null || _$props$quote15$pet_q === void 0 ? void 0 : (_$props$quote15$pet_q2 = _$props$quote15$pet_q.possession_type) === null || _$props$quote15$pet_q2 === void 0 ? void 0 : _$props$quote15$pet_q2.text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_54, [_hoisted_55, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote$quote_d = $props.quote.quote_detail) === null || _$props$quote$quote_d === void 0 ? void 0 : _$props$quote$quote_d.transapp_code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_56, [_hoisted_57, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote$quote_d2 = $props.quote.quote_detail) === null || _$props$quote$quote_d2 === void 0 ? void 0 : (_$props$quote$quote_d3 = _$props$quote$quote_d2.lost_reason) === null || _$props$quote$quote_d3 === void 0 ? void 0 : _$props$quote$quote_d3.text), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_58, [_hoisted_59, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_28, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_29, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_30, [_hoisted_31, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote4 = $props.quote) === null || _$props$quote4 === void 0 ? void 0 : (_$props$quote4$pet_qu = _$props$quote4.pet_quote) === null || _$props$quote4$pet_qu === void 0 ? void 0 : _$props$quote4$pet_qu.premium), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_32, [_hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote5 = $props.quote) === null || _$props$quote5 === void 0 ? void 0 : (_$props$quote5$pet_qu = _$props$quote5.pet_quote) === null || _$props$quote5$pet_qu === void 0 ? void 0 : _$props$quote5$pet_qu.policy_number), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_34, [_hoisted_35, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote6 = $props.quote) === null || _$props$quote6 === void 0 ? void 0 : (_$props$quote6$pet_qu = _$props$quote6.pet_quote) === null || _$props$quote6$pet_qu === void 0 ? void 0 : (_$props$quote6$pet_qu2 = _$props$quote6$pet_qu.pet_type) === null || _$props$quote6$pet_qu2 === void 0 ? void 0 : _$props$quote6$pet_qu2.text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_36, [_hoisted_37, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote7 = $props.quote) === null || _$props$quote7 === void 0 ? void 0 : (_$props$quote7$pet_qu = _$props$quote7.pet_quote) === null || _$props$quote7$pet_qu === void 0 ? void 0 : _$props$quote7$pet_qu.breed_of_pet1), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_38, [_hoisted_39, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote8 = $props.quote) === null || _$props$quote8 === void 0 ? void 0 : (_$props$quote8$pet_qu = _$props$quote8.pet_quote) === null || _$props$quote8$pet_qu === void 0 ? void 0 : (_$props$quote8$pet_qu2 = _$props$quote8$pet_qu.pet_age) === null || _$props$quote8$pet_qu2 === void 0 ? void 0 : _$props$quote8$pet_qu2.text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_40, [_hoisted_41, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote9 = $props.quote) !== null && _$props$quote9 !== void 0 && (_$props$quote9$pet_qu = _$props$quote9.pet_quote) !== null && _$props$quote9$pet_qu !== void 0 && _$props$quote9$pet_qu.is_neutered ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_42, [_hoisted_43, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote10 = $props.quote) !== null && _$props$quote10 !== void 0 && (_$props$quote10$pet_q = _$props$quote10.pet_quote) !== null && _$props$quote10$pet_q !== void 0 && _$props$quote10$pet_q.is_microchipped ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_44, [_hoisted_45, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote11 = $props.quote) === null || _$props$quote11 === void 0 ? void 0 : (_$props$quote11$pet_q = _$props$quote11.pet_quote) === null || _$props$quote11$pet_q === void 0 ? void 0 : _$props$quote11$pet_q.microchip_no), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_46, [_hoisted_47, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote12 = $props.quote) !== null && _$props$quote12 !== void 0 && (_$props$quote12$pet_q = _$props$quote12.pet_quote) !== null && _$props$quote12$pet_q !== void 0 && _$props$quote12$pet_q.is_mixed_breed ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_48, [_hoisted_49, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote13 = $props.quote) !== null && _$props$quote13 !== void 0 && (_$props$quote13$pet_q = _$props$quote13.pet_quote) !== null && _$props$quote13$pet_q !== void 0 && _$props$quote13$pet_q.has_injury ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_50, [_hoisted_51, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote14 = $props.quote) === null || _$props$quote14 === void 0 ? void 0 : (_$props$quote14$pet_q = _$props$quote14.pet_quote) === null || _$props$quote14$pet_q === void 0 ? void 0 : _$props$quote14$pet_q.gender), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_52, [_hoisted_53, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote15 = $props.quote) === null || _$props$quote15 === void 0 ? void 0 : (_$props$quote15$pet_q = _$props$quote15.pet_quote) === null || _$props$quote15$pet_q === void 0 ? void 0 : (_$props$quote15$pet_q2 = _$props$quote15$pet_q.accomodation_type) === null || _$props$quote15$pet_q2 === void 0 ? void 0 : _$props$quote15$pet_q2.text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_54, [_hoisted_55, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote16 = $props.quote) === null || _$props$quote16 === void 0 ? void 0 : (_$props$quote16$pet_q = _$props$quote16.pet_quote) === null || _$props$quote16$pet_q === void 0 ? void 0 : (_$props$quote16$pet_q2 = _$props$quote16$pet_q.possession_type) === null || _$props$quote16$pet_q2 === void 0 ? void 0 : _$props$quote16$pet_q2.text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_56, [_hoisted_57, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote$quote_d = $props.quote.quote_detail) === null || _$props$quote$quote_d === void 0 ? void 0 : _$props$quote$quote_d.transapp_code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_58, [_hoisted_59, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote$quote_d2 = $props.quote.quote_detail) === null || _$props$quote$quote_d2 === void 0 ? void 0 : (_$props$quote$quote_d3 = _$props$quote$quote_d2.lost_reason) === null || _$props$quote$quote_d3 === void 0 ? void 0 : _$props$quote$quote_d3.text), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_60, [_hoisted_61, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_60, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_61, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_62, [_hoisted_63, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_quote_policy_number), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_64, [_hoisted_65, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_policy_expiry_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_66, [_hoisted_67, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_quote_policy_premium), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_68, [_hoisted_69, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.renewal_batch), 1 /* TEXT */)])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)($setup["QuoteActivities"], {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_62, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_63, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_64, [_hoisted_65, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_quote_policy_number), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_66, [_hoisted_67, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_policy_expiry_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_68, [_hoisted_69, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_quote_policy_premium), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_70, [_hoisted_71, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.renewal_batch), 1 /* TEXT */)])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)($setup["QuoteActivities"], {
     can: $setup.can,
     quote: $props.quote,
     activities: $props.activities,
