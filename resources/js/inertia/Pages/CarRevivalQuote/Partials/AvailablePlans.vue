@@ -25,13 +25,7 @@ const hidePlan = ref(props.plan.isDisabled),
   ancillaryExcess = ref(false),
   insurerAvailableTrims = ref(false);
 
-const addonFormData = reactive({
-    addonId: null,
-    addonOptionId: null,
-    price: '',
-    vat: '',
-    isSelected: false
-});
+const addonFormData = ref([]);
 
 const updatePlanForm = reactive({
   car_plan_id: props.plan.id,
@@ -49,15 +43,25 @@ const updatePlanForm = reactive({
   insurerTrim: props.plan.insurerTrimId || null,
 });
 
-const setAddonsUpdate = (parentAddon, childAddonsOption) => {
+const setAddons = (parentAddon, childAddonsOption) => {
+  addonFormData.value.push({
+    addonId: parentAddon.id,
+    addonOptionId: childAddonsOption.id,
+    price: childAddonsOption.price,
+    vat: childAddonsOption.vat,
+    isSelected: childAddonsOption.isSelected,
+  });
+};
 
-    addonFormData = {
-        addonId: parentAddon.id,
-        addonOptionId: childAddonsOption.id,
-        price: childAddonsOption.price,
-        vat: childAddonsOption.vat,
-        isSelected: childAddonsOption.isSelected
-    };
+const onAddonsUpdate = (event, addonId, addonOptionId) => {
+  const { isSelected, price } = event;
+  const addon = addonFormData.value.find(
+    addon => addon.addonId == addonId && addon.addonOptionId == addonOptionId,
+  );
+  if (addon) {
+    if (isSelected !== undefined) addon.isSelected = isSelected;
+    if (price !== undefined) addon.price = price;
+  }
 };
 
 const insuranceAvailableTrim = computed(() => {
@@ -121,15 +125,19 @@ const tabs = ref([
   { index: 5, label: 'Policy Detail' },
 ]);
 
-
 const onPlanUpdate = planDetails => {
   planUpdateLoader.value = true;
 
-  const currentPlanURL = page.props.baseUrl+'/quotes/car/'+planDetails.car_quote_uuid+'/plan_details/'+planDetails.car_plan_id;
+  const currentPlanURL =
+    page.props.baseUrl +
+    '/quotes/car/' +
+    planDetails.car_quote_uuid +
+    '/plan_details/' +
+    planDetails.car_plan_id;
   const updatePlanData = {
-      ...planDetails,
-      current_url: currentPlanURL,
-      addons: addonFormData
+    ...planDetails,
+    current_url: currentPlanURL,
+    addons: addonFormData.value,
   };
 
   console.log(updatePlanData);
@@ -349,26 +357,38 @@ const onTogglePlans = () => {
 
         <TabPanel>
           <div class="grid gap-x-6 gap-y-4 p-4">
-            <div v-for="addons in planAddons" :key="addons.id">
+            <div v-for="(addons, index) in planAddons" :key="index">
               <div
                 v-for="addonOptions in addons.carAddonOption"
                 :key="addonOptions.id"
                 class="flex gap-5 items-center justify-between font-medium"
               >
-                  <input type="hidden" :value="setAddonsUpdate(addons, addonOptions)">
+                <input type="hidden" :value="setAddons(addons, addonOptions)" />
                 <div class="w-1/4">{{ addons.text }}</div>
                 <div class="w-1/4">{{ addonOptions.value }}</div>
                 <div class="w-1/4">
                   <x-input
-                    v-model="addonOptions.price"
-                    class="w-full"
+                    :value="addonOptions.price"
+                    :disabled="false"
+                    @update:modelValue="
+                      onAddonsUpdate(
+                        { price: $event },
+                        addons.id,
+                        addonOptions.id,
+                      )
+                    "
                   />
                 </div>
                 <div class="w-1/5 text-center">
                   <x-toggle
-                    v-model="addonOptions.isSelected"
                     color="success"
-                    :loading="toggleLoader"
+                    @update:modelValue="
+                      onAddonsUpdate(
+                        { isSelected: $event },
+                        addons.id,
+                        addonOptions.id,
+                      )
+                    "
                   />
                 </div>
               </div>
@@ -376,8 +396,14 @@ const onTogglePlans = () => {
 
             <div class="flex justify-end">
               <x-button
-                  v-if="hasRole(page.props.rolesEnum.PA)"
-                  color="primary" size="sm" outlined> Update </x-button>
+                v-if="hasRole(page.props.rolesEnum.PA)"
+                color="primary"
+                size="sm"
+                outlined
+                @click.prevent="onPlanUpdate(updatePlanForm)"
+              >
+                Update
+              </x-button>
             </div>
           </div>
         </TabPanel>
