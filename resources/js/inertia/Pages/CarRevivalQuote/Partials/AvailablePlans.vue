@@ -26,8 +26,8 @@ const hidePlan = ref(props.plan.isDisabled),
   insurerAvailableTrims = ref(false);
 
 const addonFormData = reactive({
-    addonId: '',
-    addonOptionId: '',
+    addonId: null,
+    addonOptionId: null,
     price: '',
     vat: '',
     isSelected: false
@@ -50,36 +50,14 @@ const updatePlanForm = reactive({
 });
 
 const setAddonsUpdate = (parentAddon, childAddonsOption) => {
-    // Only add last value of iteration in addonFormData but i need to pass every iteration data in addFormData
-    // Kindly console parentAddon or childAddonsOption
-    // Need data like this, below
-        // 0 => array:5 [
-        //     "addonId" => 38
-        //     "addonOptionId" => 45
-        //     "price" => 0
-        //     "vat" => 0
-        //     "isSelected" => true
-        // ]
-        // 1 => array:5 [
-        //     "addonId" => 76
-        //     "addonOptionId" => 87
-        //     "price" => 0
-        //     "vat" => 0
-        //     "isSelected" => true
-        // ]
-        // 2 => array:5 [
-        //     "addonId" => 3
-        //     "addonOptionId" => 6
-        //     "price" => 0
-        //     "vat" => 0
-        //     "isSelected" => true
 
-
-    addonFormData.addonId = parentAddon.id;
-    addonFormData.addonOptionId = childAddonsOption.id,
-    addonFormData.price = childAddonsOption.price,
-    addonFormData.vat = childAddonsOption.vat,
-    addonFormData.isSelected = childAddonsOption.isSelected
+    addonFormData = {
+        addonId: parentAddon.id,
+        addonOptionId: childAddonsOption.id,
+        price: childAddonsOption.price,
+        vat: childAddonsOption.vat,
+        isSelected: childAddonsOption.isSelected
+    };
 };
 
 const insuranceAvailableTrim = computed(() => {
@@ -151,8 +129,11 @@ const onPlanUpdate = planDetails => {
   const updatePlanData = {
       ...planDetails,
       current_url: currentPlanURL,
-      addons: {}
+      addons: addonFormData
   };
+
+  console.log(updatePlanData);
+  return false;
 
   axios
     .post('/car-plan-manual-update-process', updatePlanData)
@@ -381,7 +362,6 @@ const onTogglePlans = () => {
                   <x-input
                     v-model="addonOptions.price"
                     class="w-full"
-                    readonly
                   />
                 </div>
                 <div class="w-1/5 text-center">
