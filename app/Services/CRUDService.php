@@ -272,7 +272,7 @@ class CRUDService extends BaseService
 
                 $carLostQuoteLog->update($lostQuoteLogData);
 
-                if($request->lost_approval_status == GenericRequestEnum::APPROVED)
+                if($request->hasFile('mo_proof_document'))
                 {
                     //todo: remove duplicate code for file uploading
                     $fileName = $request->mo_proof_document->getClientOriginalName();
