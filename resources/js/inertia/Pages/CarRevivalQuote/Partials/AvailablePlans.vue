@@ -153,9 +153,6 @@ const onPlanUpdate = planDetails => {
     addons: uniqueAddons,
   };
 
-  console.log(updatePlanData);
-  return false;
-
   axios
     .post('/car-plan-manual-update-process', updatePlanData)
     .then(res => {
