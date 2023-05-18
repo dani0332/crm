@@ -486,7 +486,7 @@ class CRUDController extends Controller
                     $q->with(['advisor', 'quoteStatus', 'documents'])->orderBy('id', 'desc');
                 }, 'pendingLostQuoteLog']);
             }
-            
+
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',

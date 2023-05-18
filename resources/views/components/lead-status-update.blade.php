@@ -153,15 +153,44 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
             </div>
             <div class="x_content">
                 @php
-                    $carLostQuoteLog = $paymentEntityModel->carLostQuoteLogs->first();
-                    $allowQuoteLogAction = false;
-                    if(auth()->user()->hasRole(RolesEnum::MarketingOperations) && $carLostQuoteLog->status == GenericRequestEnum::PENDING) {
-                        $allowQuoteLogAction = true;
+
+                    $allowQuoteLogAction =  true;
+                    $carLostChangeStatus = true;
+
+                    if($modeltype == quoteTypeCode::Car)
+                    {
+                        //condition to make roles other than (MO and CarAdvisor) compatible
+                        if(auth()->user()->hasAnyRole([RolesEnum::MarketingOperations, RolesEnum::CarAdvisor]))
+                        {
+                            if(auth()->user()->hasRole(RolesEnum::MarketingOperations))
+                            {
+                                $carLostQuoteLog = $paymentEntityModel->carLostQuoteLogs->first();
+
+                                $allowQuoteLogAction = false;
+                                $carLostChangeStatus = false;
+
+                                if($carLostQuoteLog->status == GenericRequestEnum::PENDING) {
+                                    $allowQuoteLogAction = true;
+                                    $statuses = $statuses->whereIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
+                                }
+                            }
+
+                            if(auth()->user()->hasRole(RolesEnum::CarAdvisor) && isCarLostStatus($lead->quote_status_id))
+                            {
+                                $allowQuoteLogAction = false;
+                                $carLostChangeStatus = false;
+
+                                $carLostQuoteLog = $paymentEntityModel->carLostQuoteLogs->first();
+                                if($carLostQuoteLog->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2)
+                                {
+                                    $allowQuoteLogAction = false;
+                                    $carLostChangeStatus = true;
+                                    $statuses = $statuses = $statuses->whereIn('id', [$lead->quote_status_id])->all();
+                                }
+                            }
+                        }
                     }
 
-                    if($allowQuoteLogAction) {
-                        $statuses = $statuses->whereIn('id',[ QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
-                    }
 
                 @endphp
                 <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/update-lead-status" id="lead-status-form" enctype="multipart/form-data">
@@ -176,8 +205,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                             <div class="col-md-6 col-sm-6">
                                 <select @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved ||
                                     ($quoteTypeId == QuoteTypeId::Car && ($lead->quote_status_id == QuoteStatusEnum::Duplicate || $lead->quote_status_id == QuoteStatusEnum::Fake)
-                                    && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) ||
-                                    ( !$allowQuoteLogAction)
+                                    && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) || (!$carLostChangeStatus && !$allowQuoteLogAction)
                                     )
                                     disabled
                                     @endif
@@ -206,10 +234,10 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                             class="form-control" id="lostApprovalStatus" name="lost_approval_status">
 
                                             @if(!$allowQuoteLogAction)
-                                                <option @if($carLostQuoteLog->status == GenericRequestEnum::PENDING) selected @endif value="{{ GenericRequestEnum::PENDING }}">{{ GenericRequestEnum::PENDING }}</option>
+                                                <option @if(@$carLostQuoteLog->status == GenericRequestEnum::PENDING) selected @endif value="{{ GenericRequestEnum::PENDING }}">{{ GenericRequestEnum::PENDING }}</option>
                                             @endif
-                                            <option @if($carLostQuoteLog->status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
-                                            <option @if($carLostQuoteLog->status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
+                                            <option @if(@$carLostQuoteLog->status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
+                                            <option @if(@$carLostQuoteLog->status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
 
                                         </select>
                                     </div>
@@ -222,7 +250,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                             @if(!$allowQuoteLogAction) disabled @endif
                                             class="form-control" name="approve_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
                                             @foreach($lostRejectReasons as $lostRejectReason)
-                                                <option value="{{$lostRejectReason->id}}" @if($carLostQuoteLog->reason_id == $lostRejectReason->id) selected @endif >{{$lostRejectReason->text}}</option>
+                                                <option value="{{$lostRejectReason->id}}" @if(@$carLostQuoteLog->reason_id == $lostRejectReason->id) selected @endif >{{$lostRejectReason->text}}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -235,7 +263,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                             @if(!$allowQuoteLogAction) disabled @endif
                                             class="form-control" name="reject_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
                                             @foreach($lostApproveReasons as $lostApproveReason)
-                                                <option value="{{$lostApproveReason->id}}" @if($carLostQuoteLog->reason_id == $lostRejectReason->id) selected @endif>{{$lostApproveReason->text}}</option>
+                                                <option value="{{$lostApproveReason->id}}" @if(@$carLostQuoteLog->reason_id == $lostRejectReason->id) selected @endif>{{$lostApproveReason->text}}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -244,7 +272,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                 <div class="col-sm-12 mb-3">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Notes</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <input @if(!$allowQuoteLogAction) disabled @endif value="{{$carLostQuoteLog->notes}}" type="text" id="lost_notes" name="lost_notes"  class="form-control">
+                                        <input @if(!$allowQuoteLogAction) disabled @endif value="{{@$carLostQuoteLog->notes}}" type="text" id="lost_notes" name="lost_notes"  class="form-control">
                                     </div>
                                 </div>
 
@@ -330,7 +358,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                             <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Car Sold / Uncontactable Proof</b></label>
                             <div class="col-md-6 col-sm-6">
                                 <input
-                                    @if(isCarLostStatus($lead->quote_status_id) )
+                                    @if(isCarLostStatus($lead->quote_status_id) && !$carLostChangeStatus)
                                         disabled
                                     @endif
                                     class="form-control hide" type="file" name="proof_document" id="proofDocument" />
@@ -352,7 +380,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                             @cannot(PermissionsEnum::ApprovePayments)
                             <button type="submit" style="float: right;"
                                     @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved
-                                    || (!$allowQuoteLogAction)
+                                    || (!$carLostChangeStatus && !$allowQuoteLogAction)
 //                                || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
 //                                || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
                                 ) disabled @endif class="btn btn-success
@@ -362,38 +390,39 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                     </div>
                 </form>
 
-                <h2>Car Sold / Uncontactable Logs</h2>
-                <div id="lead-history-div">
-                    <table id="carLostQuoteLogsTable" class="table table-striped jambo_table" style="width:100%">
-                        <thead>
-                        <tr>
-                            <th>Modified At</th>
-                            <th>Modified By</th>
-                            <th>Notes</th>
-                            <th>Lead Status</th>
-                            <th>Approval Status</th>
-                            <th>Documents</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach($paymentEntityModel->carLostQuoteLogs as $carLostQuoteLog)
+                @if(isset($paymentEntityModel->carLostQuoteLogs))
+                    <h2>Car Sold / Uncontactable Logs</h2>
+                    <div id="lead-history-div">
+                        <table id="carLostQuoteLogsTable" class="table table-striped jambo_table" style="width:100%">
+                            <thead>
                             <tr>
-                                <td>{{$carLostQuoteLog->created_at}}</td>
-                                <td>{{$carLostQuoteLog->advisor->email}}</td>
-                                <td>{{$carLostQuoteLog->notes}}</td>
-                                <td>{{$carLostQuoteLog->quoteStatus->text}}</td>
-                                <td>{{$carLostQuoteLog->status}}</td>
-                                <td>
-                                    @foreach($carLostQuoteLog->documents as $document)
-                                        <p><a target="_blank" href="{{$cdnBaseUrl . $document->path}}">Document</a></p>
-                                    @endforeach
-                                </td>
+                                <th>Modified At</th>
+                                <th>Modified By</th>
+                                <th>Notes</th>
+                                <th>Lead Status</th>
+                                <th>Approval Status</th>
+                                <th>Documents</th>
                             </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                </div>
-
+                            </thead>
+                            <tbody>
+                            @foreach($paymentEntityModel->carLostQuoteLogs as $carLostQuoteLog)
+                                <tr>
+                                    <td>{{$carLostQuoteLog->created_at}}</td>
+                                    <td>{{$carLostQuoteLog->advisor->email}}</td>
+                                    <td>{{$carLostQuoteLog->notes}}</td>
+                                    <td>{{$carLostQuoteLog->quoteStatus->text}}</td>
+                                    <td>{{$carLostQuoteLog->status}}</td>
+                                    <td>
+                                        @foreach($carLostQuoteLog->documents as $document)
+                                            <p><a target="_blank" href="{{$cdnBaseUrl . $document->path}}">Document</a></p>
+                                        @endforeach
+                                    </td>
+                                </tr>
+                            @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
