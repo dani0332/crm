@@ -147,7 +147,7 @@ class CarLeadPage {
 
   //Upload Documents
   getUploadDocButton(quoteID) {
-    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car/${quoteID}/documents"]`).click()
+    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car${quoteID}/documents"]`).click()
   }
 
   getUploadFile() {
@@ -155,7 +155,7 @@ class CarLeadPage {
   }
 
   getBackButton(quoteID) {
-    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car/${quoteID}"]`).click()
+    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car${quoteID}"]`).click()
   }
 
   //Add Activity
