@@ -209,6 +209,10 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  if (page.props.defaultFilters) {
+    filters.advisorAssignedDates =
+      page.props.defaultFilters.advisorAssignedDates;
+  }
   router.visit('/reports/advisor-conversion', {
     method: 'get',
     data: {
