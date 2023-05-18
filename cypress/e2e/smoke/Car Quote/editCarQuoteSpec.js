@@ -92,6 +92,8 @@ describe('Car qoutes', () => {
     carLeadPage.getContactType()
     carLeadPage.getContactValue()
     carLeadPage.getAddContactSubmitButton()
+
+    //Delete Additional Contact Button
     carLeadPage.deleteContactButton()
 
   })

@@ -2,6 +2,8 @@ import CommonPage from '../../../pageObjects/CommonPage';
 import HealthLeadPage from '../../../pageObjects/HealthLeadPage';
 let quoteData = require('../../../fixtures/qoutesData.json')
 let healthLeadData = require('../../../fixtures/healthLeadData.json')
+let leadUrl
+let quoteId
 describe('Health qoutes', () => {
 
   const commonPage = new CommonPage()
@@ -18,6 +20,7 @@ describe('Health qoutes', () => {
       return false
     }
   })
+
   it('Should create lead car qoutes insurance', () => {
     Cypress.on('uncaught:exception', err => {
       if (resizeObserverLoopErrRe.test(err.message)) {
@@ -49,5 +52,62 @@ describe('Health qoutes', () => {
     commonPage.getDropdownByName('GENDER ', 'Male')
     healthLeadPage.getSubmitButton()
     commonPage.verifyURL('/quotes/health')
+    cy.wait(10000)
+    cy.url().then(data => {
+      cy.log("Data logged", data)
+      leadUrl = `/${data.substring(data.lastIndexOf('quotes/health/'))}`
+      quoteId = `${(data.substring(data.lastIndexOf('/'))).replace('/', '')}`
+      cy.log(leadUrl)
+      cy.log(quoteId)
+    })
+  })
+
+  it('Should Update Quote Details', () => {
+    cy.visit('/quotes/health')
+    commonPage.verifyURL('/quotes/health')
+    healthLeadPage.getTextFieldByName('CDB ID', `HEA-${quoteId}`)
+    healthLeadPage.getSearchButton()
+    healthLeadPage.getOpenQuoteButton(quoteId)
+    healthLeadPage.getEditButton()
+    healthLeadPage.getHealthTextFieldByName("FIRST NAME", "Muhammad Updated")
+    healthLeadPage.getHealthTextFieldByName("LAST NAME", "Abdullah Updated")
+    healthLeadPage.getHealthTextFieldByName("PREMIUM", healthLeadData.healthData.premium)
+    healthLeadPage.getHealthTextFieldByName("DETAILS", "Test Details")
+    healthLeadPage.getNationalityDropdown("NATIONALITY")
+    healthLeadPage.getNationalityValue("Pakistani")
+    healthLeadPage.getHealthDetailDropdown("EMIRATE OF YOUR VISA")
+    healthLeadPage.getEmirateOfVisaValue()
+    healthLeadPage.getMemberCategoryDropdown("MEMBER CATEGORY")
+    healthLeadPage.getMemberCategoryValue()
+    healthLeadPage.getSubmitButton()
+  })
+
+  it('Should Add member', () => {
+    cy.visit(`${leadUrl}`)
+    commonPage.verifyURL(`/quotes/health/`)
+    //Add Member
+    healthLeadPage.getAddMemberButton()
+    healthLeadPage.getAddMemberDropdown("Emirate of Visa")
+    healthLeadPage.getAddMemberDropdownVisa("Dubai")
+    healthLeadPage.getAddMemberDropdown("Gender")
+    healthLeadPage.getAddMemberDropdownVisa("Male")
+    healthLeadPage.getAddMemberDOB("DOB")
+    healthLeadPage.getDate()
+    healthLeadPage.getMemberCategoryDropdown("Member Category")
+    healthLeadPage.getAddMemberDropdowns('Employee')
+    healthLeadPage.getSubmitButton()
+
+    //Delete Member 
+    healthLeadPage.getDeleteButton()
+    healthLeadPage.getModalDeleteButton()
+
+    //Add Additional Contact
+    healthLeadPage.getAddAdditionalContactButton()
+    healthLeadPage.getLeadStatusDropdown("Type")
+    healthLeadPage.selectMobileNumber()
+    healthLeadPage.getAddAdditionalContactvalueField()
+    healthLeadPage.getAdditionalContactSubmitButton()
+    healthLeadPage.getButtonByName(" Load History Data ")
+    healthLeadPage.getButtonByName(" Load Audit Logs ")
   })
 })
