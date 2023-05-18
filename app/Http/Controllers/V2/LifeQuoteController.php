@@ -61,7 +61,7 @@ class LifeQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Quote is created successfully.');
+        return back()->with('message', 'Quote is created successfully.')->with('uid', data_get($response, 'quoteUID'));
     }
 
     /**
@@ -111,7 +111,7 @@ class LifeQuoteController extends Controller
             'activities' => $activitiesData,
             'advisors' => $advisors,
             'allowedDuplicateLOB' => $duplicateAllowedLobs,
-            'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote),
+            'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote->mobile_no),
             'lostReasons' => $lostReasons,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);
