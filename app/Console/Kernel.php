@@ -38,11 +38,10 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        //Disabling - Enable for RM Deployment
-        // $schedule->command(UpdateHealthStatus::class)
-        // ->timezone('Asia/Dubai')
-        // ->dailyAt('01:00')->onOneServer()
-        // ->withoutOverlapping(1);
+        $schedule->command(UpdateHealthStatus::class)
+            ->timezone('Asia/Dubai')
+            ->dailyAt('01:00')->onOneServer()
+            ->withoutOverlapping(1);
 
         $schedule->command('telescope:prune --hours=48')->daily()
             ->onOneServer()
