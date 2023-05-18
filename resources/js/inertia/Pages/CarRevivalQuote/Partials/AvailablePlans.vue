@@ -25,13 +25,7 @@ const hidePlan = ref(props.plan.isDisabled),
   ancillaryExcess = ref(false),
   insurerAvailableTrims = ref(false);
 
-const addonFormData = reactive({
-    addonId: '',
-    addonOptionId: '',
-    price: '',
-    vat: '',
-    isSelected: false
-});
+const addonFormData = ref([]);
 
 const updatePlanForm = reactive({
   car_plan_id: props.plan.id,
@@ -49,37 +43,27 @@ const updatePlanForm = reactive({
   insurerTrim: props.plan.insurerTrimId || null,
 });
 
-const setAddonsUpdate = (parentAddon, childAddonsOption) => {
-    // Only add last value of iteration in addonFormData but i need to pass every iteration data in addFormData
-    // Kindly console parentAddon or childAddonsOption
-    // Need data like this, below
-        // 0 => array:5 [
-        //     "addonId" => 38
-        //     "addonOptionId" => 45
-        //     "price" => 0
-        //     "vat" => 0
-        //     "isSelected" => true
-        // ]
-        // 1 => array:5 [
-        //     "addonId" => 76
-        //     "addonOptionId" => 87
-        //     "price" => 0
-        //     "vat" => 0
-        //     "isSelected" => true
-        // ]
-        // 2 => array:5 [
-        //     "addonId" => 3
-        //     "addonOptionId" => 6
-        //     "price" => 0
-        //     "vat" => 0
-        //     "isSelected" => true
+const setAddons = (parentAddon, childAddonsOption) => {
+  addonFormData.value.push({
+    addonId: parentAddon.id,
+    addonOptionId: childAddonsOption.id,
+    price: childAddonsOption.price,
+    vat: childAddonsOption.vat,
+    isSelected: childAddonsOption.isSelected,
+  });
+};
 
+const onAddonsUpdate = (event, addonId, addonOptionId) => {
+  const { isSelected, price } = event;
+  const addonIndex = addonFormData.value.findIndex(
+    addon => addon.addonId == addonId && addon.addonOptionId == addonOptionId,
+  );
 
-    addonFormData.addonId = parentAddon.id;
-    addonFormData.addonOptionId = childAddonsOption.id,
-    addonFormData.price = childAddonsOption.price,
-    addonFormData.vat = childAddonsOption.vat,
-    addonFormData.isSelected = childAddonsOption.isSelected
+  if (addonIndex > -1) {
+    if (isSelected !== undefined)
+      addonFormData.value[addonIndex].isSelected = isSelected;
+    if (price !== undefined) addonFormData.value[addonIndex].price = price;
+  }
 };
 
 const insuranceAvailableTrim = computed(() => {
@@ -143,16 +127,34 @@ const tabs = ref([
   { index: 5, label: 'Policy Detail' },
 ]);
 
-
 const onPlanUpdate = planDetails => {
   planUpdateLoader.value = true;
 
-  const currentPlanURL = page.props.baseUrl+'/quotes/car/'+planDetails.car_quote_uuid+'/plan_details/'+planDetails.car_plan_id;
+  const currentPlanURL =
+    page.props.baseUrl +
+    '/quotes/car/' +
+    planDetails.car_quote_uuid +
+    '/plan_details/' +
+    planDetails.car_plan_id;
+
+  const uniqueAddons = addonFormData.value.filter(
+    (addon, index, self) =>
+      index ===
+      self.findIndex(
+        t =>
+          t.addonId === addon.addonId &&
+          t.addonOptionId === addon.addonOptionId,
+      ),
+  );
+
   const updatePlanData = {
-      ...planDetails,
-      current_url: currentPlanURL,
-      addons: {}
+    ...planDetails,
+    current_url: currentPlanURL,
+    addons: uniqueAddons,
   };
+
+  console.log(updatePlanData);
+  return false;
 
   axios
     .post('/car-plan-manual-update-process', updatePlanData)
@@ -368,27 +370,39 @@ const onTogglePlans = () => {
 
         <TabPanel>
           <div class="grid gap-x-6 gap-y-4 p-4">
-            <div v-for="addons in planAddons" :key="addons.id">
+            <div v-for="(addons, index) in planAddons" :key="index">
               <div
                 v-for="addonOptions in addons.carAddonOption"
                 :key="addonOptions.id"
                 class="flex gap-5 items-center justify-between font-medium"
               >
-                  <input type="hidden" :value="setAddonsUpdate(addons, addonOptions)">
+                <input type="hidden" :value="setAddons(addons, addonOptions)" />
                 <div class="w-1/4">{{ addons.text }}</div>
                 <div class="w-1/4">{{ addonOptions.value }}</div>
                 <div class="w-1/4">
                   <x-input
-                    v-model="addonOptions.price"
-                    class="w-full"
-                    readonly
+                    :value="addonOptions.price"
+                    :disabled="false"
+                    @update:modelValue="
+                      onAddonsUpdate(
+                        { price: $event },
+                        addons.id,
+                        addonOptions.id,
+                      )
+                    "
                   />
                 </div>
                 <div class="w-1/5 text-center">
                   <x-toggle
-                    v-model="addonOptions.isSelected"
+                    :modelValue="addonFormData[index].isSelected"
                     color="success"
-                    :loading="toggleLoader"
+                    @update:modelValue="
+                      onAddonsUpdate(
+                        { isSelected: $event },
+                        addons.id,
+                        addonOptions.id,
+                      )
+                    "
                   />
                 </div>
               </div>
@@ -396,8 +410,14 @@ const onTogglePlans = () => {
 
             <div class="flex justify-end">
               <x-button
-                  v-if="hasRole(page.props.rolesEnum.PA)"
-                  color="primary" size="sm" outlined> Update </x-button>
+                v-if="hasRole(page.props.rolesEnum.PA)"
+                color="primary"
+                size="sm"
+                outlined
+                @click.prevent="onPlanUpdate(updatePlanForm)"
+              >
+                Update
+              </x-button>
             </div>
           </div>
         </TabPanel>
