@@ -127,7 +127,7 @@ class TravelData {
 
     //Delete Activity button
     getDeleteAdditionalContactButton() {
-        return cy.get('.btn.btn-danger.btn-sm').should('be.visible').click()
+        return cy.get('button.btn.btn-danger.btn-sm').contains('Delete').should('be.visible').click()
     }
 
     //Load History Button
@@ -141,8 +141,8 @@ class TravelData {
     }
 
     //Edit Quote Details
-    getEditButton() {
-        return cy.get('a[href="https://crmstage.alfred.ae/quotes/travel/HFLWTV3Y/edit"]').should('be.visible').click()
+    getEditButton(id) {
+        return cy.get(`a[href="https://crmstage.alfred.ae/quotes/travel${id}/edit"]`).should('be.visible').click()
     }
 
 }

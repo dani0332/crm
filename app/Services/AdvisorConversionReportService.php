@@ -208,8 +208,9 @@ class AdvisorConversionReportService extends BaseService
         $freshLoad = ! isset($filters->page);
 
         $startDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) :
-                Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
+                ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) :
+                    now()->subDays((int) $maxDays)->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) :

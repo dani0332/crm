@@ -147,7 +147,7 @@ class CarLeadPage {
 
   //Upload Documents
   getUploadDocButton(quoteID) {
-    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car/${quoteID}/documents"]`).click()
+    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car${quoteID}/documents"]`).click()
   }
 
   getUploadFile() {
@@ -155,7 +155,7 @@ class CarLeadPage {
   }
 
   getBackButton(quoteID) {
-    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car/${quoteID}"]`).click()
+    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car${quoteID}"]`).click()
   }
 
   //Add Activity
@@ -219,7 +219,7 @@ class CarLeadPage {
 
   // delete Additional Contact
   deleteContactButton() {
-    return cy.get('.additional-contact-delete-btn').should("be.visible").click()
+    return cy.get('.btn.btn-danger.btn-sm').contains('Delete').should("be.visible").click()
   }
   //Load History Button
   getLloadHistoryButton() {
