@@ -68,7 +68,7 @@ class HealthLead {
 
     //Edit Quote Details
     getEditButton(quoteId) {
-        return cy.get(`a[href="https://crmstage.alfred.ae/medical/amt${quoteId}/edit"]`).should('be.visible').click()
+        return cy.get(`a[href="https://crmstage.alfred.ae/medical/amt/${quoteId}/edit"]`).should('be.visible').click()
     }
 
     getGroupMedicalType(type) {

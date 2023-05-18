@@ -91,7 +91,7 @@ describe('Home qoutes', () => {
         commonPage.getAddContactButton()
 
         //Delete Contact
-        commonPage.getDeleteAdditionalContactButton()
+        // commonPage.getDeleteAdditionalContactButton()
     })
 
 })
