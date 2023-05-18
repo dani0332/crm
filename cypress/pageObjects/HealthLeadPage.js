@@ -69,8 +69,8 @@ class HealthLeadPage {
         })
     }
 
-    getOpenQuoteButton() {
-        return cy.get('a[href="/quotes/health/GVMSBC8N"]').should('be.visible').click()
+    getOpenQuoteButton(Id) {
+        return cy.get(`a[href="https://crmstage.alfred.ae/quotes/health/${Id}"]`).should('be.visible').click()
     }
 
     getEditButton() {
@@ -116,7 +116,7 @@ class HealthLeadPage {
 
     getAddMemberNationalityDropdown(dropdownName) {
         cy.get('.font-medium.text-gray-800').contains(dropdownName).parent().within(() => {
-            cy.get('#headlessui-combobox-button-6').should('be.visible').click()
+            cy.get('.appearance-none.block.placeholder-gray-400').should('be.visible').click()
         })
     }
 
@@ -194,7 +194,7 @@ class HealthLeadPage {
 
     getAddAdditionalContactvalueField() {
         cy.get('.font-medium.text-gray-800').contains("Value").parent().within(() => {
-            cy.get('.appearance-none.block.w-full.placeholder-gray-400').should('be.visible').type("12345678910")
+            cy.get('.appearance-none.block.w-full.placeholder-gray-400').should('be.visible').type("9875032151")
         })
     }
 
@@ -212,6 +212,15 @@ class HealthLeadPage {
 
     getAdditionalContactSubmitButton() {
         return cy.get('button[type="submit"]').should('be.visible').click()
+    }
+
+    //Delete Activity Button
+    getDeleteButton() {
+        return cy.get('button[type="button"]').contains('Delete').should('be.visible').click()
+    }
+
+    getModalDeleteButton() {
+        return cy.get('div[role="dialog"] button.x-button').contains('Delete').click()
     }
 
 }
