@@ -36,8 +36,9 @@ const setPage = newPage => {
       Previous
     </x-button>
 
-    <div class="text-xs lining-nums font-medium text-center">
-      Now displaying: {{ props.links.from }} ~ {{ props.links.to }}
+    <div class="text-xs lining-nums font-medium text-center text-gray-700">
+      Now displaying: {{ props.links.from }} ~
+      {{ props.links.to }}
       <span v-if="props.links.total"> of {{ props.links.total }} </span>
     </div>
 
