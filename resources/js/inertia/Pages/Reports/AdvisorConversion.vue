@@ -211,7 +211,10 @@ function onSubmit(isValid) {
 function onReset() {
   router.visit('/reports/advisor-conversion', {
     method: 'get',
-    data: { page: 1 },
+    data: {
+      advisorAssignedDates: filters.advisorAssignedDates,
+      page: 1,
+    },
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
     onSuccess: () => (loaders.table = false),
