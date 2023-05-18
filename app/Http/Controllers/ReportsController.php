@@ -34,6 +34,7 @@ class ReportsController extends Controller
             'teamsFilter' => $request->teams,
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
+            'page' => $request->page,
         ];
 
         return $advisorConversionReportService->getAdvisorsAssignedLeads($filters);

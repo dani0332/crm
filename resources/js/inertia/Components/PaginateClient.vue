@@ -23,11 +23,11 @@ const setPage = newPage => {
 <template>
   <div class="flex justify-between items-center gap-2 py-6">
     <x-button
-      v-if="links.current !== 1"
+      v-if="props.links.current !== 1"
       size="sm"
       icon-left="prev"
-      :loading="loading"
-      @click="setPage(links.current - 1)"
+      :loading="props.loading"
+      @click="setPage(props.links.current - 1)"
     >
       Previous
     </x-button>
@@ -37,17 +37,17 @@ const setPage = newPage => {
     </x-button>
 
     <div class="text-xs lining-nums font-medium text-center">
-      Now displaying: {{ links.from }} ~ {{ links.to }}
-      <span v-if="links.total"> of {{ links.total }} </span>
+      Now displaying: {{ props.links.from }} ~ {{ props.links.to }}
+      <span v-if="props.links.total"> of {{ props.links.total }} </span>
     </div>
 
     <x-button
       v-if="props.links.next !== null"
       size="sm"
       icon-right="next"
-      :loading="loading"
+      :loading="props.loading"
       :disabled="props.links.next === null"
-      @click="setPage(links.current + 1)"
+      @click="setPage(props.links.current + 1)"
     >
       Next
     </x-button>
