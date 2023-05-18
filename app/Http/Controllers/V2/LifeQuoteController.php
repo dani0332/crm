@@ -111,7 +111,7 @@ class LifeQuoteController extends Controller
             'activities' => $activitiesData,
             'advisors' => $advisors,
             'allowedDuplicateLOB' => $duplicateAllowedLobs,
-            'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote),
+            'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote->mobile_no),
             'lostReasons' => $lostReasons,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);
