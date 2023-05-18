@@ -37,7 +37,7 @@ describe('Car qoutes', () => {
     carLeadPage.getCurrentInsurance(carLeadData.carLeadData.currentInsurance)
     carLeadPage.getClaimHistory(carLeadData.carLeadData.claimHistory)
     carLeadPage.getCreateButton().click()
-    cy.wait(2000)
+    cy.wait(4000)
     cy.url().then(data => {
       leadUrl = `/${data.substring(data.lastIndexOf('quotes/car/'))}`
       quoteId = `/${(data.substring(data.lastIndexOf('/'))).replace('/', '')}`
@@ -127,8 +127,5 @@ describe('Car qoutes', () => {
     carLeadPage.getContactType()
     carLeadPage.getContactValue()
     carLeadPage.getAddContactSubmitButton()
-
-    //Delete Additional Contact Button
-    carLeadPage.deleteContactButton()
   })
 })
