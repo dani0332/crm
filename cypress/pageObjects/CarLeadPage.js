@@ -219,7 +219,7 @@ class CarLeadPage {
 
   // delete Additional Contact
   deleteContactButton() {
-    return cy.get('.additional-contact-delete-btn').should("be.visible").click()
+    return cy.get('.btn.btn-danger.btn-sm').contains('Delete').should("be.visible").click()
   }
   //Load History Button
   getLloadHistoryButton() {
