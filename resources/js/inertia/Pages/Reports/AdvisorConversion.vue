@@ -66,7 +66,7 @@ const tableHeader = [
   },
   {
     text: 'Manual Created',
-    value: 'manual_created_bad_leads',
+    value: 'manual_created',
   },
   {
     text: 'Gross Conversion',
