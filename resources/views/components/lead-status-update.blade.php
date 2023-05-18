@@ -184,19 +184,25 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                         </div>
                         <div class="col">
 
-                            <!--               todo: check request is pending then only show form             -->
-                            @if( isCarLostStatus($lead->quote_status_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations))
-                                @php $allowMoAction = isset($paymentEntityModel->pendingLostQuoteStatus->id) @endphp
+                            @if(isCarLostStatus($lead->quote_status_id))
+                                @php
+                                      $carLostQuoteLog = $paymentEntityModel->carLostQuoteLogs->first();
+                                      $allowQuoteLogAction = false;
+                                      if(auth()->user()->hasRole(RolesEnum::MarketingOperations) && $carLostQuoteLog->status == GenericRequestEnum::PENDING) {
+                                          $allowQuoteLogAction = true;
+                                      }
+                                @endphp
                                 <div class="col-sm-12 mb-3">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Approval Status</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
                                         <select
-                                            @if(!$allowMoAction)
-                                                disabled
-                                            @endif
-                                            class="form-control" id="lostApprovalStatus" name="lost_approval_status" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
-                                            <option @if($lead->lost_approval_status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
-                                            <option @if($lead->lost_approval_status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
+                                            @if(!$allowQuoteLogAction) disabled @endif
+                                            class="form-control" id="lostApprovalStatus" name="lost_approval_status">
+
+                                            <option @if($carLostQuoteLog->status == GenericRequestEnum::PENDING) selected @endif value="{{ GenericRequestEnum::PENDING }}">{{ GenericRequestEnum::PENDING }}</option>
+                                            <option @if($carLostQuoteLog->status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
+                                            <option @if($carLostQuoteLog->status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
+
                                         </select>
                                     </div>
                                 </div>
@@ -204,7 +210,9 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                 <div class="col-sm-12 mb-3 div-reject-reasons" style="display: none;">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Rejection Reasons</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <select @if(!$allowMoAction) disabled @endif class="form-control" name="approve_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
+                                        <select
+                                            @if(!$allowQuoteLogAction) disabled @endif
+                                            class="form-control" name="approve_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
                                             @foreach($lostRejectReasons as $lostRejectReason)
                                                 <option value="{{$lostRejectReason->id}}">{{$lostRejectReason->text}}</option>
                                             @endforeach
@@ -215,7 +223,9 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                 <div class="col-sm-12 mb-3 div-approve-reasons" style="display: none;">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Approval Reasons</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <select class="form-control" name="reject_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
+                                        <select
+                                            @if(!$allowQuoteLogAction) disabled @endif
+                                            class="form-control" name="reject_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
                                             @foreach($lostApproveReasons as $lostApproveReason)
                                                 <option value="{{$lostApproveReason->id}}">{{$lostApproveReason->text}}</option>
                                             @endforeach
@@ -226,14 +236,14 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                 <div class="col-sm-12 mb-3">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Notes</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <input type="text" id="lost_notes" name="lost_notes"  class="form-control">
+                                        <input @if(!$allowQuoteLogAction) disabled @endif type="text" id="lost_notes" name="lost_notes"  class="form-control">
                                     </div>
                                 </div>
 
                                 <div class="col-sm-12 mb-3 div-mo-proof-document" style="display: none;">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Car Sold / Uncontactable Proof</b></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <input class="form-control hide" type="file" name="mo_proof_document" id="moProofDocument" />
+                                        <input @if(!$allowQuoteLogAction) disabled @endif class="form-control hide" type="file" name="mo_proof_document" id="moProofDocument" />
                                     </div>
                                 </div>
 
