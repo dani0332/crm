@@ -539,6 +539,18 @@ onMounted(() => {
         </button>
       </template>
 
+      <template #item-created_sale_leads="item">
+        <p v-if="item.created_sale_leads == 0">{{ item.created_sale_leads }}</p>
+        <button
+          v-else
+          @click="onFetchAdvisorAssignedLeads(item, 'created_sale_leads')"
+          class="text-primary underline"
+        >
+          {{ item.sale_leads }}
+        </button>
+      </template>
+
+
       <template #item-afia_renewals_count="item">
         <p v-if="item.afia_renewals_count == 0">
           {{ item.afia_renewals_count }}
