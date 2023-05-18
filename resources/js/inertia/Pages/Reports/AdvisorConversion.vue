@@ -256,7 +256,6 @@ function onFetchAdvisorAssignedLeads(item, type, page = 1) {
   totalLeads.current = type;
   totalLeads.modal = true;
   totalLeads.loader = true;
-  totalLeads.data = {};
 
   if (item) {
     totalLeads.filters = {
@@ -345,6 +344,15 @@ onMounted(() => {
   }
   setQueryStringFilters();
 });
+
+watch(
+  () => totalLeads.modal,
+  val => {
+    if (!val) {
+      totalLeads.data = {};
+    }
+  },
+);
 </script>
 
 <template>
@@ -639,7 +647,7 @@ onMounted(() => {
         </select>
       </div>
 
-      <div class="text-xs lining-nums">
+      <div class="text-xs lining-nums text-gray-700 text-center">
         Now displaying: {{ currentPageFirstIndex }} ~
         {{ currentPageLastIndex }} of {{ clientItemsLength }}
       </div>
@@ -679,8 +687,8 @@ onMounted(() => {
               to: totalLeads.data.to,
               total: totalLeads.data.total,
               last: totalLeads.data.last_page,
-              loading: totalLeads.loader,
             }"
+            :loading="totalLeads.loader"
             @update="setPageTable"
           />
           <DataTable
