@@ -69,6 +69,7 @@ class AdvisorConversionReportService extends BaseService
             'teamsFilter' => $request->teams,
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
+            'page' => $request->page,
         ];
 
         $query = $this->applyFilters($query, $filters);
@@ -79,7 +80,9 @@ class AdvisorConversionReportService extends BaseService
     public function getFilterOptions()
     {
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+
         $loginUserId = auth()->user()->id;
+
         $advisors = User::whereIn('id', [$loginUserId])
             ->select('name', 'id')
             ->orderBy('name')
@@ -88,8 +91,9 @@ class AdvisorConversionReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
-        // TODO: add teams logic
+
         $teamIds = $this->getUserTeams($loginUserId);
+
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
             ->select('name', 'id')
             ->orderBy('name')
@@ -112,6 +116,7 @@ class AdvisorConversionReportService extends BaseService
                 return $batch->name.'-('.$start_date.' to '.$end_date.')';
             })
             ->toArray();
+
         $tiers = Tier::query()
             ->select('name', 'id')
             ->orderBy('name')
@@ -120,6 +125,7 @@ class AdvisorConversionReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
+
         $leadSources = LeadSource::query()
             ->select('name')
             ->where('is_active', 1)->where('is_applicable_for_rules', 0)
@@ -197,15 +203,15 @@ class AdvisorConversionReportService extends BaseService
         }
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         info('date : '.json_encode($filters));
-        $startDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
-            Carbon::parse(now())->startOfDay()->format($dateFormat);
+        $freshLoad = $filters->page == null;
 
-        $endDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) :
-            Carbon::parse(now())->endOfDay()->format($dateFormat);
+        $startDate = isset($filters->advisorAssignedDates) ? Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : null);
 
-        $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+        $endDate = isset($filters->advisorAssignedDates) ? Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->endOfDay()->format($dateFormat) : null);
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+        }
 
         if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
             info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
