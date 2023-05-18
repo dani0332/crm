@@ -66,9 +66,15 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  if (page.props.defaultFilters) {
+    filters.createdAtDates = page.props.defaultFilters.createdAtDates;
+  }
   router.visit('/reports/lead-distribution', {
     method: 'get',
-    data: { page: 1 },
+    data: {
+      createdAtDates: filters.createdAtDates,
+      page: 1,
+    },
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
     onSuccess: () => (loaders.table = false),
@@ -94,8 +100,7 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   if (page.props.defaultFilters) {
-    filters.createdAtDates =
-      page.props.defaultFilters.createdAtDates;
+    filters.createdAtDates = page.props.defaultFilters.createdAtDates;
   }
   setQueryStringFilters();
 });
