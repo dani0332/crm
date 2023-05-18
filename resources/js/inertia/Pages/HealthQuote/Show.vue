@@ -1491,7 +1491,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- <PaymentTable
+    <PaymentTable
       v-if="isBetaUser"
       :payments="payments"
       :can="can"
@@ -1499,7 +1499,7 @@ onMounted(() => {
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"
       :quote="quote"
-    /> -->
+    />
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -1612,7 +1612,7 @@ onMounted(() => {
             </x-button>
           </x-button-group>
 
-          <!-- <x-button
+          <x-button
             v-if="selectedPlans.length > 0"
             size="sm"
             color="emerald"
@@ -1620,13 +1620,11 @@ onMounted(() => {
             :loading="exportLoader"
           >
             Download PDF
-          </x-button> -->
+          </x-button>
 
-          <!-- hide create quote button for rm deployment -->
           <x-button
             size="sm"
             color="primary"
-            v-show="false"
             @click.prevent="modals.createPlan = true"
           >
             Create Quote
@@ -1723,7 +1721,7 @@ onMounted(() => {
       </x-modal>
     </div>
 
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
@@ -1807,7 +1805,7 @@ onMounted(() => {
           </div>
         </template>
       </x-modal>
-    </div> -->
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
