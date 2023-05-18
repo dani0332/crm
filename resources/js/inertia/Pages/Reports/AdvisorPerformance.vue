@@ -83,9 +83,16 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  if (page.props.defaultFilters) {
+    filters.advisorAssignedDates =
+      page.props.defaultFilters.advisorAssignedDates;
+  }
   router.visit('/reports/advisor-performance', {
     method: 'get',
-    data: { page: 1 },
+    data: {
+      advisorAssignedDates: filters.advisorAssignedDates,
+      page: 1,
+    },
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
     onSuccess: () => (loaders.table = false),
@@ -225,7 +232,6 @@ onMounted(() => {
           </td>
         </tr>
       </template>
-
     </DataTable>
 
     <Pagination

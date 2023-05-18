@@ -92,9 +92,12 @@ class LeadDistributionReportService extends BaseService
 
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = ! isset($filters->page);
+
         $startDate = isset($filters->createdAtDates) ?
             Carbon::parse($filters->createdAtDates[0])->startOfDay()->format($dateFormat) :
-            Carbon::parse(now())->startOfDay()->format($dateFormat);
+                ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->createdAtDates) ?
             Carbon::parse($filters->createdAtDates[1])->endOfDay()->format($dateFormat) :

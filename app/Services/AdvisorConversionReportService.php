@@ -203,15 +203,19 @@ class AdvisorConversionReportService extends BaseService
         }
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         info('date : '.json_encode($filters));
-        $freshLoad = $filters->page == null;
 
-        $startDate = isset($filters->advisorAssignedDates) ? Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : null);
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = ! isset($filters->page);
 
-        $endDate = isset($filters->advisorAssignedDates) ? Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->endOfDay()->format($dateFormat) : null);
+        $startDate = isset($filters->advisorAssignedDates) ?
+            Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) : ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) :
+                Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
-        if ($startDate && $endDate) {
-            $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
-        }
+        $endDate = isset($filters->advisorAssignedDates) ?
+            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) :
+            Carbon::parse(now())->endOfDay()->format($dateFormat);
+
+        $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
 
         if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
             info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
