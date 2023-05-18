@@ -15,6 +15,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Exports\HealthQuotesExport;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
@@ -1041,7 +1042,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function updateLeadStatus(Request $request)
+    public function updateLeadStatus(UpdateLeadStatusRequest $request)
     {
         if (! $request->leadStatus) {
             return redirect()->back()->with('message', 'Please select lead status and try again.');

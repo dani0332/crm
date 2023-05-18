@@ -296,7 +296,8 @@ class CRUDService extends BaseService
                 $carLostQuoteLog = $entity->carLostQuoteLogs()->create([
                     'advisor_id' => auth()->user()->id,
                     'quote_status_id' => $request->leadStatus,
-                    'status'          => GenericRequestEnum::PENDING
+                    'status'          => GenericRequestEnum::PENDING,
+                    'notes' => $request->notes
                 ]);
 
                 $fileName = $request->proof_document->getClientOriginalName();

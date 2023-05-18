@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Http\Requests;
+
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
+use App\Models\QuoteStatus;
+use App\Traits\GenericQueriesAllLobs;
+use Illuminate\Foundation\Http\FormRequest;
+
+class UpdateLeadStatusRequest extends FormRequest
+{
+    use GenericQueriesAllLobs;
+
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool
+     */
+    public function authorize()
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array
+     */
+    public function rules()
+    {
+
+        $rules = [
+            'modelType' => 'required',
+            'quote_uuid' => 'required',
+            'leadStatus' => 'required',
+            'notes' => 'nullable'
+        ];
+
+        /**
+         * advisor can mark car quote lead status to car sold / un-contactable with proof document required
+         */
+        if(!empty(request()->leadStatus) && !empty(request()->modelType) && strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)
+            && isCarLostStatus(request()->leadStatus) && auth()->user()->hasRole(RolesEnum::CarAdvisor)
+        )
+        {
+            //check for valid quote
+            if(!$quote = $this->getQuoteObject(request()->modelType, request()->quote_uuid)) {
+                vAbort('Invalid quote type or uuid provided');
+            }
+
+            //once quote is marked as sold/uncontactable, quote should be locked until have pending request
+            if(isCarLostStatus($quote->quote_status_id) && auth()->user()->hasRole(RolesEnum::CarAdvisor) ) {
+                $quote->load('pendingLostQuoteLog');
+                if(isset($quote->pendingLostQuoteLog->id)) {
+                    vAbort('Quote is locked as it has pending request to verify proof document');
+                }
+            }
+
+            $rules['proof_document'] = 'required';
+        }
+
+        return $rules;
+    }
+
+    public function messages()
+    {
+        return ['proof_document.required' => 'In order to change the status to Car Sold or Uncontactable, a proof document is required'];
+    }
+}

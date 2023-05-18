@@ -185,12 +185,16 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                         <div class="col">
 
                             <!--               todo: check request is pending then only show form             -->
-                            @if( ($lead->quote_status_id == QuoteStatusEnum::CarSold || $lead->quote_status_id == QuoteStatusEnum::Uncontactable) && auth()->user()->hasRole(RolesEnum::MarketingOperations))
+                            @if( isCarLostStatus($lead->quote_status_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations))
+                                @php $allowMoAction = isset($paymentEntityModel->pendingLostQuoteStatus->id) @endphp
                                 <div class="col-sm-12 mb-3">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Approval Status</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <select class="form-control" id="lostApprovalStatus" name="lost_approval_status" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
-                                            <option @if($lead->lost_approval_status == GenericRequestEnum::PENDING) selected @endif value="{{ GenericRequestEnum::PENDING }}">{{ GenericRequestEnum::PENDING }}</option>
+                                        <select
+                                            @if(!$allowMoAction)
+                                                disabled
+                                            @endif
+                                            class="form-control" id="lostApprovalStatus" name="lost_approval_status" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
                                             <option @if($lead->lost_approval_status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
                                             <option @if($lead->lost_approval_status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
                                         </select>
@@ -200,7 +204,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                 <div class="col-sm-12 mb-3 div-reject-reasons" style="display: none;">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Rejection Reasons</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <select class="form-control" name="approve_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
+                                        <select @if(!$allowMoAction) disabled @endif class="form-control" name="approve_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
                                             @foreach($lostRejectReasons as $lostRejectReason)
                                                 <option value="{{$lostRejectReason->id}}">{{$lostRejectReason->text}}</option>
                                             @endforeach
@@ -233,8 +237,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                     </div>
                                 </div>
 
-                                <input type="hidden" name="car_lost_quote_log_id" value="{{$paymentEntityModel->pendingLostQuoteLog->id}}">
-
+                                <input type="hidden" name="car_lost_quote_log_id" value="{{@$paymentEntityModel->pendingLostQuoteLog->id}}">
                             @endif
 
                             <div id="quote-next-followup-date" style="display: none;">
@@ -292,8 +295,10 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Notes</b></label>
                             <div class="col-md-6 col-sm-6">
-                                <textarea @if($lead->quote_status_id ==
-                                    QuoteStatusEnum::TransactionApproved) disabled @endif class="form-control" id="notes" name="notes"
+                                <textarea
+                                    @if( ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved) || isCarLostStatus($lead->quote_status_id) )
+                                        disabled
+                                    @endif class="form-control" id="notes" name="notes"
                                     placeholder="Notes">{{ old('notes', $lead->notes) }}</textarea>
                             </div>
                         </div>
@@ -306,7 +311,14 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Car Sold / Uncontactable Proof</b></label>
                             <div class="col-md-6 col-sm-6">
-                                <input class="form-control hide" type="file" name="proof_document" id="proofDocument" />
+                                <input
+                                    @if(isCarLostStatus($lead->quote_status_id) )
+                                        disabled
+                                    @endif
+                                    class="form-control hide" type="file" name="proof_document" id="proofDocument" />
+                                @if ($errors->has('proof_document'))
+                                    <span class="text-danger font-weight-bold" role="alert"><strong>{{ $errors->first('proof_document') }}.</strong></span>
+                                @endif
                             </div>
                         </div>
                         <div class="col">

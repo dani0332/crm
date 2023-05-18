@@ -419,3 +419,9 @@ if (! function_exists('newUi')) {
         ];
     }
 }
+
+if (! function_exists('isCarLostStatus')) {
+    function isCarLostStatus($quoteStatus) : bool {
+        return ($quoteStatus == \App\Enums\QuoteStatusEnum::CarSold || $quoteStatus == \App\Enums\QuoteStatusEnum::Uncontactable);
+    }
+}
