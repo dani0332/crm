@@ -16,7 +16,7 @@ const loaders = reactive({
 const page = usePage();
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
-const advisorOptions = ref([]);
+let advisorOptions = ref([]);
 
 const tableHeader = [
   {
@@ -345,30 +345,23 @@ const onTeamChange = e => {
 
   loaders.advisorOptions = true;
 
-  // remove bottom setTimeout demo code and uncomment below code when API is ready
-  setTimeout(() => {
-    loaders.advisorOptions = false;
-    console.log(e);
-    advisorOptions.value = [
-      { value: 1, label: 'Advisor 1' },
-      { value: 2, label: 'Advisor 2' },
-      { value: 3, label: 'Advisor 3' },
-    ];
-  }, 1500);
   // remove top setTimeout demo code and uncomment below code when API is ready
 
-  // axios
-  //   .post(`/path`, {
-  //     teamIds: e,
-  //   })
-  //   .then(res => {
-  //     if (res.data.length > 0) {
-  //       advisorOptions = res.data;
-  //     }
-  //   })
-  //   .finally(() => {
-  //     loaders.advisorOptions = false;
-  //   });
+  axios
+    .post(`/reports/fetch-advisor-by-team`, {
+      teamIds: e,
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        advisorOptions = Object.keys(res.data).map(key => ({
+            value: key,
+            label: res.data[key].name,
+            }));
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
 };
 
 const hasRole = role => useHasRole(role);
@@ -490,8 +483,8 @@ watch(
                 : `Advisors`
             "
             :options="advisorOptions"
-            :select-all="filters.teams.length > 0"
-            :deselect-all="filters.teams.length > 0"
+            :select-all="filters.advisors?.length > 0"
+            :deselect-all="filters.advisors?.length > 0"
             :loading="loaders.advisorOptions"
           />
         </template>
