@@ -45,7 +45,9 @@ class CarRenewalEmailJob implements ShouldQueue
 
         $renewalEmailRecipients = $leadAllocationService->getAppStorageValueByKey('RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
 
-        if(isset($this->lead->advisor_id)) $renewalEmailRecipients .= ',' . User::where('id', $this->lead->advisor_id)->first()->email;
+        if (isset($this->lead->advisor_id)) {
+            $renewalEmailRecipients .= ','.User::where('id', $this->lead->advisor_id)->first()->email;
+        }
 
         $renewalEmailCcRecipients = $leadAllocationService->getAppStorageValueByKey('RENEWAL_ALLOCATION_LEAD_EMAIL_CC');
 
