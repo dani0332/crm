@@ -223,5 +223,67 @@ class HealthLeadPage {
         return cy.get('div[role="dialog"] button.x-button').contains('Delete').click()
     }
 
+    //Health Quote Plans
+    getViewPlansButton() {
+        return cy.get('.flex.gap-2.pr-2 span').should('be.visible').eq(0).click()
+    }
+    //General Info tab assertions
+    getGeneralTab() {
+        return cy.get('button[id="headlessui-tabs-tab-3"]').contains('General Info').should('be.visible').click()
+    }
+
+    getTabMembersAssertion(name) {
+        return cy.get('dt.font-medium').contains(name).should('be.visible')
+    }
+
+    //Members tab
+    getMemberstab() {
+        return cy.get('button[id="headlessui-tabs-tab-4"]').contains('Members').should('be.visible').click()
+    }
+
+    getMemberAsertions(name) {
+        return cy.get('th.py-2.font-semibold').contains(name).should('be.visible')
+    }
+
+    //In Patient Tab
+    getInPatientTab() {
+        return cy.get('button[id="headlessui-tabs-tab-5"]').contains('In Patient').should('be.visible').click()
+    }
+
+    getInPatientAssertions(names) {
+        return cy.get('dt.font-medium.mb-1').contains(names).should('be.visible')
+    }
+
+    //Out Patient Tab
+    getOutPatientTab() {
+        return cy.get('button[id="headlessui-tabs-tab-6"]').contains('Out Patient').should('be.visible').click()
+    }
+
+    //Region coverage & Network list
+    getRegionCoverageTab() {
+        return cy.get('button[id="headlessui-tabs-tab-7"]').contains('Region coverage & Network list').should('be.visible').click()
+    }
+
+    //Co-pay/Co-insurance
+    getCopayCoInsuranceTab() {
+        return cy.get('[id="headlessui-tabs-tab-8"]').contains('Co-pay/Co-insurance').should('be.visible').click()
+    }
+
+    //Maternity cover
+    getMaternityTab() {
+        return cy.get('button[id="headlessui-tabs-tab-9"]').contains('Maternity cover').should('be.visible').click()
+    }
+
+    //Health plan toggle button
+    getToggleButton() {
+        return cy.get('.flex.items-center.rounded-full.transition-colors').should('be.visible').click()
+    }
+
+    //close pop up Plan
+    getCloseButton() {
+        return cy.get('div.flex.absolute.p-1').should('be.visible').click()
+    }
+
+
 }
 export default HealthLeadPage;
