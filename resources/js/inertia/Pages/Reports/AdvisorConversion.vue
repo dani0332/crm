@@ -197,10 +197,16 @@ const filters = reactive({
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
+    const payLoad = cleanFilters(filters);
 
     router.visit('/reports/advisor-conversion', {
       method: 'get',
-      data: cleanFilters(filters),
+      data: {
+        ...payLoad,
+        ...(payLoad.teams && {
+          teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
+        }),
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loaders.table = true),
@@ -267,9 +273,11 @@ function onFetchAdvisorAssignedLeads(item, type, page = 1) {
     };
   }
 
+  const payLoad = cleanFilters(filters);
+
   axios
     .post(`/reports/fetch-advisor-assigned-leads-data`, {
-      ...cleanFilters(filters),
+      ...payLoad,
       page: page,
       leadType: totalLeads.filters.leadType,
       quote_batch_id: totalLeads.filters.quote_batch_id,
@@ -339,6 +347,7 @@ const updateRowsPerPageSelect = e => {
 const onTeamChange = e => {
   if (e.length == 0) {
     filters.teams = [];
+    filters.advisors = [];
     advisorOptions.value = [];
 
     return;
@@ -372,11 +381,11 @@ onMounted(() => {
       page.props.defaultFilters.advisorAssignedDates;
   }
 
+  setQueryStringFilters();
+
   if (params['teams[]'] && params['teams[]'].length > 0) {
     onTeamChange(params['teams[]']);
   }
-
-  setQueryStringFilters();
 });
 
 watch(
