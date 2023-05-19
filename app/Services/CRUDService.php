@@ -102,16 +102,6 @@ class CRUDService extends BaseService
         return $this->{$teamName.'QuoteService'}->getLeadsForAssignment();
     }
 
-    public function getAdvisorLeads($request, $leadType)
-    {
-        return $this->{strtolower($leadType).'QuoteService'}->{'get'.ucwords($leadType).'LeadsForAdvisor'}($request);
-    }
-
-    public function getOverDueFollowups($request, $leadType)
-    {
-        return $this->{strtolower($leadType).'QuoteService'}->{'get'.ucwords($leadType).'OverDueFollowups'}($request);
-    }
-
     public function getEntityByUUID($uuid, $leadType)
     {
         return $this->{strtolower($leadType).'QuoteService'}->getEntity($uuid, $leadType);

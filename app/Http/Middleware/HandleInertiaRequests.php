@@ -147,10 +147,6 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->check() && auth()->user()->hasMyLeadAccess()) {
-            $nav = $nav->add('My Leads', url('/myleads'));
-        }
-
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {
             $nav = $nav->add('Activities', url('/activities'));
         }
