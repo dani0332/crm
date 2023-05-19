@@ -501,10 +501,12 @@ class HealthQuoteService extends BaseService
             $healthQuoteFirstMember = HealthMemberDetail::where('health_quote_request_id', $healthQuote->id)->first();
             if ($healthQuoteFirstMember) {
                 $healthQuoteFirstMember->update(array_merge(
-                    $updateMemberDetails, [
+                    $updateMemberDetails,
+                    [
                         'nationality_id' => $request->nationality_id,
                         'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
-                    ]));
+                    ]
+                ));
             }
 
             if ($healthQuote->primary_member_id) {
@@ -1404,7 +1406,7 @@ class HealthQuoteService extends BaseService
                 $apiArray = [
                     'planId' => (int) $data[$i],
                     'isHidden' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
-                    'isManualUpdate' => true,
+                    'isManualUpdate' => false,
                 ];
                 array_push($plansArray, $apiArray);
             }
