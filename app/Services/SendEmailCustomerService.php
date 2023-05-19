@@ -368,17 +368,17 @@ class SendEmailCustomerService extends BaseService
                 'email' => $emailData->advisorEmail,
                 'name' => $emailData->advisorName,
             ],
-            [
-                'email' => $emailData->advisorEmail,
-                'name' => $emailData->advisorName,
-            ]];
+                [
+                    'email' => $emailData->advisorEmail,
+                    'name' => $emailData->advisorName,
+                ]];
             $bccAdditional = [];
             $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->value;
-                foreach (explode(',', $additionalBcc) as $additionalContact) {
-                    $ccAdditional[] = [
-                        'email' => $additionalContact,
-                    ];
-                }
+            foreach (explode(',', $additionalBcc) as $additionalContact) {
+                $ccAdditional[] = [
+                    'email' => $additionalContact,
+                ];
+            }
             $body['bcc'] = array_merge($bccAdditional, $bcc);
             $body = json_encode([
                 'to' => [[

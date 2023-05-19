@@ -667,7 +667,7 @@ class LeadAllocationService extends BaseService
             ->where('lead_sources.is_applicable_for_rules', 1)
             ->groupBy('rule_lead_sources.lead_source_id')
             ->select(
-                'lead_sources.name AS leadSourceName', 
+                'lead_sources.name AS leadSourceName',
                 'lead_sources.id AS leadSourceId',
                 DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers')
             );
