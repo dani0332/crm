@@ -117,4 +117,9 @@ class PetQuoteRepository extends BaseRepository
             'possession_types' => HomePossessionType::all(),
         ];
     }
+
+    public function fetchCreateDuplicate(string $lob, array $dataArr) : object
+    {
+        return Capi::request('/api/v1-save-' . strtolower($lob) . '-quote', 'post', $dataArr);
+    }
 }

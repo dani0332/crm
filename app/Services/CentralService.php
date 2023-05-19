@@ -89,8 +89,7 @@ class CentralService
                     $dataArr['business_type_of_insurance_id'] = 5;
                 }
 
-                $response = Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
-
+                $response = method_exists($repository, 'DuplicateLob') ? $repository::DuplicateLob($lob, $dataArr) : Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
                 if (isset($response->message) && str_contains($response->message, 'Error')) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
                 } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
