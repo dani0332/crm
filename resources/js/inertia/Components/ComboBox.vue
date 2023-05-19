@@ -98,7 +98,7 @@ const onDeselectAll = () => {
   <label
     class="group relative x-select inline-block align-bottom text-left focus:outline-none mb-3 w-full"
   >
-    <p class="font-medium text-gray-800 mb-1">
+    <p v-if="props.label" class="font-medium text-gray-800 mb-1">
       {{ props.label }}
     </p>
     <Combobox

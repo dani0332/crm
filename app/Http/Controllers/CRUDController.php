@@ -267,7 +267,7 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HealthQuote/Create', [
+            return inertia('HealthQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -682,7 +682,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HealthQuote/Edit', [
+            return inertia('HealthQuote/Form', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'dropdownSource' => $dropdownSource,
