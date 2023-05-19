@@ -176,6 +176,10 @@ const rolesEnum = page.props.rolesEnum;
 onMounted(() => {
   setQueryStringFilters();
 });
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 </script>
 
 <template>
@@ -313,7 +317,7 @@ onMounted(() => {
     </section>
 
     <Transition name="fade">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
+      <div v-if="quotesSelected.length > 0 && can(permissionsEnum.DATA_EXTRACTION)" class="mb-4">
         <ExportExcel
           :data="quotesSelected"
           :columns="tableHeader"
