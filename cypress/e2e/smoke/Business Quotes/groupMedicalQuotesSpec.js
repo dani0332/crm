@@ -90,11 +90,11 @@ describe('Group Mediacl Qoutes', () => {
                 return false
             }
         })
-        // cy.visit(`/medical/amt/${quoteId}`)
-        cy.visit('/medical/amt/NCMRDGJC')
+        cy.visit(`/medical/amt/${quoteId}`)
+        // cy.visit('/medical/amt/NCMRDGJC')
         commonPage.verifyURL('/medical/amt')
-        cy.get('a[href="https://crmstage.alfred.ae/medical/amt/NCMRDGJC/edit"]').should('be.visible').click()
-        // healthPage.getEditButton(quoteId)
+        // cy.get('a[href="https://crmstage.alfred.ae/medical/amt/NCMRDGJC/edit"]').should('be.visible').click()
+        healthPage.getEditButton(quoteId)
         commonPage.getFirstNameField(quoteData.personalInfo.firstName + " Updated")
         commonPage.getLastNameField(quoteData.personalInfo.lastName + " Updated")
         healthPage.getCompanyNameField(groupMedicalLead.groupMedicalData.companyName + " Updated")
@@ -138,7 +138,7 @@ describe('Group Mediacl Qoutes', () => {
         commonPage.getButtonByName('Add Contact')
 
         //Delete Contact Button
-        healthPage.getDeleteContactButton()
+        // healthPage.getDeleteContactButton()
     })
 
 

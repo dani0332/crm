@@ -112,13 +112,15 @@ class AdvisorDistributionReportService extends BaseService
         $filters = (object) $filters;
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = ! isset($filters->page);
+
         $startDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
-            Carbon::parse(now())->startOfDay()->format($dateFormat);
+                ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) :
-            Carbon::parse(now())->endOfDay()->format($dateFormat);
+            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
 

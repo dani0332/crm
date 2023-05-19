@@ -111,18 +111,18 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->hasRole(RolesEnum::BetaUser) && auth()->user()->hasAnyRole([
-            RolesEnum::CarDeputyManager,
-            RolesEnum::CarAdvisor,
-            RolesEnum::Admin,
-            RolesEnum::CarManager,
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
+            PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
+            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+            PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
         ])) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
-                    ->add('Advisor Conversion', route('advisor-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Advisor Performance', route('advisor-performance-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW), 'Advisor Conversion', route('advisor-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW), 'Advisor Performance', route('advisor-performance-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW), 'Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 

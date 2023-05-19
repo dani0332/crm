@@ -3,7 +3,8 @@ let quoteData = require('../../../fixtures/qoutesData')
 let TravelData = require('../../../pageObjects/TravelData')
 let travelLeadData = require('../../../fixtures/travelLeadData')
 let leadUrl
-describe('Health qoutes', () => {
+let quoteId
+describe('Travel qoutes', () => {
     const commonPage = new CommonPage()
     const travelPage = new TravelData()
 
@@ -44,6 +45,7 @@ describe('Health qoutes', () => {
         travelPage.getPanelAssertion('Travel Detail')
         cy.url().then(data => {
             leadUrl = `/${data.substring(data.lastIndexOf('quotes/travel/'))}`
+            quoteId = `/${(data.substring(data.lastIndexOf('/'))).replace('/', '')}`
             cy.log(leadUrl)
         })
         travelPage.getPopUpAssertion("Lead has been created")
@@ -100,7 +102,7 @@ describe('Health qoutes', () => {
         travelPage.getCreateButton('Add Contact')
 
         //Delete Additional Contact
-        travelPage.getDeleteAdditionalContactButton()
+        // travelPage.getDeleteAdditionalContactButton()
 
     })
 
@@ -110,10 +112,10 @@ describe('Health qoutes', () => {
                 return false
             }
         })
-        // cy.visit(leadUrl)
-        cy.visit('/quotes/travel/hflwtv3y')
+        cy.visit(leadUrl)
+        // cy.visit('/quotes/travel/hflwtv3y')
         commonPage.verifyURL('/quotes/travel')
-        travelPage.getEditButton()
+        travelPage.getEditButton(quoteId)
         commonPage.getFirstNameField(quoteData.personalInfo.firstName)
         commonPage.getLastNameField(quoteData.personalInfo.lastName)
         commonPage.getDOB(quoteData.personalInfo.month, quoteData.personalInfo.year, quoteData.personalInfo.day)

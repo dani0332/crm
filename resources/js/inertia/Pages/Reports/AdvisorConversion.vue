@@ -9,6 +9,7 @@ defineProps({
 
 const loaders = reactive({
   table: false,
+  advisorLeadTable: false,
 });
 
 const page = usePage();
@@ -66,7 +67,7 @@ const tableHeader = [
   },
   {
     text: 'Manual Created',
-    value: 'manual_created_bad_leads',
+    value: 'manual_created',
   },
   {
     text: 'Gross Conversion',
@@ -209,9 +210,16 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  if (page.props.defaultFilters) {
+    filters.advisorAssignedDates =
+      page.props.defaultFilters.advisorAssignedDates;
+  }
   router.visit('/reports/advisor-conversion', {
     method: 'get',
-    data: { page: 1 },
+    data: {
+      advisorAssignedDates: filters.advisorAssignedDates,
+      page: 1,
+    },
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
     onSuccess: () => (loaders.table = false),
@@ -241,11 +249,13 @@ const currentTypeTitle = computed(() => {
 });
 
 function onFetchAdvisorAssignedLeads(item, type, page = 1) {
+  if (page == 1 && !totalLeads.modal) {
+    loaders.advisorLeadTable = true;
+  }
+
   totalLeads.current = type;
   totalLeads.modal = true;
-
   totalLeads.loader = true;
-  totalLeads.data = {};
 
   if (item) {
     totalLeads.filters = {
@@ -270,6 +280,7 @@ function onFetchAdvisorAssignedLeads(item, type, page = 1) {
       console.log(error);
     })
     .finally(() => {
+      loaders.advisorLeadTable = false;
       totalLeads.loader = false;
     });
 }
@@ -323,6 +334,9 @@ const updateRowsPerPageSelect = e => {
   updateRowsPerPageActiveOption(Number(e.target.value));
 };
 
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
+
 onMounted(() => {
   if (page.props.defaultFilters) {
     filters.advisorAssignedDates =
@@ -330,6 +344,15 @@ onMounted(() => {
   }
   setQueryStringFilters();
 });
+
+watch(
+  () => totalLeads.modal,
+  val => {
+    if (!val) {
+      totalLeads.data = {};
+    }
+  },
+);
 </script>
 
 <template>
@@ -392,47 +415,49 @@ onMounted(() => {
           deselect-all
         />
 
-        <ComboBox
-          v-model="filters.leadSources"
-          label="Lead Source"
-          placeholder="Search by Lead Source"
-          :options="
-            Object.keys(filterOptions.leadSources).map(key => ({
-              value: key,
-              label: filterOptions.leadSources[key],
-            }))
-          "
-          :max-limit="3"
-          deselect-all
-        />
+        <template v-if="!hasRole(rolesEnum.CarAdvisor)">
+          <ComboBox
+            v-model="filters.leadSources"
+            label="Lead Source"
+            placeholder="Search by Lead Source"
+            :options="
+              Object.keys(filterOptions.leadSources).map(key => ({
+                value: key,
+                label: filterOptions.leadSources[key],
+              }))
+            "
+            :max-limit="3"
+            deselect-all
+          />
 
-        <ComboBox
-          v-model="filters.teams"
-          label="Teams"
-          placeholder="Search by Teams"
-          :options="
-            Object.keys(filterOptions.teams).map(key => ({
-              value: key,
-              label: filterOptions.teams[key],
-            }))
-          "
-          select-all
-          deselect-all
-        />
+          <ComboBox
+            v-model="filters.teams"
+            label="Teams"
+            placeholder="Search by Teams"
+            :options="
+              Object.keys(filterOptions.teams).map(key => ({
+                value: key,
+                label: filterOptions.teams[key],
+              }))
+            "
+            select-all
+            deselect-all
+          />
 
-        <ComboBox
-          v-model="filters.advisors"
-          label="Advisors"
-          placeholder="Search by Advisors"
-          :options="
-            Object.keys(filterOptions.advisors).map(key => ({
-              value: key,
-              label: filterOptions.advisors[key],
-            }))
-          "
-          select-all
-          deselect-all
-        />
+          <ComboBox
+            v-model="filters.advisors"
+            label="Advisors"
+            placeholder="Search by Advisors"
+            :options="
+              Object.keys(filterOptions.advisors).map(key => ({
+                value: key,
+                label: filterOptions.advisors[key],
+              }))
+            "
+            select-all
+            deselect-all
+          />
+        </template>
       </div>
       <div class="flex justify-end gap-3 mb-4">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
@@ -527,6 +552,17 @@ onMounted(() => {
         </button>
       </template>
 
+      <template #item-created_sale_leads="item">
+        <p v-if="item.created_sale_leads == 0">{{ item.created_sale_leads }}</p>
+        <button
+          v-else
+          @click="onFetchAdvisorAssignedLeads(item, 'created_sale_leads')"
+          class="text-primary underline"
+        >
+          {{ item.created_sale_leads }}
+        </button>
+      </template>
+
       <template #item-afia_renewals_count="item">
         <p v-if="item.afia_renewals_count == 0">
           {{ item.afia_renewals_count }}
@@ -611,7 +647,7 @@ onMounted(() => {
         </select>
       </div>
 
-      <div class="text-xs lining-nums">
+      <div class="text-xs lining-nums text-gray-700 text-center">
         Now displaying: {{ currentPageFirstIndex }} ~
         {{ currentPageLastIndex }} of {{ clientItemsLength }}
       </div>
@@ -641,7 +677,7 @@ onMounted(() => {
         <div class="text-center">{{ currentTypeTitle }}</div>
       </template>
       <section class="min-h-[70vh]">
-        <div v-if="totalLeads.data.data?.length > 0">
+        <div v-if="!loaders.advisorLeadTable">
           <PaginateClient
             :links="{
               next: totalLeads.data.next_page_url,
@@ -652,6 +688,7 @@ onMounted(() => {
               total: totalLeads.data.total,
               last: totalLeads.data.last_page,
             }"
+            :loading="totalLeads.loader"
             @update="setPageTable"
           />
           <DataTable
