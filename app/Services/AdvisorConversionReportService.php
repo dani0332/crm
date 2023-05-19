@@ -83,7 +83,9 @@ class AdvisorConversionReportService extends BaseService
 
         $loginUserId = auth()->user()->id;
 
-        $advisors = User::whereIn('id', [$loginUserId])
+        $subOrdinates = $this->walkTree($loginUserId);
+
+        $advisors = User::whereIn('id', $subOrdinates)
             ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
