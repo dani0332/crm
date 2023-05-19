@@ -10,11 +10,13 @@ defineProps({
 const loaders = reactive({
   table: false,
   advisorLeadTable: false,
+  advisorOptions: false,
 });
 
 const page = usePage();
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
+const advisorOptions = ref([]);
 
 const tableHeader = [
   {
@@ -334,6 +336,41 @@ const updateRowsPerPageSelect = e => {
   updateRowsPerPageActiveOption(Number(e.target.value));
 };
 
+const onTeamChange = e => {
+  if (e.length == 0) {
+    filters.teams = [];
+    advisorOptions.value = [];
+    return;
+  }
+
+  loaders.advisorOptions = true;
+
+  // remove bottom setTimeout demo code and uncomment below code when API is ready
+  setTimeout(() => {
+    loaders.advisorOptions = false;
+    console.log(e);
+    advisorOptions.value = [
+      { value: 1, label: 'Advisor 1' },
+      { value: 2, label: 'Advisor 2' },
+      { value: 3, label: 'Advisor 3' },
+    ];
+  }, 1500);
+  // remove top setTimeout demo code and uncomment below code when API is ready
+
+  // axios
+  //   .post(`/path`, {
+  //     teamIds: e,
+  //   })
+  //   .then(res => {
+  //     if (res.data.length > 0) {
+  //       advisorOptions = res.data;
+  //     }
+  //   })
+  //   .finally(() => {
+  //     loaders.advisorOptions = false;
+  //   });
+};
+
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
@@ -440,22 +477,22 @@ watch(
                 label: filterOptions.teams[key],
               }))
             "
+            @update:model-value="onTeamChange"
             select-all
             deselect-all
           />
 
           <ComboBox
             v-model="filters.advisors"
-            label="Advisors"
-            placeholder="Search by Advisors"
-            :options="
-              Object.keys(filterOptions.advisors).map(key => ({
-                value: key,
-                label: filterOptions.advisors[key],
-              }))
+            :label="
+              !filters.teams || filters.teams.length == 0
+                ? `Advisors (select teams first)`
+                : `Advisors`
             "
-            select-all
-            deselect-all
+            :options="advisorOptions"
+            :select-all="filters.teams.length > 0"
+            :deselect-all="filters.teams.length > 0"
+            :loading="loaders.advisorOptions"
           />
         </template>
       </div>
