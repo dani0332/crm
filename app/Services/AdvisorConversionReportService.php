@@ -12,7 +12,6 @@ use App\Models\LeadSource;
 use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\Tier;
-use App\Models\User;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -83,16 +82,7 @@ class AdvisorConversionReportService extends BaseService
 
         $loginUserId = auth()->user()->id;
 
-        $subOrdinates = $this->walkTree($loginUserId);
-
-        $advisors = User::whereIn('id', $subOrdinates)
-            ->select('name', 'id')
-            ->orderBy('name')
-            ->where('is_active', 1)
-            ->get()
-            ->keyBy('id')
-            ->map(fn ($users) => $users->name)
-            ->toArray();
+        $advisors = [];
 
         $teamIds = $this->getUserTeams($loginUserId);
 
