@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
 use App\Jobs\UpdateSendPolicySubjectJob;
+use App\Models\ApplicationStorage;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -362,14 +364,26 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
+            $bcc = [[
+                'email' => $emailData->advisorEmail,
+                'name' => $emailData->advisorName,
+            ],
+            [
+                'email' => $emailData->advisorEmail,
+                'name' => $emailData->advisorName,
+            ]];
+            $bccAdditional = [];
+            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->value;
+                foreach (explode(',', $additionalBcc) as $additionalContact) {
+                    $ccAdditional[] = [
+                        'email' => $additionalContact,
+                    ];
+                }
+            $body['bcc'] = array_merge($bccAdditional, $bcc);
             $body = json_encode([
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
-                ]],
-                'bcc' => [[
-                    'email' => $emailData->advisorEmail,
-                    'name' => $emailData->advisorName,
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
