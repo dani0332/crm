@@ -475,6 +475,15 @@ class CRUDController extends Controller
             $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
             $this->carQuoteService->addOrUpdateQuoteViewCount($record);
 
+            $daysAfterCapturedPayment = null;
+            if( ($capturedPaymentDate = PaymentStatusLog::where(['quote_type_id' => QuoteTypeId::Car,
+                'quote_request_id' => $record->id,
+                'current_payment_status_id' => PaymentStatusEnum::CAPTURED
+            ])->first()))
+            {
+                $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
+            }
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
@@ -482,7 +491,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers',
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment'
             ]));
         }
 

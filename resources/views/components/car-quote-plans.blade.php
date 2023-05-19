@@ -278,7 +278,10 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                     >Copy</button>
                                 @endif
 
-                                @if(auth()->user()->hasRole(RolesEnum::CarAdvisor))
+
+                                @if( (auth()->user()->hasRole(RolesEnum::CarAdvisor) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment <= 7) ||
+								     (auth()->user()->hasRole(RolesEnum::CarManager) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment > 7 && $daysAfterCapturedPayment <= 14)
+								 )
                                     <button class="btn btn-info btn-sm btn-change-insurer"
                                             data-planId="{{$quotePlan->id}}"
                                             data-uuid="{{$record->uuid}}"
