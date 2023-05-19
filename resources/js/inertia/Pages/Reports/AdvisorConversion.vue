@@ -16,7 +16,7 @@ const loaders = reactive({
 const page = usePage();
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
-let advisorOptions = ref([]);
+const advisorOptions = ref([]);
 
 const tableHeader = [
   {
@@ -340,23 +340,22 @@ const onTeamChange = e => {
   if (e.length == 0) {
     filters.teams = [];
     advisorOptions.value = [];
+
     return;
   }
 
   loaders.advisorOptions = true;
 
-  // remove top setTimeout demo code and uncomment below code when API is ready
-
   axios
     .post(`/reports/fetch-advisor-by-team`, {
-      teamIds: e,
+      teamIds: Array.isArray(e) ? e : [e],
     })
     .then(res => {
       if (res.data.length > 0) {
-        advisorOptions = Object.keys(res.data).map(key => ({
-            value: key,
-            label: res.data[key].name,
-            }));
+        advisorOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id,
+          label: res.data[key].name,
+        }));
       }
     })
     .finally(() => {
@@ -372,6 +371,11 @@ onMounted(() => {
     filters.advisorAssignedDates =
       page.props.defaultFilters.advisorAssignedDates;
   }
+
+  if (params['teams[]'] && params['teams[]'].length > 0) {
+    onTeamChange(params['teams[]']);
+  }
+
   setQueryStringFilters();
 });
 
