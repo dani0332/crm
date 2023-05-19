@@ -375,7 +375,6 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalContact,
                 ];
             }
-            $body['bcc'] = array_merge($bccAdditional, $bcc);
             $body = json_encode([
                 'to' => [[
                     'email' => $emailData->customerEmail,
@@ -395,6 +394,7 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
+            $body['bcc'] = array_merge($bccAdditional, $bcc);
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
