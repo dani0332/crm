@@ -310,14 +310,13 @@ function onAssignLead(isValid) {
       fixed-checkbox
     >
       <template #item-uuid="{ code, uuid }">
-        <a
-          target="_blank"
-          v-if="can(permissionsEnum.PetQuotesView)"
+        <Link
+          v-if="can(permissionsEnum.PetQuotesShow)"
           :href="`/personal-quotes/pet/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </a>
+        </Link>
         <span v-else>{{ code }}</span>
       </template>
 
