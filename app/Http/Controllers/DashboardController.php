@@ -144,8 +144,9 @@ class DashboardController extends Controller
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
 
-        $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'undefined';
-        $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $tiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
+        if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
+            $records->whereIn('tiers.id', $request->tier_filter);
+        }
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
             $records->whereIn('users.id', function ($query) use ($request) {
@@ -234,8 +235,10 @@ class DashboardController extends Controller
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
-        $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'null';
-        $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
+
+        if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
+            $records->whereIn('tiers.id', $request->tier_filter);
+        }
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
             $records->whereIn('users.id', function ($query) use ($request) {
