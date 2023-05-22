@@ -61,7 +61,7 @@ class LifeQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect('/quotes/life/'.data_get($response, 'quoteUID'))->with('message', 'Quote is created successfully.');
+        return redirect('/quotes/life/'.$response->quoteUID)->with('message', 'Quote is created successfully.');
     }
 
     /**
