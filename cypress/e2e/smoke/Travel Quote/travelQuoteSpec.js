@@ -131,5 +131,22 @@ describe('Travel qoutes', () => {
         travelPage.getPopUpAssertion("Travel has been updated")
     })
 
+    it('Should View Plan Details', () => {
+        Cypress.on('uncaught:exception', err => {
+            if (resizeObserverLoopErrRe.test(err.message)) {
+                return false
+            }
+        })
+        cy.visit(leadUrl)
+        commonPage.verifyURL('/quotes/travel')
+        travelPage.getViewPlanButton()
+        travelPage.getMembersTab()
+        travelPage.getInclusionTab()
+        travelPage.getExclusionsTab()
+        travelPage.getCovidTab()
+        travelPage.getPolicyDetailTab()
+
+    })
+
 
 })
