@@ -44,12 +44,10 @@ function onSubmit(isValid) {
     let method = 'post';
     let url = `/quotes/life/`;
     let title = 'Quote saved successfully';
-    let redirectUrl = '/quotes/life';
     if (props.quote) {
       method = 'put';
       url = url + props.quote.uuid;
       title = 'Quote updated successfully';
-      redirectUrl = `/quotes/life/${props.quote?.uuid}`;
     }
 
      quoteForm.submit(method, url, {
@@ -61,13 +59,6 @@ function onSubmit(isValid) {
           title: title,
           position: 'top',
         });
-        const uuid = props.flash?.uid;
-          if (uuid) {
-            redirectUrl = `/quotes/life/${uuid}`;
-          }
-        setTimeout(function () {
-          router.get(redirectUrl);
-        }, 500);
       },
     });
   }
