@@ -10,11 +10,13 @@ defineProps({
 const loaders = reactive({
   table: false,
   advisorLeadTable: false,
+  advisorOptions: false,
 });
 
 const page = usePage();
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
+const advisorOptions = ref([]);
 
 const tableHeader = [
   {
@@ -195,10 +197,16 @@ const filters = reactive({
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
+    const payLoad = cleanFilters(filters);
 
     router.visit('/reports/advisor-conversion', {
       method: 'get',
-      data: cleanFilters(filters),
+      data: {
+        ...payLoad,
+        ...(payLoad.teams && {
+          teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
+        }),
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loaders.table = true),
@@ -265,9 +273,11 @@ function onFetchAdvisorAssignedLeads(item, type, page = 1) {
     };
   }
 
+  const payLoad = cleanFilters(filters);
+
   axios
     .post(`/reports/fetch-advisor-assigned-leads-data`, {
-      ...cleanFilters(filters),
+      ...payLoad,
       page: page,
       leadType: totalLeads.filters.leadType,
       quote_batch_id: totalLeads.filters.quote_batch_id,
@@ -334,6 +344,34 @@ const updateRowsPerPageSelect = e => {
   updateRowsPerPageActiveOption(Number(e.target.value));
 };
 
+const onTeamChange = e => {
+  if (e.length == 0) {
+    filters.teams = [];
+    filters.advisors = [];
+    advisorOptions.value = [];
+
+    return;
+  }
+
+  loaders.advisorOptions = true;
+
+  axios
+    .post(`/reports/fetch-advisor-by-team`, {
+      teamIds: Array.isArray(e) ? e : [e],
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        advisorOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id,
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
+};
+
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
@@ -342,7 +380,12 @@ onMounted(() => {
     filters.advisorAssignedDates =
       page.props.defaultFilters.advisorAssignedDates;
   }
+
   setQueryStringFilters();
+
+  if (params['teams[]'] && params['teams[]'].length > 0) {
+    onTeamChange(params['teams[]']);
+  }
 });
 
 watch(
@@ -440,22 +483,22 @@ watch(
                 label: filterOptions.teams[key],
               }))
             "
+            @update:model-value="onTeamChange"
             select-all
             deselect-all
           />
 
           <ComboBox
             v-model="filters.advisors"
-            label="Advisors"
-            placeholder="Search by Advisors"
-            :options="
-              Object.keys(filterOptions.advisors).map(key => ({
-                value: key,
-                label: filterOptions.advisors[key],
-              }))
+            :label="
+              !filters.teams || filters.teams.length == 0
+                ? `Advisors (select teams first)`
+                : `Advisors`
             "
-            select-all
-            deselect-all
+            :options="advisorOptions"
+            :select-all="filters.advisors?.length > 0"
+            :deselect-all="filters.advisors?.length > 0"
+            :loading="loaders.advisorOptions"
           />
         </template>
       </div>
