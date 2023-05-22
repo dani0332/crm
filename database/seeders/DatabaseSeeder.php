@@ -45,7 +45,7 @@ class DatabaseSeeder extends Seeder
             addSystemUser::class,
             addCarDripListKey::class,
             addCarQuoteNewStatuses::class,
-            AddPermissionForExportData::class,
+            GenericPermissionSeeder::class,
             RenewalBatchUpdatePermissionSeeder::class,
             addBusinessAsProduct::class,
             addHealthManualAssignmentByPassUsers::class,

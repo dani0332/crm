@@ -207,4 +207,6 @@ final class PermissionsEnum extends Enum
     const JetskiQuotesEdit = 'jetski-quotes-edit';
     const JetskiQuotesShow = 'jetski-quotes-show';
     const RenewalBatchUpdate = 'renewal-batch-update';
+    const CarSoldList = 'car-sold-list';
+    const CarUncontactableList = 'car-uncontactable-list';
 }
