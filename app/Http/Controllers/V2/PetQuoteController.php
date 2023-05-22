@@ -64,7 +64,7 @@ class PetQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Quote is created successfully.')->with('uid', data_get($response, 'quoteUID'));
+        return redirect('/personal-quotes/pet/'.data_get($response, 'quoteUID'));
     }
 
     /**
