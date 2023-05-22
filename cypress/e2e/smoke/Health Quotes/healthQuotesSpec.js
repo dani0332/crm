@@ -69,7 +69,7 @@ describe('Health qoutes', () => {
     healthLeadPage.getSearchButton()
     healthLeadPage.getOpenQuoteButton(quoteId)
     healthLeadPage.getEditButton()
-    healthLeadPage.getHealthTextFieldByName("FIRST NAME", "Muhammad Updated")
+    healthLeadPage.getHealthTextFieldByName("FIRST NAME ", "Muhammad Updated")
     healthLeadPage.getHealthTextFieldByName("LAST NAME", "Abdullah Updated")
     healthLeadPage.getHealthTextFieldByName("PREMIUM", healthLeadData.healthData.premium)
     healthLeadPage.getHealthTextFieldByName("DETAILS", "Test Details")
@@ -93,7 +93,7 @@ describe('Health qoutes', () => {
     healthLeadPage.getAddMemberDropdownVisa("Male")
     healthLeadPage.getAddMemberDOB("DOB")
     healthLeadPage.getDate()
-    healthLeadPage.getMemberCategoryDropdown("Member Category")
+    healthLeadPage.getAddMemberCategoryDropdown("Member Category")
     healthLeadPage.getAddMemberDropdowns('Employee')
     healthLeadPage.getSubmitButton()
     //Delete Member 
