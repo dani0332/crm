@@ -484,7 +484,7 @@ class CRUDController extends Controller
             if($record->quote_status_id == QuoteStatusEnum::CarSold || $record->quote_status_id == QuoteStatusEnum::Uncontactable) {
                 $paymentEntityModel->load(['carLostQuoteLogs' => function($q){
                     $q->with(['advisor', 'quoteStatus', 'documents'])->orderBy('id', 'desc');
-                }, 'pendingLostQuoteLog']);
+                }, 'carLostQuoteLog']);
             }
 
 

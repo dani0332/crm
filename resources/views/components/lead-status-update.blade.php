@@ -283,7 +283,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                     </div>
                                 </div>
 
-                                <input type="hidden" name="car_lost_quote_log_id" value="{{@$paymentEntityModel->pendingLostQuoteLog->id}}">
+                                <input type="hidden" name="car_lost_quote_log_id" value="{{@$paymentEntityModel->carLostQuoteLog->id}}">
                             @endif
 
                             <div id="quote-next-followup-date" style="display: none;">

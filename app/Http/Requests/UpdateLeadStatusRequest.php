@@ -52,8 +52,8 @@ class UpdateLeadStatusRequest extends FormRequest
 
             //once quote is marked as sold/uncontactable, quote should be locked until have pending request
             if(isCarLostStatus($quote->quote_status_id) && auth()->user()->hasRole(RolesEnum::CarAdvisor) ) {
-                $quote->load('pendingLostQuoteLog');
-                if(isset($quote->pendingLostQuoteLog->id)) {
+                $quote->load('carLostQuoteLog');
+                if(isset($quote->carLostQuoteLog->id)) {
                     vAbort('Quote is locked as it has pending request to verify proof document');
                 }
             }

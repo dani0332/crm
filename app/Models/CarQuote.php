@@ -474,8 +474,8 @@ class CarQuote extends BaseModel
         return $this->hasMany(CarLostQuoteLog::class, 'car_quote_request_id');
     }
 
-    public function pendingLostQuoteLog()
+    public function carLostQuoteLog()
     {
-        return $this->hasOne(CarLostQuoteLog::class, 'car_quote_request_id')->where('status' , GenericRequestEnum::PENDING);
+        return $this->hasOne(CarLostQuoteLog::class, 'car_quote_request_id')->orderBy('id', 'desc');
     }
 }
