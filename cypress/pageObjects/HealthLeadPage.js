@@ -46,25 +46,25 @@ class HealthLeadPage {
     }
 
     getHealthDetailDropdown(dropdownName) {
-        cy.get('.font-medium.text-gray-800').contains(dropdownName).parent().within(() => {
+        cy.get('.text-gray-700.text-sm').contains(dropdownName).parent().within(() => {
             cy.get('.w-full.border.border-gray-300').should('be.visible').click()
         })
     }
 
     getNationalityDropdown(dropdownName) {
-        cy.get('.font-medium.text-gray-800').contains(dropdownName).parent().within(() => {
+        cy.get('.text-gray-700.text-sm').contains(dropdownName).parent().within(() => {
             cy.get('button[type="button"]').should('be.visible').click()
         })
     }
 
     getHealthTextFieldByName(fieldName, text) {
-        cy.get('.font-medium.text-gray-800').contains(fieldName).parent().within(() => {
+        cy.get('.text-gray-700.text-sm').contains(fieldName).parent().within(() => {
             cy.get('input[type="text"]').should('be.visible').clear().type(text)
         })
     }
 
     getMemberCategoryDropdown(dropdownName) {
-        cy.get('.font-medium.text-gray-800').contains(dropdownName).parent().within(() => {
+        cy.get('.text-gray-700.text-sm').contains(dropdownName).parent().within(() => {
             cy.get('.w-full.border.border-gray-300').should('be.visible').click()
         })
     }
@@ -104,9 +104,17 @@ class HealthLeadPage {
         })
     }
 
+    //Add Member
+
     getButtonByName(buttonName) {
         return cy.get('button[type="button"]').contains(buttonName).parent().within(() => {
             cy.get('data-v-dc323f72').should('be.visible').click()
+        })
+    }
+
+    getAddMemberCategoryDropdown() {
+        return cy.get('.font-medium.text-gray-800').contains('Member Category').parent().within(() => {
+            cy.get('.w-full.border.border-gray-300').should('be.visible').click()
         })
     }
 
