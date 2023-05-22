@@ -23,7 +23,7 @@
         for (let index = 0; index < comprehensiveDashboardStats[0].length; index++) {
             data.push({
                 name: comprehensiveDashboardStats[0][index],
-                y: parseFloat(comprehensiveDashboardStats[1][index])
+                y: Number(comprehensiveDashboardStats[1][index])
             })
         }
         comprehensiveDashboardStatChart = Highcharts.chart('comprehensiveConversion', {
@@ -122,7 +122,7 @@
                         var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
                         var numbers = [];
                         for (let index = 0; index < data.length; index++) {
-                            numbers.push(parseFloat(data[index]));
+                            numbers.push(Number(data[index]));
                         }
                         if (labels.length > 0) {
                             comprehensiveDashboardStatChart.destroy();
