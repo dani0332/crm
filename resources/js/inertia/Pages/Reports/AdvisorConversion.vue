@@ -17,6 +17,28 @@ const page = usePage();
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
 const advisorOptions = ref([]);
+const isDirty = ref(false);
+const isMounted = ref(false);
+
+const {
+  currentPageFirstIndex,
+  currentPageLastIndex,
+  clientItemsLength,
+  isFirstPage,
+  isLastPage,
+  nextPage,
+  prevPage,
+} = usePagination(dataTableRef);
+
+const {
+  rowsPerPageOptions,
+  rowsPerPageActiveOption,
+  updateRowsPerPageActiveOption,
+} = useRowsPerPage(dataTableRef);
+
+const updateRowsPerPageSelect = e => {
+  updateRowsPerPageActiveOption(Number(e.target.value));
+};
 
 const tableHeader = [
   {
@@ -196,9 +218,9 @@ const filters = reactive({
 
 function onSubmit(isValid) {
   if (isValid) {
+    isDirty.value = false;
     filters.page = 1;
     const payLoad = cleanFilters(filters);
-
     router.visit('/reports/advisor-conversion', {
       method: 'get',
       data: {
@@ -222,6 +244,8 @@ function onReset() {
     filters.advisorAssignedDates =
       page.props.defaultFilters.advisorAssignedDates;
   }
+
+  isDirty.value = false;
   router.visit('/reports/advisor-conversion', {
     method: 'get',
     data: {
@@ -324,26 +348,6 @@ const calculateTotalSum = (data, key) => {
   return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
 };
 
-const {
-  currentPageFirstIndex,
-  currentPageLastIndex,
-  clientItemsLength,
-  isFirstPage,
-  isLastPage,
-  nextPage,
-  prevPage,
-} = usePagination(dataTableRef);
-
-const {
-  rowsPerPageOptions,
-  rowsPerPageActiveOption,
-  updateRowsPerPageActiveOption,
-} = useRowsPerPage(dataTableRef);
-
-const updateRowsPerPageSelect = e => {
-  updateRowsPerPageActiveOption(Number(e.target.value));
-};
-
 const onTeamChange = e => {
   if (e.length == 0) {
     filters.teams = [];
@@ -351,6 +355,10 @@ const onTeamChange = e => {
     advisorOptions.value = [];
 
     return;
+  }
+
+  if (isMounted.value) {
+    isDirty.value = true;
   }
 
   loaders.advisorOptions = true;
@@ -386,6 +394,7 @@ onMounted(() => {
   if (params['teams[]'] && params['teams[]'].length > 0) {
     onTeamChange(params['teams[]']);
   }
+  isMounted.value = true;
 });
 
 watch(
@@ -502,11 +511,19 @@ watch(
           />
         </template>
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between gap-3 mb-4 items-center">
+        <div>
+          <p v-if="isDirty" class="text-xs text-gray-700">
+            Please click <strong>search</strong>, to show updated records based
+            on the selected filters
+          </p>
+        </div>
+        <div class="flex gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
 
