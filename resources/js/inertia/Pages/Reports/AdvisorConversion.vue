@@ -512,9 +512,9 @@ watch(
         </template>
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
-        <div>
-          <p v-if="isDirty" class="text-xs text-gray-700">
-            Please click <strong>search</strong>, to show updated records based
+        <div class="flex-1">
+          <p v-if="isDirty" class="text-xs text-gray-700 text-red-500 text-center font-bold">
+            Please click search, to show updated records based
             on the selected filters
           </p>
         </div>
