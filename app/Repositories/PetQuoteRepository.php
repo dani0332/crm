@@ -119,6 +119,7 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr) : object
     {
+        $dataArr['quoteTypeId'] = intval(QuoteTypes::PET->id());
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
     }
 }

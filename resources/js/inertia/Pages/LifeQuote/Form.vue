@@ -52,7 +52,7 @@ function onSubmit(isValid) {
       redirectUrl = `/quotes/life/${props.quote?.uuid}`;
     }
 
-     quoteForm.post(url, {
+     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
       },
