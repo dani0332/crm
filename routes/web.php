@@ -125,6 +125,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-list');
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
+
+        Route::get('quotes/car-sold', [\App\Http\Controllers\V2\CarQuoteController::class, 'getCarSoldQuotes'])->name('car-sold-list');
+        Route::get('quotes/car-uncontactable', [\App\Http\Controllers\V2\CarQuoteController::class, 'getCarSoldQuotes'])->name('car-uncontactable-list');
+
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);

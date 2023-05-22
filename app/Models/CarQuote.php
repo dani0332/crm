@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Enums\GenericRequestEnum;
+use App\Traits\FilterCriteria;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use LookUpModel;
 
 class CarQuote extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, FilterCriteria;
 
     protected $table = 'car_quote_request';
     protected $casts = [
