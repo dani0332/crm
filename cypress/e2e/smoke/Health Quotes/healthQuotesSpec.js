@@ -69,7 +69,7 @@ describe('Health qoutes', () => {
     healthLeadPage.getSearchButton()
     healthLeadPage.getOpenQuoteButton(quoteId)
     healthLeadPage.getEditButton()
-    healthLeadPage.getHealthTextFieldByName("FIRST NAME", "Muhammad Updated")
+    healthLeadPage.getHealthTextFieldByName("FIRST NAME ", "Muhammad Updated")
     healthLeadPage.getHealthTextFieldByName("LAST NAME", "Abdullah Updated")
     healthLeadPage.getHealthTextFieldByName("PREMIUM", healthLeadData.healthData.premium)
     healthLeadPage.getHealthTextFieldByName("DETAILS", "Test Details")
@@ -93,13 +93,81 @@ describe('Health qoutes', () => {
     healthLeadPage.getAddMemberDropdownVisa("Male")
     healthLeadPage.getAddMemberDOB("DOB")
     healthLeadPage.getDate()
-    healthLeadPage.getMemberCategoryDropdown("Member Category")
+    healthLeadPage.getAddMemberCategoryDropdown("Member Category")
     healthLeadPage.getAddMemberDropdowns('Employee')
     healthLeadPage.getSubmitButton()
-
     //Delete Member 
-    healthLeadPage.getDeleteButton()
-    healthLeadPage.getModalDeleteButton()
+    // healthLeadPage.getDeleteButton()
+    // healthLeadPage.getModalDeleteButton()
+
+    healthLeadPage.getViewPlansButton() //View Plans Button
+
+    //General Info Tab
+    healthLeadPage.getTabMembersAssertion('Provider Name')
+    healthLeadPage.getTabMembersAssertion('Network Provider')
+    healthLeadPage.getTabMembersAssertion('Base Premium')
+    healthLeadPage.getTabMembersAssertion('Basmah')
+    healthLeadPage.getTabMembersAssertion('Policy Fee')
+    healthLeadPage.getTabMembersAssertion('Total (exclusive of VAT)')
+
+    //Hide Plan toggle button
+    healthLeadPage.getToggleButton()
+
+    //Members Tab
+    healthLeadPage.getMemberstab()
+    healthLeadPage.getMemberAsertions('Relationship')
+    healthLeadPage.getMemberAsertions('DOB')
+    healthLeadPage.getMemberAsertions('Gender')
+    healthLeadPage.getMemberAsertions('Premium')
+
+    //In Patient Tab
+    healthLeadPage.getInPatientTab()
+    healthLeadPage.getInPatientAssertions('Pre-existing & Chronic Conditions*')
+    healthLeadPage.getInPatientAssertions('Surgery and Recovery*')
+    healthLeadPage.getInPatientAssertions('Network Provider (TPA)')
+    healthLeadPage.getInPatientAssertions('Room and board')
+
+    //Out Patient Tab
+    healthLeadPage.getOutPatientTab()
+    healthLeadPage.getInPatientAssertions('Pre-existing & Chronic Conditions*')
+    healthLeadPage.getInPatientAssertions('Medicines*')
+    healthLeadPage.getInPatientAssertions('Alternative Medicine')
+    healthLeadPage.getInPatientAssertions('Network Provider')
+    healthLeadPage.getInPatientAssertions('Consultation & Diagnostics*')
+    healthLeadPage.getInPatientAssertions('Physiotherapy*')
+    healthLeadPage.getInPatientAssertions('Routine Dental*')
+    healthLeadPage.getInPatientAssertions('Routine Optical*')
+
+    //Region coverage & Network list
+    healthLeadPage.getRegionCoverageTab()
+    healthLeadPage.getInPatientAssertions('Regions Covered')
+    healthLeadPage.getInPatientAssertions('Direct Billing Network (Outpatient)')
+    healthLeadPage.getInPatientAssertions('Direct Billing Network (Inpatient)')
+
+    //Co-pay/Co-insurance
+    healthLeadPage.getCopayCoInsuranceTab()
+    healthLeadPage.getInPatientAssertions('Outpatient Consultation*')
+    healthLeadPage.getInPatientAssertions('Outpatient Diagnostics*')
+    healthLeadPage.getInPatientAssertions('Inpatient*')
+    healthLeadPage.getInPatientAssertions('Outpatient Physiotherapy*')
+    healthLeadPage.getInPatientAssertions('Outpatient Medicine*')
+    healthLeadPage.getInPatientAssertions('Routine Dental*')
+    healthLeadPage.getInPatientAssertions('Routine Optical*')
+
+    //Maternity cover
+    healthLeadPage.getMaternityTab()
+    healthLeadPage.getInPatientAssertions('Outpatient Maternity Co-insurance')
+    healthLeadPage.getInPatientAssertions('Outpatient Maternity')
+    healthLeadPage.getInPatientAssertions('Newborn')
+    healthLeadPage.getInPatientAssertions('Delivery')
+    healthLeadPage.getInPatientAssertions('Important Note')
+
+    //getGeneralInfoTab
+    healthLeadPage.getGeneralTab()
+    healthLeadPage.getToggleButton()
+
+    //Close button
+    healthLeadPage.getCloseButton()
 
     //Add Additional Contact
     healthLeadPage.getAddAdditionalContactButton()

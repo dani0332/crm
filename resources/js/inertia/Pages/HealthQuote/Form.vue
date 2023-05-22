@@ -3,9 +3,18 @@ const props = defineProps({
   dropdownSource: Object,
   model: String,
   genderOptions: Object,
+  quote: {
+    type: Object,
+    default: {},
+  },
 });
 
-const notification = useNotifications('toast');
+const { isRequired, isEmail } = useRules();
+const isEmptyField = ref(false);
+
+const isEdit = computed(() => {
+  return route().current().includes('edit');
+});
 
 const genderSelect = computed(() => {
   return Object.keys(props.genderOptions).map(status => ({
@@ -17,62 +26,67 @@ const genderSelect = computed(() => {
 const quoteForm = useForm({
   modelType: '"Health"',
   model: props.model,
-  first_name: '',
-  last_name: '',
-  email: '',
-  mobile_no: '',
-  dob: '',
-  premium: null,
-  policy_number: null,
-  preference: '',
-  details: '',
-  marital_status_id: null,
-  cover_for_id: null,
-  nationality_id: null,
-  lead_type_id: null,
-  emirate_of_your_visa_id: null,
-  salary_band_id: null,
-  member_category_id: null,
-  gender: null,
-  currently_insured_with_id: null,
-  is_ebp_renewal: null,
-  is_ecommerce: null,
-  has_dental: null,
-  has_worldwide_cover: null,
-  has_home: null,
+  first_name: props.quote?.first_name || '',
+  last_name: props.quote?.last_name || '',
+  email: props.quote?.email || '',
+  mobile_no: props.quote?.mobile_no || '',
+  dob: props.quote?.dob
+    ? props.quote?.dob.split('-').reverse().join('-')
+    : null,
+  premium: props.quote?.premium || null,
+  policy_number: props.quote?.policy_number || null,
+  preference: props.quote?.preference || '',
+  details: props.quote?.details || '',
+  marital_status_id: props.quote?.marital_status_id || null,
+  cover_for_id: props.quote?.cover_for_id || null,
+  nationality_id: props.quote?.nationality_id || null,
+  lead_type_id: props.quote?.lead_type_id || null,
+  emirate_of_your_visa_id: props.quote?.emirate_of_your_visa_id || null,
+  salary_band_id: props.quote?.salary_band_id || null,
+  member_category_id: props.quote?.member_category_id || null,
+  gender: props.quote?.gender || null,
+  currently_insured_with_id: props.quote?.currently_insured_with_id || null,
+  policy_start_date: props.quote?.policy_start_date || null,
+  is_ebp_renewal: props.quote?.is_ebp_renewal || null,
+  is_ecommerce: props.quote?.is_ecommerce || null,
+  has_dental: props.quote?.has_dental || null,
+  has_worldwide_cover: props.quote?.has_worldwide_cover || null,
+  has_home: props.quote?.has_home || null,
 });
 
-const { isRequired, isEmail } = useRules();
-
-const isEmptyField = ref(false);
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
     isEmptyField.value = true;
   } else {
     isEmptyField.value = false;
   }
-  if (isValid) {
-    quoteForm.post(route('health.store'), {
-      onError: errors => {
-        quoteForm.setError(errors);
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Quote saved successfully',
-          position: 'top',
-        });
-        quoteForm.reset();
-      },
-    });
-  }
+
+  if (!isValid) return;
+
+  quoteForm.clearErrors();
+
+  const method = isEdit.value ? 'put' : 'post';
+  const url = isEdit.value
+    ? route('health.update', props.quote.uuid)
+    : route('health.store');
+
+  const options = {
+    onError: errors => {
+      quoteForm.setError(errors);
+    },
+  };
+
+  quoteForm.submit(method, url, options);
 }
 </script>
 
 <template>
   <div>
-    <Head title="Create Health" />
+    <Head :title="isEdit ? 'Edit Health' : 'Create Health'" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Create Health</h2>
+      <h2 class="text-xl font-semibold">
+        {{ isEdit ? 'Edit' : 'Create' }} Health
+      </h2>
       <div>
         <Link :href="route('health.index')">
           <x-button size="sm" color="#1d83bc" tag="div"> Health List </x-button>
@@ -82,6 +96,17 @@ function onSubmit(isValid) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
+        <x-alert
+          v-if="quoteForm.errors.length > 0"
+          color="error"
+          class="sm:col-span-2"
+        >
+          <ul class="list-disc list-inside">
+            <li v-for="error in quoteForm.errors" :key="error">
+              {{ error }}
+            </li>
+          </ul>
+        </x-alert>
         <x-field label="FIRST NAME" required>
           <x-input
             v-model="quoteForm.first_name"
@@ -196,7 +221,7 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="CURRENTLY INSURED WITH">
+        <x-field v-if="!isEdit" label="CURRENTLY INSURED WITH">
           <x-select
             v-model="quoteForm.currently_insured_with_id"
             :options="
@@ -209,7 +234,7 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="MARITAL STATUS">
+        <x-field v-if="!isEdit" label="MARITAL STATUS">
           <x-select
             v-model="quoteForm.marital_status_id"
             :options="
@@ -256,7 +281,7 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="POLICY START DATE">
+        <x-field v-if="!isEdit" label="POLICY START DATE">
           <x-input v-model="quoteForm.policy_start_date" class="w-full" />
         </x-field>
 
@@ -297,7 +322,7 @@ function onSubmit(isValid) {
           type="submit"
           :loading="quoteForm.processing"
         >
-          Create
+          {{ isEdit ? 'Update' : 'Create' }}
         </x-button>
       </div>
     </x-form>

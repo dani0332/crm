@@ -29,7 +29,6 @@ use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\MembersDetailController;
-use App\Http\Controllers\MyLeadsController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\ReasonController;
@@ -142,7 +141,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
-    Route::get('getOverDueFollowupLeads', [MyLeadsController::class, 'getOverDueFollowupLeads'])->name('getOverDueFollowupLeads');
 
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
@@ -280,7 +278,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         if (in_array(quoteTypeCode::Travel, newUi()) || in_array(quoteTypeCode::Life, newUi())) {
-            Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('trave.cards');
+            Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('travel.cards');
             Route::resource('travel', TravelController::class);
             Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
         } else {

@@ -258,9 +258,10 @@ $(document).ready(function () {
   $('.role-data-table').DataTable({
     ordering: false,
     info: false,
-    searching: false,
+    searching: true,
     bLengthChange: false,
     serverSide: true,
+    pageLength: 20,
     ajax: config.routes.role_datatable_route,
     columns: [
       {
@@ -1669,13 +1670,12 @@ $(document).ready(function () {
     }
   });
 
-  $('#healthPlansAll').on('click', function()
-  {
-    if($(this).is(":checked")) {
-      $('.health-plans-checkbox').prop('checked',this.checked);
+  $('#healthPlansAll').on('click', function () {
+    if ($(this).is(':checked')) {
+      $('.health-plans-checkbox').prop('checked', this.checked);
     } else {
       $('.health-plans-checkbox').removeAttr('checked');
-    } 
+    }
   });
 
   // TM Leads: Select tm leads id and store in hidden field
@@ -2448,7 +2448,6 @@ $(document).ready(function () {
 });
 
 $('#btn_download_plan_pdf_health').on('click', function () {
-  
   if ($("input[name='health_plans_checkbox']:checked").length < 3) {
     alert('Please select at least three (3) plans.');
     return false;
@@ -2468,7 +2467,6 @@ $('#btn_download_plan_pdf_health').on('click', function () {
   $('#plan_ids').val(plan_ids);
   $('#form_plans_pdf').submit();
 });
-
 
 $('#renewals-upload-button').click(function () {
   $('#renewals-upload-button').hide();
@@ -2845,47 +2843,47 @@ $('#send-one-click-buy-email-btn').on('click', function () {
 // Button: Send One click buy email - End
 
 var teamsDataTable = $('.teams-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: {
-      url: config.routes.teams_datatable_route,
-      data: function (d) {
-        d.name = $('#name').val();
+  ordering: false,
+  info: false,
+  searching: false,
+  bLengthChange: false,
+  serverSide: true,
+  ajax: {
+    url: config.routes.teams_datatable_route,
+    data: function (d) {
+      d.name = $('#name').val();
+    },
+  },
+  columns: [
+    {
+      data: 'id',
+      name: 'id',
+      render: function (data, type, row) {
+        return (
+          "<a href='" +
+          config.routes.teams_datatable_route +
+          '/' +
+          row.id +
+          "'>" +
+          row.id +
+          '</a>'
+        );
       },
     },
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.teams_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'name', name: 'name' },
-      { data: 'type', name: 'type' },
-      { data: 'parent.name', name: 'parent.name' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-      { data: 'is_active', name: 'is_active' },
-    ],
-  });
+    { data: 'name', name: 'name' },
+    { data: 'type', name: 'type' },
+    { data: 'parent.name', name: 'parent.name' },
+    { data: 'created_at', name: 'created_at' },
+    { data: 'updated_at', name: 'updated_at' },
+    { data: 'is_active', name: 'is_active' },
+  ],
+});
 
-  $('#search-teams').submit(function (e) {
-    e.preventDefault();
-    $('.loader').show();
-    teamsDataTable.draw();
-    setTimeout(() => {
-      $('.loader').hide();
-    }, 1000);
-  });
+$('#search-teams').submit(function (e) {
+  e.preventDefault();
+  $('.loader').show();
+  teamsDataTable.draw();
+  setTimeout(() => {
+    $('.loader').hide();
+  }, 1000);
+});
