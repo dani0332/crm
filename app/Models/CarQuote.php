@@ -476,6 +476,6 @@ class CarQuote extends BaseModel
 
     public function carLostQuoteLog()
     {
-        return $this->hasOne(CarLostQuoteLog::class, 'car_quote_request_id')->orderBy('id', 'desc');
+        return $this->hasOne(CarLostQuoteLog::class, 'car_quote_request_id')->latestOfMany();
     }
 }

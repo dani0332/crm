@@ -27958,9 +27958,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "class": "w-full",
         placeholder: "Search by Renewal Batch"
       }, null, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_select, {
-        modelValue: $setup.filters.is_ecommerce,
+        modelValue: $setup.filters.approval_status,
         "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
-          return $setup.filters.is_ecommerce = $event;
+          return $setup.filters.approval_status = $event;
         }),
         label: "Approval Status",
         placeholder: "Search by approval status",

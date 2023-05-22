@@ -119,7 +119,7 @@ const quotesSelected = ref([]),
                 />
 
                 <x-select
-                    v-model="filters.is_ecommerce"
+                    v-model="filters.approval_status"
                     label="Approval Status"
                     placeholder="Search by approval status"
                     :options="[
@@ -140,7 +140,7 @@ const quotesSelected = ref([]),
             </div>
         </x-form>
 
-        
+
 
         <DataTable
             v-model:items-selected="quotesSelected"
