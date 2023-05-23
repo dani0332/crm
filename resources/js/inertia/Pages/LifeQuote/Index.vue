@@ -26,7 +26,7 @@ const rules = {
   },
 };
 
-const role = [rolesEnum.Admin, rolesEnum.LeadPool];
+const role = [rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.LifeManager];
 const roleLeadPool = [rolesEnum.LeadPool];
 const hasAnyRole = role => useHasAnyRole(role);
 
