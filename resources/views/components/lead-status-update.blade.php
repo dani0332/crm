@@ -159,38 +159,33 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
 
                     if($modeltype == quoteTypeCode::Car)
                     {
-                        //condition to make roles other than (MO and CarAdvisor) compatible
-                        if(auth()->user()->hasAnyRole([RolesEnum::MarketingOperations, RolesEnum::CarAdvisor]))
+                        if(isCarLostStatus($lead->quote_status_id))
                         {
+                            $carLostChangeStatus = false;
+                            $allowQuoteLogAction = false;
+
                             if(auth()->user()->hasRole(RolesEnum::MarketingOperations))
                             {
-                                $carLostQuoteLog = $paymentEntityModel->carLostQuoteLogs->first();
-
-                                $allowQuoteLogAction = false;
                                 $carLostChangeStatus = false;
-
-                                if($carLostQuoteLog->status == GenericRequestEnum::PENDING) {
+                                if(isCarLostStatus($lead->quote_status_id) && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::PENDING)
+                                {
                                     $allowQuoteLogAction = true;
                                     $statuses = $statuses->whereIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
                                 }
                             }
 
-                            if(auth()->user()->hasRole(RolesEnum::CarAdvisor) && isCarLostStatus($lead->quote_status_id))
+                            if(auth()->user()->hasRole(RolesEnum::CarAdvisor) )
                             {
                                 $allowQuoteLogAction = false;
-                                $carLostChangeStatus = false;
 
-                                $carLostQuoteLog = $paymentEntityModel->carLostQuoteLogs->first();
-                                if($carLostQuoteLog->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2)
+                                if(isCarLostStatus($lead->quote_status_id) && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2)
                                 {
-                                    $allowQuoteLogAction = false;
                                     $carLostChangeStatus = true;
                                     $statuses = $statuses = $statuses->whereIn('id', [$lead->quote_status_id])->all();
                                 }
                             }
-                        }
+                       }
                     }
-
 
                 @endphp
                 <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/update-lead-status" id="lead-status-form" enctype="multipart/form-data">
@@ -236,21 +231,22 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                             @if(!$allowQuoteLogAction)
                                                 <option @if(@$carLostQuoteLog->status == GenericRequestEnum::PENDING) selected @endif value="{{ GenericRequestEnum::PENDING }}">{{ GenericRequestEnum::PENDING }}</option>
                                             @endif
-                                            <option @if(@$carLostQuoteLog->status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
-                                            <option @if(@$carLostQuoteLog->status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
+                                            <option @if(@$paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
+                                            <option @if(@$paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
 
                                         </select>
                                     </div>
                                 </div>
+
 
                                 <div class="col-sm-12 mb-3 div-reject-reasons" style="display: none;">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Rejection Reasons</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
                                         <select
                                             @if(!$allowQuoteLogAction) disabled @endif
-                                            class="form-control" name="approve_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
+                                            class="form-control" name="reject_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
                                             @foreach($lostRejectReasons as $lostRejectReason)
-                                                <option value="{{$lostRejectReason->id}}" @if(@$carLostQuoteLog->reason_id == $lostRejectReason->id) selected @endif >{{$lostRejectReason->text}}</option>
+                                                <option value="{{$lostRejectReason->id}}" @if(@$paymentEntityModel->carLostQuoteLog->reason_id == $lostRejectReason->id) selected @endif >{{$lostRejectReason->text}}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -261,9 +257,9 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                     <div class="col-md-6 col-sm-6">
                                         <select
                                             @if(!$allowQuoteLogAction) disabled @endif
-                                            class="form-control" name="reject_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
+                                            class="form-control" name="approve_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
                                             @foreach($lostApproveReasons as $lostApproveReason)
-                                                <option value="{{$lostApproveReason->id}}" @if(@$carLostQuoteLog->reason_id == $lostRejectReason->id) selected @endif>{{$lostApproveReason->text}}</option>
+                                                <option value="{{$lostApproveReason->id}}" @if(@$paymentEntityModel->carLostQuoteLog->reason_id == $lostApproveReason->id) selected @endif>{{$lostApproveReason->text}}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -272,7 +268,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                 <div class="col-sm-12 mb-3">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Notes</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <input @if(!$allowQuoteLogAction) disabled @endif value="{{@$carLostQuoteLog->notes}}" type="text" id="lost_notes" name="lost_notes"  class="form-control">
+                                        <input maxlength="100" value="{{$paymentEntityModel->carLostQuoteLog->notes }}" @if(!$allowQuoteLogAction) disabled @endif value="{{@$carLostQuoteLog->notes}}" type="text" id="lost_notes" name="lost_notes"  class="form-control">
                                     </div>
                                 </div>
 

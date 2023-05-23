@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
+use App\Enums\LeadSourceEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -480,12 +481,15 @@ class CRUDController extends Controller
             $lostRejectReasons = LookupRepository::where('key', LookupsEnum::CAR_LOST_REJECT_REASONS)->get();
             $lostApproveReasons = LookupRepository::where('key', LookupsEnum::CAR_LOST_APPROVE_REASONS)->get();
 
-            if($record->quote_status_id == QuoteStatusEnum::CarSold || $record->quote_status_id == QuoteStatusEnum::Uncontactable) {
+            if(isCarLostStatus($record->quote_status_id)) {
                 $paymentEntityModel->load(['carLostQuoteLogs' => function($q){
                     $q->with(['advisor', 'quoteStatus', 'documents'])->orderBy('id', 'desc');
                 }, 'carLostQuoteLog']);
             }
 
+            if($record->source != LeadSourceEnum::RENEWAL_UPLOAD || auth()->user()->hasRole(RolesEnum::CarManager)) {
+                $leadStatuses = $leadStatuses->whereNotIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
+            }
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',

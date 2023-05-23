@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
@@ -35,7 +36,10 @@ class UpdateLeadStatusRequest extends FormRequest
             'modelType' => 'required',
             'quote_uuid' => 'required',
             'leadStatus' => 'required',
-            'notes' => 'nullable'
+            'notes' => 'nullable',
+            'lost_notes' => 'nullable|max:100',
+            'approve_reason_id' => 'nullable',
+            'reject_reason_id' => 'nullable'
         ];
 
         /**
@@ -53,7 +57,7 @@ class UpdateLeadStatusRequest extends FormRequest
             //once quote is marked as sold/uncontactable, quote should be locked until have pending request
             if(isCarLostStatus($quote->quote_status_id) && auth()->user()->hasRole(RolesEnum::CarAdvisor) ) {
                 $quote->load('carLostQuoteLog');
-                if(isset($quote->carLostQuoteLog->id)) {
+                if(isset($quote->carLostQuoteLog->id) && $quote->carLostQuoteLog->status == GenericRequestEnum::PENDING) {
                     vAbort('Quote is locked as it has pending request to verify proof document');
                 }
             }
