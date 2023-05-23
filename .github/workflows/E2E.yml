@@ -17,27 +17,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Extract pull request number
-        id: extract_pr_number
-        run: echo "::set-output name=pr_number::$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")"
+      # - name: Extract pull request number
+      #   id: extract_pr_number
+      #   run: echo "::set-output name=pr_number::$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")"
 
-      - name: Change String Case
-        id: string
-        uses: ASzc/change-string-case-action@v2
-        with:
-          string: ${{ github.event.deployment_status.environment }}
+      # - name: Change String Case
+      #   id: string
+      #   uses: ASzc/change-string-case-action@v2
+      #   with:
+      #     string: ${{ github.event.deployment_status.environment }}
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16 # specify desired Node.js version
-          registry-url: https://registry.npmjs.org/
+      # # - name: Set up Node.js
+      # #   uses: actions/setup-node@v3
+      # #   with:
+      # #     node-version: 16 # specify desired Node.js version
+      # #     registry-url: https://registry.npmjs.org/
 
-      - name: Update npm
-        run: npm install -g npm
+      # # # - name: Update npm
+      # # #   run: npm install -g npm
 
-      - name: Clear npm cache
-        run: npm cache clean --force
+      # # # - name: Clear npm cache
+      # # #   run: npm cache clean --force
 
       - name: Cypress run
         uses: cypress-io/github-action@v5
