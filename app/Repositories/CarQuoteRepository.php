@@ -12,14 +12,17 @@ class CarQuoteRepository extends BaseRepository
         return CarQuote::class;
     }
 
+    /**
+     * @param $quoteStatusId (CarLost/Uncontactable)
+     * @return mixed
+     */
     public function fetchGetLostQuotes($quoteStatusId)
     {
-        $query =  $this->where('quote_status_id', $quoteStatusId)
+        $query =  $this->where('quote_status_id', $quoteStatusId)->with('carLostQuoteLog')
             ->filter();
 
         if(!empty(request()->approval_status)) {
-            $query->with('carLostQuoteLog')
-            ->whereHas('carLostQuoteLog' , function($q) {
+            $query->whereHas('carLostQuoteLog' , function($q) {
                 $q->where('status', request()->approval_status);
             });
         }
