@@ -9027,7 +9027,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       value: 'advisor'
     }, {
       text: 'Approval Status STATUS',
-      value: 'car_lost_quote_log'
+      value: 'approval_status'
     }, {
       text: 'Notes',
       value: 'notes'
@@ -28175,7 +28175,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(advisor === null || advisor === void 0 ? void 0 : advisor.email), 1 /* TEXT */)];
     }),
 
-    "item-car_lost_quote_log": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref3) {
+    "item-approval_status": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref3) {
       var car_lost_quote_log = _ref3.car_lost_quote_log;
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(car_lost_quote_log === null || car_lost_quote_log === void 0 ? void 0 : car_lost_quote_log.status), 1 /* TEXT */)];
     }),
@@ -28330,9 +28330,13 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
 
     "item-approval_status": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref3) {
-      var _quote$carQuoteLostLo;
-      var quote = _ref3.quote;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(quote === null || quote === void 0 ? void 0 : (_quote$carQuoteLostLo = quote.carQuoteLostLog) === null || _quote$carQuoteLostLo === void 0 ? void 0 : _quote$carQuoteLostLo.status), 1 /* TEXT */)];
+      var car_lost_quote_log = _ref3.car_lost_quote_log;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(car_lost_quote_log === null || car_lost_quote_log === void 0 ? void 0 : car_lost_quote_log.status), 1 /* TEXT */)];
+    }),
+
+    "item-notes": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref4) {
+      var car_lost_quote_log = _ref4.car_lost_quote_log;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(car_lost_quote_log === null || car_lost_quote_log === void 0 ? void 0 : car_lost_quote_log.notes), 1 /* TEXT */)];
     }),
 
     _: 1 /* STABLE */

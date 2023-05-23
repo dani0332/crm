@@ -74,7 +74,7 @@ const tableHeader = [
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
     { text: 'ADVISOR', value: 'advisor' },
-    { text: 'Approval Status STATUS', value: 'car_lost_quote_log' },
+    { text: 'Approval Status STATUS', value: 'approval_status' },
     { text: 'Notes', value: 'notes' },
 ];
 
@@ -160,7 +160,7 @@ const quotesSelected = ref([]),
                 {{ advisor?.email }}
             </template>
 
-            <template #item-car_lost_quote_log="{ car_lost_quote_log }">
+            <template #item-approval_status="{ car_lost_quote_log }">
                 {{ car_lost_quote_log?.status }}
             </template>
 

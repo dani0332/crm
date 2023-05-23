@@ -21,6 +21,7 @@ class CarQuoteRepository extends BaseRepository
         $query =  $this->where('quote_status_id', $quoteStatusId)->with(['carLostQuoteLog', 'advisor'])
             ->filter();
 
+        //filter by approval status
         if(!empty(request()->approval_status)) {
             $query->whereHas('carLostQuoteLog' , function($q) {
                 $q->where('status', request()->approval_status);

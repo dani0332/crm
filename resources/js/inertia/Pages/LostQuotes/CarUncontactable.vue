@@ -161,8 +161,12 @@ const quotesSelected = ref([]),
                 {{ advisor?.email }}
             </template>
 
-            <template #item-approval_status="{ quote }">
-                {{ quote?.carQuoteLostLog?.status }}
+            <template #item-approval_status="{ car_lost_quote_log }">
+                {{ car_lost_quote_log?.status }}
+            </template>
+
+            <template #item-notes="{ car_lost_quote_log }">
+                {{ car_lost_quote_log?.notes }}
             </template>
 
 
