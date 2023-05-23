@@ -147,11 +147,10 @@ class CarRevivalQuoteRepository extends BaseRepository
 
     public function fetchGetReportsData()
     {
-        $groups = $this->where('source', '=', LeadSourceEnum::REVIVAL)->whereNotNull(['quote_batch_id', 'payment_status_id'])->get();
-
+        $groups = $this->where('source', '=', LeadSourceEnum::REVIVAL)->whereNotNull(['quote_batch_id', 'payment_status_id'])->with(['dtt_revival'])->get();
         $groups = $groups->groupBy('quote_batch_id');
 
-        return $groups->map(function ($group) {
+        $data['leadConversionReport'] = $groups->map(function ($group) {
             $capture = $group->where('payment_status_id', '=', PaymentStatusEnum::CAPTURED)->where('quote_status_id', '=', QuoteStatusEnum::TransactionApproved)->count();
             $authorized = $group->where('payment_status_id', '=', PaymentStatusEnum::AUTHORISED)->where('quote_status_id', '=', QuoteStatusEnum::PaymentPending)->count();
 
@@ -163,5 +162,25 @@ class CarRevivalQuoteRepository extends BaseRepository
             ];
         })->values()
             ->all();
+        foreach ($groups as $key => $value) {
+            $revivalData = [];
+            $revivalData['quote_batch_id'] = $key;
+            $eamil_sent_count = $reply_received_count = 0;
+            foreach ($value as $group) {
+                if (! empty($group['dtt_revival']) && $group['dtt_revival']['email_sent'] == 1) {
+                    $eamil_sent_count++;
+                }
+
+                if (! empty($group['dtt_revival']) && $group['dtt_revival']['reply_received'] == 1) {
+                    $reply_received_count++;
+                }
+            }
+            $revivalData['eamil_sent_count'] = $eamil_sent_count;
+            $revivalData['reply_received_count'] = $reply_received_count;
+            $revivalData['ratio'] = $eamil_sent_count > 0 ? round(($reply_received_count / $eamil_sent_count) * 100, 2).'%' : null;
+            $data['emailConversionReport'][] = $revivalData;
+        }
+
+        return $data;
     }
 }

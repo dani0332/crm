@@ -4,10 +4,13 @@ namespace App\Jobs;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Facades\Ken;
 use App\Models\CarMake;
 use App\Models\CarQuote;
+use App\Models\DttRevival;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -20,6 +23,7 @@ use Throwable;
 class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 {
     use Stackable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use GenericQueriesAllLobs;
 
     public $tries = 3;
     public $timeout = 60;
@@ -88,6 +92,17 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 dispatch(new SendOCBEmailJob($capiResponse->quoteUID));
 
                 info('CarRevivalLeadsCreationJob - UUID - '.$capiResponse->quoteUID.' - OCB Email Sent');
+
+                $quote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
+
+                DttRevival::insert([
+                    'quote_type_id' => QuoteTypes::CAR->id(),
+                    'quote_id' => $quote->id,
+                    'uuid' =>$capiResponse->quoteUID,
+                    'email_sent' => true,
+                ]);
+
+                info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -'.$capiResponse->quoteUID);
 
                 CarQuote::find($this->lead->id)->update(['is_revived' => true]);
             }

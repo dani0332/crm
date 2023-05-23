@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum QuoteTypes: string
 {
+    case CAR = 'Car';
     case LIFE = 'Life';
     case BIKE = 'Bike';
     case CYCLE = 'Cycle';
@@ -20,6 +21,7 @@ enum QuoteTypes: string
     public static function getId(self $value): int
     {
         return match ($value) {
+            QuoteTypes::CAR => 1,
             QuoteTypes::LIFE => 4,
             QuoteTypes::BIKE => 6,
             QuoteTypes::CYCLE => 10,

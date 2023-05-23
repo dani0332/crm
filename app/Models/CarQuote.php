@@ -17,7 +17,6 @@ class CarQuote extends BaseModel
         'dob' => 'datetime',
     ];
     protected $guarded = [];
-
     public $filterables = [
         'code' => FilterTypes::EXACT,
         'first_name' => FilterTypes::EXACT,
@@ -34,7 +33,7 @@ class CarQuote extends BaseModel
         'renewal_batch' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'policy_number' => FilterTypes::NULL_CHECK,
-        'advisor_id' => FilterTypes::IN
+        'advisor_id' => FilterTypes::IN,
     ];
 
     public function fullName()
@@ -256,6 +255,11 @@ class CarQuote extends BaseModel
     public function quoteViewCount()
     {
         return $this->hasMany(QuoteViewCount::class, 'id', 'quote_id');
+    }
+
+    public function dtt_revival()
+    {
+        return $this->hasOne(DttRevival::class, 'quote_id');
     }
 
     public function scopeRelationWhere($query, $isGetList, $filters)

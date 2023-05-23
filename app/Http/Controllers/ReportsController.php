@@ -67,7 +67,8 @@ class ReportsController extends Controller
         $reportData = CarRevivalQuoteRepository::getReportsData();
 
         return inertia('Reports/RevivalConversion', [
-            'reportData' => $reportData,
+            'leadConversionReport' => $reportData['leadConversionReport'],
+            'emailConversionReport' => $reportData['emailConversionReport'],
         ]);
     }
 }
