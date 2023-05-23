@@ -91,9 +91,9 @@ class DashboardController extends Controller
             'teams' => $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id),
         ];
         $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])
-        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-        ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-        ->get();
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->get();
 
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
 
@@ -146,13 +146,12 @@ class DashboardController extends Controller
             ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->where('car_quote_request.source', '!=' , LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
 
         if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
             $records->whereIn('tiers.id', $request->tier_filter);
-        }
-        else{
+        } else {
             $records->whereIn('tiers.id', $tiers);
         }
 
@@ -241,12 +240,12 @@ class DashboardController extends Controller
             ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->where('car_quote_request.source', '!=' , LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
 
         if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
             $records->whereIn('tiers.id', $request->tier_filter);
-        }else{
+        } else {
             $records->whereIn('tiers.id', $compTiers);
         }
 
