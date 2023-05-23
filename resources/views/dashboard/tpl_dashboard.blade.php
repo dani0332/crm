@@ -23,7 +23,7 @@
         for (let index = 0; index < tplDashboardStats[0].length; index++) {
             data.push({
                 name: tplDashboardStats[0][index],
-                y: parseFloat(tplDashboardStats[1][index])
+                y: Number(tplDashboardStats[1][index])
             })
         }
         tplDashboardStatsBarChart = Highcharts.chart('tplConversionDiv', {
@@ -94,7 +94,7 @@
                         var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
                         var numbers = [];
                         for (let index = 0; index < data.length; index++) {
-                            numbers.push(parseFloat(data[index]));
+                            numbers.push(Number(data[index]));
                         }
                         if (labels.length > 0) {
                             tplDashboardStatsBarChart.destroy();
