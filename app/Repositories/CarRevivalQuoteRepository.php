@@ -147,8 +147,9 @@ class CarRevivalQuoteRepository extends BaseRepository
 
     public function fetchGetReportsData()
     {
-        $groups = $this->where('source', '=', LeadSourceEnum::REVIVAL)->whereNotNull(['quote_batch_id', 'payment_status_id'])->with(['dtt_revival'])->get();
-        $groups = $groups->groupBy('quote_batch_id');
+        $groups = $this->where('source', '=', LeadSourceEnum::REVIVAL)->whereNotNull(['quote_batch_id', 'payment_status_id'])->with(['dtt_revival'])->filter()->simplePaginate();
+
+        $groups->setCollection($groups->groupBy('quote_batch_id'));
 
         $data['leadConversionReport'] = $groups->map(function ($group) {
             $capture = $group->where('payment_status_id', '=', PaymentStatusEnum::CAPTURED)->where('quote_status_id', '=', QuoteStatusEnum::TransactionApproved)->count();
@@ -181,6 +182,6 @@ class CarRevivalQuoteRepository extends BaseRepository
             $data['emailConversionReport'][] = $revivalData;
         }
 
-        return $data;
+        return  $groups->setCollection(collect($data));
     }
 }

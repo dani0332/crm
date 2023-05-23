@@ -34,6 +34,7 @@ class CarQuote extends BaseModel
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'policy_number' => FilterTypes::NULL_CHECK,
         'advisor_id' => FilterTypes::IN,
+        'created_at' => FilterTypes::DATE,
     ];
 
     public function fullName()
