@@ -453,7 +453,7 @@
                 align: 'center'
             },
             tooltip: {
-                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
             },
             accessibility: {
                 point: {
@@ -493,7 +493,7 @@
                 align: 'center'
             },
             tooltip: {
-                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
             },
             accessibility: {
                 point: {
@@ -532,7 +532,7 @@
                 align: 'center'
             },
             tooltip: {
-                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
             },
             accessibility: {
                 point: {
@@ -571,7 +571,7 @@
                 align: 'center'
             },
             tooltip: {
-                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
             },
             accessibility: {
                 point: {
@@ -623,7 +623,7 @@
                     borderWidth: 0,
                     dataLabels: {
                         enabled: true,
-                        format: '{point.y:.1f}'
+                        format: '{point.y:.2f}'
                     }
                 }
             },
