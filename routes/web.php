@@ -221,7 +221,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'quotes'], function () {
-        Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');

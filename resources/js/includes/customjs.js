@@ -569,38 +569,6 @@ $(document).ready(function () {
     ],
   });
 
-  $('.healthquote-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: config.routes.healthquote_datatable_route,
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.healthquote_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'preference', name: 'preference' },
-      { data: 'is_synced', name: 'is_synced' },
-      { data: 'device', name: 'device' },
-      { data: 'code', name: 'code' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-    ],
-  });
-
   var claimsDatatable = $('.claim-data-table').DataTable({
     ordering: false,
     info: false,
@@ -907,20 +875,6 @@ $(document).ready(function () {
     var providerCode = $(this).attr('data-providerCode');
     var websiteURL = $(this).attr('data-websiteURL');
     var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-    navigator.clipboard.writeText(paymentLink);
-    var self = this;
-    $(this).text('Copied !');
-    setTimeout(function () {
-      $(self).text('Copy');
-    }, 2000);
-  });
-
-  $('.health-plan-link-copy').on('click', function () {
-    var planId = $(this).attr('data-planId');
-    var quoteUUID = $(this).attr('data-quoteUUId');
-    var providerCode = $(this).attr('data-providerCode');
-    var websiteURL = $(this).attr('data-websiteURL');
-    var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
     navigator.clipboard.writeText(paymentLink);
     var self = this;
     $(this).text('Copied !');
@@ -1569,14 +1523,6 @@ $(document).ready(function () {
     }
   });
 
-  $('#healthPlansAll').on('click', function () {
-    if ($(this).is(':checked')) {
-      $('.health-plans-checkbox').prop('checked', this.checked);
-    } else {
-      $('.health-plans-checkbox').removeAttr('checked');
-    }
-  });
-
   // TM Leads: Select tm leads id and store in hidden field
   $('#checkAllTmLeads').click(function () {
     $('input:checkbox').not(this).prop('checked', this.checked);
@@ -1811,10 +1757,6 @@ $(document).ready(function () {
   });
   $('#add-activity-btn').on('click', function () {
     $('#activityModal').modal({ show: true });
-  });
-  $('#add-edit-health-members-btn').on('click', function () {
-    $('#ebp_gender,#ebp_dob,#ebp_category,#ebp_salary').val('');
-    $('#addHealthMemberModal').modal({ show: true });
   });
   $('#add-edit-travel-members-btn').on('click', function () {
     $('#addTravelMemberModal').modal({ show: true });
@@ -2310,20 +2252,6 @@ $(document).ready(function () {
     }, 2000);
   });
 
-  $('.health-plan-link-copy').on('click', function () {
-    var planId = $(this).attr('data-planId');
-    var quoteUUID = $(this).attr('data-quoteUUId');
-    var providerCode = $(this).attr('data-providerCode');
-    var websiteURL = $(this).attr('data-websiteURL');
-    var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-    navigator.clipboard.writeText(paymentLink);
-    var self = this;
-    $(this).text('Copied !');
-    setTimeout(function () {
-      $(self).text('Copy');
-    }, 2000);
-  });
-
   $('#btn_download_plan_pdf').on('click', function () {
     if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
       alert('Please select at least three (3) plans to download pdf.');
@@ -2344,27 +2272,6 @@ $(document).ready(function () {
     $('#plan_ids').val(plan_ids);
     $('#form_plans_pdf').submit();
   });
-});
-
-$('#btn_download_plan_pdf_health').on('click', function () {
-  if ($("input[name='health_plans_checkbox']:checked").length < 3) {
-    alert('Please select at least three (3) plans.');
-    return false;
-  }
-
-  if ($("input[name='health_plans_checkbox']:checked").length > 5) {
-    alert('A maximum of five (5) plans are allowed to be selected.');
-    return false;
-  }
-
-  var plan_ids = [];
-
-  $.each($("input[name='health_plans_checkbox']:checked"), function () {
-    plan_ids.push($(this).val());
-  });
-
-  $('#plan_ids').val(plan_ids);
-  $('#form_plans_pdf').submit();
 });
 
 $('#renewals-upload-button').click(function () {
@@ -2512,34 +2419,6 @@ function isNumberKey(evt, obj) {
   if (charCode == 46) return true;
   if (charCode > 31 && (charCode < 48 || charCode > 57)) return false;
   return true;
-}
-
-function editMemberDetail(member) {
-  $.ajax({
-    url: '/members/' + member + '/edit',
-    method: 'GET',
-    success: function (data) {
-      $('#member_model_content_form').html(data);
-      $('#addHealthMemberModal').modal({ show: true });
-    },
-  });
-}
-
-function deleteMemberDetail(member) {
-  if (confirm('Are you sure you want to delete this member?')) {
-    $.ajax({
-      url: '/members/' + member,
-      method: 'delete',
-      data: {
-        _token: $('input[name=_token]').val(),
-      },
-      success: function (data) {
-        location.reload();
-      },
-    });
-  } else {
-    return false;
-  }
 }
 
 function editTravelMemberDetail(member) {

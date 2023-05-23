@@ -158,7 +158,6 @@
             routes: {
                 user_datatable_route: "{{ route('users.index') }}",
                 role_datatable_route: "{{ route('roles.index') }}",
-                healthquote_datatable_route: "{{ route('healthquotes.index') }}",
                 claim_datatable_route: "{{ route('claims.index') }}",
                 typeofinsurance_datatable_route: "{{ route('typeofinsurance.index') }}",
                 vehicledepreciation_datatable_route: "{{ route('vehicledepreciation.index') }}",
