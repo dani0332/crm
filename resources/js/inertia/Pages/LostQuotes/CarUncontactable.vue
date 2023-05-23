@@ -30,7 +30,7 @@ function onSubmit(isValid) {
                 delete filters[key],
         );
 
-        router.visit('/quotes/car-sold', {
+        router.visit('/quotes/car-uncontactable', {
             method: 'get',
             data: filters,
             preserveState: true,
@@ -44,7 +44,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-    router.visit('/quotes/car-sold', {
+    router.visit('/quotes/car-uncontactable', {
         method: 'get',
         data: { page: 1 },
         preserveScroll: true,
@@ -74,7 +74,7 @@ const tableHeader = [
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
     { text: 'ADVISOR', value: 'advisor' },
-    { text: 'Approval Status STATUS', value: 'car_lost_quote_log' },
+    { text: 'Approval Status STATUS', value: 'approval_status' },
     { text: 'Notes', value: 'notes' },
 ];
 
@@ -89,10 +89,10 @@ const quotesSelected = ref([]),
 
 <template>
     <div>
-        <Head title="Car Sold Quotes" />
+        <Head title="Car Uncontactable Quotes" />
 
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Car Sold Quotes List</h2>
+            <h2 class="text-xl font-semibold">Car Uncontactable Quotes List</h2>
         </div>
         <x-divider class="my-4" />
 
@@ -130,6 +130,7 @@ const quotesSelected = ref([]),
                     class="w-full"
                 />
 
+
             </div>
             <div class="flex justify-end gap-3 mb-4">
                 <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
@@ -160,13 +161,11 @@ const quotesSelected = ref([]),
                 {{ advisor?.email }}
             </template>
 
-            <template #item-car_lost_quote_log="{ car_lost_quote_log }">
-                {{ car_lost_quote_log?.status }}
+            <template #item-approval_status="{ quote }">
+                {{ quote?.carQuoteLostLog?.status }}
             </template>
 
-            <template #item-notes="{ car_lost_quote_log }">
-                {{ car_lost_quote_log?.notes }}
-            </template>
+
 
         </DataTable>
 

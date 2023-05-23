@@ -18,7 +18,7 @@ class CarQuoteRepository extends BaseRepository
      */
     public function fetchGetLostQuotes($quoteStatusId)
     {
-        $query =  $this->where('quote_status_id', $quoteStatusId)->with('carLostQuoteLog')
+        $query =  $this->where('quote_status_id', $quoteStatusId)->with(['carLostQuoteLog', 'advisor'])
             ->filter();
 
         if(!empty(request()->approval_status)) {

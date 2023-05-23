@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\FilterTypes;
 use App\Enums\GenericRequestEnum;
 use App\Traits\FilterCriteria;
 use Auth;
@@ -12,6 +13,9 @@ class CarQuote extends BaseModel
 {
     use HasFactory, FilterCriteria;
 
+    public $filterables = [
+        'renewal_batch' => FilterTypes::EXACT,
+    ];
     protected $table = 'car_quote_request';
     protected $casts = [
         'dob' => 'datetime',

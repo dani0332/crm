@@ -6,6 +6,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
 use Spatie\Navigation\Section;
@@ -225,6 +226,18 @@ class HandleInertiaRequests extends Middleware
                 $section
                     ->add('Valuation', '/valuation/calculatevaluation', fn ($s) => $s->attributes(['icon' => 'car']))
                     ->add('Vehicle Depreciation', '/valuation/vehicledepreciation', fn ($s) => $s->attributes(['icon' => 'car']));
+            });
+        }
+
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::CarSoldList,
+            PermissionsEnum::CarUncontactableList,
+        ])) {
+
+            $nav = $nav->add('Car Sold/Uncontactable', '', function (Section $section) {
+                $section
+                    ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CarSoldList),'Car Sold', '/quotes/car-sold', fn ($s) => $s->attributes(['icon' => 'car']))
+                    ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CarUncontactableList),'Car Uncontactable', '/quotes/car-uncontactable', fn ($s) => $s->attributes(['icon' => 'car']));
             });
         }
 
