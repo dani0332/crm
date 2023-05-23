@@ -110,7 +110,7 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.roles[0].name
-      ? advisor.name + '-' + advisor.roles[0]?.name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
       : advisor.name,
   }));
 });
