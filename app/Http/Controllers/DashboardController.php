@@ -48,7 +48,9 @@ class DashboardController extends Controller
         $endDate = now()->endOfDay()->format($dateFormat);
 
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
-            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->get();
         $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
         $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
@@ -88,7 +90,10 @@ class DashboardController extends Controller
             'endDate' => $endDate,
             'teams' => $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id),
         ];
-        $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
+        $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])
+        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+        ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+        ->get();
 
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
 
@@ -124,7 +129,7 @@ class DashboardController extends Controller
 
     public function getTPLDashboardStats(Request $request): array
     {
-        $tiers = Tier::where('can_handle_tpl', 1)->get()->pluck('id');
+        $tiers = Tier::where('can_handle_tpl', 1)->where('is_active', 1)->get()->pluck('id');
         $records = QuoteBatches::query()
             ->select(
                 'quote_batches.id',
@@ -141,11 +146,14 @@ class DashboardController extends Controller
             ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('car_quote_request.source', '!=' , LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
 
         if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
             $records->whereIn('tiers.id', $request->tier_filter);
+        }
+        else{
+            $records->whereIn('tiers.id', $tiers);
         }
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
@@ -233,11 +241,13 @@ class DashboardController extends Controller
             ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
-            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('car_quote_request.source', '!=' , LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
 
         if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
             $records->whereIn('tiers.id', $request->tier_filter);
+        }else{
+            $records->whereIn('tiers.id', $compTiers);
         }
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
