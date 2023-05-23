@@ -157,8 +157,8 @@ class DashboardController extends Controller
             $records->whereIn('tiers.id', $tiers);
         }
 
-        if($tplTeam != null){
-            $records->whereIn('users.id', function ($query) use ($request, $tplTeam) {
+        if ($tplTeam != null) {
+            $records->whereIn('users.id', function ($query) use ($tplTeam) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
