@@ -7,7 +7,6 @@ use App\Enums\RolesEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\LeadSourceEnum;
 
-$cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 @endphp
 
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -410,7 +409,7 @@ $cdnBaseUrl = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                                     <td>{{$carLostQuoteLog->status}}</td>
                                     <td>
                                         @foreach($carLostQuoteLog->documents as $document)
-                                            <p><a target="_blank" href="{{$cdnBaseUrl . $document->path}}">Document</a></p>
+                                            <p><a target="_blank" href="{{ createCdnUrl($document->path) }}">Document</a></p>
                                         @endforeach
                                     </td>
                                 </tr>
