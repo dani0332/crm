@@ -17,6 +17,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Team;
 
 class DashboardController extends Controller
 {
@@ -131,7 +132,7 @@ class DashboardController extends Controller
     public function getTPLDashboardStats(Request $request): array
     {
         $tiers = Tier::where('can_handle_tpl', 1)->where('is_active', 1)->get()->pluck('id');
-        $tplTeam = Teams::where('name', 'TPL')->where('is_active', 1)->first();
+        $tplTeam = Team::where('name', 'TPL')->where('is_active', 1)->first();
         $records = QuoteBatches::query()
             ->select(
                 'quote_batches.id',
