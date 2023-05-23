@@ -241,7 +241,7 @@ function onAssignLead(isValid) {
           "
         />
         <ComboBox
-          v-model="filters.advisors"
+          v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorOptions"
