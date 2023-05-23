@@ -9,7 +9,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
-use App\Models\Teams;
+use App\Models\Team;
 use App\Models\Tier;
 use App\Services\DashboardService;
 use App\Services\TierService;
@@ -131,7 +131,7 @@ class DashboardController extends Controller
     public function getTPLDashboardStats(Request $request): array
     {
         $tiers = Tier::where('can_handle_tpl', 1)->where('is_active', 1)->get()->pluck('id');
-        $tplTeam = Teams::where('name', 'TPL')->where('is_active', 1)->first();
+        $tplTeam = Team::where('name', 'TPL')->where('is_active', 1)->first();
         $records = QuoteBatches::query()
             ->select(
                 'quote_batches.id',
