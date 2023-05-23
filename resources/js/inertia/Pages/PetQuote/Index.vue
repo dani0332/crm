@@ -110,7 +110,7 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.roles[0].name
-      ? advisor.name + '-' + advisor.roles[0]?.name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
       : advisor.name,
   }));
 });
@@ -344,6 +344,11 @@ function onAssignLead(isValid) {
       <template #item-is_neutered="{ pet_quote }">
         {{ pet_quote?.is_neutered ? 'Yes' : 'No' }}
       </template>
+
+      <template #item-breed_of_pet1="{ pet_quote }">
+        {{ pet_quote?.breed_of_pet1 }}
+     </template>
+
       <template #item-is_microchipped="{ pet_quote }">
         {{ pet_quote?.is_microchipped ? 'Yes' : 'No' }}
       </template>
