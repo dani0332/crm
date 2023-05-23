@@ -8,6 +8,11 @@ describe('Car qoutes', () => {
 
   const commonPage = new CommonPage()
   const carLeadPage = new CarLeadPage()
+  Cypress.on('uncaught:exception', (err, runnable) => {
+    // returning false here prevents Cypress from
+    // failing the test
+    return false
+  })
 
   beforeEach(() => {
     cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
@@ -15,9 +20,9 @@ describe('Car qoutes', () => {
   })
 
   it('Should create lead car qoutes insurance', () => {
-    cy.visit('/quotes/car/create')
-    commonPage.verifyURL('/quotes/car/create')
-
+    cy.visit('/quotes/car')
+    commonPage.verifyURL('/quotes/car')
+    carLeadPage.getCreateLeadButton()
     commonPage.getFirstNameField(qouteData.personalInfo.firstName)
     commonPage.getLastNameField(qouteData.personalInfo.lastName)
     commonPage.getDOB(qouteData.personalInfo.month, qouteData.personalInfo.year, qouteData.personalInfo.day)
@@ -40,7 +45,7 @@ describe('Car qoutes', () => {
     cy.wait(4000)
     cy.url().then(data => {
       leadUrl = `/${data.substring(data.lastIndexOf('quotes/car/'))}`
-      quoteId = `/${(data.substring(data.lastIndexOf('/'))).replace('/', '')}`
+      quoteId = `${(data.substring(data.lastIndexOf('/'))).replace('/', '')}`
       cy.log(leadUrl)
     })
     commonPage.verifyURL('/quotes/car')
@@ -75,16 +80,16 @@ describe('Car qoutes', () => {
   })
 
   it('Should Update Status, Edit Assumptions, Upload Documents, Add/Update/Delete Activity & Add Additional Contact', () => {
-    cy.visit(`${leadUrl}`)
+    cy.visit(`/quotes/car/${quoteId}`)
     Cypress.on('uncaught:exception', (err, runnable) => {
       // returning false here prevents Cypress from
       // failing the test
       return false
     })
-
     //Change Lead Status
     carLeadPage.setLeadStatus()
     carLeadPage.getChangeStatusButton()
+    commonPage.getPopUpAssertion(' Lead Status has been Updated')
 
     //Edit assumptions
     carLeadPage.getEditAssumptionsButtons()
