@@ -154,6 +154,8 @@ onMounted(() => {
               label: filterOptions.tiers[key],
             }))
           "
+          deselect-all
+          select-all
         />
         <ComboBox
           v-model="filters.teams"
@@ -165,6 +167,8 @@ onMounted(() => {
               label: filterOptions.teams[key],
             }))
           "
+           deselect-all
+          select-all
         />
         <ComboBox
           v-model="filters.leadSources"
