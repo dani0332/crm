@@ -310,13 +310,14 @@ function onAssignLead(isValid) {
       fixed-checkbox
     >
       <template #item-uuid="{ code, uuid }">
-        <Link
+        <a
+          target="_blank"
           v-if="can(permissionsEnum.PetQuotesShow)"
           :href="`/personal-quotes/pet/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </Link>
+        </a>
         <span v-else>{{ code }}</span>
       </template>
 
@@ -344,6 +345,11 @@ function onAssignLead(isValid) {
       <template #item-is_neutered="{ pet_quote }">
         {{ pet_quote?.is_neutered ? 'Yes' : 'No' }}
       </template>
+
+      <template #item-breed_of_pet1="{ pet_quote }">
+        {{ pet_quote?.breed_of_pet1 }}
+     </template>
+
       <template #item-is_microchipped="{ pet_quote }">
         {{ pet_quote?.is_microchipped ? 'Yes' : 'No' }}
       </template>
