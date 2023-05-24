@@ -3,11 +3,13 @@
 namespace App\Repositories;
 
 use App\Enums\LookupsEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
 use App\Models\PersonalQuote;
+use App\Models\PetQuote;
 use Config;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +19,7 @@ class PetQuoteRepository extends BaseRepository
 {
     public function model()
     {
-        return PersonalQuote::class;
+        return (in_array(quoteTypeCode::Pet, newUi())) ? PersonalQuote::class : PetQuote::class;
     }
 
     public function fetchCreate($request)
@@ -113,5 +115,12 @@ class PetQuoteRepository extends BaseRepository
             'accomodation_types' => HomeAccomodationType::all(),
             'possession_types' => HomePossessionType::all(),
         ];
+    }
+
+    public function fetchCreateDuplicate(array $dataArr): object
+    {
+        $dataArr['quoteTypeId'] = intval(QuoteTypes::PET->id());
+
+        return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
     }
 }

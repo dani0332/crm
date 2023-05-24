@@ -127,7 +127,7 @@ class TravelData {
 
     //Delete Activity button
     getDeleteAdditionalContactButton() {
-        return cy.get('.btn.btn-danger.btn-sm').should('be.visible').click()
+        return cy.get('button.btn.btn-danger.btn-sm').contains('Delete').should('be.visible').click()
     }
 
     //Load History Button
@@ -141,8 +141,33 @@ class TravelData {
     }
 
     //Edit Quote Details
-    getEditButton() {
-        return cy.get('a[href="https://crmstage.alfred.ae/quotes/travel/HFLWTV3Y/edit"]').should('be.visible').click()
+    getEditButton(id) {
+        return cy.get(`a[href="https://crmstage.alfred.ae/quotes/travel${id}/edit"]`).should('be.visible').click()
+    }
+
+    //View Plans & Tabs
+    getViewPlanButton() {
+        return cy.get('a[href="#"]').contains('View').should('be.visible').eq(0).click()
+    }
+
+    getMembersTab() {
+        return cy.get('li a[id="members-tab"]').contains('Members').should('be.visible').click()
+    }
+
+    getInclusionTab() {
+        return cy.get('li a[id="benefits-inclusion-tab"]').contains('Inclusions').should('be.visible').click()
+    }
+
+    getExclusionsTab() {
+        return cy.get('li a[id="benefits-exclusion-tab"]').contains('Exclusions').should('be.visible').click()
+    }
+
+    getCovidTab() {
+        return cy.get('li a[id="covid-tab"]').contains('COVID-19 Cover').should('be.visible').click()
+    }
+
+    getPolicyDetailTab() {
+        return cy.get('li a[id="policy-detail-tab"]').contains('Policy Detail').should('be.visible').click()
     }
 
 }

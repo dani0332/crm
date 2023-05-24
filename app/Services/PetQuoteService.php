@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\PetQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
@@ -376,131 +377,6 @@ class PetQuoteService extends BaseService
         }
     }
 
-    public function getPetOverDueFollowups()
-    {
-        $query = DB::table('pet_quote_request as pqr')
-            ->select(
-                'pqr.id',
-                'pqr.uuid',
-                'pqr.code',
-                DB::raw("CONCAT_WS(' ',pqr.first_name,pqr.last_name) AS clientName"),
-                'qs.text as leadStatus',
-                'pqr.created_at as createdAt',
-                'pqr.quote_status_id',
-                'pqrd.advisor_assigned_date as assignedDate',
-                'u.name as assignedBy',
-                'pqr.updated_at',
-                'pqr.source as leadSource',
-                'pqr.premium',
-                'pqrd.next_followup_date as nextFollowupDate',
-            )
-            ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', '=', 'pqr.id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'pqrd.advisor_assigned_by_id')
-            ->where('pqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
-            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
-            ->where('pqr.advisor_id', Auth::user()->id);
-
-        return $query;
-    }
-
-    public function getPetLeadsForAdvisor($request)
-    {
-        $query = DB::table('pet_quote_request as pqr')
-            ->select(
-                'pqr.id',
-                'pqr.uuid',
-                'pqr.code',
-                'qs.text as leadStatus',
-                'pqr.created_at as createdAt',
-                'pqr.quote_status_id',
-                'pqrd.advisor_assigned_date as assignedDate',
-                'u.name as assignedBy',
-                'pqr.updated_at as updatedAt',
-                'pqr.source as leadSource',
-                'pqr.policy_number as policy_number',
-                'pqr.email',
-                'pqr.mobile_no',
-                'pqrd.next_followup_date as nextFollowupDate',
-                'pqr.previous_quote_id',
-                'ps.text as paymentStatus',
-                'pqr.renewal_batch as renewalBatch',
-                'pqr.previous_quote_policy_number as previousPolicyNumber',
-                DB::raw('DATE_FORMAT(pqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
-                'pqr.previous_quote_policy_premium as previousPolicyPremium',
-                'pqr.first_name as firstName',
-                'pqr.last_name as lastName',
-            )
-            ->leftJoin('pet_quote_request_detail as pqrd', 'pqrd.pet_quote_request_id', '=', 'pqr.id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'pqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'pqrd.advisor_assigned_by_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'pqr.payment_status_id')
-            ->where('qs.id', '!=', 9)
-            ->where('pqr.advisor_id', Auth::user()->id);
-
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            if ($column == 3) {
-                $column = 'pqr.created_at';
-            }
-            if ($column == 4) {
-                $column = 'pqrd.advisor_assigned_date';
-            }
-            if ($column == 7) {
-                $column = 'pqrd.next_followup_date';
-            }
-            $query->orderBy($column, $direction);
-        }
-        if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
-            $query->whereBetween('pqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
-            $query->whereBetween('pqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->cdbId) && $request->cdbId != 0) {
-            $query->where('pqr.code', $request->cdbId);
-        }
-        if (isset($request->email) && $request->email != '') {
-            $query->where('pqr.email', $request->email);
-        }
-        if (isset($request->leadStatus) && $request->leadStatus != 0) {
-            $query->where('pqr.quote_status_id', $request->leadStatus);
-        }
-        if (isset($request->paymentStatus)) {
-            $query->where('pqr.payment_status_id', $request->paymentStatus);
-        }
-        if (Auth::user()->isRenewalAdvisor()) {
-            $query->whereNotNull('pqr.previous_quote_policy_number');
-        }
-        if (Auth::user()->isNewBusinessAdvisor()) {
-            $query->whereNull('pqr.previous_quote_policy_number');
-        }
-        if (isset($request->paymentStatus) && $request->paymentStatus != '') {
-            $query->where('pqr.payment_status_id', $request->paymentStatus);
-        }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $query->where('pqr.renewal_batch', $request->renewal_batch);
-        }
-        if (isset($request->previous_policy_number) && $request->previous_policy_number != '') {
-            $query->where('pqr.previous_quote_policy_number', $request->previous_policy_number);
-        }
-        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $query->where('pqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-        }
-        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $query->whereBetween('pqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-
-        return $query;
-    }
-
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('pet_quote_request as pqr')
@@ -713,10 +589,12 @@ class PetQuoteService extends BaseService
         Log::info('Leads ids to assign: '.json_encode($leadsIds));
         $result = [];
         foreach ($leadsIds as $leadId) {
-            $lead = $this->getEntityPlain($leadId);
-            $lead->advisor_id = $userId;
-            $lead->save();
-            $this->updateChildRecord($lead->id);
+            $lead = PersonalQuote::findOrfail($leadId);
+            if ($lead) {
+                $lead->advisor_id = $userId;
+                $lead->save();
+                $this->updateChildRecord($lead->id);
+            }
         }
 
         return $result;

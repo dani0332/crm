@@ -124,12 +124,12 @@ class LeadListReportTable extends DataTableComponent
             SelectFilter::make('Ecommerce')
                 ->setFilterPillTitle('ABC')
                 ->options([
-                        '' => 'All',
-                        'yes' => 'Yes',
-                        'no' => 'No',
-                    ])->filter(function (Builder $builder, string $value) {
-                        $builder->where('car_quote_request.is_ecommerce', $value == 'no' ? false : true);
-                    }),
+                    '' => 'All',
+                    'yes' => 'Yes',
+                    'no' => 'No',
+                ])->filter(function (Builder $builder, string $value) {
+                    $builder->where('car_quote_request.is_ecommerce', $value == 'no' ? false : true);
+                }),
             SelectFilter::make('Payment Status')
                 ->options(
                     PaymentStatus::query()

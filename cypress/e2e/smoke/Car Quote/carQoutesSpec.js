@@ -2,26 +2,57 @@ import CarLeadPage from '../../../pageObjects/CarLeadPage';
 import CommonPage from '../../../pageObjects/CommonPage';
 let carLeadData = require('../../../fixtures/carLeadData')
 let qouteData = require('../../../fixtures/qoutesData')
-
-let CDBID
+let leadUrl
+let quoteId
 describe('Car qoutes', () => {
 
   const commonPage = new CommonPage()
   const carLeadPage = new CarLeadPage()
-  before(() => {
-    //Creating Quote using API
-    cy.generate_CDBID(Cypress.env('Capi_X_Api_Token'), qouteData.carQouteData, carLeadData.carLeadData.endPoint).then((data) => {
-      // cy.log(JSON.stringify(data))
-      CDBID = data
-      cy.log(CDBID)
-    })
+  Cypress.on('uncaught:exception', (err, runnable) => {
+    // returning false here prevents Cypress from
+    // failing the test
+    return false
   })
+
   beforeEach(() => {
     cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
     cy.runRoutes()
   })
+
+  it('Should create lead car qoutes insurance', () => {
+    cy.visit('/quotes/car')
+    commonPage.verifyURL('/quotes/car')
+    carLeadPage.getCreateLeadButton()
+    commonPage.getFirstNameField(qouteData.personalInfo.firstName)
+    commonPage.getLastNameField(qouteData.personalInfo.lastName)
+    commonPage.getDOB(qouteData.personalInfo.month, qouteData.personalInfo.year, qouteData.personalInfo.day)
+    commonPage.getMobileNumber(qouteData.personalInfo.phoneNumber)
+    commonPage.getEmail(qouteData.personalInfo.email)
+    commonPage.getNationalityId(carLeadData.carLeadData.nationality)
+    carLeadPage.getUaeLicenseHeldFor(carLeadData.carLeadData.licenseHeldFor)
+    carLeadPage.getBackHomeLicense(carLeadData.carLeadData.backHome)
+    carLeadPage.getCarMakeId(carLeadData.carLeadData.carMakeId)
+    carLeadPage.getCarModelId(carLeadData.carLeadData.carModelId)
+    carLeadPage.getManufacturYear(carLeadData.carLeadData.ManufactureYear)
+    carLeadPage.getCarValue(carLeadData.carLeadData.carValue)
+    carLeadPage.getVehicleType(carLeadData.carLeadData.vehicleType)
+    carLeadPage.getSeatCapacity(carLeadData.carLeadData.seatCapacity)
+    carLeadPage.getRegistrationId(carLeadData.carLeadData.registrationId)
+    carLeadPage.getInsuranceType(carLeadData.carLeadData.typeOfInsurance)
+    carLeadPage.getCurrentInsurance(carLeadData.carLeadData.currentInsurance)
+    carLeadPage.getClaimHistory(carLeadData.carLeadData.claimHistory)
+    carLeadPage.getCreateButton().click()
+    cy.wait(4000)
+    cy.url().then(data => {
+      leadUrl = `/${data.substring(data.lastIndexOf('quotes/car/'))}`
+      quoteId = `${(data.substring(data.lastIndexOf('/'))).replace('/', '')}`
+      cy.log(leadUrl)
+    })
+    commonPage.verifyURL('/quotes/car')
+  })
+
   it('Should edit car qoute details', () => {
-    cy.visit(`/quotes/car/${CDBID}`)
+    cy.visit(`${leadUrl}`)
     Cypress.on('uncaught:exception', (err, runnable) => {
       // returning false here prevents Cypress from
       // failing the test
@@ -46,10 +77,19 @@ describe('Car qoutes', () => {
     carLeadPage.getCurrentInsurance("Adamjee Insurance")
     carLeadPage.getClaimHistory("No claims for 4 years")
     carLeadPage.getUpdateButton()
+  })
 
+  it('Should Update Status, Edit Assumptions, Upload Documents, Add/Update/Delete Activity & Add Additional Contact', () => {
+    cy.visit(`/quotes/car/${quoteId}`)
+    Cypress.on('uncaught:exception', (err, runnable) => {
+      // returning false here prevents Cypress from
+      // failing the test
+      return false
+    })
     //Change Lead Status
     carLeadPage.setLeadStatus()
     carLeadPage.getChangeStatusButton()
+    commonPage.getPopUpAssertion(' Lead Status has been Updated')
 
     //Edit assumptions
     carLeadPage.getEditAssumptionsButtons()
@@ -62,9 +102,9 @@ describe('Car qoutes', () => {
     carLeadPage.getAssumptionsUpdateButton()
 
     //Upload Documents
-    carLeadPage.getUploadDocButton(CDBID)
+    carLeadPage.getUploadDocButton(quoteId)
     carLeadPage.getUploadFile()
-    carLeadPage.getBackButton(CDBID)
+    carLeadPage.getBackButton(quoteId)
 
     // Send notes to customer
     carLeadPage.getSendNotesToCustomerButton()
@@ -92,7 +132,5 @@ describe('Car qoutes', () => {
     carLeadPage.getContactType()
     carLeadPage.getContactValue()
     carLeadPage.getAddContactSubmitButton()
-    carLeadPage.deleteContactButton()
-
   })
 })
