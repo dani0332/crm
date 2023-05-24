@@ -369,9 +369,9 @@ class SendEmailCustomerService extends BaseService
                 'name' => $emailData->advisorName,
             ]];
             $bccAdditional = [];
-            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->value;
+            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->first()->value;
             foreach (explode(',', $additionalBcc) as $additionalContact) {
-                $ccAdditional[] = [
+                $bccAdditional[] = [
                     'email' => $additionalContact,
                 ];
             }
@@ -380,6 +380,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
                 ]],
+                'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => $emailTemplateId,
                 'params' => [
                     'clientFullName' => $emailData->clientFullName,
@@ -394,7 +395,6 @@ class SendEmailCustomerService extends BaseService
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
-            $body['bcc'] = array_merge($bccAdditional, $bcc);
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,

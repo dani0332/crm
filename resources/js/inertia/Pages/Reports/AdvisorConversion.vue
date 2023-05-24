@@ -225,6 +225,24 @@ function onSubmit(isValid) {
       method: 'get',
       data: {
         ...payLoad,
+        ...(payLoad.batches && {
+          batches: Array.isArray(payLoad.batches)
+            ? payLoad.batches
+            : [payLoad.batches],
+        }),
+        ...(payLoad.tiers && {
+          tiers: Array.isArray(payLoad.tiers) ? payLoad.tiers : [payLoad.tiers],
+        }),
+        ...(payLoad.leadSources && {
+          leadSources: Array.isArray(payLoad.leadSources)
+            ? payLoad.leadSources
+            : [payLoad.leadSources],
+        }),
+        ...(payLoad.advisors && {
+          advisors: Array.isArray(payLoad.advisors)
+            ? payLoad.advisors
+            : [payLoad.advisors],
+        }),
         ...(payLoad.teams && {
           teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
         }),
@@ -513,9 +531,12 @@ watch(
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
         <div class="flex-1">
-          <p v-if="isDirty" class="text-xs text-gray-700 text-red-500 text-center font-bold">
-            Please click search, to show updated records based
-            on the selected filters
+          <p
+            v-if="isDirty"
+            class="text-xs text-gray-700 text-red-500 text-center font-bold"
+          >
+            Please click search, to show updated records based on the selected
+            filters
           </p>
         </div>
         <div class="flex gap-3">
