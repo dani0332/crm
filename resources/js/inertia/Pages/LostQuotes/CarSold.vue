@@ -73,9 +73,9 @@ const tableHeader = [
     { text: 'Renewal Batch', value: 'renewal_batch' },
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
-    { text: 'ADVISOR', value: 'advisor' },
+    { text: 'ADVISOR', value: 'advisor_email' },
     { text: 'Approval Status STATUS', value: 'approval_status' },
-    { text: 'Notes', value: 'notes' },
+    { text: 'Notes', value: 'mo_notes' },
 ];
 
 const can = permission => useCan(permission);
@@ -156,17 +156,6 @@ const quotesSelected = ref([]),
                 {{ code }}
             </template>
 
-            <template #item-advisor="{ advisor }">
-                {{ advisor?.email }}
-            </template>
-
-            <template #item-approval_status="{ car_lost_quote_log }">
-                {{ car_lost_quote_log?.status }}
-            </template>
-
-            <template #item-notes="{ car_lost_quote_log }">
-                {{ car_lost_quote_log?.notes }}
-            </template>
 
         </DataTable>
 

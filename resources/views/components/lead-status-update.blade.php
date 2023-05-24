@@ -158,6 +158,11 @@ use App\Enums\LeadSourceEnum;
 
                     if($modeltype == quoteTypeCode::Car)
                     {
+                        if(!isCarLostStatus($lead->quote_status_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+                            $carLostChangeStatus = false;
+                            $allowQuoteLogAction = false;
+                        }
+
                         if(isCarLostStatus($lead->quote_status_id))
                         {
                             $carLostChangeStatus = false;
@@ -267,7 +272,7 @@ use App\Enums\LeadSourceEnum;
                                 <div class="col-sm-12 mb-3">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Notes</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <input maxlength="100" value="{{$paymentEntityModel->carLostQuoteLog->notes }}" @if(!$allowQuoteLogAction) disabled @endif value="{{@$carLostQuoteLog->notes}}" type="text" id="lost_notes" name="lost_notes"  class="form-control">
+                                        <input maxlength="100" value="{{@$paymentEntityModel->carLostQuoteLog->notes }}" @if(!$allowQuoteLogAction) disabled @endif type="text" id="lost_notes" name="lost_notes"  class="form-control">
                                     </div>
                                 </div>
 

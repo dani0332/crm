@@ -9024,13 +9024,13 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       value: 'last_name'
     }, {
       text: 'ADVISOR',
-      value: 'advisor'
+      value: 'advisor_email'
     }, {
       text: 'Approval Status STATUS',
       value: 'approval_status'
     }, {
       text: 'Notes',
-      value: 'notes'
+      value: 'mo_notes'
     }];
     var can = function can(permission) {
       return (0,_Users_faisalabbas_Sites_blanka_dev_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_2__.useCan)(permission);
@@ -28168,21 +28168,6 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       var code = _ref.code,
         uuid = _ref.uuid;
       return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(code), 1 /* TEXT */)];
-    }),
-
-    "item-advisor": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref2) {
-      var advisor = _ref2.advisor;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(advisor === null || advisor === void 0 ? void 0 : advisor.email), 1 /* TEXT */)];
-    }),
-
-    "item-approval_status": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref3) {
-      var car_lost_quote_log = _ref3.car_lost_quote_log;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(car_lost_quote_log === null || car_lost_quote_log === void 0 ? void 0 : car_lost_quote_log.status), 1 /* TEXT */)];
-    }),
-
-    "item-notes": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref4) {
-      var car_lost_quote_log = _ref4.car_lost_quote_log;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(car_lost_quote_log === null || car_lost_quote_log === void 0 ? void 0 : car_lost_quote_log.notes), 1 /* TEXT */)];
     }),
 
     _: 1 /* STABLE */
