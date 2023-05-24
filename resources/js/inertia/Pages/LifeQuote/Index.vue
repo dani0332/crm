@@ -26,7 +26,7 @@ const rules = {
   },
 };
 
-const role = [rolesEnum.Admin, rolesEnum.LeadPool];
+const role = [rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.LifeManager];
 const roleLeadPool = [rolesEnum.LeadPool];
 const hasAnyRole = role => useHasAnyRole(role);
 
@@ -76,7 +76,7 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.roles[0].name
-      ? advisor.name + '-' + advisor.roles[0]?.name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
       : advisor.name,
   }));
 });

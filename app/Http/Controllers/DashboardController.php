@@ -9,6 +9,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
+use App\Models\Team;
 use App\Models\Tier;
 use App\Services\DashboardService;
 use App\Services\TierService;
@@ -48,7 +49,9 @@ class DashboardController extends Controller
         $endDate = now()->endOfDay()->format($dateFormat);
 
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
-            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->get();
         $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
         $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
@@ -88,7 +91,10 @@ class DashboardController extends Controller
             'endDate' => $endDate,
             'teams' => $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id),
         ];
-        $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
+        $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->get();
 
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
 
@@ -124,7 +130,8 @@ class DashboardController extends Controller
 
     public function getTPLDashboardStats(Request $request): array
     {
-        $tiers = Tier::where('can_handle_tpl', 1)->get()->pluck('id');
+        $tiers = Tier::where('can_handle_tpl', 1)->where('is_active', 1)->get()->pluck('id');
+        $tplTeam = Team::where('name', 'TPL')->where('is_active', 1)->first();
         $records = QuoteBatches::query()
             ->select(
                 'quote_batches.id',
@@ -146,30 +153,21 @@ class DashboardController extends Controller
 
         if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
             $records->whereIn('tiers.id', $request->tier_filter);
+        } else {
+            $records->whereIn('tiers.id', $tiers);
         }
 
-        if (isset($request->team_filter) && $request->team_filter != 'undefined') {
-            $records->whereIn('users.id', function ($query) use ($request) {
+        if ($tplTeam != null) {
+            $records->whereIn('users.id', function ($query) use ($tplTeam) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', 'user_team.team_id')
-                    ->whereIn('teams.id', $request->team_filter);
+                    ->where('teams.id', $tplTeam->id);
             });
-        } else {
-            $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-            if (count($commonTeams) > 0) {
-                $records->whereIn('users.id', function ($query) use ($commonTeams) {
-                    $query->distinct()
-                        ->select('users.id')
-                        ->from('users')
-                        ->join('user_team', 'user_team.user_id', 'users.id')
-                        ->join('teams', 'teams.id', 'user_team.team_id')
-                        ->where('teams.id', $commonTeams[0]);
-                });
-            }
         }
+
         $labels = [];
         $data = [];
         $records = $records->get()->sortBy(function ($record) {
@@ -238,6 +236,8 @@ class DashboardController extends Controller
 
         if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
             $records->whereIn('tiers.id', $request->tier_filter);
+        } else {
+            $records->whereIn('tiers.id', $compTiers);
         }
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {

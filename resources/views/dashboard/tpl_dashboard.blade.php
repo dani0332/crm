@@ -52,7 +52,7 @@
                     borderWidth: 0,
                     dataLabels: {
                         enabled: true,
-                        format: '{point.y:.1f}%'
+                        format: '{point.y:.2f}%'
                     }
                 }
             },
@@ -72,88 +72,12 @@
     }
     $(function() {
         createLeadRcdSummaryByTierPieChart(tplDashboardStats);
-        $('#tier-filter, #source-filter, #team-filter').on('change', function(e) {
-            var tierFilterValue = $('#tier-filter').val();
-            var sourceFilterValue = $('#source-filter option:selected').val();
-            var teamFilterValue = $('#team-filter').val();
-            tplDashboardStatsBarChart.showLoading();
-            $.ajax({
-                url: "/get-tpl-filter-stats",
-                type: "post",
-                data: {
-                    'tier_filter': tierFilterValue,
-                    'team_filter': teamFilterValue,
-                    'source': sourceFilterValue
-                },
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(result) {
-                    if (result) {
-                        var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
-                        var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
-                        var numbers = [];
-                        for (let index = 0; index < data.length; index++) {
-                            numbers.push(Number(data[index]));
-                        }
-                        if (labels.length > 0) {
-                            tplDashboardStatsBarChart.destroy();
-                            createLeadRcdSummaryByTierPieChart([labels, numbers]);
-                        } else {
-                            tplDashboardStatsBarChart.destroy();
-                            createLeadRcdSummaryByTierPieChart([
-                                [''],
-                                [0]
-                            ]);
-                        }
-                    }
-                    tplDashboardStatsBarChart.hideLoading();
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    tplDashboardStatsBarChart.hideLoading();
-                    console.log(textStatus, errorThrown);
-                }
-            });
-        });
     });
 
-    new SlimSelect({
-        select: '#tier-filter',
-        settings: {
-            allowDeselect: true,
-            placeholderText: 'Select Tier',
-        }
-    })
-
-    new SlimSelect({
-        select: '#team-filter',
-        settings: {
-            allowDeselect: true,
-            placeholderText: 'Select Team',
-        }
-    })
 </script>
 @endpush
 
 <div>
-    <div class="flex gap-4 justify-end mb-4">
-        <div class="md:w-1/4">
-            <select multiple name="tiers[]" id="tier-filter">
-                <option data-placeholder="true"></option>
-                @foreach ($tiers as $tier)
-                <option value={{$tier->id}}>{{$tier->name}}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="md:w-1/4">
-            <select multiple name="teams[]" id="team-filter">
-                <option data-placeholder="true"></option>
-                @foreach ($teams as $team)
-                <option @if($commonTeam==$team->id) selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
-                @endforeach
-            </select>
-        </div>
-    </div>
     <div style="min-height: 700px;">
         <div id="tplConversionDiv"></div>
     </div>

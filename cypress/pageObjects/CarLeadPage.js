@@ -22,6 +22,10 @@ class CarLeadPage {
     return cy.get("input#mobile_no").type(mobileNumber)
   }
 
+  //Create Lead Button
+  getCreateLeadButton() {
+    return cy.get('a[href="https://crmstage.alfred.ae/quotes/car/create"]').contains('Create Lead').click()
+  }
 
   //
   getUaeLicenseHeldFor(licenseHeld) {
@@ -147,7 +151,7 @@ class CarLeadPage {
 
   //Upload Documents
   getUploadDocButton(quoteID) {
-    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car${quoteID}/documents"]`).click()
+    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car/${quoteID}/documents"]`).click()
   }
 
   getUploadFile() {
@@ -155,7 +159,7 @@ class CarLeadPage {
   }
 
   getBackButton(quoteID) {
-    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car${quoteID}"]`).click()
+    return cy.get(`a[href="https://crmstage.alfred.ae/quotes/car/${quoteID}"]`).click()
   }
 
   //Add Activity

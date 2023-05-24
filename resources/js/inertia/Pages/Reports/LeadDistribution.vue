@@ -139,6 +139,8 @@ const calculateTotalSum = (data, key) => {
               label: filterOptions.tiers[key],
             }))
           "
+           deselect-all
+          select-all
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
