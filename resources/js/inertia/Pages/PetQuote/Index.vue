@@ -22,7 +22,7 @@ let availableFilters = {
   created_at_start: '',
   created_at_end: '',
   quote_status: [],
-  advisors: [],
+  advisor_id: [],
   is_ecommerce: '',
   is_renewal: '',
   page: 1,
