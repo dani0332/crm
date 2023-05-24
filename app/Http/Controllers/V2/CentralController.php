@@ -35,7 +35,7 @@ class CentralController extends Controller
 
         $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
         if ($diff > 120) {
-            // return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
         }
 
         return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
