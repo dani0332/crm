@@ -103,7 +103,6 @@ class LifeQuoteRepository extends BaseRepository
         ];
     }
 
-
     public function fetchExportData()
     {
         return $this->with(['advisor', 'quoteStatus', 'nationality'])

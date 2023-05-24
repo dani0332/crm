@@ -39,7 +39,7 @@ class CentralController extends Controller
         if ($diff > 120) {
             return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
         }
-        switch($quoteType) {
+        switch ($quoteType) {
             case 'life':
                 return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
             default:
