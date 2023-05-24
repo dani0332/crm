@@ -22,7 +22,7 @@ let availableFilters = {
   created_at_start: '',
   created_at_end: '',
   quote_status: [],
-  advisors: [],
+  advisor_id: [],
   is_ecommerce: '',
   is_renewal: '',
   page: 1,
@@ -241,7 +241,7 @@ function onAssignLead(isValid) {
           "
         />
         <ComboBox
-          v-model="filters.advisors"
+          v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorOptions"
