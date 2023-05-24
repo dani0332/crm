@@ -128,6 +128,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
         Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
+        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction');
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
@@ -225,7 +226,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('car', CRUDController::class);
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
         Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
-        Route::get('leads-export', [CentralController::class, 'exportLeads'])->name('export.leads');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);
         Route::resource('home', CRUDController::class);

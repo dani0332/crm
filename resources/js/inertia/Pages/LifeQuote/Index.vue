@@ -180,8 +180,8 @@ const onExport = () => {
   Object.keys(data).forEach(
     key => (data[key] === '' || data[key].length === 0) && delete data[key],
   );
-  const url = route('export.leads');
-  window.open(url + '?' + new URLSearchParams(data).toString(), '_blank');
+  const url = route('data-extraction', 'life');
+  window.open(url + '?' + new URLSearchParams(data).toString());
 };
 
 watch(
