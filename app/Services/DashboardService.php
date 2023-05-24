@@ -64,6 +64,7 @@ class DashboardService extends BaseService
         )
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
             ->groupBy('tiers.name');
 
@@ -80,6 +81,7 @@ class DashboardService extends BaseService
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->whereNull('car_quote_request.advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
             ->groupBy('tiers.name')
             ->get();
@@ -92,7 +94,8 @@ class DashboardService extends BaseService
             DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
         )
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
-            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]);
 
         return $query->get();
     }
@@ -105,6 +108,7 @@ class DashboardService extends BaseService
         )
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->groupBy('source');
 
         return $query->get();
@@ -121,7 +125,7 @@ class DashboardService extends BaseService
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM)
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('users.name');
 
         if (isset($filters['startDate']) && isset($filters['endDate'])) {
