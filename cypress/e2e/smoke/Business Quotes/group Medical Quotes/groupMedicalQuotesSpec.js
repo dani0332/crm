@@ -1,7 +1,7 @@
-import CommonPage from '../../../pageObjects/CommonPage';
-import HealthLead from '../../../pageObjects/GroupMedicalLeadPage';
-let groupMedicalLead = require('../../../fixtures/groupMedicalLeadData')
-let quoteData = require('../../../fixtures/qoutesData')
+import CommonPage from '../../../../pageObjects/CommonPage';
+import HealthLead from '../../../../pageObjects/GroupMedicalLeadPage';
+let groupMedicalLead = require('../../../../fixtures/groupMedicalLeadData')
+let quoteData = require('../../../../fixtures/qoutesData.json')
 let leadUrl
 let quoteId
 describe('Group Mediacl Qoutes', () => {
