@@ -369,9 +369,9 @@ class SendEmailCustomerService extends BaseService
                 'name' => $emailData->advisorName,
             ]];
             $bccAdditional = [];
-            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->value;
+            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->first()->value;
             foreach (explode(',', $additionalBcc) as $additionalContact) {
-                $ccAdditional[] = [
+                $bccAdditional[] = [
                     'email' => $additionalContact,
                 ];
             }
