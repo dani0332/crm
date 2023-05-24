@@ -230,6 +230,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
         Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
+        Route::get('leads-export', [CentralController::class, 'exportLeads'])->name('export.leads');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);
 

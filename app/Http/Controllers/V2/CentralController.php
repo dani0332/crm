@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\DuplicateLobRequest;
+use App\Exports\LifeQuotesExport;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use App\Services\CentralService;
+use App\Http\Controllers\Controller;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Http\Requests\DuplicateLobRequest;
 
 class CentralController extends Controller
 {
@@ -17,5 +21,23 @@ class CentralController extends Controller
         }
 
         return back()->with('message', 'Quote is created successfully.');
+    }
+
+
+    public function exportLeads(Request $request)
+    {
+        $request->validate([
+            'created_at_start' => 'required',
+            'created_at_end' => 'required',
+        ]);
+        $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
+        $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
+
+        $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+        if ($diff > 120) {
+            // return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+        }
+
+        return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
     }
 }
