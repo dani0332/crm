@@ -33,7 +33,9 @@ class TierAssignmentJob implements ShouldQueue
 
         $weekBeforeDateTime = now()->subWeek(1)->startOfDay();
 
-        if (Carbon::parse($from)->startOfDay() < $weekBeforeDateTime) $from = $weekBeforeDateTime;
+        if (Carbon::parse($from)->startOfDay() < $weekBeforeDateTime) {
+            $from = $weekBeforeDateTime;
+        }
 
         $isFIFO = $applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
 
@@ -51,14 +53,14 @@ class TierAssignmentJob implements ShouldQueue
 
             if ($tier != null) {
 
-                info('Found tier ' . $tier->name . ' against car lead : ' . $carLead->code);
+                info('Found tier '.$tier->name.' against car lead : '.$carLead->code);
 
                 $carLead->tier_id = $tier->id;
 
                 $carLead->save();
             } else {
 
-                info('No tier found to car lead : ' . $carLead->code);
+                info('No tier found to car lead : '.$carLead->code);
             }
         }
     }
