@@ -292,13 +292,13 @@ class CarQuoteService extends BaseService
         $carQuote->updated_by = auth()->user()->email;
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
 
-        if($deleteValuationResponse){
+        if ($deleteValuationResponse) {
             $carQuote->save();
 
             if (isset($request->return_to_view)) {
                 return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
             }
-        }else{
+        } else {
             return false;
         }
 
@@ -1365,11 +1365,12 @@ class CarQuoteService extends BaseService
 
     private function deleteValuationAPI($oldValue, $currentValue, $quoteUuId)
     {
-        if($oldValue == $currentValue)
+        if ($oldValue == $currentValue) {
             return true;
+        }
 
         try {
-            $deleteValuationAPI = config('constants.KEN_API_ENDPOINT') . '/delete-car-valuation';
+            $deleteValuationAPI = config('constants.KEN_API_ENDPOINT').'/delete-car-valuation';
             $kenCapiBasicAuthUsername = config('constants.KEN_API_USER');
             $kenCapiBasicAuthPassword = config('constants.KEN_API_PWD');
             $kenCapiApiToken = config('constants.KEN_API_TOKEN');
@@ -1378,11 +1379,13 @@ class CarQuoteService extends BaseService
                 ->withBasicAuth($kenCapiBasicAuthUsername, $kenCapiBasicAuthPassword)
                 ->post($deleteValuationAPI, ['quoteUuid' => $quoteUuId]);
 
-            if($response->ok())
+            if ($response->ok()) {
                 return true;
+            }
 
-        } catch (\Exception $exception){
+        } catch (\Exception $exception) {
             Log::info('Delete Valuation API Error: '.$exception->getMessage());
+
             return false;
         }
     }

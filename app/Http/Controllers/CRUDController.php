@@ -730,7 +730,7 @@ class CRUDController extends Controller
         // dd($request->all(), $validateArray);
         // $this->validate($request, $validateArray);
         $response = $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
-        if(!is_null($response) && !$response){
+        if (! is_null($response) && ! $response) {
             return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id.'/edit')->with('error', json_decode($request->modelType, true).' has not been updated');
         }
 
