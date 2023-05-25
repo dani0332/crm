@@ -38,7 +38,4 @@ final class GenericRequestEnum extends Enum
     public const ASSIGN_WITH_EMAIL = 2;
     public const MAX_DAYS = 'MAX_DAYS_CAR_REPORTS';
     public const FEMALE = 'Female';
-    public const CDB_ID = 'cdbID';
-    public const EMAIL_ADDRESS = 'emailAddress';
-    public const PHONE_NUMBER = 'phoneNumber';
 }

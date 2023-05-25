@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\GenericRequestEnum;
 use App\Enums\tmLeadStatusCode;
 use App\Http\Requests\TmLeadRequest;
 use App\Http\Traits\TmLeadTrait;
@@ -103,7 +102,7 @@ class TmLeadController extends Controller
                 isset($request->searchType) && ! empty($request->searchType)
                 && isset($request->tmLeadsStartDate) && ! empty($request->tmLeadsStartDate)
                 && isset($request->tmLeadsEndDate) && ! empty($request->tmLeadsEndDate)
-                && ($request->searchType != GenericRequestEnum::CDB_ID && $request->searchType != GenericRequestEnum::EMAIL_ADDRESS && $request->searchType != GenericRequestEnum::PHONE_NUMBER)
+                && ($request->searchType != 'cdbID' && $request->searchType != 'emailAddress' && $request->searchType != 'phoneNumber')
             ) {
                 if ($request->tmLeadsEndDate >= $request->tmLeadsStartDate) {
                     $tmLeadsDateFrom = Carbon::createFromFormat('Y-m-d', $request->tmLeadsStartDate)->startOfDay()->toDateTimeString();
