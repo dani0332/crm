@@ -62,6 +62,7 @@ class DashboardController extends Controller
             'endDate' => $endDate,
             'teams' => $this->getCurrentUserTeamsAndSubTeams($loggedInUserId),
             'teamIds' => $teamIds,
+            'applyUnAssignedLeadsCountByTierDateFilter' => false,
         ];
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
         $totalLeadsReceived = count($todaysLeads);
@@ -90,6 +91,7 @@ class DashboardController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate,
             'teams' => $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id),
+            'applyUnAssignedLeadsCountByTierDateFilter' => true,
         ];
         $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -105,12 +107,12 @@ class DashboardController extends Controller
         $totalUnAssignedRevivalLeads = count($todaysLeads->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
         $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
-
+        $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
         $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
         return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
-            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData];
+            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData, 'unAssignedLeadsByTier' => $unAssignedLeadsByTier];
     }
 
     public function renderTplDashboard(Request $request)
