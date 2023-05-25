@@ -79,7 +79,7 @@ class DashboardService extends BaseService
             'tiers.name as tierNames',
             DB::raw('count(*) as leadCount')
         )
-            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->whereNull('car_quote_request.advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
@@ -177,7 +177,8 @@ class DashboardService extends BaseService
 
     public function getTotalUnAssignedLeads($filters)
     {
-        $query = CarQuote::whereNull('advisor_id')
+        $query = CarQuote::leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->whereNull('advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('tiers.name', '!=', TiersEnum::TIER_R)
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]);
