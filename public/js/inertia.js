@@ -3099,7 +3099,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       activityConfirm: false
     });
     var leadDuplicateForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
-      lob_team: []
+      lob_team: [],
+      lob_team_sub_selection: null
     });
     var openDuplicate = function openDuplicate() {
       modals.duplicate = true;
@@ -3113,12 +3114,12 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         entityId: page.props.quote.id,
         entityCode: page.props.quote.code,
         entityUId: page.props.quote.uuid,
-        lob_team: leadDuplicateForm.lob_team
+        lob_team: leadDuplicateForm.lob_team,
+        lob_team_sub_selection: leadDuplicateForm.lob_team_sub_selection
       };
       axios__WEBPACK_IMPORTED_MODULE_5__["default"].post('/quotes/createDuplicate', data).then(function (res) {
         modals.duplicate = false;
         notification.success('Lead duplicated successfully');
-        _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.visit('/quotes/business');
       })["catch"](function (err) {
         notification.error('Something went wrong');
       });
@@ -4347,11 +4348,7 @@ __webpack_require__.r(__webpack_exports__);
     function onSubmit(isValid) {
       if (isValid) {
         quoteForm.post('/medical/amt', {
-          onSuccess: function onSuccess() {
-            _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.get('/medical/amt');
-          },
           onFinish: function onFinish() {
-            console.log(quoteForm);
             isEmptyField.value = true;
           }
         });
@@ -4799,7 +4796,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       contactPrimaryConfirm: false
     });
     var leadDuplicateForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
-      lob_team: []
+      lob_team: [],
+      lob_team_sub_selection: null
     });
     var openDuplicate = function openDuplicate() {
       modals.duplicate = true;
@@ -4813,12 +4811,12 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         entityId: page.props.quote.id,
         entityCode: page.props.quote.code,
         entityUId: page.props.quote.uuid,
-        lob_team: leadDuplicateForm.lob_team
+        lob_team: leadDuplicateForm.lob_team,
+        lob_team_sub_selection: leadDuplicateForm.lob_team_sub_selection
       };
       axios__WEBPACK_IMPORTED_MODULE_4__["default"].post('/quotes/createDuplicate', data).then(function (res) {
         modals.duplicate = false;
         notification.success('Lead duplicated successfully');
-        _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.router.visit('/medical/amt');
       })["catch"](function (err) {
         notification.error('Something went wrong');
       });
@@ -17228,7 +17226,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   return (0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_Head, {
     title: "Business Quote List"
   }), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_Link, {
-    href: "/quotes/business/cards"
+    href: "/quotes/business/cards/view"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
@@ -17829,7 +17827,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["href"])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.duplicate,
-    "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
+    "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
       return $setup.modals.duplicate = $event;
     }),
     size: "lg",
@@ -17861,7 +17859,22 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             placeholder: "Select LOB For Duplication",
             "class": "w-full",
             multiple: ""
-          }, null, 8 /* PROPS */, ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
+          }, null, 8 /* PROPS */, ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+            modelValue: $setup.leadDuplicateForm.lob_team_sub_selection,
+            "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
+              return $setup.leadDuplicateForm.lob_team_sub_selection = $event;
+            }),
+            label: "Reason",
+            rules: [$setup.isRequired],
+            "class": "w-full",
+            options: [{
+              value: 'new_enquiry',
+              label: 'New enquiry'
+            }, {
+              value: 'record_only',
+              label: 'Record purposes only'
+            }]
+          }, null, 8 /* PROPS */, ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
             color: "orange",
             type: "submit",
             loading: $setup.leadDuplicateForm.processing
@@ -17885,7 +17898,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "mb-4 mt-1"
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_69, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_70, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_71, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
     modelValue: $setup.leadStatusForm.leadStatus,
-    "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
+    "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
       return $setup.leadStatusForm.leadStatus = $event;
     }),
     label: "STATUS",
@@ -17895,7 +17908,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "w-full"
   }, null, 8 /* PROPS */, ["modelValue", "options", "disabled"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_textarea, {
     modelValue: $setup.leadStatusForm.notes,
-    "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
+    "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
       return $setup.leadStatusForm.notes = $event;
     }),
     type: "text",
@@ -17907,7 +17920,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     key: 0,
     disabled: $props.quote.quote_status_id == $props.enums.quoteStatusEnum.TransactionApproved,
     modelValue: $setup.leadStatusForm.trans_code,
-    "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
+    "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
       return $setup.leadStatusForm.trans_code = $event;
     }),
     label: "TRANSAPP CODE",
@@ -17917,7 +17930,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, null, 8 /* PROPS */, ["disabled", "modelValue", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true), $setup.leadStatusForm.leadStatus == $props.enums.quoteStatusEnum.Lost ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_select, {
     key: 1,
     modelValue: $setup.leadStatusForm.lostReason,
-    "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
+    "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
       return $setup.leadStatusForm.lostReason = $event;
     }),
     label: "LOST REASON",
@@ -18010,7 +18023,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["items", "hide-footer"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.activity,
-    "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
+    "onUpdate:modelValue": _cache[12] || (_cache[12] = function ($event) {
       return $setup.modals.activity = $event;
     }),
     size: "lg",
@@ -18029,7 +18042,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_78, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_input, {
             modelValue: $setup.activityForm.title,
-            "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
+            "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
               return $setup.activityForm.title = $event;
             }),
             label: "Title",
@@ -18037,7 +18050,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "class": "w-full"
           }, null, 8 /* PROPS */, ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_textarea, {
             modelValue: $setup.activityForm.description,
-            "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
+            "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
               return $setup.activityForm.description = $event;
             }),
             label: "Description",
@@ -18045,7 +18058,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "class": "w-full"
           }, null, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
             modelValue: $setup.activityForm.assignee_id,
-            "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
+            "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
               return $setup.activityForm.assignee_id = $event;
             }),
             label: "Assignee",
@@ -18056,7 +18069,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           }, null, 8 /* PROPS */, ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_DatePicker, {
             format: $setup.format,
             modelValue: $setup.activityForm.due_date,
-            "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
+            "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
               return $setup.activityForm.due_date = $event;
             }),
             label: "Due Date",
@@ -18066,7 +18079,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "min-date": new Date()
           }, null, 8 /* PROPS */, ["modelValue", "rules", "min-date"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_79, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
             size: "sm",
-            onClick: _cache[10] || (_cache[10] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+            onClick: _cache[11] || (_cache[11] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
               return $setup.modals.activity = false;
             }, ["prevent"]))
           }, {
@@ -18094,7 +18107,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.activityConfirm,
-    "onUpdate:modelValue": _cache[13] || (_cache[13] = function ($event) {
+    "onUpdate:modelValue": _cache[14] || (_cache[14] = function ($event) {
       return $setup.modals.activityConfirm = $event;
     }),
     "show-close": "",
@@ -18107,7 +18120,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_81, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
-        onClick: _cache[12] || (_cache[12] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+        onClick: _cache[13] || (_cache[13] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
           return $setup.modals.activityConfirm = false;
         }, ["prevent"]))
       }, {
@@ -21149,7 +21162,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["href"])) : (0,vue__WEBPACK_IMPORTED_MODULE_2__.createCommentVNode)("v-if", true)])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.duplicate,
-    "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
+    "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
       return $setup.modals.duplicate = $event;
     }),
     size: "lg",
@@ -21181,7 +21194,22 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             placeholder: "Select LOB For Duplication",
             "class": "w-full",
             multiple: ""
-          }, null, 8 /* PROPS */, ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
+          }, null, 8 /* PROPS */, ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_select, {
+            modelValue: $setup.leadDuplicateForm.lob_team_sub_selection,
+            "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
+              return $setup.leadDuplicateForm.lob_team_sub_selection = $event;
+            }),
+            label: "Reason",
+            rules: [$setup.isRequired],
+            "class": "w-full",
+            options: [{
+              value: 'new_enquiry',
+              label: 'New enquiry'
+            }, {
+              value: 'record_only',
+              label: 'Record purposes only'
+            }]
+          }, null, 8 /* PROPS */, ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_button, {
             color: "orange",
             type: "submit",
             loading: $setup.leadDuplicateForm.processing
@@ -21207,7 +21235,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "mb-4 mt-1"
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_65, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_66, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_67, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_select, {
     modelValue: $setup.leadStatusForm.leadStatus,
-    "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
+    "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
       return $setup.leadStatusForm.leadStatus = $event;
     }),
     label: "STATUS",
@@ -21217,7 +21245,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "w-full"
   }, null, 8 /* PROPS */, ["modelValue", "options", "disabled"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_textarea, {
     modelValue: $setup.leadStatusForm.notes,
-    "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
+    "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
       return $setup.leadStatusForm.notes = $event;
     }),
     type: "text",
@@ -21229,7 +21257,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     key: 0,
     disabled: $props.quote.quote_status_id == $props.enums.quoteStatusEnum.TransactionApproved,
     modelValue: $setup.leadStatusForm.trans_code,
-    "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
+    "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
       return $setup.leadStatusForm.trans_code = $event;
     }),
     label: "TRANSAPP CODE",
@@ -21239,7 +21267,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, null, 8 /* PROPS */, ["disabled", "modelValue", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_2__.createCommentVNode)("v-if", true), $setup.leadStatusForm.leadStatus == $props.enums.quoteStatusEnum.Lost ? ((0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createBlock)(_component_x_select, {
     key: 1,
     modelValue: $setup.leadStatusForm.lostReason,
-    "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
+    "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
       return $setup.leadStatusForm.lostReason = $event;
     }),
     label: "LOST REASON",
