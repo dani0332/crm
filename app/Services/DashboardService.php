@@ -176,8 +176,7 @@ class DashboardService extends BaseService
     {
         $query = CarQuote::whereNull('advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->get();
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]);
 
         if ($filters['applyTotalUnAssignedLeadsDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
             $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
