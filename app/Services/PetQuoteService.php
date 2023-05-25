@@ -589,7 +589,12 @@ class PetQuoteService extends BaseService
         Log::info('Leads ids to assign: '.json_encode($leadsIds));
         $result = [];
         foreach ($leadsIds as $leadId) {
-            $lead = PersonalQuote::findOrfail($leadId);
+            if (in_array(quoteTypeCode::Pet, newUi())) {
+                $lead = PersonalQuote::findOrfail($leadId);
+            } else {
+                $lead = PetQuote::findOrfail($leadId);
+            }
+
             if ($lead) {
                 $lead->advisor_id = $userId;
                 $lead->save();
