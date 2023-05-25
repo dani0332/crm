@@ -2354,6 +2354,24 @@ $(document).ready(function () {
       $(self).text('Copy');
     }, 2000);
   });
+  $('.enable-tabby').on('click', function () {
+    var planId = $(this).attr('data-planId');
+    var quoteUUID = $(this).attr('data-quoteUUId');
+
+    console.log(planId + ' ' + quoteUUID);
+    $.ajax({
+      url: '/update-car-plan-details',
+      method: 'POST',
+      data: {
+        plan_id: planId,
+        quote_uuid: quoteUUID,
+        _token: config._token,
+      },
+      success: function (data) {
+        console.log(data);
+      },
+    });
+  });
 
   $('#btn_download_plan_pdf').on('click', function () {
     if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {

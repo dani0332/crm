@@ -108,6 +108,11 @@ class AjaxController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function updateCarPlanDetails(Request $request)
+    {
+        dd($request->toArray());
+    }
+
     public function generatePaymentLink(Request $request)
     {
         $payment = Payment::where('code', '=', $request->paymentCode)->first();

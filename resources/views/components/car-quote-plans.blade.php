@@ -5,6 +5,7 @@ use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\RolesEnum;
 $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 @endphp
@@ -306,6 +307,15 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                 @endif
 
                             </td>
+								@if($quotePlan->providerCode == InsuranceProvidersEnum::RSA)
+								<button
+								class="btn btn-success btn-sm enable-tabby"
+								data-planId="{{$quotePlan->id}}"
+								data-quoteUUId="{{$record->uuid}}"
+								
+								>Enable Tabby</button>
+								@endif
+                                </td>
 						</tr>
 						@endforeach
 					</tbody>
