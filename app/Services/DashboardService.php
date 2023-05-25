@@ -171,4 +171,21 @@ class DashboardService extends BaseService
 
         return $teamWiseLeadsAssignedAverage;
     }
+
+    public function getTotalUnAssignedLeads($filters)
+    {
+        $query = CarQuote::whereNull('advisor_id')
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->get();
+
+        if ($filters['applyTotalUnAssignedLeadsDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
+            $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
+        } else {
+            $from = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
+            $query->whereBetween('car_quote_request.created_at', [$from, now()->endOfDay()]);
+        }
+
+        return $query->get();
+    }
 }
