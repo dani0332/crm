@@ -278,10 +278,24 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                     >Copy</button>
                                 @endif
 
+                                @php
+                                    $allowChangeInsurer = (auth()->user()->hasRole(RolesEnum::CarAdvisor)) ? true : false;
+                                    
+                                    if($record->payment_status_id == \App\Enums\PaymentStatusEnum::CAPTURED)
+                                    {
+                                        $allowChangeInsurer = false;
+                                        if((auth()->user()->hasRole(RolesEnum::CarAdvisor) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment <= 7)) {
+                                            $allowChangeInsurer = true;
+                                        }
+                                        elseif((auth()->user()->hasRole(RolesEnum::CarManager) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment > 7 && $daysAfterCapturedPayment <= 14))
+                                        {
+                                            $allowChangeInsurer = true;
+                                        }
+                                    }
 
-                                @if( (auth()->user()->hasRole(RolesEnum::CarAdvisor) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment <= 7) ||
-								     (auth()->user()->hasRole(RolesEnum::CarManager) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment > 7 && $daysAfterCapturedPayment <= 14)
-								 )
+                                @endphp
+
+                                @if($allowChangeInsurer)
                                     <button class="btn btn-info btn-sm btn-change-insurer"
                                             data-planId="{{$quotePlan->id}}"
                                             data-uuid="{{$record->uuid}}"
