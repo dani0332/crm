@@ -120,7 +120,6 @@ const emailConversionReportTableHeader = [
   </div>
   <x-divider class="my-4" />
   <div>
-    <Head title="Advisor Conversion Report" />
     <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
       Revival Response Rate
     </h1>

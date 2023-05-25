@@ -50,14 +50,20 @@ class Dtt extends Command
     public function handle()
     {
         try {
-            $date = Carbon::now()->subYear(1)->subDays(15)->toDateString();
+            $sameDayBeforeOneYear = Carbon::now()->subYear(1)->toDateString();
+            $sameDayBeforeTwoYear = Carbon::now()->subYear(2)->toDateString();
 
             $datethirtyDaysBefore = Carbon::now()->addDays(-30)->toDateString();
 
             $jobs = [];
 
-            $leads = CarQuote::where('created_at', '>=', $date)
-                ->where('is_revived', '=', false)
+            $leads = CarQuote::where('is_revived', '=', false)
+
+            ->where(function ($q) use ($sameDayBeforeOneYear, $sameDayBeforeTwoYear) {
+                $q->whereDate('created_at', '=', $sameDayBeforeOneYear);
+                $q->orWhereDate('created_at', '=', $sameDayBeforeTwoYear);
+            })
+
                 ->whereNotNull(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture', 'payment_status_id'])
                 ->where(function ($q) use ($datethirtyDaysBefore) {
                     $q->where('source', '!=', LeadSourceEnum::REVIVAL)
@@ -74,7 +80,6 @@ class Dtt extends Command
                         ->orWhere('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
                 })
                 ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
-                ->take(10)
                 ->orderBy('id', 'DESC')->get();
 
             foreach ($leads as $carLead) {
