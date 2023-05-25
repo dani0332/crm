@@ -39,6 +39,7 @@ const modals = reactive({
 
 const leadDuplicateForm = useForm({
   lob_team: [],
+  lob_team_sub_selection: null,
 });
 
 const openDuplicate = () => {
@@ -55,13 +56,13 @@ const onCreateDuplicate = isValid => {
     entityCode: page.props.quote.code,
     entityUId: page.props.quote.uuid,
     lob_team: leadDuplicateForm.lob_team,
+    lob_team_sub_selection: leadDuplicateForm.lob_team_sub_selection,
   };
   axios
     .post('/quotes/createDuplicate', data)
     .then(res => {
       modals.duplicate = false;
       notification.success('Lead duplicated successfully');
-      router.visit('/medical/amt');
     })
     .catch(err => {
       notification.error('Something went wrong');
@@ -89,7 +90,6 @@ const leadStatusForm = useForm({
 });
 
 const onLeadStatus = () => {
-
   let data = {
     modelType: 'Business',
     leadId: leadStatusForm.leadId,
@@ -188,6 +188,17 @@ const isDuplicateAllowed = computed(() => {
             placeholder="Select LOB For Duplication"
             class="w-full"
             multiple
+          />
+
+          <x-select
+            v-model="leadDuplicateForm.lob_team_sub_selection"
+            label="Reason"
+            :rules="[isRequired]"
+            class="w-full"
+            :options="[
+              { value: 'new_enquiry', label: 'New enquiry' },
+              { value: 'record_only', label: 'Record purposes only' },
+            ]"
           />
 
           <x-button
