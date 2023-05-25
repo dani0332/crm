@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
   businessInsuranceType: Object,
   quote: Object,
@@ -32,20 +31,16 @@ const quoteForm = useForm({
   brief_details: props.quote.brief_details,
 });
 
-const { isRequired, emptyOrDecimal, isNumber, isEmail  } = useRules();
+const { isRequired, emptyOrDecimal, isNumber, isEmail } = useRules();
 
 const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
   if (isValid) {
     quoteForm.post('/medical/amt', {
-      onSuccess: () => {
-        router.get('/medical/amt');
-        },
-        onFinish: () => {
-            console.log(quoteForm);
-          isEmptyField.value = true;
-        },
+      onFinish: () => {
+        isEmptyField.value = true;
+      },
     });
   }
 }
