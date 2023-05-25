@@ -63,13 +63,15 @@ class DashboardController extends Controller
             'teams' => $this->getCurrentUserTeamsAndSubTeams($loggedInUserId),
             'teamIds' => $teamIds,
             'applyUnAssignedLeadsCountByTierDateFilter' => false,
+            'applyTotalUnAssignedLeadsDateFilter' => false,
         ];
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
-        $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
-        $totalUnAssignedLeadsReceivedEcommerce = count($todaysLeads->whereNull('advisor_id')->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($todaysLeads->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
+        $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
+        $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
+        $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
 
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
@@ -92,6 +94,7 @@ class DashboardController extends Controller
             'endDate' => $endDate,
             'teams' => $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id),
             'applyUnAssignedLeadsCountByTierDateFilter' => true,
+            'applyTotalUnAssignedLeadsDateFilter' => true,
         ];
         $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -102,9 +105,10 @@ class DashboardController extends Controller
 
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
-        $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
-        $totalUnAssignedLeadsReceivedEcommerce = count($todaysLeads->whereNull('advisor_id')->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($todaysLeads->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
+        $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
+        $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
+        $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
         $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
