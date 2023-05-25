@@ -6,6 +6,7 @@ import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
+import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 
 defineProps({
   quote: Object,
@@ -22,6 +23,7 @@ defineProps({
   advisors: Object,
   lostReasons: Object,
   quoteStatusEnum: Object,
+  duplicateAllowedLobs: Array,
 });
 
 const page = usePage();
@@ -30,25 +32,44 @@ const permissionsEnum = page.props.permissionsEnum;
 
 const historyLoading = ref(false);
 
-// history data
-const historyData = ref(null);
+const { isRequired } = useRules();
+const notification = useNotifications('toast');
 
-const onLoadHistoryData = async () => {
-  historyLoading.value = true;
-  const res = await fetch(
-    `/quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`,
-  );
-  const finalRes = await res.json();
-  historyData.value = finalRes;
-  historyLoading.value = false;
+
+const modals = reactive({
+  duplicate: false,
+});
+
+const leadDuplicateForm = useForm({
+  modelType: 'Pet',
+  parentType: 'Pet',
+  entityId: page.props.quote.id,
+  entityCode: page.props.quote.code,
+  entityUId: page.props.quote.uid,
+  lob_team: [],
+  lob_team_sub_selection: null,
+});
+
+const openDuplicate = () => {
+  modals.duplicate = true;
+  leadDuplicateForm.reset();
 };
 
-const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Notes', value: 'NewNotes' },
-  { text: 'Lead Status', value: 'NewStatus' },
-];
+const onCreateDuplicate = isValid => {
+  if (!isValid) return;
+  leadDuplicateForm.post('/quotes/createDuplicate', {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Quote duplicated successfully',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      modals.duplicate = false;
+    },
+  });
+};
 </script>
 
 <template>
@@ -58,6 +79,9 @@ const historyDataTable = [
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Pet Detail</h2>
       <div class="flex gap-2">
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
         <Link
           v-if="can(permissionsEnum.PetQuotesEdit)"
           :href="`/personal-quotes/pet/${quote.uuid}/edit`"
@@ -73,6 +97,46 @@ const historyDataTable = [
           <x-button size="sm" color="primary" tag="div"> Pet Quotes </x-button>
         </Link>
       </div>
+
+      <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
+        <template #header> Duplicate Lead </template>
+        <x-form @submit="onCreateDuplicate" :auto-focus="false">
+          <div class="grid gap-4">
+            <x-select
+              v-model="leadDuplicateForm.lob_team"
+              label="LOBs"
+              :options="
+                duplicateAllowedLobs.map(lob => ({
+                  value: lob,
+                  label: lob,
+                }))
+              "
+              :rules="[isRequired]"
+              placeholder="Select LOB For Duplication"
+              class="w-full"
+              multiple
+            />
+            <x-select
+              v-model="leadDuplicateForm.lob_team_sub_selection"
+              label="Reason"
+              :rules="[isRequired]"
+              class="w-full"
+              :options="[
+                { value: 'new_enquiry', label: 'New enquiry' },
+                { value: 'record_only', label: 'Record purposes only' },
+              ]"
+            />
+
+            <x-button
+              color="orange"
+              type="submit"
+              :loading="leadDuplicateForm.processing"
+            >
+              Create Duplicate
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -101,6 +165,11 @@ const historyDataTable = [
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">MOBILE NUMBER</dt>
             <dd>{{ quote?.mobile_no }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ADVISOR</dt>
+            <dd>{{ quote?.advisor?.name }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -190,6 +259,18 @@ const historyDataTable = [
             <dt class="font-medium">POSSESION TYPE</dt>
             <dd>{{ quote?.pet_quote?.possession_type?.text }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TRANSAPP CODE</dt>
+            <dd>{{ quote.quote_detail?.transapp_code }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">LOST REASON</dt>
+            <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PARENT CDB ID</dt>
+            <dd>{{ quote.parent_duplicate_quote_id }}</dd>
+          </div>
         </dl>
       </div>
 
@@ -244,7 +325,7 @@ const historyDataTable = [
       :personal-plans="personalPlans"
     />
 
-    <AdditionalContacts :quote="quote" />
+    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <QuoteStatus
       :quote="quote"
@@ -262,39 +343,8 @@ const historyDataTable = [
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
+    <LeadHistory :quote="quote" />
 
-      <div v-if="historyData === null" class="text-center py-3">
-        <x-button
-          size="sm"
-          color="primary"
-          outlined
-          @click.prevent="onLoadHistoryData"
-          :loading="historyLoading"
-        >
-          Load History Data
-        </x-button>
-      </div>
-
-      <DataTable
-        v-else
-        table-class-name="compact"
-        :headers="historyDataTable"
-        :items="historyData || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="historyData.length < 15"
-      />
-    </div>
-
-    <AuditLogs
-      :quote-type="quoteType"
-      :id="$page.props.quote.id"
-    />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
   </div>
 </template>

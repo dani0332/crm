@@ -49,6 +49,8 @@ class DatabaseSeeder extends Seeder
             RenewalBatchUpdatePermissionSeeder::class,
             addBusinessAsProduct::class,
             addHealthManualAssignmentByPassUsers::class,
+            AssignPermissionsToQuoteRoles::class,
+            addPermissionForCustomerSeeder::class,
         ]);
     }
 }

@@ -96,12 +96,12 @@ const onSearch = id => {
     <Head title="Health List ~ Card View" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
-      <div class="space-x-3">
-        <Link href="/quotes/health">
+      <div class="space-x-2">
+        <Link :href="route('health.index')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
-        <Link href="/quotes/health/create">
+        <Link :href="route('health.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>

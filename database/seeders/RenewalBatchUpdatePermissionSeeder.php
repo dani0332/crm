@@ -15,6 +15,6 @@ class RenewalBatchUpdatePermissionSeeder extends Seeder
      */
     public function run()
     {
-         Permission::findOrCreate(PermissionsEnum::RenewalBatchUpdate, 'web');
+        Permission::findOrCreate(PermissionsEnum::RenewalBatchUpdate, 'web');
     }
 }

@@ -49,15 +49,11 @@
         // global app configuration object
         var config = {
             routes: {
-                partner_datatable_route: "{{ route('partner.index') }}",
                 user_datatable_route:"{{ route('users.index') }}",
                 role_datatable_route:"{{ route('roles.index') }}",
                 carquote_datatable_route:"{{ route('carquotes.index') }}",
                 carquote_resubmitap_route:"{{ url('quotes/carquotes/resubmit_api') }}",
                 healthquote_datatable_route:"{{ route('healthquotes.index') }}",
-                reward_datatable_route:"{{ route('reward.index') }}",
-                reward_categories_datatable_route:"{{ route('reward-categories.index') }}",
-                reward_tags_datatable_route:"{{ route('reward-tags.index') }}",
                 claim_datatable_route:"{{ route('claims.index') }}",
                 typeofinsurance_datatable_route:"{{ route('typeofinsurance.index') }}",
                 subtypeofinsurance_datatable_route:"{{ route('subtypeofinsurance.index') }}",
@@ -76,8 +72,7 @@
                 transaction_datatable_route:"{{ route('transaction.index') }}",
                 re_issue_transaction_form:"{{ route('re_issue_transaction_form') }}",
             },
-            _token:"{{ csrf_token() }}",
-            image_path:"{{ \Config::get('constants.azure_storage_url').'myrewards/' }}"
+            _token:"{{ csrf_token() }}"
         };
     </script>
      <script src="{{ mix('/js/app.js') }}"></script>

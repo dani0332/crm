@@ -20,7 +20,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         $this->hideSensitiveRequestDetails();
 
         Telescope::filter(function (IncomingEntry $entry) {
-            if ($this->app->environment('staging') || $this->app->environment('local')) {
+            if ($this->app->environment('staging') || $this->app->environment('local') || $this->app->environment('production')) {
                 return true;
             }
 

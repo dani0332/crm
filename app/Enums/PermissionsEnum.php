@@ -126,7 +126,9 @@ final class PermissionsEnum extends Enum
     const RenewalsUpload = 'renewals-upload';
     const CustomersUpload = 'customers-upload';
     const TravelQuotesList = 'travel-quotes-list';
+    const TravelQuotesShow = 'travel-quotes-show';
     const LifeQuotesList = 'life-quotes-list';
+    const LifeQuotesShow = 'life-quotes-show';
     const HomeQuotesList = 'home-quotes-list';
     const BusinessQuotesList = 'business-quotes-list';
     const TeamsList = 'teams-list';
@@ -167,6 +169,7 @@ final class PermissionsEnum extends Enum
     const PetQuotesUpdate = 'pet-quotes-update';
     const PetQuotesDelete = 'pet-quotes-delete';
     const PetQuotesView = 'pet-quotes-view';
+    const PetQuotesShow = 'pet-quotes-show';
     const PetQuotesEdit = 'pet-quotes-edit';
     const DashboardView = 'dashboard-view';
     const LeadAllocationView = 'lead-allocation-view';

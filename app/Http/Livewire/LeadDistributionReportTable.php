@@ -53,7 +53,7 @@ class LeadDistributionReportTable extends DataTableComponent
             ->toArray();
 
         if (! $this->getAppliedFilterWithValue('created_at')) {
-            $this->setFilter('created_at', now()->subDays($this->maxDays)->format('d-m-Y').'~'.now()->format('d-m-Y'));
+            $this->setFilter('created_at', now()->format('d-m-Y').'~'.now()->format('d-m-Y'));
         }
     }
 
@@ -67,8 +67,8 @@ class LeadDistributionReportTable extends DataTableComponent
             Column::make('Leads Created')->label(fn ($row) => $row->lead_created)->footer(function ($rows) {
                 return $rows->sum('lead_created');
             })->sortable(),
-            Column::make('Total Leads')->label(fn ($row) => $row->lead_created + $row->received_leads)->footer(function ($rows) {
-                return $rows->sum('lead_created') + $rows->sum('received_leads');
+            Column::make('Total Leads')->label(fn ($row) => $row->total_leads)->footer(function ($rows) {
+                return $rows->sum('total_leads');
             })->sortable(),
             Column::make('UnAssigned Leads')->label(fn ($row) => $row->unassigned_leads)->footer(function ($rows) {
                 return $rows->sum('unassigned_leads');
@@ -90,8 +90,7 @@ class LeadDistributionReportTable extends DataTableComponent
 
             (SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
             + SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
-            + SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END))
-            - SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END)) AS received_leads,
+            + SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END))) AS received_leads,
 
             SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) AS lead_created, COUNT(*) AS total_leads,
 
@@ -103,7 +102,7 @@ class LeadDistributionReportTable extends DataTableComponent
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('tiers.name');
 
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+        if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
             $userIds = $this->walkTree(auth()->user()->id);
             info('user ids for lead distribution report are : '.json_encode($userIds));
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);

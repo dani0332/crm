@@ -129,34 +129,6 @@ class TravelQuoteService extends BaseService
         return $response;
     }
 
-    public function getTravelOverDueFollowups()
-    {
-        $query = DB::table('travel_quote_request as tqr')
-            ->select(
-                'tqr.id',
-                'tqr.uuid',
-                'tqr.code',
-                DB::raw("CONCAT_WS(' ',tqr.first_name,tqr.last_name) AS clientName"),
-                'qs.text as leadStatus',
-                'tqr.created_at as createdAt',
-                'tqr.quote_status_id',
-                'tqrd.advisor_assigned_date as assignedDate',
-                'u.name as assignedBy',
-                'tqr.updated_at',
-                'tqr.source as leadSource',
-                'tqr.premium',
-                'tqrd.next_followup_date as nextFollowupDate'
-            )
-            ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
-            ->where('tqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
-            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
-            ->where('tqr.advisor_id', Auth::user()->id);
-
-        return $query;
-    }
-
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)
     {
         $query = DB::table('travel_quote_request as tqr')
@@ -191,101 +163,6 @@ class TravelQuoteService extends BaseService
     public function getLeadsForAssignment()
     {
         return TravelQuote::orderBy('created_at', 'desc')->get();
-    }
-
-    public function getTravelLeadsForAdvisor($request)
-    {
-        $query = DB::table('travel_quote_request as tqr')
-            ->select(
-                'tqr.id',
-                'tqr.uuid',
-                'tqr.code',
-                'qs.text as leadStatus',
-                'tqr.created_at as createdAt',
-                'tqr.quote_status_id',
-                'tqrd.advisor_assigned_date as assignedDate',
-                'u.name as assignedBy',
-                'tqr.updated_at as updatedAt',
-                'tqr.premium as premium',
-                'tqr.email as email',
-                'tqr.mobile_no as mobile_no',
-                'tqr.source as leadSource',
-                'tqrd.next_followup_date as nextFollowupDate',
-                'tqr.previous_quote_id',
-                'ps.text as paymentStatus',
-                'tqr.renewal_batch as renewalBatch',
-                'tqr.previous_quote_policy_number as previousPolicyNumber',
-                DB::raw('DATE_FORMAT(tqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
-                'tqr.previous_quote_policy_premium as previousPolicyPremium',
-                'tqr.first_name as firstName',
-                'tqr.last_name as lastName',
-            )
-            ->leftJoin('travel_quote_request_detail as tqrd', 'tqrd.travel_quote_request_id', '=', 'tqr.id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'tqrd.advisor_assigned_by_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
-            ->where('tqr.quote_status_id', '!=', 9)
-            ->where('tqr.advisor_id', Auth::user()->id)
-            ->orderBy('tqr.created_at', 'DESC');
-
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            if ($column == 3) {
-                $column = 'tqr.created_at';
-            }
-            if ($column == 4) {
-                $column = 'tqrd.advisor_assigned_date';
-            }
-            if ($column == 7) {
-                $column = 'tqrd.next_followup_date';
-            }
-            $query->orderBy($column, $direction);
-        }
-        if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
-            $query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
-            $query->whereBetween('tqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->cdbId) && $request->cdbId != 0) {
-            $query->where('tqr.code', $request->cdbId);
-        }
-        if (isset($request->email) && $request->email != '') {
-            $query->where('tqr.email', $request->email);
-        }
-        if (isset($request->leadStatus) && $request->leadStatus != 0) {
-            $query->where('tqr.quote_status_id', $request->leadStatus);
-        }
-        if (isset($request->paymentStatus)) {
-            $query->where('tqr.payment_status_id', $request->paymentStatus);
-        }
-        if (Auth::user()->isRenewalAdvisor()) {
-            $query->whereNotNull('tqr.previous_quote_policy_number');
-        }
-        if (Auth::user()->isNewBusinessAdvisor()) {
-            $query->whereNull('tqr.previous_quote_policy_number');
-        }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $query->where('tqr.renewal_batch', $request->renewal_batch);
-        }
-        if (isset($request->previous_policy_number) && $request->previous_policy_number != '') {
-            $query->where('tqr.previous_quote_policy_number', $request->previous_policy_number);
-        }
-        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $query->whereBetween('tqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $query->where('tqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-        }
-
-        return $query;
     }
 
     public function getGridData($model, $request)
@@ -355,7 +232,6 @@ class TravelQuoteService extends BaseService
         if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
-            $this->query->whereNull('tqr.previous_quote_policy_number');
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
             $this->query->where('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
@@ -653,9 +529,6 @@ class TravelQuoteService extends BaseService
                 break;
             case 'mobile_no':
                 $title = 'Mobile Number';
-                break;
-            case 'next_followup_date':
-                $title = 'Next Followup Date';
                 break;
             case 'previous_quote_id':
                 $title = 'Previous Quote Id';

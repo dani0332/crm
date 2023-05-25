@@ -58,6 +58,17 @@ trait GenericQueriesAllLobs
         return $model::find($id);
     }
 
+    public function getRepositoryObject($quoteType)
+    {
+        $repository = '\\App\\Repositories\\'.ucwords($quoteType).'QuoteRepository';
+
+        if (! class_exists($repository)) {
+            return false;
+        }
+
+        return $repository;
+    }
+
     public function createDuplicateRecord($lob, $parentRecord)
     {
         if (! ($lob) || ! isset($parentRecord->enquiryType) || ! isset($parentRecord->id)) {

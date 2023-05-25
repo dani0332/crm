@@ -890,19 +890,19 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td>Hide Plan?</td>
 								<td style="width: 10%;">
 									<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
-										<input type="checkbox" class="success" id="is_disabled" name="is_disabled" @if($isDisabled=="false" ) checked="checked" @endif>
+										<input type="checkbox" class="success" id="is_disabled" name="is_disabled" @if(isset($isDisabled) && $isDisabled==GenericRequestEnum::FALSE ) checked="checked" @endif>
 										<span class="slider round"></span>
 								</td>
 								<td>Manual</td>
 								<td>
 									<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
-										<input type="checkbox" class="success" id="is_manual_update" name="is_manual_update" @if(isset($isManualUpdate) && $isManualUpdate=="true" ) checked="checked" @endif {{ !$shouldReviseQuote && $isManualUpdate ? "disabled" : "" }}>
+										<input type="checkbox" class="success" id="is_manual_update" name="is_manual_update" @if(isset($isManualUpdate) && $isManualUpdate=="true" ) checked="checked" @endif {{ !isset($shouldReviseQuote) && isset($isManualUpdate) ? "disabled" : "" }}>
 										<span class="slider round"></span>
 								</td>
 							</tr>
 							<tr>
 								<td>Provider Name:</td>
-								<td>{{ $providerName }}</td>
+								<td>{{ isset($providerName) ? $providerName : NULL }}</td>
 								<td>Repair Type:</td>
 								<td>{{ $repairType == CarPlanType::COMP ? 'NON-AGENCY' : $repairType }}</td>
 							</tr>

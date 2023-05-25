@@ -12,6 +12,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Exports\HealthQuotesExport;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -221,6 +222,7 @@ class CRUDController extends Controller
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
+                'isManualAllocationAllowed' => $isManualAllocationAllowed,
             ]);
         }
 
@@ -228,8 +230,6 @@ class CRUDController extends Controller
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->make(true);
-
-            return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'userMaxCap', 'todayAssignmentCount'));
         }
 
         return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'userMaxCap', 'todayAssignmentCount'));
@@ -267,7 +267,7 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HealthQuote/Create', [
+            return inertia('HealthQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -682,7 +682,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HealthQuote/Edit', [
+            return inertia('HealthQuote/Form', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'dropdownSource' => $dropdownSource,
@@ -735,17 +735,6 @@ class CRUDController extends Controller
         }
 
         return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 
     public function cardsViewHome(Request $request)
@@ -1263,7 +1252,8 @@ class CRUDController extends Controller
 
     public function manualPlanToggle(Request $request)
     {
-        $response = $this->carQuoteService->updateManualPlansBulk($request);
+        $response = $this->{strtolower($request->modelType).'QuoteService'}->updateManualPlansBulk($request);
+
         if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
             return redirect()->back()->with('success', 'Plan has been updated');
         } else {
@@ -1313,6 +1303,23 @@ class CRUDController extends Controller
         $pdf = $response['pdf'];
 
         return $pdf->download($response['name']);
+    }
+
+    /**
+     * export health leads to excel sheet.
+     */
+    public function exportHealthLeads(Request $request)
+    {
+        $created_at_start = $request->created_at_start;
+        $created_at_end = $request->created_at_end;
+
+        if (Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end)) > 120) {
+            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+        }
+
+        $query = $this->crudService->getGridData($this->genericModel, $request);
+
+        return (new HealthQuotesExport($query))->download('Health-List.xlsx');
     }
 
     public function destroyDocument($quoteType, $quoteUuId, $id)

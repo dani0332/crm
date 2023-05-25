@@ -19,11 +19,6 @@ class Customer extends Model implements AuditableContract
         return $this->hasOne(Nationality::class, 'id', 'nationality_id');
     }
 
-    public function Rewards()
-    {
-        return $this->belongsToMany(Reward::class, 'reward_customer_viewed', 'reward_id', 'customer_id');
-    }
-
     public function MyAlfredUsers()
     {
         return $this->hasOne(MyAlFredUser::class);

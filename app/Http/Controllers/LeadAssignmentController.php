@@ -94,6 +94,7 @@ class LeadAssignmentController extends Controller
         $suffix = '';
         switch ($leadType) {
             case 'health':
+            case 'home':
                 $suffix = 'hqr';
                 break;
             case 'life':
@@ -105,11 +106,10 @@ class LeadAssignmentController extends Controller
             case 'car':
                 $suffix = 'cqr';
                 break;
-            case 'home':
-                $suffix = 'hqr';
-                break;
             case 'business':
                 $suffix = 'bqr';
+                break;
+            default:
                 break;
         }
 

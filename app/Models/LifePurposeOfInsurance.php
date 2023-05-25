@@ -12,4 +12,9 @@ class LifePurposeOfInsurance extends Model implements AuditableContract
     use HasFactory, Auditable;
 
     protected $table = 'life_insurance_purpose';
+
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
 }

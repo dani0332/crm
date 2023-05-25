@@ -210,142 +210,6 @@ $(document).ready(function () {
     scrollX: true,
   });
 
-  $('.data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    ajax: config.routes.partner_datatable_route,
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.partner_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'name', name: 'name' },
-      { data: 'name_ar', name: 'name_ar' },
-      {
-        data: 'logo_image',
-        name: 'logo_image',
-        render: function (data, type, row, meta) {
-          var imgsrc = config.image_path + data; // here data should be in base64 string
-          return (
-            '<img class="img-responsive" src="' +
-            imgsrc +
-            '" alt="logo_image" height="40px" width="40px">'
-          );
-        },
-      },
-      { data: 'is_active', name: 'is_active' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-    ],
-  });
-
-  var rewardCategory = $('.reward-category-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    ajax: config.routes.reward_categories_datatable_route,
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.reward_categories_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'text', name: 'text' },
-      { data: 'text_ar', name: 'text_ar' },
-      { data: 'sort_order', name: 'sort_order' },
-      { data: 'is_active', name: 'is_active' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-    ],
-  });
-
-  var rewardTags = $('.reward-tag-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    ajax: config.routes.reward_tags_datatable_route,
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.reward_tags_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'text', name: 'text' },
-      { data: 'text_ar', name: 'text_ar' },
-      { data: 'sort_order', name: 'sort_order' },
-      { data: 'is_active', name: 'is_active' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-    ],
-  });
-
-  $('.reward-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    ajax: config.routes.reward_datatable_route,
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.reward_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'coupon_code', name: 'coupon_code' },
-      { data: 'partner', name: 'partner' },
-      { data: 'discount', name: 'discount' },
-      { data: 'start_date', name: 'start_date' },
-      { data: 'end_date', name: 'end_date' },
-      { data: 'sort_order', name: 'sort_order' },
-      { data: 'is_active', name: 'is_active' },
-    ],
-  });
-
   var usersDataTable = $('.user-data-table').DataTable({
     ordering: false,
     info: false,
@@ -394,9 +258,10 @@ $(document).ready(function () {
   $('.role-data-table').DataTable({
     ordering: false,
     info: false,
-    searching: false,
+    searching: true,
     bLengthChange: false,
     serverSide: true,
+    pageLength: 20,
     ajax: config.routes.role_datatable_route,
     columns: [
       {
@@ -699,139 +564,6 @@ $(document).ready(function () {
       { data: 'is_active', name: 'is_active' },
       { data: 'created_by', name: 'created_by' },
       { data: 'updated_by', name: 'updated_by' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-    ],
-  });
-
-  var carquoteDatatable = $('.carquote-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: {
-      url: config.routes.carquote_datatable_route,
-      data: function (d) {
-        d.searchtype = $('#search_type').val();
-        d.searchfield = $('input[name=searchfield]').val();
-        d.quotestatus = $('#quote_status_value').val();
-        d.paymentstatus = $('#payment_status_value').val();
-      },
-    },
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.carquote_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'car_value', name: 'car_value' },
-      { data: 'is_synced', name: 'is_synced' },
-      { data: 'device', name: 'device' },
-      { data: 'code', name: 'code' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-    ],
-  });
-
-  $('#search-car-quote').submit(function (e) {
-    e.preventDefault();
-    $('.loader').show();
-    carquoteDatatable.draw();
-    setTimeout(() => {
-      $('.loader').hide();
-    }, 1000);
-  });
-
-  $('#resubmit_api_carquote').click(function () {
-    $('.loader').show();
-    $('#resubmit_api_carquote').attr('disabled', true);
-    var data_id = $(this).attr('data-id');
-    var carQuotes = [];
-    if (data_id != '') carQuotes.push(data_id);
-    $('.multicheckbox').each(function (index) {
-      if ($(this).prop('checked')) {
-        var id = $(this).attr('data-id');
-        carQuotes.push(id);
-      }
-    });
-    if (carQuotes.length > 0) {
-      $.ajax({
-        url: config.routes.carquote_resubmitap_route,
-        type: 'post',
-        data: { car_quotes: carQuotes, _token: config._token },
-        success: function (response) {
-          $('.loader').hide();
-          $('#success_message').show();
-          $('#success_message')
-            .fadeIn()
-            .html('Resubmit Api Execution is successfull');
-
-          $('.carquote-data-table').DataTable().ajax.reload();
-
-          setTimeout(function () {
-            $('#resubmit_api_carquote').attr('disabled', false);
-            $('#success_message').fadeOut('slow');
-          }, 3000);
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-          $('.loader').hide();
-          $('#error_message').show();
-          $('#error_message').fadeIn().html(errorThrown);
-          setTimeout(function () {
-            $('#resubmit_api_carquote').attr('disabled', false);
-            $('#error_message').fadeOut('slow');
-          }, 3000);
-        },
-      });
-    } else {
-      $('.loader').hide();
-      $('#error_message').show();
-      $('#error_message').fadeIn().html('Please select atleast one row');
-      setTimeout(function () {
-        $('#resubmit_api_carquote').attr('disabled', false);
-        $('#error_message').fadeOut('slow');
-      }, 3000);
-    }
-  });
-
-  $('.healthquote-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: config.routes.healthquote_datatable_route,
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.healthquote_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'preference', name: 'preference' },
-      { data: 'is_synced', name: 'is_synced' },
-      { data: 'device', name: 'device' },
-      { data: 'code', name: 'code' },
       { data: 'created_at', name: 'created_at' },
       { data: 'updated_at', name: 'updated_at' },
     ],
@@ -1151,20 +883,6 @@ $(document).ready(function () {
     }, 2000);
   });
 
-  $('.health-plan-link-copy').on('click', function () {
-    var planId = $(this).attr('data-planId');
-    var quoteUUID = $(this).attr('data-quoteUUId');
-    var providerCode = $(this).attr('data-providerCode');
-    var websiteURL = $(this).attr('data-websiteURL');
-    var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-    navigator.clipboard.writeText(paymentLink);
-    var self = this;
-    $(this).text('Copied !');
-    setTimeout(function () {
-      $(self).text('Copy');
-    }, 2000);
-  });
-
   $('#btn_copy_doc_upload_link').on('click', function () {
     var doc_upload_url = $(this).data('doc-upload-url');
     navigator.clipboard.writeText(doc_upload_url);
@@ -1197,7 +915,7 @@ $(document).ready(function () {
             "<a href='" +
             config.routes.customer_data_table_route +
             '/' +
-            row.id +
+            row.uuid +
             "'>" +
             row.id +
             '</a>'
@@ -1805,15 +1523,6 @@ $(document).ready(function () {
     }
   });
 
-  $('#healthPlansAll').on('click', function()
-  {
-    if($(this).is(":checked")) {
-      $('.health-plans-checkbox').prop('checked',this.checked);
-    } else {
-      $('.health-plans-checkbox').removeAttr('checked');
-    } 
-  });
-
   // TM Leads: Select tm leads id and store in hidden field
   $('#checkAllTmLeads').click(function () {
     $('input:checkbox').not(this).prop('checked', this.checked);
@@ -2018,107 +1727,6 @@ $(document).ready(function () {
     ],
   });
 
-  $('.rewardsliders-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    processing: true,
-    ajax: config.routes.reward_sliders_datatable_route,
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.reward_sliders_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      {
-        data: 'image',
-        name: 'image',
-        render: function (data, type, row, meta) {
-          var imgsrc = config.image_path_rewards_slider + data;
-          return (
-            '<img class="img-responsive" src="' +
-            imgsrc +
-            '" alt="image" height="40px" width="40px">'
-          );
-        },
-      },
-      { data: 'link', name: 'link' },
-      { data: 'start_date', name: 'start_date' },
-      { data: 'end_date', name: 'end_date' },
-      { data: 'sort_order', name: 'sort_order' },
-      { data: 'is_public', name: 'is_public' },
-      { data: 'is_active', name: 'is_active' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-    ],
-  });
-
-  $('#rewards_slider_start_end #start_date').daterangepicker({
-    // Rewards Slider start date & time
-    timePicker: true,
-    singleDatePicker: true,
-    timePicker24Hour: true,
-    minDate: new Date(),
-    locale: {
-      format: 'YYYY-MM-DD HH:mm:ss',
-    },
-  });
-
-  var rewardSliderEditEndDateTime = $(
-    '#rewards_slider_start_end #rewardSliderEditEndDateTime',
-  ).val();
-  var rsdt = new Date();
-  var rewardSliderEditCurrentDateTime =
-    rsdt.getFullYear() +
-    '-' +
-    ('0' + (rsdt.getMonth() + 1)).slice(-2) +
-    '-' +
-    ('0' + rsdt.getDate()).slice(-2) +
-    ' ' +
-    ('0' + rsdt.getHours()).slice(-2) +
-    ':' +
-    ('0' + rsdt.getMinutes()).slice(-2) +
-    ':' +
-    ('0' + rsdt.getSeconds()).slice(-2);
-
-  console.log(
-    'rewardSliderEditCurrentDateTime: ',
-    rewardSliderEditCurrentDateTime,
-  );
-  console.log('rewardSliderEditEndDateTime: ', rewardSliderEditEndDateTime);
-
-  if (
-    rewardSliderEditEndDateTime != '' &&
-    rewardSliderEditEndDateTime < rewardSliderEditCurrentDateTime
-  ) {
-    minRewardSliderEndDateTime = rewardSliderEditEndDateTime;
-  } else {
-    minRewardSliderEndDateTime = new Date();
-  }
-
-  $('#rewards_slider_start_end #end_date').daterangepicker({
-    // Rewards Slider end date & time
-    timePicker: true,
-    singleDatePicker: true,
-    timePicker24Hour: true,
-    minDate: minRewardSliderEndDateTime,
-    locale: {
-      format: 'YYYY-MM-DD HH:mm:ss',
-    },
-  });
-
   //select/unselect all checkboxes if this selected
   $('#select_all_checkboxes').click(function (e) {
     var isChecked = e.target.checked;
@@ -2149,10 +1757,6 @@ $(document).ready(function () {
   });
   $('#add-activity-btn').on('click', function () {
     $('#activityModal').modal({ show: true });
-  });
-  $('#add-edit-health-members-btn').on('click', function () {
-    $('#ebp_gender,#ebp_dob,#ebp_category,#ebp_salary').val('');
-    $('#addHealthMemberModal').modal({ show: true });
   });
   $('#add-edit-travel-members-btn').on('click', function () {
     $('#addTravelMemberModal').modal({ show: true });
@@ -2205,15 +1809,6 @@ $(document).ready(function () {
     $('#redirect_to_view_div').html(input);
     setTimeout(function () {
       $('#demo-form2').submit();
-    }, 500);
-  });
-
-  $('.active_reward').click(function (e) {
-    e.preventDefault();
-    var input = '<input name="active_reward" type="hidden" value="1"/>';
-    $('#active_reward').html(input);
-    setTimeout(function () {
-      $('form').submit();
     }, 500);
   });
 
@@ -2333,56 +1928,6 @@ $(document).ready(function () {
     columns: [{ data: 'batch', name: 'batch' }],
   });
 
-  var searchLeadsTable = $('.leadSearch-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: {
-      url: config.routes.searchLeadsDataTable,
-      data: function (d) {
-        d.leadType = $('#leadType').val();
-        d.cdbID = $('#cdbID').val();
-        d.email = $('#email').val();
-        d.phnNumber = $('#phnNumber').val();
-      },
-    },
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          if (row.access) {
-            return (
-              "<a href='" +
-              config.routes.searchLeadsDataTable +
-              '/' +
-              row.id +
-              "'>" +
-              row.id +
-              '</a>'
-            );
-          } else {
-            return row.id;
-          }
-        },
-      },
-
-      { data: 'created_at', name: 'created_at' },
-      { data: 'first_name', name: 'first_name' },
-      { data: 'last_name', name: 'last_name' },
-      { data: 'advisor_name', name: 'advisor_name' },
-    ],
-  });
-  $('#search-leads').submit(function (e) {
-    e.preventDefault();
-    $('.loader').show();
-    searchLeadsTable.draw();
-    setTimeout(() => {
-      $('.loader').hide();
-    }, 1000);
-  });
   $('#car_make_value').on('change', function (e) {
     var make_code = $('#car_make_value option:selected').attr('data-id');
     $.get('/valuation/car-models?make_code=' + make_code, function (data) {
@@ -2707,20 +2252,6 @@ $(document).ready(function () {
     }, 2000);
   });
 
-  $('.health-plan-link-copy').on('click', function () {
-    var planId = $(this).attr('data-planId');
-    var quoteUUID = $(this).attr('data-quoteUUId');
-    var providerCode = $(this).attr('data-providerCode');
-    var websiteURL = $(this).attr('data-websiteURL');
-    var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-    navigator.clipboard.writeText(paymentLink);
-    var self = this;
-    $(this).text('Copied !');
-    setTimeout(function () {
-      $(self).text('Copy');
-    }, 2000);
-  });
-
   $('#btn_download_plan_pdf').on('click', function () {
     if ($("input[name='toggle_plans_checkbox']:checked").length < 3) {
       alert('Please select at least three (3) plans to download pdf.');
@@ -2742,29 +2273,6 @@ $(document).ready(function () {
     $('#form_plans_pdf').submit();
   });
 });
-
-$('#btn_download_plan_pdf_health').on('click', function () {
-  
-  if ($("input[name='health_plans_checkbox']:checked").length < 3) {
-    alert('Please select at least three (3) plans.');
-    return false;
-  }
-
-  if ($("input[name='health_plans_checkbox']:checked").length > 5) {
-    alert('A maximum of five (5) plans are allowed to be selected.');
-    return false;
-  }
-
-  var plan_ids = [];
-
-  $.each($("input[name='health_plans_checkbox']:checked"), function () {
-    plan_ids.push($(this).val());
-  });
-
-  $('#plan_ids').val(plan_ids);
-  $('#form_plans_pdf').submit();
-});
-
 
 $('#renewals-upload-button').click(function () {
   $('#renewals-upload-button').hide();
@@ -2911,34 +2419,6 @@ function isNumberKey(evt, obj) {
   if (charCode == 46) return true;
   if (charCode > 31 && (charCode < 48 || charCode > 57)) return false;
   return true;
-}
-
-function editMemberDetail(member) {
-  $.ajax({
-    url: '/members/' + member + '/edit',
-    method: 'GET',
-    success: function (data) {
-      $('#member_model_content_form').html(data);
-      $('#addHealthMemberModal').modal({ show: true });
-    },
-  });
-}
-
-function deleteMemberDetail(member) {
-  if (confirm('Are you sure you want to delete this member?')) {
-    $.ajax({
-      url: '/members/' + member,
-      method: 'delete',
-      data: {
-        _token: $('input[name=_token]').val(),
-      },
-      success: function (data) {
-        location.reload();
-      },
-    });
-  } else {
-    return false;
-  }
 }
 
 function editTravelMemberDetail(member) {
@@ -3141,47 +2621,47 @@ $('#send-one-click-buy-email-btn').on('click', function () {
 // Button: Send One click buy email - End
 
 var teamsDataTable = $('.teams-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: {
-      url: config.routes.teams_datatable_route,
-      data: function (d) {
-        d.name = $('#name').val();
+  ordering: false,
+  info: false,
+  searching: false,
+  bLengthChange: false,
+  serverSide: true,
+  ajax: {
+    url: config.routes.teams_datatable_route,
+    data: function (d) {
+      d.name = $('#name').val();
+    },
+  },
+  columns: [
+    {
+      data: 'id',
+      name: 'id',
+      render: function (data, type, row) {
+        return (
+          "<a href='" +
+          config.routes.teams_datatable_route +
+          '/' +
+          row.id +
+          "'>" +
+          row.id +
+          '</a>'
+        );
       },
     },
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.teams_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'name', name: 'name' },
-      { data: 'type', name: 'type' },
-      { data: 'parent.name', name: 'parent.name' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-      { data: 'is_active', name: 'is_active' },
-    ],
-  });
+    { data: 'name', name: 'name' },
+    { data: 'type', name: 'type' },
+    { data: 'parent.name', name: 'parent.name' },
+    { data: 'created_at', name: 'created_at' },
+    { data: 'updated_at', name: 'updated_at' },
+    { data: 'is_active', name: 'is_active' },
+  ],
+});
 
-  $('#search-teams').submit(function (e) {
-    e.preventDefault();
-    $('.loader').show();
-    teamsDataTable.draw();
-    setTimeout(() => {
-      $('.loader').hide();
-    }, 1000);
-  });
+$('#search-teams').submit(function (e) {
+  e.preventDefault();
+  $('.loader').show();
+  teamsDataTable.draw();
+  setTimeout(() => {
+    $('.loader').hide();
+  }, 1000);
+});

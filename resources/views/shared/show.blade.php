@@ -96,7 +96,15 @@ use App\Enums\GenericRequestEnum;
                     <ul class="nav navbar-right panel_toolbox">
                         @cannot(PermissionsEnum::ApprovePayments)
                             @if (count($allowedDuplicateLOB) > 0)
-                                <li> <a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a> </li>
+                                @if(str_contains(strtolower($model->modelType), 'car'))
+                                    @if(!auth()->user()->hasAnyRole([
+                                        RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager]
+                                    ))
+                                        <li><a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a></li>
+                                    @endif
+                                @else
+                                    <li><a id="duplicateLeadModalBtn" class="btn btn-warning btn-sm">Duplicate Lead</a></li>
+                                @endif
                             @endif
                         @endcannot
                         <li><a href="{{ url('quotes/' . strtolower($model->modelType)) }}"
@@ -522,15 +530,6 @@ use App\Enums\GenericRequestEnum;
                 </div>
             </div>
         </div>
-        <x-health-quote-ecom-details :data="$ecomDetails" />
-        <x-health-quote-plans
-            :record="$record"
-            :listQuotePlans="$listQuotePlans"
-            :uuidModal="$record->uuid"
-            :quoteRequestId="$record->id"
-            :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
-            <x-health-quote-members-detail :members="$membersDetail" />
-        <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />

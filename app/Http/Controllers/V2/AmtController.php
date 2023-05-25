@@ -174,9 +174,10 @@ class AmtController extends Controller
             $data->orderBy('bqr.created_at', 'DESC');
         }
 
+        $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManagerORDeputy;
         $quotes = $data->simplePaginate(15)->withQueryString();
 
-        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes'));
+        return inertia('GroupMedicalQuote/Index', compact('model', 'leadStatuses', 'advisors', 'isManagerORDeputy', 'quotes', 'isManualAllocationAllowed'));
     }
 
     /**
@@ -293,6 +294,7 @@ class AmtController extends Controller
             'permissions' => [
                 'canEditQuote' => auth()->user()->can('corpline-quotes-edit'),
             ],
+            'typeCode' => quoteTypeCode::GroupMedical,
         ]);
     }
 
@@ -323,8 +325,6 @@ class AmtController extends Controller
             'gmTypes' => $gmTypes,
             'selectedGmType' => $selectedGmType,
         ]);
-
-        return view('amt.edit', compact('businessInsuranceType', 'record', 'gmTypes', 'selectedGmType'));
     }
 
     /**

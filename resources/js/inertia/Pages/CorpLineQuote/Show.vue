@@ -1,5 +1,4 @@
 <script setup>
-
 defineProps({
   quote: Object,
   genderOptions: Object,
@@ -11,11 +10,10 @@ defineProps({
   activities: Array,
   advisors: Array,
   permissions: Object,
+  typeCode: String,
 });
 
-const {
-  isRequired
-} = useRules();
+const { isRequired } = useRules();
 
 const page = usePage();
 
@@ -53,9 +51,6 @@ const modals = reactive({
   createPlan: false,
   activity: false,
   activityConfirm: false,
-  addContact: false,
-  contactDeleteConfirm: false,
-  contactPrimaryConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -287,6 +282,10 @@ const onActivitySubmit = isValid => {
   }
 };
 
+const confirmDeleteData = reactive({
+  activity: null,
+});
+
 const activityDelete = id => {
   modals.activityConfirm = true;
   confirmDeleteData.activity = id;
@@ -314,124 +313,9 @@ const activityDeleteConfirmed = () => {
   );
 };
 
-// additional contact
-
-const additionalContactTable = [
-  { text: 'Type', value: 'key' },
-  { text: 'Value', value: 'value' },
-  { text: 'Created At', value: 'created_at' },
-  { text: 'Action', value: 'action' },
-];
-
-const additionalContact = useForm({
-  id: null,
-  additional_contact_type: null,
-  additional_contact_val: null,
-  quote_id: page.props.quote.id,
-  customer_id: page.props.quote.customer_id,
-  quote_type: 'business',
+const isDuplicateAllowed = computed(() => {
+  return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
 });
-
-const addAdditionalContact = () => {
-  additionalContact.additional_contact_type = null;
-  additionalContact.additional_contact_val = null;
-  modals.addContact = true;
-};
-
-const onAdditionalContactSubmit = isValid => {
-  if (!isValid) return;
-  additionalContact
-    .transform(data => ({
-      ...data,
-      isInertia: true,
-    }))
-    .post(`/customer-additional-contact/add`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Additional Contact Added',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.addContact = false;
-      },
-      onError: err => {
-        const firstError = Object.values(err)[0];
-        notification.error({
-          title: firstError,
-          position: 'top',
-        });
-      },
-    });
-};
-
-const additionalContactDelete = id => {
-  modals.contactDeleteConfirm = true;
-  confirmDeleteData.contact = id;
-};
-
-const additionalContactDeleteConfirmed = () => {
-  router.post(
-    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
-    {
-      isInertia: true,
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.error({
-          title: 'Additional Contact Deleted',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactDeleteConfirm = false;
-      },
-    },
-  );
-};
-
-const additionalContactPrimary = data => {
-  modals.contactPrimaryConfirm = true;
-  confirmData.contactPrimary = data;
-};
-
-const additionalContactPrimaryConfirmed = () => {
-  const isEmail = confirmData.contactPrimary.key === 'email';
-  router.post(
-    `/customer-additional-contact/${
-      isEmail ? confirmData.contactPrimary.id : 0
-    }/make-primary`,
-    {
-      isInertia: true,
-      quote_id: page.props.quote.id,
-      key: confirmData.contactPrimary.key,
-      value: confirmData.contactPrimary.value,
-      quote_type: 'Business',
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Additional Contact Primary',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactPrimaryConfirm = false;
-      },
-    },
-  );
-};
 
 const onAssignLead = () => {
   if (!assignLead.value) {
@@ -465,8 +349,6 @@ const onAssignLead = () => {
     },
   );
 };
-
-onMounted(() => {});
 </script>
 <template>
   <div>
@@ -475,7 +357,7 @@ onMounted(() => {});
       <h2 class="text-xl font-semibold">Business Quote Detail</h2>
       <div class="flex gap-2">
         <x-button
-          v-if="allowedDuplicateLOB"
+          v-if="isDuplicateAllowed"
           size="sm"
           color="#ff5e00"
           @click.prevent="openDuplicate"
@@ -534,6 +416,10 @@ onMounted(() => {});
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">ID</dt>
+            <dd>{{ quote.id }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CDB ID</dt>
             <dd>{{ quote.code }}</dd>
           </div>
@@ -573,6 +459,11 @@ onMounted(() => {});
           </div>
 
           <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">POLICY NUMBER</dt>
+            <dd>{{ quote.policy_number }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
             <dd>{{ quote.lost_reason }}</dd>
           </div>
@@ -590,6 +481,11 @@ onMounted(() => {});
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LAST MODIFIED DATE</dt>
             <dd>{{ quote.updated_at }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">PREMIUM</dt>
+            <dd>{{ quote.premium }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -662,83 +558,82 @@ onMounted(() => {});
           </div>
         </dl>
       </div>
-
-      <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
-        <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-          <x-divider class="mb-4 mt-1" />
-        </div>
-        <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <div class="flex flex-col gap-4">
-              <x-select
-                v-model="leadStatusForm.leadStatus"
-                label="STATUS"
-                :options="leadStatusOptions"
-                :disabled="
-                  quote.quote_status_id ==
-                  enums.quoteStatusEnum.TransactionApproved
-                "
-                placeholder="Lead Status"
-                class="w-full"
-              />
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                label="NOTES"
-                placeholder="Lead Notes"
-                class="w-full"
-                :disabled="
-                  quote.quote_status_id ==
-                  enums.quoteStatusEnum.TransactionApproved
-                "
-              />
-            </div>
-          </div>
-          <div class="w-full md:w-2/3">
-            <x-input
-              v-if="
-                leadStatusForm.leadStatus ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
+    </div>
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-select
+              v-model="leadStatusForm.leadStatus"
+              label="STATUS"
+              :options="leadStatusOptions"
               :disabled="
                 quote.quote_status_id ==
                 enums.quoteStatusEnum.TransactionApproved
               "
-              v-model="leadStatusForm.trans_code"
-              label="TRANSAPP CODE"
-              placeholder="TransApp Code is required"
+              placeholder="Lead Status"
               class="w-full"
-              :error="leadStatusForm.errors.trans_code"
             />
-            <x-select
-              v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
-              v-model="leadStatusForm.lostReason"
-              label="LOST REASON"
-              :options="lostReasonsOptions"
-              placeholder="Lost Reason is required"
+            <x-textarea
+              v-model="leadStatusForm.notes"
+              type="text"
+              label="NOTES"
+              placeholder="Lead Notes"
               class="w-full"
-              :error="leadStatusForm.errors.lostReason"
+              :disabled="
+                quote.quote_status_id ==
+                enums.quoteStatusEnum.TransactionApproved
+              "
             />
           </div>
         </div>
-        <div class="flex justify-end">
-          <x-button
-            class="mt-4"
-            color="emerald"
-            size="sm"
-            :loading="leadStatusForm.processing"
-            @click.prevent="onLeadStatus"
+        <div class="w-full md:w-2/3">
+          <x-input
+            v-if="
+              leadStatusForm.leadStatus ==
+              enums.quoteStatusEnum.TransactionApproved
+            "
             :disabled="
               quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
             "
-          >
-            Change Status
-          </x-button>
+            v-model="leadStatusForm.trans_code"
+            label="TRANSAPP CODE"
+            placeholder="TransApp Code is required"
+            class="w-full"
+            :error="leadStatusForm.errors.trans_code"
+          />
+          <x-select
+            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+            v-model="leadStatusForm.lostReason"
+            label="LOST REASON"
+            :options="lostReasonsOptions"
+            placeholder="Lost Reason is required"
+            class="w-full"
+            :error="leadStatusForm.errors.lostReason"
+          />
         </div>
       </div>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :loading="leadStatusForm.processing"
+          @click.prevent="onLeadStatus"
+          :disabled="
+            quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
+          "
+        >
+          Change Status
+        </x-button>
+      </div>
+    </div>
 
-      <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Lead Activities
@@ -828,6 +723,7 @@ onMounted(() => {});
               :rules="[isRequired]"
               class="w-full"
               withTime
+              :min-date="new Date()"
             />
           </div>
 
@@ -872,180 +768,45 @@ onMounted(() => {});
       </x-modal>
     </div>
 
-      <div class="p-4 rounded shadow mb-6 bg-white">
-        <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Customer Additional Contacts
-            <x-tag size="sm">{{
-              customerAdditionalContacts.length || 0
-            }}</x-tag>
-          </h3>
-          <x-button
-            size="sm"
-            color="orange"
-            @click.prevent="addAdditionalContact"
-          >
-            Add Additional Contacts
-          </x-button>
-        </div>
+    <!-- Additional Contact -->
+    <customerAdditionalContacts
+      quoteType="Business"
+      :customerId="quote.customer_id"
+      :quoteId="quote.id"
+      :contacts="customerAdditionalContacts"
+    />
 
-        <DataTable
-          table-class-name="compact"
-          :headers="additionalContactTable"
-          :items="customerAdditionalContacts || []"
-          border-cell
-          hide-rows-per-page
-          hide-footer
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div v-if="historyData === null" class="text-center py-3">
+        <x-button
+          size="sm"
+          color="primary"
+          outlined
+          @click.prevent="onLoadHistoryData"
+          :loading="historyLoading"
         >
-          <template #item-key="{ key }">
-            <span v-if="key === 'email'"> Email Address </span>
-            <span v-else> Mobile Number </span>
-          </template>
-          <template #item-action="item">
-            <div class="space-x-4">
-              <x-button
-                size="xs"
-                color="emerald"
-                outlined
-                @click.prevent="additionalContactPrimary(item)"
-              >
-                Make Primary
-              </x-button>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="additionalContactDelete(item.id)"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </DataTable>
-
-        <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-          <template #header> Add Additional Contacts </template>
-
-          <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
-            <div class="grid gap-4">
-              <x-select
-                v-model="additionalContact.additional_contact_type"
-                label="Type"
-                :options="[
-                  { value: 'email', label: 'Email' },
-                  { value: 'mobile_no', label: 'Mobile Number' },
-                ]"
-                :rules="[rules.isRequired]"
-                placeholder="Select Type"
-                class="w-full"
-              />
-
-              <x-input
-                v-model="additionalContact.additional_contact_val"
-                label="Value"
-                :rules="[rules.isRequired]"
-                class="w-full"
-              />
-            </div>
-
-            <div class="text-right space-x-4 mt-12">
-              <x-button size="sm" @click.prevent="modals.addContact = false">
-                Cancel
-              </x-button>
-
-              <x-button
-                size="sm"
-                color="emerald"
-                :loading="additionalContact.processing"
-                type="submit"
-              >
-                Save
-              </x-button>
-            </div>
-          </x-form>
-        </x-modal>
-
-        <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
-          <template #header> Delete Additional Contact </template>
-          <p>Are you sure you want to delete this?</p>
-          <template #actions>
-            <div class="text-right space-x-4">
-              <x-button
-                size="sm"
-                ghost
-                @click.prevent="modals.contactDeleteConfirm = false"
-              >
-                Cancel
-              </x-button>
-              <x-button
-                size="sm"
-                color="error"
-                @click.prevent="additionalContactDeleteConfirmed"
-                :loading="contactLoader"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </x-modal>
-
-        <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-          <template #header> Primary Additional Contact </template>
-          <p>Are you sure you want to make this information as Primary?</p>
-          <template #actions>
-            <div class="text-right space-x-4">
-              <x-button
-                size="sm"
-                ghost
-                @click.prevent="modals.contactPrimaryConfirm = false"
-              >
-                Cancel
-              </x-button>
-              <x-button
-                size="sm"
-                color="emerald"
-                @click.prevent="additionalContactPrimaryConfirmed"
-                :loading="contactLoader"
-              >
-                Confirm
-              </x-button>
-            </div>
-          </template>
-        </x-modal>
+          Load History Data
+        </x-button>
       </div>
-
-      <div class="p-4 rounded shadow mb-6 bg-white">
-        <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          <x-divider class="mb-4 mt-1" />
-        </div>
-        <div v-if="historyData === null" class="text-center py-3">
-          <x-button
-            size="sm"
-            color="primary"
-            outlined
-            @click.prevent="onLoadHistoryData"
-            :loading="historyLoading"
-          >
-            Load History Data
-          </x-button>
-        </div>
-        <DataTable
-          v-else
-          table-class-name="compact"
-          :headers="historyDataTable"
-          :items="historyData || []"
-          border-cell
-          hide-rows-per-page
-          :rows-per-page="15"
-          :hide-footer="historyData.length < 15"
-        />
-      </div>
-
-      <AuditLogs
-        :type="'App\\Models\\BusinessQuote'"
-        :id="$page.props.quote.id"
+      <DataTable
+        v-else
+        table-class-name="compact"
+        :headers="historyDataTable"
+        :items="historyData || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="historyData.length < 15"
       />
     </div>
+
+    <AuditLogs
+      :type="'App\\Models\\BusinessQuote'"
+      :id="$page.props.quote.id"
+    />
   </div>
 </template>

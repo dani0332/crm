@@ -102,16 +102,6 @@ class CRUDService extends BaseService
         return $this->{$teamName.'QuoteService'}->getLeadsForAssignment();
     }
 
-    public function getAdvisorLeads($request, $leadType)
-    {
-        return $this->{strtolower($leadType).'QuoteService'}->{'get'.ucwords($leadType).'LeadsForAdvisor'}($request);
-    }
-
-    public function getOverDueFollowups($request, $leadType)
-    {
-        return $this->{strtolower($leadType).'QuoteService'}->{'get'.ucwords($leadType).'OverDueFollowups'}($request);
-    }
-
     public function getEntityByUUID($uuid, $leadType)
     {
         return $this->{strtolower($leadType).'QuoteService'}->getEntity($uuid, $leadType);
@@ -449,25 +439,6 @@ class CRUDService extends BaseService
         }
 
         return $this->applicationstorageService->getValueByKey($key);
-    }
-
-    public function sortMetaArray($sourceArray, $token)
-    {
-        $sorted = [];
-        foreach ($sourceArray as $key => $value) {
-            if (preg_match('/'.$token.'(\d+)/', $value, $matches)) {
-                $sorted[$key] = $matches[1];
-            } else {
-                $sorted[$key] = PHP_INT_MAX;
-            }
-        }
-        asort($sorted);
-        $result = [];
-        foreach ($sorted as $key => $value) {
-            $result[$key] = $sourceArray[$key];
-        }
-
-        return $result;
     }
 
     public function getGenderOptions()

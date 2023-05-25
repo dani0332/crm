@@ -40,7 +40,7 @@ class PersonalQuoteRepository extends BaseRepository
 
             $detailData = array_filter(Arr::only($data, ['lost_reason_id', 'transapp_code']));
             if (count($detailData)) {
-                $quote->quoteDetail()->updateOrCreate($detailData);
+                $quote->quoteDetail()->updateOrCreate(['personal_quote_id' => $quote->id], $detailData);
             }
 
             QuoteStatusLog::create([

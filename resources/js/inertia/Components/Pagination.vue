@@ -20,37 +20,37 @@ router.on('finish', event => {
 <template>
   <div class="flex justify-between items-center gap-2 py-6">
     <Link
-      :href="props.links.prev ? props.links.prev : '#'"
+      v-if="props.links.current !== 1"
+      :href="props.links.prev"
       preserve-scroll
       preserve-state
     >
-      <x-button
-        tag="div"
-        size="sm"
-        icon-left="prev"
-        :loading="loading"
-        :disabled="links.current === 1"
-      >
+      <x-button tag="div" size="sm" icon-left="prev" :loading="loading">
         Previous
       </x-button>
     </Link>
-    <div class="text-xs lining-nums font-medium">
-      Page {{ links.current }} ~ [{{ links.from }} - {{ links.to }}]
+    <x-button v-else tag="div" size="sm" icon-left="prev" disabled>
+      Previous
+    </x-button>
+
+    <div class="text-xs lining-nums font-medium text-center text-gray-700">
+      Now displaying: {{ props.links.from }} ~ {{ props.links.to }}
+      <span v-if="props.links.total"> of {{ props.links.total }} </span>
+      (Page: {{ props.links.current }})
     </div>
+
     <Link
-      :href="props.links.next ? props.links.next : '#'"
+      v-if="props.links.next !== null"
+      :href="props.links.next"
       preserve-scroll
       preserve-state
     >
-      <x-button
-        tag="div"
-        size="sm"
-        icon-right="next"
-        :loading="loading"
-        :disabled="props.links.next === null"
-      >
+      <x-button tag="div" size="sm" icon-right="next" :loading="loading">
         Next
       </x-button>
     </Link>
+    <x-button v-else tag="div" size="sm" icon-right="next" disabled>
+      Next
+    </x-button>
   </div>
 </template>
