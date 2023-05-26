@@ -312,7 +312,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 								class="btn btn-success btn-sm enable-tabby"
 								data-planId="{{$quotePlan->id}}"
 								data-quoteUUId="{{$record->uuid}}"
-								
+								{{ $quotePlan->isPayLaterActive ? 'disabled' : '' }}
 								>Enable Tabby</button>
 								@endif
                                 </td>
