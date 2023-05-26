@@ -10,12 +10,13 @@ use Illuminate\Http\Request;
 class CarQuoteController extends Controller
 {
     /**
-     * @param Request $request
+     * @param  Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function changeInsurer(ChangeInsurerRequest $request)
     {
         $response = CarQuoteRepository::changeInsurer($request->validated());
+
         return response()->json($response);
     }
 }
