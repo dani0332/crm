@@ -2322,11 +2322,7 @@ $(document).ready(function () {
         _token: config._token,
       },
       success: function (data) {
-        $('#sucess-div')
-          .text('Plan updated successfully')
-          .show()
-          .delay(5000)
-          .hide(0);
+        window.location.reload();
       },
     });
   });
