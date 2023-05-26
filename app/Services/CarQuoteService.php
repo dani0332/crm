@@ -1069,10 +1069,10 @@ class CarQuoteService extends BaseService
                 $daysAfterCaptured = Carbon::now()->diffInDays(Carbon::parse($paymentStatusLog->created_at));
 
                 if (Auth::user()->hasRole(RolesEnum::CarAdvisor) && $daysAfterCaptured <= 7) {
-                    info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid . ' and captured days diff is ' . $daysAfterCaptured . ' to ' . RolesEnum::CarManager);
+                    info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid . ' and captured days diff is ' . $daysAfterCaptured );
                     return true;
                 } else if (Auth::user()->hasRole(RolesEnum::CarManager) && ($daysAfterCaptured > 7 && $daysAfterCaptured <= 14)) {
-                    info($logPrefix . ' plan modify allowed to car manager for uuid ' . $quote->uuid  . ' and captured days diff is ' . $daysAfterCaptured . ' to ' . RolesEnum::CarManager);
+                    info($logPrefix . ' plan modify allowed to car manager for uuid ' . $quote->uuid  . ' and captured days diff is ' . $daysAfterCaptured );
                     return true;
                 }
             }
