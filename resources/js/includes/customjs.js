@@ -2312,7 +2312,6 @@ $(document).ready(function () {
     var planId = $(this).attr('data-planId');
     var quoteUUID = $(this).attr('data-quoteUUId');
 
-    console.log(planId + ' ' + quoteUUID);
     $.ajax({
       url: '/update-car-plan-details',
       method: 'POST',
