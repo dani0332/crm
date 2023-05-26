@@ -346,15 +346,4 @@ class AMTController extends Controller
 
         return redirect('medical/amt/'.$id)->with('success', 'Lead has been updated');
     }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
 }

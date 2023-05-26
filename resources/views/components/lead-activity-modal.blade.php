@@ -10,7 +10,7 @@
                     <input type="hidden" value="{{ strtolower($modeltype) }}" name="parentType">
                     <input type="hidden" value="{{ strtolower($record->id) }}" name="entityId">
                     <input type="hidden" value="{{ strtolower($record->code) }}" name="entityCode">
-                    <input type="hidden" value="{{ strtolower($record->uuid) }}" name="entityUId">
+                    <input type="hidden" value="{{ $record->uuid }}" name="entityUId">
                     <div class="modal-header">
                         <h5 class="modal-title" id="duplicateLeadModalLabel" style="font-size: 16px !important;"> <i class="fa fa-cog" aria-hidden="true"></i>
                             <strong style="margin-left: 13px;">New Lead Activity</strong>

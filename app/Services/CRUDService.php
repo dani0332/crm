@@ -102,16 +102,6 @@ class CRUDService extends BaseService
         return $this->{$teamName.'QuoteService'}->getLeadsForAssignment();
     }
 
-    public function getAdvisorLeads($request, $leadType)
-    {
-        return $this->{strtolower($leadType).'QuoteService'}->{'get'.ucwords($leadType).'LeadsForAdvisor'}($request);
-    }
-
-    public function getOverDueFollowups($request, $leadType)
-    {
-        return $this->{strtolower($leadType).'QuoteService'}->{'get'.ucwords($leadType).'OverDueFollowups'}($request);
-    }
-
     public function getEntityByUUID($uuid, $leadType)
     {
         return $this->{strtolower($leadType).'QuoteService'}->getEntity($uuid, $leadType);
@@ -366,8 +356,12 @@ class CRUDService extends BaseService
     public function updateModelByType($modelType, Request $request, $id)
     {
         $lowerCaseModelType = strtolower($modelType);
-        $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
+        $response = $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)}($request, $id);
+
+        if ((in_array($lowerCaseModelType, $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)) == 'update'.ucwords($modelType).'Quote') {
+            return $response;
+        }
     }
 
     public function getEntity($modelType, $id)
