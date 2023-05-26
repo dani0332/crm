@@ -1266,6 +1266,7 @@ class HealthQuoteService extends BaseService
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
+
         if ($request->planIds) {
             $data = $request->planIds;
             $isDisabled = $request->toggle;
@@ -1274,7 +1275,7 @@ class HealthQuoteService extends BaseService
                 $apiArray = [
                     'planId' => (int) $data[$i],
                     'isHidden' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
-                    'isManualUpdate' => true,
+                    'isManualUpdate' => false,
                 ];
                 array_push($plansArray, $apiArray);
             }
