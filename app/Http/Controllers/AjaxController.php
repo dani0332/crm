@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Facades\Ken;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
@@ -107,25 +106,6 @@ class AjaxController extends Controller
         $quoteModel->save();
 
         return response()->json(['success' => true]);
-    }
-
-    public function updateCarPlanDetails(Request $request)
-    {
-        $payLoad = [
-            'quoteUID' => $request->quote_uuid,
-            'update'=>true,
-        ];
-        $payLoad['plans'][] = (object) [
-            'planId' => $request->plan_id,
-            'isPayLaterActive'=>true,
-        ];
-        $response = Ken::request('/save-manual-car-quote-plan', 'post', $payLoad);
-
-        if (! $response) {
-            return response()->json(['success' => false]);
-        }
-
-        return response()->json(['success' => true, 'message' => 'updated successfully']);
     }
 
     public function generatePaymentLink(Request $request)
