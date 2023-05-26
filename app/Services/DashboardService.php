@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\TiersEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Traits\GetUserTreeTrait;
@@ -78,10 +79,11 @@ class DashboardService extends BaseService
             'tiers.name as tierNames',
             DB::raw('count(*) as leadCount')
         )
-            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->whereNull('car_quote_request.advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->where('tiers.name', '!=', TiersEnum::TIER_R)
             ->groupBy('tiers.name');
         if ($filters['applyUnAssignedLeadsCountByTierDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
             $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
@@ -100,6 +102,7 @@ class DashboardService extends BaseService
             DB::raw('sum(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE 0 END) as non_revival_leads'),
         )
             ->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']])
+            ->whereNull('advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]);
 
@@ -170,5 +173,23 @@ class DashboardService extends BaseService
         }
 
         return $teamWiseLeadsAssignedAverage;
+    }
+
+    public function getTotalUnAssignedLeads($filters)
+    {
+        $query = CarQuote::leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->whereNull('advisor_id')
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->where('tiers.name', '!=', TiersEnum::TIER_R)
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]);
+
+        if ($filters['applyTotalUnAssignedLeadsDateFilter'] == true && $filters['startDate'] != now()->startOfDay()->toDateTimeString()) {
+            $query->whereBetween('car_quote_request.created_at', [$filters['startDate'], $filters['endDate']]);
+        } else {
+            $from = ApplicationStorage::where('key_name', 'CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS')->first()->value;
+            $query->whereBetween('car_quote_request.created_at', [$from, now()->endOfDay()]);
+        }
+
+        return $query->get();
     }
 }
