@@ -155,6 +155,7 @@
 				}
 			});
 		}
+        checkLeadRedirection();
 	});
 
 	function getCarModels(makeId, modelId) {
@@ -172,6 +173,17 @@
 			});
 		});
 	}
+
+    function checkLeadRedirection()
+    {
+        let model = JSON.parse('<?php echo json_encode(get_object_vars($model)) ?>');
+
+        if(!localStorage.getItem('throughConfirmation') && model.modelType.toLowerCase() == '<?php echo strtolower(quoteTypeCode::Car); ?>')
+        {
+            localStorage.removeItem("throughConfirmation");
+            window.location.href = "{{ url('quotes/' . strtolower($model->modelType) ) }}";
+        }
+    }
 </script>
 <div class="row">
 	<div class="col-md-12 col-sm-12">
@@ -221,7 +233,6 @@
 					<input type="hidden" name="model" value={{ json_encode($model->properties) }} />
 					<input type="hidden" name="modelSkipProperties" value={{ json_encode($skipProperties) }} />
 					<input type="hidden" name="modelType" value={{ json_encode($model->modelType) }} />
-
 
 
 					@foreach($model->properties as $property => $value)

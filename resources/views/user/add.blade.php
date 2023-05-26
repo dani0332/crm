@@ -298,7 +298,7 @@
                             </select>
                         </div>
                         <div class="col-md-3 col-sm-3">
-                            <i class="fa fa-info-circle" id="tooltipGm" style="margin-top: 13px;" title="Additional teams selection helps advisor see leads from selected teams as well"></i>
+                            <i class="fa fa-info-circle" id="tooltipGm" style="margin-top: 13px;" data-html="true" data-toggle="tooltip" data-placement="right" title="Additional teams selection<br/>helps advisor see leads<br/>from selected teams as well"></i>
                         </div>
                     </div>
                     <div class="item form-group">

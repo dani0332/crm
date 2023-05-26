@@ -7,6 +7,7 @@ use App\Enums\CarPlanType;
 use App\Enums\carTypeInsuranceCode;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
@@ -422,6 +423,13 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
+
+            if(!empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
+                info('FetchPlans FN: fetchRenewalPlans'.' can not proceed with quote as payment is already in process. ');
+                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+                return false;
+            }
+
             if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (! $aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first())) {
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
                 $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
