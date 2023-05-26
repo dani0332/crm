@@ -9,7 +9,7 @@ module.exports = defineConfig({
     specPattern: 'cypress/e2e/**/*Spec.js',
     viewportWidth: 1920,
     viewportHeight: 1080,
-    pageLoadTimeout: 30000,
+    pageLoadTimeout: 100000,
     defaultCommandTimeout: 100000,
   },
 

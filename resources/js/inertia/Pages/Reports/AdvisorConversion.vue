@@ -9,11 +9,36 @@ defineProps({
 
 const loaders = reactive({
   table: false,
+  advisorLeadTable: false,
+  advisorOptions: false,
 });
 
 const page = usePage();
 const params = useUrlSearchParams('history');
 const dataTableRef = ref();
+const advisorOptions = ref([]);
+const isDirty = ref(false);
+const isMounted = ref(false);
+
+const {
+  currentPageFirstIndex,
+  currentPageLastIndex,
+  clientItemsLength,
+  isFirstPage,
+  isLastPage,
+  nextPage,
+  prevPage,
+} = usePagination(dataTableRef);
+
+const {
+  rowsPerPageOptions,
+  rowsPerPageActiveOption,
+  updateRowsPerPageActiveOption,
+} = useRowsPerPage(dataTableRef);
+
+const updateRowsPerPageSelect = e => {
+  updateRowsPerPageActiveOption(Number(e.target.value));
+};
 
 const tableHeader = [
   {
@@ -66,7 +91,7 @@ const tableHeader = [
   },
   {
     text: 'Manual Created',
-    value: 'manual_created_bad_leads',
+    value: 'manual_created',
   },
   {
     text: 'Gross Conversion',
@@ -193,11 +218,35 @@ const filters = reactive({
 
 function onSubmit(isValid) {
   if (isValid) {
+    isDirty.value = false;
     filters.page = 1;
-
+    const payLoad = cleanFilters(filters);
     router.visit('/reports/advisor-conversion', {
       method: 'get',
-      data: cleanFilters(filters),
+      data: {
+        ...payLoad,
+        ...(payLoad.batches && {
+          batches: Array.isArray(payLoad.batches)
+            ? payLoad.batches
+            : [payLoad.batches],
+        }),
+        ...(payLoad.tiers && {
+          tiers: Array.isArray(payLoad.tiers) ? payLoad.tiers : [payLoad.tiers],
+        }),
+        ...(payLoad.leadSources && {
+          leadSources: Array.isArray(payLoad.leadSources)
+            ? payLoad.leadSources
+            : [payLoad.leadSources],
+        }),
+        ...(payLoad.advisors && {
+          advisors: Array.isArray(payLoad.advisors)
+            ? payLoad.advisors
+            : [payLoad.advisors],
+        }),
+        ...(payLoad.teams && {
+          teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
+        }),
+      },
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loaders.table = true),
@@ -209,9 +258,18 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  if (page.props.defaultFilters) {
+    filters.advisorAssignedDates =
+      page.props.defaultFilters.advisorAssignedDates;
+  }
+
+  isDirty.value = false;
   router.visit('/reports/advisor-conversion', {
     method: 'get',
-    data: { page: 1 },
+    data: {
+      advisorAssignedDates: filters.advisorAssignedDates,
+      page: 1,
+    },
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
     onSuccess: () => (loaders.table = false),
@@ -241,11 +299,13 @@ const currentTypeTitle = computed(() => {
 });
 
 function onFetchAdvisorAssignedLeads(item, type, page = 1) {
+  if (page == 1 && !totalLeads.modal) {
+    loaders.advisorLeadTable = true;
+  }
+
   totalLeads.current = type;
   totalLeads.modal = true;
-
   totalLeads.loader = true;
-  totalLeads.data = {};
 
   if (item) {
     totalLeads.filters = {
@@ -255,9 +315,11 @@ function onFetchAdvisorAssignedLeads(item, type, page = 1) {
     };
   }
 
+  const payLoad = cleanFilters(filters);
+
   axios
     .post(`/reports/fetch-advisor-assigned-leads-data`, {
-      ...cleanFilters(filters),
+      ...payLoad,
       page: page,
       leadType: totalLeads.filters.leadType,
       quote_batch_id: totalLeads.filters.quote_batch_id,
@@ -270,6 +332,7 @@ function onFetchAdvisorAssignedLeads(item, type, page = 1) {
       console.log(error);
     })
     .finally(() => {
+      loaders.advisorLeadTable = false;
       totalLeads.loader = false;
     });
 }
@@ -303,33 +366,63 @@ const calculateTotalSum = (data, key) => {
   return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
 };
 
-const {
-  currentPageFirstIndex,
-  currentPageLastIndex,
-  clientItemsLength,
-  isFirstPage,
-  isLastPage,
-  nextPage,
-  prevPage,
-} = usePagination(dataTableRef);
+const onTeamChange = e => {
+  if (e.length == 0) {
+    filters.teams = [];
+    filters.advisors = [];
+    advisorOptions.value = [];
 
-const {
-  rowsPerPageOptions,
-  rowsPerPageActiveOption,
-  updateRowsPerPageActiveOption,
-} = useRowsPerPage(dataTableRef);
+    return;
+  }
 
-const updateRowsPerPageSelect = e => {
-  updateRowsPerPageActiveOption(Number(e.target.value));
+  if (isMounted.value) {
+    isDirty.value = true;
+  }
+
+  loaders.advisorOptions = true;
+
+  axios
+    .post(`/reports/fetch-advisor-by-team`, {
+      teamIds: Array.isArray(e) ? e : [e],
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        advisorOptions.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id,
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.advisorOptions = false;
+    });
 };
+
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 
 onMounted(() => {
   if (page.props.defaultFilters) {
     filters.advisorAssignedDates =
       page.props.defaultFilters.advisorAssignedDates;
   }
+
   setQueryStringFilters();
+
+  if (params['teams[]'] && params['teams[]'].length > 0) {
+    onTeamChange(params['teams[]']);
+  }
+  isMounted.value = true;
 });
+
+watch(
+  () => totalLeads.modal,
+  val => {
+    if (!val) {
+      totalLeads.data = {};
+    }
+  },
+);
 </script>
 
 <template>
@@ -392,53 +485,66 @@ onMounted(() => {
           deselect-all
         />
 
-        <ComboBox
-          v-model="filters.leadSources"
-          label="Lead Source"
-          placeholder="Search by Lead Source"
-          :options="
-            Object.keys(filterOptions.leadSources).map(key => ({
-              value: key,
-              label: filterOptions.leadSources[key],
-            }))
-          "
-          :max-limit="3"
-          deselect-all
-        />
+        <template v-if="!hasRole(rolesEnum.CarAdvisor)">
+          <ComboBox
+            v-model="filters.leadSources"
+            label="Lead Source"
+            placeholder="Search by Lead Source"
+            :options="
+              Object.keys(filterOptions.leadSources).map(key => ({
+                value: key,
+                label: filterOptions.leadSources[key],
+              }))
+            "
+            :max-limit="3"
+            deselect-all
+          />
 
-        <ComboBox
-          v-model="filters.teams"
-          label="Teams"
-          placeholder="Search by Teams"
-          :options="
-            Object.keys(filterOptions.teams).map(key => ({
-              value: key,
-              label: filterOptions.teams[key],
-            }))
-          "
-          select-all
-          deselect-all
-        />
+          <ComboBox
+            v-model="filters.teams"
+            label="Teams"
+            placeholder="Search by Teams"
+            :options="
+              Object.keys(filterOptions.teams).map(key => ({
+                value: key,
+                label: filterOptions.teams[key],
+              }))
+            "
+            @update:model-value="onTeamChange"
+            select-all
+            deselect-all
+          />
 
-        <ComboBox
-          v-model="filters.advisors"
-          label="Advisors"
-          placeholder="Search by Advisors"
-          :options="
-            Object.keys(filterOptions.advisors).map(key => ({
-              value: key,
-              label: filterOptions.advisors[key],
-            }))
-          "
-          select-all
-          deselect-all
-        />
+          <ComboBox
+            v-model="filters.advisors"
+            :label="
+              !filters.teams || filters.teams.length == 0
+                ? `Advisors (select teams first)`
+                : `Advisors`
+            "
+            :options="advisorOptions"
+            :select-all="filters.advisors?.length > 0"
+            :deselect-all="filters.advisors?.length > 0"
+            :loading="loaders.advisorOptions"
+          />
+        </template>
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between gap-3 mb-4 items-center">
+        <div class="flex-1">
+          <p
+            v-if="isDirty"
+            class="text-xs text-gray-700 text-red-500 text-center font-bold"
+          >
+            Please click search, to show updated records based on the selected
+            filters
+          </p>
+        </div>
+        <div class="flex gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
 
@@ -527,6 +633,17 @@ onMounted(() => {
         </button>
       </template>
 
+      <template #item-created_sale_leads="item">
+        <p v-if="item.created_sale_leads == 0">{{ item.created_sale_leads }}</p>
+        <button
+          v-else
+          @click="onFetchAdvisorAssignedLeads(item, 'created_sale_leads')"
+          class="text-primary underline"
+        >
+          {{ item.created_sale_leads }}
+        </button>
+      </template>
+
       <template #item-afia_renewals_count="item">
         <p v-if="item.afia_renewals_count == 0">
           {{ item.afia_renewals_count }}
@@ -611,7 +728,7 @@ onMounted(() => {
         </select>
       </div>
 
-      <div class="text-xs lining-nums">
+      <div class="text-xs lining-nums text-gray-700 text-center">
         Now displaying: {{ currentPageFirstIndex }} ~
         {{ currentPageLastIndex }} of {{ clientItemsLength }}
       </div>
@@ -641,7 +758,7 @@ onMounted(() => {
         <div class="text-center">{{ currentTypeTitle }}</div>
       </template>
       <section class="min-h-[70vh]">
-        <div v-if="totalLeads.data.data?.length > 0">
+        <div v-if="!loaders.advisorLeadTable">
           <PaginateClient
             :links="{
               next: totalLeads.data.next_page_url,
@@ -652,6 +769,7 @@ onMounted(() => {
               total: totalLeads.data.total,
               last: totalLeads.data.last_page,
             }"
+            :loading="totalLeads.loader"
             @update="setPageTable"
           />
           <DataTable

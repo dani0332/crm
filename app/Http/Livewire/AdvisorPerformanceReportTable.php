@@ -133,7 +133,7 @@ class AdvisorPerformanceReportTable extends DataTableComponent
             ->groupBy('car_quote_request.advisor_id')
             ->orderBy('users.email');
 
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+        if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
             $userIds = $this->walkTree(auth()->user()->id);
             info('user ids for advisor performance report are : '.json_encode($userIds));
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
@@ -163,14 +163,14 @@ class AdvisorPerformanceReportTable extends DataTableComponent
                 'placeholder' => 'SELECT ALL TEAMS',
             ])
                 ->options($this->teams)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('teams.id', $value);
-            }),
+                    $builder->whereIn('teams.id', $value);
+                }),
             MultiSelectFilter::make('Tiers')->config([
                 'placeholder' => 'SELECT ALL TIERS',
             ])
                 ->options($this->tiers)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.tier_id', $value);
-            }),
+                    $builder->whereIn('car_quote_request.tier_id', $value);
+                }),
             MultiSelectFilter::make('Lead Source')
                 ->options($this->leadSources)->filter(function (Builder $builder, $value) {
                     $builder->whereIn('car_quote_request.source', $value);

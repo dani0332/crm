@@ -6,7 +6,6 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Facades\Capi;
 use App\Traits\GenericQueriesAllLobs;
-use Illuminate\Support\Facades\DB;
 
 class CentralService
 {
@@ -32,7 +31,6 @@ class CentralService
             return $item;
         });
         foreach ($allowedLeadTypes as $leadType) {
-
             $leadType = strtolower($leadType);
 
             if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
@@ -91,8 +89,7 @@ class CentralService
                     $dataArr['business_type_of_insurance_id'] = 5;
                 }
 
-                $response = Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
-
+                $response = in_array(quoteTypeCode::Pet, newUi()) && method_exists($repository, 'fetchCreateDuplicate') ? $repository::createDuplicate($dataArr) : Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
                 if (isset($response->message) && str_contains($response->message, 'Error')) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
                 } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {

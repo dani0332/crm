@@ -12,7 +12,6 @@ use App\Models\LeadSource;
 use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\Tier;
-use App\Models\User;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -51,7 +50,7 @@ class AdvisorConversionReportService extends BaseService
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+        if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
             $userIds = $this->walkTree(auth()->user()->id);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         }
@@ -69,6 +68,7 @@ class AdvisorConversionReportService extends BaseService
             'teamsFilter' => $request->teams,
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
+            'page' => $request->page,
         ];
 
         $query = $this->applyFilters($query, $filters);
@@ -79,17 +79,13 @@ class AdvisorConversionReportService extends BaseService
     public function getFilterOptions()
     {
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+
         $loginUserId = auth()->user()->id;
-        $advisors = User::whereIn('id', [$loginUserId])
-            ->select('name', 'id')
-            ->orderBy('name')
-            ->where('is_active', 1)
-            ->get()
-            ->keyBy('id')
-            ->map(fn ($users) => $users->name)
-            ->toArray();
-        // TODO: add teams logic
+
+        $advisors = [];
+
         $teamIds = $this->getUserTeams($loginUserId);
+
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
             ->select('name', 'id')
             ->orderBy('name')
@@ -112,6 +108,7 @@ class AdvisorConversionReportService extends BaseService
                 return $batch->name.'-('.$start_date.' to '.$end_date.')';
             })
             ->toArray();
+
         $tiers = Tier::query()
             ->select('name', 'id')
             ->orderBy('name')
@@ -120,6 +117,7 @@ class AdvisorConversionReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($users) => $users->name)
             ->toArray();
+
         $leadSources = LeadSource::query()
             ->select('name')
             ->where('is_active', 1)->where('is_applicable_for_rules', 0)
@@ -197,9 +195,14 @@ class AdvisorConversionReportService extends BaseService
         }
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         info('date : '.json_encode($filters));
+
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = ! isset($filters->page);
+
         $startDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
-            Carbon::parse(now())->startOfDay()->format($dateFormat);
+                ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) :
+                    now()->subDays((int) $maxDays)->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) :

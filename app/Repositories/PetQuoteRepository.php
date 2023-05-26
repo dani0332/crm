@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\LookupsEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Models\HomeAccomodationType;
@@ -18,7 +19,7 @@ class PetQuoteRepository extends BaseRepository
 {
     public function model()
     {
-        return PersonalQuote::class;
+        return (in_array(quoteTypeCode::Pet, newUi())) ? PersonalQuote::class : PetQuote::class;
     }
 
     public function fetchCreate($request)
@@ -82,6 +83,7 @@ class PetQuoteRepository extends BaseRepository
             return $quote;
         });
     }
+
     public function fetchGetData()
     {
         return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text', 'currentlyInsuredWith', 'advisor'])
@@ -90,6 +92,7 @@ class PetQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc')
             ->simplePaginate()->withQueryString();
     }
+
     public function fetchGetBy($column, $value)
     {
         return $this->byQuoteTypeId(QuoteTypes::PET->id())
@@ -102,7 +105,7 @@ class PetQuoteRepository extends BaseRepository
     }
 
     /**
-     * get all dropdown options required for form
+     * get all dropdown options required for form.
      *
      * @return array
      */
@@ -114,5 +117,12 @@ class PetQuoteRepository extends BaseRepository
             'accomodation_types' => HomeAccomodationType::all(),
             'possession_types' => HomePossessionType::all(),
         ];
+    }
+
+    public function fetchCreateDuplicate(array $dataArr): object
+    {
+        $dataArr['quoteTypeId'] = intval(QuoteTypes::PET->id());
+
+        return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
     }
 }

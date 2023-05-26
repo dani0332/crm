@@ -2,13 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
+use App\Services\AdvisorPerformanceReportService;
+use App\Services\LeadDistributionReportService;
+use App\Traits\GetUserTreeTrait;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 
 class ReportsController extends Controller
 {
+    use TeamHierarchyTrait;
+    use GetUserTreeTrait;
+
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
         return inertia('Reports/AdvisorConversion', [
@@ -33,14 +41,19 @@ class ReportsController extends Controller
             'teamsFilter' => $request->teams,
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
+            'page' => $request->page,
         ];
 
         return $advisorConversionReportService->getAdvisorsAssignedLeads($filters);
     }
 
-    public function renderLeadDistributionReport()
+    public function renderLeadDistributionReport(Request $request, LeadDistributionReportService $leadDistributionReportService)
     {
-        return view('reports.lead-distribution-report');
+        return inertia('Reports/LeadDistribution', [
+            'reportData' => $leadDistributionReportService->getReportData($request),
+            'filterOptions' => $leadDistributionReportService->getFilterOptions(),
+            'defaultFilters' => $leadDistributionReportService->getDefaultFilters(),
+        ]);
     }
 
     public function renderAdvisorDistributionReport(Request $request, AdvisorDistributionReportService $advisorDistributionReportService)
@@ -52,9 +65,13 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function renderAdvisorPerformanceReport()
+    public function renderAdvisorPerformanceReport(Request $request, AdvisorPerformanceReportService $advisorPerformanceReportService)
     {
-        return view('reports.advisor-performance-report');
+        return inertia('Reports/AdvisorPerformance', [
+            'reportData' => $advisorPerformanceReportService->getReportData($request),
+            'filterOptions' => $advisorPerformanceReportService->getFilterOptions(),
+            'defaultFilters' => $advisorPerformanceReportService->getDefaultFilters(),
+        ]);
     }
 
     public function renderLeadListReport()
@@ -69,5 +86,21 @@ class ReportsController extends Controller
         return inertia('Reports/RevivalConversion', [
             'reportsData'=>$reportData,
         ]);
+    }
+
+    public function fetchAdvisorListByTeam(Request $request)
+    {
+        $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+
+        $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id);
+
+        $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+
+        return User::whereIn('id', $advisorIdsByTeam)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
     }
 }
