@@ -43,6 +43,7 @@ class AuditableController extends Controller
      */
     public function getQuoteAudits(Request $request)
     {
-        return AuditRepository::getQuoteAudits();
+        $audits = AuditRepository::getQuoteAudits();
+        return ($request->jsonData)  ? response()->json($audits) : $audits;
     }
 }
