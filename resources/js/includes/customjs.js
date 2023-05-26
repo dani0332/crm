@@ -1523,10 +1523,9 @@ $(document).ready(function () {
     }
   });
 
-  $('#healthPlansAll').on('click', function()
-  {
-    if($(this).is(":checked")) {
-      $('.health-plans-checkbox').prop('checked',this.checked);
+  $('#healthPlansAll').on('click', function () {
+    if ($(this).is(':checked')) {
+      $('.health-plans-checkbox').prop('checked', this.checked);
     } else {
       $('.health-plans-checkbox').removeAttr('checked');
     }
@@ -2248,53 +2247,51 @@ $(document).ready(function () {
     });
   });
 
-  $('.btn-change-insurer').on('click', function(){
-      if(confirm('Are you sure to change insurer')) {
+  $('.btn-change-insurer').on('click', function () {
+    if (confirm('Are you sure to change insurer')) {
+      let btn = $(this);
+      $(btn).btnLoader();
 
-          let btn = $(this);
-          $(btn).btnLoader();
-
-          $.ajax({
-              url: '/quotes/car/change-insurer',
-              method: 'POST',
-              data: {
-                  uuid: $(this).attr('data-uuid'),
-                  plan_id: $(this).attr('data-planId'),
-                  provider_code: $(this).attr('data-providerCode'),
-                  _token: $('input[name=_token]').val(),
-              },
-              success: function (data) {
-                  $(btn).btnResetLoader();
-                  setTimeout(function () {
-                      alert(data.message);
-                      window.location.reload();
-                  }, 0);
-              },
-              error: function (response) {
-                  $(btn).btnResetLoader();
-                  let errorMsg = '';
-                  $.each(response.responseJSON.errors, function(key,error) {
-                        errorMsg += error + '\n';
-                  });
-                 alert(errorMsg);
-              }
+      $.ajax({
+        url: '/quotes/car/change-insurer',
+        method: 'POST',
+        data: {
+          uuid: $(this).attr('data-uuid'),
+          plan_id: $(this).attr('data-planId'),
+          provider_code: $(this).attr('data-providerCode'),
+          _token: $('input[name=_token]').val(),
+        },
+        success: function (data) {
+          $(btn).btnResetLoader();
+          setTimeout(function () {
+            alert(data.message);
+            window.location.reload();
+          }, 0);
+        },
+        error: function (response) {
+          $(btn).btnResetLoader();
+          let errorMsg = '';
+          $.each(response.responseJSON.errors, function (key, error) {
+            errorMsg += error + '\n';
           });
-
-      } else {
-          return false;
-      }
+          alert(errorMsg);
+        },
+      });
+    } else {
+      return false;
+    }
   });
 
-  $.fn.btnLoader = function() {
-    let loading_text  = "<i class='fa fa-spinner fa-spin'></i> " + this.html();
+  $.fn.btnLoader = function () {
+    let loading_text = "<i class='fa fa-spinner fa-spin'></i> " + this.html();
     this.data('original-text', this.html());
-    this.html(loading_text).attr('disabled', 'disabled')
+    this.html(loading_text).attr('disabled', 'disabled');
     return this;
   };
 
-  $.fn.btnResetLoader = function() {
-    let original_text = this.data("original-text");
-    this.html(original_text).removeAttr('disabled')
+  $.fn.btnResetLoader = function () {
+    let original_text = this.data('original-text');
+    this.html(original_text).removeAttr('disabled');
     return this;
   };
 
@@ -2311,7 +2308,7 @@ $(document).ready(function () {
       $(self).text('Copy');
     }, 2000);
   });
-  $('.enable-tabby').on('click', function () {
+  $('.enable-bnpl').on('click', function () {
     var planId = $(this).attr('data-planId');
     var quoteUUID = $(this).attr('data-quoteUUId');
 
@@ -2325,7 +2322,11 @@ $(document).ready(function () {
         _token: config._token,
       },
       success: function (data) {
-        console.log(data);
+        $('#sucess-div')
+          .text('Plan updated successfully')
+          .show()
+          .delay(5000)
+          .hide(0);
       },
     });
   });
@@ -2353,7 +2354,6 @@ $(document).ready(function () {
 });
 
 $('#btn_download_plan_pdf_health').on('click', function () {
-
   if ($("input[name='health_plans_checkbox']:checked").length < 3) {
     alert('Please select at least three (3) plans.');
     return false;
@@ -2373,7 +2373,6 @@ $('#btn_download_plan_pdf_health').on('click', function () {
   $('#plan_ids').val(plan_ids);
   $('#form_plans_pdf').submit();
 });
-
 
 $('#renewals-upload-button').click(function () {
   $('#renewals-upload-button').hide();

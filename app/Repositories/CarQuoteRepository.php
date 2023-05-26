@@ -6,8 +6,6 @@ use App\Facades\Ken;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Traits\CentralTrait;
-use Illuminate\Support\Facades\DB;
-use OwenIt\Auditing\Models\Audit;
 
 class CarQuoteRepository extends BaseRepository
 {
@@ -33,7 +31,22 @@ class CarQuoteRepository extends BaseRepository
             'userId' => strval(auth()->id()),
         ];
 
-        info('fn: changeInsurer sending change insurer request for quote UUID: ' . $data['uuid'] . ' providerCode: ' . $data['provider_code'] . ' planId: ' . $data['plan_id']);
+        info('fn: changeInsurer sending change insurer request for quote UUID: '.$data['uuid'].' providerCode: '.$data['provider_code'].' planId: '.$data['plan_id']);
+
         return Ken::request('/update-car-ecom-insurer', 'post', $requestData);
+    }
+
+    public function fetchUpdateCareQuotePlanDetails($data)
+    {
+        $payLoad = [
+            'quoteUID' => $data['quote_uuid'],
+            'update'=>true,
+        ];
+        $payLoad['plans'][] = (object) [
+            'planId' =>  (int) $data['plan_id'],
+            'isPayLaterActive'=>true,
+        ];
+
+        return Ken::request('/save-manual-car-quote-plan', 'post', $payLoad);
     }
 }
