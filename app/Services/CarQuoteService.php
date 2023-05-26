@@ -19,6 +19,7 @@ use App\Models\InsuranceProvider;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteBatches;
 use App\Models\QuoteViewCount;
+use App\Models\Role;
 use App\Models\Tier;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
@@ -1077,14 +1078,14 @@ class CarQuoteService extends BaseService
             }
         }
 
-        if ($quote->payment_status_id == PaymentStatusEnum::CANCELLED && Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
+        if ($quote->payment_status_id == PaymentStatusEnum::CANCELLED && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager])) {
             info($logPrefix . ' plan modify allowed to advisor for uuid ' . $quote->uuid . ' payment status ' . $quote->paymentStatus->text . ' to role ' . RolesEnum::CarAdvisor);
             return true;
         }
 
         if (
-            in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
-            && Auth::user()->hasRole(RolesEnum::CarAdvisor)
+            $quote->payment_status_id == "" || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
+        && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager]))
         ) {
             info($logPrefix . ' plan modify allowed for uuid ' . $quote->uuid . ' payment status ' . $quote->paymentStatus->text . ' to ' . RolesEnum::CarAdvisor);
             return true;
