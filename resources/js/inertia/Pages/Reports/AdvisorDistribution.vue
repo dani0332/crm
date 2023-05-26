@@ -103,9 +103,17 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  if (page.props.defaultFilters) {
+    filters.advisorAssignedDates =
+      page.props.defaultFilters.advisorAssignedDates;
+  }
+
   router.visit('/reports/advisor-distribution', {
     method: 'get',
-    data: { page: 1 },
+    data: {
+      advisorAssignedDates: filters.advisorAssignedDates,
+      page: 1,
+    },
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
     onSuccess: () => (loaders.table = false),
@@ -136,6 +144,10 @@ onMounted(() => {
   }
   setQueryStringFilters();
 });
+
+const calculateTotalSum = (data, key) => {
+  return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
+};
 </script>
 
 <template>
@@ -199,6 +211,56 @@ onMounted(() => {
     >
       <template #item-advisor_name="item">
         <span class="font-bold"> {{ item.advisor_name }} </span>
+      </template>
+      <template #body-append>
+        <tr v-if="reportData.data.length > 0" class="total-row">
+          <td class="direction-left">Total</td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'total_leads') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_0_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_1_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_2_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_3_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_4_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_5_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_l_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_h_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_r_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_6_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_6_lead_count_e') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_tr_lead_count_e') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'tier_tr_lead_count') }}
+          </td>
+          <td class="direction-center">
+            {{ calculateTotalSum(reportData.data, 'total_lead_cost') }}
+          </td>
+        </tr>
       </template>
     </DataTable>
 

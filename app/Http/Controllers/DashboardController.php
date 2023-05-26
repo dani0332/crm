@@ -9,6 +9,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\QuoteBatches;
+use App\Models\Team;
 use App\Models\Tier;
 use App\Services\DashboardService;
 use App\Services\TierService;
@@ -46,25 +47,31 @@ class DashboardController extends Controller
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $startDate = now()->startOfDay()->format($dateFormat);
         $endDate = now()->endOfDay()->format($dateFormat);
+
+        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->get();
+        $car = $this->getProductByName(quoteTypeCode::Car);
+        $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
+        $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
+        $carAdvisors = $this->getUsersByTeamId(count($teamIds->toArray()) > 0 ? $teamIds->toArray() : []);
+
         $filters = [
             'startDate' => $startDate,
             'endDate' => $endDate,
             'teams' => $this->getCurrentUserTeamsAndSubTeams($loggedInUserId),
+            'teamIds' => $teamIds,
+            'applyUnAssignedLeadsCountByTierDateFilter' => false,
+            'applyTotalUnAssignedLeadsDateFilter' => false,
         ];
-        $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
-            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
-        $car = $this->getProductByName(quoteTypeCode::Car);
-        $teams = $this->getCurrentUserTeamsAndSubTeams($loggedInUserId);
-        $teamIds = DB::table('user_team')->where('user_id', $loggedInUserId)->get()->pluck('team_id');
-
-        $carAdvisors = $this->getUsersByTeamId(count($teamIds->toArray()) > 0 ? $teamIds->toArray() : []);
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
-
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
-        $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
-        $totalUnAssignedLeadsReceivedEcommerce = count($todaysLeads->whereNull('advisor_id')->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($todaysLeads->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
+        $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
+        $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
+        $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
 
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
@@ -86,24 +93,30 @@ class DashboardController extends Controller
             'startDate' => $startDate,
             'endDate' => $endDate,
             'teams' => $this->getCurrentUserTeamsAndSubTeams(auth()->user()->id),
+            'applyUnAssignedLeadsCountByTierDateFilter' => true,
+            'applyTotalUnAssignedLeadsDateFilter' => true,
         ];
-        $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->get();
+        $todaysLeads = CarQuote::whereBetween('created_at', [$startDate, $endDate])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->get();
 
         $teamWiseLeadsAssignedAverage = $this->dashboardService->getTeamWiseLeadStats($filters);
 
         $totalLeadsReceived = count($todaysLeads);
         $totalLeadsReceivedEcommerce = count($todaysLeads->where('is_ecommerce', 1));
-        $totalUnAssignedLeadsReceived = count($todaysLeads->whereNull('advisor_id'));
-        $totalUnAssignedLeadsReceivedEcommerce = count($todaysLeads->whereNull('advisor_id')->where('is_ecommerce', 1));
-        $totalUnAssignedRevivalLeads = count($todaysLeads->whereNull('advisor_id')->where('source', LeadSourceEnum::REVIVAL));
+        $totalUnAssignedLeads = $this->dashboardService->getTotalUnAssignedLeads($filters);
+        $totalUnAssignedLeadsReceived = count($totalUnAssignedLeads);
+        $totalUnAssignedLeadsReceivedEcommerce = count($totalUnAssignedLeads->where('is_ecommerce', 1));
+        $totalUnAssignedRevivalLeads = count($totalUnAssignedLeads->where('source', LeadSourceEnum::REVIVAL));
         $leadsCountByTier = $this->dashboardService->getLeadsCountByTier($filters);
         $revivalLeadsCount = $this->dashboardService->getLeadsCountRevival($filters);
-
+        $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
         $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
         return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
-            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData];
+            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData, 'unAssignedLeadsByTier' => $unAssignedLeadsByTier];
     }
 
     public function renderTplDashboard(Request $request)
@@ -123,7 +136,8 @@ class DashboardController extends Controller
 
     public function getTPLDashboardStats(Request $request): array
     {
-        $tiers = Tier::where('can_handle_tpl', 1)->get()->pluck('id');
+        $tiers = Tier::where('can_handle_tpl', 1)->where('is_active', 1)->get()->pluck('id');
+        $tplTeam = Team::where('name', 'TPL')->where('is_active', 1)->first();
         $records = QuoteBatches::query()
             ->select(
                 'quote_batches.id',
@@ -140,33 +154,26 @@ class DashboardController extends Controller
             ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
 
-        $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'undefined';
-        $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $tiers, $isTierDefined ? IMCRMSearchTypesEnum::EQUAL_SEARCH : IMCRMSearchTypesEnum::MULTI_SEARCH);
+        if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
+            $records->whereIn('tiers.id', $request->tier_filter);
+        } else {
+            $records->whereIn('tiers.id', $tiers);
+        }
 
-        if (isset($request->team_filter) && $request->team_filter != 'undefined') {
-            $records->whereIn('users.id', function ($query) use ($request) {
+        if ($tplTeam != null) {
+            $records->whereIn('users.id', function ($query) use ($tplTeam) {
                 $query->distinct()
                     ->select('users.id')
                     ->from('users')
                     ->join('user_team', 'user_team.user_id', 'users.id')
                     ->join('teams', 'teams.id', 'user_team.team_id')
-                    ->whereIn('teams.id', $request->team_filter);
+                    ->where('teams.id', $tplTeam->id);
             });
-        } else {
-            $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-            if (count($commonTeams) > 0) {
-                $records->whereIn('users.id', function ($query) use ($commonTeams) {
-                    $query->distinct()
-                        ->select('users.id')
-                        ->from('users')
-                        ->join('user_team', 'user_team.user_id', 'users.id')
-                        ->join('teams', 'teams.id', 'user_team.team_id')
-                        ->where('teams.id', $commonTeams[0]);
-                });
-            }
         }
+
         $labels = [];
         $data = [];
         $records = $records->get()->sortBy(function ($record) {
@@ -230,9 +237,14 @@ class DashboardController extends Controller
             ->join('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('quote_batches.name', 'quote_batches.id')->skip(0)->take(10)->orderBy('quote_batches.id', 'desc');
-        $isTierDefined = isset($request->tier_filter) && $request->tier_filter != 'null';
-        $records = $this->applyFilter($records, 'tiers.id', $isTierDefined ? $request->tier_filter : $compTiers, IMCRMSearchTypesEnum::MULTI_SEARCH);
+
+        if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
+            $records->whereIn('tiers.id', $request->tier_filter);
+        } else {
+            $records->whereIn('tiers.id', $compTiers);
+        }
 
         if (isset($request->team_filter) && $request->team_filter != 'undefined') {
             $records->whereIn('users.id', function ($query) use ($request) {
@@ -349,7 +361,24 @@ class DashboardController extends Controller
 
     public function getTeamAdvisorConversionStats(Request $request)
     {
-        return $this->dashboardService->getAdvisorLeadAssignedData(['teamIds' => $request->teamFilter]);
+
+        $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+        $startDate = null;
+        $endDate = null;
+        if (isset($request->range)) {
+            $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
+            $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
+        } else {
+            $startDate = now()->startOfDay()->format($dateFormat);
+            $endDate = now()->endOfDay()->format($dateFormat);
+        }
+        $filters = [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'teamIds' => $request->teamFilter,
+        ];
+
+        return $this->dashboardService->getAdvisorLeadAssignedData($filters);
     }
 
     public function getUsersByTeam(Request $request)

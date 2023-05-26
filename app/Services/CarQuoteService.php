@@ -27,6 +27,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class CarQuoteService extends BaseService
@@ -211,7 +213,9 @@ class CarQuoteService extends BaseService
     public function updateCarQuote(Request $request, $id)
     {
         $carQuote = CarQuote::where('uuid', $id)->first();
+        $oldCarValue = $carQuote->car_value;
         info('Update triggered from IMCRM for Car Quote request with uuid : ' . $carQuote->code);
+
         if ($request->first_name) {
             $carQuote->first_name = $request->first_name;
         }
@@ -291,10 +295,16 @@ class CarQuoteService extends BaseService
             $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
         }
         $carQuote->updated_by = auth()->user()->email;
-        $carQuote->save();
+        $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
 
-        if (isset($request->return_to_view)) {
-            return redirect('quote/car/' . $carQuote->id)->with('success', 'Car Quote has been updated');
+        if ($deleteValuationResponse) {
+            $carQuote->save();
+
+            if (isset($request->return_to_view)) {
+                return redirect('quote/car/' . $carQuote->id)->with('success', 'Car Quote has been updated');
+            }
+        } else {
+            return false;
         }
     }
 
@@ -590,154 +600,13 @@ class CarQuoteService extends BaseService
         return $title;
     }
 
-    public function getCarOverDueFollowups()
-    {
-        $query = DB::table('car_quote_request as cqr')
-            ->select(
-                'cqr.id',
-                'cqr.uuid',
-                'cqr.code',
-                DB::raw("CONCAT_WS(' ',cqr.first_name,cqr.last_name) AS clientName"),
-                'qs.text as leadStatus',
-                'cqr.created_at as createdAt',
-                'cqr.quote_status_id',
-                'cqrd.advisor_assigned_date as assignedDate',
-                'u.name as assignedBy',
-                'cqr.updated_at',
-                'cqr.source as leadSource',
-                'cqr.premium',
-                'cqrd.next_followup_date as nextFollowupDate',
-            )
-            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
-            ->where('cqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
-            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
-            ->where('cqr.advisor_id', Auth::user()->id);
-
-        return $query;
-    }
-
-    public function getCarLeadsForAdvisor($request)
-    {
-        $query = DB::table('car_quote_request as cqr')
-            ->select(
-                'cqr.id',
-                'cqr.uuid',
-                'cqr.code',
-                'qs.text as leadStatus',
-                'cqr.created_at as createdAt',
-                'vt.text as vehicleType',
-                'cqr.quote_status_id',
-                'cqrd.advisor_assigned_date as assignedDate',
-                'u.name as assignedBy',
-                'cqr.updated_at',
-                'cqr.source as leadSource',
-                'cqrd.next_followup_date as nextFollowupDate',
-                'cqr.previous_quote_policy_premium as previousPolicyPremium',
-                'ps.text as paymentStatus',
-                'cqr.renewal_batch as renewalBatch',
-                'cqr.previous_quote_policy_number as previousPolicyNumber',
-                DB::raw('DATE_FORMAT(cqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
-                'cmake.text as carMake',
-                'cmodel.text as carModel',
-                'cqr.year_of_manufacture as yearOfManufacture',
-                'cti.text as typeOfCarInsurance',
-                'cqr.currently_insured_with as currentlyInsuredWith',
-                'ua.name as assignedTo',
-                'cqr.updated_at as updatedAt',
-                'ls.text as lostReason',
-                'cqr.first_name as firstName',
-                'cqr.last_name as lastName',
-            )
-            ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'cqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'cqrd.advisor_assigned_by_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
-            ->leftJoin('vehicle_type as vt', 'vt.id', '=', 'cqr.vehicle_type_id')
-            ->leftJoin('car_make as cmake', 'cmake.id', '=', 'cqr.car_make_id')
-            ->leftJoin('car_model as cmodel', 'cmodel.id', '=', 'cqr.car_model_id')
-            ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
-            ->leftJoin('users as ua', 'ua.id', '=', 'cqr.advisor_id')
-            ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'cqrd.lost_reason_id')
-            ->where('cqr.quote_status_id', '!=', 9)
-            ->where('cqr.advisor_id', Auth::user()->id)
-            ->orderBy('cqr.created_at', 'DESC');
-
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            $columnName = $request->get('columns')[$column]['name'];
-            $query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
-        }
-
-        if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
-            $dateFrom = $this->parseDate($request->startedAt, true);
-            $dateTo = $this->parseDate($request->endAt, false);
-            $query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
-            $dateFrom = $this->parseDate($request->nfdSart, true);
-            $dateTo = $this->parseDate($request->nfdEnd, false);
-            $query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->cdbId) && $request->cdbId != 0) {
-            $query->where('cqr.code', $request->cdbId);
-        }
-        if (isset($request->email) && $request->email != '') {
-            $query->where('cqr.email', $request->email);
-        }
-        if (isset($request->leadStatus) && $request->leadStatus != 0) {
-            $query->where('cqr.quote_status_id', $request->leadStatus);
-        }
-        if (isset($request->paymentStatus)) {
-            $query->where('cqr.payment_status_id', $request->paymentStatus);
-        }
-        if (isset($request->renewal_batch)) {
-            $query->where('cqr.renewal_batch', $request->renewal_batch);
-        }
-        if (isset($request->previous_policy_number)) {
-            $query->where('cqr.previous_quote_policy_number', $request->previous_policy_number);
-        }
-        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-        if (Auth::user()->isRenewalAdvisor()) {
-            $query->whereNotNull('cqr.previous_quote_policy_number');
-            $query->orderBy('cqr.previous_policy_expiry_date', 'ASC');
-        }
-        if (isset($request->isEcommerce)) {
-            $isEcommerce = $request->isEcommerce == 'Yes' ? 1 : 0;
-            $query->where('cqr.is_ecommerce', $isEcommerce);
-        }
-        if (isset($request->createdAtStart) && isset($request->createdAtEnd) && $request->createdAtStart != '' && $request->createdAtEnd != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['createdAtStart'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['createdAtEnd'])->endOfDay()->toDateTimeString();
-            $query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->vehicleType)) {
-            $query->where('cqr.vehicle_type_id', $request->vehicleType);
-        }
-        if (isset($request->typeOfCarInsurance)) {
-            $query->where('cqr.car_type_insurance_id', $request->typeOfCarInsurance);
-        }
-        if (isset($request->currentlyInsuredWith)) {
-            $query->where('cqr.currently_insured_with', $request->currentlyInsuredWith);
-        }
-
-        return $query;
-    }
-
     private function parseDate($date, $isStartOfDay)
     {
         if ($date != '') {
-            $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
             if ($isStartOfDay) {
-                return Carbon::createFromFormat($dateFormat, $date)->startOfDay();
+                return Carbon::parse($date)->startOfDay()->toDateTimeString();
             } else {
-                return Carbon::createFromFormat($dateFormat, $date)->endOfDay();
+                return Carbon::parse($date)->endOfDay()->toDateTimeString();
             }
         }
     }
@@ -790,18 +659,18 @@ class CarQuoteService extends BaseService
             }
             if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
                 $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
-                $dateTo = $this->parseDate($request['renewal_expiry_date_end'], true);
+                $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
                 $this->query->whereBetween(DB::raw('DATE(cqr.previous_policy_expiry_date)'), [$dateFrom, $dateTo]);
             }
             if (isset($request->next_followup_date) && $request->next_followup_date != '') {
                 $dateFrom = $this->parseDate($request['next_followup_date'], true);
-                $dateTo = $this->parseDate($request['next_followup_date_end'], true);
+                $dateTo = $this->parseDate($request['next_followup_date_end'], false);
                 $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
             }
             if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
                 $dateFrom = $this->parseDate($request['created_at'], true);
-                $dateTo = $this->parseDate($request['created_at_end'], true);
-                $this->query->whereBetween(DB::raw('DATE(cqr.created_at)'), [$dateFrom, $dateTo]);
+                $dateTo = $this->parseDate($request['created_at_end'], false);
+                $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
             }
 
             foreach ($searchProperties as $item) {
@@ -851,7 +720,7 @@ class CarQuoteService extends BaseService
 
     private function addLeadViewEligibilityCheck()
     {
-        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
+        if (Auth::user()->hasRole(RolesEnum::CarManager) || Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
             $this->walkTree(Auth::user()->id);
             $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
         } elseif (Auth::user()->hasRole(RolesEnum::LeadPool)) {
@@ -859,9 +728,6 @@ class CarQuoteService extends BaseService
             $this->query->where(function ($query) {
                 return $query->whereIn('cqr.advisor_id', $this->childUserIds)->OrWhereNull('cqr.advisor_id');
             });
-        } elseif (Auth::user()->hasRole(RolesEnum::CarDeputyManager)) {
-            $this->walkTree(Auth::user()->id);
-            $this->query->whereIn('cqr.advisor_id', $this->childUserIds);
         } elseif (Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
             $this->query->where('cqr.advisor_id', Auth::user()->id);
         }
@@ -1302,6 +1168,8 @@ class CarQuoteService extends BaseService
 
             $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
 
+            $lead->auto_assigned = false;
+
             $lead->save();
 
             if (isset($request->assignment_type) && $request->assignment_type == GenericRequestEnum::ASSIGN_WITH_EMAIL) {
@@ -1395,7 +1263,6 @@ class CarQuoteService extends BaseService
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('previous advisor (' . $userId . ')  auto assignment count is : ' . $previousAdvisorAllocationRecord->auto_assignment_count);
                     $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                    $lead->auto_assigned = false;
                 }
             } else {
                 if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
@@ -1545,6 +1412,32 @@ class CarQuoteService extends BaseService
                     'visit_count' => 1,
                 ]);
             }
+        }
+    }
+
+    private function deleteValuationAPI($oldValue, $currentValue, $quoteUuId)
+    {
+        if ($oldValue == $currentValue) {
+            return true;
+        }
+
+        try {
+            $deleteValuationAPI = config('constants.KEN_API_ENDPOINT') . '/delete-car-valuation';
+            $kenCapiBasicAuthUsername = config('constants.KEN_API_USER');
+            $kenCapiBasicAuthPassword = config('constants.KEN_API_PWD');
+            $kenCapiApiToken = config('constants.KEN_API_TOKEN');
+
+            $response = Http::withHeaders(['x-api-token' => $kenCapiApiToken])
+                ->withBasicAuth($kenCapiBasicAuthUsername, $kenCapiBasicAuthPassword)
+                ->post($deleteValuationAPI, ['quoteUuid' => $quoteUuId]);
+
+            if ($response->ok()) {
+                return true;
+            }
+        } catch (\Exception $exception) {
+            Log::info('Delete Valuation API Error: ' . $exception->getMessage());
+
+            return false;
         }
     }
 }

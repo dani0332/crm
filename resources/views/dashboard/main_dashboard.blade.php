@@ -247,13 +247,13 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6 ml-10 col-md-offset-1" style="width:  40%; float:left;">
+        {{-- <div class="col-md-6 ml-10 col-md-offset-1" style="width:  40%; float:left;">
             <div class="panel panel-default">
                 <div class="panel-body">
                     <div id="AssignedLeadRcdSummaryByLeadSource" style="margin-top: 60px;"></div>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
     </div>
     <div style="clear: both;">
@@ -311,7 +311,7 @@
    var revivalLeadsCount = <?php echo json_encode($revivalLeadsCount)?>;
    var advisorLeadsAssignedData = <?php echo json_encode($advisorLeadsAssignedData)?>;
    var assignedLeadsBySource = <?php echo json_encode($assignedLeadsBySource)?>;
-   var leadRcdSummaryByTierPieChart =  revivalLeadsCountChart = assignedLeadsBySourceChart = advisorConversionChart = leadAssignCountByAdvisorChart = {};
+   var leadRcdSummaryByTierPieChart =  revivalLeadsCountChart = assignedLeadsBySourceChart = advisorConversionChart = leadAssignCountByAdvisorChart = unAssignedLeadsByTierChart =  {};
    $(function(){
         setTimeout(function() {
             window.location.reload(1);
@@ -368,6 +368,10 @@
                     {name : 'Non Revival Leads', y: parseInt(data['revivalLeadsCount'][0]['non_revival_leads']) }];
                  createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCountChartData);
 
+                 unAssignedLeadsByTierChart.destroy();
+                 var unAssignedLeadsByTierData = prepareGraphData(data['unAssignedLeadsByTier'], 'tierNames', 'leadCount');
+                 createUnAssignedLeadRcdSummaryByTierChart(unAssignedLeadsByTierData);
+
                  var advisorLeadsAssignedSummaryData = prepareGraphData(data.advisorLeadsAssignedData, 'name', 'total_leads');
                  createLeadAssignCountSummaryByAdvisorChart(advisorLeadsAssignedSummaryData.length > 0 ? advisorLeadsAssignedSummaryData : [{name: '', y: 0}]);
                }
@@ -376,11 +380,15 @@
 
         $('#team-filter').on('change', function (e) {
             var teamFilteValue = $('#team-filter').val();
+            var selectedDate = $('#reloadDailyStatsDate').val();
             leadAssignCountByAdvisorChart.showLoading();
             $.ajax({
                 url: "/get-team-conversion-stats",
                 type: "post",
-                data: { 'teamFilter' : teamFilteValue} ,
+                data: {
+                    'teamFilter' : teamFilteValue,
+                    'range' : selectedDate
+                } ,
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 },
@@ -418,8 +426,8 @@
         {name : 'Non Revival Leads', y: parseInt(revivalLeadsCount[0]['non_revival_leads']) }];
         createUnAssignedLeadRcdSummaryByLeadSourceChart(revivalLeadsCountData);
 
-        var assignedLeadsBySourceData = prepareGraphData(unAssignedLeadsByTier, 'sourceName', 'sourceCount');
-        createAssignedLeadRcdSummaryByLeadSourceChart(assignedLeadsBySourceData);
+        // var assignedLeadsBySourceData = prepareGraphData(unAssignedLeadsByTier, 'sourceName', 'sourceCount');
+        // createAssignedLeadRcdSummaryByLeadSourceChart(assignedLeadsBySourceData);
 
         var advisorLeadsAssignedSummaryData =  prepareGraphData(advisorLeadsAssignedData, 'name', 'total_leads');
         createLeadAssignCountSummaryByAdvisorChart(advisorLeadsAssignedSummaryData);
@@ -449,7 +457,7 @@
                 align: 'center'
             },
             tooltip: {
-                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
             },
             accessibility: {
                 point: {
@@ -462,7 +470,7 @@
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: 'Tier {point.name} - <b>{y} Leads'
+                        format: '{point.name} - <b>{y} Leads'
                     }
                 }
             },
@@ -489,7 +497,7 @@
                 align: 'center'
             },
             tooltip: {
-                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
             },
             accessibility: {
                 point: {
@@ -502,7 +510,7 @@
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: 'Tier {point.name} - <b>{y} Leads'
+                        format: '{point.name} - <b>{y} Leads'
                     }
                 }
             },
@@ -528,7 +536,7 @@
                 align: 'center'
             },
             tooltip: {
-                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
             },
             accessibility: {
                 point: {
@@ -567,7 +575,7 @@
                 align: 'center'
             },
             tooltip: {
-                pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+                pointFormat: '{series.name}: <b>{point.percentage:.2f}%</b>'
             },
             accessibility: {
                 point: {
@@ -619,7 +627,7 @@
                     borderWidth: 0,
                     dataLabels: {
                         enabled: true,
-                        format: '{point.y:.1f}'
+                        format: '{point.y:.2f}'
                     }
                 }
             },

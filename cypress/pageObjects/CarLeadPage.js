@@ -22,6 +22,10 @@ class CarLeadPage {
     return cy.get("input#mobile_no").type(mobileNumber)
   }
 
+  //Create Lead Button
+  getCreateLeadButton() {
+    return cy.get('a[href="https://crmstage.alfred.ae/quotes/car/create"]').contains('Create Lead').click()
+  }
 
   //
   getUaeLicenseHeldFor(licenseHeld) {
@@ -219,7 +223,7 @@ class CarLeadPage {
 
   // delete Additional Contact
   deleteContactButton() {
-    return cy.get('.additional-contact-delete-btn').should("be.visible").click()
+    return cy.get('.btn.btn-danger.btn-sm').contains('Delete').should("be.visible").click()
   }
   //Load History Button
   getLloadHistoryButton() {

@@ -81,6 +81,10 @@ class CommonPage {
     })
   }
 
+  getPanelHeadingAssertion(heading) {
+    return cy.get('div.x_title').should('be.visible').contains(heading)
+  }
+
   getButtonByName(name) {
     return cy.get('button[type="submit"]').contains(name).should('be.visible').click()
   }
