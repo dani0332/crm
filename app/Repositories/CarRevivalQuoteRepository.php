@@ -182,6 +182,6 @@ class CarRevivalQuoteRepository extends BaseRepository
             $data['emailConversionReport'][] = $revivalData;
         }
 
-        return  $groups->setCollection(collect($data));
+        return $groups->setCollection(collect($data));
     }
 }

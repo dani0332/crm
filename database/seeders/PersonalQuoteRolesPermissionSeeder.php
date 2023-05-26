@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\PermissionsEnum;
 use App\Enums\QuoteTypes;
-use App\Enums\quoteTypeCode;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;

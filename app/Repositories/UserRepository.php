@@ -31,11 +31,11 @@ class UserRepository extends BaseRepository
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->select('users.id as id', DB::raw("CONCAT(users.name,' - ',r.name) AS name"));
 
-        switch (strtolower($modelType)){
+        switch (strtolower($modelType)) {
             case strtolower(quoteTypeCode::Car):
                 $query->whereIn('r.name', [
-                        RolesEnum::CarAdvisor,
-                        RolesEnum::CarDeputyManager]
+                    RolesEnum::CarAdvisor,
+                    RolesEnum::CarDeputyManager]
                 );
 
             case strtolower(quoteTypeCode::Health):
@@ -44,7 +44,7 @@ class UserRepository extends BaseRepository
                     RolesEnum::EBPAdvisor,
                     RolesEnum::HealthRenewalAdvisor,
                     RolesEnum::HealthNewBusinessAdvisor,
-                    RolesEnum::HealthWCUAdvisor
+                    RolesEnum::HealthWCUAdvisor,
                 ]);
 
             case strtolower(quoteTypeCode::Business):
@@ -53,7 +53,7 @@ class UserRepository extends BaseRepository
                     RolesEnum::CorpLineRenewalAdvisor,
                     RolesEnum::CorpLineNewBusinessAdvisor,
                     RolesEnum::GMRenewalAdvisor,
-                    RolesEnum::GMNewBusinessAdvisor
+                    RolesEnum::GMNewBusinessAdvisor,
                 ]);
 
             default:
