@@ -212,7 +212,7 @@ class User extends Authenticatable implements AuditableContract
     public function hasMyLeadAccess()
     {
         return Auth::user()->hasAnyRole([
-            RolesEnum::Admin, RolesEnum::CarAdvisor, RolesEnum::BusinessAdvisor, RolesEnum::HealthAdvisor, RolesEnum::HomeAdvisor,
+            RolesEnum::Admin, RolesEnum::BusinessAdvisor, RolesEnum::HealthAdvisor, RolesEnum::HomeAdvisor,
             RolesEnum::LifeAdvisor, RolesEnum::TravelAdvisor, RolesEnum::GMAdvisor, RolesEnum::RMAdvisor, RolesEnum::CorpLineAdvisor,
             RolesEnum::EBPAdvisor, RolesEnum::HealthWCUAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor,
             RolesEnum::TravelAdvisor, RolesEnum::HealthWCUAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor,

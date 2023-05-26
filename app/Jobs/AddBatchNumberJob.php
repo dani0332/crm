@@ -39,16 +39,16 @@ class AddBatchNumberJob implements ShouldQueue
             if ($lastBatch == null) {
                 info('inside creating batches from scratch');
                 $batches = $this->generateBatchNumbers(Carbon::parse('2018-08-06'));
-                if (count($batches)) {
+                if (count($batches) > 0) {
                     foreach ($batches as $batch) {
                         $this->insertQuoteBatch($batch);
                     }
                     info('batches created');
                 }
-            } elseif (! (now() >= Carbon::parse($lastBatch->start_date) && now() <= Carbon::parse($lastBatch->end_date))) {
+            } elseif (! (now()->startOfDay() >= Carbon::parse($lastBatch->start_date)->startOfDay() && now()->endOfDay() <= Carbon::parse($lastBatch->end_date)->endOfDay())) {
                 info('inside creating batch of current week');
                 $batches = $this->generateBatchNumbers(Carbon::parse($lastBatch->end_date)->addDays(1));
-                if (count($batches)) {
+                if (count($batches) > 0) {
                     foreach ($batches as $batch) {
                         $this->insertQuoteBatch($batch);
                     }
