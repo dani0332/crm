@@ -1274,7 +1274,7 @@ class HealthQuoteService extends BaseService
                 $apiArray = [
                     'planId' => (int) $data[$i],
                     'isHidden' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
-                    'isManualUpdate' => true,
+                    'isManualUpdate' => false,
                 ];
                 array_push($plansArray, $apiArray);
             }
