@@ -1084,13 +1084,14 @@ class CarQuoteService extends BaseService
         }
 
         if (
-            $quote->payment_status_id == "" || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
+            $quote->payment_status_id == "" || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
         && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager]))
         ) {
             info($logPrefix . ' plan modify allowed for uuid ' . $quote->uuid . ' payment status ' . $quote->paymentStatus->text . ' to ' . RolesEnum::CarAdvisor);
             return true;
         }
 
+        info($logPrefix . ' plan modification is not allowed for uuid ' . $quote->uuid);
         return 'Plan Modification is not allowed';
     }
 
