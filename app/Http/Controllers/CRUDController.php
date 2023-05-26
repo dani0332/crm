@@ -1452,4 +1452,15 @@ class CRUDController extends Controller
             'is_renewal_tier_email_sent' => 0,
         ]);
     }
+
+        /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\ClaimsStatus  $claimsStatus
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy()
+    {
+
+    }
 }
