@@ -158,6 +158,7 @@ use App\Enums\LeadSourceEnum;
 
                     if($modeltype == quoteTypeCode::Car)
                     {
+                        //mo can only change status when status is car sold / uncontactable, based on condition below
                         if(!isCarLostStatus($lead->quote_status_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                             $carLostChangeStatus = false;
                             $allowQuoteLogAction = false;
@@ -165,9 +166,11 @@ use App\Enums\LeadSourceEnum;
 
                         if(isCarLostStatus($lead->quote_status_id))
                         {
+                            //when status is car sold / uncontactable, default lead status change is blocked, will allow agains validations below
                             $carLostChangeStatus = false;
                             $allowQuoteLogAction = false;
 
+                            //validations for MO role
                             if(auth()->user()->hasRole(RolesEnum::MarketingOperations))
                             {
                                 $carLostChangeStatus = false;
@@ -178,7 +181,8 @@ use App\Enums\LeadSourceEnum;
                                 }
                             }
 
-                            if(auth()->user()->hasRole(RolesEnum::CarAdvisor) )
+                            //validations for Car Advisor / Deputy Manager Role
+                            if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]))
                             {
                                 $allowQuoteLogAction = false;
 
