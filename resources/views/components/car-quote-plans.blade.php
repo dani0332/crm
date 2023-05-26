@@ -280,11 +280,11 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                 @endif
 								@if($quotePlan->providerCode == InsuranceProvidersEnum::RSA)
 								<button
-								class="btn btn-success btn-sm enable-tabby"
+								class="btn btn-success btn-sm enable-bnpl"
 								data-planId="{{$quotePlan->id}}"
 								data-quoteUUId="{{$record->uuid}}"
 								{{ $quotePlan->isPayLaterActive ? 'disabled' : '' }}
-								>Enable Tabby</button>
+								>Enable BNPL</button>
 								@endif
                                 </td>
 
