@@ -119,9 +119,8 @@ class AjaxController extends Controller
             'planId' => $request->plan_id,
             'isPayLaterActive'=>true,
         ];
-        $response = Ken::request('/api/v1/save-manual-car-quote-plan', 'post', $payLoad);
+        $response = Ken::request('/save-manual-car-quote-plan', 'post', $payLoad);
 
-        dd($response);
         if (! $response) {
             return response()->json(['success' => false]);
         }
