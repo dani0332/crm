@@ -29,39 +29,45 @@ class TierAssignmentJob implements ShouldQueue
      */
     public function handle(ApplicationStorageService $applicationStorageService, LeadAllocationService $leadAllocationService)
     {
-        $from = $applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+        $tierAssignmentSwitch = $applicationStorageService->getValueByKey('TIER_ASSIGNMENT_SWITCH');
 
-        $weekBeforeDateTime = now()->subWeek(1)->startOfDay();
+        if($tierAssignmentSwitch != 0) {
 
-        if (Carbon::parse($from)->startOfDay() < $weekBeforeDateTime) {
-            $from = $weekBeforeDateTime;
-        }
+            $from = $applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
 
-        $isFIFO = $applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
+            // $weekBeforeDateTime = now()->subWeek(1)->startOfDay();
 
-        $to = now()->subMinutes(2)->toDateTimeString();
+            // if (Carbon::parse($from)->startOfDay() < $weekBeforeDateTime) {
+            //     $from = $weekBeforeDateTime;
+            // }
 
-        $carLeads = CarQuote::whereNull('tier_id')
-            ->whereBetween('created_at', [$from, $to])
-            ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')->get();
+            $isFIFO = $applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
 
-        foreach ($carLeads as $carLead) {
+            $to = now()->subMinutes(2)->toDateTimeString();
 
-            $tier = $leadAllocationService->getTierForValue($carLead);
+            $carLeads = CarQuote::whereNull('tier_id')
+                ->whereBetween('created_at', [$from, $to])
+                ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
+                ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+                ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')->get();
 
-            if ($tier != null) {
+            foreach ($carLeads as $carLead) {
 
-                info('Found tier '.$tier->name.' against car lead : '.$carLead->code);
+                $tier = $leadAllocationService->getTierForValue($carLead);
 
-                $carLead->tier_id = $tier->id;
+                if ($tier != null) {
 
-                $carLead->save();
-            } else {
+                    info('Found tier '.$tier->name.' against car lead : '.$carLead->code);
 
-                info('No tier found to car lead : '.$carLead->code);
+                    $carLead->tier_id = $tier->id;
+
+                    $carLead->save();
+                } else {
+
+                    info('No tier found to car lead : '.$carLead->code);
+                }
             }
+
         }
     }
 }
