@@ -6,7 +6,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use App\Models\Permission;
 use App\Models\Role;
-use App\Models\RoleHasPermissions;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 

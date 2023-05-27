@@ -26,7 +26,7 @@ class ChangeInsurerRequest extends FormRequest
         return [
             'uuid' => 'required',
             'plan_id' => 'required',
-            'provider_code' => 'required|exists:insurance_provider,code'
+            'provider_code' => 'required|exists:insurance_provider,code',
         ];
     }
 }
