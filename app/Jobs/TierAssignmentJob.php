@@ -31,7 +31,7 @@ class TierAssignmentJob implements ShouldQueue
     {
         $tierAssignmentSwitch = $applicationStorageService->getValueByKey('TIER_ASSIGNMENT_SWITCH');
 
-        if($tierAssignmentSwitch != 0) {
+        if ($tierAssignmentSwitch != 0) {
 
             $from = $applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
 
