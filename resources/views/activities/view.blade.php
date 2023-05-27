@@ -1,6 +1,9 @@
 @extends('layouts.app')
 @section('title', 'View Activity')
 @section('content')
+@php
+        use App\Enums\PermissionsEnum;
+    @endphp
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
     <style>
@@ -432,7 +435,11 @@
                                 for="Payment mode">Assigned To</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">
-                                    <select class="form-control" @iF(Auth::user()->isAdvisor()) disabled="disabled" @endif name="assignee_id" id="assignee_id">
+                                    <select class="form-control"
+                                       @cannot(PermissionsEnum::ActivitiesAssignedToView)
+                                        disabled="disabled"
+                                        @endcannot
+                                        name="assignee_id" id="assignee_id">
                                         <option value="">Select Assigned To</option>
                                         @foreach ($advisors as $advisor)
                                             <option value="{{ $advisor['id'] }}">{{ $advisor['name'] }}</option>
