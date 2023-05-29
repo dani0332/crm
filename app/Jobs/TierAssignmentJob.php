@@ -48,7 +48,7 @@ class TierAssignmentJob implements ShouldQueue
                 ->whereBetween('created_at', [$from, $to])
                 ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
                 ->select('id', 'tier_id', 'cost_per_lead', 'code', 'is_ecommerce', 'car_type_insurance_id', 'car_value', 'source', 'uuid',
-                'previous_policy_expiry_date', 'email', 'mobile_no', 'car_make_id', 'car_model_id', 'is_renewal_tier_email_sent')
+                    'previous_policy_expiry_date', 'email', 'mobile_no', 'car_make_id', 'car_model_id', 'is_renewal_tier_email_sent')
                 ->skip(0)->take(3000)
                 ->get();
 
