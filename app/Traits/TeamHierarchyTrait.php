@@ -180,12 +180,12 @@ trait TeamHierarchyTrait
         $userIds = User::join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->where(function ($query) use ($teamId) {
-            $query->whereIn('id', function ($subQuery) use ($teamId) {
-                $subQuery->select('user_id')
-                    ->from('user_team')
-                    ->whereIn('team_id', (array) $teamId);
-            })->orWhereIn('sub_team_id', (array) $teamId);
-        })->where('is_active', 1)->where('r.name', RolesEnum::CarAdvisor)
+                $query->whereIn('id', function ($subQuery) use ($teamId) {
+                    $subQuery->select('user_id')
+                        ->from('user_team')
+                        ->whereIn('team_id', (array) $teamId);
+                })->orWhereIn('sub_team_id', (array) $teamId);
+            })->where('is_active', 1)->where('r.name', RolesEnum::CarAdvisor)
             ->pluck('id')
             ->toArray();
 
