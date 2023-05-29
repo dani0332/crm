@@ -48,8 +48,6 @@ class TierAssignmentJob implements ShouldQueue
 
             $carLeads = CarQuote::whereNull('tier_id')
                 ->whereBetween('created_at', [$from, $to])
-                ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
-                ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
                 ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
                 ->select('id', 'tier_id', 'cost_per_lead')
                 ->skip(0)->take(1000)
