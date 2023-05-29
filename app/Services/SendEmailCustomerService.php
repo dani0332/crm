@@ -384,7 +384,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
                 ]],
-                'replyTo' => $emailData->advisorEmail,
+                'replyTo' => ['name' => $emailData->advisorName, 'email' => $emailData->advisorEmail],
                 'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => $emailTemplateId,
                 'params' => [
