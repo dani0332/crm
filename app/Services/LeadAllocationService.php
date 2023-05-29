@@ -592,9 +592,10 @@ class LeadAllocationService extends BaseService
     public function buildEmailDateForLMSIntroEmail($userId, $carQuote)
     {
         $user = User::where('id', $userId)->first();
+        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         $emailData = (object) [
             'customerEmail' => $carQuote->email,
-            'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
+            'documentUrl' => [$documentUrl], // this will be replace with a generic URL once document upload section is done
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'advisorName' => $user->name,
             'landLine' => $user->landline_no,
