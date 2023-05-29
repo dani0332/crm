@@ -57,7 +57,7 @@ class TierAssignmentJob implements ShouldQueue
 
                 if ($tier != null) {
 
-                    info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code. ' , uuid : '. $carLead->uuid);
+                    info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code.' , uuid : '.$carLead->uuid);
 
                     $carLead->tier_id = $tier->id;
 
