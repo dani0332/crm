@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -10,6 +11,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Jobs\IntroEmailJob;
+use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -1179,9 +1181,11 @@ class CarQuoteService extends BaseService
 
                 $currentAdvisor = User::where('id', $userId)->first();
 
+                $documentUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL)->first()->value;
+
                 $emailData = (object) [
                     'customerEmail' => $lead->email,
-                    'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
+                    'documentUrl' => [$documentUrl], // this will be replace with a generic URL once document upload section is done
                     'clientFullName' => $lead->first_name.' '.$lead->last_name,
                     'advisorName' => $currentAdvisor->name,
                     'landLine' => $currentAdvisor->landline_no,
