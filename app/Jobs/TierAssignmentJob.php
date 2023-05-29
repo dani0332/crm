@@ -3,8 +3,6 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
