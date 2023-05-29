@@ -70,6 +70,8 @@ class TierAssignmentJob implements ShouldQueue
                 }
             }
 
+        }else{
+            info('Tier Assignment Job is turned Off');
         }
     }
 }
