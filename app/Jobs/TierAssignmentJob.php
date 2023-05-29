@@ -48,7 +48,7 @@ class TierAssignmentJob implements ShouldQueue
                 ->whereBetween('created_at', [$from, $to])
                 ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
                 ->select('id', 'tier_id', 'cost_per_lead', 'code', 'is_ecommerce', 'car_type_insurance_id', 'car_value', 'source')
-                ->skip(0)->take(2000)
+                ->skip(0)->take(3000)
                 ->get();
 
             foreach ($carLeads as $carLead) {
@@ -57,7 +57,7 @@ class TierAssignmentJob implements ShouldQueue
 
                 if ($tier != null) {
 
-                    info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code);
+                    info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code. ' , uuid : '. $carLead->uuid);
 
                     $carLead->tier_id = $tier->id;
 
