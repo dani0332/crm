@@ -18,7 +18,7 @@ class TierAssignmentJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 5;
+    public $tries = 3;
     public $timeout = 300;
     public $backoff = 3;
 
