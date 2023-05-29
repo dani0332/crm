@@ -61,6 +61,8 @@ class TierAssignmentJob implements ShouldQueue
 
                     $carLead->tier_id = $tier->id;
 
+                    $carLead->cost_per_lead = $tier->cost_per_lead;
+
                     $carLead->save();
                 } else {
 
