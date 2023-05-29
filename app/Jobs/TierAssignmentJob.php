@@ -33,7 +33,7 @@ class TierAssignmentJob implements ShouldQueue
 
         if ($tierAssignmentSwitch != 0) {
 
-            $from = $applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+            $from = $applicationStorageService->getValueByKey('TIER_ASSIGNMENT_PROCESS_START_DATE');
 
             // $weekBeforeDateTime = now()->subWeek(1)->startOfDay();
 
@@ -49,7 +49,10 @@ class TierAssignmentJob implements ShouldQueue
                 ->whereBetween('created_at', [$from, $to])
                 ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
                 ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-                ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')->get();
+                ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
+                ->select('id', 'tier_id', 'cost_per_lead')
+                ->skip(0)->take(1000)
+                ->get();
 
             foreach ($carLeads as $carLead) {
 

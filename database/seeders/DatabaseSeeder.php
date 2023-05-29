@@ -54,6 +54,7 @@ class DatabaseSeeder extends Seeder
             AddActivitiesAssignedToPermssion::class,
             AddTierAssignmentSwitch::class,
             AddLMSINTROEMAILATTACHMENTLINK::class,
+            AddTierAssignmentProcessStartDate::class,
         ]);
     }
 }
