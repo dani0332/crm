@@ -52,7 +52,9 @@ class DatabaseSeeder extends Seeder
             AssignPermissionsToQuoteRoles::class,
             addPermissionForCustomerSeeder::class,
             AddActivitiesAssignedToPermssion::class,
+            AddTierAssignmentSwitch::class,
             AddLMSINTROEMAILATTACHMENTLINK::class,
+            AddTierAssignmentProcessStartDate::class,
         ]);
     }
 }
