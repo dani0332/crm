@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
@@ -123,6 +124,9 @@ class AjaxController extends Controller
             $description = (get_class($quoteModel) == PersonalQuote::class) ? $payment->personalPlan->text : ($quoteModel->plan->text ?? '');
 
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
+
+            $paymentLink = $payment->payment_methods_code == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
+
             $paymentParams = [
                 'code' => $payment->code,
                 'quoteTypeId' => $quoteTypeId,

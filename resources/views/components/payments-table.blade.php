@@ -12,7 +12,7 @@ use App\Enums\PaymentStatusEnum;
             } else {
                 wasSubmitted = true;
                 $('#create-payment-btn').text('Creating Payment').prop('disabled', true);
-                if($('#captured_amount').val() != '' && $('#payment_methods').val() != '' && ($('#payment_methods').val() == 'CC' || ($('#reference').val() != '' && $('#payment_methods').val() != 'CC')) && $('#collection_type').val() != ''){
+                if($('#captured_amount').val() != '' && $('#payment_methods').val() != '' && ($('#payment_methods').val() == 'CC' || $('#payment_methods').val()== 'IN_PL' || ($('#reference').val() != ''&& $('#payment_methods').val() != 'CC' && $('#payment_methods').val() != 'IN_PL')) && $('#collection_type').val() != ''){
                     $('#create-payment-form').submit();
                     $('#paymentCreateModel').modal('show');
                     wasSubmitted = false;
@@ -36,7 +36,7 @@ use App\Enums\PaymentStatusEnum;
             $('#paymentCreateModel').modal('show');
         });
         $('#payment_methods').on('change',function () {
-            $(this).val() != 'CC' ? $('#payment-reference-div').show() : $('#payment-reference-div').hide();
+            $(this).val() != 'CC' &&  $(this).val() != 'IN_PL' ? $('#payment-reference-div').show() : $('#payment-reference-div').hide();
         });
 
         $('#upayment-reference-div, #payment-reference-div').hide();
@@ -145,7 +145,7 @@ use App\Enums\PaymentStatusEnum;
                                 <td>{{$payment->reference}}</td>
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
-                                        @if($payment->paymentMethod->code == 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID &&
+                                        @if(($payment->paymentMethod->code == 'CC' ||  $payment->paymentMethod->code == 'IN_PL') && $payment->payment_status_id != PaymentStatusEnum::PAID &&
                                         $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
                                         ! auth()->user()->hasRole(RolesEnum::PA))
                                             <button
