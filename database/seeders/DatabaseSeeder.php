@@ -51,6 +51,7 @@ class DatabaseSeeder extends Seeder
             addHealthManualAssignmentByPassUsers::class,
             AssignPermissionsToQuoteRoles::class,
             addPermissionForCustomerSeeder::class,
+            AddActivitiesAssignedToPermssion::class,
         ]);
     }
 }

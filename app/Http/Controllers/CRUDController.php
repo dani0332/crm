@@ -475,6 +475,14 @@ class CRUDController extends Controller
             $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
             $this->carQuoteService->addOrUpdateQuoteViewCount($record);
 
+            $daysAfterCapturedPayment = null;
+            if (($capturedPaymentDate = PaymentStatusLog::where(['quote_type_id' => QuoteTypeId::Car,
+                'quote_request_id' => $record->id,
+                'current_payment_status_id' => PaymentStatusEnum::CAPTURED,
+            ])->first())) {
+                $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
+            }
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
@@ -482,7 +490,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers',
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment',
             ]));
         }
 
@@ -1096,7 +1104,7 @@ class CRUDController extends Controller
         if ($response == 200 || $response == 201) {
             return redirect()->back()->with('success', 'Car Plan has been saved');
         } else {
-            return redirect()->back()->with('message', $response);
+            return redirect()->back()->with('error', $response);
         }
     }
 
@@ -1451,5 +1459,16 @@ class CRUDController extends Controller
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'is_renewal_tier_email_sent' => 0,
         ]);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\ClaimsStatus  $claimsStatus
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy()
+    {
+
     }
 }

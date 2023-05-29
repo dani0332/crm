@@ -470,7 +470,7 @@
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: 'Tier {point.name} - <b>{y} Leads'
+                        format: '{point.name} - <b>{y} Leads'
                     }
                 }
             },
@@ -510,7 +510,7 @@
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: 'Tier {point.name} - <b>{y} Leads'
+                        format: '{point.name} - <b>{y} Leads'
                     }
                 }
             },

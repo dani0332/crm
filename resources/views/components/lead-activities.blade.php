@@ -75,6 +75,12 @@ $url = '/quotes/' . strtolower($modeltype) . '/' . $lead->uuid;
                                         $quotetypename = 'travel';
                                         $quoteCode = 'TRA-';
                                         break;
+                                    case 9:
+                                        $quotetypename = 'pet';
+                                        $quoteCode = 'PET-';
+                                        break;
+                                    default:
+                                        break;
                                 }
                             @endphp
                                 <tr>

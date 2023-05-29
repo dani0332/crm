@@ -464,7 +464,9 @@ use App\Enums\GenericRequestEnum;
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" />
+
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
+
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />

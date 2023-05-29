@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -12,6 +13,7 @@ use App\Jobs\IntroEmailJob;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\PaymentStatusLog;
 use App\Models\QuoteBatches;
 use App\Models\QuoteViewCount;
 use App\Models\Tier;
@@ -301,7 +303,6 @@ class CarQuoteService extends BaseService
         } else {
             return false;
         }
-
     }
 
     public function getEntity($id)
@@ -641,8 +642,10 @@ class CarQuoteService extends BaseService
         if ($request->ajax()) {
             $this->addLeadViewEligibilityCheck();
 
-            if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                    empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+            if (
+                empty($request->email) && empty($request->code) && empty($request->first_name) &&
+                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
+            ) {
                 $this->query->whereNotIn('cqr.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
             }
 
@@ -976,69 +979,120 @@ class CarQuoteService extends BaseService
 
     public function carPlanModify($request)
     {
-        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-car-quote-plan';
-        $apiToken = config('constants.KEN_API_TOKEN');
-        $apiTimeout = config('constants.KEN_API_TIMEOUT');
-        $apiUserName = config('constants.KEN_API_USER');
-        $apiPassword = config('constants.KEN_API_PWD');
+        if (($response = $this->isPlanModifyAllowed($request->all())) === true) {
+            $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-car-quote-plan';
+            $apiToken = config('constants.KEN_API_TOKEN');
+            $apiTimeout = config('constants.KEN_API_TIMEOUT');
+            $apiUserName = config('constants.KEN_API_USER');
+            $apiPassword = config('constants.KEN_API_PWD');
 
-        if (isset($request->is_create)) {
-            if ($request->is_create == 1) {
-                $discountedPremium = $request->actual_premium;
-                $isUpdate = false;
+            if (isset($request->is_create)) {
+                if ($request->is_create == 1) {
+                    $discountedPremium = $request->actual_premium;
+                    $isUpdate = false;
+                } else {
+                    $discountedPremium = $request->discounted_premium;
+                    $isUpdate = true;
+                }
             } else {
-                $discountedPremium = $request->discounted_premium;
-                $isUpdate = true;
+                $discountedPremium = $request->actual_premium;
             }
-        } else {
-            $discountedPremium = $request->actual_premium;
-        }
 
-        $addons = [];
-        if ($request->addons != null && count($request->addons) > 0) {
-            $addons = $request->addons;
-        } else {
             $addons = [];
-        }
+            if ($request->addons != null && count($request->addons) > 0) {
+                $addons = $request->addons;
+            } else {
+                $addons = [];
+            }
 
-        $carPlanData = [
-            'quoteUID' => $request->car_quote_uuid,
-            'update' => $isUpdate,
-            'url' => strval($request->current_url),
-            'ipAddress' => request()->ip(),
-            'userAgent' => request()->header('User-Agent'),
-            'userId' => strval(auth()->id()),
-            'plans' => [
-                [
-                    'planId' => (int) $request->car_plan_id,
-                    'actualPremium' => (float) $request->actual_premium,
-                    'carValue' => (float) $request->car_value,
-                    'excess' => (float) $request->excess,
-                    'discountPremium' => (float) $discountedPremium,
-                    'isDisabled' => isset($request->is_disabled) ? (bool) $request->is_disabled : (bool) false,
-                    'addons' => $addons,
-                    'insurerTrimId' => strval($request->insurerTrim),
-                    'insurerQuoteNo' => strval($request->insurer_quote_no),
-                    'isManualUpdate' => $request->is_manual_update,
-                    'ancillaryExcess' => (int) $request->ancillary_excess,
+            $carPlanData = [
+                'quoteUID' => $request->car_quote_uuid,
+                'update' => $isUpdate,
+                'url' => strval($request->current_url),
+                'ipAddress' => request()->ip(),
+                'userAgent' => request()->header('User-Agent'),
+                'userId' => strval(auth()->id()),
+                'plans' => [
+                    [
+                        'planId' => (int) $request->car_plan_id,
+                        'actualPremium' => (float) $request->actual_premium,
+                        'carValue' => (float) $request->car_value,
+                        'excess' => (float) $request->excess,
+                        'discountPremium' => (float) $discountedPremium,
+                        'isDisabled' => isset($request->is_disabled) ? (bool) $request->is_disabled : (bool) false,
+                        'addons' => $addons,
+                        'insurerTrimId' => strval($request->insurerTrim),
+                        'insurerQuoteNo' => strval($request->insurer_quote_no),
+                        'isManualUpdate' => $request->is_manual_update,
+                        'ancillaryExcess' => (int) $request->ancillary_excess,
+                    ],
                 ],
-            ],
-        ];
+            ];
 
-        $apiCreds = [
-            'apiEndPoint' => $apiEndPoint,
-            'apiToken' => $apiToken,
-            'apiTimeout' => $apiTimeout,
-            'apiUserName' => $apiUserName,
-            'apiPassword' => $apiPassword,
-        ];
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
 
-        $response = $this->httpService->processRequest($carPlanData, $apiCreds);
-        if ($response == 200) {
-            $this->lockCarQuote($request->car_quote_uuid);
+            $response = $this->httpService->processRequest($carPlanData, $apiCreds);
+            if ($response == 200) {
+                $this->lockCarQuote($request->car_quote_uuid);
+            }
         }
 
         return $response;
+    }
+
+    /**
+     * @return bool|string
+     * paid_at = authorized date
+     */
+    public function isPlanModifyAllowed($data)
+    {
+        $logPrefix = 'fn: isPlanModifyAllowed ';
+        $quote = CarQuote::where('uuid', $data['car_quote_uuid'])->with('paymentStatus')->first();
+
+        if ($quote->payment_status_id == PaymentStatusEnum::CAPTURED) {
+            if ($paymentStatusLog = PaymentStatusLog::where([
+                'quote_type_id' => QuoteTypeId::Car,
+                'quote_request_id' => $quote->id,
+                'current_payment_status_id' => PaymentStatusEnum::CAPTURED,
+            ])->first()) {
+                $daysAfterCaptured = Carbon::now()->diffInDays(Carbon::parse($paymentStatusLog->created_at));
+
+                if (Auth::user()->hasRole(RolesEnum::CarAdvisor) && $daysAfterCaptured <= 7) {
+                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$daysAfterCaptured);
+
+                    return true;
+                } elseif (Auth::user()->hasRole(RolesEnum::CarManager) && ($daysAfterCaptured > 7 && $daysAfterCaptured <= 14)) {
+                    info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid.' and captured days diff is '.$daysAfterCaptured);
+
+                    return true;
+                }
+            }
+        }
+
+        if ($quote->payment_status_id == PaymentStatusEnum::CANCELLED && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager])) {
+            info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+
+            return true;
+        }
+
+        if (
+            $quote->payment_status_id == '' || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
+        && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager]))
+        ) {
+            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+
+            return true;
+        }
+
+        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+
+        return 'Plan Modification is not allowed';
     }
 
     public function getDuplicateEntityByCode($code)
@@ -1382,7 +1436,6 @@ class CarQuoteService extends BaseService
             if ($response->ok()) {
                 return true;
             }
-
         } catch (\Exception $exception) {
             Log::info('Delete Valuation API Error: '.$exception->getMessage());
 

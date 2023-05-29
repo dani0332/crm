@@ -45,4 +45,12 @@ class CarQuoteRequestDetail extends Model implements AuditableContract
     {
         return $this->hasOne(LostReasons::class, 'id', 'lost_reason_id');
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function carQuote()
+    {
+        return $this->belongsTo(CarQuote::class, 'car_quote_request_id');
+    }
 }

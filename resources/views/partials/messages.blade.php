@@ -17,5 +17,5 @@
 @endif
 
 @if(session()->has('error'))
-    <div class="alert alert-danger mt-5">{{ session()->get('error') }}</div>
+    <div class="row mt-6"><div class="col-md-12 col-sm-12"><div class="alert alert-danger">{{ session()->get('error') }}</div></div></div>
 @endif
