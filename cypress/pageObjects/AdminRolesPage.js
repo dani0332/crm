@@ -1,8 +1,9 @@
 class AdminRolesPage {
     //Create Role
     getCreateRoleButton() {
-        return cy.get('a[href="https://crmstage.alfred.ae/admin/roles/create"]').should('be.visible').click()
+        return cy.get('a.btn-sm').contains('Create Role').should('be.visible').click()
     }
+
 
     getNameField(name) {
         return cy.get('input#name').should('be.visible').clear().type(name)
@@ -19,10 +20,10 @@ class AdminRolesPage {
         return cy.get('input[type="search"]').should('be.visible').type('muhammad16')
     }
     openRoleById(id) {
-        return cy.get(`a[href="https://crmstage.alfred.ae/admin/roles/${id}"]`).should('be.visible').click()
+        return cy.get(`a[href*="admin/roles/${id}"]`).should('be.visible').click()
     }
     getEditButton(id) {
-        return cy.get(`a[href="https://crmstage.alfred.ae/admin/roles/${id}/edit"]`).contains('Edit').should('be.visible').click()
+        return cy.get(`a[href*="admin/roles/${id}/edit"]`).contains('Edit').should('be.visible').click()
     }
 
     getEditPermission() {

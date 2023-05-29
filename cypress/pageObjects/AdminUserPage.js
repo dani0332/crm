@@ -16,7 +16,7 @@ class AdminUserPage {
 
     //Create User
     getCreateButton() {
-        return cy.get('a[href="https://crmstage.alfred.ae/admin/users/create"]').should('be.visible').click()
+        return cy.get('a[href*="admin/users/create"]').should('be.visible').click()
     }
 
     getNameField() {
