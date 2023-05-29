@@ -80,6 +80,9 @@ class CentralService
             ];
             $resp = [];
             foreach ($lobTeams as $lob) {
+                if (strtolower($lob) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
+                    $lob = quoteTypeCode::Business;
+                }
                 $repository = $this->getRepositoryObject(ucfirst($lob));
 
                 if (! class_exists($repository)) {

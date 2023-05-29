@@ -105,9 +105,16 @@ class BusinessQuoteController extends Controller
      */
     public function store(StoreBusinessQuoteRequest $request)
     {
-        $this->businessQuoteService->saveBusinessQuote($request);
-
-        redirect('/quotes/business')->with('message', 'Record created successfully');
+        $record = $this->businessQuoteService->saveBusinessQuote($request);
+        if (isset($record->message) && str_contains($record->message, 'Error')) {
+            return redirect()->back()->with('message', $record->message)->withInput();
+        } else {
+            if (!isset($record->quoteUID)) {
+                return redirect('quotes/business')->with('success', 'Lead has been stored');
+            } else {
+                return redirect('quotes/business/' . $record->quoteUID)->with('success', 'Lead has been stored');
+            }
+        }
     }
 
     /**
