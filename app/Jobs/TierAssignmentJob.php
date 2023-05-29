@@ -3,8 +3,6 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
@@ -48,8 +46,6 @@ class TierAssignmentJob implements ShouldQueue
 
             $carLeads = CarQuote::whereNull('tier_id')
                 ->whereBetween('created_at', [$from, $to])
-                ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
-                ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
                 ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
                 ->select('id', 'tier_id', 'cost_per_lead')
                 ->skip(0)->take(1000)
@@ -61,7 +57,7 @@ class TierAssignmentJob implements ShouldQueue
 
                 if ($tier != null) {
 
-                    info('Found tier '.$tier->name.' against car lead : '.$carLead->code);
+                    info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code);
 
                     $carLead->tier_id = $tier->id;
 
