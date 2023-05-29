@@ -376,10 +376,15 @@ class SendEmailCustomerService extends BaseService
                 ];
             }
             $body = json_encode([
+                'sender' => [
+                    'email' => strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae',
+                    'name' => $emailData->advisorName,
+                ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
                 ]],
+                'replyTo' => ['name' => $emailData->advisorName, 'email' => $emailData->advisorEmail],
                 'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => $emailTemplateId,
                 'params' => [

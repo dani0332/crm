@@ -592,9 +592,10 @@ class LeadAllocationService extends BaseService
     public function buildEmailDateForLMSIntroEmail($userId, $carQuote)
     {
         $user = User::where('id', $userId)->first();
+        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         $emailData = (object) [
             'customerEmail' => $carQuote->email,
-            'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
+            'documentUrl' => [$documentUrl], // this will be replace with a generic URL once document upload section is done
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'advisorName' => $user->name,
             'landLine' => $user->landline_no,
@@ -651,7 +652,7 @@ class LeadAllocationService extends BaseService
         return CarQuote::whereNull('advisor_id')
             ->where('is_renewal_tier_email_sent', 0) // this check make sure that Tier R leads are excluded bcz we only send email for Tier R and not assign advisor
             ->whereBetween('created_at', [$from, $to])
-            ->where('quote_status_id', '!=', QuoteStatusEnum::Fake) // excluding all Fake leads
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]) // excluding all Fake leads
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]) // leads created from IMCRM are excluded because they get assigned to the creator right away
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc') // pickup order
             ->skip(0)->take($carLeadPickupLimit)->get();
