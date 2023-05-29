@@ -47,7 +47,7 @@ class TierAssignmentJob implements ShouldQueue
             $carLeads = CarQuote::whereNull('tier_id')
                 ->whereBetween('created_at', [$from, $to])
                 ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
-                ->select('id', 'tier_id', 'cost_per_lead')
+                ->select('id', 'tier_id', 'cost_per_lead', 'code', 'is_ecommerce', 'car_type_insurance_id', 'car_value', 'source')
                 ->skip(0)->take(1000)
                 ->get();
 
