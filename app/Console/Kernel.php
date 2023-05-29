@@ -33,7 +33,7 @@ class Kernel extends ConsoleKernel
 
         $schedule
             ->command('TierAssignment:cron')
-            ->everyFiveMinutes()
+            ->everyTwoMinutes()
             ->onOneServer()
             ->withoutOverlapping(1);
 
