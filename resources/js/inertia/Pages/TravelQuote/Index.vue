@@ -192,6 +192,9 @@ function setQueryFilters() {
   }
 }
 
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 onMounted(() => {
   setQueryFilters();
 });
@@ -337,6 +340,7 @@ onMounted(() => {
         </div>
 
         <ExportExcel
+            v-if="can(permissionsEnum.DATA_EXTRACTION)"
           :data="quotesSelected"
           :columns="tableHeader"
           :filename="'Travel-List'"
