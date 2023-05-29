@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Models\CarQuote;
@@ -29,11 +30,11 @@ class TierAssignmentJob implements ShouldQueue
      */
     public function handle(ApplicationStorageService $applicationStorageService, LeadAllocationService $leadAllocationService)
     {
-        $tierAssignmentSwitch = $applicationStorageService->getValueByKey('TIER_ASSIGNMENT_SWITCH');
+        $tierAssignmentSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_SWITCH);
 
         if ($tierAssignmentSwitch != 0) {
 
-            $from = $applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+            $from = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_PROCESS_START_DATE);
 
             // $weekBeforeDateTime = now()->subWeek(1)->startOfDay();
 
@@ -41,7 +42,7 @@ class TierAssignmentJob implements ShouldQueue
             //     $from = $weekBeforeDateTime;
             // }
 
-            $isFIFO = $applicationStorageService->getValueByKey('CAR_LEAD_PICKUP_FIFO');
+            $isFIFO = $applicationStorageService->getValueByKey(ApplicationStorageEnums::CAR_LEAD_PICKUP_FIFO);
 
             $to = now()->subMinutes(2)->toDateTimeString();
 
@@ -49,7 +50,10 @@ class TierAssignmentJob implements ShouldQueue
                 ->whereBetween('created_at', [$from, $to])
                 ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
                 ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-                ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')->get();
+                ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
+                ->select('id', 'tier_id', 'cost_per_lead')
+                ->skip(0)->take(1000)
+                ->get();
 
             foreach ($carLeads as $carLead) {
 
