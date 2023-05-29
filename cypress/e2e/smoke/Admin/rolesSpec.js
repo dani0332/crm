@@ -2,7 +2,7 @@ import AdminRolesPage from '../../../pageObjects/AdminRolesPage';
 import CommonPage from '../../../pageObjects/CommonPage';
 let rolesData = require('../../../fixtures/adminRolesData.json')
 let id
-describe('Group Mediacl Qoutes', () => {
+describe('Admin Roles ', () => {
     const commonPage = new CommonPage()
     const rolePage = new AdminRolesPage()
 
