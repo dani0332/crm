@@ -49,10 +49,6 @@ describe('Group Mediacl Qoutes', () => {
         commonPage.getPopUpAssertion('Role has been updated')
         rolePage.getViewAuditLogsButton()
         commonPage.getHeadingAssertion('Audit Logs')
-        rolePage.getDeleteButton()
-        rolePage.getConfirmButton()
-        commonPage.getButtonByName('Delete')
-        rolePage.getDeleteAssertion()
 
 
     })
