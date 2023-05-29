@@ -153,12 +153,13 @@ class DashboardService extends BaseService
         $todaysLeads = CarQuote::whereHas('carQuoteRequestDetail', function ($q) use ($filters) {
             $q->whereBetween('advisor_assigned_date', [$filters['startDate'], $filters['endDate']]);
         })
+            ->whereNotNull('car_quote_request.advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])->get();
 
         $teamWiseLeadsAssignedAverage = [];
         foreach ($filters['teams'] as $team) {
-            $teamUserIds = $this->getUsersByTeamId($team->id)->pluck('id');
+            $teamUserIds = $this->getAdvisorsByTeamId($team->id)->pluck('id');
 
             $usersCount = count($teamUserIds);
             $leadsCount = $todaysLeads->whereIn('advisor_id', $teamUserIds)->count();
