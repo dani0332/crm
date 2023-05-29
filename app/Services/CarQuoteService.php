@@ -1064,11 +1064,11 @@ class CarQuoteService extends BaseService
                 $daysAfterCaptured = Carbon::now()->diffInDays(Carbon::parse($paymentStatusLog->created_at));
 
                 if (Auth::user()->hasRole(RolesEnum::CarAdvisor) && $daysAfterCaptured <= 7) {
-                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' payment status '.$quote->paymentStatus->text.' and captured days diff is '.$daysAfterCaptured.' to '.RolesEnum::CarManager);
+                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$daysAfterCaptured);
 
                     return true;
                 } elseif (Auth::user()->hasRole(RolesEnum::CarManager) && ($daysAfterCaptured > 7 && $daysAfterCaptured <= 14)) {
-                    info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid.' payment status '.$quote->paymentStatus->text.' and captured days diff is '.$daysAfterCaptured.' to '.RolesEnum::CarManager);
+                    info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid.' and captured days diff is '.$daysAfterCaptured);
 
                     return true;
                 }
@@ -1076,7 +1076,7 @@ class CarQuoteService extends BaseService
         }
 
         if ($quote->payment_status_id == PaymentStatusEnum::CANCELLED && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager])) {
-            info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' payment status '.$quote->paymentStatus->text.' to role '.RolesEnum::CarAdvisor);
+            info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
 
             return true;
         }
@@ -1085,7 +1085,7 @@ class CarQuoteService extends BaseService
             $quote->payment_status_id == '' || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
         && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager]))
         ) {
-            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid.' payment status '.$quote->paymentStatus->text.' to '.RolesEnum::CarAdvisor);
+            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
             return true;
         }
