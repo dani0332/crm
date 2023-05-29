@@ -109,10 +109,10 @@ class BusinessQuoteController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
         } else {
-            if (!isset($record->quoteUID)) {
+            if (! isset($record->quoteUID)) {
                 return redirect('quotes/business')->with('success', 'Lead has been stored');
             } else {
-                return redirect('quotes/business/' . $record->quoteUID)->with('success', 'Lead has been stored');
+                return redirect('quotes/business/'.$record->quoteUID)->with('success', 'Lead has been stored');
             }
         }
     }
