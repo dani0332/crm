@@ -242,11 +242,10 @@ class DashboardController extends Controller
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
-            ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
+            ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
 
         if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
             $records->whereIn('tiers.id', $request->tier_filter);
@@ -285,7 +284,7 @@ class DashboardController extends Controller
         $data = [];
         $records = $records->get();
 
-        $batchesWiseGroupedData = $records->groupBy('batch_name')->sortBy('quote_batch_id')->take(10)->toArray();
+        $batchesWiseGroupedData = $records->groupBy('batch_name')->take(10)->sortKeys()->toArray();
 
         foreach ($batchesWiseGroupedData as $batchData) {
             $saleLeads = 0;

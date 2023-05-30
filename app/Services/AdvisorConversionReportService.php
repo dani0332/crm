@@ -247,15 +247,15 @@ class AdvisorConversionReportService extends BaseService
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
             info('inside lead type new');
-            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::NewLead);
+            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::NewLead)->where('source', '!=' ,LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::NOT_INTERESTED) {
             info('inside lead type not interested');
-            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec, QuoteStatusEnum::AMLScreeningFailed]);
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec, QuoteStatusEnum::AMLScreeningFailed])->where('source', '!=' ,LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::IN_PROGRESS) {
             info('inside lead type in progress');
-            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::PaymentPending, QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::PendingQuote]);
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::PaymentPending, QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::PendingQuote])->where('source', '!=' ,LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::MANUAL_CREATED) {
             info('inside lead type MANUAL_CREATED');
@@ -263,15 +263,15 @@ class AdvisorConversionReportService extends BaseService
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::BAD_LEAD) {
             info('inside lead type BAD_LEAD');
-            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->where('source', '!=' ,LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT) {
             info('inside lead type AFIA_RENEWALS_COUNT');
-            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::IMRenewal);
+            $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::IMRenewal)->where('source', '!=' ,LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
             info('inside lead type SALE_LEAD');
-            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued]);
+            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])->where('source', '!=' ,LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
             info('inside lead type CREATED_SALE_LEAD');
