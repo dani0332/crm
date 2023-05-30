@@ -211,7 +211,6 @@ class AdvisorConversionReportService extends BaseService
         if ($freshLoad) {
             $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
         } elseif (isset($filters->advisorAssignedDates)) {
-            dd($filters->advisorAssignedDates);
             $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
         }
 
