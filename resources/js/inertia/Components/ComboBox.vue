@@ -146,6 +146,7 @@ const onDeselectAll = () => {
               v-model="query"
               :placeholder="`${props.searchPlaceholder} (${props.options.length})`"
               class="w-full"
+              @update:modelValue="scrollTo(0)"
             />
           </li>
 
