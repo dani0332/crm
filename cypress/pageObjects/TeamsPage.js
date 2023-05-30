@@ -31,12 +31,12 @@ class TeamsPage {
     }
 
     getOpenTeam() {
-        return cy.get('a[href*="generic/team/56"]').should('be.visible').click()
+        return cy.get('[role="row"] a[href*="/generic/team/"]').should('be.visible').eq(0).click()
     }
 
     //Edit Team Details
     getEditButton() {
-        return cy.get('a[href*="generic/team/56/edit"]').should('be.visible').contains('Edit').click()
+        return cy.get('a.btn-sm').should('be.visible').contains('Edit').click()
     }
 
     getUpdateButton() {
