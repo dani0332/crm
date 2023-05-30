@@ -287,9 +287,12 @@ class DashboardController extends Controller
 
         $batchesWiseGroupedData = $records->groupBy('batch_name')->sortBy('quote_batch_id')->take(10)->toArray();
 
-        foreach($batchesWiseGroupedData as $batchData)
-        {
-            $saleLeads = 0; $createdSaleLeads = 0; $totalLeads = 0; $badLeads = 0; $manualCreatedBadLeads = 0;
+        foreach ($batchesWiseGroupedData as $batchData) {
+            $saleLeads = 0;
+            $createdSaleLeads = 0;
+            $totalLeads = 0;
+            $badLeads = 0;
+            $manualCreatedBadLeads = 0;
             foreach ($batchData as $record) {
                 $saleLeads = $saleLeads + $record['sale_leads'];
                 $createdSaleLeads = $createdSaleLeads + $record['created_sale_leads'];
@@ -300,7 +303,6 @@ class DashboardController extends Controller
             $numerator = $saleLeads - $createdSaleLeads;
             $denominator = $totalLeads - ($badLeads - $manualCreatedBadLeads);
             $total = $denominator > 0 ? ($numerator / $denominator) : 0;
-
 
             $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record['batch_name'].'-('.$record['start_date'].' to '.$record['end_date'].')';
