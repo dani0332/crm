@@ -15,4 +15,5 @@ final class ReportsLeadTypeEnum extends Enum
     public const SALE_LEAD = 'sale_leads';
     public const CREATED_SALE_LEAD = 'created_sale_leads';
     public const OTHERS = 'others';
+    public const TOTAL_LEADS = 'total_leads';
 }
