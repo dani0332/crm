@@ -245,6 +245,11 @@ class AdvisorConversionReportService extends BaseService
             info('advisorsFilter are : '.json_encode($filters->advisorsFilter));
             $query->whereIn('car_quote_request.advisor_id', $filters->advisorsFilter);
         }
+
+        if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::TOTAL_LEADS) {
+            info('inside lead type total');
+            $query->where('source', '!=', LeadSourceEnum::IMCRM);
+        }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
             info('inside lead type new');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::NewLead)->where('source', '!=', LeadSourceEnum::IMCRM);
