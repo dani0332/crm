@@ -299,8 +299,8 @@ class DashboardController extends Controller
                 $badLeads = $badLeads + $record['bad_leads'];
                 $manualCreatedBadLeads = $manualCreatedBadLeads + $record['manual_created_bad_leads'];
             }
-            $numerator = $saleLeads - $createdSaleLeads;
-            $denominator = $totalLeads - ($badLeads - $manualCreatedBadLeads);
+            $numerator = $saleLeads;
+            $denominator = $totalLeads - $badLeads;
             $total = $denominator > 0 ? ($numerator / $denominator) : 0;
 
             $data[] = number_format((float) $total * 100, 2, '.', '');
