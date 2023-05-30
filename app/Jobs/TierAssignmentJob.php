@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Mail\TierAssignmentFailedNotification;
 use App\Models\CarQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
@@ -12,13 +13,16 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class TierAssignmentJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $timeout = 300;
+    public $timeout = 117;
     public $backoff = 3;
 
     /**
@@ -51,7 +55,7 @@ class TierAssignmentJob implements ShouldQueue
                 ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
                 ->select('id', 'tier_id', 'cost_per_lead', 'code', 'is_ecommerce', 'car_type_insurance_id', 'car_value', 'source', 'uuid',
                     'previous_policy_expiry_date', 'email', 'mobile_no', 'car_make_id', 'car_model_id', 'is_renewal_tier_email_sent', 'created_at')
-                ->skip(0)->take(3000)
+                ->skip(0)->take(1000)
                 ->get();
 
             foreach ($carLeads as $carLead) {
@@ -87,8 +91,26 @@ class TierAssignmentJob implements ShouldQueue
                 }
             }
 
+            return;
+
         } else {
             info('Tier Assignment Job is turned Off');
+            return;
+        }
+    }
+
+     /**
+     * Handle a job failure.
+     *
+     * @param  \App\Events\OrderShipped  $event
+     * @param  \Throwable  $exception
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        if ($exception) {
+            Log::error('Exception in lead allocation : '.$exception->getMessage());
+            Mail::send(new TierAssignmentFailedNotification($exception));
         }
     }
 }
