@@ -93,7 +93,8 @@ class CarLeadAllocationDashboardService extends BaseService
         $from = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
         $to = now()->subMinutes(2)->toDateTimeString();
 
-        return CarQuote::whereBetween('created_at', [$from, $to])
+        return CarQuote::leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->whereBetween('car_quote_request.created_at', [$from, $to])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('tiers.name', '!=', TiersEnum::TIER_R)
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
