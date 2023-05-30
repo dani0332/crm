@@ -9,7 +9,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
-use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Services\DashboardService;
