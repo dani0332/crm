@@ -284,17 +284,15 @@ class DashboardController extends Controller
                     ->whereIn('teams.id', $request->team_filter);
             });
         } else {
-            $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-            if (count($commonTeams) > 0) {
-                $records->whereIn('users.id', function ($query) use ($commonTeams) {
-                    $query->distinct()
-                        ->select('users.id')
-                        ->from('users')
-                        ->join('user_team', 'user_team.user_id', 'users.id')
-                        ->join('teams', 'teams.id', 'user_team.team_id')
-                        ->where('teams.id', $commonTeams[0]);
-                });
-            }
+            $organicTeam = Team::where('name', 'Organic')->first();
+            $records->whereIn('users.id', function ($query) use ($organicTeam) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->where('teams.id', $organicTeam->id);
+            });
         }
 
         if (isset($request->userFilter) && $request->userFilter != 'null') {
