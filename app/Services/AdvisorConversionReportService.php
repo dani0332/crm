@@ -208,7 +208,12 @@ class AdvisorConversionReportService extends BaseService
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) :
             Carbon::parse(now())->endOfDay()->format($dateFormat);
 
-        $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+        if ($freshLoad) {
+            $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+        } elseif (isset($filters->advisorAssignedDates)) {
+            dd($filters->advisorAssignedDates);
+            $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+        }
 
         if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
             info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
