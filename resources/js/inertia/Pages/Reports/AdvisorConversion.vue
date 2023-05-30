@@ -318,6 +318,27 @@ function onFetchAdvisorAssignedLeads(item, type, page = 1) {
   axios
     .post(`/reports/fetch-advisor-assigned-leads-data`, {
       ...payLoad,
+      ...(payLoad.batches && {
+        batches: Array.isArray(payLoad.batches)
+          ? payLoad.batches
+          : [payLoad.batches],
+      }),
+      ...(payLoad.tiers && {
+        tiers: Array.isArray(payLoad.tiers) ? payLoad.tiers : [payLoad.tiers],
+      }),
+      ...(payLoad.leadSources && {
+        leadSources: Array.isArray(payLoad.leadSources)
+          ? payLoad.leadSources
+          : [payLoad.leadSources],
+      }),
+      ...(payLoad.advisors && {
+        advisors: Array.isArray(payLoad.advisors)
+          ? payLoad.advisors
+          : [payLoad.advisors],
+      }),
+      ...(payLoad.teams && {
+        teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
+      }),
       page: page,
       leadType: totalLeads.filters.leadType,
       quote_batch_id: totalLeads.filters.quote_batch_id,

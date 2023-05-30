@@ -18,6 +18,7 @@ class LeadReceivedSummaryBySourceDataTable extends DataTableComponent
             ->setColumnSelectDisabled()
             ->setPerPageVisibilityDisabled()
             ->setPaginationVisibilityDisabled()
+            ->setPaginationDisabled()
             ->setSearchDisabled();
     }
 
