@@ -95,15 +95,15 @@ class TierAssignmentJob implements ShouldQueue
 
         } else {
             info('Tier Assignment Job is turned Off');
+
             return;
         }
     }
 
-     /**
+    /**
      * Handle a job failure.
      *
      * @param  \App\Events\OrderShipped  $event
-     * @param  \Throwable  $exception
      * @return void
      */
     public function failed(Throwable $exception)
