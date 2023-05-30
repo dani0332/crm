@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\ReportsLeadTypeEnum;
 use App\Enums\RolesEnum;
@@ -281,11 +282,17 @@ class AdvisorConversionReportService extends BaseService
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
             info('inside lead type SALE_LEAD');
-            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])->where('source', '!=', LeadSourceEnum::IMCRM);
+            $query->where(function ($query) {
+                $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
+                    ->orWhere('car_quote_request.payment_status_id', PaymentStatusEnum::CAPTURED);
+            })->where('source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
             info('inside lead type CREATED_SALE_LEAD');
-            $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])->where('source', LeadSourceEnum::IMCRM);
+            $query->where(function ($query) {
+                $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
+                    ->orWhere('car_quote_request.payment_status_id', PaymentStatusEnum::CAPTURED);
+            })->where('source', '=', LeadSourceEnum::IMCRM);
         }
 
         return $query;
