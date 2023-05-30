@@ -45,7 +45,7 @@
                                 <div class="row radio-reason-manual-lead">
                                     <input type="radio" name="reason-manual-lead" value="payment-status" />
                                     <span class="col-form-label col-md-3 col-sm-3 reason-manual-lead-label" data-html="true" data-toggle="tooltip" data-placement="right" title="<div class='wide-tip'>If the payment status is ‘Pending’,<br/>
-                                        ‘Authorized, ‘Declined, Failed’<br/>‘Captured’ or ‘Cancelled’; you do not<br/>
+                                        ‘Authorized', ‘Declined', 'Failed’<br/>‘Captured’ or ‘Cancelled’; you do not<br/>
                                         need to create a new lead as you can<br/>work with the current lead.<br/><br/>
                                         You should be able to add manual<br/>plan(s), update or make changes to the<br/>
                                         available plan(s), add optional cover(s),<br/>and change of insurer using the same<br/>
