@@ -195,8 +195,7 @@ function calculateNetConversion(row) {
   const saleLeads = row.sale_leads;
   const createdSaleLeads = row.created_sale_leads;
   const numerator = saleLeads;
-  const denominator =
-    totalLeads - badLeads;
+  const denominator = totalLeads - badLeads;
   if (denominator > 0) {
     return parseFloat((numerator / denominator) * 100).toFixed(2) + ' %';
   } else {
@@ -401,7 +400,7 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
 onMounted(() => {
-  if (page.props.defaultFilters) {
+  if (page.props.defaultFilters && !params['page']) {
     filters.advisorAssignedDates =
       page.props.defaultFilters.advisorAssignedDates;
   }
