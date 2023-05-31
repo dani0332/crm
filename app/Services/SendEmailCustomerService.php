@@ -375,16 +375,18 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalContact,
                 ];
             }
+
+            $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
+
+            info('advisor custom email is : '.$advisorCustomEmail.' for lead : '.$emailData->carQuoteId);
+
             $body = json_encode([
-                'sender' => [
-                    'email' => strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae',
-                    'name' => $emailData->advisorName,
-                ],
+                'sender' => ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail],
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
                 ]],
-                'ReplyTo' => $emailData->advisorEmail,
+                'replyTo' => ['name' => $emailData->advisorName, 'email' => $emailData->advisorEmail],
                 'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => $emailTemplateId,
                 'params' => [

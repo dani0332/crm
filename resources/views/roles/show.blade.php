@@ -50,7 +50,8 @@
                     <div class="col-auto mr-auto"></div>
                         <div class="col-auto">
                             <a href="{{ route('roles.edit', ['role' => $role->id]) }}" class='btn btn-warning btn-sm'>Edit</a>
-                            <a href="#" date-route="{{ route('roles.destroy', ['role' => $role->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>
+                            {{-- Tempraory Hide Delete button --}}
+{{--                            <a href="#" date-route="{{ route('roles.destroy', ['role' => $role->id]) }}" class='btn btn-warning btn-sm delete'>Delete</a>--}}
                         </div>
                     </div>
                 </form>
