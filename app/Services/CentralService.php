@@ -81,6 +81,7 @@ class CentralService
             $resp = [];
             foreach ($lobTeams as $lob) {
                 if (strtolower($lob) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
+                    $dataArr['business_type_of_insurance_id'] = $parentRecord->business_type_of_insurance_id ?? '';
                     $lob = quoteTypeCode::Business;
                 }
                 $repository = $this->getRepositoryObject(ucfirst($lob));
