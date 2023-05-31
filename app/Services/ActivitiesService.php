@@ -85,7 +85,7 @@ class ActivitiesService extends BaseService
             $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
             $dueDate = Carbon::createFromFormat($dateFormat, $activity->due_date);
             $now = now()->format($dateFormat);
-            $activity->is_overdue = $dueDate < $now;
+            $activity->is_overdue = $dueDate->lt($now);
         }
 
         return $rawActivities;
