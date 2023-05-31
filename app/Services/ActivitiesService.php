@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\QuoteTypeId;
 use App\Models\Activities;
 use App\Models\QuoteStatus;
-use App\Models\User;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -81,6 +80,7 @@ class ActivitiesService extends BaseService
             'activities.id as id',
             'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid'
         )->get()->sortBy('status');
+
         return $rawActivities;
     }
 
@@ -179,7 +179,7 @@ class ActivitiesService extends BaseService
     {
         $subOrdinateIds = $this->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
-        $activities = Activities::leftJoin('users', 'users.id','activities.assignee_id')->whereIn('assignee_id', $subOrdinateIds);
+        $activities = Activities::leftJoin('users', 'users.id', 'activities.assignee_id')->whereIn('assignee_id', $subOrdinateIds);
 
         return $activities;
     }
