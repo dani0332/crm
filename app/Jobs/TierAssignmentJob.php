@@ -62,7 +62,7 @@ class TierAssignmentJob implements ShouldQueue
 
             foreach ($carLeads as $carLead) {
 
-                info('------------------- Processing Lead : ' . $carLead->code . ' -------------------');
+                info('------------------- Processing Lead : '.$carLead->code.' -------------------');
 
                 if ($leadAllocationService->checkIfLeadIsRenewal($carLead)) {
                     info('Renewal found against quote Id : '.$carLead->uuid);
@@ -102,6 +102,7 @@ class TierAssignmentJob implements ShouldQueue
         } else {
             info('Tier Assignment Job is turned Off');
             info('------------------- Tier Assignment Job Finished -------------------');
+
             return;
         }
     }
