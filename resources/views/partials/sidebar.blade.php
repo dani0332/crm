@@ -41,7 +41,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW])
+                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
@@ -58,6 +58,9 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW)
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
                             @endcan
+                                @can(PermissionsEnum::UtmLeadsSalesReport)
+                                    <li><a href="{{ url('reports/utm-leads-sale-report-view') }}">UTM Leads and Sales Report</a></li>
+                                @endcan
                         </ul>
                     </li>
                 </ul>

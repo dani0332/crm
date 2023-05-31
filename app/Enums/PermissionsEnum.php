@@ -208,4 +208,5 @@ final class PermissionsEnum extends Enum
     const JetskiQuotesShow = 'jetski-quotes-show';
     const RenewalBatchUpdate = 'renewal-batch-update';
     const ActivitiesAssignedToView = 'activities-assigned-to-view';
+    const UtmLeadsSalesReport = 'utm-leads-sales-report';
 }

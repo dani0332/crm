@@ -93,4 +93,9 @@ class ReportsController extends Controller
             ->get()
             ->toArray();
     }
+
+
+    public function utmLeadsSaleReport(){
+        dd('m here');
+    }
 }
