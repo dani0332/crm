@@ -32,7 +32,9 @@ class TierAssignmentJob implements ShouldQueue
      */
     public function handle(ApplicationStorageService $applicationStorageService, LeadAllocationService $leadAllocationService)
     {
-        info('------------------- Tier Assignment Job Started -------------------');
+        $currentIteration = now();
+
+        info('------------------- Tier Assignment Job Started At : '. $currentIteration .' -------------------');
 
         $tierAssignmentSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_SWITCH);
 
@@ -95,13 +97,13 @@ class TierAssignmentJob implements ShouldQueue
                 }
             }
 
-            info('------------------- Tier Assignment Job Finished -------------------');
+            info('------------------- Tier Assignment Job Finished for ' . $currentIteration . ' -------------------');
 
             return;
 
         } else {
             info('Tier Assignment Job is turned Off');
-            info('------------------- Tier Assignment Job Finished -------------------');
+            info('------------------- Tier Assignment Job Finished for ' . $currentIteration . ' -------------------');
 
             return;
         }
