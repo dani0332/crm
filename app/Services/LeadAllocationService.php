@@ -476,13 +476,13 @@ class LeadAllocationService extends BaseService
                 info('----------------------- CAR LEAD ALLOCATION STARTED FOR LEAD '.$carLead->uuid.' -----------------------');
 
                 if ($this->checkIfLeadIsRenewal($carLead)) {
-                    info('Renewal found against quote Id : '.$carLead->uuid);
+                    info('Renewal found against quote Id : '.$carLead->uuid.' skipping it now');
 
-                    if (! $carLead->is_renewal_tier_email_sent) {
-                        info('About to send Renewal Tier R email for quote Id : '.$carLead->uuid);
+                    // if (! $carLead->is_renewal_tier_email_sent) {
+                    //     info('About to send Renewal Tier R email for quote Id : '.$carLead->uuid);
 
-                        CarRenewalEmailJob::dispatch($carLead);
-                    }
+                    //     CarRenewalEmailJob::dispatch($carLead);
+                    // }
 
                     continue; // since we found renewal against current lead we will skip advisor assignment
                 }
