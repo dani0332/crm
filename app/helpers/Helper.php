@@ -422,6 +422,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Pet,
             quoteTypeCode::CORPLINE,
             quoteTypeCode::Business,
+            quoteTypeCode::Cycle
         ];
     }
 }
