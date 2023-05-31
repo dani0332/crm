@@ -9,6 +9,7 @@ use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ActivitiesService extends BaseService
 {
@@ -78,7 +79,7 @@ class ActivitiesService extends BaseService
         }
         $rawActivities = $activities->select(
             'activities.id as id',
-            'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid'
+            'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid', DB::raw('CASE WHEN `due_date` < NOW() THEN TRUE ELSE FALSE END AS `is_overdue`')
         )->get()->sortBy('status');
 
         return $rawActivities;
