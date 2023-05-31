@@ -102,6 +102,8 @@ const quotesSelected = ref([]),
   assignAdvisor = ref(null),
   assignmentType = ref(null),
   isDisabled = ref(false);
+
+
 </script>
 
 <template>
@@ -238,6 +240,7 @@ const quotesSelected = ref([]),
           :advisors="advisors"
         />
         <ExportExcel
+            v-if="can(permissionsEnum.DATA_EXTRACTION)"
           :data="quotesSelected"
           :columns="tableHeader"
           :filename="'Home-List'"
