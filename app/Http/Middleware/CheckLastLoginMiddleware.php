@@ -17,7 +17,7 @@ class CheckLastLoginMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        $specialUsers = ['im.automation4@gmail.com'];
+        $specialUsers = getAutomationUser();
         if (auth()->user()) {
             if (in_array(auth()->user()->email, $specialUsers)) {
                 return $next($request);
