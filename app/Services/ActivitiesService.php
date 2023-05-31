@@ -82,7 +82,7 @@ class ActivitiesService extends BaseService
         )->get()->sortBy('status');
 
         foreach ($rawActivities as $activity) {
-            $activity->is_overdue = strtotime($activity->due_date) < time();
+            $activity->is_overdue = $activity->due_date < now()->format('d-m-Y H:i:s');
         }
 
         return $rawActivities;
