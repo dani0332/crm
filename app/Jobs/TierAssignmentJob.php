@@ -32,6 +32,10 @@ class TierAssignmentJob implements ShouldQueue
      */
     public function handle(ApplicationStorageService $applicationStorageService, LeadAllocationService $leadAllocationService)
     {
+        $currentIteration = now();
+
+        info('------------------- Tier Assignment Job Started At : '.$currentIteration.' -------------------');
+
         $tierAssignmentSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_SWITCH);
 
         if ($tierAssignmentSwitch != 0) {
@@ -59,6 +63,8 @@ class TierAssignmentJob implements ShouldQueue
                 ->get();
 
             foreach ($carLeads as $carLead) {
+
+                info('------------------- Processing Lead : '.$carLead->code.' -------------------');
 
                 if ($leadAllocationService->checkIfLeadIsRenewal($carLead)) {
                     info('Renewal found against quote Id : '.$carLead->uuid);
@@ -91,10 +97,13 @@ class TierAssignmentJob implements ShouldQueue
                 }
             }
 
+            info('------------------- Tier Assignment Job Finished for '.$currentIteration.' -------------------');
+
             return;
 
         } else {
             info('Tier Assignment Job is turned Off');
+            info('------------------- Tier Assignment Job Finished for '.$currentIteration.' -------------------');
 
             return;
         }
