@@ -81,16 +81,16 @@ class CentralService
             $resp = [];
             foreach ($lobTeams as $lob) {
                 if (strtolower($lob) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $dataArr['business_type_of_insurance_id'] = $parentRecord->business_type_of_insurance_id ?? '';
                     $lob = quoteTypeCode::Business;
+                    $dataArr['business_type_of_insurance_id'] = $parentRecord->business_type_of_insurance_id ?? '';
+
+                    if(strtolower($lob) == strtolower(quoteTypeCode::GroupMedical))
+                        $dataArr['business_type_of_insurance_id'] = 5;
                 }
                 $repository = $this->getRepositoryObject(ucfirst($lob));
 
                 if (! class_exists($repository)) {
                     return false;
-                }
-                if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $dataArr['business_type_of_insurance_id'] = 5;
                 }
 
                 $response = in_array(quoteTypeCode::Pet, newUi()) && method_exists($repository, 'fetchCreateDuplicate') ? $repository::createDuplicate($dataArr) : Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
