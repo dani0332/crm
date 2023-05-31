@@ -34,7 +34,7 @@ class TierAssignmentJob implements ShouldQueue
     {
         $currentIteration = now();
 
-        info('------------------- Tier Assignment Job Started At : '. $currentIteration .' -------------------');
+        info('------------------- Tier Assignment Job Started At : '.$currentIteration.' -------------------');
 
         $tierAssignmentSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_SWITCH);
 
@@ -97,13 +97,13 @@ class TierAssignmentJob implements ShouldQueue
                 }
             }
 
-            info('------------------- Tier Assignment Job Finished for ' . $currentIteration . ' -------------------');
+            info('------------------- Tier Assignment Job Finished for '.$currentIteration.' -------------------');
 
             return;
 
         } else {
             info('Tier Assignment Job is turned Off');
-            info('------------------- Tier Assignment Job Finished for ' . $currentIteration . ' -------------------');
+            info('------------------- Tier Assignment Job Finished for '.$currentIteration.' -------------------');
 
             return;
         }
