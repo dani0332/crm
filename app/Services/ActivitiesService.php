@@ -82,7 +82,7 @@ class ActivitiesService extends BaseService
         )->get()->sortBy('status');
 
         foreach ($rawActivities as $activity) {
-            $activity->is_overdue = $activity->due_date < now()->format('d-m-Y H:i:s');
+            $activity->is_overdue = Carbon::parse($activity->due_date)->format('d-m-Y H:i:s') < now()->format('d-m-Y H:i:s');
         }
 
         return $rawActivities;
