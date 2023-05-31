@@ -286,6 +286,7 @@
                 searching: false,
                 bLengthChange: false,
                 serverSide: true,
+                processing: true,
                 ajax: {
                     url: config.routes.activitiesDataTable,
                     data: function(d) {
@@ -295,6 +296,11 @@
                         d.endDate = $("#customPeriodEnd").val();
                         d.status = $("#status").val();
                     }
+                },
+                language: {
+                    "processing": "<span class='fa-stack fa-lg'>\n\
+                                            <i class='fa fa-spinner fa-spin fa-stack-2x fa-fw'></i>\n\
+                                    </span>&emsp;Processing ...",
                 },
                 columns: [
 
@@ -328,8 +334,8 @@
                         name: 'due_date'
                     },
                     {
-                        data: "assignee_name",
-                        name: "assignee_name"
+                        data: "name",
+                        name: "name"
                     },
                     {
                         data: 'uuid',

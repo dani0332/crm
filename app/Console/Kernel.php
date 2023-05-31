@@ -3,6 +3,8 @@
 namespace App\Console;
 
 use App\Console\Commands\UpdateHealthStatus;
+use App\Jobs\LeadAllocationJob;
+use App\Jobs\TierAssignmentJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -25,17 +27,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
+
         $schedule
             ->command('LeadAllocation:cron')
             ->everyMinute()
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        $schedule
-            ->command('TierAssignment:cron')
-            ->everyTwoMinutes()
-            ->onOneServer()
-            ->withoutOverlapping(1);
+        //$schedule->job(new LeadAllocationJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
+
+        $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
 
         $schedule
             ->command('AddBatchNumber:cron')
