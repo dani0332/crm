@@ -9,7 +9,6 @@ use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class ActivitiesService extends BaseService
 {
@@ -83,7 +82,7 @@ class ActivitiesService extends BaseService
         )->get()->sortBy('status');
 
         foreach ($rawActivities as $activity) {
-            if($activity->due_date < now()->toDateTimeString()){
+            if ($activity->due_date < now()->toDateTimeString()) {
                 $activity->is_overdue = true;
             }
         }

@@ -38,8 +38,7 @@ class GoogleSocialiteController extends Controller
             return redirect()->route('login')->with('status', 'You are not authorized to login. Please contact admin.');
         }
 
-
-        $remember =  in_array( $requestingUser->email, getAutomationUser()) ? true : false;
+        $remember = in_array($requestingUser->email, getAutomationUser()) ? true : false;
         auth()->login($requestingUser, $remember);
 
         $requestingUser->last_login = now();
