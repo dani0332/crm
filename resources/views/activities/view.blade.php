@@ -254,6 +254,7 @@
         );
         }
         $(document).ready(function() {
+            var activitiesSourceArray = [];
             $("#hiddenField").daterangepicker({
                 timePicker: true,
                 singleDatePicker: false,
@@ -286,6 +287,10 @@
                 searching: false,
                 bLengthChange: false,
                 serverSide: true,
+                processing: true,
+                rowId: function (data) {
+                    return data.uuid;
+                },
                 ajax: {
                     url: config.routes.activitiesDataTable,
                     data: function(d) {
@@ -294,7 +299,16 @@
                         d.startDate = $("#customPeriodStart").val();
                         d.endDate = $("#customPeriodEnd").val();
                         d.status = $("#status").val();
+                    },
+                    dataSrc: function (response) {
+                        activitiesSourceArray = response.data;
+                        return response.data;
                     }
+                },
+                language: {
+                    "processing": "<span class='fa-stack fa-lg'>\n\
+                                            <i class='fa fa-spinner fa-spin fa-stack-2x fa-fw'></i>\n\
+                                    </span>&emsp;Processing ...",
                 },
                 columns: [
 
@@ -328,8 +342,8 @@
                         name: 'due_date'
                     },
                     {
-                        data: "assignee_name",
-                        name: "assignee_name"
+                        data: "name",
+                        name: "name"
                     },
                     {
                         data: 'uuid',
@@ -363,28 +377,14 @@
                 ],
                 drawCallback: function (settings) {
                     $("#totalActivites").text("Total Activites: " + settings._iRecordsTotal);
+                    for (let index = 0; index < activitiesSourceArray.length; index++) {
+                        const element = activitiesSourceArray[index];
+                        if(element.is_overdue) $('#' + element.uuid).children().eq(3).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+                    }
                 }
             });
+
             activitiesTable.on('draw', function() {
-                var rows = $('.activities-datatable tr');
-                var headerRowColumns = $(rows[0]).children();
-                var nextFollowupDateColumn = 0;
-                for (let i = 0; i < headerRowColumns.length; i++) {
-                    const element = headerRowColumns[i];
-                    if(element.outerText == "Followup Date"){
-                        nextFollowupDateColumn = i;
-                    }
-                }
-                for (let index = 1; index < rows.length; index++) {
-                    var columns = $(rows[index]).children();
-                    for (let i = 0; i < columns.length; i++) {
-                        if(i == nextFollowupDateColumn && $(columns[i]).text() != ""){
-                            if( NewformatDate(new Date()) > $(columns[i]).text() ) {
-                                $(rows[index]).children().eq(i).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
-                            }
-                        }
-                    }
-                }
                 $('.activityChk').each(function(index, el) {
                     if ($(el).is(':checked') == true) {
                         $(el).attr('disabled', true);

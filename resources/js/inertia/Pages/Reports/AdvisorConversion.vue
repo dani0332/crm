@@ -135,7 +135,7 @@ function calculateGrossConversion(item) {
     const manualCreated = item.manual_created;
     const saleLeads = item.sale_leads;
     const createdSaleLeads = item.created_sale_leads;
-    const numerator = saleLeads - createdSaleLeads;
+    const numerator = saleLeads;
     const denominator = totalLeadsCount;
     if (denominator > 0) {
       return parseFloat((numerator / denominator) * 100).toFixed(2) + ' %';
@@ -162,8 +162,8 @@ function calculateTotalNetConversion(data) {
     badLeads += Number(row.bad_leads);
     manualCreatedBadLeads += Number(row.manual_created_bad_leads);
   });
-  const numerator = saleLeads - createdSaleLeads;
-  const denominator = totalLeads - (badLeads - manualCreatedBadLeads);
+  const numerator = saleLeads;
+  const denominator = totalLeads - badLeads;
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
     : 'NaN';
@@ -180,7 +180,7 @@ function calculateTotalGrossConversion(data) {
     saleLeads += Number(row.sale_leads);
     createdSaleLeads += Number(row.created_sale_leads);
   });
-  const numerator = saleLeads - createdSaleLeads;
+  const numerator = saleLeads;
   const denominator = totalLeads;
   return denominator > 0
     ? ((numerator / denominator) * 100).toFixed(2) + ' %'
@@ -194,9 +194,8 @@ function calculateNetConversion(row) {
   const manualCreatedBadLeads = row.manual_created_bad_leads;
   const saleLeads = row.sale_leads;
   const createdSaleLeads = row.created_sale_leads;
-  const numerator = saleLeads - createdSaleLeads;
-  const denominator =
-    totalLeads - (badLeads - manualCreatedBadLeads);
+  const numerator = saleLeads;
+  const denominator = totalLeads - badLeads;
   if (denominator > 0) {
     return parseFloat((numerator / denominator) * 100).toFixed(2) + ' %';
   } else {
@@ -319,6 +318,27 @@ function onFetchAdvisorAssignedLeads(item, type, page = 1) {
   axios
     .post(`/reports/fetch-advisor-assigned-leads-data`, {
       ...payLoad,
+      ...(payLoad.batches && {
+        batches: Array.isArray(payLoad.batches)
+          ? payLoad.batches
+          : [payLoad.batches],
+      }),
+      ...(payLoad.tiers && {
+        tiers: Array.isArray(payLoad.tiers) ? payLoad.tiers : [payLoad.tiers],
+      }),
+      ...(payLoad.leadSources && {
+        leadSources: Array.isArray(payLoad.leadSources)
+          ? payLoad.leadSources
+          : [payLoad.leadSources],
+      }),
+      ...(payLoad.advisors && {
+        advisors: Array.isArray(payLoad.advisors)
+          ? payLoad.advisors
+          : [payLoad.advisors],
+      }),
+      ...(payLoad.teams && {
+        teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
+      }),
       page: page,
       leadType: totalLeads.filters.leadType,
       quote_batch_id: totalLeads.filters.quote_batch_id,
@@ -401,7 +421,7 @@ const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
 onMounted(() => {
-  if (page.props.defaultFilters) {
+  if (page.props.defaultFilters && !params['page']) {
     filters.advisorAssignedDates =
       page.props.defaultFilters.advisorAssignedDates;
   }

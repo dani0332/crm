@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\QuoteTypeId;
 use App\Models\Activities;
 use App\Models\QuoteStatus;
-use App\Models\User;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -77,9 +76,15 @@ class ActivitiesService extends BaseService
         if (isset($request->status) && $request->status != '') {
             $activities = $activities->where('status', $request->status);
         }
-        $rawActivities = $activities->get()->sortBy('status');
-        foreach ($rawActivities as $act) {
-            $act->assignee_name = User::where('id', $act->assignee_id)->first()->name;
+        $rawActivities = $activities->select(
+            'activities.id as id',
+            'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid'
+        )->get()->sortBy('status');
+
+        foreach ($rawActivities as $activity) {
+            if ($activity->due_date < now()->format('d-m-Y h:i:s')) {
+                $activity->is_overdue = true;
+            }
         }
 
         return $rawActivities;
@@ -180,7 +185,7 @@ class ActivitiesService extends BaseService
     {
         $subOrdinateIds = $this->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
-        $activities = Activities::whereIn('assignee_id', $subOrdinateIds);
+        $activities = Activities::leftJoin('users', 'users.id', 'activities.assignee_id')->whereIn('assignee_id', $subOrdinateIds);
 
         return $activities;
     }

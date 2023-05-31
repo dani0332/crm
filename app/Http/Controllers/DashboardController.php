@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
-use App\Models\QuoteBatches;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Services\DashboardService;
@@ -138,24 +138,31 @@ class DashboardController extends Controller
     {
         $tiers = Tier::where('can_handle_tpl', 1)->where('is_active', 1)->get()->pluck('id');
         $tplTeam = Team::where('name', 'TPL')->where('is_active', 1)->first();
-        $records = QuoteBatches::query()
+        $records = CarQuote::query()
             ->select(
-                'quote_batches.id',
-                'quote_batches.name',
+                'users.id as advisorId',
                 DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
                 DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
+                'quote_batches.name as batch_name',
+                'users.name as advisor_name',
+                'quote_batches.id as quote_batch_id',
                 DB::raw('SUM(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as total_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as new_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as not_interested'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as in_progress'),
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.'))  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'"  THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
             )
-            ->leftJoin('car_quote_request', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-            ->leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
+            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-            ->groupBy('quote_batches.name', 'quote_batches.id')->take(10)->orderBy('quote_batches.start_date', 'desc');
+            ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
+            ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
 
         if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
             $records->whereIn('tiers.id', $request->tier_filter);
@@ -176,15 +183,29 @@ class DashboardController extends Controller
 
         $labels = [];
         $data = [];
-        $records = $records->get()->sortBy(function ($record) {
-            return $record->id;
-        });
-        foreach ($records as $record) {
-            $numerator = $record->sale_leads - $record->created_sale_leads;
-            $denominator = ($record->total_leads - $record->manual_created) - ($record->bad_leads - $record->manual_created_bad_leads);
+        $records = $records->get();
+
+        $batchesWiseGroupedData = $records->groupBy('batch_name')->take(10)->sortKeys()->toArray();
+
+        foreach ($batchesWiseGroupedData as $batchData) {
+            $saleLeads = 0;
+            $createdSaleLeads = 0;
+            $totalLeads = 0;
+            $badLeads = 0;
+            $manualCreatedBadLeads = 0;
+            foreach ($batchData as $record) {
+                $saleLeads = $saleLeads + $record['sale_leads'];
+                $createdSaleLeads = $createdSaleLeads + $record['created_sale_leads'];
+                $totalLeads = $totalLeads + $record['total_leads'];
+                $badLeads = $badLeads + $record['bad_leads'];
+                $manualCreatedBadLeads = $manualCreatedBadLeads + $record['manual_created_bad_leads'];
+            }
+            $numerator = $saleLeads;
+            $denominator = $totalLeads - $badLeads;
             $total = $denominator > 0 ? ($numerator / $denominator) : 0;
+
             $data[] = number_format((float) $total * 100, 2, '.', '');
-            $labels[] = $record->name.'-('.$record->start_date.' to '.$record->end_date.')';
+            $labels[] = $record['batch_name'].'-('.$record['start_date'].' to '.$record['end_date'].')';
         }
 
         return isset($request->tier_filter) || isset($request->source) ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
@@ -235,18 +256,17 @@ class DashboardController extends Controller
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as in_progress'),
                 DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as bad_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" and car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) as created_sale_leads'),
+                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.'))  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
+                DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'"  THEN 1 ELSE 0 END) as created_sale_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-            ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
-            ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
+            ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
 
         if (isset($request->tier_filter) && $request->tier_filter != 'undefined') {
             $records->whereIn('tiers.id', $request->tier_filter);
@@ -264,17 +284,15 @@ class DashboardController extends Controller
                     ->whereIn('teams.id', $request->team_filter);
             });
         } else {
-            $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-            if (count($commonTeams) > 0) {
-                $records->whereIn('users.id', function ($query) use ($commonTeams) {
-                    $query->distinct()
-                        ->select('users.id')
-                        ->from('users')
-                        ->join('user_team', 'user_team.user_id', 'users.id')
-                        ->join('teams', 'teams.id', 'user_team.team_id')
-                        ->where('teams.id', $commonTeams[0]);
-                });
-            }
+            $organicTeam = Team::where('name', 'Organic')->first();
+            $records->whereIn('users.id', function ($query) use ($organicTeam) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->where('teams.id', $organicTeam->id);
+            });
         }
 
         if (isset($request->userFilter) && $request->userFilter != 'null') {
@@ -285,7 +303,7 @@ class DashboardController extends Controller
         $data = [];
         $records = $records->get();
 
-        $batchesWiseGroupedData = $records->groupBy('batch_name')->sortBy('quote_batch_id')->take(10)->toArray();
+        $batchesWiseGroupedData = $records->groupBy('batch_name')->take(10)->sortKeys()->toArray();
 
         foreach ($batchesWiseGroupedData as $batchData) {
             $saleLeads = 0;
@@ -300,8 +318,8 @@ class DashboardController extends Controller
                 $badLeads = $badLeads + $record['bad_leads'];
                 $manualCreatedBadLeads = $manualCreatedBadLeads + $record['manual_created_bad_leads'];
             }
-            $numerator = $saleLeads - $createdSaleLeads;
-            $denominator = $totalLeads - ($badLeads - $manualCreatedBadLeads);
+            $numerator = $saleLeads;
+            $denominator = $totalLeads - $badLeads;
             $total = $denominator > 0 ? ($numerator / $denominator) : 0;
 
             $data[] = number_format((float) $total * 100, 2, '.', '');
