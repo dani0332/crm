@@ -75,9 +75,11 @@ class TierAssignmentJob implements ShouldQueue
                         $lead = CarQuote::where('uuid', $carLead->uuid)->first();
 
                         CarRenewalEmailJob::dispatch($lead);
+                    } else {
+                        info("Renewal email not sent created_at for lead : ". $carLead->uuid . ' is : '. $carLead->created_at . ' and email flag for renewal is : '. $carLead->is_renewal_tier_email_sent);
+                        continue; // since we found renewal against current lead we will skip advisor assignment
                     }
 
-                    continue; // since we found renewal against current lead we will skip advisor assignment
                 }
 
                 $tier = $leadAllocationService->getTierForValue($carLead);
