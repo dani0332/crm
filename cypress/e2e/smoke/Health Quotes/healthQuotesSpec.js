@@ -4,6 +4,7 @@ let quoteData = require('../../../fixtures/qoutesData.json')
 let healthLeadData = require('../../../fixtures/healthLeadData.json')
 let leadUrl
 let quoteId
+let availablePlans
 describe('Health qoutes', () => {
 
   const commonPage = new CommonPage()
@@ -97,85 +98,95 @@ describe('Health qoutes', () => {
     healthLeadPage.getAddMemberDropdowns('Employee')
     healthLeadPage.getSubmitButton()
     //Delete Member 
-    // healthLeadPage.getDeleteButton()
-    // healthLeadPage.getModalDeleteButton()
+    healthLeadPage.getDeleteButton()
+    healthLeadPage.getModalDeleteButton()
+    cy.contains(' Available Plans ').parent().within(() => {
+      cy.get('span.x-tag').should('be.visible').then((data) => {
+        availablePlans = parseInt(data.text());
+        cy.log(availablePlans)
+      })
+    })
+    if (availablePlans > 0) {
+      healthLeadPage.getViewPlansButton() //View Plans Button
 
-    healthLeadPage.getViewPlansButton() //View Plans Button
+      //General Info Tab
+      healthLeadPage.getTabMembersAssertion('Provider Name')
+      healthLeadPage.getTabMembersAssertion('Network Provider')
+      healthLeadPage.getTabMembersAssertion('Base Premium')
+      healthLeadPage.getTabMembersAssertion('Basmah')
+      healthLeadPage.getTabMembersAssertion('Policy Fee')
+      healthLeadPage.getTabMembersAssertion('Total (exclusive of VAT)')
 
-    //General Info Tab
-    healthLeadPage.getTabMembersAssertion('Provider Name')
-    healthLeadPage.getTabMembersAssertion('Network Provider')
-    healthLeadPage.getTabMembersAssertion('Base Premium')
-    healthLeadPage.getTabMembersAssertion('Basmah')
-    healthLeadPage.getTabMembersAssertion('Policy Fee')
-    healthLeadPage.getTabMembersAssertion('Total (exclusive of VAT)')
+      //Hide Plan toggle button
+      healthLeadPage.getToggleButton()
 
-    //Hide Plan toggle button
-    healthLeadPage.getToggleButton()
+      //Members Tab
+      healthLeadPage.getMemberstab()
+      healthLeadPage.getMemberAsertions('Relationship')
+      healthLeadPage.getMemberAsertions('DOB')
+      healthLeadPage.getMemberAsertions('Gender')
+      healthLeadPage.getMemberAsertions('Premium')
 
-    //Members Tab
-    healthLeadPage.getMemberstab()
-    healthLeadPage.getMemberAsertions('Relationship')
-    healthLeadPage.getMemberAsertions('DOB')
-    healthLeadPage.getMemberAsertions('Gender')
-    healthLeadPage.getMemberAsertions('Premium')
+      //In Patient Tab
+      healthLeadPage.getInPatientTab()
+      healthLeadPage.getInPatientAssertions('Pre-existing & Chronic Conditions*')
+      healthLeadPage.getInPatientAssertions('Surgery and Recovery*')
+      healthLeadPage.getInPatientAssertions('Network Provider (TPA)')
+      healthLeadPage.getInPatientAssertions('Room and board')
 
-    //In Patient Tab
-    healthLeadPage.getInPatientTab()
-    healthLeadPage.getInPatientAssertions('Pre-existing & Chronic Conditions*')
-    healthLeadPage.getInPatientAssertions('Surgery and Recovery*')
-    healthLeadPage.getInPatientAssertions('Network Provider (TPA)')
-    healthLeadPage.getInPatientAssertions('Room and board')
+      //Out Patient Tab
+      healthLeadPage.getOutPatientTab()
+      healthLeadPage.getInPatientAssertions('Pre-existing & Chronic Conditions*')
+      healthLeadPage.getInPatientAssertions('Medicines*')
+      healthLeadPage.getInPatientAssertions('Alternative Medicine')
+      healthLeadPage.getInPatientAssertions('Network Provider')
+      healthLeadPage.getInPatientAssertions('Consultation & Diagnostics*')
+      healthLeadPage.getInPatientAssertions('Physiotherapy*')
+      healthLeadPage.getInPatientAssertions('Routine Dental*')
+      healthLeadPage.getInPatientAssertions('Routine Optical*')
 
-    //Out Patient Tab
-    healthLeadPage.getOutPatientTab()
-    healthLeadPage.getInPatientAssertions('Pre-existing & Chronic Conditions*')
-    healthLeadPage.getInPatientAssertions('Medicines*')
-    healthLeadPage.getInPatientAssertions('Alternative Medicine')
-    healthLeadPage.getInPatientAssertions('Network Provider')
-    healthLeadPage.getInPatientAssertions('Consultation & Diagnostics*')
-    healthLeadPage.getInPatientAssertions('Physiotherapy*')
-    healthLeadPage.getInPatientAssertions('Routine Dental*')
-    healthLeadPage.getInPatientAssertions('Routine Optical*')
+      //Region coverage & Network list
+      healthLeadPage.getRegionCoverageTab()
+      healthLeadPage.getInPatientAssertions('Regions Covered')
+      healthLeadPage.getInPatientAssertions('Direct Billing Network (Outpatient)')
+      healthLeadPage.getInPatientAssertions('Direct Billing Network (Inpatient)')
 
-    //Region coverage & Network list
-    healthLeadPage.getRegionCoverageTab()
-    healthLeadPage.getInPatientAssertions('Regions Covered')
-    healthLeadPage.getInPatientAssertions('Direct Billing Network (Outpatient)')
-    healthLeadPage.getInPatientAssertions('Direct Billing Network (Inpatient)')
+      //Co-pay/Co-insurance
+      healthLeadPage.getCopayCoInsuranceTab()
+      healthLeadPage.getInPatientAssertions('Outpatient Consultation*')
+      healthLeadPage.getInPatientAssertions('Outpatient Diagnostics*')
+      healthLeadPage.getInPatientAssertions('Inpatient*')
+      healthLeadPage.getInPatientAssertions('Outpatient Physiotherapy*')
+      healthLeadPage.getInPatientAssertions('Outpatient Medicine*')
+      healthLeadPage.getInPatientAssertions('Routine Dental*')
+      healthLeadPage.getInPatientAssertions('Routine Optical*')
 
-    //Co-pay/Co-insurance
-    healthLeadPage.getCopayCoInsuranceTab()
-    healthLeadPage.getInPatientAssertions('Outpatient Consultation*')
-    healthLeadPage.getInPatientAssertions('Outpatient Diagnostics*')
-    healthLeadPage.getInPatientAssertions('Inpatient*')
-    healthLeadPage.getInPatientAssertions('Outpatient Physiotherapy*')
-    healthLeadPage.getInPatientAssertions('Outpatient Medicine*')
-    healthLeadPage.getInPatientAssertions('Routine Dental*')
-    healthLeadPage.getInPatientAssertions('Routine Optical*')
+      //Maternity cover
+      healthLeadPage.getMaternityTab()
+      healthLeadPage.getInPatientAssertions('Outpatient Maternity Co-insurance')
+      healthLeadPage.getInPatientAssertions('Outpatient Maternity')
+      healthLeadPage.getInPatientAssertions('Newborn')
+      healthLeadPage.getInPatientAssertions('Delivery')
+      healthLeadPage.getInPatientAssertions('Important Note')
 
-    //Maternity cover
-    healthLeadPage.getMaternityTab()
-    healthLeadPage.getInPatientAssertions('Outpatient Maternity Co-insurance')
-    healthLeadPage.getInPatientAssertions('Outpatient Maternity')
-    healthLeadPage.getInPatientAssertions('Newborn')
-    healthLeadPage.getInPatientAssertions('Delivery')
-    healthLeadPage.getInPatientAssertions('Important Note')
+      //getGeneralInfoTab
+      healthLeadPage.getGeneralTab()
+      healthLeadPage.getToggleButton()
 
-    //getGeneralInfoTab
-    healthLeadPage.getGeneralTab()
-    healthLeadPage.getToggleButton()
+      //Close button
+      healthLeadPage.getCloseButton()
+    }
+    else {
 
-    //Close button
-    healthLeadPage.getCloseButton()
+      //Add Additional Contact
+      healthLeadPage.getAddAdditionalContactButton()
+      healthLeadPage.getLeadStatusDropdown("Type")
+      healthLeadPage.selectMobileNumber()
+      healthLeadPage.getAddAdditionalContactvalueField()
+      healthLeadPage.getAdditionalContactSubmitButton()
+      healthLeadPage.getButtonByName(" Load History Data ")
+      healthLeadPage.getButtonByName(" Load Audit Logs ")
+    }
 
-    //Add Additional Contact
-    healthLeadPage.getAddAdditionalContactButton()
-    healthLeadPage.getLeadStatusDropdown("Type")
-    healthLeadPage.selectMobileNumber()
-    healthLeadPage.getAddAdditionalContactvalueField()
-    healthLeadPage.getAdditionalContactSubmitButton()
-    healthLeadPage.getButtonByName(" Load History Data ")
-    healthLeadPage.getButtonByName(" Load Audit Logs ")
   })
 })
