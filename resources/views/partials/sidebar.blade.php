@@ -227,6 +227,7 @@ use App\Enums\PermissionsEnum;
                             @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
                             <li><a href="{{ url('renewals/batches') }}">Batches</a></li>
                             @endhasanyrole
+                            <li><a href="{{ route('renewal-batches') }}">Renewal Batches</a></li>
                         </ul>
                     </li>
                 </ul>

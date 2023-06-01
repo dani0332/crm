@@ -378,5 +378,11 @@ class PermissionTableSeeder extends Seeder
             'name' => 'rent-a-car-delete',
             'guard_name' => 'web',
         ]);
+
+        // Renewal Batch Permission
+        \DB::table('permissions')->insertGetId([
+            'name' => 'renewal-batches',
+            'gurad_name' => 'web'
+        ]);
     }
 }

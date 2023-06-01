@@ -129,6 +129,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('quotes/car-sold', [\App\Http\Controllers\V2\CarQuoteController::class, 'getCarSoldQuotes'])->name('car-sold-list');
         Route::get('quotes/car-uncontactable', [\App\Http\Controllers\V2\CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
+        Route::group(['prefix' => 'renewals'], function () {
+            Route::match(['get', 'post'], 'renewal-batches', [RenewalsUploadController::class, 'renewalBatches'])->name('renewal-batches');
+        });
+
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\FetchPlansStatuses;
 use App\Enums\ProcessStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
@@ -23,6 +24,7 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Repositories\QuoteStatusRepository;
 use App\Services\RenewalsUploadService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -431,5 +433,14 @@ class RenewalsUploadController extends Controller
         }
 
         return redirect('/');
+    }
+
+    public function renewalBatches()
+    {
+        $quoteStatuses = QuoteStatusRepository::getQuoteStatusesByIds([QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable]);
+
+        return inertia('Renewals/RenewalBatches', [
+            'quoteStatuses' => $quoteStatuses
+        ]);
     }
 }

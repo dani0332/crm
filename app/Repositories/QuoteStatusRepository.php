@@ -17,4 +17,9 @@ class QuoteStatusRepository extends BaseRepository
             $q->where('quote_type_id', $quoteTypeId)->orderBy('sort_order');
         });
     }
+
+    public function fetchGetQuoteStatusesByIds($quoteStatusIds)
+    {
+        return $this->whereIn('id', $quoteStatusIds)->orderBy('sort_order')->get();
+    }
 }
