@@ -86,8 +86,7 @@ class TierAssignmentJob implements ShouldQueue
                         info('Renewal email not sent created_at for lead : '.$carLead->uuid.' is : '.$carLead->created_at.' and email flag for renewal is : '.$carLead->is_renewal_tier_email_sent);
                     }
 
-                }
-                else {
+                } else {
                     $tier = $leadAllocationService->getTierForValue($carLead);
 
                     if ($tier != null) {
@@ -104,7 +103,6 @@ class TierAssignmentJob implements ShouldQueue
                         info('No tier found to car lead : '.$carLead->code);
                     }
                 }
-
 
             }
 
