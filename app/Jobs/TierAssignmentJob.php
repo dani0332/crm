@@ -71,9 +71,7 @@ class TierAssignmentJob implements ShouldQueue
                 if ($leadAllocationService->checkIfLeadIsRenewal($carLead)) {
                     info('Renewal found against quote Id : '.$carLead->uuid);
 
-                    $leadCreationDate = Carbon::createFromFormat($dateFormat, $carLead->created_at);
-
-                    $lmsStartDate = Carbon::createFromFormat($dateFormat, $lmsStartDate);
+                    $leadCreationDate = Carbon::parse($carLead->created_at);
 
                     if (! $carLead->is_renewal_tier_email_sent && $leadCreationDate->gt($lmsStartDate)) {
 
