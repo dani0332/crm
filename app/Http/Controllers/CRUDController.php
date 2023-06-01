@@ -1354,7 +1354,7 @@ class CRUDController extends Controller
             'collection_type' => $request->collection_type,
             'captured_amount' => $request->captured_amount,
             'payment_methods_code' => $request->payment_methods,
-            'payment_status_id' => PaymentStatusEnum::PENDING,
+            'payment_status_id' => PaymentStatusEnum::DRAFT,
             'plan_id' => $request->plan_id,
             'insurance_provider_id' => $request->insurance_provider_id,
             'created_by' => $request->user()->id,
@@ -1363,7 +1363,7 @@ class CRUDController extends Controller
         if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
         }
-        if ($request->payment_methods != PaymentMethodsEnum::CreditCard) {
+        if ($request->payment_methods != PaymentMethodsEnum::CreditCard && $request->payment_methods != PaymentMethodsEnum::InsureNowPayLater) {
             $paymentInformation['authorized_at'] = now();
         }
         $payment = Payment::create($paymentInformation);

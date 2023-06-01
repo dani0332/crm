@@ -122,11 +122,12 @@ use App\Enums\PaymentStatusEnum;
                                 <th>Payment ID</th>
                                 <th>Payment Status</th>
                                 <th>Plan Name</th>
-                                <th>Captured Amount</th>
+                                <th>Authorize Amount</th>
                                 <th>Status Change Date</th>
                                 <th>Captured At</th>
                                 <th>Authorized At</th>
                                 <th>Payment method</th>
+                                <th>Captured Amount</th>
                                 <th>Reference</th>
                                 <th>Actions</th>
                             </tr>
@@ -142,6 +143,7 @@ use App\Enums\PaymentStatusEnum;
                                 <td>{{ $payment->captured_at }}</td>
                                 <td>{{ $payment->authorized_at }}</td>
                                 <td>{{ $payment->paymentMethod->name }}</td>
+                                <td>{{ $payment->premium_captured}}</td>
                                 <td>{{$payment->reference}}</td>
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
@@ -225,7 +227,7 @@ use App\Enums\PaymentStatusEnum;
                     <div class="col-md-12">
                         <div class="item form-group">
                             <div class="col">
-                                <span class="col-form-label col-md-6 col-sm-6">Capture Amount<span
+                                <span class="col-form-label col-md-6 col-sm-6">Price Including VAT<span
                                         class="required">*</span></span>
                                 <input id="captured_amount" type="number" class="form-control" name="captured_amount"
                                     placeholder="Amount" />
