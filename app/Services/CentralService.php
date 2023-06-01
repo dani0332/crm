@@ -70,7 +70,6 @@ class CentralService
             $parentRecord['enquiryType'] = 'record_only';
         }
 
-
         if (! empty($lobTeams)) {
             $dataArr = [
                 'firstName' => $parentRecord->first_name,
@@ -87,8 +86,9 @@ class CentralService
                     $lob = quoteTypeCode::Business;
                     $dataArr['businessTypeOfInsuranceId'] = $parentRecord->business_type_of_insurance_id ?? '';
 
-                    if(strtolower($lob) == strtolower(quoteTypeCode::GroupMedical))
+                    if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
                         $dataArr['businessTypeOfInsuranceId'] = QuoteTypeId::Business;
+                    }
                 }
 
                 $repository = $this->getRepositoryObject(ucfirst($lob));
