@@ -54,6 +54,8 @@ class TierAssignmentJob implements ShouldQueue
 
             $to = now()->subMinutes(2)->toDateTimeString();
 
+            $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
+
             $carLeads = CarQuote::whereNull('tier_id')
                 ->whereBetween('created_at', [$from, $to])
                 ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
@@ -69,7 +71,12 @@ class TierAssignmentJob implements ShouldQueue
                 if ($leadAllocationService->checkIfLeadIsRenewal($carLead)) {
                     info('Renewal found against quote Id : '.$carLead->uuid);
 
-                    if (! $carLead->is_renewal_tier_email_sent && $carLead->created_at > $lmsStartDate) {
+                    $leadCreationDate = Carbon::createFromFormat($dateFormat, $carLead->created_at);
+
+                    $lmsStartDate = Carbon::createFromFormat($dateFormat, $lmsStartDate);
+
+                    if (! $carLead->is_renewal_tier_email_sent && $leadCreationDate->gt($lmsStartDate)) {
+
                         info('About to send Renewal Tier R email for quote Id : '.$carLead->uuid);
 
                         $lead = CarQuote::where('uuid', $carLead->uuid)->first();
@@ -77,27 +84,28 @@ class TierAssignmentJob implements ShouldQueue
                         CarRenewalEmailJob::dispatch($lead);
                     } else {
                         info('Renewal email not sent created_at for lead : '.$carLead->uuid.' is : '.$carLead->created_at.' and email flag for renewal is : '.$carLead->is_renewal_tier_email_sent);
-
-                        continue; // since we found renewal against current lead we will skip advisor assignment
                     }
 
                 }
+                else {
+                    $tier = $leadAllocationService->getTierForValue($carLead);
 
-                $tier = $leadAllocationService->getTierForValue($carLead);
+                    if ($tier != null) {
 
-                if ($tier != null) {
+                        info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code.' , uuid : '.$carLead->uuid);
 
-                    info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code.' , uuid : '.$carLead->uuid);
+                        $carLead->tier_id = $tier->id;
 
-                    $carLead->tier_id = $tier->id;
+                        $carLead->cost_per_lead = $tier->cost_per_lead;
 
-                    $carLead->cost_per_lead = $tier->cost_per_lead;
+                        $carLead->save();
+                    } else {
 
-                    $carLead->save();
-                } else {
-
-                    info('No tier found to car lead : '.$carLead->code);
+                        info('No tier found to car lead : '.$carLead->code);
+                    }
                 }
+
+
             }
 
             info('------------------- Tier Assignment Job Finished for '.$currentIteration.' -------------------');
