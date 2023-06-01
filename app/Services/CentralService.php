@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -87,7 +88,7 @@ class CentralService
                     $dataArr['businessTypeOfInsuranceId'] = $parentRecord->business_type_of_insurance_id ?? '';
 
                     if(strtolower($lob) == strtolower(quoteTypeCode::GroupMedical))
-                        $dataArr['businessTypeOfInsuranceId'] = 5;
+                        $dataArr['businessTypeOfInsuranceId'] = QuoteTypeId::Business;
                 }
 
                 $repository = $this->getRepositoryObject(ucfirst($lob));
