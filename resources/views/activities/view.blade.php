@@ -379,7 +379,9 @@
                     $("#totalActivites").text("Total Activites: " + settings._iRecordsTotal);
                     for (let index = 0; index < activitiesSourceArray.length; index++) {
                         const element = activitiesSourceArray[index];
-                        if(element.is_overdue) $('#' + element.uuid).children().eq(3).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+                        if(element.is_overdue) {
+                            $('#' + element.uuid).children().eq(3).css({'color': 'white', 'background-color': 'red', 'font-weight': 'bold', 'font-size': '12px'});
+                        }
                     }
                 }
             });
