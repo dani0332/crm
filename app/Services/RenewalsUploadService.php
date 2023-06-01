@@ -14,6 +14,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Enums\TiersEnum;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
 use App\Jobs\Renewals\CreateRenewalQuotesJob;
@@ -40,6 +41,7 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
@@ -780,6 +782,10 @@ class RenewalsUploadService
                         $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                         $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
                     }
+                }
+
+                if($tier = Tier::where('name', TiersEnum::TIER_R)->first()) {
+                    $quoteData['tier_id'] = $tier->id;
                 }
             }
 
