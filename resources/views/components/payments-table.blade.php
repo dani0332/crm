@@ -129,6 +129,7 @@ use App\Enums\PaymentStatusEnum;
                                 <th>Payment method</th>
                                 <th>Captured Amount</th>
                                 <th>Reference</th>
+                                <th>Status Detail</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -145,6 +146,7 @@ use App\Enums\PaymentStatusEnum;
                                 <td>{{ $payment->paymentMethod->name }}</td>
                                 <td>{{ $payment->premium_captured}}</td>
                                 <td>{{$payment->reference}}</td>
+                                <td>{{$payment->payment_status_message}}</td>
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
                                         @if(($payment->paymentMethod->code == 'CC' ||  $payment->paymentMethod->code == 'IN_PL') && $payment->payment_status_id != PaymentStatusEnum::PAID &&
