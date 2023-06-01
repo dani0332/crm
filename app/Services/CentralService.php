@@ -69,6 +69,7 @@ class CentralService
             $parentRecord['enquiryType'] = 'record_only';
         }
 
+
         if (! empty($lobTeams)) {
             $dataArr = [
                 'firstName' => $parentRecord->first_name,
@@ -78,15 +79,17 @@ class CentralService
                 'referenceUrl' => config('constants.APP_URL'),
                 'source' => config('constants.SOURCE_NAME'),
             ];
+
             $resp = [];
             foreach ($lobTeams as $lob) {
                 if (strtolower($lob) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
                     $lob = quoteTypeCode::Business;
-                    $dataArr['business_type_of_insurance_id'] = $parentRecord->business_type_of_insurance_id ?? '';
+                    $dataArr['businessTypeOfInsuranceId'] = $parentRecord->business_type_of_insurance_id ?? '';
 
                     if(strtolower($lob) == strtolower(quoteTypeCode::GroupMedical))
-                        $dataArr['business_type_of_insurance_id'] = 5;
+                        $dataArr['businessTypeOfInsuranceId'] = 5;
                 }
+
                 $repository = $this->getRepositoryObject(ucfirst($lob));
 
                 if (! class_exists($repository)) {
