@@ -23,6 +23,8 @@ describe('Car qoutes', () => {
     cy.visit('/quotes/car')
     commonPage.verifyURL('/quotes/car')
     carLeadPage.getCreateLeadButton()
+    carLeadPage.getReferral()
+    carLeadPage.getConfirmButton()
     commonPage.getFirstNameField(qouteData.personalInfo.firstName)
     commonPage.getLastNameField(qouteData.personalInfo.lastName)
     commonPage.getDOB(qouteData.personalInfo.month, qouteData.personalInfo.year, qouteData.personalInfo.day)
