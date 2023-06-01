@@ -73,7 +73,7 @@ class TierAssignmentJob implements ShouldQueue
 
                     $leadCreationDate = Carbon::parse($carLead->created_at);
 
-                    info('formatted date is : '. $leadCreationDate);
+                    info('formatted date is : '.$leadCreationDate);
 
                     if (! $carLead->is_renewal_tier_email_sent && $leadCreationDate->gt($lmsStartDate)) {
 
