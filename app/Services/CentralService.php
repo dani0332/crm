@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Traits\GenericQueriesAllLobs;
 
@@ -69,6 +70,7 @@ class CentralService
             $parentRecord['enquiryType'] = 'record_only';
         }
 
+
         if (! empty($lobTeams)) {
             $dataArr = [
                 'firstName' => $parentRecord->first_name,
@@ -78,19 +80,21 @@ class CentralService
                 'referenceUrl' => config('constants.APP_URL'),
                 'source' => config('constants.SOURCE_NAME'),
             ];
+
             $resp = [];
             foreach ($lobTeams as $lob) {
                 if (strtolower($lob) == strtolower(quoteTypeCode::CORPLINE) || strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $dataArr['business_type_of_insurance_id'] = $parentRecord->business_type_of_insurance_id ?? '';
                     $lob = quoteTypeCode::Business;
+                    $dataArr['businessTypeOfInsuranceId'] = $parentRecord->business_type_of_insurance_id ?? '';
+
+                    if(strtolower($lob) == strtolower(quoteTypeCode::GroupMedical))
+                        $dataArr['businessTypeOfInsuranceId'] = QuoteTypeId::Business;
                 }
+
                 $repository = $this->getRepositoryObject(ucfirst($lob));
 
                 if (! class_exists($repository)) {
                     return false;
-                }
-                if (strtolower($lob) == strtolower(quoteTypeCode::GroupMedical)) {
-                    $dataArr['business_type_of_insurance_id'] = 5;
                 }
 
                 $response = in_array(quoteTypeCode::Pet, newUi()) && method_exists($repository, 'fetchCreateDuplicate') ? $repository::createDuplicate($dataArr) : Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);

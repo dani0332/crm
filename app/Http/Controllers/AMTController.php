@@ -92,7 +92,7 @@ class AMTController extends Controller
                 'bqr.previous_quote_policy_premium',
                 'bqr.customer_id',
                 'bqr.parent_duplicate_quote_id'
-            )->orderBy('bqr.advisor_id', 'asc');
+            )->orderBy('bqr.advisor_id');
         if (Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || Auth::user()->isSpecificTeamAdvisor(quoteTypeCode::GM)) {
             // if user has advisor Role then fetch leads assigned to the user only
             $data->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
