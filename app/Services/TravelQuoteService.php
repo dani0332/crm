@@ -265,10 +265,7 @@ class TravelQuoteService extends BaseService
                 $this->query->where('tqr.is_ecommerce', 0);
             }
         }
-        if (Auth::user()->isManagerOrDeputy()) {
-            $this->query->whereNotIn('tqr.id', $this->travelPreviousQuoteIds());
-            $this->query->whereNull('tqr.previous_quote_policy_number');
-        }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
