@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Mail\TierAssignmentFailedNotification;
 use App\Models\CarQuote;
 use App\Services\ApplicationStorageService;
@@ -58,6 +59,7 @@ class TierAssignmentJob implements ShouldQueue
 
             $carLeads = CarQuote::whereNull('tier_id')
                 ->whereBetween('created_at', [$from, $to])
+                ->where('source', '!=' , LeadSourceEnum::RENEWAL_UPLOAD)
                 ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
                 ->select('id', 'tier_id', 'cost_per_lead', 'code', 'is_ecommerce', 'car_type_insurance_id', 'car_value', 'source', 'uuid',
                     'previous_policy_expiry_date', 'email', 'mobile_no', 'car_make_id', 'car_model_id', 'is_renewal_tier_email_sent', 'created_at')
