@@ -4,7 +4,6 @@ class AdminRolesPage {
         return cy.get('a.btn-sm').contains('Create Role').should('be.visible').click()
     }
 
-
     getNameField(name) {
         return cy.get('input#name').should('be.visible').clear().type(name)
     }
