@@ -223,10 +223,12 @@ use App\Enums\PermissionsEnum;
                         <ul class="nav child_menu">
                             <li><a href="{{ url('renewals/upload') }}">Upload & Create</a></li>
                             <li><a href="{{ url('renewals/uploaded-leads') }}">Uploaded Leads</a></li>
+                            @unlessrole(RolesEnum::MarketingOperations)
                             <li><a href="{{ url('renewals/update') }}">Upload & Update</a></li>
                             @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
                             <li><a href="{{ url('renewals/batches') }}">Batches</a></li>
                             @endhasanyrole
+                            @endunlessrole
                         </ul>
                     </li>
                 </ul>

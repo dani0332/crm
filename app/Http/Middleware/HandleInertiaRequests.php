@@ -305,9 +305,12 @@ class HandleInertiaRequests extends Middleware
                 $section
                     ->add('Upload & Create', url('renewals/upload'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->add('Uploaded Leads', url('renewals/uploaded-leads'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Upload & Update', url('renewals/upload'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(!auth()->user()->hasRole(RolesEnum::MarketingOperations),'Upload & Update', url('renewals/upload'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(
-                        auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering]),
+                        (
+                            auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering]) &&
+                            !auth()->user()->hasRole(RolesEnum::MarketingOperations)
+                        ),
                         'Batches',
                         url('renewals/batches'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
