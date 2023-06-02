@@ -329,7 +329,7 @@ class HandleInertiaRequests extends Middleware
                         url('renewals/batches'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
-                    ->add('Renewals Batches', route('renewal-batches'), fn($s) => $s->attributes(['icon' => 'box']));
+                    ->add('Renewals Batches', route('renewal-batches-list'), fn($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
