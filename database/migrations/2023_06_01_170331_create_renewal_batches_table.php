@@ -15,12 +15,12 @@ class CreateRenewalBatchesTable extends Migration
     {
         Schema::create('renewal_batches', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('batch')->references('id')->on('quote_batches');
-
+            $table->string('name');
             $table->integer('quote_status_id');
             $table->foreign('quote_status_id')->references('id')->on('quote_status');
 
             $table->date('deadline_date');
+            $table->timestamps();
         });
     }
 
