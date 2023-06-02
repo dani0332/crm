@@ -419,3 +419,10 @@ if (! function_exists('newUi')) {
         ];
     }
 }
+
+if (! function_exists('getAutomationUser')) {
+    function getAutomationUser(): array
+    {
+        return ['im.automation4@gmail.com'];
+    }
+}

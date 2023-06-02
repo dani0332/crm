@@ -27,14 +27,21 @@ use Carbon\Carbon;
 
 
                           <tbody>
-
                             @foreach($audits as $key => $audit)
                             <tr>
                               <td style="word-wrap:break-word;">{{ $audit->id }}</td>
                               <td style="word-wrap:break-word;">{{ $audit->name }}</td>
                               <td style="word-wrap:break-word;">{{ $audit->event }}</td>
                               <td style="word-wrap:break-word;">{{ $audit->old_values }}</td>
-                              <td style="word-wrap:break-word;">{{ $audit->new_values }}</td>
+                              <td style="word-wrap:break-word;">
+                                  @if($audit->auditable_type == \App\Models\CarQuotePlanDetail::class)
+                                      Plan Name : {{$audit->plan_name}} <br/>
+                                      Provider Name : {{$audit->provider_name}} <br/>
+                                      {{ $audit->new_values }}
+                                  @else
+                                      {{ $audit->new_values }}
+                                  @endif
+                              </td>
                               <td style="word-wrap:break-word;">{{ $audit->ip_address }}</td>
                               <td style="word-wrap:break-word;">{{ isset($audit->created_at) ? Carbon::parse($audit->created_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '' }}</td>
                             </tr>

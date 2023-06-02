@@ -258,9 +258,10 @@ $(document).ready(function () {
   $('.role-data-table').DataTable({
     ordering: false,
     info: false,
-    searching: false,
+    searching: true,
     bLengthChange: false,
     serverSide: true,
+    pageLength: 20,
     ajax: config.routes.role_datatable_route,
     columns: [
       {
@@ -563,139 +564,6 @@ $(document).ready(function () {
       { data: 'is_active', name: 'is_active' },
       { data: 'created_by', name: 'created_by' },
       { data: 'updated_by', name: 'updated_by' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-    ],
-  });
-
-  var carquoteDatatable = $('.carquote-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: {
-      url: config.routes.carquote_datatable_route,
-      data: function (d) {
-        d.searchtype = $('#search_type').val();
-        d.searchfield = $('input[name=searchfield]').val();
-        d.quotestatus = $('#quote_status_value').val();
-        d.paymentstatus = $('#payment_status_value').val();
-      },
-    },
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.carquote_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'car_value', name: 'car_value' },
-      { data: 'is_synced', name: 'is_synced' },
-      { data: 'device', name: 'device' },
-      { data: 'code', name: 'code' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-    ],
-  });
-
-  $('#search-car-quote').submit(function (e) {
-    e.preventDefault();
-    $('.loader').show();
-    carquoteDatatable.draw();
-    setTimeout(() => {
-      $('.loader').hide();
-    }, 1000);
-  });
-
-  $('#resubmit_api_carquote').click(function () {
-    $('.loader').show();
-    $('#resubmit_api_carquote').attr('disabled', true);
-    var data_id = $(this).attr('data-id');
-    var carQuotes = [];
-    if (data_id != '') carQuotes.push(data_id);
-    $('.multicheckbox').each(function (index) {
-      if ($(this).prop('checked')) {
-        var id = $(this).attr('data-id');
-        carQuotes.push(id);
-      }
-    });
-    if (carQuotes.length > 0) {
-      $.ajax({
-        url: config.routes.carquote_resubmitap_route,
-        type: 'post',
-        data: { car_quotes: carQuotes, _token: config._token },
-        success: function (response) {
-          $('.loader').hide();
-          $('#success_message').show();
-          $('#success_message')
-            .fadeIn()
-            .html('Resubmit Api Execution is successfull');
-
-          $('.carquote-data-table').DataTable().ajax.reload();
-
-          setTimeout(function () {
-            $('#resubmit_api_carquote').attr('disabled', false);
-            $('#success_message').fadeOut('slow');
-          }, 3000);
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-          $('.loader').hide();
-          $('#error_message').show();
-          $('#error_message').fadeIn().html(errorThrown);
-          setTimeout(function () {
-            $('#resubmit_api_carquote').attr('disabled', false);
-            $('#error_message').fadeOut('slow');
-          }, 3000);
-        },
-      });
-    } else {
-      $('.loader').hide();
-      $('#error_message').show();
-      $('#error_message').fadeIn().html('Please select atleast one row');
-      setTimeout(function () {
-        $('#resubmit_api_carquote').attr('disabled', false);
-        $('#error_message').fadeOut('slow');
-      }, 3000);
-    }
-  });
-
-  $('.healthquote-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: config.routes.healthquote_datatable_route,
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.healthquote_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'preference', name: 'preference' },
-      { data: 'is_synced', name: 'is_synced' },
-      { data: 'device', name: 'device' },
-      { data: 'code', name: 'code' },
       { data: 'created_at', name: 'created_at' },
       { data: 'updated_at', name: 'updated_at' },
     ],
@@ -1007,20 +875,6 @@ $(document).ready(function () {
     var providerCode = $(this).attr('data-providerCode');
     var websiteURL = $(this).attr('data-websiteURL');
     var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-    navigator.clipboard.writeText(paymentLink);
-    var self = this;
-    $(this).text('Copied !');
-    setTimeout(function () {
-      $(self).text('Copy');
-    }, 2000);
-  });
-
-  $('.health-plan-link-copy').on('click', function () {
-    var planId = $(this).attr('data-planId');
-    var quoteUUID = $(this).attr('data-quoteUUId');
-    var providerCode = $(this).attr('data-providerCode');
-    var websiteURL = $(this).attr('data-websiteURL');
-    var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
     navigator.clipboard.writeText(paymentLink);
     var self = this;
     $(this).text('Copied !');
@@ -1913,10 +1767,6 @@ $(document).ready(function () {
   $('#add-activity-btn').on('click', function () {
     $('#activityModal').modal({ show: true });
   });
-  $('#add-edit-health-members-btn').on('click', function () {
-    $('#ebp_gender,#ebp_dob,#ebp_category,#ebp_salary').val('');
-    $('#addHealthMemberModal').modal({ show: true });
-  });
   $('#add-edit-travel-members-btn').on('click', function () {
     $('#addTravelMemberModal').modal({ show: true });
   });
@@ -2439,26 +2289,63 @@ $(document).ready(function () {
       },
     });
   });
+
+  $('.btn-change-insurer').on('click', function(){
+      if(confirm('Are you sure to change insurer')) {
+
+          let btn = $(this);
+          $(btn).btnLoader();
+
+          $.ajax({
+              url: '/quotes/car/change-insurer',
+              method: 'POST',
+              data: {
+                  uuid: $(this).attr('data-uuid'),
+                  plan_id: $(this).attr('data-planId'),
+                  provider_code: $(this).attr('data-providerCode'),
+                  _token: $('input[name=_token]').val(),
+              },
+              success: function (data) {
+                  $(btn).btnResetLoader();
+                  setTimeout(function () {
+                      alert(data.message);
+                      window.location.reload();
+                  }, 0);
+              },
+              error: function (response) {
+                  $(btn).btnResetLoader();
+                  let errorMsg = '';
+                  $.each(response.responseJSON.errors, function(key,error) {
+                        errorMsg += error + '\n';
+                  });
+                 alert(errorMsg);
+              }
+          });
+
+      } else {
+          return false;
+      }
+  });
+
+  $.fn.btnLoader = function() {
+    let loading_text  = "<i class='fa fa-spinner fa-spin'></i> " + this.html();
+    this.data('original-text', this.html());
+    this.html(loading_text).attr('disabled', 'disabled')
+    return this;
+  };
+
+  $.fn.btnResetLoader = function() {
+    let original_text = this.data("original-text");
+    this.html(original_text).removeAttr('disabled')
+    return this;
+  };
+
   $('.payment-link-copy').on('click', function () {
     var planId = $(this).attr('data-planId');
     var quoteUUID = $(this).attr('data-quoteUUId');
     var providerCode = $(this).attr('data-providerCode');
     var websiteURL = $(this).attr('data-websiteURL');
     var paymentLink = `${websiteURL}/car-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
-    navigator.clipboard.writeText(paymentLink);
-    var self = this;
-    $(this).text('Copied !');
-    setTimeout(function () {
-      $(self).text('Copy');
-    }, 2000);
-  });
-
-  $('.health-plan-link-copy').on('click', function () {
-    var planId = $(this).attr('data-planId');
-    var quoteUUID = $(this).attr('data-quoteUUId');
-    var providerCode = $(this).attr('data-providerCode');
-    var websiteURL = $(this).attr('data-websiteURL');
-    var paymentLink = `${websiteURL}/health-insurance/quote/${quoteUUID}/payment/?providerCode=${providerCode}&planId=${planId}`;
     navigator.clipboard.writeText(paymentLink);
     var self = this;
     $(this).text('Copied !');
@@ -2657,34 +2544,6 @@ function isNumberKey(evt, obj) {
   if (charCode == 46) return true;
   if (charCode > 31 && (charCode < 48 || charCode > 57)) return false;
   return true;
-}
-
-function editMemberDetail(member) {
-  $.ajax({
-    url: '/members/' + member + '/edit',
-    method: 'GET',
-    success: function (data) {
-      $('#member_model_content_form').html(data);
-      $('#addHealthMemberModal').modal({ show: true });
-    },
-  });
-}
-
-function deleteMemberDetail(member) {
-  if (confirm('Are you sure you want to delete this member?')) {
-    $.ajax({
-      url: '/members/' + member,
-      method: 'delete',
-      data: {
-        _token: $('input[name=_token]').val(),
-      },
-      success: function (data) {
-        location.reload();
-      },
-    });
-  } else {
-    return false;
-  }
 }
 
 function editTravelMemberDetail(member) {
@@ -2887,47 +2746,47 @@ $('#send-one-click-buy-email-btn').on('click', function () {
 // Button: Send One click buy email - End
 
 var teamsDataTable = $('.teams-data-table').DataTable({
-    ordering: false,
-    info: false,
-    searching: false,
-    bLengthChange: false,
-    serverSide: true,
-    ajax: {
-      url: config.routes.teams_datatable_route,
-      data: function (d) {
-        d.name = $('#name').val();
+  ordering: false,
+  info: false,
+  searching: false,
+  bLengthChange: false,
+  serverSide: true,
+  ajax: {
+    url: config.routes.teams_datatable_route,
+    data: function (d) {
+      d.name = $('#name').val();
+    },
+  },
+  columns: [
+    {
+      data: 'id',
+      name: 'id',
+      render: function (data, type, row) {
+        return (
+          "<a href='" +
+          config.routes.teams_datatable_route +
+          '/' +
+          row.id +
+          "'>" +
+          row.id +
+          '</a>'
+        );
       },
     },
-    columns: [
-      {
-        data: 'id',
-        name: 'id',
-        render: function (data, type, row) {
-          return (
-            "<a href='" +
-            config.routes.teams_datatable_route +
-            '/' +
-            row.id +
-            "'>" +
-            row.id +
-            '</a>'
-          );
-        },
-      },
-      { data: 'name', name: 'name' },
-      { data: 'type', name: 'type' },
-      { data: 'parent.name', name: 'parent.name' },
-      { data: 'created_at', name: 'created_at' },
-      { data: 'updated_at', name: 'updated_at' },
-      { data: 'is_active', name: 'is_active' },
-    ],
-  });
+    { data: 'name', name: 'name' },
+    { data: 'type', name: 'type' },
+    { data: 'parent.name', name: 'parent.name' },
+    { data: 'created_at', name: 'created_at' },
+    { data: 'updated_at', name: 'updated_at' },
+    { data: 'is_active', name: 'is_active' },
+  ],
+});
 
-  $('#search-teams').submit(function (e) {
-    e.preventDefault();
-    $('.loader').show();
-    teamsDataTable.draw();
-    setTimeout(() => {
-      $('.loader').hide();
-    }, 1000);
-  });
+$('#search-teams').submit(function (e) {
+  e.preventDefault();
+  $('.loader').show();
+  teamsDataTable.draw();
+  setTimeout(() => {
+    $('.loader').hide();
+  }, 1000);
+});

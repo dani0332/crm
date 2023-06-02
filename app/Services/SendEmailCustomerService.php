@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
 use App\Jobs\UpdateSendPolicySubjectJob;
+use App\Models\ApplicationStorage;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -362,15 +364,30 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
+            $bcc = [[
+                'email' => $emailData->advisorEmail,
+                'name' => $emailData->advisorName,
+            ]];
+            $bccAdditional = [];
+            $additionalBcc = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_BCC)->first()->value;
+            foreach (explode(',', $additionalBcc) as $additionalContact) {
+                $bccAdditional[] = [
+                    'email' => $additionalContact,
+                ];
+            }
+
+            $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
+
+            info('advisor custom email is : '.$advisorCustomEmail.' for lead : '.$emailData->carQuoteId);
+
             $body = json_encode([
+                'sender' => ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail],
                 'to' => [[
                     'email' => $emailData->customerEmail,
                     'name' => $emailData->clientFullName,
                 ]],
-                'bcc' => [[
-                    'email' => $emailData->advisorEmail,
-                    'name' => $emailData->advisorName,
-                ]],
+                'replyTo' => ['name' => $emailData->advisorName, 'email' => $emailData->advisorEmail],
+                'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => $emailTemplateId,
                 'params' => [
                     'clientFullName' => $emailData->clientFullName,

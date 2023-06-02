@@ -10,6 +10,7 @@ defineProps({
   activities: Array,
   advisors: Array,
   permissions: Object,
+  typeCode: String,
 });
 
 const { isRequired } = useRules();
@@ -54,6 +55,7 @@ const modals = reactive({
 
 const leadDuplicateForm = useForm({
   lob_team: [],
+  lob_team_sub_selection: null,
 });
 
 const openDuplicate = () => {
@@ -70,13 +72,13 @@ const onCreateDuplicate = isValid => {
     entityCode: page.props.quote.code,
     entityUId: page.props.quote.uuid,
     lob_team: leadDuplicateForm.lob_team,
+    lob_team_sub_selection: leadDuplicateForm.lob_team_sub_selection,
   };
   axios
     .post('/quotes/createDuplicate', data)
     .then(res => {
       modals.duplicate = false;
       notification.success('Lead duplicated successfully');
-      router.visit('/quotes/business');
     })
     .catch(err => {
       notification.error('Something went wrong');
@@ -312,7 +314,9 @@ const activityDeleteConfirmed = () => {
   );
 };
 
-
+const isDuplicateAllowed = computed(() => {
+  return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
+});
 
 const onAssignLead = () => {
   if (!assignLead.value) {
@@ -346,7 +350,6 @@ const onAssignLead = () => {
     },
   );
 };
-
 </script>
 <template>
   <div>
@@ -355,7 +358,7 @@ const onAssignLead = () => {
       <h2 class="text-xl font-semibold">Business Quote Detail</h2>
       <div class="flex gap-2">
         <x-button
-          v-if="allowedDuplicateLOB"
+          v-if="isDuplicateAllowed"
           size="sm"
           color="#ff5e00"
           @click.prevent="openDuplicate"
@@ -395,6 +398,17 @@ const onAssignLead = () => {
             placeholder="Select LOB For Duplication"
             class="w-full"
             multiple
+          />
+
+          <x-select
+            v-model="leadDuplicateForm.lob_team_sub_selection"
+            label="Reason"
+            :rules="[isRequired]"
+            class="w-full"
+            :options="[
+              { value: 'new_enquiry', label: 'New enquiry' },
+              { value: 'record_only', label: 'Record purposes only' },
+            ]"
           />
 
           <x-button
@@ -767,7 +781,12 @@ const onAssignLead = () => {
     </div>
 
     <!-- Additional Contact -->
-    <customerAdditionalContacts quoteType="Business" :customerId="quote.customer_id" :quoteId="quote.id"  :contacts="customerAdditionalContacts" />
+    <customerAdditionalContacts
+      quoteType="Business"
+      :customerId="quote.customer_id"
+      :quoteId="quote.id"
+      :contacts="customerAdditionalContacts"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

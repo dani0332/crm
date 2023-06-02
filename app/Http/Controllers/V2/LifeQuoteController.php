@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Repositories\ActivityRepository;
+use App\Repositories\CustomerRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
@@ -60,7 +61,7 @@ class LifeQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Quote is created successfully.');
+        return redirect('/quotes/life/'.$response->quoteUID)->with('message', 'Quote is created successfully.');
     }
 
     /**
@@ -76,6 +77,7 @@ class LifeQuoteController extends Controller
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
 
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
+
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
@@ -84,13 +86,32 @@ class LifeQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
+        $activitiesData = [];
+        foreach ($activities as $activity) {
+            $activitiesData[] = [
+                'id' => $activity->id,
+                'uuid' => $activity->uuid,
+                'title' => $activity->title,
+                'description' => $activity->description,
+                'quote_request_id' => $activity->quote_request_id,
+                'quote_type_id' => $activity->quote_type_id,
+                'quote_uuid' => $activity->quote_uuid,
+                'client_name' => $activity->client_name,
+                'due_date' => $activity->due_date,
+                'assignee' => $activity->assignee->name,
+                'assignee_id' => $activity->assignee_id,
+                'status' => $activity->status,
+            ];
+        }
+
         return inertia('LifeQuote/Show', [
             'quoteType' => QuoteTypes::LIFE,
             'quoteStatuses' => $quoteStatuses,
             'quote' => $quote,
-            'activities' => $activities,
+            'activities' => $activitiesData,
             'advisors' => $advisors,
             'allowedDuplicateLOB' => $duplicateAllowedLobs,
+            'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote->mobile_no),
             'lostReasons' => $lostReasons,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
         ]);

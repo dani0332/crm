@@ -111,18 +111,18 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->hasRole(RolesEnum::BetaUser) && auth()->user()->hasAnyRole([
-            RolesEnum::CarDeputyManager,
-            RolesEnum::CarAdvisor,
-            RolesEnum::Admin,
-            RolesEnum::CarManager,
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW,
+            PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
+            PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
+            PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
         ])) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
-                    ->add('Advisor Conversion', url('reports/advisor-conversion'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Advisor Performance', url('reports/advisor-performance'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Advisor Distribution', url('reports/advisor-distribution'), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Lead Distribution', url('reports/lead-distribution'), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW), 'Advisor Conversion', route('advisor-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW), 'Advisor Performance', route('advisor-performance-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW), 'Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
@@ -145,10 +145,6 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'car'])
                     );
             });
-        }
-
-        if (auth()->check() && auth()->user()->hasMyLeadAccess()) {
-            $nav = $nav->add('My Leads', url('/myleads'));
         }
 
         if (auth()->user()->can(PermissionsEnum::ActivitiesList)) {

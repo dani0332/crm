@@ -50,4 +50,14 @@ class QuoteStatusLog extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function quoteType()
+    {
+        return $this->belongsTo(QuoteType::class, 'quote_type_id');
+    }
+
+    public function quoteStatus()
+    {
+        return $this->belongsTo(QuoteStatus::class, 'current_quote_status_id');
+    }
 }

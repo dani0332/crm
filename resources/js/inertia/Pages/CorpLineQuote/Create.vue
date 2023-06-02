@@ -55,11 +55,7 @@ const genderOptions = [
 
 function onSubmit(isValid) {
   if (isValid) {
-    quoteForm.post(`/quotes/business/`, {
-      onSuccess: () => {
-        router.get(`/quotes/business/`);
-      },
-    });
+    quoteForm.post(`/quotes/business/`);
   }
 }
 </script>
