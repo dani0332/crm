@@ -66,7 +66,10 @@
                 name: 'Net Conversion',
                 colorByPoint: true,
                 data: data
-            }]
+            }],
+            credits: {
+                enabled: false,
+            },
         });
 
     }
