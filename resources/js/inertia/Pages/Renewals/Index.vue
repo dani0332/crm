@@ -3,15 +3,15 @@ import {computed, reactive} from "vue";
 import {Head, router, usePage, Link, useForm} from '@inertiajs/vue3';
 
 defineProps({
-    quoteStatuses: Array,
-    renewalBatches: Array,
+    leadStatuses: [Object, Array],
+    renewalBatches: [Array, Object],
 });
 
 const page = usePage();
 
 const filters = reactive({
     deadline_date: '',
-    quote_status: '',
+    quote_status_id: '',
     page: 1,
 });
 
@@ -20,18 +20,52 @@ const loader = reactive({
     export: false,
 });
 
-const quoteStatusOptions = computed(() => {
-    return page.props.quoteStatuses.map(status => ({
+const leadStatusOptions = computed(() => {
+    return page.props.leadStatuses.map(status => ({
         value: status.id,
         label: status.text,
     }));
 });
 
 const tableHeader = [
-    { text: 'BATCH', value: 'batch' },
+    {text: 'ID', value: 'id'},
+    { text: 'BATCH', value: 'name' },
     { text: 'LEAD STATUS', value: 'quote_status' },
     { text: 'DEADLINE DATE', value: 'deadline_date' },
 ];
+
+function onSubmit(isValid) {
+    if (isValid) {
+        filters.page = 1;
+        Object.keys(filters).forEach(
+            key =>
+                (filters[key] === '' || filters[key].length === 0) &&
+                delete filters[key],
+        );
+
+        router.visit('/renewals/renewal-batches', {
+            method: 'get',
+            data: filters,
+            preserveState: true,
+            preserveScroll: true,
+            onBefore: () => (loader.table = true),
+            onSuccess: () => (loader.table = false),
+        });
+    } else {
+        console.log('Invalid');
+    }
+}
+
+function onReset() {
+    router.visit('/renewals/renewal-batches', {
+        method: 'get',
+        data: { page: 1 },
+        preserveScroll: true,
+        onBefore: () => (loader.table = true),
+        onSuccess: () => (loader.table = false),
+    });
+}
+
 
 </script>
 
@@ -50,9 +84,9 @@ const tableHeader = [
         <x-form @submit="onSubmit" :auto-focus="false">
             <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <x-select
-                    v-model="filters.quote_status"
+                    v-model="filters.quote_status_id"
                     label="Quote Status"
-                    :options="quoteStatusOptions"
+                    :options="leadStatusOptions"
                     class="w-full"
                 />
                 <DatePicker
@@ -63,13 +97,12 @@ const tableHeader = [
             </div>
             <div class="flex justify-end gap-3 mb-4">
                 <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-                <x-button size="sm" color="primary">
+                <x-button size="sm" color="primary" @click.prevent="onReset">
                     Reset
                 </x-button>
             </div>
         </x-form>
         <DataTable
-            v-model:items-selected="quotesSelected"
             table-class-name="tablefixed"
             :headers="tableHeader"
             :loading="loader.table"
@@ -78,7 +111,22 @@ const tableHeader = [
             hide-rows-per-page
             hide-footer
             fixed-checkbox
-        ></DataTable>
+        >
+        <template #item-id="{ id }">
+            <Link
+                :href="`/renewals/renewal-batches/${id}/edit`"
+                class="text-primary-500 hover:underline"
+            >
+                {{ id }}
+            </Link>
+        </template>
+
+        <template #item-quote_status="{ quote_status }">
+            {{ quote_status?.code }}
+        </template>
+
+        </DataTable>
+
         <Pagination
             :links="{
             next: renewalBatches.next_page_url,

@@ -4,8 +4,9 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\QuoteStatusEnum;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RenewalBatchRequest;
 use App\Repositories\QuoteStatusRepository;
-use Illuminate\Http\Request;
+use App\Repositories\RenewalBatchRepository;
 
 class RenewalBatchController extends Controller
 {
@@ -17,10 +18,11 @@ class RenewalBatchController extends Controller
     public function index()
     {
         $quoteStatuses = QuoteStatusRepository::getQuoteStatusesByIds([QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable]);
+        $renewalBatches = RenewalBatchRepository::getData();
 
         return inertia('Renewals/Index', [
-            'renewalBatches' => [],
-            'quoteStatuses' => $quoteStatuses
+            'renewalBatches' => $renewalBatches ?? [],
+            'leadStatuses' => $quoteStatuses
         ]);
     }
 
@@ -31,7 +33,11 @@ class RenewalBatchController extends Controller
      */
     public function create()
     {
-        return inertia('Renewals/Form');
+        $quoteStatuses = QuoteStatusRepository::getQuoteStatusesByIds([QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable]);
+
+        return inertia('Renewals/Form', [
+            'leadStatuses' => $quoteStatuses
+        ]);
     }
 
     /**
@@ -40,20 +46,15 @@ class RenewalBatchController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(RenewalBatchRequest $request)
     {
-        //
-    }
+        $response = RenewalBatchRepository::create($request->validated());
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
+        if (! empty($response->errors) || ! empty($response->msg)) {
+            vAbort($response->msg);
+        }
+
+        return back()->with('message', 'Renewal Batch is created successfully.');
     }
 
     /**
@@ -64,7 +65,13 @@ class RenewalBatchController extends Controller
      */
     public function edit($id)
     {
-        //
+        $renewalBatch = RenewalBatchRepository::getBy('id', $id);
+        $quoteStatuses = QuoteStatusRepository::getQuoteStatusesByIds([QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable]);
+
+        return inertia('Renewals/Form', [
+            'leadStatuses' => $quoteStatuses,
+            'renewalBatch' => $renewalBatch
+        ]);
     }
 
     /**
@@ -74,19 +81,11 @@ class RenewalBatchController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(RenewalBatchRequest $request, $id)
     {
-        //
+        RenewalBatchRepository::update($id, $request->validated());
+
+        return back()->with('message', 'Renewal Batch is updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
 }
