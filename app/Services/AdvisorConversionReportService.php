@@ -98,9 +98,8 @@ class AdvisorConversionReportService extends BaseService
 
         $batches = QuoteBatches::query()
             ->select('name', 'start_date', 'end_date', 'id')
-            ->orderBy('id')
+            ->orderByDesc('id')
             ->get()
-            ->keyBy('id')
             ->map(function ($batch) {
                 $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
                 $start_date = Carbon::parse($batch->start_date)->format($dateFormat);
