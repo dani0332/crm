@@ -8,9 +8,7 @@ use App\Enums\quoteTypeCode;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
-use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
-use App\Traits\GetTravelPreviousQuoteIds;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
@@ -23,7 +21,6 @@ class TravelQuoteService extends BaseService
     protected $query;
 
     use RolePermissionConditions;
-    use GetTravelPreviousQuoteIds;
     use AddPremiumAllLobs;
 
     public function __construct(LeadAllocationService $leadAllocationService)
