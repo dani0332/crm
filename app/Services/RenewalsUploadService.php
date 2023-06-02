@@ -784,7 +784,7 @@ class RenewalsUploadService
                     }
                 }
 
-                if($tier = Tier::where('name', TiersEnum::TIER_R)->first()) {
+                if ($tier = Tier::where('name', TiersEnum::TIER_R)->first()) {
                     $quoteData['tier_id'] = $tier->id;
                 }
             }
