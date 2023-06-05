@@ -2,6 +2,7 @@
 use App\Enums\RolesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentMethodsEnum;
 @endphp
 <script>
     var wasSubmitted = false;
@@ -29,8 +30,8 @@ use App\Enums\PaymentStatusEnum;
     $(document).ready(function () {
         $('#add-payment-btn').on('click',function () {
             $('#captured_amount').val('');
-            $('#payment_methods').val('');
-            $('#collection_type').val('');
+            // $('#payment_methods').val('');
+            // $('#collection_type').val('');
             $('#reference').val('');
             $('#payment-reference-div').hide();
             $('#paymentCreateModel').modal('show');
@@ -64,7 +65,7 @@ use App\Enums\PaymentStatusEnum;
             $('#uprovider_id').val($(this).attr('data-provider'));
             $('#ucode').val($(this).attr('data-code'));
 
-            if($(this).attr('data-payment-method') != 'CC'){
+            if($(this).attr('data-payment-method') != 'CC' && $(this).attr('data-payment-method') != 'IN_PL'){
                 $('#upayment-reference-div').show();
             }else{
                 $('#upayment-reference-div').hide();
@@ -239,10 +240,8 @@ use App\Enums\PaymentStatusEnum;
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Collection Type<span
                                         class="required">*</span></span>
-                                <select class="form-control" name="collection_type" id="collection_type">
-                                    <option value="">Select Collection Type</option>
-                                    <option value="broker">Broker</option>
-                                    <option value="insurer">Insurer</option>
+                                <select class="form-control" name="collection_type" id="collection_type" readonly>
+                                    <option value="broker" selected>Broker</option>
                                 </select>
                                 <span class="text-danger" style="display: none" id="collection_type_validation">Please
                                     select collection type</span>
@@ -253,27 +252,12 @@ use App\Enums\PaymentStatusEnum;
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Payment Method<span
                                         class="required">*</span></span>
-                                <select id='payment_methods' class="form-control" name='payment_methods'>
-                                    <option value="">Select Payment Method</option>
+                                <select id='payment_methods' class="form-control" name='payment_methods' readonly >
                                     @php
-                                    $parentPaymentMethods = $paymentMethods->whereNull('parent_code');
-                                    $childPaymentMethods = $paymentMethods->whereNotNull('parent_code');
+                                    $parentPaymentMethods = $paymentMethods->where('code','=',PaymentMethodsEnum::CreditCard);
                                     @endphp
                                     @foreach ($parentPaymentMethods as $payment_method)
-                                    @if($childPaymentMethods->where('parent_code', $payment_method->code)->count() >
-                                    0)
-                                    <optgroup label="{{ $payment_method->name }}">
-                                        @foreach ($childPaymentMethods->where('parent_code', $payment_method->code)
-                                        as
-                                        $childPaymentMethod)
-                                        <option value="{{ $childPaymentMethod->code }}">{{ $childPaymentMethod->name
-                                            }}
-                                        </option>
-                                        @endforeach
-                                    </optgroup>
-                                    @else
-                                    <option value="{{ $payment_method->code }}">{{ $payment_method->name }}</option>
-                                    @endif
+                                        <option value="{{ $payment_method->code }}" selected>{{ $payment_method->name }}</option>
                                     @endforeach
                                 </select>
                                 <span class="text-danger" style="display: none" id="payment_methods_validation">Please
@@ -349,7 +333,7 @@ use App\Enums\PaymentStatusEnum;
                     <div class="col-md-12">
                         <div class="item form-group">
                             <div class="col">
-                                <span class="col-form-label col-md-6 col-sm-6">Capture Amount<span
+                                <span class="col-form-label col-md-6 col-sm-6">Price Including VAT<span
                                         class="required">*</span></span>
                                 <input id="ucaptured_amount" type="number" class="form-control" name="captured_amount"
                                     placeholder="Amount" />
@@ -359,7 +343,7 @@ use App\Enums\PaymentStatusEnum;
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Collection Type<span
                                         class="required">*</span></span>
-                                <select class="form-control" name="collection_type" id="ucollection_type">
+                                <select class="form-control" name="collection_type" id="ucollection_type" readonly>
                                     <option value="">Select Collection Type</option>
                                     <option value="broker">Broker</option>
                                     <option value="insurer">Insurer</option>
@@ -373,7 +357,7 @@ use App\Enums\PaymentStatusEnum;
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Payment Method<span
                                         class="required">*</span></span>
-                                <select id='upayment_methods' class="form-control" name='payment_methods'>
+                                <select id='upayment_methods' class="form-control" name='payment_methods' readonly>
                                     <option value="">Select Payment Method</option>
                                     @php
                                     $parentPaymentMethods = $paymentMethods->whereNull('parent_code');

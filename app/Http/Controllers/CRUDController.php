@@ -1348,7 +1348,10 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-        $paymentsCount = $quoteModel->payments->count();
+        $mainPaymentExists = $quoteModel->payments()->where('code','=', $quoteModel->code)->first();
+
+        $count = $quoteModel->payments->count();
+        $paymentsCount =  $mainPaymentExists ? $count :  $count+1;
 
         $code= $quoteModel->code.'-'.$paymentsCount;
 
