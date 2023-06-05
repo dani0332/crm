@@ -25,8 +25,12 @@ class RenewalBatchRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => ['required', \Illuminate\Validation\Rule::unique('renewal_batches')->where(function($query){
-                return $query->where('quote_status_id', request()->quote_status_id);
+            'name' => ['required', \Illuminate\Validation\Rule::unique('renewal_batches')->where(function($query) {
+                $query = $query->where('quote_status_id', request()->quote_status_id);
+                if(!empty(request()->renewal_batch)) {
+                    $query->where('id', '<>', request()->renewal_batch);
+                }
+                return $query;
             })],
             'quote_status_id' => 'required|integer',
             'deadline_date' => 'required'
