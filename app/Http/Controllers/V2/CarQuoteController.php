@@ -15,7 +15,7 @@ class CarQuoteController extends Controller
     public function index(CarQuoteRequest $request)
     {
         $personalQuotes = [];
-        dd('ss');
+
         if ($request->ajax) {
             $personalQuotes = CarQuoteRepository::getData();
         }
@@ -93,5 +93,18 @@ class CarQuoteController extends Controller
         $response = CarQuoteRepository::changeInsurer($request->validated());
 
         return response()->json($response);
+    }
+
+    public function search(CarQuoteRequest $request)
+    {
+        $personalQuotes = [];
+
+        if ($request->ajax) {
+            $personalQuotes = CarQuoteRepository::getData();
+        }
+
+        return inertia('CarQuote/Index', [
+            'quotes' => $personalQuotes,
+        ]);
     }
 }
