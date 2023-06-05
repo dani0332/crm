@@ -490,6 +490,8 @@ class CRUDController extends Controller
 
             if($record->source != LeadSourceEnum::RENEWAL_UPLOAD || auth()->user()->hasRole(RolesEnum::CarManager)) {
                 $leadStatuses = $leadStatuses->whereNotIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
+            }
+
             $daysAfterCapturedPayment = null;
             if (($capturedPaymentDate = PaymentStatusLog::where(['quote_type_id' => QuoteTypeId::Car,
                 'quote_request_id' => $record->id,
