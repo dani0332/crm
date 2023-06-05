@@ -43,7 +43,7 @@ function onSubmit(isValid) {
                 delete filters[key],
         );
 
-        router.visit('/renewals/renewal-batches', {
+        router.visit('/renewal-batches', {
             method: 'get',
             data: filters,
             preserveState: true,
@@ -57,7 +57,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-    router.visit('/renewals/renewal-batches', {
+    router.visit('/renewal-batches', {
         method: 'get',
         data: { page: 1 },
         preserveScroll: true,
@@ -114,7 +114,7 @@ function onReset() {
         >
         <template #item-id="{ id }">
             <Link
-                :href="`/renewals/renewal-batches/${id}/edit`"
+                :href="`/renewal-batches/${id}/edit`"
                 class="text-primary-500 hover:underline"
             >
                 {{ id }}

@@ -32,9 +32,9 @@ function onSubmit(isValid) {
     if (isValid) {
 
         let method = 'post';
-        let url = `/renewals/renewal-batches/`;
+        let url = `/renewal-batches/`;
         let title = 'Renewal Batch saved successfully';
-        let redirectUrl = '/renewals/renewal-batches';
+        let redirectUrl = '/renewal-batches';
         if (props.renewalBatch) {
             method = 'put';
             url = url + props.renewalBatch.id;
@@ -67,7 +67,7 @@ function onSubmit(isValid) {
         <div class="flex justify-between items-center">
             <h2 class="text-xl font-semibold"> {{ pageFor }} Renewal Batch</h2>
             <div>
-                <Link href="/renewals/renewal-batches">
+                <Link href="/renewal-batches">
                     <x-button size="sm" color="#ff5e00" tag="div"> Renewal Batch List </x-button>
                 </Link>
             </div>
