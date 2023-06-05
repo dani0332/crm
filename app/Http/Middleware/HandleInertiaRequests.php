@@ -167,7 +167,7 @@ class HandleInertiaRequests extends Middleware
                     )
                     ->add(
                         'Car Search',
-                        '/quotes/car',
+                        '/personal-quotes/car/car-quotes-search',
                         fn ($s) => $s->attributes(['icon' => 'car'])
                     ),
                 )

@@ -408,6 +408,7 @@ function generateRouteNames($prefix)
         'edit' => $prefix.'-edit',
         'update' => $prefix.'-update',
         'destroy' => $prefix.'-delete',
+        'search' => $prefix.'-search',
     ];
 }
 
@@ -416,6 +417,8 @@ if (! function_exists('newUi')) {
     {
         return [
             quoteTypeCode::Health,
+            quoteTypeCode::Car,
+            quoteTypeCode::Bike,
         ];
     }
 }
