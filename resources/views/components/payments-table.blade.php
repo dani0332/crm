@@ -58,9 +58,9 @@ use App\Enums\PaymentMethodsEnum;
         $('.edit-payment-btn').on('click',function (e) {
             e.preventDefault();
             $('#ucaptured_amount').val($(this).attr('data-amount'));
-            $('#upayment_methods').val($(this).attr('data-payment-method'));
+            // $('#upayment_methods').val($(this).attr('data-payment-method'));
             $('#ureference').val($(this).attr('data-reference'));
-            $('#ucollection_type').val($(this).attr('data-collection'));
+            // $('#ucollection_type').val($(this).attr('data-collection'));
             $('#uplan_id').val($(this).attr('data-plan'));
             $('#uprovider_id').val($(this).attr('data-provider'));
             $('#ucode').val($(this).attr('data-code'));
