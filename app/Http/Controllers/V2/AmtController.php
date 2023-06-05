@@ -292,7 +292,7 @@ class AmtController extends Controller
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
             'permissions' => [
-                'canEditQuote' => auth()->user()->can('corpline-quotes-edit'),
+                'canEditQuote' => auth()->user()->can('gm-quotes-edit'),
             ],
             'typeCode' => quoteTypeCode::GroupMedical,
         ]);
