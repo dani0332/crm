@@ -1348,7 +1348,10 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-        $code = 'P-'.strtoupper(substr(uniqid(''), 0, 8));
+        $paymentsCount = $quoteModel->payments->count();
+
+        $code= $quoteModel->code.'-'.$paymentsCount;
+
         $paymentInformation = [
             'code' => $code,
             'collection_type' => $request->collection_type,
