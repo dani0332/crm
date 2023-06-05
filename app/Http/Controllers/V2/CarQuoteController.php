@@ -17,7 +17,7 @@ class CarQuoteController extends Controller
     {
         $personalQuotes = [];
 
-        if($request->page){
+        if ($request->page) {
             $personalQuotes = CarQuoteRepository::getData()->withQueryString();
         }
 
