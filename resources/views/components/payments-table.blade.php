@@ -58,18 +58,13 @@ use App\Enums\PaymentMethodsEnum;
         $('.edit-payment-btn').on('click',function (e) {
             e.preventDefault();
             $('#ucaptured_amount').val($(this).attr('data-amount'));
-            // $('#upayment_methods').val($(this).attr('data-payment-method'));
             $('#ureference').val($(this).attr('data-reference'));
-            // $('#ucollection_type').val($(this).attr('data-collection'));
             $('#uplan_id').val($(this).attr('data-plan'));
             $('#uprovider_id').val($(this).attr('data-provider'));
             $('#ucode').val($(this).attr('data-code'));
 
-            if($(this).attr('data-payment-method') != 'CC' && $(this).attr('data-payment-method') != 'IN_PL'){
-                $('#upayment-reference-div').show();
-            }else{
-                $('#upayment-reference-div').hide();
-            }
+            $('#upayment-reference-div').hide();
+
             $('#paymentUpdateModel').modal('show');
         });
 
@@ -167,8 +162,6 @@ use App\Enums\PaymentMethodsEnum;
                                                 data-reference="{{$payment->reference}}"
                                                 data-amount="{{$payment->captured_amount}}"
                                                 data-plan="{{$paymentPlainModel->plan->text}}"
-                                                data-collection="{{$payment->collection_type}}"
-                                                data-payment-method="{{$payment->paymentMethod->code}}"
                                                 data-provider="{{$paymentPlainModel->plan->insuranceProvider->text}}">Edit</button>
                                             @endcan
                                         @endif
@@ -241,7 +234,7 @@ use App\Enums\PaymentMethodsEnum;
                                 <span class="col-form-label col-md-6 col-sm-6">Collection Type<span
                                         class="required">*</span></span>
                                 <select class="form-control" name="collection_type" id="collection_type" readonly>
-                                    <option value="broker" selected>Broker</option>
+                                    <option value="broker" selected="selected">Broker</option>
                                 </select>
                                 <span class="text-danger" style="display: none" id="collection_type_validation">Please
                                     select collection type</span>
@@ -257,7 +250,7 @@ use App\Enums\PaymentMethodsEnum;
                                     $parentPaymentMethods = $paymentMethods->where('code','=',PaymentMethodsEnum::CreditCard);
                                     @endphp
                                     @foreach ($parentPaymentMethods as $payment_method)
-                                        <option value="{{ $payment_method->code }}" selected>{{ $payment_method->name }}</option>
+                                        <option value="{{ $payment_method->code }}" selected="selected">{{ $payment_method->name }}</option>
                                     @endforeach
                                 </select>
                                 <span class="text-danger" style="display: none" id="payment_methods_validation">Please
@@ -344,7 +337,7 @@ use App\Enums\PaymentMethodsEnum;
                                 <span class="col-form-label col-md-6 col-sm-6">Collection Type<span
                                         class="required">*</span></span>
                                 <select class="form-control" name="collection_type" id="ucollection_type" readonly>
-                                    <option value="broker" selected>Broker</option>
+                                    <option value="broker" selected="selected">Broker</option>
                                 </select>
                                 <span class="text-danger" style="display: none" id="ucollection_type_validation">Please
                                     select collection type</span>
@@ -360,7 +353,7 @@ use App\Enums\PaymentMethodsEnum;
                                         $parentPaymentMethods = $paymentMethods->where('code','=',PaymentMethodsEnum::CreditCard);
                                     @endphp
                                     @foreach ($parentPaymentMethods as $payment_method)
-                                        <option value="{{ $payment_method->code }}" selected>{{ $payment_method->name }}</option>
+                                        <option value="{{ $payment_method->code }}" selected="selected">{{ $payment_method->name }}</option>
                                     @endforeach
                                 </select>
                                 <span class="text-danger" style="display: none" id="upayment_methods_validation">Please
