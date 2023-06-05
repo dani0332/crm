@@ -159,17 +159,17 @@ class HandleInertiaRequests extends Middleware
                     'Car',
                     '/quotes/car',
                     fn ($s) => $s
-                    ->attributes(['icon' => 'car'])
-                    ->add(
-                        'Car List',
-                        '/quotes/car',
-                        fn ($s) => $s->attributes(['icon' => 'car'])
-                    )
-                    ->add(
-                        'Car Search',
-                        '/personal-quotes/car/car-quotes-search',
-                        fn ($s) => $s->attributes(['icon' => 'car'])
-                    ),
+                        ->attributes(['icon' => 'car'])
+                        ->add(
+                            'Car List',
+                            '/quotes/car',
+                            fn ($s) => $s->attributes(['icon' => 'car'])
+                        )
+                        ->add(
+                            'Car Search',
+                            '/personal-quotes/car/car-quotes-search',
+                            fn ($s) => $s->attributes(['icon' => 'car'])
+                        ),
                 )
                 ->addIf(
                     auth()->user()->can(PermissionsEnum::HealthQuotesList),

@@ -9,7 +9,6 @@ use App\Repositories\CarQuoteRepository;
 
 class CarQuoteController extends Controller
 {
-
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -17,16 +16,16 @@ class CarQuoteController extends Controller
     {
         $personalQuotes = [];
         dd('ss');
-        if($request->ajax){
+        if ($request->ajax) {
             $personalQuotes = CarQuoteRepository::getData();
         }
 
         return inertia('CarQuote/Index', [
-            'quotes' => $personalQuotes
+            'quotes' => $personalQuotes,
         ]);
     }
 
-        /**
+    /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function create()
