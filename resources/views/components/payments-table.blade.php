@@ -344,9 +344,7 @@ use App\Enums\PaymentMethodsEnum;
                                 <span class="col-form-label col-md-6 col-sm-6">Collection Type<span
                                         class="required">*</span></span>
                                 <select class="form-control" name="collection_type" id="ucollection_type" readonly>
-                                    <option value="">Select Collection Type</option>
-                                    <option value="broker">Broker</option>
-                                    <option value="insurer">Insurer</option>
+                                    <option value="broker" selected>Broker</option>
                                 </select>
                                 <span class="text-danger" style="display: none" id="ucollection_type_validation">Please
                                     select collection type</span>
@@ -358,26 +356,11 @@ use App\Enums\PaymentMethodsEnum;
                                 <span class="col-form-label col-md-6 col-sm-6">Payment Method<span
                                         class="required">*</span></span>
                                 <select id='upayment_methods' class="form-control" name='payment_methods' readonly>
-                                    <option value="">Select Payment Method</option>
                                     @php
-                                    $parentPaymentMethods = $paymentMethods->whereNull('parent_code');
-                                    $childPaymentMethods = $paymentMethods->whereNotNull('parent_code');
+                                        $parentPaymentMethods = $paymentMethods->where('code','=',PaymentMethodsEnum::CreditCard);
                                     @endphp
                                     @foreach ($parentPaymentMethods as $payment_method)
-                                    @if($childPaymentMethods->where('parent_code', $payment_method->code)->count() >
-                                    0)
-                                    <optgroup label="{{ $payment_method->name }}">
-                                        @foreach ($childPaymentMethods->where('parent_code', $payment_method->code)
-                                        as
-                                        $childPaymentMethod)
-                                        <option value="{{ $childPaymentMethod->code }}">{{ $childPaymentMethod->name
-                                            }}
-                                        </option>
-                                        @endforeach
-                                    </optgroup>
-                                    @else
-                                    <option value="{{ $payment_method->code }}">{{ $payment_method->name }}</option>
-                                    @endif
+                                        <option value="{{ $payment_method->code }}" selected>{{ $payment_method->name }}</option>
                                     @endforeach
                                 </select>
                                 <span class="text-danger" style="display: none" id="upayment_methods_validation">Please
