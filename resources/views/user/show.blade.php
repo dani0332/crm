@@ -114,8 +114,9 @@
                         <div class="col-auto">
                             <a href="{{ route('users.edit', ['user' => $user->id])}}"
                                 class='btn btn-warning btn-sm'>Edit</a>
-                            <a href="#" date-route="{{ route('users.destroy', ['user' => $user->id])}}"
-                                class='btn btn-warning btn-sm delete'>Delete</a>
+                            {{-- Tempraory Hide Delete button --}}
+{{--                            <a href="#" date-route="{{ route('users.destroy', ['user' => $user->id])}}"--}}
+{{--                                class='btn btn-warning btn-sm delete'>Delete</a>--}}
                         </div>
                     </div>
                 </form>

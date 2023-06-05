@@ -13,9 +13,10 @@ class QuoteStatusRepository extends BaseRepository
 
     public function fetchByQuoteTypeId($quoteTypeId)
     {
-        return $this->whereHas('quoteStatusMap', function ($q) use ($quoteTypeId) {
-            $q->where('quote_type_id', $quoteTypeId)->orderBy('sort_order');
-        });
+        return $this->select('quote_status.id as id', 'quote_status.text as text', 'quote_status.code as code')
+            ->where(['quote_status.is_active' => true, 'quote_status_map.quote_type_id' => $quoteTypeId])
+            ->leftjoin('quote_status_map', 'quote_status.id', 'quote_status_map.quote_status_id')
+            ->orderBy('quote_status_map.sort_order', 'asc');
     }
 
     public function fetchGetQuoteStatusesByIds($quoteStatusIds)

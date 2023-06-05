@@ -1,21 +1,19 @@
 <script setup>
-
 defineProps({
   quote: Object,
   genderOptions: Object,
   assignedGMType: String,
   allowedDuplicateLOB: Array,
-  isDuplicateAllowed: Boolean,
   quoteDetails: Object,
   customerAdditionalContacts: Array,
   enums: Object,
   permissions: Object,
+  typeCode: String,
 });
 
 const page = usePage();
 
 const notification = useNotifications('toast');
-
 
 const { isRequired } = useRules();
 
@@ -41,6 +39,7 @@ const modals = reactive({
 
 const leadDuplicateForm = useForm({
   lob_team: [],
+  lob_team_sub_selection: null,
 });
 
 const openDuplicate = () => {
@@ -57,13 +56,13 @@ const onCreateDuplicate = isValid => {
     entityCode: page.props.quote.code,
     entityUId: page.props.quote.uuid,
     lob_team: leadDuplicateForm.lob_team,
+    lob_team_sub_selection: leadDuplicateForm.lob_team_sub_selection,
   };
   axios
     .post('/quotes/createDuplicate', data)
     .then(res => {
       modals.duplicate = false;
       notification.success('Lead duplicated successfully');
-      router.visit('/medical/amt');
     })
     .catch(err => {
       notification.error('Something went wrong');
@@ -91,7 +90,6 @@ const leadStatusForm = useForm({
 });
 
 const onLeadStatus = () => {
-
   let data = {
     modelType: 'Business',
     leadId: leadStatusForm.leadId,
@@ -139,6 +137,9 @@ const historyDataTable = [
   { text: 'Lead Status', value: 'NewStatus' },
 ];
 
+const isDuplicateAllowed = computed(() => {
+  return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
+});
 </script>
 <template>
   <div>
@@ -189,6 +190,17 @@ const historyDataTable = [
             multiple
           />
 
+          <x-select
+            v-model="leadDuplicateForm.lob_team_sub_selection"
+            label="Reason"
+            :rules="[isRequired]"
+            class="w-full"
+            :options="[
+              { value: 'new_enquiry', label: 'New enquiry' },
+              { value: 'record_only', label: 'Record purposes only' },
+            ]"
+          />
+
           <x-button
             color="orange"
             type="submit"
@@ -205,7 +217,7 @@ const historyDataTable = [
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div class="grid sm:grid-cols-2">
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ID</dt>
             <dd>{{ quote.id }}</dd>
           </div>
@@ -415,9 +427,13 @@ const historyDataTable = [
         </div>
       </div>
 
-
-    <!-- Additional Contact -->
-    <customerAdditionalContacts quoteType="Business" :customerId="quote.customer_id" :quoteId="quote.id"  :contacts="customerAdditionalContacts" />
+      <!-- Additional Contact -->
+      <customerAdditionalContacts
+        quoteType="Business"
+        :customerId="quote.customer_id"
+        :quoteId="quote.id"
+        :contacts="customerAdditionalContacts"
+      />
 
       <div class="p-4 rounded shadow mb-6 bg-white">
         <div>

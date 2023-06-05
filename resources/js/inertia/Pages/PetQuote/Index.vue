@@ -22,7 +22,7 @@ let availableFilters = {
   created_at_start: '',
   created_at_end: '',
   quote_status: [],
-  advisors: [],
+  advisor_id: [],
   is_ecommerce: '',
   is_renewal: '',
   page: 1,
@@ -69,16 +69,13 @@ const tableHeader = [
   { text: 'CDB ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DOB', value: 'dob_formatted' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'PREMIUM', value: 'premium' },
-  { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'PREMIUM', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'TYPE OF PET', value: 'type_of_pet' },
   { text: 'BREED OF PET', value: 'breed_of_pet1' },
@@ -90,6 +87,8 @@ const tableHeader = [
   { text: 'HAS INJURY', value: 'has_injury' },
   { text: 'ACCOMMODATION TYPE', value: 'accommodation_type' },
   { text: 'POSSESION TYPE', value: 'possesion_type' },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'TRANSAPP CODE', value: 'transapp_code' },
 ];
 
 const can = permission => useCan(permission);
@@ -111,7 +110,7 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.roles[0].name
-      ? advisor.name + '-' + advisor.roles[0]?.name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
       : advisor.name,
   }));
 });
@@ -242,7 +241,7 @@ function onAssignLead(isValid) {
           "
         />
         <ComboBox
-          v-model="filters.advisors"
+          v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorOptions"
@@ -312,7 +311,7 @@ function onAssignLead(isValid) {
     >
       <template #item-uuid="{ code, uuid }">
         <Link
-          v-if="can(permissionsEnum.PetQuotesView)"
+          v-if="can(permissionsEnum.PetQuotesShow)"
           :href="`/personal-quotes/pet/${uuid}`"
           class="text-primary-500 hover:underline"
         >
@@ -322,7 +321,7 @@ function onAssignLead(isValid) {
       </template>
 
       <template #item-advisor="{ advisor }">
-        {{ advisor?.email }}
+        {{ advisor?.name }}
       </template>
 
       <template #item-quote_status="{ quote_status }">
@@ -331,14 +330,6 @@ function onAssignLead(isValid) {
 
       <template #item-currently_insured_with="{ currently_insured_with }">
         {{ currently_insured_with?.text }}
-      </template>
-
-      <template #item-is_ecommerce="{ is_ecommerce }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
-            {{ is_ecommerce ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
       </template>
 
       <template #item-policy_number="{ pet_quote }">
@@ -353,6 +344,11 @@ function onAssignLead(isValid) {
       <template #item-is_neutered="{ pet_quote }">
         {{ pet_quote?.is_neutered ? 'Yes' : 'No' }}
       </template>
+
+      <template #item-breed_of_pet1="{ pet_quote }">
+        {{ pet_quote?.breed_of_pet1 }}
+     </template>
+
       <template #item-is_microchipped="{ pet_quote }">
         {{ pet_quote?.is_microchipped ? 'Yes' : 'No' }}
       </template>
@@ -370,6 +366,11 @@ function onAssignLead(isValid) {
       </template>
       <template #item-possesion_type="{ pet_quote }">
         {{ pet_quote?.possession_type?.text }}
+      </template>
+      <template #item-is_ecommerce="{ is_ecommerce }">
+        <div class="text-center">
+            {{ is_ecommerce ? 'Yes' : 'No' }}
+        </div>
       </template>
     </DataTable>
 

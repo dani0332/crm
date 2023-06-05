@@ -7,9 +7,14 @@ use App\Models\CarLostQuoteLog;
 use App\Models\CarQuote;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Facades\DB;
+use App\Facades\Ken;
+use App\Models\InsuranceProvider;
+use App\Traits\CentralTrait;
 
 class CarQuoteRepository extends BaseRepository
 {
+    use CentralTrait;
+
     public function model()
     {
         return CarQuote::class;
@@ -21,9 +26,9 @@ class CarQuoteRepository extends BaseRepository
      */
     public function fetchGetLostQuotes($quoteStatusId)
     {
-       $query = DB::table('car_quote_request as cqr')
-           ->select(DB::raw('cqr.*, clql.status as approval_status, u.email as advisor_email, clql.notes as mo_notes'))
-           ->join(DB::raw('(SELECT *
+        $query = DB::table('car_quote_request as cqr')
+            ->select(DB::raw('cqr.*, clql.status as approval_status, u.email as advisor_email, clql.notes as mo_notes'))
+            ->join(DB::raw('(SELECT *
              FROM   car_lost_quote_logs
                     INNER JOIN (SELECT Max(`car_lost_quote_logs`.`id`) AS `id_latest`,
                                 `car_lost_quote_logs`.`car_quote_request_id` AS
@@ -35,18 +40,35 @@ class CarQuoteRepository extends BaseRepository
                     ON `latest_log`.`id_latest` = `car_lost_quote_logs`.`id`
                     AND `latest_log`.`cqr_id` =
                     `car_lost_quote_logs`.`car_quote_request_id`) clql
-        '), function($join){
-            $join->on('cqr.id', 'clql.car_quote_request_id');
-        })
-           ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
-           ->where('cqr.quote_status_id', $quoteStatusId);
+        '), function ($join) {
+                $join->on('cqr.id', 'clql.car_quote_request_id');
+            })
+            ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+            ->where('cqr.quote_status_id', $quoteStatusId);
 
-       if(!empty(request()->approval_status)) {
-           $query->where('clql.status', request()->approval_status);
-       }
+        if (!empty(request()->approval_status)) {
+            $query->where('clql.status', request()->approval_status);
+        }
 
-        return $query->orderBy(DB::raw(' IF (clql.status = "'.GenericRequestEnum::PENDING.'", 0, 1) '))->simplePaginate();
-
+        return $query->orderBy(DB::raw(' IF (clql.status = "' . GenericRequestEnum::PENDING . '", 0, 1) '))->simplePaginate();
     }
 
+    /*
+     * @return mixed
+     */
+    public function fetchChangeInsurer($data)
+    {
+        $provider = InsuranceProvider::where('code', $data['provider_code'])->first();
+
+        $requestData = [
+            'quoteUuid' => $data['uuid'],
+            'providerId' => $provider->id,
+            'planId' => $data['plan_id'],
+            'userId' => strval(auth()->id()),
+        ];
+
+        info('fn: changeInsurer sending change insurer request for quote UUID: ' . $data['uuid'] . ' providerCode: ' . $data['provider_code'] . ' planId: ' . $data['plan_id']);
+
+        return Ken::request('/update-car-ecom-insurer', 'post', $requestData);
+    }
 }

@@ -209,4 +209,5 @@ final class PermissionsEnum extends Enum
     const RenewalBatchUpdate = 'renewal-batch-update';
     const CarSoldList = 'car-sold-list';
     const CarUncontactableList = 'car-uncontactable-list';
+    const ActivitiesAssignedToView = 'activities-assigned-to-view';
 }

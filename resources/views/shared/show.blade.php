@@ -466,7 +466,9 @@ use App\Enums\GenericRequestEnum;
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" />
+
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
+
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
@@ -532,15 +534,6 @@ use App\Enums\GenericRequestEnum;
                 </div>
             </div>
         </div>
-        <x-health-quote-ecom-details :data="$ecomDetails" />
-        <x-health-quote-plans
-            :record="$record"
-            :listQuotePlans="$listQuotePlans"
-            :uuidModal="$record->uuid"
-            :quoteRequestId="$record->id"
-            :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
-            <x-health-quote-members-detail :members="$membersDetail" />
-        <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />

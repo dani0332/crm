@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Repositories\CarQuoteRepository;
 use App\Services\CentralService;
+use App\Http\Requests\ChangeInsurerRequest;
+use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
 {
@@ -33,5 +35,16 @@ class CarQuoteController extends Controller
         return inertia('LostQuotes/CarUncontactable', [
             'quotes' => $quotes
         ]);
+    }
+
+    /**
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function changeInsurer(ChangeInsurerRequest $request)
+    {
+        $response = CarQuoteRepository::changeInsurer($request->validated());
+
+        return response()->json($response);
     }
 }

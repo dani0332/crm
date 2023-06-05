@@ -85,7 +85,7 @@ const openDuplicate = () => {
 
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
-  leadDuplicateForm.post('/quotes/createDuplicate', {
+  leadDuplicateForm.post(route('createDuplicate'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -213,7 +213,7 @@ const onTeamAssign = () => {
     return;
   }
   router.post(
-    `/quotes/health/healthTeamAssign`,
+    route('healthTeamAssign'),
     {
       modelType: 'Health',
       entityId: page.props.quote.id,
@@ -246,7 +246,7 @@ const onAssignLead = () => {
     return;
   }
   router.post(
-    `/quotes/health/manualLeadAssign`,
+    route('manualLeadAssign', { quoteType: 'Health' }),
     {
       modelType: 'Health',
       entityId: page.props.quote.id,
@@ -342,7 +342,7 @@ const memberForm = useForm({
     : page.props.quote.emirate_of_your_visa_id,
   member_category_id: null,
   health_quote_request_id: page.props.quote.id,
-    update_lead_against_member: null
+  update_lead_against_member: null,
 });
 
 function onEditMember(data) {
@@ -537,7 +537,7 @@ const onTogglePlans = toggle => {
   ).value;
 
   axios
-    .post('/quotes/health/manual-plan-toggle', {
+    .post(route('manualPlanToggle', { quoteType: 'Health' }), {
       modelType: 'Health',
       planIds: planIds,
       quote_uuid: page.props.quote.uuid,
@@ -677,7 +677,7 @@ const addActivity = () => {
 
 const onActivityStatusUpdate = id => {
   activityForm.activity_id = id;
-  activityForm.post(`/activities/updateStatus`, {
+  activityForm.post(route('activities.updateStatus'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -947,6 +947,20 @@ const sendPolicyToClient = () => {
   }
 };
 
+// temp fix for old structure notification
+watch(
+  () => page.props.flash,
+  () => {
+    if (page.props.flash && page.props.flash.success) {
+      notification.success({
+        title: page.props.flash.success,
+        position: 'top',
+      });
+    }
+  },
+  { immediate: true },
+);
+
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
@@ -964,11 +978,11 @@ onMounted(() => {
           Duplicate Lead
         </x-button>
 
-        <Link href="/quotes/health" preserve-scroll>
+        <Link :href="route('health.index')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div"> Health List </x-button>
         </Link>
 
-        <Link :href="`${quote.uuid}/edit`">
+        <Link :href="route('health.edit', quote.uuid)">
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>

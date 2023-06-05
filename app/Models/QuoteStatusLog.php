@@ -26,4 +26,14 @@ class QuoteStatusLog extends Model
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    public function quoteType()
+    {
+        return $this->belongsTo(QuoteType::class, 'quote_type_id');
+    }
+
+    public function quoteStatus()
+    {
+        return $this->belongsTo(QuoteStatus::class, 'current_quote_status_id');
+    }
 }

@@ -16,6 +16,7 @@ use App\Repositories\PersonalPlanRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\CentralService;
 
 class PetQuoteController extends Controller
 {
@@ -53,7 +54,7 @@ class PetQuoteController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
      */
     public function store(PetQuoteRequest $request)
     {
@@ -63,7 +64,7 @@ class PetQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Quote is created successfully.');
+        return redirect('/personal-quotes/pet/'.$response->quoteUID)->with('message', 'Quote is created successfully.');
     }
 
     /**
@@ -93,6 +94,8 @@ class PetQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
+        $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
+
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
@@ -107,6 +110,7 @@ class PetQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'duplicateAllowedLobs' => $duplicateAllowedLobs,
         ]);
     }
 

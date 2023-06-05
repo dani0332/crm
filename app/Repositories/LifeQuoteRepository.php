@@ -85,7 +85,7 @@ class LifeQuoteRepository extends BaseRepository
     }
 
     /**
-     * get all dropdown options required for form
+     * get all dropdown options required for form.
      *
      * @return array
      */
@@ -101,5 +101,14 @@ class LifeQuoteRepository extends BaseRepository
             'numberOfYears' => LifeNumberOfYearsRepository::withActive()->get(),
 
         ];
+    }
+
+    public function fetchExportData()
+    {
+        return $this->with(['advisor', 'quoteStatus', 'nationality'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 }
