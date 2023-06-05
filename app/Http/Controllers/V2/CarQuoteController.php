@@ -6,22 +6,26 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
 use App\Repositories\CarQuoteRepository;
+use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
 {
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
-    public function index(CarQuoteRequest $request)
+    public function index(Request $request)
     {
         $personalQuotes = [];
 
-        if ($request->ajax) {
-            $personalQuotes = CarQuoteRepository::getData();
+        if($request->page){
+            $personalQuotes = CarQuoteRepository::getData()->withQueryString();
         }
+
+        $advisors = CarQuoteRepository::getAdvisors();
 
         return inertia('CarQuote/Index', [
             'quotes' => $personalQuotes,
+            'advisors' => $advisors,
         ]);
     }
 

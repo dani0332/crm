@@ -2,17 +2,29 @@
 
 namespace App\Models;
 
+use App\Enums\FilterTypes;
+use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Auth;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use LookUpModel;
+use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel
 {
-    use HasFactory;
+    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
 
     protected $table = 'car_quote_request';
     protected $casts = [
         'dob' => 'datetime',
+    ];
+    public $filterables = [
+        'first_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::FREE,
+        'policy_number' => FilterTypes::EXACT,
+        'code' => FilterTypes::EXACT,
+        'email' => FilterTypes::EXACT,
     ];
     protected $guarded = [];
 
@@ -28,12 +40,12 @@ class CarQuote extends BaseModel
 
     public function carMake()
     {
-        return $this->hasOne(CarMake::class, 'id', 'car_make_id');
+        return $this->hasOne(CarMake::class, 'id', 'car_make_id')->select(['id', 'code', 'text']);
     }
 
     public function carModel()
     {
-        return $this->hasOne(CarModel::class, 'id', 'car_model_id');
+        return $this->hasOne(CarModel::class, 'id', 'car_model_id')->select(['id', 'code', 'text']);
     }
 
     public function emirate()
@@ -58,7 +70,7 @@ class CarQuote extends BaseModel
 
     public function nationality()
     {
-        return $this->hasOne(Nationality::class, 'id', 'nationality_id');
+        return $this->hasOne(Nationality::class, 'id', 'nationality_id')->select(['id', 'code', 'text']);
     }
 
     public function paymentStatus()
@@ -71,18 +83,18 @@ class CarQuote extends BaseModel
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
     }
 
-    public function getCreatedAtAttribute($table)
+    public function getCreatedAtAttribute($value)
     {
-        $date_time_format = config('constants.datetime_format');
+        $date_time_format = config('constants.DATETIME_DISPLAY_FORMAT');
 
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return Carbon::parse($value)->format($date_time_format);
     }
 
-    public function getUpdatedAtAttribute($table)
+    public function getUpdatedAtAttribute($value)
     {
-        $date_time_format = config('constants.datetime_format');
+        $date_time_format = config('constants.DATETIME_DISPLAY_FORMAT');
 
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
+        return Carbon::parse($value)->format($date_time_format);
     }
 
     /*****  NewRelationships so old should not effect */
@@ -95,6 +107,11 @@ class CarQuote extends BaseModel
     public function carQuoteRequestDetail()
     {
         return $this->hasOne(CarQuoteRequestDetail::class, 'car_quote_request_id', 'id');
+    }
+
+    public function insuranceProvider()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
     }
 
     public function car_model_id()
@@ -114,12 +131,12 @@ class CarQuote extends BaseModel
 
     public function car_type_insurance_id()
     {
-        return $this->hasOne(CarTypeInsurance::class, 'id', 'car_type_insurance_id');
+        return $this->hasOne(CarTypeInsurance::class, 'id', 'car_type_insurance_id')->select(['id', 'text']);
     }
 
     public function uae_license_held_for_id()
     {
-        return $this->hasOne(UAELicenseHeldFor::class, 'id', 'uae_license_held_for_id');
+        return $this->hasOne(UAELicenseHeldFor::class, 'id', 'uae_license_held_for_id')->select(['id', 'code', 'text']);
     }
 
     public function customer_id()
@@ -169,7 +186,7 @@ class CarQuote extends BaseModel
 
     public function vehicleType()
     {
-        return $this->hasOne(VehicleType::class, 'id', 'vehicle_type_id');
+        return $this->hasOne(VehicleType::class, 'id', 'vehicle_type_id')->select(['id', 'text']);
     }
 
     public function payment_detail()
@@ -220,6 +237,21 @@ class CarQuote extends BaseModel
     public function tier()
     {
         return $this->hasOne(Tier::class, 'id', 'tier_id')->select(['id', 'name', 'min_price', 'max_price', 'cost_per_lead']);
+    }
+
+    public function quoteViewCount()
+    {
+        return $this->hasOne(QuoteViewCount::class, 'quote_id', 'id')->select(['id', 'visit_count']);
+    }
+
+    public function updatedBy()
+    {
+        return $this->hasOne(User::class, 'id', 'updated_by')->select(['id', 'email', 'name']);
+    }
+
+    public function lostReason()
+    {
+        return $this->hasOne(LostReasons::class, 'id', 'carQuoteRequestDetail.lost_reason_id')->select(['id', 'text']);
     }
 
     public function scopeRelationWhere($query, $isGetList, $filters)
