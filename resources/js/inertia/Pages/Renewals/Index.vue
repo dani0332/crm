@@ -1,6 +1,7 @@
 <script setup>
 import {computed, reactive} from "vue";
 import {Head, router, usePage, Link, useForm} from '@inertiajs/vue3';
+import {XInput} from "@indielayer/ui";
 
 defineProps({
     leadStatuses: [Object, Array],
@@ -10,7 +11,7 @@ defineProps({
 const page = usePage();
 
 const filters = reactive({
-    deadline_date: '',
+    name: '',
     quote_status_id: '',
     page: 1,
 });
@@ -83,17 +84,18 @@ function onReset() {
         <x-divider class="my-4"/>
         <x-form @submit="onSubmit" :auto-focus="false">
             <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <x-input
+                    v-model="filters.name"
+                    name="name"
+                    label="Batch Name"
+                />
                 <x-select
                     v-model="filters.quote_status_id"
                     label="Quote Status"
                     :options="leadStatusOptions"
                     class="w-full"
                 />
-                <DatePicker
-                    v-model="filters.deadline_date"
-                    name="deadline_date"
-                    label="Deadline Date"
-                />
+
             </div>
             <div class="flex justify-end gap-3 mb-4">
                 <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>

@@ -80,6 +80,7 @@ function onSubmit(isValid) {
                         v-model="batchForm.name"
                         :rules="[isRequired]"
                         class="w-full"
+                        :error="batchForm.errors.name"
                     />
                 </x-field>
                 <x-field label="LEAD STATUS" required>
@@ -88,6 +89,7 @@ function onSubmit(isValid) {
                         :rules="[isRequired]"
                         :options=leadStatusOptions
                         class="w-full"
+                        :error="batchForm.errors.quote_status_id"
                     />
                 </x-field>
                 <x-field label="DEADLINE DATE" required>
@@ -95,6 +97,7 @@ function onSubmit(isValid) {
                         v-model="batchForm.deadline_date"
                         :rules="[isRequired]"
                         class="w-full"
+                        :error="batchForm.errors.deadline_date"
                     />
                 </x-field>
             </div>

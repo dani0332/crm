@@ -15,8 +15,7 @@ class RenewalBatch extends Model
 
     public $filterables = [
         'name' => FilterTypes::EXACT,
-        'quote_status_id' => FilterTypes::IN,
-        'deadline_date' => FilterTypes::DATE_BETWEEN,
+        'quote_status_id' => FilterTypes::EXACT
     ];
 
     public function quoteStatus()
