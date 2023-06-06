@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -292,7 +293,7 @@ class AmtController extends Controller
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
             'permissions' => [
-                'canEditQuote' => auth()->user()->can('corpline-quotes-edit'),
+                'canEditQuote' => auth()->user()->can(PermissionsEnum::GMQuotesEdit),
             ],
             'typeCode' => quoteTypeCode::GroupMedical,
         ]);
