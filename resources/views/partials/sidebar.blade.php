@@ -82,9 +82,18 @@ use App\Enums\PermissionsEnum;
                             Activities</a></li>
                 </ul>
                 @endcan
-                @canany([PermissionsEnum::CarQuotesList, PermissionsEnum::HealthQuotesList,
-                PermissionsEnum::TravelQuotesList, PermissionsEnum::LifeQuotesList,
-                PermissionsEnum::HomeQuotesList, PermissionsEnum::PetQuotesList])
+                @canany([
+                    PermissionsEnum::CarQuotesList,
+                    PermissionsEnum::HealthQuotesList,
+                    PermissionsEnum::TravelQuotesList,
+                    PermissionsEnum::LifeQuotesList,
+                    PermissionsEnum::HomeQuotesList,
+                    PermissionsEnum::PetQuotesList,
+                    PermissionsEnum::BikeQuotesList,
+                    PermissionsEnum::CycleQuotesList,
+                    PermissionsEnum::YachtQuotesList,
+                    PermissionsEnum::JetskiQuotesList
+                ])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
@@ -110,19 +119,26 @@ use App\Enums\PermissionsEnum;
                                 <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
                                 @endif
                             @endcan
-
-                            @if(in_array(quoteTypeCode::Bike, newUi()))
-                            <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
-                            @endif
-                            @if(in_array(quoteTypeCode::Cycle, newUi()))
-                            <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>
-                            @endif
-                            @if(in_array(quoteTypeCode::Yacht, newUi()))
-                            <li><a href="{{ url('personal-quotes/yacht') }}">Yacht Quotes</a></li>
-                            @endif
-                            @if(in_array(quoteTypeCode::Jetski, newUi()))
-                            <li><a href="{{ url('personal-quotes/jetski') }}">JetSki Quotes</a></li>
-                            @endif
+                            @can(PermissionsEnum::BikeQuotesList)
+                                @if(in_array(quoteTypeCode::Bike, newUi()))
+                                    <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
+                                @endif
+                            @endcan
+                            @can(PermissionsEnum::CycleQuotesList)
+                                @if(in_array(quoteTypeCode::Cycle, newUi()))
+                                    <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>
+                                @endif
+                            @endcan
+                            @can(PermissionsEnum::YachtQuotesList)
+                                @if(in_array(quoteTypeCode::Yacht, newUi()))
+                                    <li><a href="{{ url('personal-quotes/yacht') }}">Yacht Quotes</a></li>
+                                @endif
+                            @endcan
+                            @can(PermissionsEnum::JetskiQuotesList)
+                                @if(in_array(quoteTypeCode::Jetski, newUi()))
+                                    <li><a href="{{ url('personal-quotes/jetski') }}">JetSki Quotes</a></li>
+                                @endif
+                            @endcan
                         </ul>
                     </li>
                 </ul>
