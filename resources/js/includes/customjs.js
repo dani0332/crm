@@ -2195,11 +2195,11 @@ $(document).ready(function () {
                 (leadHistory?.created_at == null ? '' : leadHistory.created_at) +
               '</td><td>' +
                 (leadHistory?.created_by?.email ? leadHistory.created_by.email : '') +
-              '</td><td>' +
-                (leadHistory?.current_quote_status?.text ? leadHistory.current_quote_status.text : '')  +
-              '</td><td>' +
+                '</td><td>' +
                 (leadHistory?.previous_quote_status?.text ? leadHistory.previous_quote_status.text : '')  +
                 '</td><td>' +
+              '</td><td>' +
+                (leadHistory?.current_quote_status?.text ? leadHistory.current_quote_status.text : '')  +
                 ((leadHistory?.notes ? leadHistory.notes : '')) +
               '</td></tr>';
           }
