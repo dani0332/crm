@@ -54,6 +54,7 @@ function onAssignLead(isValid) {
             :options="props.advisors"
             placeholder="Select Advisor"
             class="flex-1 w-auto"
+            single
           />
           <x-select
             v-model="assignForm.manual_assignment_email_flag"
