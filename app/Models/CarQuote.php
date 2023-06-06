@@ -241,17 +241,12 @@ class CarQuote extends BaseModel
 
     public function quoteViewCount()
     {
-        return $this->hasOne(QuoteViewCount::class, 'quote_id', 'id')->select(['id', 'visit_count']);
+        return $this->hasOne(QuoteViewCount::class, 'quote_id', 'id')->where('quote_type_id', 1);
     }
 
     public function updatedBy()
     {
         return $this->hasOne(User::class, 'id', 'updated_by')->select(['id', 'email', 'name']);
-    }
-
-    public function lostReason()
-    {
-        return $this->hasOne(LostReasons::class, 'id', 'carQuoteRequestDetail.lost_reason_id')->select(['id', 'text']);
     }
 
     public function scopeRelationWhere($query, $isGetList, $filters)

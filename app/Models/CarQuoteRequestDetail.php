@@ -43,7 +43,7 @@ class CarQuoteRequestDetail extends Model implements AuditableContract
 
     public function lostReason()
     {
-        return $this->hasOne(LostReasons::class, 'id', 'lost_reason_id')->select(['id', 'text']);
+        return $this->hasOne(LostReasons::class, 'id', 'lost_reason_id');
     }
 
     /**

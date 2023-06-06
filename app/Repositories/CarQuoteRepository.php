@@ -25,7 +25,7 @@ class CarQuoteRepository extends BaseRepository
         return $this->filter()->with(
             ['quoteStatus', 'advisor', 'batch', 'nationality', 'uae_license_held_for_id', 'carMake', 'carModel', 'vehicleType',
                 'insuranceProvider', 'claim_history_id', 'carQuoteRequestDetail', 'payment_status_id', 'tier', 'quoteViewCount',
-                'car_type_insurance_id', 'updatedBy', 'lostReason',
+                'car_type_insurance_id', 'updatedBy', 'carQuoteRequestDetail.lostReason'
             ])->orderBy('created_at', 'desc')->Paginate();
     }
 
