@@ -1,5 +1,5 @@
-    <script setup>
-    import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+<script setup>
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
   quotes: Object,
@@ -30,7 +30,7 @@ let availableFilters = {
   page: 1,
 };
 
-    const filters = reactive(availableFilters);
+const filters = reactive(availableFilters);
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -120,7 +120,7 @@ const tableHeader = [
   { text: 'GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'VEHICLE MODIFIED', value: 'is_modified' },
   { text: 'PREMIUM', value: 'premium' },
-  { text: 'LOST REASON', value: 'lostReason' },
+  { text: 'LOST REASON', value: 'lost' },
   { text: 'QUOTE LINK', value: 'quote_link' },
 ];
 
@@ -241,8 +241,8 @@ const quotesSelected = ref([]),
         {{ insurance_provider?.text }}
       </template>
 
-      <template #item-lostReason="{ lostReason }">
-        {{ lostReason?.text }}
+      <template #item-lost="item">
+        {{ item.car_quote_request_detail.lost_reason?.text }}
       </template>
 
       <template #item-claim_history_id="{ claim_history_id }">
@@ -258,7 +258,7 @@ const quotesSelected = ref([]),
       </template>
 
       <template #item-quote_view_count="{ quote_view_count }">
-        {{ quote_view_count }}
+        {{ quote_view_count?.visit_count }}
       </template>
 
       <template #item-car_make="{ car_make }">
@@ -333,6 +333,7 @@ const quotesSelected = ref([]),
     </DataTable>
 
     <Pagination
+      v-if="quotes.total > 0"
       :links="{
         next: quotes.next_page_url,
         prev: quotes.prev_page_url,
