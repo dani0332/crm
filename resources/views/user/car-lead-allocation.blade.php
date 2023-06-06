@@ -66,13 +66,6 @@
             name: 'lastAllocation',
             orderable: true,
             searchable: false,
-            render: function(data, type, row) {
-                if (data == null) {
-                    return '-';
-                } else {
-                    return new Date(data * 1000).toLocaleString('en-US', dateOptions).replace(',', '').replace(/ /, ' '); // add leading zero to hour;
-                }
-            }
         },
         {
             class: 'td-max-cap',
@@ -123,13 +116,6 @@
         name: 'lastLogin',
         orderable: true,
         searchable: false,
-        render: function(data, type, row) {
-            if (data == null) {
-                return '-';
-            } else {
-                return new Date(data).toLocaleString('en-US', dateOptions).replace(',', '').replace(/ /, ' ');;
-            }
-        }
     })
     @endif
 
