@@ -11,6 +11,13 @@ defineProps({
   },
 });
 
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
 const dateFormat = date => {
   return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 };
@@ -80,7 +87,7 @@ onMounted(() => {
 });
 
 const tableHeader = [
-  { text: 'CDB ID', value: 'uuid' },
+  { text: 'CDB ID', value: 'code' },
   { text: 'BATCH', value: 'batch' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
@@ -112,7 +119,7 @@ const tableHeader = [
     value: 'car_quote_request_detail.next_followup_date',
   },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'UPDATED BY', value: 'updatedBy' },
+  { text: 'UPDATED BY', value: 'updated_by' },
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'POLICY NO', value: 'policy_number' },
@@ -225,12 +232,14 @@ const quotesSelected = ref([]),
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <Link
-          :href="route('health.show', uuid)"
-          class="text-primary-500 hover:underline"
-        >
-          {{ code }}
-        </Link>
+        <a
+            :href="route('car.show', uuid)"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-primary-500 hover:underline"
+            >
+            {{ code }}
+        </a>
       </template>
 
       <template #item-advisor="{ advisor }">
@@ -242,7 +251,7 @@ const quotesSelected = ref([]),
       </template>
 
       <template #item-lost="item">
-        {{ item.car_quote_request_detail.lost_reason?.text }}
+        {{ item?.car_quote_request_detail.lost_reason?.text }}
       </template>
 
       <template #item-claim_history_id="{ claim_history_id }">
@@ -301,8 +310,8 @@ const quotesSelected = ref([]),
         {{ updated_at }}
       </template>
 
-      <template #item-updatedBy="{ updatedBy }">
-        {{ updatedBy?.name }}
+      <template #item-updated_by="{ updated_by }">
+        {{ updated_by?.name }}
       </template>
 
       <template #item-policy_number="{ policy_number }">

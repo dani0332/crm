@@ -246,7 +246,7 @@ class CarQuote extends BaseModel
 
     public function updatedBy()
     {
-        return $this->hasOne(User::class, 'id', 'updated_by')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'email', 'updated_by')->select(['id', 'email', 'name']);
     }
 
     public function scopeRelationWhere($query, $isGetList, $filters)

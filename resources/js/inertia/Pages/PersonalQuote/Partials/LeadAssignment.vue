@@ -8,14 +8,28 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  quoteType: {
+    type : String
+  }
 });
+
+if (!String.prototype.hasOwnProperty('capitalizeFirstChar')) {
+  Object.defineProperty(String.prototype, 'capitalizeFirstChar', {
+    get: function() {
+      return function() {
+        return this.charAt(0).toUpperCase() + this.slice(1);
+      };
+    },
+    enumerable: false
+  });
+}
 
 const { isRequired } = useRules();
 
 const assignForm = useForm({
   assigned_to_id_new: null,
   manual_assignment_email_flag: '1',
-  modelType: 'Home',
+  modelType: props.quoteType,
   selectTmLeadId: '',
 });
 
@@ -26,13 +40,13 @@ function onAssignLead(isValid) {
         ...data,
         selectTmLeadId: `${props.selected}`,
       }))
-      .post('/quotes/home/manualLeadAssign', {
+      .post(`/quotes/${props.quoteType}/manualLeadAssign`, {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
           quotesSelected.value = [];
           notification.success({
-            title: 'Home Leads Assigned',
+            title: `${props.quoteType.capitalizeFirstChar()} Leads Assigned`,
             position: 'top',
           });
         },
