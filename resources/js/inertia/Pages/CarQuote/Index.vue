@@ -210,7 +210,7 @@ const dateFormat = date => {
             </template>
 
             <template #item-quote_view_count="{ quote_view_count }">
-                {{ quote_view_count?.visit_count}}
+                {{ quote_view_count}}
             </template>
 
             <template #item-car_make="{ car_make }">

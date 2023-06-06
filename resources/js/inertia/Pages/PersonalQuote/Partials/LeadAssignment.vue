@@ -48,13 +48,12 @@ function onAssignLead(isValid) {
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="onAssignLead" :auto-focus="false">
         <div class="w-full flex flex-col md:flex-row gap-4">
-          <x-select
+          <ComboBox
             v-model="assignForm.assigned_to_id_new"
             label="Assign Advisor"
             :options="props.advisors"
             placeholder="Select Advisor"
             class="flex-1 w-auto"
-            :rules="[isRequired]"
           />
           <x-select
             v-model="assignForm.manual_assignment_email_flag"
