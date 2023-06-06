@@ -49,7 +49,7 @@ class RenewalsUploadController extends Controller
     {
         $result = $this->renewalsUploadFileService->renewalsUploadCreate($request->validated());
 
-        return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
+        return redirect()->route('renewals-upload')->with('success', 'Uploaded renewals records has been stored');
     }
 
     /**
@@ -61,7 +61,7 @@ class RenewalsUploadController extends Controller
     {
         $result = $this->renewalsUploadFileService->renewalsUploadUpdate($request->validated());
 
-        return redirect('renewals/update')->with('success', 'Uploaded renewals records has been updated');
+        return redirect()->route('renewals-update')->with('success', 'Uploaded renewals records has been updated');
     }
 
     /**
@@ -94,10 +94,10 @@ class RenewalsUploadController extends Controller
 
             FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);
 
-            return redirect('renewals/batches/'.$batch.'/plans-processes')->with('success', 'Fetch plans is started for batch '.$batch);
+            return redirect()->route('batch-plans-processes', $batch)->with('success', 'Fetch plans is started for batch '.$batch);
         }
 
-        return redirect('renewals/batches/'.$batch.'/plans-processes')->with('error', 'No pending leads available to fetch plans');
+        return redirect()->route('batch-plans-processes', $batch)->with('error', 'No pending leads available to fetch plans');
     }
 
     /**
@@ -172,19 +172,19 @@ class RenewalsUploadController extends Controller
             // Redirect back to the upload page if there are errors
             if ($renewalsUpload->failures()->isNotEmpty() || $countErrors > 30) {
                 if ($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
-                    return redirect('renewals/upload')->withFailures($renewalsUpload->failures());
+                    return redirect()->route('renewals-upload')->withFailures($renewalsUpload->failures());
                 }
                 if ($request->renewals_upload_type == RenewalsUploadType::UPDATE_LEADS) {
-                    return redirect('renewals/update')->withFailures($renewalsUpload->failures());
+                    return redirect()->route('renewals-update')->withFailures($renewalsUpload->failures());
                 }
             }
 
             // Redirect back to the upload page if there are no errors
             if ($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
-                return redirect('renewals/upload')->with('success', 'Uploaded renewals records has been stored');
+                return redirect()->route('renewals-upload')->with('success', 'Uploaded renewals records has been stored');
             }
             if ($request->renewals_upload_type == RenewalsUploadType::UPDATE_LEADS) {
-                return redirect('renewals/update')->with('success', 'Uploaded renewals records has been stored');
+                return redirect()->route('renewals-update')->with('success', 'Uploaded renewals records has been stored');
             }
         }
     }
@@ -301,7 +301,7 @@ class RenewalsUploadController extends Controller
         $lastBatchProcess = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
 
         if ($lastBatchProcess && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastBatchProcess->created_at) <= 5) {
-            return redirect('renewals/batches/'.$batch)->with('error', 'Batch process is already created, next can be created after 5 minutes ');
+            return redirect()->route('batch-renewal-detail', $batch)->with('error', 'Batch process is already created, next can be created after 5 minutes ');
         }
 
         Log::info('runBatchProcess START');
@@ -310,7 +310,7 @@ class RenewalsUploadController extends Controller
         Log::info('batch: '.$batch.' batchLeadsCount: '.$batchLeadsCount);
 
         if ($batchLeadsCount == 0) {
-            return redirect('renewals/batches/'.$batch)->with('success', 'No leads found for this batch');
+            return redirect()->route('batch-renewal-detail', $batch)->with('success', 'No leads found for this batch');
         }
 
         $batchEmail = new RenewalsBatchEmails();
@@ -330,7 +330,7 @@ class RenewalsUploadController extends Controller
 
         Log::info('runBatchProcess END');
 
-        return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
+        return redirect()->route('batch-renewal-detail', $batch)->with('success', 'Batch has been created and emails are being sent');
     }
 
     public function validationFailed($id)

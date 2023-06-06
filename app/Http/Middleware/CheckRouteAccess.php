@@ -35,10 +35,31 @@ class CheckRouteAccess
             $routeName = str_replace($methodName, $methodMapping[$methodName], $routeName);
         }
 
+        $routeName = $this->handleRouteMapping($routeName);
+
         if (auth()->user()->can($routeName)) {
             return $next($request);
         }
 
         abort(403, 'Unauthorized access');
+    }
+
+    private function handleRouteMapping($routeName)
+    {
+        $routesForBinds = [
+            'upload-create' => 'renewals-upload',
+            'upload-update' => 'renewals-update',
+            'batch-plans-processes' => 'batches-list',
+            'batch-renewal-detail' => 'batches-list',
+            'batch-fetch-plans' => 'batches-list',
+            'run-batch-process' => 'batches-list'
+        ];
+
+        if(isset($routesForBinds[$routeName]))
+        {
+            return $routesForBinds[$routeName];
+        }
+
+        return $routeName;
     }
 }

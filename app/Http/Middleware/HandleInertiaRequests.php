@@ -300,19 +300,18 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->hasAnyRole([RolesEnum::Renewals, RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (auth()->user()->hasAnyRole([RolesEnum::Renewals, RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::MarketingOperations])) {
             $nav = $nav->add('Renewals', '', function (Section $section) {
                 $section
-                    ->add('Upload & Create', url('renewals/upload'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Uploaded Leads', url('renewals/uploaded-leads'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(!auth()->user()->hasRole(RolesEnum::MarketingOperations),'Upload & Update', url('renewals/upload'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(
-                        (
-                            auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering]) &&
-                            !auth()->user()->hasRole(RolesEnum::MarketingOperations)
-                        ),
+                    ->add('Upload & Create', route('renewals-upload'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->add('Uploaded Leads', route('uploaded-leads-list'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering]),
+                        'Upload & Update',
+                        route('renewals-update'),
+                        fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering]),
                         'Batches',
-                        url('renewals/batches'),
+                        route('batches-list'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });
