@@ -120,8 +120,8 @@ use App\Enums\PaymentMethodsEnum;
                                 <th>Plan Name</th>
                                 <th>Authorize Amount</th>
                                 <th>Status Change Date</th>
-                                <th>Captured At</th>
                                 <th>Authorized At</th>
+                                <th>Captured At</th>
                                 <th>Payment method</th>
                                 <th>Captured Amount</th>
                                 <th>Reference</th>
@@ -137,8 +137,8 @@ use App\Enums\PaymentMethodsEnum;
                                 <td>{{ $paymentPlainModel->plan->text }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
                                 <td>{{  $payment->paymentStatusLogs->last() != null ? $payment->paymentStatusLogs->last()->created_at : ''}}</td>
-                                <td>{{ $payment->captured_at }}</td>
                                 <td>{{ $payment->authorized_at }}</td>
+                                <td>{{ $payment->captured_at }}</td>
                                 <td>{{ $payment->paymentMethod->name }}</td>
                                 <td>{{ $payment->premium_captured}}</td>
                                 <td>{{$payment->reference}}</td>
