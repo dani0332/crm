@@ -8,14 +8,31 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  quoteType: {
+    type : String
+  }
 });
+
+const emit = defineEmits(['success', 'error']);
+
+
+if (!String.prototype.hasOwnProperty('capitalizeFirstChar')) {
+  Object.defineProperty(String.prototype, 'capitalizeFirstChar', {
+    get: function() {
+      return function() {
+        return this.charAt(0).toUpperCase() + this.slice(1);
+      };
+    },
+    enumerable: false
+  });
+}
 
 const { isRequired } = useRules();
 
 const assignForm = useForm({
   assigned_to_id_new: null,
   manual_assignment_email_flag: '1',
-  modelType: 'Home',
+  modelType: props.quoteType,
   selectTmLeadId: '',
 });
 
@@ -26,15 +43,16 @@ function onAssignLead(isValid) {
         ...data,
         selectTmLeadId: `${props.selected}`,
       }))
-      .post('/quotes/home/manualLeadAssign', {
+      .post(`/quotes/${props.quoteType}/manualLeadAssign`, {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
-          quotesSelected.value = [];
-          notification.success({
-            title: 'Home Leads Assigned',
-            position: 'top',
-          });
+            assignForm.processing = false;
+            emit('success');
+        },
+        onError: () => {
+            assignForm.processing = false;
+            emit('error');
         },
       });
   }
@@ -48,13 +66,13 @@ function onAssignLead(isValid) {
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="onAssignLead" :auto-focus="false">
         <div class="w-full flex flex-col md:flex-row gap-4">
-          <x-select
+          <ComboBox
             v-model="assignForm.assigned_to_id_new"
             label="Assign Advisor"
             :options="props.advisors"
             placeholder="Select Advisor"
             class="flex-1 w-auto"
-            :rules="[isRequired]"
+            single
           />
           <x-select
             v-model="assignForm.manual_assignment_email_flag"
