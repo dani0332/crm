@@ -65,14 +65,25 @@ const onLogout = () => {
             <x-collapse
               show-icon
               :expanded="
-                link.children.some(child => $page.url.startsWith(child.url))
+                link.children.some(child => $page.url.startsWith(child.url)) ||
+                link.children.some(child =>
+                  child.children.some(grandchild =>
+                    $page.url.startsWith(grandchild.url),
+                  ),
+                )
               "
             >
               <template #default>
                 <div
                   :class="{
-                    'bg-black/10': link.children.some(child =>
-                      $page.url.startsWith(child.url),
+                    'bg-black/10': link.children.some(
+                      child =>
+                        $page.url.startsWith(child.url) ||
+                        link.children.some(child =>
+                          child.children.some(grandchild =>
+                            $page.url.startsWith(grandchild.url),
+                          ),
+                        ),
                     ),
                   }"
                   class="pl-3 py-2.5 hover:bg-black/10"
