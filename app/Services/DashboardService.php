@@ -150,18 +150,18 @@ class DashboardService extends BaseService
 
     public function getTeamWiseLeadStats($filters)
     {
-        $todaysLeads = CarQuote::whereHas('carQuoteRequestDetail', function ($q) use ($filters) {
-            $q->whereBetween('advisor_assigned_date', [$filters['startDate'], $filters['endDate']]);
-        })
+        $todaysLeads = CarQuote::join('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'car_quote_request.id')
+            ->whereNotNull('car_quote_request.advisor_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])->get();
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereBetween('cqrd.advisor_assigned_date', [$filters['startDate'], $filters['endDate']])->get();
 
         $teamWiseLeadsAssignedAverage = [];
         foreach ($filters['teams'] as $team) {
-            $teamUserIds = $this->getUsersByTeamId($team->id)->pluck('id');
-
+            $teamUserIds = $this->getAdvisorsByTeamId($team->id)->pluck('id');
             $usersCount = count($teamUserIds);
-            $leadsCount = $todaysLeads->whereIn('advisor_id', $teamUserIds)->count();
+
+            $leadsCount = $todaysLeads->whereIn('advisor_id', array_unique($teamUserIds->toArray()))->count();
             $stats = $leadsCount.' / '.$usersCount.' =  '.number_format((float) $usersCount == 0 ? 0 : $leadsCount / $usersCount, 2, '.', '');
 
             $teamWiseLeadsAssignedAverage[] = [

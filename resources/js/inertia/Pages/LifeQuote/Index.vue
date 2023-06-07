@@ -187,7 +187,7 @@ const onExport = () => {
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end) {
+    if (filters.created_at_start && filters.created_at_end && can(permissionsEnum.DATA_EXTRACTION)) {
       canExport.value = true;
     } else {
       canExport.value = false;

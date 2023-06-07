@@ -478,7 +478,10 @@
                 name: 'Leads',
                 colorByPoint: true,
                 data: data
-            }]
+            }],
+            credits: {
+                enabled: false,
+            },
         });
 
    }
@@ -518,7 +521,10 @@
                 name: 'Leads',
                 colorByPoint: true,
                 data: data
-            }]
+            }],
+            credits: {
+                enabled: false,
+            },
         });
     }
 
@@ -557,7 +563,10 @@
                 name: 'Leads',
                 colorByPoint: true,
                 data: data
-            }]
+            }],
+            credits: {
+                enabled: false,
+            },
         });
     }
 
@@ -596,7 +605,10 @@
                 name: 'Leads',
                 colorByPoint: true,
                 data: data
-            }]
+            }],
+            credits: {
+                enabled: false,
+            },
         });
     };
 
@@ -641,7 +653,10 @@
                     colorByPoint: true,
                     data: data
                 }
-            ]
+            ],
+            credits: {
+                enabled: false,
+            },
         });
     };
 

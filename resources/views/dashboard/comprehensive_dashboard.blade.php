@@ -66,7 +66,10 @@
                 name: 'Net Conversion',
                 colorByPoint: true,
                 data: data
-            }]
+            }],
+            credits: {
+                enabled: false,
+            },
         });
 
     }
@@ -196,7 +199,7 @@
             <select multiple name="teams[]" id="team-filter">
                 <option data-placeholder="true"></option>
                 @foreach ($teams as $team)
-                <option @if($commonTeam==$team->id) selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
+                <option @if($team->name == 'Organic') selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
                 @endforeach
             </select>
         </div>

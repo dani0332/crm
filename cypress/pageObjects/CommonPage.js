@@ -25,11 +25,11 @@ class CommonPage {
   }
 
   getMobileNumber(phoneNumber) {
-    return cy.get("input#mobile_no").should('be.visible').type(phoneNumber)
+    return cy.get("input#mobile_no").should('be.visible').clear().type(phoneNumber)
   }
 
   getEmail(email) {
-    return cy.get('input#email').type(email)
+    return cy.get('input#email').clear().type(email)
   }
 
   getNationalityId(nationality) {
