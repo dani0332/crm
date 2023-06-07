@@ -47,17 +47,15 @@ class GenericLobController extends Controller
     {
         dispatch(new SendOCBEmailJob($OCBEmailRequest->quoteUuId));
 
-        $this->dispatchCarRenewalEmail($OCBEmailRequest);
+        $this->dispatchCarRenewalEmail($OCBEmailRequest->quoteUuId);
 
         return response()->json(['message' => 'OCB Email Job dispatched against UUID: '.$OCBEmailRequest->quoteUuId]);
     }
 
-    public function dispatchCarRenewalEmail(OCBEmailRequest $OCBEmailRequest)
+    public function dispatchCarRenewalEmail(string $uuid)
     {
-        $lead = CarQuote::where('uuid', $OCBEmailRequest->quoteUuId)->first();
+        $lead = CarQuote::where('uuid', $uuid)->first();
 
         dispatch(new CarRenewalEmailJob($lead));
-
-        return response()->json(['message' => 'OCB Email Job dispatched against UUID: '.$OCBEmailRequest->quoteUuId]);
     }
 }

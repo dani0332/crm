@@ -187,22 +187,6 @@ const manualAssignmentError = () => {
           placeholder="Search by CDB ID"
         />
         <x-input
-          v-model="filters.first_name"
-          type="search"
-          name="first_name"
-          label="First Name"
-          class="w-full"
-          placeholder="Search by First Name"
-        />
-        <x-input
-          v-model="filters.last_name"
-          type="search"
-          name="last_name"
-          label="Last Name"
-          class="w-full"
-          placeholder="Search by Last Name"
-        />
-        <x-input
           v-model="filters.email"
           type="search"
           name="email"
