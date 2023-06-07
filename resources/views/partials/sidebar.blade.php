@@ -106,7 +106,7 @@ use App\Enums\PermissionsEnum;
                                         @endcan
                                     </ul>
                                 </li>
-                            @endcan
+                            @endcanany
                             @can(PermissionsEnum::HealthQuotesList)
                             <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
                             @endcan
