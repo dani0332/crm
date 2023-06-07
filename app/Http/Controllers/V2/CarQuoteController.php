@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
 use App\Repositories\CarQuoteRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 
 class CarQuoteController extends Controller
 {
