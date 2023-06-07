@@ -1,15 +1,15 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
+const notification = useToast();
+
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
-  quoteType: {
-    type: String,
-    default: 'car',
-  },
 });
+
+const quoteType = 'car';
 
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
@@ -58,7 +58,10 @@ function onSubmit(isValid) {
       onSuccess: () => (loader.table = false),
     });
   } else {
-    console.log('Invalid');
+    notification.error({
+    title: 'Error while fetching quotes. Please try again',
+    position: 'top',
+  });
   }
 }
 
@@ -138,6 +141,21 @@ const quotesSelected = ref([]),
   assignAdvisor = ref(null),
   assignmentType = ref(null),
   isDisabled = ref(false);
+
+const manualAssignmentSuccess = () => {
+    quotesSelected.value = [];
+    notification.success({
+        title: `${quoteType.capitalizeFirstChar()} Manual Leads Assigned`,
+        position: 'top',
+      });
+};
+
+const manualAssignmentError = () => {
+  notification.error({
+    title: 'Manual Assignment Failed',
+    position: 'top',
+  });
+};
 </script>
 
 <template>
@@ -215,6 +233,8 @@ const quotesSelected = ref([]),
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
           :quoteType="quoteType"
+          @success="manualAssignmentSuccess"
+          @error="manualAssignmentError"
         />
       </div>
     </Transition>
@@ -225,7 +245,7 @@ const quotesSelected = ref([]),
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
-      :items="quotes.data || []"
+      :items=" quotes.data || []"
       border-cell
       hide-rows-per-page
       hide-footer

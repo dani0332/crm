@@ -13,6 +13,9 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['success', 'error']);
+
+
 if (!String.prototype.hasOwnProperty('capitalizeFirstChar')) {
   Object.defineProperty(String.prototype, 'capitalizeFirstChar', {
     get: function() {
@@ -44,11 +47,12 @@ function onAssignLead(isValid) {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
-          quotesSelected.value = [];
-          notification.success({
-            title: `${props.quoteType.capitalizeFirstChar()} Leads Assigned`,
-            position: 'top',
-          });
+            assignForm.processing = false;
+            emit('success');
+        },
+        onError: () => {
+            assignForm.processing = false;
+            emit('error');
         },
       });
   }
