@@ -263,9 +263,4 @@ class User extends Authenticatable implements AuditableContract
             return User::where('name', 'System User')->first()->email;
         }
     }
-
-    public function hasPermission(string $permission)
-    {
-        return auth()->user()->can($permission);
-    }
 }
