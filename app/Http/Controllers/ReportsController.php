@@ -117,20 +117,17 @@ class ReportsController extends Controller
                 $groupBy[] = $group_by_two;
             }
 
-            $records = $model::query()
-                ->select(
+            $query= $model::query()->select(
                     'utm_source',
                     'utm_medium',
                     'utm_campaign',
                     DB::raw('count(' . $quoteRequestTable . '.id) as leads_count'),
-                    DB::raw('COUNT(CASE  WHEN payment_status_id = 4 THEN 1 ELSE NULL END) as authorized'),
-                    DB::raw('COUNT(CASE  WHEN payment_status_id = 6 THEN 1 ELSE NULL END) as captured'),
+                    DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN 1 ELSE NULL END) as authorized'),
+                    DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as captured'),
 
-                    DB::raw('sum(CASE WHEN payment_status_id = 4 THEN premium  ELSE 0 END) as authorized_sum'),
-                    DB::raw('sum(CASE WHEN payment_status_id = 6 THEN premium  ELSE 0 END) as captured_sum'),
-
-
-                )
+                    DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN premium  ELSE 0 END) as authorized_sum'),
+                    DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN premium  ELSE 0 END) as captured_sum'),
+            )
                 ->join($quoteRequestTable . '_detail', $quoteRequestTable . '.id', $quoteRequestTable . '_detail.' . $quoteRequestTable . '_id')
                 ->where(function ($query) {
                     $query->where('payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
@@ -139,19 +136,17 @@ class ReportsController extends Controller
                 ->where('payment_status_id', '<>', '')
                 ->where('utm_source', '<>', '')
                 ->where('utm_medium', '<>', '')
-                ->where('utm_campaign', '<>', '');
-            if (!empty($request->date_from) && !empty($request->date_to)) {
+                ->where('utm_campaign', '<>', '')->groupBy($groupBy);
 
+            if (!empty($request->date_from) && !empty($request->date_to)) {
                 $date_from = date('Y-m-d 00:00:00', strtotime(request()->date_from));
                 $date_to = date('Y-m-d 23:59:59', strtotime(request()->date_to));
 
-                $records->whereBetween($quoteRequestTable . '.created_at', [$date_from, $date_to]);
+                $query->whereBetween($quoteRequestTable . '.created_at', [$date_from, $date_to]);
             }
-            $records->groupBy($groupBy)
-                ->simplePaginate(10)->withQueryString();
+          $records=  $query->simplePaginate(10)->withQueryString();
+
         }
-
-
         return inertia('Reports/UtmLeadsSale', [
             'quoteTypes' => QuoteTypeRepository::getList(),
             'reportData' => $records,

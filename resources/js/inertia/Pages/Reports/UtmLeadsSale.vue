@@ -68,43 +68,30 @@ function onSubmit(isValid) {
     filters.page = 1;
 
     Object.keys(filters).forEach(
-      key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
+      key => filters[key] === '' && delete filters[key],
     );
     router.visit('/reports/utm-leads-sale-report-view', {
       method: 'get',
       data: filters,
       preserveState: true,
       preserveScroll: true,
-      // onBefore: () => (loader.table = true),
+      onBefore: () => (loader.table = true),
       onSuccess: () => (loader.table = false),
     });
   } else {
     console.log('Invalid');
   }
 }
-
-const cleanFilters = filters => {
-  Object.keys(filters).forEach(
-    key => (filters[key] === '' || filters[key] == null) && delete filters[key],
-  );
-  return filters;
-};
-
-function setQueryStringFilters() {
-  // for (const [key] of Object.entries(params)) {
-  //   if (key.includes('[]')) {
-  //     filters[key.substring(0, key.length - 2)] = params[key];
-  //   } else {
-  //     filters[key] = params[key];
-  //   }
-  // }
+function onReset() {
+  router.visit('/reports/utm-leads-sale-report-view', {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
 }
-
-onMounted(() => {
-  setQueryStringFilters();
-});
+onMounted(() => {});
 </script>
 
 <template>
