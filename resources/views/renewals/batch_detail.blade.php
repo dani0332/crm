@@ -7,7 +7,7 @@
             Email Batch Details
         </h2>
         <div class="flex gap-2">
-            <a href="{{ route('batches-list') }}" class="btn-2">Batches List</a>
+            <a href="{{ route('renewals-batches') }}" class="btn-2">Batches List</a>
             <a class="btn" onclick="return confirm('Do you want to send emails?');" href="{{ route('run-batch-process', $batch) }}">Send Emails</a>
         </div>
     </div>

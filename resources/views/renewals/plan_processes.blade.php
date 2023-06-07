@@ -10,7 +10,7 @@ use App\Enums\RolesEnum;
             Plans Processes
         </h2>
         <div class="flex gap-2">
-            <a href="{{ route('batches-list') }}" class="btn-2">Batches List</a>
+            <a href="{{ route('renewals-batches') }}" class="btn-2">Batches List</a>
             @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin)
             <a class="btn" onclick="return confirm('Do you want to fetch Plans?');" href="{{ route('batch-fetch-plans', $batch) }}">Fetch Plans</a>
             @endhasanyrole

@@ -309,15 +309,15 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyRole([RolesEnum::Renewals, RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::MarketingOperations])) {
             $nav = $nav->add('Renewals', '', function (Section $section) {
                 $section
-                    ->add('Upload & Create', route('renewals-upload'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Uploaded Leads', route('uploaded-leads-list'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->add('Upload & Create', route('renewals-upload-create'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->add('Uploaded Leads', route('renewals-uploaded-leads-list'), fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering]),
                         'Upload & Update',
-                        route('renewals-update'),
+                        route('renewals-upload-update'),
                         fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering]),
                         'Batches',
-                        route('batches-list'),
+                        route('renewals-batches'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     );
             });

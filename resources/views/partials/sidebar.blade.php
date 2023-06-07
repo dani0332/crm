@@ -237,11 +237,11 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            <li><a href="{{ route('renewals-upload') }}">Upload & Create</a></li>
-                            <li><a href="{{ route('uploaded-leads-list') }}">Uploaded Leads</a></li>
+                            <li><a href="{{ route('renewals-upload-create') }}">Upload & Create</a></li>
+                            <li><a href="{{ route('renewals-uploaded-leads-list') }}">Uploaded Leads</a></li>
                             @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
-                            <li><a href="{{ route('renewals-update') }}">Upload & Update</a></li>
-                            <li><a href="{{ route('batches-list') }}">Batches</a></li>
+                            <li><a href="{{ route('renewals-upload-update') }}">Upload & Update</a></li>
+                            <li><a href="{{ route('renewals-batches') }}">Batches</a></li>
                             @endhasanyrole
                         </ul>
                     </li>

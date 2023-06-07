@@ -49,7 +49,7 @@ class RenewalsUploadController extends Controller
     {
         $result = $this->renewalsUploadFileService->renewalsUploadCreate($request->validated());
 
-        return redirect()->route('renewals-upload')->with('success', 'Uploaded renewals records has been stored');
+        return redirect()->route('renewals-upload-create')->with('success', 'Uploaded renewals records has been stored');
     }
 
     /**
@@ -61,7 +61,7 @@ class RenewalsUploadController extends Controller
     {
         $result = $this->renewalsUploadFileService->renewalsUploadUpdate($request->validated());
 
-        return redirect()->route('renewals-update')->with('success', 'Uploaded renewals records has been updated');
+        return redirect()->route('renewals-upload-update')->with('success', 'Uploaded renewals records has been updated');
     }
 
     /**
@@ -172,19 +172,19 @@ class RenewalsUploadController extends Controller
             // Redirect back to the upload page if there are errors
             if ($renewalsUpload->failures()->isNotEmpty() || $countErrors > 30) {
                 if ($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
-                    return redirect()->route('renewals-upload')->withFailures($renewalsUpload->failures());
+                    return redirect()->route('renewals-upload-create')->withFailures($renewalsUpload->failures());
                 }
                 if ($request->renewals_upload_type == RenewalsUploadType::UPDATE_LEADS) {
-                    return redirect()->route('renewals-update')->withFailures($renewalsUpload->failures());
+                    return redirect()->route('renewals-upload-update')->withFailures($renewalsUpload->failures());
                 }
             }
 
             // Redirect back to the upload page if there are no errors
             if ($request->renewals_upload_type == RenewalsUploadType::CREATE_LEADS) {
-                return redirect()->route('renewals-upload')->with('success', 'Uploaded renewals records has been stored');
+                return redirect()->route('renewals-upload-create')->with('success', 'Uploaded renewals records has been stored');
             }
             if ($request->renewals_upload_type == RenewalsUploadType::UPDATE_LEADS) {
-                return redirect()->route('renewals-update')->with('success', 'Uploaded renewals records has been stored');
+                return redirect()->route('renewals-upload-update')->with('success', 'Uploaded renewals records has been stored');
             }
         }
     }

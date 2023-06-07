@@ -47,12 +47,12 @@ class CheckRouteAccess
     private function handleRouteMapping($routeName)
     {
         $routesForBinds = [
-            'upload-create' => 'renewals-upload',
-            'upload-update' => 'renewals-update',
-            'batch-plans-processes' => 'batches-list',
-            'batch-renewal-detail' => 'batches-list',
-            'batch-fetch-plans' => 'batches-list',
-            'run-batch-process' => 'batches-list'
+            'upload-create' => 'renewals-upload-create',
+            'upload-update' => 'renewals-upload-update',
+            'batch-plans-processes' => 'renewals-batches',
+            'batch-renewal-detail' => 'renewals-batches',
+            'batch-fetch-plans' => 'renewals-batches',
+            'run-batch-process' => 'renewals-batches'
         ];
 
         if(isset($routesForBinds[$routeName]))
