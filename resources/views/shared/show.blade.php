@@ -496,6 +496,9 @@ use App\Enums\GenericRequestEnum;
                 </div>
             </div>
         </div>
+        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+            <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
+        @endif
         <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
         <x-travel-quote-members-detail :members="$membersDetail" />
         <x-quote-policy :record="$record" :quoteType="$quoteType" />
