@@ -304,18 +304,18 @@
 
             ["code" => "heading", "title" => "Outpatient Benefits*", "description" => "*All benefits, limits and sublimits are subject to applicable excess, co‐insurance/co‐pays and prior authorization; Specific benefits varies for each insurer, please refer to table of benefits for more details"],
             ["code" => "medicine", "title" => "Medicines", "type" => 'outpatient'],
-            ["code" => ["consultation", "diagnostics"], "title" => "Consultation & Diagnostic", "type" => 'outpatient'],
+            ["code" => "consultation", "title" => "Consultation & Diagnostic", "type" => 'outpatient'],
             ["code" => "alternativeMedicineAndTreatment", "title" => "Alternative Medicine", "type" => ['outpatient', 'exclusion']],
             ["code" => "physiotherapy", "title" => "Physiotherapy", "type" => 'outpatient'],
             ["code" => "dentalCover", "title" => "Routine Dental", "type" => ['outpatient', 'exclusion'] ],
             ["code" => "visionAndHearingCover", "title" => "Routine Optical", "type" => 'outpatient'],
 
             ["code" => "heading", "title" => "Inpatient Benefits*", "description" => "*All benefits, limits and sub limits are subject to applicable excess co‐insurance/co‐pays and prior authorization; Specific benefits varies for each insurer, please refer to table of benefits for more details"],
-            ["code" => ["medicine", "surgeryRecovery", "diagnostics", "physiotherapy"], "title" => "Medicines, Surgery and Recovery, Diagnostics and Physiotherapy", "type" => 'inpatient'],
+            ["code" => "surgeryRecovery", "title" => "Medicines, Surgery and Recovery, Diagnostics and Physiotherapy", "type" => 'inpatient'],
             ["code" => "roomBoard", "title" => "Room and board", "type" => 'inpatient'],
 
             ["code" => "heading", "title" => "Maternity Cover"],
-            ["code" => "outpatient", "title" => "Outpatient Maternity", "type" => 'maternityCover'],
+            ["code" => "testCovered", "title" => "Outpatient Maternity", "type" => 'maternityCover'],
             ["code" => "coInsurance", "title" => "Outpatient Maternity Co‐insurance", "type" => 'maternityCover'],
             ["code" => "normalDelivery", "title" => "Delivery", "type" => 'maternityCover'],
             ["code" => "newBorn", "title" => "Newborn Cover", "type" => 'maternityCover'],
@@ -508,21 +508,7 @@
                                 @endforeach
                                 {!! ($value)  !!}
                             @else
-                                @if(!is_array($feature['code']))
-                                    {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
-                                @else
-                                    @php
-                                        $planMergedFeatures = [];
-                                    @endphp
-                                    @foreach($feature['code'] as $featureCode)
-                                        @php
-                                            $featureValue = $plans[$planId]->{$feature['type']}->{$featureCode}->value ?? 'Excluded';
-                                            if(!in_array($featureValue, $planMergedFeatures))
-                                                $planMergedFeatures[] = $featureValue;
-                                        @endphp
-                                    @endforeach
-                                    {!! implode('</br>', $planMergedFeatures) !!}
-                                @endif
+                                {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
                             @endif
                         </p>
                     </td>
