@@ -93,8 +93,8 @@ class PetQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeId(QuoteTypes::PET->id())
             ->where($column, $value)
-            ->with(['petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+            ->with(['petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text','plans:id,text', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
+                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod','paymentStatusLogs']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();
