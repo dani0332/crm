@@ -110,7 +110,7 @@ const tableHeader = [
   { text: 'CREATED DATE', value: 'created_at' },
   {
     text: 'ADVISOR ASSIGNED DATE',
-    value: 'car_quote_request_detail.advisor_assigned_date',
+    value: 'advisor_assigned_date',
   },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'PAYMENT STATUS', value: 'payment_status_id' },
@@ -119,7 +119,7 @@ const tableHeader = [
   { text: 'VISIT COUNT', value: 'quote_view_count' },
   {
     text: 'FOLLOW UP DATE',
-    value: 'car_quote_request_detail.next_followup_date',
+    value: 'followupDate',
   },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'UPDATED BY', value: 'updated_by' },
@@ -254,8 +254,15 @@ const manualAssignmentError = () => {
         {{ insurance_provider?.text }}
       </template>
 
+      <template #item-advisor_assigned_date="item">
+        {{ item?.car_quote_request_detail?.advisor_assigned_date }}
+      </template>
+      <template #item-followupDate="item">
+        {{ item?.car_quote_request_detail?.next_followup_date }}
+      </template>
+
       <template #item-lost="item">
-        {{ item?.car_quote_request_detail.lost_reason?.text }}
+        {{ item?.car_quote_request_detail?.lost_reason?.text }}
       </template>
 
       <template #item-claim_history_id="{ claim_history_id }">

@@ -42,6 +42,7 @@ function onAssignLead(isValid) {
       .transform(data => ({
         ...data,
         selectTmLeadId: `${props.selected}`,
+        assignment_type: assignForm.manual_assignment_email_flag,
       }))
       .post(`/quotes/${props.quoteType}/manualLeadAssign`, {
         preserveScroll: true,
