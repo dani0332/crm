@@ -393,6 +393,7 @@ class CRUDController extends Controller
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
+        $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
         $isRenewalUser = false;
         $isNewBusinessUser = false;
         $model = $this->genericModel;
@@ -480,7 +481,7 @@ class CRUDController extends Controller
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
-                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'paymentEntityModel', 'payments', 'paymentMethods','insuranceProviders', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
                 'carMakeText', 'carModelText', 'advisor', 'tiers',
             ]));
         }
@@ -506,7 +507,7 @@ class CRUDController extends Controller
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail', 'model_name',
                 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
-                'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
+                'paymentEntityModel', 'payments', 'paymentMethods','insuranceProviders', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
                 'quoteTypeId', 'tiers',
             ]));
@@ -641,7 +642,7 @@ class CRUDController extends Controller
             ]);
         } else {
             return view('shared.show', compact([
-                'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
+                'record', 'model','payments','paymentMethods', 'insuranceProviders','paymentEntityModel','customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
                 'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId', 'tiers',
@@ -1354,14 +1355,13 @@ class CRUDController extends Controller
         $paymentsCount =  $mainPaymentExists ? $count :  $count+1;
 
         $code= $quoteModel->code.'-'.$paymentsCount;
-
         $paymentInformation = [
             'code' => $code,
             'collection_type' => $request->collection_type,
             'captured_amount' => $request->captured_amount,
             'payment_methods_code' => $request->payment_methods,
             'payment_status_id' => PaymentStatusEnum::DRAFT,
-            'plan_id' => $request->plan_id,
+            'plan_id' => !empty($request->plan_id) ? $request->plan_id : null,
             'insurance_provider_id' => $request->insurance_provider_id,
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
@@ -1375,7 +1375,7 @@ class CRUDController extends Controller
         $payment = Payment::create($paymentInformation);
         $quoteModel->payments()->save($payment);
         $paymentLog = new PaymentStatusLog([
-            'current_payment_status_id' => PaymentStatusEnum::PENDING,
+            'current_payment_status_id' => PaymentStatusEnum::DRAFT,
             'payment_code' => $code,
             'created_at' => now(),
             'updated_at' => now(),

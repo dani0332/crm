@@ -80,6 +80,10 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(PaymentStatus::class, 'payment_status_id', 'id');
     }
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
+    }
     public function customer()
     {
         return $this->belongsTo(Customer::class);

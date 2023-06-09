@@ -474,6 +474,12 @@ use App\Enums\GenericRequestEnum;
         <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
 
+@if ($model->modelType == quoteTypeCode::Life)
+    @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+        <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :insuranceProviders="$insuranceProviders" :modeltype="$model->modelType" />
+    @endif
+
+@endif
     @if ($model->modelType == quoteTypeCode::Travel)
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
             aria-labelledby="quotePlanModalLabel" aria-hidden="true">
