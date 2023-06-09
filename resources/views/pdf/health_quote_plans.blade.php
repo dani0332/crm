@@ -365,35 +365,46 @@
                         height: 100px;
                         " src="{{ public_path('images/advisors/sample_1.png') }}">
                 </td>
-                <td colspan="2" class="text-left">Advisor Name: {{ $quote->advisor->name }}</td>
-                <td class="text-right">Tel: <a href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a href="https://insurancemarket.ae">www.insurancemarket.ae</a> </td>
+                @php
+                    $advisorName = isset($quote->advisor->name) && !empty($quote->advisor->name);
+                @endphp
+                @if($advisorName)
+                    <td colspan="2" class="text-left">Advisor Name: {{ $quote->advisor?->name ?? '' }}</td>
+                @endif
+                <td colspan="{{ $advisorName ?: 3 }}" class="text-right">Tel: <a href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a href="https://insurancemarket.ae">www.insurancemarket.ae</a> </td>
             </tr>
             <tr>
-                <td colspan="2" class="text-left">
-                    Mobile/Whatsapp:
-                    @if(isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no) )
-                         <a href="tel:{{$quote->advisor->mobile_no}}">{{$quote->advisor->mobile_no}}</a>
-                    @endif
-                </td>
-                <td class="text-right">27th Floor, Control Tower, Motor City, Dubai, United Arab Emirates, P.O Box 26423</td>
+                @php
+                    $advisorMobile = isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no);
+                @endphp
+                @if($advisorMobile)
+                    <td colspan="2" class="text-left">
+                        Mobile/Whatsapp: <a href="tel:{{$quote->advisor->mobile_no}}">{{$quote->advisor->mobile_no}}</a>
+                    </td>
+                @endif
+                <td colspan="{{ $advisorMobile ?: 3 }}" class="text-right">27th Floor, Control Tower, Motor City, Dubai, United Arab Emirates, P.O Box 26423</td>
             </tr>
             <tr>
-                <td colspan="2" class="text-left">
-                    Direct Line:
-                    @if(isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
-                        <a href="tel:{{$quote->advisor->landline_no}}">{{$quote->advisor->landline_no}}</a>
-                    @endif
-                </td>
-                <td class="text-right">Registration No. 85 under Central Bank of UAE (UAE Insurance Authority)</td>
+                @php
+                    $advisorLandLine = isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no);
+                @endphp
+                @if($advisorLandLine)
+                    <td colspan="2" class="text-left">
+                        Direct Line: <a href="tel:{{$quote->advisor->landline_no}}">{{$quote->advisor->landline_no}}</a>
+                    </td>
+                @endif
+                <td colspan="{{ $advisorLandLine ?: 3 }}" class="text-right">Registration No. 85 under Central Bank of UAE (UAE Insurance Authority)</td>
             </tr>
             <tr>
-                <td colspan="2" class="text-left">
-                    Email:
-                    @if(isset($quote->advisor->email))
-                         <a href="mailto:{{$quote->advisor->email}}">{{$quote->advisor->email}}</a>
-                    @endif
-                </td>
-                <td class="text-right">Holder of HIIP from HA, Intermediary ID No. BRK-00003</td>
+                @php
+                    $advisorEmail = isset($quote->advisor->email) && !empty($quote->advisor->email);
+                @endphp
+                @if($advisorEmail)
+                    <td colspan="2" class="text-left">
+                        Email: <a href="mailto:{{$quote->advisor->email}}">{{$quote->advisor->email}}</a>
+                    </td>
+                @endif
+                <td colspan="{{ $advisorEmail ?: 3 }}" class="text-right">Holder of HIIP from HA, Intermediary ID No. BRK-00003</td>
             </tr>
         </table>
     </footer>
@@ -499,7 +510,6 @@
                                 @endif
 
                             @elseif(is_array($feature['type']))
-                                we need to check of value is in inclusion or exclusion object, only one value will be printed
                                 @php $value = "Excluded"; @endphp
                                 @foreach($feature['type'] as $type)
                                     @if(isset($plans[$planId]->{$type}->{$feature['code']}->value))
