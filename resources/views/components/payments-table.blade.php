@@ -65,6 +65,7 @@ use App\Enums\QuoteTypes;
             $('#uplan_id').val($(this).attr('data-plan'));
             $('#uprovider_id').val($(this).attr('data-provider'));
             $('#ucode').val($(this).attr('data-code'));
+            $('#uinsurance_provider').val($(this).attr('data-insurance_provider_id'));
 
             $('#upayment-reference-div').hide();
 
@@ -166,6 +167,7 @@ use App\Enums\QuoteTypes;
                                                 data-reference="{{$payment->reference}}"
                                                 data-amount="{{$payment->captured_amount}}"
                                                 data-plan="{{!empty($paymentPlainModel->plan)? $paymentPlainModel->plan->text : ""}}"
+                                                data-insurance_provider_id="{{!empty($payment->insurance_provider_id)? $payment->insurance_provider_id : ""}}"
                                                 data-provider="{{ !empty($paymentPlainModel->plan->insuranceProvider)? $paymentPlainModel->plan->insuranceProvider->text :"" }}">Edit</button>
                                             @endcan
                                         @endif
@@ -267,19 +269,7 @@ use App\Enums\QuoteTypes;
                                     select payment method</span>
                             </div>
                         </div>
-                        <div class="item form-group">
-                            <div class="col">
-                                <span class="col-form-label col-md-6 col-sm-6">Provider Name<span
-                                        class="required">*</span></span>
-                                <select  class="form-control" name='insurance_provider_id'>
-                                    @php
-                                    @endphp
-                                    @foreach ($insuranceProviders as $item)
-                                        <option value="{{ $item->id }}" selected="selected">{{ $item->text }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
+
                         <br />
                         @if($modeltype == quoteTypeCode::Car || $modeltype == quoteTypeCode::Travel)
                             <div class="item form-group">
@@ -309,6 +299,20 @@ use App\Enums\QuoteTypes;
                                         payment reference</span>
                                 </div>
                             </div>
+                        @else
+                            <div class="item form-group">
+                                <div class="col">
+                                <span class="col-form-label col-md-6 col-sm-6">Provider Name<span
+                                        class="required">*</span></span>
+                                    <select  class="form-control" name='insurance_provider_id'>
+                                        @php
+                                            @endphp
+                                        @foreach ($insuranceProviders as $item)
+                                            <option value="{{ $item->id }}">{{ $item->text }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
                         @endif
 
                     </div>
@@ -335,9 +339,13 @@ use App\Enums\QuoteTypes;
                 @csrf
                 <input type="hidden" name="quote_id" value="{{ $paymentPlainModel->id }}">
                 <input type="hidden" name="modelType" value="{{ $modeltype }}">
-                <input type="hidden" name="plan_id" value="{{ $paymentPlainModel->plan_id }}">
-                <input type="hidden" name="insurance_provider_id"
-                    value="{{ $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->id : null }}">
+
+                @if($modeltype == quoteTypeCode::Car || $modeltype == quoteTypeCode::Travel)
+
+                    <input type="hidden" name="plan_id" value="{{ $paymentPlainModel->plan_id }}">
+                    <input type="hidden" name="insurance_provider_id"
+                           value="{{ $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->id : null }}">
+                @endif
                 <input type="hidden" name="paymentCode" id="ucode" value="" />
                 <div class="modal-header">
                     <h5 class="modal-title" style="font-size: 16px !important;">
@@ -387,6 +395,9 @@ use App\Enums\QuoteTypes;
                             </div>
                         </div>
                         <br />
+                        @if($modeltype == quoteTypeCode::Car || $modeltype == quoteTypeCode::Travel)
+
+
                         <div class="item form-group">
                             <div class="col">
                                 <div class="input-group">
@@ -414,6 +425,19 @@ use App\Enums\QuoteTypes;
                                         payment reference</span>
                             </div>
                         </div>
+                        @else
+                            <div class="item form-group">
+                                <div class="col">
+                                <span class="col-form-label col-md-6 col-sm-6">Provider Name<span
+                                        class="required">*</span></span>
+                                    <select  class="form-control"  id='uinsurance_provider'name='insurance_provider_id'>
+                                        @foreach ($insuranceProviders as $item)
+                                            <option value="{{ $item->id }}">{{ $item->text }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
                 <div class="modal-footer" style="justify-content: center;">
