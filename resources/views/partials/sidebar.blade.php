@@ -19,7 +19,7 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/home') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-            @canany([PermissionsEnum::DashboardView, PermissionsEnum::TPL_DASHBOARD_VIEW, PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW, PermissionsEnum::MAIN_DASHBOARD_VIEW])
+            @canany([PermissionsEnum::DashboardView, PermissionsEnum::TPL_DASHBOARD_VIEW, PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW, PermissionsEnum::MAIN_DASHBOARD_VIEW, PermissionsEnum::UtmLeadsSalesReport])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-tachometer"
                         aria-hidden="true"></i>Dashboard <span class="fa fa-chevron-down"></span></a>
@@ -65,7 +65,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD, PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD])
+                @canany([PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD, PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,PermissionsEnum::UtmLeadsSalesReport])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-paper-plane"></i>Lead Allocation<span class="fa fa-chevron-down" style="color: white;"></span></a>
                         <ul class="nav child_menu">
@@ -95,7 +95,8 @@ use App\Enums\PermissionsEnum;
                     PermissionsEnum::BikeQuotesList,
                     PermissionsEnum::CycleQuotesList,
                     PermissionsEnum::YachtQuotesList,
-                    PermissionsEnum::JetskiQuotesList
+                    PermissionsEnum::JetskiQuotesList,
+                    PermissionsEnum::UtmLeadsSalesReport
                 ])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
@@ -153,7 +154,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::GMQuotesList, PermissionsEnum::CorpLineQuotesList])
+                @canany([PermissionsEnum::GMQuotesList, PermissionsEnum::CorpLineQuotesList,PermissionsEnum::UtmLeadsSalesReport])
                 <ul class="nav side-menu">
                     <li> <a><i class="fa fa-quote-right"></i> Business Quotes <span
                                 class="fa fa-chevron-down"></span></a>

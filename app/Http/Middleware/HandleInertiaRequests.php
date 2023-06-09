@@ -85,6 +85,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::TPL_DASHBOARD_VIEW,
             PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
             PermissionsEnum::MAIN_DASHBOARD_VIEW,
+            PermissionsEnum::UtmLeadsSalesReport,
         ])) {
             $nav = $nav->add('Dashboard', '', function (Section $section) {
                 $section
@@ -116,6 +117,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
             PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
             PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
+            PermissionsEnum::UtmLeadsSalesReport,
         ])) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
@@ -130,6 +132,7 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::UtmLeadsSalesReport,
         ])) {
             $nav = $nav->add('Lead Allocation', '', function (Section $section) {
                 $section
@@ -209,6 +212,7 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::GMQuotesList,
             PermissionsEnum::CorpLineQuotesList,
+            PermissionsEnum::UtmLeadsSalesReport,
         ])) {
             $nav = $nav->add('Business Quotes', '', function (Section $section) {
                 $section
