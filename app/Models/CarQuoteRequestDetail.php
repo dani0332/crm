@@ -31,7 +31,7 @@ class CarQuoteRequestDetail extends Model implements AuditableContract
 
     public function getAdvisorAssignedDateAttribute($table)
     {
-        $date_time_format = Config::get('constants.datetime_format');
+        $date_time_format = config('constants.DATETIME_DISPLAY_FORMAT');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
