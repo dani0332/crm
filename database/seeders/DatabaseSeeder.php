@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             addCarQuoteSearchPermission::class,
+            UtmLeadsSalesReportSeeder::class,
         ]);
     }
 }
