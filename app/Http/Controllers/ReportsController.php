@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatusEnum;
+use App\Models\QuoteType;
 use App\Models\User;
+use App\Repositories\QuoteTypeRepository;
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
 use App\Services\AdvisorPerformanceReportService;
 use App\Services\LeadDistributionReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ReportsController extends Controller
 {
@@ -92,5 +97,59 @@ class ReportsController extends Controller
             ->where('is_active', 1)
             ->get()
             ->toArray();
+    }
+
+
+    public function utmLeadsSaleReport(Request $request)
+    {
+        $records = [];
+        if ($request->has('quote_type_id') && $request->has('group_by_one')) {
+
+            $quoteTypeCode = QuoteType::where('id', '=', $request->quote_type_id)->value('code');
+            $model = 'App\Models\\' . $quoteTypeCode . 'Quote';
+            $quoteRequestTable = strtolower($quoteTypeCode) . '_quote_request';
+
+            $group_by_one = $request->group_by_one;
+            $group_by_two = $request->group_by_two;
+
+            $groupBy[] = $group_by_one;
+            if (!empty($group_by_two)) {
+                $groupBy[] = $group_by_two;
+            }
+
+            $query= $model::query()->select(
+                    'utm_source',
+                    'utm_medium',
+                    'utm_campaign',
+                    DB::raw('count(' . $quoteRequestTable . '.id) as leads_count'),
+                    DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN 1 ELSE NULL END) as authorized'),
+                    DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as captured'),
+
+                    DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN premium  ELSE 0 END) as authorized_sum'),
+                    DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN premium  ELSE 0 END) as captured_sum'),
+            )
+                ->join($quoteRequestTable . '_detail', $quoteRequestTable . '.id', $quoteRequestTable . '_detail.' . $quoteRequestTable . '_id')
+                ->where(function ($query) {
+                    $query->where('payment_status_id', '=', PaymentStatusEnum::AUTHORISED)
+                        ->orWhere('payment_status_id', '=', PaymentStatusEnum::CAPTURED);
+                })
+                ->where('payment_status_id', '<>', '')
+                ->where('utm_source', '<>', '')
+                ->where('utm_medium', '<>', '')
+                ->where('utm_campaign', '<>', '')->groupBy($groupBy);
+
+            if (!empty($request->date_from) && !empty($request->date_to)) {
+                $date_from = date('Y-m-d 00:00:00', strtotime(request()->date_from));
+                $date_to = date('Y-m-d 23:59:59', strtotime(request()->date_to));
+
+                $query->whereBetween($quoteRequestTable . '.created_at', [$date_from, $date_to]);
+            }
+          $records=  $query->simplePaginate(10)->withQueryString();
+
+        }
+        return inertia('Reports/UtmLeadsSale', [
+            'quoteTypes' => QuoteTypeRepository::getList(),
+            'reportData' => $records,
+        ]);
     }
 }
