@@ -1393,6 +1393,7 @@ class CRUDController extends Controller
             'collection_type' => $request->collection_type,
             'captured_amount' => $request->captured_amount,
             'payment_methods_code' => $request->payment_methods,
+            'insurance_provider_id' => $request->insurance_provider_id,
             'updated_by' => $request->user()->id,
         ];
         if ($request->reference) {
