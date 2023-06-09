@@ -81,6 +81,13 @@ class ActivitiesService extends BaseService
             'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid'
         )->get()->sortBy('status');
 
+        foreach ($rawActivities as $activity) {
+            $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
+            $dueDate = Carbon::createFromFormat($dateFormat, $activity->due_date);
+            $now = now()->format($dateFormat);
+            $activity->is_overdue = $dueDate->lt($now);
+        }
+
         return $rawActivities;
     }
 

@@ -156,10 +156,23 @@ class HandleInertiaRequests extends Middleware
         $nav = $nav->add('Personal Quotes', '', function (Section $section) {
             $section
                 ->addIf(
-                    auth()->user()->can(PermissionsEnum::CarQuotesList),
-                    'Car Quotes',
+                    auth()->user()->hasAnyPermission([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch]),
+                    'Car',
                     '/quotes/car',
-                    fn ($s) => $s->attributes(['icon' => 'car'])
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'car'])
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::CarQuotesList),
+                            'Car List',
+                            '/quotes/car',
+                            fn ($s) => $s->attributes(['icon' => 'car'])
+                        )
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::CarQuoteSearch),
+                            'Car Search',
+                            '/personal-quotes/car/car-quotes-search',
+                            fn ($s) => $s->attributes(['icon' => 'car'])
+                        ),
                 )
                 ->addIf(
                     auth()->user()->can(PermissionsEnum::HealthQuotesList),
@@ -263,27 +276,33 @@ class HandleInertiaRequests extends Middleware
                     ->add('Transaction List', '/transapp/transaction', fn ($s) => $s->attributes(['icon' => 'box']))
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Insurance Companies',
+                        'Admin',
                         route('insurancecompany.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Reasons',
-                        route('reason.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Status',
-                        route('status.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Payment Modes',
-                        route('paymentmode.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
+                        fn ($s) => $s
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::InsuranceCompanyList),
+                                'Insurance Companies',
+                                route('insurancecompany.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::ReasonList),
+                                'Reasons',
+                                route('reason.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::StatusList),
+                                'Status',
+                                route('status.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::PaymentModeList),
+                                'Payment Modes',
+                                route('paymentmode.index'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
                     );
             });
         }
@@ -396,9 +415,6 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
             PermissionsEnum::TeamsList,
-            PermissionsEnum::RULE_CONFIG_LIST,
-            PermissionsEnum::QUAD_CONFIG_LIST,
-            PermissionsEnum::TIER_CONFIG_LIST,
         ])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
@@ -421,28 +437,33 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::TIER_CONFIG_LIST),
-                        'Tiers (Allocation)',
+                        auth()->user()->hasAnyPermission([
+                            PermissionsEnum::RULE_CONFIG_LIST,
+                            PermissionsEnum::QUAD_CONFIG_LIST,
+                            PermissionsEnum::TIER_CONFIG_LIST,
+                        ]),
+                        'Allocation Config',
                         url('generic/tier'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::QUAD_CONFIG_LIST),
-                        'Quadrants (Allocation)',
-                        url('generic/quadrant'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
-                        'Rules (Allocation)',
-                        url('generic/rule'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->hasRole(RolesEnum::Admin),
-                        'Failed Jobs',
-                        route('failed-jobs.index'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
+                        fn ($s) => $s
+                            ->attributes(['icon' => 'box'])
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::TIER_CONFIG_LIST),
+                                'Tiers',
+                                url('generic/tier'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::QUAD_CONFIG_LIST),
+                                'Quadrants',
+                                url('generic/quadrant'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
+                                'Rules',
+                                url('generic/rule'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
                     );
             });
         }
