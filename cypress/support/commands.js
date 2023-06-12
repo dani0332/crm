@@ -24,9 +24,10 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 import 'cypress-file-upload'
-Cypress.Commands.add('loginByCookies', (session, token) => {
+Cypress.Commands.add('loginByCookies', (session, token, remember_web_token) => {
    cy.setCookie('imcrm_session', session)
    cy.setCookie('XSRF-TOKEN', token)
+   cy.setCookie('remember_web_59ba36addc2b2f9401580f014c7f58ea4e30989d', remember_web_token)
 })
 
 //  Cypress.Commands.add('generate_car_CDBID', (token,data) => {
