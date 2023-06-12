@@ -319,18 +319,13 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->hasAnyRole([RolesEnum::Renewals, RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (auth()->user()->canAny([PermissionsEnum::RenewalsUpload, PermissionsEnum::RenewalsUploadedLeadList, PermissionsEnum::RenewalsUploadUpdate, PermissionsEnum::RenewalsBatches])) {
             $nav = $nav->add('Renewals', '', function (Section $section) {
                 $section
-                    ->add('Upload & Create', url('renewals/upload'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Uploaded Leads', url('renewals/uploaded-leads'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Upload & Update', url('renewals/upload'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(
-                        auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering]),
-                        'Batches',
-                        url('renewals/batches'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    );
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUpload),'Upload & Create', route('renewals-upload-create'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadedLeadList),'Uploaded Leads', route('renewals-uploaded-leads-list'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadUpdate),'Upload & Update', route('renewals-upload-update'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsBatches),'Batches', route('renewals-batches'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 

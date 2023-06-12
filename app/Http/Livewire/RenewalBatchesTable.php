@@ -31,8 +31,8 @@ class RenewalBatchesTable extends DataTableComponent
             Column::make('Batch'),
             Column::make('Actions')
                 ->label(function ($row) {
-                    return '<div class="flex gap-2"><a href="'.url('renewals/batches').'/'.$row->batch.'/plans-processes" title="Fetch Plans" class="btn">Fetch Plans</a>'.
-                        '<a href="'.url('renewals/batches').'/'.$row->batch.'" title="Send Emails" class="btn-2">Send Emails</a></div>';
+                    return '<div class="flex gap-2"><a href="'.route('batch-plans-processes', $row->batch).'" title="Fetch Plans" class="btn">Fetch Plans</a>'.
+                        '<a href="'.route('batch-renewal-detail', $row->batch)  .'" title="Send Emails" class="btn-2">Send Emails</a></div>';
                 })->html(),
         ];
     }
