@@ -9,7 +9,7 @@ describe('Car qoutes', () => {
   const carLeadPage = new CarLeadPage()
 
   beforeEach(() => {
-    cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
+    cy.loginByCookies()
     cy.runRoutes()
   })
 

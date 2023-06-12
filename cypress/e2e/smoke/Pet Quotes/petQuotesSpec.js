@@ -10,7 +10,7 @@ describe('Pet qoutes', () => {
     const PetPage = new petPage()
 
     beforeEach(() => {
-        cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
+        cy.loginByCookies()
         cy.runRoutes()
     })
     const resizeObserverLoopErrRe = /^[^(ResizeObserver loop limit exceeded)]/
