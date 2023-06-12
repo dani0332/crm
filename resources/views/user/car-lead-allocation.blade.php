@@ -122,12 +122,16 @@ use App\Enums\RolesEnum;
 </script>
 
 <script>
-        var leadAllocationDataTable = null;
+    var leadAllocationDataTable = null;
         var maxCapKeyValue = [];
-
+        var userOriginalCaps = [];
         let refreshTimeout;
 
         function enableRefresh() {
+            const refreshSwitch = document.getElementById('refresh-switch');
+            if(!refreshSwitch.checked){
+                refreshSwitch.checked = true;
+            }
             refreshTimeout = setTimeout(function() {
                 window.location.reload(1);
             }, 80000);
@@ -139,6 +143,31 @@ use App\Enums\RolesEnum;
                 refreshSwitch.checked = false;
             }
             clearTimeout(refreshTimeout);
+        }
+
+        function revertCap(userId, element)
+        {
+            var maxCap = fetchOriginalCap(userId);
+
+            $(element).parent().removeAttr("style").html(maxCap);
+
+            maxCapKeyValue = maxCapKeyValue.filter(function( obj ) {
+                return parseInt(obj.userId) !== userId;
+            });
+
+            if(maxCapKeyValue.length == 0) {
+                $('#submitBtn').hide();
+                enableRefresh();
+            }
+        }
+
+        function fetchOriginalCap(userId)
+        {
+            var result = userOriginalCaps.filter(obj => {
+                return parseInt(obj.userId) === parseInt(userId)
+            });
+
+            return result[0].maxCap;
         }
 
         $(document).ready(function() {
@@ -175,6 +204,14 @@ use App\Enums\RolesEnum;
                             $inputs = $('.chk');
                             $inputs.each(function(){ $(this).attr('disabled', true); });
                         }
+                    },
+                    initComplete :function( settings, json){
+                        json.data.forEach(element => {
+                            userOriginalCaps.push({
+                                userId: element.userId,
+                                maxCap: element.maxCapacity,
+                            });
+                        });
                     }
                 });
 
@@ -199,7 +236,6 @@ use App\Enums\RolesEnum;
                 });
 
                 $('body').on('dblclick', 'table:first td.td-max-cap', function() {
-                        debugger;
                         var maxCapValue = parseInt($(this).text());
                         if(maxCapValue !== NaN){
                             $(this).html(`<input type="text" class="form-control" value="${maxCapValue}" />`);
@@ -215,38 +251,32 @@ use App\Enums\RolesEnum;
                                     disableRefresh();
                                 }else{
                                     enableRefresh();
+                                    $(activeElement).html(maxCapValue);
                                     $('#submitBtn').hide();
+                                    $(activeElement).unbind('focusout');
                                 }
                                 return false;
                             } else {
                                 var userId = $(this).next().find('input').attr('data-aid');
                                 var id = $(this).next().find('input').attr('data-id');
-
-                                maxCapKeyValue.push({
-                                    'userId' : $(this).next().find('input').attr('data-aid'),
-                                    'maxCap' : maxCap
-                                });
-                                if(maxCapKeyValue.length > 0 ) {
+                                var originalMaxCap = fetchOriginalCap(userId);
+                                if(originalMaxCap != maxCap){
+                                    maxCapKeyValue.push({
+                                        'userId' : $(this).next().find('input').attr('data-aid'),
+                                        'maxCap' : maxCap
+                                    });
                                     disableRefresh();
                                     $('#submitBtn').show();
+                                    $(activeElement).html('<label>'+maxCap+'</label><span style="margin-left:25px;" onclick="revertCap('+userId+', this)"><i class="fa fa-undo" aria-hidden="true"></i></span>');
+                                    $(activeElement).attr('style', 'border: 2px solid yellow;color:back;font-weight:900;background-color:yellow;');
+                                    $(activeElement).unbind('focusout');
+                                }else{
+                                    (activeElement).html(maxCapValue);
                                 }
-                                $(activeElement).html(maxCap);
-                                $(activeElement).attr('style', 'border: 2px solid yellow;color:back;font-weight:900;background-color:yellow;');
 
                             }
                         });
-
-                        $(this).focus();
-                        $(this).blur(endEdition);
-
                     });
-
-                function endEdition() {
-                    var el = $(this);
-                    myTable.cell(el).invalidate().draw();
-                    el.attr('contenteditable', 'false');
-                    el.off('blur', endEdition);
-                }
         });
         function changeAvailabilityInputs(ischecked){
             $inputs = $('.chk');
@@ -425,7 +455,8 @@ use App\Enums\RolesEnum;
                     </div>
                 </div>
                 <div>
-                    <button id="submitBtn" style="display: none;float: right;margin-right: 18px;" type="button" class="btn btn-success">Submit
+                    <button id="submitBtn" style="display: none;float: right;margin-right: 18px;" type="button"
+                        class="btn btn-success">Submit
                         Cap Changes</button>
                 </div>
                 <table class="table table-striped jambo_table  car_lead_allocation_table" style="width:100%">
