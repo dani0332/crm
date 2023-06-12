@@ -97,9 +97,16 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            @can(PermissionsEnum::CarQuotesList)
-                            <li><a href="{{ url('quotes/car') }}">Car Quotes</a></li>
-                            @endcan
+                            @canany([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch])
+                                <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span>
+                                    <ul class="nav child_menu">
+                                        <li><a href="{{ url('quotes/car') }}">Car List</a></li>
+                                        @can(PermissionsEnum::CarQuoteSearch)
+                                        <li><a href="{{ url('/personal-quotes/car/car-quotes-search') }}">Car Search</a></li>
+                                        @endcan
+                                    </ul>
+                                </li>
+                            @endcanany
                             @can(PermissionsEnum::HealthQuotesList)
                             <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
                             @endcan

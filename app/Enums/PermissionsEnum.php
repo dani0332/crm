@@ -211,4 +211,5 @@ final class PermissionsEnum extends Enum
     const RenewalsUploadedLeadList = 'renewals-uploaded-leads-list';
     const RenewalsUploadUpdate = 'renewals-upload-update';
     const RenewalsBatches = 'renewals-batches';
+    const CarQuoteSearch = 'car-quotes-search';
 }

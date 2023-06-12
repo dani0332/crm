@@ -408,6 +408,7 @@ function generateRouteNames($prefix)
         'edit' => $prefix.'-edit',
         'update' => $prefix.'-update',
         'destroy' => $prefix.'-delete',
+        'search' => $prefix.'-search',
     ];
 }
 
