@@ -240,20 +240,26 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @hasanyrole(RolesEnum::Renewals.'|'.RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering.'|'.RolesEnum::MarketingOperations)
+                @canany([PermissionsEnum::RenewalsUpload, PermissionsEnum::RenewalsUploadedLeadList, PermissionsEnum::RenewalsUploadUpdate, PermissionsEnum::RenewalsBatches])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
+                            @can(PermissionsEnum::RenewalsUpload)
                             <li><a href="{{ route('renewals-upload-create') }}">Upload & Create</a></li>
+                            @endcan
+                            @can(PermissionsEnum::RenewalsUploadedLeadList)
                             <li><a href="{{ route('renewals-uploaded-leads-list') }}">Uploaded Leads</a></li>
-                            @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
+                            @endcan
+                            @can(PermissionsEnum::RenewalsUploadUpdate)
                             <li><a href="{{ route('renewals-upload-update') }}">Upload & Update</a></li>
+                            @endcan
+                            @can(PermissionsEnum::RenewalsBatches)
                             <li><a href="{{ route('renewals-batches') }}">Batches</a></li>
-                            @endhasanyrole
+                            @endcan
                         </ul>
                     </li>
                 </ul>
-                @endhasanyrole
+                @endcanany
                 @can(PermissionsEnum::ClaimList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>

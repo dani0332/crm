@@ -301,7 +301,7 @@ class RenewalsUploadController extends Controller
         $lastBatchProcess = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
 
         if ($lastBatchProcess && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastBatchProcess->created_at) <= 5) {
-            return redirect()->route('batch-renewal-detail', $batch)->with('error', 'Batch process is already created, next can be created after 5 minutes ');
+            return redirect('renewals/batches/'.$batch)->with('error', 'Batch process is already created, next can be created after 5 minutes ');
         }
 
         Log::info('runBatchProcess START');
@@ -310,7 +310,7 @@ class RenewalsUploadController extends Controller
         Log::info('batch: '.$batch.' batchLeadsCount: '.$batchLeadsCount);
 
         if ($batchLeadsCount == 0) {
-            return redirect()->route('batch-renewal-detail', $batch)->with('success', 'No leads found for this batch');
+            return redirect('renewals/batches/'.$batch)->with('success', 'No leads found for this batch');
         }
 
         $batchEmail = new RenewalsBatchEmails();
@@ -330,7 +330,7 @@ class RenewalsUploadController extends Controller
 
         Log::info('runBatchProcess END');
 
-        return redirect()->route('batch-renewal-detail', $batch)->with('success', 'Batch has been created and emails are being sent');
+        return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
     }
 
     public function validationFailed($id)
