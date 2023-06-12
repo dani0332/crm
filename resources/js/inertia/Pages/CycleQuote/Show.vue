@@ -148,7 +148,7 @@ const permissionsEnum = page.props.permissionsEnum;
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Year of manufacture</dt>
-            <dd>{{ quote?.bike_quote?.year_of_manufacture }}</dd>
+            <dd>{{ quote?.cycle_quote?.year_of_manufacture?.text }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">

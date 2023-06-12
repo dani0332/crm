@@ -59,7 +59,7 @@ class CycleQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Quote created successfully');
+        return redirect("personal-quotes/cycle/".$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     /**
