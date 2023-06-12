@@ -17,7 +17,7 @@ describe('Car qoutes', () => {
         })
     })
     beforeEach(() => {
-        cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'), Cypress.env('remember_web_token'))
+        cy.loginByCookies()
         cy.runRoutes()
     })
     it('Should edit car qoute details', () => {

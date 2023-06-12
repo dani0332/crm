@@ -9,7 +9,7 @@ describe('Travel qoutes', () => {
     const travelPage = new TravelData()
 
     beforeEach(() => {
-        cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'), Cypress.env('remember_web_token'))
+        cy.loginByCookies()
         cy.runRoutes()
     })
     const resizeObserverLoopErrRe = /^[^(ResizeObserver loop limit exceeded)]/

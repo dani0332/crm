@@ -11,7 +11,7 @@ describe('Health qoutes', () => {
   const healthLeadPage = new HealthLeadPage()
 
   beforeEach(() => {
-    cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'), Cypress.env('remember_web_token'))
+    cy.loginByCookies()
     cy.runRoutes()
   })
   const resizeObserverLoopErrRe = /^[^(ResizeObserver loop limit exceeded)]/
