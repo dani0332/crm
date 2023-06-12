@@ -22,7 +22,7 @@ class CarQuote extends BaseModel
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
-        'policy_number' => FilterTypes::EXACT,
+        'previous_quote_policy_number' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
     ];

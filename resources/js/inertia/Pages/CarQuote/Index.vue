@@ -33,7 +33,7 @@ let availableFilters = {
   first_name: '',
   last_name: '',
   email: '',
-  policy_number: '',
+  previous_quote_policy_number: '',
   page: 1,
 };
 
@@ -167,9 +167,9 @@ const manualAssignmentError = () => {
           placeholder="Search by Email"
         />
         <x-input
-          v-model="filters.policy_number"
+          v-model="filters.previous_quote_policy_number"
           type="search"
-          name="policy_number"
+          name="previous_quote_policy_number"
           label="Policy Number"
           class="w-full"
           placeholder="Search by Policy Number"

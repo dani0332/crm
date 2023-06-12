@@ -27,7 +27,7 @@ class CarQuoteRequest extends FormRequest
             'first_name' => 'required',
             'last_name' => 'required',
             'email' => 'required|email:rfc,dns',
-            'policy_number' => 'required',
+            'previous_quote_policy_number' => 'required',
             'code' => 'required',
         ];
     }
