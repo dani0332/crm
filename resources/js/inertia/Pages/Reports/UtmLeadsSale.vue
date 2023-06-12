@@ -10,8 +10,7 @@ const loader = reactive({
 const page = usePage();
 
 let availableFilters = {
-  date_from: '',
-  date_to: '',
+  date_range: [],
   quote_type_id: '',
   group_by_one: '',
   group_by_two: '',
@@ -23,7 +22,7 @@ const filters = reactive(availableFilters);
 
 const quoteTypesOptions = computed(() => {
   return page.props.quoteTypes.map(method => ({
-    value: method.id,
+    value: `${method.id}`,
     label: method.text,
   }));
 });
@@ -91,7 +90,18 @@ function onReset() {
     onSuccess: () => (loader.table = false),
   });
 }
-onMounted(() => {});
+function setQueryStringFilters() {
+  for (const [key] of Object.entries(params)) {
+    if (key.includes('[]')) {
+      filters[key.replace('[]', '')] = params[key];
+    } else {
+      filters[key] = params[key];
+    }
+  }
+}
+onMounted(() => {
+  setQueryStringFilters();
+});
 </script>
 
 <template>
@@ -106,16 +116,14 @@ onMounted(() => {});
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <DatePicker
-          v-model="filters.date_from"
-          name="date_from"
-          label="Date From"
+          v-model="filters.date_range"
+          label="Date Range"
+          :rules="[isRequired]"
           class="w-full"
-        />
-        <DatePicker
-          v-model="filters.date_to"
-          name="date_from"
-          label="Date To"
-          class="w-full"
+          range
+          multi-calendars
+          multi-calendars-solo
+          max-range="30"
         />
         <x-select
           v-model="filters.quote_type_id"
@@ -126,8 +134,8 @@ onMounted(() => {});
         />
         <x-select
           v-model="filters.group_by_one"
-          label="Group by"
-          placeholder="Group By"
+          label="Group by One"
+          placeholder="Group By One"
           :rules="[isRequired]"
           :options="[
             { value: 'utm_source', label: 'UTM Sources' },
@@ -137,8 +145,8 @@ onMounted(() => {});
         />
         <x-select
           v-model="filters.group_by_two"
-          label="Group by"
-          placeholder="Group By"
+          label="Group by Two"
+          placeholder="Group By Two"
           :options="[
             { value: 'utm_source', label: 'UTM Sources' },
             { value: 'utm_medium', label: 'UTM Medium' },
