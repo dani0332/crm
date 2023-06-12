@@ -132,10 +132,10 @@ const manualAssignmentError = () => {
 
 <template>
   <div>
-    <Head title="Car Quotes Search" />
+    <Head title="Car Search" />
 
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Car Quotes Search</h2>
+      <h2 class="text-xl font-semibold">Search</h2>
       <x-button
         v-if="can(permissionsEnum.CarQuotesCreate)"
         size="sm"
