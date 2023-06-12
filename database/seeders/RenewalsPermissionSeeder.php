@@ -21,18 +21,20 @@ class RenewalsPermissionSeeder extends Seeder
         $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalsUploadedLeadList, 'web')->id;
 
         $marketingOperationRole = Role::findOrCreate(RolesEnum::MarketingOperations, 'web');
-        foreach ($permissions as $permission){
-            if (! $marketingOperationRole->hasPermissionTo($permission))
+        foreach ($permissions as $permission) {
+            if (! $marketingOperationRole->hasPermissionTo($permission)) {
                 $marketingOperationRole->givePermissionTo($permission);
+            }
         }
 
         $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalsUploadUpdate, 'web')->id;
         $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalsBatches, 'web')->id;
 
         $renewalsManagerRole = Role::findOrCreate(RolesEnum::RenewalsManager, 'web');
-        foreach ($permissions as $permission){
-            if (! $renewalsManagerRole->hasPermissionTo($permission))
+        foreach ($permissions as $permission) {
+            if (! $renewalsManagerRole->hasPermissionTo($permission)) {
                 $renewalsManagerRole->givePermissionTo($permission);
+            }
         }
     }
 }
