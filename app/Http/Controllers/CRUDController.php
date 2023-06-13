@@ -1155,7 +1155,6 @@ class CRUDController extends Controller
     }
 
     /**
-     * @param Request $request
      * @return mixed
      */
     public function getLeadHistoryLogs(Request $request)

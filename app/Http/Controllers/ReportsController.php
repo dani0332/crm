@@ -136,9 +136,9 @@ class ReportsController extends Controller
 
             if ($isGroupMedical) {
                 $query->where('business_type_of_insurance_id', 5);
-            }if (!empty($group_by_one)) {
+            }if (! empty($group_by_one)) {
                 $query->where($group_by_one, '<>', '');
-            }if (!empty($group_by_two)) {
+            }if (! empty($group_by_two)) {
                 $query->where($group_by_two, '<>', '');
             }
             if (! empty($date_range)) {

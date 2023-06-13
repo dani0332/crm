@@ -7,7 +7,6 @@ use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\SyncSIBContactJob;
@@ -280,7 +279,7 @@ class CRUDService extends BaseService
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
             'notes' => $request->notes,
-            'created_by' => Auth::user()->id
+            'created_by' => Auth::user()->id,
         ]);
 
         return $entity;
