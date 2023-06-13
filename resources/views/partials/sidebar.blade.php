@@ -100,10 +100,10 @@ use App\Enums\PermissionsEnum;
                             @canany([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch])
                                 <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span>
                                     <ul class="nav child_menu">
-                                        <li><a href="{{ url('quotes/car') }}">Car List</a></li>
                                         @can(PermissionsEnum::CarQuoteSearch)
-                                        <li><a href="{{ url('/personal-quotes/car/car-quotes-search') }}">Car Search</a></li>
+                                        <li><a href="{{ url('/personal-quotes/car/car-quotes-search') }}">Search</a></li>
                                         @endcan
+                                        <li><a href="{{ url('quotes/car') }}">Lead List</a></li>
                                     </ul>
                                 </li>
                             @endcanany
