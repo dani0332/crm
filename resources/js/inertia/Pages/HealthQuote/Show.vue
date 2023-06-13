@@ -43,6 +43,7 @@ const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 
+const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -1478,7 +1479,16 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
-            <dd>{{ ecomDetails.paymentStatus }}</dd>
+            <dd>{{ quote.payment_status_text }}</dd>
+          </div>
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="
+              page.props.quote.payment_status_id == paymentStatusEnum.DECLINED
+            "
+          >
+            <dt class="font-medium">REASON</dt>
+            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
