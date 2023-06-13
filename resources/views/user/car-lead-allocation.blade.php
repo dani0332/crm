@@ -22,7 +22,7 @@ use App\Enums\RolesEnum;
     let columns = [{
         data: 'userId',
         name: 'userId',
-        orderable: true,
+        orderable: false,
         searchable: false
     },
         {
@@ -34,8 +34,8 @@ use App\Enums\RolesEnum;
         {
             data: 'tiers',
             name: 'tiers',
-            orderable: true,
-            searchable: false
+            orderable: false,
+            searchable: false,
         },
         {
             data: 'quads',
@@ -46,32 +46,32 @@ use App\Enums\RolesEnum;
         {
             data: 'allocationCount',
             name: 'allocationCount',
-            orderable: true,
+            orderable: false,
             searchable: false
         },
         {
             data: 'manualAllocationCount',
             name: 'manualAllocationCount',
-            orderable: true,
+            orderable: false,
             searchable: false
         },
         {
             data: 'autoAllocationCount',
             name: 'autoAllocationCount',
-            orderable: true,
+            orderable: false,
             searchable: false
         },
         {
             data: 'lastAllocation',
             name: 'lastAllocation',
-            orderable: true,
+            orderable: false,
             searchable: false,
         },
         {
             class: 'td-max-cap',
             data: 'maxCapacity',
             name: 'maxCapacity',
-            orderable: true,
+            orderable: false,
             searchable: false
         }
     ];
@@ -80,14 +80,16 @@ use App\Enums\RolesEnum;
         columns.push({
             data: 'isAvailable',
             name: 'isAvailable',
-            orderable: true,
+            orderable: false,
             searchable: false,
             render: function(data, type, row) {
                 if (data == 1) {
-                    var html = `<span class="status-text">Available</span><label class="switch " style="margin-left: 20px;">
-                                                <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" checked="checked" class="chk success" id="is_active" name="is_active">
-                                                <span class="slider round"></span>
-                                            </label>`;
+                    var html = `
+                    <span class="status-text">Available</span><label class="switch" style="margin-left: 20px;">
+                                <input data-toggle="toggle"  data-size="lg" type="checkbox" data-id="${row.id}" data-aid="${row.userId}" checked="checked" class="chk success" id="is_active" name="is_active">
+                                <span class="slider round"></span>
+                            </label>`;
+
                     return html;
                 } else {
                     var html = `<span class="status-text">UnAvailable</span><label class="switch " style="margin-left: 20px;">
@@ -102,7 +104,7 @@ use App\Enums\RolesEnum;
         columns.push({
             data: 'isAvailable',
             name: 'isAvailable',
-            orderable: true,
+            orderable: false,
             searchable: false,
             render: function(data, type, row) {
                 return '<span class="status-text">'+ ((data == 1) ? 'Available' : 'Unavailable') + '</span>';
@@ -114,7 +116,7 @@ use App\Enums\RolesEnum;
     columns.push({
         data: 'lastLogin',
         name: 'lastLogin',
-        orderable: true,
+        orderable: false,
         searchable: false,
     })
     @endif
@@ -193,7 +195,7 @@ use App\Enums\RolesEnum;
                     paging: false,
                     processing: true,
                     lengthChange: false,
-                    ordering: false,
+                    ordering: true,
                     ajax: config.routes.car_lead_allocation_index_route,
                     columns: columns,
                     drawCallback: function (settings) {
@@ -220,16 +222,14 @@ use App\Enums\RolesEnum;
 
                         var data = {
                                     'max_cap': maxCapKeyValue,
-                                    'aid': aid,
-                                    'id': id,
                                     '_token': $('meta[name="csrf-token"]').attr('content')
                                 };
                             $.ajax({
-                                url: '/lead-allocation/updateAvailability',
+                                url: '/lead-allocation/updateCaps',
                                 type: 'POST',
                                 data: data,
                                 success: function(data) {
-                                    $(activeElement).html(maxCap);
+                                    window.location.reload(1);
                                 }
                             });
                     }
@@ -268,7 +268,7 @@ use App\Enums\RolesEnum;
                                     disableRefresh();
                                     $('#submitBtn').show();
                                     $(activeElement).html('<label>'+maxCap+'</label><span style="margin-left:25px;" onclick="revertCap('+userId+', this)"><i class="fa fa-undo" aria-hidden="true"></i></span>');
-                                    $(activeElement).attr('style', 'border: 2px solid yellow;color:back;font-weight:900;background-color:yellow;');
+                                    $(activeElement).attr('style', 'border: 2px solid #facb197d;color:back;font-weight:900;background-color:#facb197d;');
                                     $(activeElement).unbind('focusout');
                                 }else{
                                     (activeElement).html(maxCapValue);
@@ -366,8 +366,6 @@ use App\Enums\RolesEnum;
             }
         });
 </script>
-
-
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
@@ -459,7 +457,7 @@ use App\Enums\RolesEnum;
                         class="btn btn-success">Submit
                         Cap Changes</button>
                 </div>
-                <table class="table table-striped jambo_table  car_lead_allocation_table" style="width:100%">
+                <table class="table table-striped jambo_table car_lead_allocation_table" style="width:100%">
                     <thead>
                         <tr>
                             <th>User Id</th>

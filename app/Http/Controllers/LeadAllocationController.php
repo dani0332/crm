@@ -126,13 +126,25 @@ class LeadAllocationController extends Controller
             $updateLogString = $updateLogString.' is_available to : '.$request->is_available;
             $leadAllocationUser->is_available = $request->is_available;
         }
-        if (isset($request->max_cap)) {
-            $updateLogString = $updateLogString.' max_cap to : '.$request->max_cap;
-            $leadAllocationUser->max_capacity = $request->max_cap;
-        }
         $leadAllocationUser->save();
         $updateLogString = $updateLogString.' for user : '.$request->aid.' and by user : '.auth()->user()->id.' ----- ';
         info($updateLogString);
+    }
+
+    public function updateCaps(Request $request)
+    {
+        if(isset($request->max_cap))
+        {
+            foreach ($request->max_cap as $item) {
+                if($item['userId'] && $item['maxCap']){
+                    $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $item['userId'])->first();
+                    $leadAllocationObj->max_capacity = (int)$item['maxCap'];
+                    $leadAllocationObj->save();
+                    info('Updated max cap of user : '. $leadAllocationObj->leadAllocationUser->email. ' to '. (int)$item['maxCap']);
+                }
+
+            }
+        }
     }
 
     public function toggleLeadAllocationJobStatus()
