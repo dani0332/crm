@@ -59,7 +59,7 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
                             @endcan
                                 @can(PermissionsEnum::UtmLeadsSalesReport)
-                                    <li><a href="{{ url('reports/utm-leads-sale-report-view') }}">UTM Leads and Sales Report</a></li>
+                                    <li><a href="{{ url('reports/utm-report') }}">UTM Report</a></li>
                                 @endcan
                         </ul>
                     </li>

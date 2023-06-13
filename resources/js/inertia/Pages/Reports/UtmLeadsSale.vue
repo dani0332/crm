@@ -69,7 +69,7 @@ function onSubmit(isValid) {
     Object.keys(filters).forEach(
       key => filters[key] === '' && delete filters[key],
     );
-    router.visit('/reports/utm-leads-sale-report-view', {
+    router.visit('/reports/utm-report', {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -82,7 +82,7 @@ function onSubmit(isValid) {
   }
 }
 function onReset() {
-  router.visit('/reports/utm-leads-sale-report-view', {
+  router.visit('/reports/utm-report', {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -106,9 +106,9 @@ onMounted(() => {
 
 <template>
   <div>
-    <Head title="Lead Distribution Report" />
+    <Head title="Utm Report" />
     <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
-      UTM Leads and Sales
+      UTM Report
     </h1>
 
     <x-divider class="my-4" />
