@@ -298,8 +298,16 @@ class CarQuoteService extends BaseService
         if ($request->car_value_tier) {
 
             info('Car value at enquiry is about to change from : '.$carQuote->car_value_tier.' to : '.$request->car_value_tier.' for lead : '.$carQuote->code);
+
             $carQuote->car_value_tier = $request->car_value_tier;
+
+            $originalValue = $carQuote->car_value; // taking backup of original car_value
+
+            $carQuote->car_value = $request->car_value_tier; // adding value tier because tier function uses car_value
+
             $selectedTier = $this->leadAllocationService->getTierForValue($carQuote);
+
+            $carQuote->car_value = $originalValue; // adding back the original value since tier is now selected.
 
             info('After car value tier update the new selected tier is : '.$selectedTier->name.' for lead : '.$carQuote->code);
 
