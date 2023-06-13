@@ -283,14 +283,14 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 									class="btn btn-success btn-sm enable-bnpl"
 									data-planId="{{$quotePlan->id}}"
 									data-quoteUUId="{{$record->uuid}}"
-									{{ $quotePlan->isPayLaterActive ? 'disabled' : '' }}
+									{{ (isset($quotePlan->isPayLaterActive) && $quotePlan->isPayLaterActive) ? 'disabled' : '' }}
 									>Enable BNPL</button>
 									@endif
                                 </td>
 
                                 @php
                                     $allowChangeInsurer = (auth()->user()->hasRole(RolesEnum::CarAdvisor)) ? true : false;
-                                    
+
                                     if($record->payment_status_id == \App\Enums\PaymentStatusEnum::CAPTURED)
                                     {
                                         $allowChangeInsurer = false;
