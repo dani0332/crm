@@ -133,14 +133,13 @@ class LeadAllocationController extends Controller
 
     public function updateCaps(Request $request)
     {
-        if(isset($request->max_cap))
-        {
+        if (isset($request->max_cap)) {
             foreach ($request->max_cap as $item) {
-                if($item['userId'] && $item['maxCap']){
+                if ($item['userId'] && $item['maxCap']) {
                     $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $item['userId'])->first();
-                    $leadAllocationObj->max_capacity = (int)$item['maxCap'];
+                    $leadAllocationObj->max_capacity = (int) $item['maxCap'];
                     $leadAllocationObj->save();
-                    info('Updated max cap of user : '. $leadAllocationObj->leadAllocationUser->email. ' to '. (int)$item['maxCap']);
+                    info('Updated max cap of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $item['maxCap']);
                 }
 
             }
