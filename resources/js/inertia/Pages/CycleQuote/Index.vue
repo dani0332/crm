@@ -88,7 +88,6 @@ const tableHeader = [
   { text: 'PREMIUM', value: 'premium' },
   { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
@@ -245,10 +244,6 @@ const permissionsEnum = page.props.permissionsEnum;
 
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.text }}
-      </template>
-
-      <template #item-currently_insured_with="{ currently_insured_with }">
-        {{ currently_insured_with?.text }}
       </template>
 
       <template #item-is_ecommerce="{ is_ecommerce }">

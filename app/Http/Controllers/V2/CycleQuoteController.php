@@ -6,10 +6,8 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\CycleQuoteRequest;
 use App\Repositories\ActivityRepository;
-use App\Repositories\BikeQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -18,6 +16,7 @@ use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\CentralService;
 
 class CycleQuoteController extends Controller
 {
@@ -41,14 +40,14 @@ class CycleQuoteController extends Controller
      */
     public function create()
     {
-        $data = BikeQuoteRepository::getFormOptions();
+        $data = CycleQuoteRepository::getFormOptions();
 
         return inertia('CycleQuote/Form', $data);
     }
 
     /**
      * @param $quoteTypeCode
-     * @param  BikeQuoteRequest  $request
+     * @param  CycleQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(CycleQuoteRequest $request)
@@ -80,14 +79,15 @@ class CycleQuoteController extends Controller
     /**
      * @param $quoteTypeCode
      * @param $quoteId
-     * @param  BikeQuoteRequest  $request
+     * @param  CycleQuoteRequest  $request
      * @return void
      */
     public function update($uuid, CycleQuoteRequest $request)
     {
         CycleQuoteRepository::update($uuid, $request->validated());
 
-        return back()->with('message', 'Quote updated successfully');
+        return redirect("personal-quotes/cycle/".$uuid)->with('message', 'Quote updated successfully');
+
     }
 
     /**
@@ -114,6 +114,7 @@ class CycleQuoteController extends Controller
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+        $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::CYCLE->value, $quote->code);
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
@@ -129,6 +130,7 @@ class CycleQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'duplicateAllowedLobs' => $duplicateAllowedLobs,
         ]);
     }
 }
