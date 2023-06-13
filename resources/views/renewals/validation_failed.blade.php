@@ -8,7 +8,7 @@
         </h2>
         <div class="flex gap-2">
             <a type="_blank" href="{{ request()->url() }}/download" class="btn-3">Download Excel File</a>
-            <a href="{{ url('renewals/uploaded-leads') }}" class="btn-2">Batches List</a>
+            <a href="{{ route('renewals-uploaded-leads-list') }}" class="btn-2">Batches List</a>
         </div>
     </div>
 

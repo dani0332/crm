@@ -104,10 +104,10 @@ use App\Enums\PermissionsEnum;
                             @canany([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch])
                                 <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span>
                                     <ul class="nav child_menu">
-                                        <li><a href="{{ url('quotes/car') }}">Car List</a></li>
                                         @can(PermissionsEnum::CarQuoteSearch)
-                                        <li><a href="{{ url('/personal-quotes/car/car-quotes-search') }}">Car Search</a></li>
+                                        <li><a href="{{ url('/personal-quotes/car/car-quotes-search') }}">Search</a></li>
                                         @endcan
+                                        <li><a href="{{ url('quotes/car') }}">Lead List</a></li>
                                     </ul>
                                 </li>
                             @endcanany
@@ -244,20 +244,26 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @hasanyrole(RolesEnum::Renewals.'|'.RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
+                @canany([PermissionsEnum::RenewalsUpload, PermissionsEnum::RenewalsUploadedLeadList, PermissionsEnum::RenewalsUploadUpdate, PermissionsEnum::RenewalsBatches])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            <li><a href="{{ url('renewals/upload') }}">Upload & Create</a></li>
-                            <li><a href="{{ url('renewals/uploaded-leads') }}">Uploaded Leads</a></li>
-                            <li><a href="{{ url('renewals/update') }}">Upload & Update</a></li>
-                            @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
-                            <li><a href="{{ url('renewals/batches') }}">Batches</a></li>
-                            @endhasanyrole
+                            @can(PermissionsEnum::RenewalsUpload)
+                            <li><a href="{{ route('renewals-upload-create') }}">Upload & Create</a></li>
+                            @endcan
+                            @can(PermissionsEnum::RenewalsUploadedLeadList)
+                            <li><a href="{{ route('renewals-uploaded-leads-list') }}">Uploaded Leads</a></li>
+                            @endcan
+                            @can(PermissionsEnum::RenewalsUploadUpdate)
+                            <li><a href="{{ route('renewals-upload-update') }}">Upload & Update</a></li>
+                            @endcan
+                            @can(PermissionsEnum::RenewalsBatches)
+                            <li><a href="{{ route('renewals-batches') }}">Batches</a></li>
+                            @endcan
                         </ul>
                     </li>
                 </ul>
-                @endhasanyrole
+                @endcanany
                 @can(PermissionsEnum::ClaimList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>
