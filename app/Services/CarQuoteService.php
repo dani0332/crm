@@ -294,24 +294,25 @@ class CarQuoteService extends BaseService
             $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
             $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
         }
+
+        if ($request->car_value_tier) {
+
+            info('Car value at enquiry is about to change from : '.$carQuote->car_value_tier.' to : '.$request->car_value_tier.' for lead : '.$carQuote->code);
+            $carQuote->car_value_tier = $request->car_value_tier;
+            $selectedTier = $this->leadAllocationService->getTierForValue($carQuote);
+
+            info('After car value tier update the new selected tier is : '.$selectedTier->name.' for lead : '.$carQuote->code);
+
+            $carQuote->tier_id = $selectedTier->id;
+            $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+
+            info('Car tier and cost per lead updated after value change for lead : '.$carQuote->code);
+        }
+
         $carQuote->updated_by = auth()->user()->email;
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
 
         if ($deleteValuationResponse) {
-
-            if ($request->car_value_tier) {
-
-                info('Car value at enquiry is about to change from : '.$carQuote->car_value_tier.' to : '.$request->car_value_tier.' for lead : '.$carQuote->code);
-                $carQuote->car_value_tier = $request->car_value_tier;
-                $selectedTier = $this->leadAllocationService->getTierForValue($carQuote);
-
-                info('After car value tier update the new selected tier is : '.$selectedTier->name.' for lead : '.$carQuote->code);
-
-                $carQuote->tier_id = $selectedTier->id;
-                $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
-
-                info('Car tier and cost per lead updated after value change for lead : '.$carQuote->code);
-            }
 
             $carQuote->save();
 
