@@ -31,6 +31,7 @@ defineProps({
   isQuoteDocumentEnabled: Boolean,
   isBetaUser: Boolean,
   payments: Array,
+  mainPayment: Object,
   quoteRequest: Object,
   can: Object,
   paymentMethods: Object,
@@ -1488,7 +1489,7 @@ onMounted(() => {
             "
           >
             <dt class="font-medium">REASON</dt>
-            <dd></dd>
+            <dd>{{ mainPayment?.payment_status_message }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>

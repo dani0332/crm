@@ -392,6 +392,8 @@ class CRUDController extends Controller
         }
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
+        $mainPayment =  $paymentEntityModel->payments()->where('code','=', $paymentEntityModel->code)->first();
+
         $paymentMethods = $this->lookupService->getPaymentMethods();
         $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
         $isRenewalUser = false;
@@ -481,7 +483,7 @@ class CRUDController extends Controller
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
-                'paymentEntityModel', 'payments', 'paymentMethods','insuranceProviders', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'paymentEntityModel', 'payments', 'mainPayment','paymentMethods','insuranceProviders', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
                 'carMakeText', 'carModelText', 'advisor', 'tiers',
             ]));
         }
@@ -502,12 +504,13 @@ class CRUDController extends Controller
 
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
 
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail', 'model_name',
                 'allowedDuplicateLOB', 'audits', 'activities', 'advisors', 'isRenewalUser',
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
-                'paymentEntityModel', 'payments', 'paymentMethods','insuranceProviders', 'emailStatuses',
+                'paymentEntityModel', 'payments','mainPayment', 'paymentMethods','insuranceProviders', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
                 'quoteTypeId', 'tiers',
             ]));
@@ -639,6 +642,7 @@ class CRUDController extends Controller
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'quoteRequest' => $paymentEntityModel,
                 'payments' => $payments,
+                'mainPayment' => $mainPayment,
                 'paymentMethods' => $paymentMethods,
                 'sendPolicy' => (bool) $displaySendPolicyButton,
                 'can' => [
