@@ -1,5 +1,5 @@
 <script setup>
-import {useCan} from "../../../Composables/can";
+import { useCan } from '../../../Composables/can';
 
 const notification = useNotifications('toast');
 const page = usePage();
@@ -43,10 +43,12 @@ const collectionTypes = [
 ];
 
 const paymentMethodOptions = computed(() => {
-  return page.props.paymentMethods.map(method => ({
-    value: method.code,
-    label: method.name,
-  }));
+  return page.props.paymentMethods
+    .filter(opt => opt.code == 'CC')
+    .map(method => ({
+      value: method.code,
+      label: method.name,
+    }));
 });
 
 const insuranceProviderOptions = computed(() => {
@@ -56,7 +58,6 @@ const insuranceProviderOptions = computed(() => {
   }));
 });
 
-// Unused Code: Use or remove it
 const personalPlanOptions = computed(() => {
   return page.props.personalPlans.map(method => ({
     value: method.id,
@@ -169,12 +170,15 @@ const getPlanName = computed(() => {
 const paymentTableHeaders = [
   { text: 'Payment ID', value: 'code', align: 'center' },
   { text: 'Payment Status', value: 'payment_status.code' },
-  { text: 'Plan Name', value: 'personal_plan?.text' },
-  { text: 'Captured Amount', value: 'captured_amount', sortable: true },
-  { text: 'Status Change Date', value: 'payment_status_log.created_at' },
-  { text: 'Captured At', value: 'captured_at' },
+  { text: 'Plan Name', value: 'plan_name' },
+  { text: 'Authorize Amount', value: 'captured_amount', sortable: true },
+  { text: 'Status Change Date', value: 'change_date' },
   { text: 'Authorized At', value: 'authorized_at' },
+  { text: 'Captured At', value: 'captured_at' },
+  { text: 'Payment method', value: 'payment_methods_code' },
+  { text: 'Captured Amount', value: 'premium_captured' },
   { text: 'Reference', value: 'reference' },
+  { text: 'Status Detail', value: 'payment_status_message' },
   { text: 'Actions', value: 'actions', sortable: false },
 ];
 
@@ -184,7 +188,7 @@ const generateCCLink = async payment => {
 
     const response = await axios.post('/generate-payment-link', {
       quoteId: page.props.quote.id,
-      modelType: 'personal',
+      modelType: page.props.quoteType,
       paymentCode: payment.code,
       isInertia: true,
     });
@@ -221,8 +225,6 @@ const can = permission => useCan(permission);
 const hasRole = role => useHasRole(role);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
-
-
 </script>
 
 <template>
@@ -230,7 +232,11 @@ const rolesEnum = page.props.rolesEnum;
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="can(permissionsEnum.PaymentsCreate) && !can(permissionsEnum.ApprovePayments) && !hasRole(rolesEnum.PA)"
+        v-if="
+          can(permissionsEnum.PaymentsCreate) &&
+          !can(permissionsEnum.ApprovePayments) &&
+          !hasRole(rolesEnum.PA)
+        "
         size="sm"
         color="orange"
         @click="addPaymentModal"
@@ -250,7 +256,15 @@ const rolesEnum = page.props.rolesEnum;
       <template #item-code="{ code }">
         {{ code.toUpperCase() }}
       </template>
-
+      <template #item-plan_name="{ personal_plan }">
+        {{ personal_plan?.text }}
+      </template>
+      <template #item-change_date="{ payment_status_logs }">
+        {{ payment_status_logs[0]?.created_at }}
+      </template>
+      <template #item-payment_methods_code="{ payment_method }">
+        {{ payment_method?.name }}
+      </template>
       <template #item-actions="item">
         <div class="flex gap-2">
           <template v-if="can(permissionsEnum.ApprovePayments)">
@@ -325,7 +339,7 @@ const rolesEnum = page.props.rolesEnum;
             class="w-full"
             v-model="paymentForm.insurance_provider_id"
             :options="insuranceProviderOptions"
-            label="Insurance Provider**"
+            label="Insurance Provider*"
             :rules="[rules.isRequired]"
             :error="paymentForm.errors.insurance_provider_id"
           >
@@ -334,27 +348,12 @@ const rolesEnum = page.props.rolesEnum;
           <x-select
             class="w-full"
             v-model="paymentForm.plan_id"
-            :options="
-              planOptions.data?.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
+            :options="personalPlanOptions"
             label="Plan*"
             :rules="[rules.isRequired]"
             :error="paymentForm.errors.plan_id"
           >
           </x-select>
-
-          <x-input
-            class="w-full md:col-span-2"
-            label="Payment Reference*"
-            :rules="[rules.isRequired, rules.reference]"
-            v-show="paymentForm.payment_method != 'CC'"
-            v-model="paymentForm.reference"
-            :error="paymentForm.errors.reference"
-          />
-
           <div
             class="w-full md:col-span-2 flex justify-end"
             v-if="

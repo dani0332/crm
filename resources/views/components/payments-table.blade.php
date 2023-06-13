@@ -2,6 +2,10 @@
 use App\Enums\RolesEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentMethodsEnum;
+use \App\Enums\quoteTypeCode;
+
+use App\Enums\QuoteTypes;
 @endphp
 <script>
     var wasSubmitted = false;
@@ -12,7 +16,7 @@ use App\Enums\PaymentStatusEnum;
             } else {
                 wasSubmitted = true;
                 $('#create-payment-btn').text('Creating Payment').prop('disabled', true);
-                if($('#captured_amount').val() != '' && $('#payment_methods').val() != '' && ($('#payment_methods').val() == 'CC' || ($('#reference').val() != '' && $('#payment_methods').val() != 'CC')) && $('#collection_type').val() != ''){
+                if($('#captured_amount').val() != '' && $('#payment_methods').val() != '' && ($('#payment_methods').val() == 'CC' || $('#payment_methods').val()== 'IN_PL' || ($('#reference').val() != ''&& $('#payment_methods').val() != 'CC' && $('#payment_methods').val() != 'IN_PL')) && $('#collection_type').val() != ''){
                     $('#create-payment-form').submit();
                     $('#paymentCreateModel').modal('show');
                     wasSubmitted = false;
@@ -29,14 +33,14 @@ use App\Enums\PaymentStatusEnum;
     $(document).ready(function () {
         $('#add-payment-btn').on('click',function () {
             $('#captured_amount').val('');
-            $('#payment_methods').val('');
-            $('#collection_type').val('');
+            // $('#payment_methods').val('');
+            // $('#collection_type').val('');
             $('#reference').val('');
             $('#payment-reference-div').hide();
             $('#paymentCreateModel').modal('show');
         });
         $('#payment_methods').on('change',function () {
-            $(this).val() != 'CC' ? $('#payment-reference-div').show() : $('#payment-reference-div').hide();
+            $(this).val() != 'CC' &&  $(this).val() != 'IN_PL' ? $('#payment-reference-div').show() : $('#payment-reference-div').hide();
         });
 
         $('#upayment-reference-div, #payment-reference-div').hide();
@@ -57,18 +61,14 @@ use App\Enums\PaymentStatusEnum;
         $('.edit-payment-btn').on('click',function (e) {
             e.preventDefault();
             $('#ucaptured_amount').val($(this).attr('data-amount'));
-            $('#upayment_methods').val($(this).attr('data-payment-method'));
             $('#ureference').val($(this).attr('data-reference'));
-            $('#ucollection_type').val($(this).attr('data-collection'));
             $('#uplan_id').val($(this).attr('data-plan'));
             $('#uprovider_id').val($(this).attr('data-provider'));
             $('#ucode').val($(this).attr('data-code'));
+            $('#uinsurance_provider').val($(this).attr('data-insurance_provider_id'));
 
-            if($(this).attr('data-payment-method') != 'CC'){
-                $('#upayment-reference-div').show();
-            }else{
-                $('#upayment-reference-div').hide();
-            }
+            $('#upayment-reference-div').hide();
+
             $('#paymentUpdateModel').modal('show');
         });
 
@@ -103,7 +103,7 @@ use App\Enums\PaymentStatusEnum;
         <div class="x_panel">
             <div class="x_title">
                 <h2>Payments</h2>
-                @if($paymentPlainModel->plan && ! auth()->user()->hasRole(RolesEnum::PA))
+                @if(! auth()->user()->hasRole(RolesEnum::PA))
                 @cannot(PermissionsEnum::ApprovePayments)
                 @can(PermissionsEnum::PaymentsCreate)
                     <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
@@ -122,31 +122,36 @@ use App\Enums\PaymentStatusEnum;
                                 <th>Payment ID</th>
                                 <th>Payment Status</th>
                                 <th>Plan Name</th>
-                                <th>Captured Amount</th>
+                                <th>Authorize Amount</th>
                                 <th>Status Change Date</th>
-                                <th>Captured At</th>
                                 <th>Authorized At</th>
+                                <th>Captured At</th>
                                 <th>Payment method</th>
+                                <th>Captured Amount</th>
                                 <th>Reference</th>
+                                <th>Status Detail</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
+                        @if(!empty($payments))
                             @foreach ($payments as $payment)
                             <tr>
                                 <td>{{ strtoupper($payment->code)}}</td>
                                 <td>{{ $payment->paymentStatus->text }}</td>
-                                <td>{{ $paymentPlainModel->plan->text }}</td>
+                                <td>{{ !empty($paymentPlainModel->plan)? $paymentPlainModel->plan->text : "" }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
                                 <td>{{  $payment->paymentStatusLogs->last() != null ? $payment->paymentStatusLogs->last()->created_at : ''}}</td>
-                                <td>{{ $payment->captured_at }}</td>
                                 <td>{{ $payment->authorized_at }}</td>
+                                <td>{{ $payment->captured_at }}</td>
                                 <td>{{ $payment->paymentMethod->name }}</td>
+                                <td>{{ $payment->premium_captured}}</td>
                                 <td>{{$payment->reference}}</td>
+                                <td>{{$payment->payment_status_message}}</td>
                                 <td>
                                     @cannot(PermissionsEnum::ApprovePayments)
-                                        @if($payment->paymentMethod->code == 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID &&
-                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && 
+                                        @if(($payment->paymentMethod->code == 'CC' ||  $payment->paymentMethod->code == 'IN_PL') && $payment->payment_status_id != PaymentStatusEnum::PAID &&
+                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
                                         ! auth()->user()->hasRole(RolesEnum::PA))
                                             <button
                                             data-modelType="{{$modeltype}}"
@@ -155,21 +160,20 @@ use App\Enums\PaymentStatusEnum;
                                             class="btn btn-sm btn-success generateCCLink" style="float: left;">Copy Link</button>
                                         @endif
                                         @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
-                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && 
+                                        $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED &&
                                         ! auth()->user()->hasRole(RolesEnum::PA))
                                          @can(PermissionsEnum::PaymentsEdit)
                                             <button class="btn btn-primary btn-sm edit-payment-btn" data-code="{{$payment->code}}"
                                                 data-reference="{{$payment->reference}}"
                                                 data-amount="{{$payment->captured_amount}}"
-                                                data-plan="{{$paymentPlainModel->plan->text}}"
-                                                data-collection="{{$payment->collection_type}}"
-                                                data-payment-method="{{$payment->paymentMethod->code}}"
-                                                data-provider="{{$paymentPlainModel->plan->insuranceProvider->text}}">Edit</button>
+                                                data-plan="{{!empty($paymentPlainModel->plan)? $paymentPlainModel->plan->text : ""}}"
+                                                data-insurance_provider_id="{{!empty($payment->insurance_provider_id)? $payment->insurance_provider_id : ""}}"
+                                                data-provider="{{ !empty($paymentPlainModel->plan->insuranceProvider)? $paymentPlainModel->plan->insuranceProvider->text :"" }}">Edit</button>
                                             @endcan
                                         @endif
                                     @endcannot
                                     @can(PermissionsEnum::ApprovePayments)
-                                        @if( $payment->paymentMethod->code != 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED && 
+                                        @if( $payment->paymentMethod->code != 'CC' && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED &&
                                         ! auth()->user()->hasRole(RolesEnum::PA))
                                             <button class="btn btn-success btn-sm" id="approve-paymnet-btn" data-code="{{$payment->code}}"
                                                 data-reference="{{$payment->reference}}"
@@ -189,6 +193,7 @@ use App\Enums\PaymentStatusEnum;
                                 </td>
                             </tr>
                             @endforeach
+                        @endif
                         </tbody>
                     </table>
                     <span class="alert alert-success" id="generateCCLinkMsg"
@@ -209,9 +214,14 @@ use App\Enums\PaymentStatusEnum;
                 @csrf
                 <input type="hidden" name="quote_id" value="{{ $paymentPlainModel->id }}">
                 <input type="hidden" name="modelType" value="{{ $modeltype }}">
-                <input type="hidden" name="plan_id" value="{{ $paymentPlainModel->plan_id }}">
-                <input type="hidden" name="insurance_provider_id"
-                    value="{{ $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->id : null }}">
+                @if($modeltype == quoteTypeCode::Car || $modeltype == quoteTypeCode::Travel)
+                    <input type="hidden" name="plan_id" value="{{ $paymentPlainModel->plan_id }}">
+                    <input type="hidden" name="insurance_provider_id"
+                           value="{{ $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->id : null }}">
+
+                @endif
+
+
                 <div class="modal-header">
                     <h5 class="modal-title" style="font-size: 16px !important;">
                         <i class="fa fa-cog" aria-hidden="true"></i>
@@ -225,7 +235,7 @@ use App\Enums\PaymentStatusEnum;
                     <div class="col-md-12">
                         <div class="item form-group">
                             <div class="col">
-                                <span class="col-form-label col-md-6 col-sm-6">Capture Amount<span
+                                <span class="col-form-label col-md-6 col-sm-6">Price Including VAT<span
                                         class="required">*</span></span>
                                 <input id="captured_amount" type="number" class="form-control" name="captured_amount"
                                     placeholder="Amount" />
@@ -235,10 +245,8 @@ use App\Enums\PaymentStatusEnum;
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Collection Type<span
                                         class="required">*</span></span>
-                                <select class="form-control" name="collection_type" id="collection_type">
-                                    <option value="">Select Collection Type</option>
-                                    <option value="broker">Broker</option>
-                                    <option value="insurer">Insurer</option>
+                                <select class="form-control" name="collection_type" id="collection_type" readonly>
+                                    <option value="broker" selected="selected">Broker</option>
                                 </select>
                                 <span class="text-danger" style="display: none" id="collection_type_validation">Please
                                     select collection type</span>
@@ -249,61 +257,64 @@ use App\Enums\PaymentStatusEnum;
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Payment Method<span
                                         class="required">*</span></span>
-                                <select id='payment_methods' class="form-control" name='payment_methods'>
-                                    <option value="">Select Payment Method</option>
+                                <select id='payment_methods' class="form-control" name='payment_methods' readonly >
                                     @php
-                                    $parentPaymentMethods = $paymentMethods->whereNull('parent_code');
-                                    $childPaymentMethods = $paymentMethods->whereNotNull('parent_code');
+                                    $parentPaymentMethods = $paymentMethods->where('code','=',PaymentMethodsEnum::CreditCard);
                                     @endphp
                                     @foreach ($parentPaymentMethods as $payment_method)
-                                    @if($childPaymentMethods->where('parent_code', $payment_method->code)->count() >
-                                    0)
-                                    <optgroup label="{{ $payment_method->name }}">
-                                        @foreach ($childPaymentMethods->where('parent_code', $payment_method->code)
-                                        as
-                                        $childPaymentMethod)
-                                        <option value="{{ $childPaymentMethod->code }}">{{ $childPaymentMethod->name
-                                            }}
-                                        </option>
-                                        @endforeach
-                                    </optgroup>
-                                    @else
-                                    <option value="{{ $payment_method->code }}">{{ $payment_method->name }}</option>
-                                    @endif
+                                        <option value="{{ $payment_method->code }}" selected="selected">{{ $payment_method->name }}</option>
                                     @endforeach
                                 </select>
                                 <span class="text-danger" style="display: none" id="payment_methods_validation">Please
                                     select payment method</span>
                             </div>
                         </div>
+
                         <br />
-                        <div class="item form-group">
-                            <div class="col">
-                                <div class="input-group">
-                                    <label>Provider Name : </label> &nbsp;&nbsp;&nbsp;<b id="provider_id">{{
+                        @if($modeltype == quoteTypeCode::Car || $modeltype == quoteTypeCode::Travel)
+                            <div class="item form-group">
+                                <div class="col">
+                                    <div class="input-group">
+                                        <label>Provider Name : </label> &nbsp;&nbsp;&nbsp;<b id="provider_id">{{
                                         $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->text :
                                         'Not Found' }}</b>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col">
-                                <div class="input-group">
-                                    <label>Plan Name : </label> &nbsp;&nbsp;&nbsp;<b
-                                        id="plan_id">{{$paymentPlainModel->plan ? $paymentPlainModel->plan->text : 'Not
+                                <div class="col">
+                                    <div class="input-group">
+                                        <label>Plan Name : </label> &nbsp;&nbsp;&nbsp;<b
+                                            id="plan_id">{{$paymentPlainModel->plan ? $paymentPlainModel->plan->text : 'Not
                                         Found'}}</b>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="item form-group" class="payment-reference-div" id="payment-reference-div">
-                            <div class="col">
+                            <div class="item form-group" class="payment-reference-div" id="payment-reference-div">
+                                <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Payment Reference<span
                                         class="required">*</span></span>
-                                        <input placeholder="Payment Reference" class="form-control"
-                                        maxlength="20" id="reference" rows="5" name="reference" />
+                                    <input placeholder="Payment Reference" class="form-control"
+                                           maxlength="20" id="reference" rows="5" name="reference" />
                                     <span class="text-danger" style="display: none"  id="reference_validation">Please
                                         add
                                         payment reference</span>
+                                </div>
                             </div>
-                        </div>
+                        @else
+                            <div class="item form-group">
+                                <div class="col">
+                                <span class="col-form-label col-md-6 col-sm-6">Provider Name<span
+                                        class="required">*</span></span>
+                                    <select  class="form-control" name='insurance_provider_id'>
+                                        @php
+                                            @endphp
+                                        @foreach ($insuranceProviders as $item)
+                                            <option value="{{ $item->id }}">{{ $item->text }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        @endif
+
                     </div>
                 </div>
                 <div class="modal-footer" style="justify-content: center;">
@@ -328,9 +339,13 @@ use App\Enums\PaymentStatusEnum;
                 @csrf
                 <input type="hidden" name="quote_id" value="{{ $paymentPlainModel->id }}">
                 <input type="hidden" name="modelType" value="{{ $modeltype }}">
-                <input type="hidden" name="plan_id" value="{{ $paymentPlainModel->plan_id }}">
-                <input type="hidden" name="insurance_provider_id"
-                    value="{{ $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->id : null }}">
+
+                @if($modeltype == quoteTypeCode::Car || $modeltype == quoteTypeCode::Travel)
+
+                    <input type="hidden" name="plan_id" value="{{ $paymentPlainModel->plan_id }}">
+                    <input type="hidden" name="insurance_provider_id"
+                           value="{{ $paymentPlainModel->plan ? $paymentPlainModel->plan->insuranceProvider->id : null }}">
+                @endif
                 <input type="hidden" name="paymentCode" id="ucode" value="" />
                 <div class="modal-header">
                     <h5 class="modal-title" style="font-size: 16px !important;">
@@ -345,7 +360,7 @@ use App\Enums\PaymentStatusEnum;
                     <div class="col-md-12">
                         <div class="item form-group">
                             <div class="col">
-                                <span class="col-form-label col-md-6 col-sm-6">Capture Amount<span
+                                <span class="col-form-label col-md-6 col-sm-6">Price Including VAT<span
                                         class="required">*</span></span>
                                 <input id="ucaptured_amount" type="number" class="form-control" name="captured_amount"
                                     placeholder="Amount" />
@@ -355,10 +370,8 @@ use App\Enums\PaymentStatusEnum;
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Collection Type<span
                                         class="required">*</span></span>
-                                <select class="form-control" name="collection_type" id="ucollection_type">
-                                    <option value="">Select Collection Type</option>
-                                    <option value="broker">Broker</option>
-                                    <option value="insurer">Insurer</option>
+                                <select class="form-control" name="collection_type" id="ucollection_type" readonly>
+                                    <option value="broker" selected="selected">Broker</option>
                                 </select>
                                 <span class="text-danger" style="display: none" id="ucollection_type_validation">Please
                                     select collection type</span>
@@ -369,27 +382,12 @@ use App\Enums\PaymentStatusEnum;
                             <div class="col">
                                 <span class="col-form-label col-md-6 col-sm-6">Payment Method<span
                                         class="required">*</span></span>
-                                <select id='upayment_methods' class="form-control" name='payment_methods'>
-                                    <option value="">Select Payment Method</option>
+                                <select id='upayment_methods' class="form-control" name='payment_methods' readonly>
                                     @php
-                                    $parentPaymentMethods = $paymentMethods->whereNull('parent_code');
-                                    $childPaymentMethods = $paymentMethods->whereNotNull('parent_code');
+                                        $parentPaymentMethods = $paymentMethods->where('code','=',PaymentMethodsEnum::CreditCard);
                                     @endphp
                                     @foreach ($parentPaymentMethods as $payment_method)
-                                    @if($childPaymentMethods->where('parent_code', $payment_method->code)->count() >
-                                    0)
-                                    <optgroup label="{{ $payment_method->name }}">
-                                        @foreach ($childPaymentMethods->where('parent_code', $payment_method->code)
-                                        as
-                                        $childPaymentMethod)
-                                        <option value="{{ $childPaymentMethod->code }}">{{ $childPaymentMethod->name
-                                            }}
-                                        </option>
-                                        @endforeach
-                                    </optgroup>
-                                    @else
-                                    <option value="{{ $payment_method->code }}">{{ $payment_method->name }}</option>
-                                    @endif
+                                        <option value="{{ $payment_method->code }}" selected="selected">{{ $payment_method->name }}</option>
                                     @endforeach
                                 </select>
                                 <span class="text-danger" style="display: none" id="upayment_methods_validation">Please
@@ -397,6 +395,9 @@ use App\Enums\PaymentStatusEnum;
                             </div>
                         </div>
                         <br />
+                        @if($modeltype == quoteTypeCode::Car || $modeltype == quoteTypeCode::Travel)
+
+
                         <div class="item form-group">
                             <div class="col">
                                 <div class="input-group">
@@ -424,6 +425,19 @@ use App\Enums\PaymentStatusEnum;
                                         payment reference</span>
                             </div>
                         </div>
+                        @else
+                            <div class="item form-group">
+                                <div class="col">
+                                <span class="col-form-label col-md-6 col-sm-6">Provider Name<span
+                                        class="required">*</span></span>
+                                    <select  class="form-control"  id='uinsurance_provider'name='insurance_provider_id'>
+                                        @foreach ($insuranceProviders as $item)
+                                            <option value="{{ $item->id }}">{{ $item->text }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        @endif
                     </div>
                 </div>
                 <div class="modal-footer" style="justify-content: center;">

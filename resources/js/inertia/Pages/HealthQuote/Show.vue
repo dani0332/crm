@@ -35,6 +35,7 @@ defineProps({
   can: Object,
   paymentMethods: Object,
   sendPolicy: Boolean,
+  insuranceProviders: Array,
 });
 
 const page = usePage();
@@ -1505,15 +1506,16 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- <PaymentTable
+    <PaymentTable
       v-if="isBetaUser"
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
       :quote="quote"
-    /> -->
+    />
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>

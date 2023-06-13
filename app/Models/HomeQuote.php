@@ -38,4 +38,8 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->hasOne(HomeQuoteRequestDetail::class, 'home_quote_request_id', 'id');
     }
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
+    }
 }
