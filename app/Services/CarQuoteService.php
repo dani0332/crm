@@ -294,10 +294,34 @@ class CarQuoteService extends BaseService
             $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
             $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
         }
+
+        if ($request->car_value_tier) {
+
+            info('Car value at enquiry is about to change from : '.$carQuote->car_value_tier.' to : '.$request->car_value_tier.' for lead : '.$carQuote->code);
+
+            $carQuote->car_value_tier = $request->car_value_tier;
+
+            $originalValue = $carQuote->car_value; // taking backup of original car_value
+
+            $carQuote->car_value = $request->car_value_tier; // adding value tier because tier function uses car_value
+
+            $selectedTier = $this->leadAllocationService->getTierForValue($carQuote);
+
+            $carQuote->car_value = $originalValue; // adding back the original value since tier is now selected.
+
+            info('After car value tier update the new selected tier is : '.$selectedTier->name.' for lead : '.$carQuote->code);
+
+            $carQuote->tier_id = $selectedTier->id;
+            $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+
+            info('Car tier and cost per lead updated after value change for lead : '.$carQuote->code);
+        }
+
         $carQuote->updated_by = auth()->user()->email;
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
 
         if ($deleteValuationResponse) {
+
             $carQuote->save();
 
             if (isset($request->return_to_view)) {
@@ -846,7 +870,7 @@ class CarQuoteService extends BaseService
     {
         return [
             'create' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id,policy_start_date,advisor_assigned_date,car_value,show_renewal_upload_leads',
-            'list' => 'policy_start_date,transapp_code,seat_capacity,cylinder,has_ncd_supporting_documents,back_home_license_held_for_id,parent_duplicate_quote_id,trim,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,emirate_of_registration_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,cost_per_lead,car_value_tier,renewal_batch,show_renewal_upload_leads',
+            'list' => 'policy_start_date,transapp_code,seat_capacity,cylinder,has_ncd_supporting_documents,back_home_license_held_for_id,parent_duplicate_quote_id,trim,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,emirate_of_registration_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,renewal_batch,show_renewal_upload_leads',
             'update' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,source,transapp_code,previous_quote_policy_premium,quote_status_id,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id,policy_start_date,advisor_assigned_date,show_renewal_upload_leads',
             'show' => 'is_modified,is_gcc_standard,trim,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,quote_status_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,renewal_import_code,tier_id,visit_count,id,renewal_batch,policy_start_date,is_ecommerce,quote_link,transapp_code,order_reference,payment_reference,policy_number,renewal_expiry_date,lost_reason,show_renewal_upload_leads',
         ];
