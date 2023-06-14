@@ -32,6 +32,7 @@ use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
+use App\Services\CycleQuoteService;
 use App\Services\DropdownSourceService;
 use App\Services\EmailDataService;
 use App\Services\EmailStatusService;
@@ -68,6 +69,7 @@ class CRUDController extends Controller
     protected $homeQuoteService;
     protected $businessQuoteService;
     protected $petQuoteService;
+    protected $cycleQuoteService;
     protected $userService;
     protected $activityService;
     protected $emailStatusService;
@@ -93,6 +95,7 @@ class CRUDController extends Controller
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
         PetQuoteService $petQuoteService,
+        CycleQuoteService $cycleQuoteService,
         UserService $userService,
         Request $request,
         ActivitiesService $activityService,
@@ -117,6 +120,7 @@ class CRUDController extends Controller
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
         $this->petQuoteService = $petQuoteService;
+        $this->cycleQuoteService = $cycleQuoteService;
         $this->activityService = $activityService;
         $this->userService = $userService;
         $this->emailStatusService = $emailStatusService;
@@ -837,7 +841,7 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
+        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet,Cycle';
         $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
         $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
         $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
