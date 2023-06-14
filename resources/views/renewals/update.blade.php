@@ -42,7 +42,7 @@
                     @if(session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
-                    <form id="demo-form2" method='post' action="{{ url('renewals/upload-update') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                    <form id="demo-form2" method='post' action="{{ route('upload-update') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                         {{csrf_field()}}
                         <div class="item form-group">
                             <div class="col-lg-6 offset-lg-3">
