@@ -22,7 +22,7 @@ let availableFilters = {
   created_at_start: '',
   created_at_end: '',
   quote_status: [],
-  advisors: [],
+  advisor_id: [],
   is_ecommerce: '',
   is_renewal: '',
   page: 1,
@@ -110,7 +110,7 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.roles[0].name
-      ? advisor.name + '-' + advisor.roles[0]?.name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
       : advisor.name,
   }));
 });
@@ -241,7 +241,7 @@ function onAssignLead(isValid) {
           "
         />
         <ComboBox
-          v-model="filters.advisors"
+          v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorOptions"
@@ -310,19 +310,18 @@ function onAssignLead(isValid) {
       fixed-checkbox
     >
       <template #item-uuid="{ code, uuid }">
-        <a
-          target="_blank"
-          v-if="can(permissionsEnum.PetQuotesView)"
+        <Link
+          v-if="can(permissionsEnum.PetQuotesShow)"
           :href="`/personal-quotes/pet/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </a>
+        </Link>
         <span v-else>{{ code }}</span>
       </template>
 
       <template #item-advisor="{ advisor }">
-        {{ advisor?.email }}
+        {{ advisor?.name }}
       </template>
 
       <template #item-quote_status="{ quote_status }">
@@ -345,6 +344,11 @@ function onAssignLead(isValid) {
       <template #item-is_neutered="{ pet_quote }">
         {{ pet_quote?.is_neutered ? 'Yes' : 'No' }}
       </template>
+
+      <template #item-breed_of_pet1="{ pet_quote }">
+        {{ pet_quote?.breed_of_pet1 }}
+     </template>
+
       <template #item-is_microchipped="{ pet_quote }">
         {{ pet_quote?.is_microchipped ? 'Yes' : 'No' }}
       </template>

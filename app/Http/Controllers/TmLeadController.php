@@ -102,6 +102,7 @@ class TmLeadController extends Controller
                 isset($request->searchType) && ! empty($request->searchType)
                 && isset($request->tmLeadsStartDate) && ! empty($request->tmLeadsStartDate)
                 && isset($request->tmLeadsEndDate) && ! empty($request->tmLeadsEndDate)
+                && ($request->searchType != 'cdbID' && $request->searchType != 'emailAddress' && $request->searchType != 'phoneNumber')
             ) {
                 if ($request->tmLeadsEndDate >= $request->tmLeadsStartDate) {
                     $tmLeadsDateFrom = Carbon::createFromFormat('Y-m-d', $request->tmLeadsStartDate)->startOfDay()->toDateTimeString();

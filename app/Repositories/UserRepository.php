@@ -16,6 +16,8 @@ class UserRepository extends BaseRepository
     {
         if ($modelType == QuoteTypes::PET->value) {
             $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR'];
+        } elseif ($modelType == QuoteTypes::CAR->value) {
+            $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_DEPUTY_MANAGER'];
         } else {
             $roles = [strtoupper($modelType).'_ADVISOR'];
         }

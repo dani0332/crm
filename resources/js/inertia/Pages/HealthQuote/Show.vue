@@ -950,6 +950,20 @@ const sendPolicyToClient = () => {
   }
 };
 
+// temp fix for old structure notification
+watch(
+  () => page.props.flash,
+  () => {
+    if (page.props.flash && page.props.flash.success) {
+      notification.success({
+        title: page.props.flash.success,
+        position: 'top',
+      });
+    }
+  },
+  { immediate: true },
+);
+
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,

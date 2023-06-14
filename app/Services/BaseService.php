@@ -242,7 +242,7 @@ class BaseService
         return $activities;
     }
 
-    public function getRenewalAdvisors(): array
+    public function getRenewalAdvisors()
     {
         $crudService = app()->make(CRUDService::class);
         $renewalAdvisors = [];

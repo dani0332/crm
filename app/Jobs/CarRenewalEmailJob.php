@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
+use App\Models\User;
 use App\Services\EmailDataService;
 use App\Services\LeadAllocationService;
 use App\Services\SIBService;
@@ -43,6 +44,11 @@ class CarRenewalEmailJob implements ShouldQueue
         info('sendRenewalLeadEmail -- start');
 
         $renewalEmailRecipients = $leadAllocationService->getAppStorageValueByKey('RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
+
+        if (isset($this->lead->advisor_id)) {
+            $renewalEmailRecipients .= ','.User::where('id', $this->lead->advisor_id)->first()->email;
+        }
+
         $renewalEmailCcRecipients = $leadAllocationService->getAppStorageValueByKey('RENEWAL_ALLOCATION_LEAD_EMAIL_CC');
 
         $emailData = $emailDataService->generateTierREmailData($this->lead);

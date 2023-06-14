@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use App\Models\User;
@@ -172,5 +173,26 @@ trait TeamHierarchyTrait
                 FROM team_hierarchy;"));
 
         return $teams;
+    }
+
+    public function getAdvisorsByTeamId($teamId)
+    {
+        $userIds = User::join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
+            ->join('roles as r', 'r.id', '=', 'mr.role_id')
+            ->where(function ($query) use ($teamId) {
+                $query->whereIn('users.id', function ($subQuery) use ($teamId) {
+                    $subQuery->select('user_id')
+                        ->from('user_team')
+                        ->whereIn('team_id', (array) $teamId);
+                })->orWhereIn('sub_team_id', (array) $teamId);
+            })->where('users.is_active', 1)->where('r.name', RolesEnum::CarAdvisor)
+            ->pluck('users.id')
+            ->toArray();
+
+        $users = User::whereIn('id', $userIds)
+            ->select('id', 'name')
+            ->get();
+
+        return $users;
     }
 }

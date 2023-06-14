@@ -11,7 +11,6 @@ use App\Http\Controllers\BaseDiscountController;
 use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
-use App\Http\Controllers\CarQuoteController;
 use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\CarRepairTypeController;
 use App\Http\Controllers\ClaimController;
@@ -29,7 +28,6 @@ use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\MembersDetailController;
-use App\Http\Controllers\MyLeadsController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\ReasonController;
@@ -89,12 +87,17 @@ Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTie
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
-Route::middleware(['auth', 'last_login_check'])->get('/home', function () {
-    return view('home');
-});
-
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+    Route::get('leadsearch', function () {
+        return redirect('home');
+    });
+
+    Route::get('home', function () {
+        return view('home');
+    });
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
+    Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
+
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
         Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard'])->name('tpl-dashboard-view');
@@ -103,6 +106,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport'])->name('lead-distribution-report-view');
         Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
         Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport'])->name('advisor-performance-report-view');
+
+        Route::get('/personal-quotes/car/car-quotes-search', [\App\Http\Controllers\V2\CarQuoteController::class, 'index'])->name('car-quotes-search');
 
         if (in_array(quoteTypeCode::Pet, newUi())) {
             Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));
@@ -125,6 +130,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
         Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
+        Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction');
+
+        Route::group(['prefix' => 'renewals'], function () {
+            Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals'])->name('renewals-upload-create');
+            Route::get('uploaded-leads', [RenewalsUploadController::class, 'index'])->name('renewals-uploaded-leads-list');
+            Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
+            Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
+        });
+
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
@@ -137,7 +151,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
-    Route::get('getOverDueFollowupLeads', [MyLeadsController::class, 'getOverDueFollowupLeads'])->name('getOverDueFollowupLeads');
 
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
@@ -173,7 +186,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
-    Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
+    Route::post('/lead-allocation/update-availability', [LeadAllocationController::class, 'updateAvailability']);
+    Route::post('/lead-allocation/update-cap', [LeadAllocationController::class, 'updateCaps']);
     Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
@@ -187,21 +201,17 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('documents/delete', [QuoteDocumentController::class, 'destroy']);
 
     Route::group(['prefix' => 'renewals'], function () {
-        Route::resource('uploaded-leads', RenewalsUploadController::class);
+        Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');
+        Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate'])->name('upload-update');
+        Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses'])->name('batch-plans-processes');
+        Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batch-renewal-detail');
+        Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans'])->name('batch-fetch-plans');
+        Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('run-batch-process');
         Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed']);
         Route::get('uploaded-leads/{id}/validation-failed/download', [RenewalsUploadController::class, 'downloadValidationFailed']);
         Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);
         Route::get('uploaded-leads/{id}/validation-passed/quote-redirect/{leadId}', [RenewalsUploadController::class, 'viewQuoteRedirect'])->name('viewQuoteRedirect');
-        Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals']);
-        Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('listRenewalBatches');
-        Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batchDetail');
-        Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('runBatchProcess');
         Route::post('upload-process', [RenewalsUploadController::class, 'renewalsUploadProcess']);
-        Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate']);
-        Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate']);
-        Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses']);
-        Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans']);
-        Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
 
     Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
@@ -219,21 +229,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'quotes'], function () {
-        Route::resource('carquotes', CarQuoteController::class);
-        Route::get('carquotes/car_resubmit/{id}', [CarQuoteController::class, 'car_resubmit_capi'])->name('car_resubmit_capi');
-        Route::resource('healthquotes', HealthQuoteController::class);
         Route::resource('health', CRUDController::class);
         Route::resource('car', CRUDController::class);
-
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
         Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);
-
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
         if (in_array(quoteTypeCode::Business, newUi())) {
-            Route::get('business/cards', [BusinessQuoteController::class, 'cardsView']);
+            Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView']);
             Route::resource('business', BusinessQuoteController::class);
         }
         Route::resource('travel', CRUDController::class);
@@ -259,6 +264,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('UpdateLeadManualProcess', [CRUDController::class, 'UpdateLeadManualProcess'])->name('UpdateLeadManualProcess');
         Route::post('records', [CRUDController::class, 'loadMoreRecords'])->name('loadMoreRecords');
         Route::post('records/search', [CRUDController::class, 'searchLead'])->name('searchLead');
+        Route::get('lead-history', [CRUDController::class, 'getLeadHistoryLogs'])->name('list-lead-history');
         Route::get('getLeadHistory', [CRUDController::class, 'getLeadHistory'])->name('getLeadHistory');
         Route::post('{quoteType}/{quoteId}/car-plan-manual-process', [CRUDController::class, 'carPlanManualProcess'])->name('carPlanManualProcess');
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);
@@ -275,12 +281,15 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         if (in_array(quoteTypeCode::Travel, newUi()) || in_array(quoteTypeCode::Life, newUi())) {
-            Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('trave.cards');
+            Route::get('travel-cards', [TravelController::class, 'cardsView'])->name('travel.cards');
             Route::resource('travel', TravelController::class);
             Route::get('travel/{quoteId}/plan_details/{planId}', [TravelController::class, 'planDetails'])->name('plan_details');
         } else {
             Route::get('travel/{quoteId}/plan_details/{planId}', [CRUDController::class, 'travel_plan_details'])->name('plan_details');
         }
+
+        Route::post('car/change-insurer', [\App\Http\Controllers\V2\CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
+
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
@@ -408,8 +417,8 @@ Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'Proce
 
 Route::group(['middleware' => ['auth.rest']], function () {
     // ftc-form-delete schedule on 7th June 2023
-//    Route::resource('ftcform', FtcFormController::class);
-//    Route::resource('assignOE', FtcFormController::class);
+    //    Route::resource('ftcform', FtcFormController::class);
+    //    Route::resource('assignOE', FtcFormController::class);
     Route::group(['prefix' => 'form'], function () {
         Route::GET('/{form}', [FormController::class, 'index']);
         Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);

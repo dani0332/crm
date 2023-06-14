@@ -65,31 +65,99 @@ const onLogout = () => {
             <x-collapse
               show-icon
               :expanded="
-                link.children.some(child => $page.url.startsWith(child.url))
+                link.children.some(child => $page.url.startsWith(child.url)) ||
+                link.children.some(child =>
+                  child.children.some(grandchild =>
+                    $page.url.startsWith(grandchild.url),
+                  ),
+                )
               "
             >
               <template #default>
-                <div class="pl-3 py-2.5 hover:bg-black/10">
+                <div
+                  :class="{
+                    'bg-black/10': link.children.some(
+                      child =>
+                        $page.url.startsWith(child.url) ||
+                        link.children.some(child =>
+                          child.children.some(grandchild =>
+                            $page.url.startsWith(grandchild.url),
+                          ),
+                        ),
+                    ),
+                  }"
+                  class="pl-3 py-2.5 hover:bg-black/10"
+                >
                   {{ link.title }}
                 </div>
               </template>
 
               <template #content>
                 <template v-for="child in link.children">
-                  <a
-                    :href="child.url"
-                    class="pl-3 py-2 flex gap-2 items-center hover:bg-black/10"
-                    :class="{
-                      '!bg-primary-800': $page.url.startsWith(child.url),
-                    }"
-                  >
-                    <x-icon
-                      :icon="
-                        child.attributes.icon ? child.attributes.icon : 'box'
+                  <template v-if="child.children.length > 0">
+                    <x-collapse
+                      show-icon
+                      :expanded="
+                        child.children.some(grandchild =>
+                          $page.url.startsWith(grandchild.url),
+                        )
                       "
-                    />
-                    <span class="pt-1">{{ child.title }}</span>
-                  </a>
+                    >
+                      <template #default>
+                        <a
+                          href="#"
+                          class="pl-4 py-2.5 flex gap-2 items-center hover:bg-black/10"
+                          :class="{
+                            'bg-black/10': child.children.some(grandchild =>
+                              $page.url.startsWith(grandchild.url),
+                            ),
+                          }"
+                        >
+                          <x-icon
+                            :icon="
+                              child.attributes.icon
+                                ? child.attributes.icon
+                                : 'box'
+                            "
+                          />
+                          <span class="pt-1">{{ child.title }}</span>
+                        </a>
+                      </template>
+
+                      <template #content>
+                        <template v-for="grandchild in child.children">
+                          <a
+                            :href="grandchild.url"
+                            class="pl-10 py-2 flex gap-2 items-center hover:bg-black/10"
+                            :class="{
+                              '!bg-primary-800': $page.url.startsWith(
+                                grandchild.url,
+                              ),
+                            }"
+                          >
+                            <span class="text-primary-100"> ◉ </span>
+                            <span>{{ grandchild.title }}</span>
+                          </a>
+                        </template>
+                      </template>
+                    </x-collapse>
+                  </template>
+                  <template v-else>
+                    <a
+                      :href="child.url"
+                      class="pl-4 py-2 flex gap-2 items-center hover:bg-black/10"
+                      :class="{
+                        '!bg-primary-800': $page.url.startsWith(child.url),
+                      }"
+                    >
+                      <x-icon
+                        :icon="
+                          child.attributes.icon ? child.attributes.icon : 'box'
+                        "
+                      />
+                      <span class="pt-1">{{ child.title }}</span>
+                    </a>
+                  </template>
                 </template>
               </template>
             </x-collapse>
