@@ -20,7 +20,8 @@ class AddNotesToQuoteStatusLogTable extends Migration
             }
 
             if (! Schema::hasColumn('quote_status_log', 'created_by')) {
-                $table->unsignedBigInteger('created_by')->default(null);
+                $table->unsignedBigInteger('created_by')->nullable()->default(null);
+                $table->foreign('created_by')->references('id')->on('users');
             }
         });
     }
