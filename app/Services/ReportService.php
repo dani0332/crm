@@ -80,45 +80,12 @@ class ReportService extends BaseService
                 $query->whereBetween($quoteRequestTable.'.created_at', [$dateFrom, $dateTo]);
             }
             $records = $query->simplePaginate(10)->withQueryString();
-            $records->map(function ($item) use ($groupByOne, $groupByTwo) {
 
-                if (! empty($groupByOne) && ! empty($groupByTwo)) {
-                    if ($groupByOne == 'utm_source' && $groupByTwo == 'utm_source') {
-                        $item['utm_medium'] = '';
-                        $item['utm_campaign'] = '';
-                    } elseif ($groupByOne == 'utm_source' && $groupByTwo == 'utm_medium') {
-                        $item['utm_campaign'] = '';
-                    } elseif ($groupByOne == 'utm_source' && $groupByTwo == 'utm_campaign') {
-                        $item['utm_medium'] = '';
-                    } elseif ($groupByOne == 'utm_medium' && $groupByTwo == 'utm_source') {
-                        $item['utm_campaign'] = '';
-                    } elseif ($groupByOne == 'utm_medium' && $groupByTwo == 'utm_medium') {
-                        $item['utm_source'] = '';
-                        $item['utm_campaign'] = '';
-                    } elseif ($groupByOne == 'utm_medium' && $groupByTwo == 'utm_campaign') {
-                        $item['utm_source'] = '';
-                    } elseif ($groupByOne == 'utm_campaign' && $groupByTwo == 'utm_source') {
-                        $item['utm_medium'] = '';
-                    } elseif ($groupByOne == 'utm_campaign' && $groupByTwo == 'utm_medium') {
-                        $item['utm_source'] = '';
-                    } elseif ($groupByOne == 'utm_campaign' && $groupByTwo == 'utm_campaign') {
-                        $item['utm_source'] = '';
-                        $item['utm_medium'] = '';
-                    }
+            $records->map(function ($item) use ($groupBy) {
 
-                } else {
-                    if ($groupByOne == 'utm_source') {
-                        $item['utm_medium'] = '';
-                        $item['utm_campaign'] = '';
-                    } elseif ($groupByOne == 'utm_medium') {
-                        $item['utm_source'] = '';
-                        $item['utm_campaign'] = '';
-                    } elseif ($groupByOne == 'utm_campaign') {
-                        $item['utm_source'] = '';
-                        $item['utm_medium'] = '';
-                    }
-
-                }
+                $item['utm_source'] = in_array('utm_source', $groupBy) ? $item['utm_source'] : '';
+                $item['utm_medium'] = in_array('utm_medium', $groupBy) ? $item['utm_medium'] : '';
+                $item['utm_campaign'] = in_array('utm_campaign', $groupBy) ? $item['utm_campaign'] : '';
 
                 return $item;
             });
