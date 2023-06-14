@@ -187,7 +187,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
-    Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
+    Route::post('/lead-allocation/update-availability', [LeadAllocationController::class, 'updateAvailability']);
+    Route::post('/lead-allocation/update-cap', [LeadAllocationController::class, 'updateCaps']);
     Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
@@ -264,6 +265,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('UpdateLeadManualProcess', [CRUDController::class, 'UpdateLeadManualProcess'])->name('UpdateLeadManualProcess');
         Route::post('records', [CRUDController::class, 'loadMoreRecords'])->name('loadMoreRecords');
         Route::post('records/search', [CRUDController::class, 'searchLead'])->name('searchLead');
+        Route::get('lead-history', [CRUDController::class, 'getLeadHistoryLogs'])->name('list-lead-history');
         Route::get('getLeadHistory', [CRUDController::class, 'getLeadHistory'])->name('getLeadHistory');
         Route::post('{quoteType}/{quoteId}/car-plan-manual-process', [CRUDController::class, 'carPlanManualProcess'])->name('carPlanManualProcess');
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);

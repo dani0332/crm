@@ -2172,6 +2172,49 @@ $(document).ready(function () {
       },
     });
   });
+
+  $('#loadQuoteStatusLog').on('click', function (e) {
+    e.preventDefault();
+    var modelType = $('input[name=modelType]').val().toLowerCase();
+    var leadId = $('input[name=leadId]').val();
+    let quoteTypeId = $(this).attr('data-quote-type-id');
+
+    $.ajax({
+      url:
+        '/quotes/lead-history?modelType=' + modelType + '&recordId=' + leadId + '&quoteTypeId=' + quoteTypeId,
+      type: 'GET',
+      success: function (response) {
+        var html = '';
+        if (response.length > 0) {
+          for (let i = 0; i < response.length; i++) {
+            const leadHistory = response[i];
+            html =
+              html +
+              '<tr><td>' +
+                (leadHistory?.created_at == null ? '' : leadHistory.created_at) +
+              '</td><td>' +
+                (leadHistory?.created_by?.email ? leadHistory.created_by.email : '') +
+                '</td><td>' +
+                (leadHistory?.previous_quote_status?.text ? leadHistory.previous_quote_status.text : '')  +
+                '</td>' +
+              '<td>' +
+                (leadHistory?.current_quote_status?.text ? leadHistory.current_quote_status.text : '')  +
+                '</td><td>' +
+                ((leadHistory?.notes ? leadHistory.notes : '')) +
+              '</td></tr>';
+          }
+        } else {
+          html =
+            '<tr><td colspan="5" style="text-align: center">No data available</td></tr>';
+        }
+        $('#quoteStatusLogsTable tbody').html(html);
+      },
+      error: function (jqXHR, textStatus, errorThrown) {
+        console.log(jqXHR, textStatus, errorThrown);
+      },
+    });
+  });
+
   disabledDoneActivities();
 
   $('.activityChk1').on('change', function (e) {

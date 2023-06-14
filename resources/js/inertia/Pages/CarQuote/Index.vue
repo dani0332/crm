@@ -104,6 +104,7 @@ const tableHeader = [
     text: 'ADVISOR ASSIGNED DATE',
     value: 'advisor_assigned_date',
   },
+  { text: 'ADVISOR', value: 'advisor' },
 ];
 
 const can = permission => useCan(permission);
@@ -226,10 +227,6 @@ const manualAssignmentError = () => {
         {{ insurance_provider?.text }}
       </template>
 
-      <template #item-advisor_assigned_date="item">
-        {{ item?.car_quote_request_detail?.advisor_assigned_date }}
-      </template>
-
       <template #item-car_type_insurance_id="{ car_type_insurance_id }">
         {{ car_type_insurance_id?.text }}
       </template>
@@ -245,6 +242,11 @@ const manualAssignmentError = () => {
       <template #item-nationality="{ nationality }">
         {{ nationality?.text }}
       </template>
+
+      <template #item-advisor_assigned_date="item">
+        {{ item?.car_quote_request_detail?.advisor_assigned_date }}
+      </template>
+
     </DataTable>
 
     <Pagination
