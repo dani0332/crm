@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RenewalsPermissionSeeder::class,
             addCarQuoteSearchPermission::class,
+            UtmLeadsSalesReportSeeder::class,
         ]);
     }
 }
