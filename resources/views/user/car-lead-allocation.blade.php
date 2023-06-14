@@ -425,25 +425,11 @@ use App\Enums\RolesEnum;
                         <b><span style="color: black;">{{$totalAssignedLeadCount}}</span></b>
                     </div>
                     <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #3015ca;    margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
-                        <span style="font-size: 21px">Total Advisors</span>
-                        <br />
-                        <b><span style="color: black;">{{ $unAvailableUsers + $availableUsers}}</span></b>
-                    </div>
-                    <div class="col-md-3"
                         style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
                         <span style="font-size: 21px">Available / UnAvailable</span>
                         <br />
                         <b><span style="color: black;"><label id="availableUsers">{{$availableUsers}} </label> /
                                 <label id="UnavailableUsers">{{$unAvailableUsers}}</label></span></b>
-                    </div>
-                </div>
-                <div class="col-md-12" style="margin-left:8px;">
-                    <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #A1C86B;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
-                        <span style="font-size: 21px">Total Leads Today </span>
-                        <br />
-                        <b><span style="color: black;">{{ $todayTotalLeadCount}}</span></b>
                     </div>
                     <div class="col-md-3"
                         style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 350px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
@@ -460,21 +446,22 @@ use App\Enums\RolesEnum;
                 <table class="table table-striped jambo_table car_lead_allocation_table" style="width:100%">
                     <thead>
                         <tr>
-                            <th>User Id</th>
-                            <th>Name</th>
-                            <th>Tiers</th>
+                            <th style="width: 15px;">ID</th>
+                            <th style="width: 90px;">Name</th>
+                            <th style="width: 200px;">Tiers</th>
                             <th>Quads</th>
-                            <th>Total Assigned</th>
-                            <th>Manual Assigned</th>
-                            <th>Auto Assigned</th>
-                            <th>Last Allocation</th>
-                            <th>Max Cap Limit <i class="fa fa-info-circle" id="tooltip" data-toggle="tooltip"
-                                    data-placement="top" title="For Unlimited Capactiy Add ( -1 )"></i>
+                            <th style="width: 50px;">Total Assigned</th>
+                            <th style="width: 50px;">Manual Assigned</th>
+                            <th style="width: 50px;">Auto Assigned</th>
+                            <th style="width: 130px;">Last Allocation</th>
+                            <th style="width: 115px;">Max Cap Limit <i class="fa fa-info-circle" id="tooltip"
+                                    data-toggle="tooltip" data-placement="top"
+                                    title="For Unlimited Capactiy Add ( -1 )"></i>
                             </th>
-                            <th>Status</th>
+                            <th style="width: 150px;">Status</th>
                             @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager,
                             RolesEnum::LeadPool]))
-                            <th>Last Login</th>
+                            <th style="width: 130px;">Last Login</th>
                             @endif
                         </tr>
                     </thead>
