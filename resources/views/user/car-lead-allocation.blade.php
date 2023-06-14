@@ -449,7 +449,7 @@ use App\Enums\RolesEnum;
                             <th style="width: 15px;">ID</th>
                             <th style="width: 90px;">Name</th>
                             <th style="width: 200px;">Tiers</th>
-                            <th>Quads</th>
+                            <th style="width: 55px;">Quads</th>
                             <th style="width: 50px;">Total Assigned</th>
                             <th style="width: 50px;">Manual Assigned</th>
                             <th style="width: 50px;">Auto Assigned</th>
