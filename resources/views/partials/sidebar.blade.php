@@ -19,7 +19,7 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/home') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-            @canany([PermissionsEnum::DashboardView, PermissionsEnum::TPL_DASHBOARD_VIEW, PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW, PermissionsEnum::MAIN_DASHBOARD_VIEW])
+            @canany([PermissionsEnum::DashboardView, PermissionsEnum::TPL_DASHBOARD_VIEW, PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW, PermissionsEnum::MAIN_DASHBOARD_VIEW, PermissionsEnum::UtmLeadsSalesReport])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-tachometer"
                         aria-hidden="true"></i>Dashboard <span class="fa fa-chevron-down"></span></a>
@@ -41,7 +41,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW])
+                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
@@ -58,11 +58,14 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW)
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
                             @endcan
+                                @can(PermissionsEnum::UtmLeadsSalesReport)
+                                    <li><a href="{{ url('reports/utm-report') }}">UTM Report</a></li>
+                                @endcan
                         </ul>
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD, PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD])
+                @canany([PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD, PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,PermissionsEnum::UtmLeadsSalesReport])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-paper-plane"></i>Lead Allocation<span class="fa fa-chevron-down" style="color: white;"></span></a>
                         <ul class="nav child_menu">
@@ -92,14 +95,22 @@ use App\Enums\PermissionsEnum;
                     PermissionsEnum::BikeQuotesList,
                     PermissionsEnum::CycleQuotesList,
                     PermissionsEnum::YachtQuotesList,
-                    PermissionsEnum::JetskiQuotesList
+                    PermissionsEnum::JetskiQuotesList,
+                    PermissionsEnum::UtmLeadsSalesReport
                 ])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            @can(PermissionsEnum::CarQuotesList)
-                            <li><a href="{{ url('quotes/car') }}">Car Quotes</a></li>
-                            @endcan
+                            @canany([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch])
+                            <li><a>Car<span class="fa fa-chevron-down" style="color: white;"></span></a>
+                                <ul class="nav child_menu">
+                                    @can(PermissionsEnum::CarQuoteSearch)
+                                        <li><a href="{{ url('/personal-quotes/car/car-quotes-search') }}">Search</a></li>
+                                    @endcan
+                                    <li><a href="{{ url('quotes/car') }}">Lead List</a></li>
+                                </ul>
+                            </li>
+                            @endcanany
                             @can(PermissionsEnum::HealthQuotesList)
                             <li><a href={{ url('quotes/health') }}>Health Quotes</a></li>
                             @endcan
@@ -233,20 +244,26 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @hasanyrole(RolesEnum::Renewals.'|'.RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
+                @canany([PermissionsEnum::RenewalsUpload, PermissionsEnum::RenewalsUploadedLeadList, PermissionsEnum::RenewalsUploadUpdate, PermissionsEnum::RenewalsBatches])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Renewals <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            <li><a href="{{ url('renewals/upload') }}">Upload & Create</a></li>
-                            <li><a href="{{ url('renewals/uploaded-leads') }}">Uploaded Leads</a></li>
-                            <li><a href="{{ url('renewals/update') }}">Upload & Update</a></li>
-                            @hasanyrole(RolesEnum::RenewalsManager.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
-                            <li><a href="{{ url('renewals/batches') }}">Batches</a></li>
-                            @endhasanyrole
+                            @can(PermissionsEnum::RenewalsUpload)
+                            <li><a href="{{ route('renewals-upload-create') }}">Upload & Create</a></li>
+                            @endcan
+                            @can(PermissionsEnum::RenewalsUploadedLeadList)
+                            <li><a href="{{ route('renewals-uploaded-leads-list') }}">Uploaded Leads</a></li>
+                            @endcan
+                            @can(PermissionsEnum::RenewalsUploadUpdate)
+                            <li><a href="{{ route('renewals-upload-update') }}">Upload & Update</a></li>
+                            @endcan
+                            @can(PermissionsEnum::RenewalsBatches)
+                            <li><a href="{{ route('renewals-batches') }}">Batches</a></li>
+                            @endcan
                         </ul>
                     </li>
                 </ul>
-                @endhasanyrole
+                @endcanany
                 @can(PermissionsEnum::ClaimList)
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Claims <span class="fa fa-chevron-down"></span></a>

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
@@ -14,6 +15,15 @@ class CarQuoteRepository extends BaseRepository
     public function model()
     {
         return CarQuote::class;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function fetchGetData()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'carMake', 'carModel', 'insuranceProvider', 'carQuoteRequestDetail', 'car_type_insurance_id'])->orderBy('created_at', 'desc')->Paginate();
     }
 
     /**
@@ -33,5 +43,15 @@ class CarQuoteRepository extends BaseRepository
         info('fn: changeInsurer sending change insurer request for quote UUID: '.$data['uuid'].' providerCode: '.$data['provider_code'].' planId: '.$data['plan_id']);
 
         return Ken::request('/update-car-ecom-insurer', 'post', $requestData);
+    }
+
+    /**
+     * get all dropdown options required for form
+     *
+     * @return array
+     */
+    public function fetchGetAdvisors()
+    {
+        return UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CAR->value);
     }
 }
