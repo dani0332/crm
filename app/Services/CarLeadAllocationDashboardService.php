@@ -94,10 +94,10 @@ class CarLeadAllocationDashboardService extends BaseService
     public function getTodaysCarTotalUnAssignedLeadsCount()
     {
         return CarQuote::leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->whereNull('advisor_id')
-        ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-        ->where('tiers.name', '!=', TiersEnum::TIER_R)
-        ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->subMinutes(2)->toDateTimeString()])
-        ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])->count();
+            ->whereNull('advisor_id')
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->where('tiers.name', '!=', TiersEnum::TIER_R)
+            ->whereBetween('car_quote_request.created_at', [now()->startOfDay(), now()->subMinutes(2)->toDateTimeString()])
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])->count();
     }
 }
