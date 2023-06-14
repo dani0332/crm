@@ -32,7 +32,7 @@
                         @if($record->payment_status_id == PaymentStatusEnum::DECLINED)
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAYMENT STATUS"><b>Reason</b></label>
                             <div class="col-md-3 col-sm-3">
-                                <p class="label-align-center">{{ !empty($payments[0]->payment_status_message)? $payments[0]->payment_status_message : "" }}</p>
+                                <p class="label-align-center">{{ !empty($mainPayment->payment_status_message) ? $mainPayment->payment_status_message : "" }}</p>
                             </div>
                         @endif
                     </div>
