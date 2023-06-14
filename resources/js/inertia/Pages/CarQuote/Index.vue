@@ -242,6 +242,11 @@ const manualAssignmentError = () => {
       <template #item-nationality="{ nationality }">
         {{ nationality?.text }}
       </template>
+
+      <template #item-advisor_assigned_date="item">
+        {{ item?.car_quote_request_detail?.advisor_assigned_date }}
+      </template>
+
     </DataTable>
 
     <Pagination
