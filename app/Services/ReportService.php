@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\QuoteType;
 use App\Repositories\QuoteTypeRepository;
 use Carbon\Carbon;
@@ -38,9 +39,10 @@ class ReportService extends BaseService
 
             $isGroupMedical = false;
             if ($request->quote_type_id == 999) {
-                $request->quote_type_id = 5; // group medical and business quote table is same
+                $request->quote_type_id = QuoteTypeId::Business; // group medical and business quote table is same
                 $isGroupMedical = true;
             }
+
             $quoteTypeCode = QuoteType::where('id', '=', $request->quote_type_id)->value('code');
             $model = 'App\Models\\'.$quoteTypeCode.'Quote';
             $quoteRequestTable = strtolower($quoteTypeCode).'_quote_request';
@@ -67,7 +69,7 @@ class ReportService extends BaseService
                 ->join($quoteRequestTable.'_detail', $quoteRequestTable.'.id', $quoteRequestTable.'_detail.'.$quoteRequestTable.'_id')->groupBy($groupBy);
 
             if ($isGroupMedical) {
-                $query->where('business_type_of_insurance_id', 5);
+                $query->where('business_type_of_insurance_id', QuoteTypeId::Business);
             }if (! empty($groupByOne)) {
                 $query->where($groupByOne, '<>', '');
             }if (! empty($groupByTwo)) {
