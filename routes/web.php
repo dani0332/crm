@@ -132,6 +132,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
         Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction');
+
+        Route::group(['prefix' => 'renewals'], function () {
+            Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals'])->name('renewals-upload-create');
+            Route::get('uploaded-leads', [RenewalsUploadController::class, 'index'])->name('renewals-uploaded-leads-list');
+            Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
+            Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
+        });
+
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
@@ -179,7 +187,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
-    Route::post('/lead-allocation/updateAvailability', [LeadAllocationController::class, 'updateAvailability']);
+    Route::post('/lead-allocation/update-availability', [LeadAllocationController::class, 'updateAvailability']);
+    Route::post('/lead-allocation/update-cap', [LeadAllocationController::class, 'updateCaps']);
     Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
@@ -193,21 +202,17 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('documents/delete', [QuoteDocumentController::class, 'destroy']);
 
     Route::group(['prefix' => 'renewals'], function () {
-        Route::resource('uploaded-leads', RenewalsUploadController::class);
+        Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate'])->name('upload-create');
+        Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate'])->name('upload-update');
+        Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses'])->name('batch-plans-processes');
+        Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batch-renewal-detail');
+        Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans'])->name('batch-fetch-plans');
+        Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('run-batch-process');
         Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed']);
         Route::get('uploaded-leads/{id}/validation-failed/download', [RenewalsUploadController::class, 'downloadValidationFailed']);
         Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);
         Route::get('uploaded-leads/{id}/validation-passed/quote-redirect/{leadId}', [RenewalsUploadController::class, 'viewQuoteRedirect'])->name('viewQuoteRedirect');
-        Route::get('upload', [RenewalsUploadController::class, 'uploadRenewals']);
-        Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('listRenewalBatches');
-        Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batchDetail');
-        Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('runBatchProcess');
         Route::post('upload-process', [RenewalsUploadController::class, 'renewalsUploadProcess']);
-        Route::post('upload-create', [RenewalsUploadController::class, 'renewalsUploadCreate']);
-        Route::post('upload-update', [RenewalsUploadController::class, 'renewalsUploadUpdate']);
-        Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses']);
-        Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans']);
-        Route::get('update', [RenewalsUploadController::class, 'updateRenewals']);
     });
 
     Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
@@ -260,6 +265,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('UpdateLeadManualProcess', [CRUDController::class, 'UpdateLeadManualProcess'])->name('UpdateLeadManualProcess');
         Route::post('records', [CRUDController::class, 'loadMoreRecords'])->name('loadMoreRecords');
         Route::post('records/search', [CRUDController::class, 'searchLead'])->name('searchLead');
+        Route::get('lead-history', [CRUDController::class, 'getLeadHistoryLogs'])->name('list-lead-history');
         Route::get('getLeadHistory', [CRUDController::class, 'getLeadHistory'])->name('getLeadHistory');
         Route::post('{quoteType}/{quoteId}/car-plan-manual-process', [CRUDController::class, 'carPlanManualProcess'])->name('carPlanManualProcess');
         Route::post('car/carAssumptionsUpdate', [CRUDController::class, 'carAssumptionsUpdate']);

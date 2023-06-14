@@ -1154,6 +1154,14 @@ class CRUDController extends Controller
         return $leadHistory;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getLeadHistoryLogs(Request $request)
+    {
+        return $this->crudService->getLeadHistoryLogs($request->quoteTypeId, $request->recordId);
+    }
+
     public function searchLead(Request $request)
     {
         if ($request->has('modelType') && $request->modelType && $request->term && $request->status) {
