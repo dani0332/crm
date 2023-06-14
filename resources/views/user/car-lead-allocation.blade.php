@@ -225,7 +225,7 @@ use App\Enums\RolesEnum;
                                     '_token': $('meta[name="csrf-token"]').attr('content')
                                 };
                             $.ajax({
-                                url: '/lead-allocation/updateCaps',
+                                url: '/lead-allocation/update-cap',
                                 type: 'POST',
                                 data: data,
                                 success: function(data) {
@@ -301,7 +301,7 @@ use App\Enums\RolesEnum;
                 $(this).addClass('danger');
             }
             $.ajax({
-                url: '/lead-allocation/updateAvailability',
+                url: '/lead-allocation/update-availability',
                 type: 'POST',
                 data: {
                     'aid': $(this).data('aid'),
