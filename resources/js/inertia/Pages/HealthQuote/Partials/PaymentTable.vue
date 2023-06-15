@@ -140,10 +140,6 @@ const addPayment = isValid => {
       .post('/payments/Health/update', {
         preserveScroll: true,
         onSuccess: () => {
-          notification.success({
-            title: 'Payment Updated',
-            position: 'top',
-          });
           createPaymentModal.value = false;
         },
         onError: () => {
@@ -163,10 +159,6 @@ const addPayment = isValid => {
     .post('/payments/Health/store', {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Payment Added',
-          position: 'top',
-        });
         createPaymentModal.value = false;
       },
       onError: () => {
