@@ -476,7 +476,7 @@ use App\Enums\GenericRequestEnum;
         <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
 
-@if ($model->modelType == quoteTypeCode::Life ||  $model->modelType == quoteTypeCode::Home)
+@if ($model->modelType == quoteTypeCode::Life ||  $model->modelType == quoteTypeCode::Home ||  $model->modelType == quoteTypeCode::Business)
     @if(auth()->user()->hasRole(RolesEnum::BetaUser))
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :insuranceProviders="$insuranceProviders" :modeltype="$model->modelType" />
     @endif
