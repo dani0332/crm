@@ -93,7 +93,7 @@ class TeamController extends Controller
         $team->is_active = 1;
         $team->created_at = now();
         $team->updated_at = now();
-        if($allocationPricesEnabled) {
+        if ($allocationPricesEnabled) {
             $team->allocation_threshold_enabled = true;
             $team->min_price = $request->min_price;
             $team->max_price = $request->max_price;
@@ -154,7 +154,6 @@ class TeamController extends Controller
             $validateArray['parent_team_id'] = 'required';
         }
 
-
         $this->validate($request, $validateArray);
 
         $team = Team::where('id', $id)->first();
@@ -169,12 +168,11 @@ class TeamController extends Controller
         $team->is_active = $request->is_active == 'on' ? 1 : 0;
         $team->created_at = now();
         $team->updated_at = now();
-        if($allocationPricesEnabled) {
+        if ($allocationPricesEnabled) {
             $team->allocation_threshold_enabled = true;
             $team->min_price = $request->min_price;
             $team->max_price = $request->max_price;
-        }
-        else{
+        } else {
             $team->allocation_threshold_enabled = false;
         }
         $team->save();
