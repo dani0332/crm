@@ -25,34 +25,12 @@ class EmbeddedProductRequest extends FormRequest
     {
         $id = request()->route()->parameter('embedded_product');
 
-        if ($this->isMethod('put')) {
-            return [
-                'insurance_provider_id' => 'required|int|exists:insurance_provider,id',
-                'product_name' => 'required',
-                'short_code' => 'nullable|unique:embedded_products,short_code,'.$id,
-                'display_name' => 'required',
-                'product_type' => 'required',
-                'product_category' => 'required',
-                'product_validity' => 'nullable',
-                'description' => 'nullable',
-                'pricings' => 'required',
-                'commission_type' => 'required',
-                'commission_value' => 'required',
-                'placements' => 'required',
-                'pricing_type' => 'required',
-                'email_template_ids' => 'nullable',
-                'uncheck_message' => 'nullable',
-                'logic_description' => 'nullable',
-                'company_documents' => 'nullable',
-            ];
-        }
-
         return [
             'insurance_provider_id' => 'required|int|exists:insurance_provider,id',
             'product_name' => 'required',
-            'short_code' => 'required|unique:embedded_products',
             'display_name' => 'required',
             'product_type' => 'required',
+            'short_code' => $this->isMethod('put') ? 'nullable|unique:embedded_products,short_code,'.$id : 'required|unique:embedded_products',
             'product_category' => 'required',
             'product_validity' => 'nullable',
             'description' => 'nullable',

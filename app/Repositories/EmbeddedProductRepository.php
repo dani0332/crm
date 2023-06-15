@@ -54,8 +54,21 @@ class EmbeddedProductRepository extends BaseRepository
             $product->placements()->delete();
             $product->placements()->createMany($data['placements']);
 
-            $product->prices()->delete();
-            $product->prices()->createMany($data['pricings']);
+            $prices = $product->prices()->get();
+
+            foreach ($prices as $price) {
+                if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
+                    $price->update(['is_active' => false]);
+                }
+            }
+
+            foreach ($data['pricings'] as $price) {
+                if (isset($price['id'])) {
+                    $product->prices()->where('id', $price['id'])->update($price);
+                } else {
+                    $product->prices()->create($price);
+                }
+            }
 
             return $product;
         });

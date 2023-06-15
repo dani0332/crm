@@ -15,13 +15,33 @@ class ChangeEmbeddedProductsTable extends Migration
     {
         if (Schema::hasTable('embedded_products')) {
             Schema::table('embedded_products', function (Blueprint $table) {
-                $table->text('description')->change();
-                $table->renameColumn('description2', 'logic_description');
-                $table->renameColumn('email_template_id', 'email_template_ids');
-                $table->string('product_category')->after('product_type');
-                $table->bigInteger('product_validity')->nullable()->after('product_category');
-                $table->text('uncheck_message')->after('pricing_type');
-                $table->tinyInteger('is_active')->default(1)->after('uncheck_message');
+                if (! Schema::hasColumn('embedded_products', 'product_category')) {
+                    $table->string('product_category')->after('product_type');
+                }
+
+                if (! Schema::hasColumn('embedded_products', 'product_validity')) {
+                    $table->bigInteger('product_validity')->nullable()->after('product_category');
+                }
+
+                if (! Schema::hasColumn('embedded_products', 'uncheck_message')) {
+                    $table->text('uncheck_message')->after('pricing_type');
+                }
+
+                if (! Schema::hasColumn('embedded_products', 'is_active')) {
+                    $table->tinyInteger('is_active')->default(1)->after('uncheck_message');
+                }
+
+                if (Schema::hasColumn('embedded_products', 'description')) {
+                    $table->text('description')->change();
+                }
+
+                if (Schema::hasColumn('embedded_products', 'description2')) {
+                    $table->renameColumn('description2', 'logic_description');
+                }
+
+                if (Schema::hasColumn('embedded_products', 'email_template_id')) {
+                    $table->renameColumn('email_template_id', 'email_template_ids');
+                }
             });
         }
     }
