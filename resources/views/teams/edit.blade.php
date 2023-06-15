@@ -96,11 +96,32 @@ use App\Enums\GenericRequestEnum;
                         <span class="col-form-label col-md-6 col-sm-6">Is Active
                         <br>
                         @if ($team->is_active === GenericRequestEnum::TRUE)
-                        <input type="checkbox" name="is_active" checked="">
+                            <input type="checkbox" name="is_active" checked="">
                         @else
-                        <input type="checkbox" name="is_active"  {{ old("is_active") ? "checked" : "" }} >
+                            <input type="checkbox" name="is_active"  {{ old("is_active") ? "checked" : "" }} >
                         @endif
                         </span>
+
+                        <span class="col-form-label col-md-6 col-sm-6">Enable Lead Allocation Threshold
+                            <br />
+                            <input type="checkbox" id="allocation_threshold_enabled" name="allocation_threshold_enabled"  {{ old("allocation_threshold_enabled", $team->allocation_threshold_enabled) ? "checked" : "" }} >
+                        </span>
+                    </div>
+                </div>
+                <div class="item form-group allocation-price-section" @if(!$team->allocation_threshold_enabled) style="display: none;" @endif>
+                    <div class="col">
+                        <span class="col-form-label col-md-6 col-sm-6">Min Price </span>
+                        <input type="text" id="min_price" name="min_price" value="{{ old('min_price', $team->min_price) }}" class="form-control">
+                        @if ($errors->has('min_price'))
+                            <span class="text-danger">{{ $errors->first('min_price') }}</span>
+                        @endif
+                    </div>
+                    <div class="col">
+                        <span class="col-form-label col-md-6 col-sm-6">Max Price </span>
+                        <input type="text" id="max_price" name="max_price" value="{{ old('max_price', $team->max_price) }}" class="form-control">
+                        @if ($errors->has('max_price'))
+                            <span class="text-danger">{{ $errors->first('max_price') }}</span>
+                        @endif
                     </div>
                 </div>
                     <div id='redirect_to_view_div'></div>
