@@ -154,7 +154,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::GMQuotesList, PermissionsEnum::CorpLineQuotesList,PermissionsEnum::UtmLeadsSalesReport])
+                @canany([PermissionsEnum::GMQuotesList, PermissionsEnum::CorpLineQuotesList])
                 <ul class="nav side-menu">
                     <li> <a><i class="fa fa-quote-right"></i> Business Quotes <span
                                 class="fa fa-chevron-down"></span></a>

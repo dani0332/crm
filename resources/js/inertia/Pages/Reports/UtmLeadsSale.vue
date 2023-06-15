@@ -74,6 +74,7 @@ function onSubmit(isValid) {
       data: filters,
       preserveState: true,
       preserveScroll: true,
+      only: ['reportData'],
       onBefore: () => (loader.table = true),
       onSuccess: () => (loader.table = false),
     });
