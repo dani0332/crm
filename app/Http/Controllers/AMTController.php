@@ -8,6 +8,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\GenericModel;
 use App\Models\GroupMedicalType;
 use App\Models\QuoteStatus;
 use App\Models\User;
@@ -33,7 +34,9 @@ class AMTController extends Controller
     protected $customerService;
     protected $dropdownSourceService;
     protected $activityService;
+    protected $genericModel;
 
+    public const TYPE = quoteTypeCode::Business;
     use RolePermissionConditions;
 
     public function __construct(
@@ -50,6 +53,7 @@ class AMTController extends Controller
         $this->customerService = $customerService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->activityService = $activityService;
+        $this->genericModel = $this->businessQuoteService->getGenericModel(self::TYPE);
     }
 
     /**
@@ -267,6 +271,11 @@ class AMTController extends Controller
             $assignedUser = User::where('id', $record->advisor_id)->first();
             $assignedUserName = $assignedUser->name;
         }
+        $model = $this->genericModel;
+        $payments =  $record->payments;
+        $mainPayment =  $record->payments()->where('code','=', $record->code)->first();
+        $paymentMethods = $this->lookupService->getPaymentMethods();
+        $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
 
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $advisors = DB::table('users as u')
@@ -285,6 +294,11 @@ class AMTController extends Controller
         return view('amt.show', compact(
             'businessInsuranceType',
             'record',
+            'model',
+            'payments',
+            'mainPayment',
+            'paymentMethods',
+            'insuranceProviders',
             'selectedLeadStatus',
             'advisors',
             'assignedUserName',
