@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
@@ -56,6 +57,9 @@ class CycleQuoteRepository extends BaseRepository
     public function fetchGetData()
     {
         return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->when( \auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query){
+                $query->where('advisor_id', \auth()->user()->id)->orWhereNull('advisor_id');
+            })
             ->filter()
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc')

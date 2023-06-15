@@ -416,8 +416,7 @@ if (! function_exists('newUi')) {
     function newUi(): array
     {
         return [
-            quoteTypeCode::Health,
-            quoteTypeCode::Cycle
+            quoteTypeCode::Health
         ];
     }
 }
