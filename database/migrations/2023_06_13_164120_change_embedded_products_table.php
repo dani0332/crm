@@ -33,13 +33,6 @@ class ChangeEmbeddedProductsTable extends Migration
      */
     public function down()
     {
-        if (Schema::hasTable('embedded_products')) {
-            Schema::table('embedded_products', function (Blueprint $table) {
-                $table->string('description')->change();
-                $table->renameColumn('logic_description', 'description2');
-                $table->dropColumn('uncheck_message');
-                $table->dropColumn('is_active');
-            });
-        }
+        //
     }
 }
