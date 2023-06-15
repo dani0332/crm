@@ -25,23 +25,46 @@ class EmbeddedProductRequest extends FormRequest
     {
         $id = request()->route()->parameter('embedded_product');
 
+        if ($this->isMethod('put')) {
+            return [
+                'insurance_provider_id' => 'required|int|exists:insurance_provider,id',
+                'product_name' => 'required',
+                'short_code' => 'nullable|unique:embedded_products,short_code,'.$id,
+                'display_name' => 'required',
+                'product_type' => 'required',
+                'product_category' => 'required',
+                'product_validity' => 'nullable',
+                'description' => 'nullable',
+                'pricings' => 'required',
+                'commission_type' => 'required',
+                'commission_value' => 'required',
+                'placements' => 'required',
+                'pricing_type' => 'required',
+                'email_template_ids' => 'nullable',
+                'uncheck_message' => 'nullable',
+                'logic_description' => 'nullable',
+                'company_documents' => 'nullable',
+            ];
+        }
+
         return [
             'insurance_provider_id' => 'required|int|exists:insurance_provider,id',
             'product_name' => 'required',
-            'short_code' => 'required|max:3|unique:embedded_products,short_code,'.$id,
+            'short_code' => 'required|unique:embedded_products',
             'display_name' => 'required',
             'product_type' => 'required',
-            'logic' => 'required',
-            'positions' => 'required',
+            'product_category' => 'required',
+            'product_validity' => 'nullable',
+            'description' => 'nullable',
             'pricings' => 'required',
-            'description' => 'required',
-            'description2' => 'required',
             'commission_type' => 'required',
             'commission_value' => 'required',
-            'email_template_id' => 'required',
-            'company_documents' => 'required',
+            'placements' => 'required',
             'pricing_type' => 'required',
-            'removal_confirmation' => 'required',
+            'email_template_ids' => 'nullable',
+            'uncheck_message' => 'nullable',
+            'logic_description' => 'nullable',
+            'company_documents' => 'nullable',
         ];
     }
 }
