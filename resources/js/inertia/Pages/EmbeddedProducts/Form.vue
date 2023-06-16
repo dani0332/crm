@@ -1,41 +1,62 @@
 <script setup>
-const notification = useNotifications('toast');
-
 const props = defineProps({
   embeddedProduct: Object,
   insuranceProviders: Object,
   quoteTypes: Object,
 });
+
 const page = usePage();
-const embeddedProductsForm = useForm({
+
+const isEdit = computed(() => {
+  return route().current() === 'embedded-products.edit';
+});
+
+const form = useForm({
+  product_type: props.embeddedProduct?.product_type || '',
+  product_category: props.embeddedProduct?.product_category || '',
+  product_validity: props.embeddedProduct?.product_validity || '',
   insurance_provider_id: props.embeddedProduct?.insurance_provider_id || '',
   product_name: props.embeddedProduct?.product_name || '',
   short_code: props.embeddedProduct?.short_code || '',
   display_name: props.embeddedProduct?.display_name || '',
-  product_type: props.embeddedProduct?.product_type || '',
-  price: [],
-  quote_type_ids: [],
-  positions: props.embeddedProduct?.placements || [
+  description: props.embeddedProduct?.description || '',
+
+  placements: props.embeddedProduct?.placements || [
     {
       quote_type_id: '',
       position: '',
     },
   ],
+
+  pricing_type: props.embeddedProduct?.pricing_type || '1',
   pricings: props.embeddedProduct?.prices || [
     {
       variant: '',
       price: '',
+      is_active: true,
     },
   ],
-  logic: props.embeddedProduct?.logic || '',
-  description: props.embeddedProduct?.description || '',
-  description2: props.embeddedProduct?.description2 || '',
+
   commission_type: props.embeddedProduct?.commission_type || '',
   commission_value: props.embeddedProduct?.commission_value || '',
-  email_template_id: props.embeddedProduct?.email_template_id || '',
-  company_documents: props.embeddedProduct?.company_documents || '',
-  pricing_type: props.embeddedProduct?.pricing_type || '',
-  removal_confirmation: props.embeddedProduct?.removal_confirmation || '',
+  email_template_ids: props.embeddedProduct?.email_template_ids
+    ? JSON.parse(props.embeddedProduct?.email_template_ids).map(e => {
+        return {
+          id: e.id,
+        };
+      })
+    : [{ id: '' }],
+  uncheck_message: props.embeddedProduct?.uncheck_message || '',
+  logic_description: props.embeddedProduct?.logic_description || '',
+  is_active: props.embeddedProduct?.is_active || false,
+  company_documents: props.embeddedProduct?.company_documents
+    ? JSON.parse(props.embeddedProduct.company_documents)
+    : [
+        {
+          path: '',
+          title: '',
+        },
+      ],
 });
 
 const { isRequired } = useRules();
@@ -53,84 +74,97 @@ const quoteTypesOptions = computed(() => {
   }));
 });
 
-let positionOptions = reactive([
+const positionOptions = reactive([
   { value: 'frontline', label: 'FrontLine' },
   { value: 'checkout', label: 'Checkout' },
 ]);
 
 const addPosition = () => {
-    embeddedProductsForm.positions.push({
+    form.placements.push({
       quote_type_id: '',
       position: '',
     });
   },
   removePosition = index => {
-    embeddedProductsForm.positions.splice(index, 1);
+    form.placements.splice(index, 1);
   };
 
 const addPricing = () => {
-    embeddedProductsForm.pricings.push({
+    if (form.pricings.length >= 10) return;
+    form.pricings.push({
       variant: '',
       price: '',
+      is_active: true,
     });
   },
   removePricing = index => {
-    embeddedProductsForm.pricings.splice(index, 1);
+    form.pricings.splice(index, 1);
   };
 
+const addEmailTemplate = () => {
+    form.email_template_ids.push({
+      id: '',
+    });
+  },
+  removeEmailTemplate = index => {
+    form.email_template_ids.splice(index, 1);
+  };
+
+const addMoreDocs = () => {
+    form.company_documents.push({
+      path: '',
+      title: '',
+    });
+  },
+  removeDoc = index => {
+    form.company_documents.splice(index, 1);
+  };
+
+const updatePricingType = () => {
+  form.pricings = [
+    {
+      variant: '',
+      price: '',
+      is_active: true,
+    },
+  ];
+};
 function onSubmit(isValid) {
   if (isValid) {
-    let method = 'post';
-    let url = `/embedded-products/`;
-    let title = 'Product saved successfully';
-    let redirectUrl = '/embedded-products';
-    if (props.embeddedProduct) {
-      method = 'put';
-      url = url + props.embeddedProduct.id;
-      title = 'Product updated successfully';
-      redirectUrl = `/embedded-products/${props.embeddedProduct?.id}`;
-    }
+    const method = isEdit.value ? 'put' : 'post';
 
-    embeddedProductsForm
+    const url = isEdit.value
+      ? route('embedded-products.update', page.props.embeddedProduct.id)
+      : route('embedded-products.store');
+
+    const options = {
+      onError: errors => {
+        form.setError(errors);
+      },
+    };
+
+    form
       .transform(data => ({
         ...data,
         short_code: data.short_code.toUpperCase(),
-        pricings: data.pricings.map(pricing => ({
-          ...pricing,
-          variant: data.pricing_type == '2' ? pricing.variant : null,
-        })),
+        email_template_ids: JSON.stringify(data.email_template_ids),
+        company_documents: JSON.stringify(data.company_documents),
       }))
-      .submit(method, url, {
-        onError: errors => {
-          console.log(errors);
-          console.log(embeddedProductsForm.setError(errors));
-        },
-
-        onSuccess: () => {
-          notification.success({
-            title: title,
-            position: 'top',
-          });
-
-          setTimeout(function () {
-            router.get(redirectUrl);
-          }, 500);
-        },
-      });
+      .submit(method, url, options);
   }
 }
+
+// TODO: Remove this after testing
+const tempfileUrl = 'https://insurancemarket.blob.core.windows.net/imcrmdev/';
 </script>
 
 <template>
   <div>
     <Head title="Embedded Products" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">
-        Embedded products
-        <!-- <span v-if="quote">{{ quote?.uuid }}</span> -->
-      </h2>
+      <h2 class="text-xl font-semibold">Embedded Products</h2>
       <div>
-        <Link href="/embedded-products">
+        <Link :href="route('embedded-products.index')">
           <x-button size="sm" color="#ff5e00">
             Embedded products List
           </x-button>
@@ -138,71 +172,24 @@ function onSubmit(isValid) {
       </div>
     </div>
     <x-divider class="my-4" />
+    <div class="flex justify-end mb-3">
+      <x-toggle
+        v-model="form.is_active"
+        color="success"
+        label="Product Status"
+      />
+    </div>
     <x-form @submit="onSubmit" :auto-focus="false">
-      <x-alert
-        color="error"
-        class="mb-5"
-        v-if="embeddedProductsForm.errors.error"
-      >
-        {{ embeddedProductsForm?.errors?.error }}
+      <x-alert color="error" class="mb-5" v-if="form.errors.error">
+        {{ form?.errors?.error }}
       </x-alert>
 
-      <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="Company Name" required>
-          <x-select
-            v-model="embeddedProductsForm.insurance_provider_id"
-            :options="insuranceProviderOptions"
-            :rules="[isRequired]"
-            class="w-full"
-          />
-        </x-field>
-
-        <x-field label="Product name" required>
-          <x-input
-            v-model="embeddedProductsForm.product_name"
-            maxLength="255"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="embeddedProductsForm.errors.product_name"
-          />
-        </x-field>
-
-        <x-field label="Shortcode" required>
-          <x-input
-            v-model="embeddedProductsForm.short_code"
-            maxLength="3"
-            :rules="[isRequired]"
-            class="w-full uppercase"
-            :error="embeddedProductsForm.errors.short_code"
-          />
-        </x-field>
-
-        <x-field label="Display Name" required>
-          <x-input
-            v-model="embeddedProductsForm.display_name"
-            maxLength="100"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="embeddedProductsForm.errors.display_name"
-          />
-        </x-field>
-
-        <x-field label="Logic" required>
-          <x-textarea
-            v-model="embeddedProductsForm.logic"
-            maxLength="100"
-            :rules="[isRequired]"
-            :adjust-to-text="false"
-            class="w-full"
-            :error="embeddedProductsForm.errors.logic"
-          />
-        </x-field>
-
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
         <x-field label="Product Type" required>
           <x-select
-            v-model="embeddedProductsForm.product_type"
+            v-model="form.product_type"
             :rules="[isRequired]"
-            placeholder="Product Type"
+            placeholder="Select Product Type"
             :options="[
               { value: 'insurance', label: 'Insurance' },
               { value: 'non-insurance', label: 'Non Insurance' },
@@ -211,217 +198,393 @@ function onSubmit(isValid) {
           />
         </x-field>
 
-        <x-field label="Description 1" required>
-          <x-textarea
-            v-model="embeddedProductsForm.description"
-            :rules="[isRequired]"
-            :adjust-to-text="false"
-            class="w-full"
-          />
-        </x-field>
-
-        <x-field label="Description 2" required>
-          <x-textarea
-            v-model="embeddedProductsForm.description2"
-            :rules="[isRequired]"
-            :adjust-to-text="false"
-            class="w-full"
-          />
-        </x-field>
-
-        <x-field label="Commission Type" required>
+        <x-field label="Product Category" required>
           <x-select
-            v-model="embeddedProductsForm.commission_type"
+            v-model="form.product_category"
             :rules="[isRequired]"
-            placeholder="Commission type"
+            placeholder="Select Product Category"
             :options="[
-              { value: '1', label: 'Flat Amount' },
-              { value: '2', label: '% Value' },
+              { value: 'bolt-on', label: 'Bolt-on' },
+              { value: 'stand-alone', label: 'Stand-alone' },
             ]"
             class="w-full"
           />
         </x-field>
 
         <x-field
-          :label="
-            embeddedProductsForm.commission_type == '2'
-              ? 'Percentage Value'
-              : 'Commission Value'
-          "
+          v-if="form.product_category == 'bolt-on'"
+          label="Product Validity"
           required
         >
           <x-input
-            v-model="embeddedProductsForm.commission_value"
-            type="number"
+            v-model="form.product_validity"
             :rules="[isRequired]"
-            class="w-full"
-            :error="embeddedProductsForm.errors.commission_value"
-          />
-        </x-field>
-
-        <x-field label="Email Templates" required>
-          <x-select
-            v-model="embeddedProductsForm.email_template_id"
-            :rules="[isRequired]"
-            placeholder="Email Templates"
-            :options="[
-              { value: '1', label: 'Generic templates' },
-              { value: '2', label: 'Specific templates' },
-              { value: '3', label: 'OCB' },
-            ]"
+            placeholder="Enter number of days"
             class="w-full"
           />
         </x-field>
 
-        <x-field label="Company Documents" required>
+        <x-field label="Insurance Provider" required>
           <x-select
-            v-model="embeddedProductsForm.company_documents"
+            v-model="form.insurance_provider_id"
+            :options="insuranceProviderOptions"
             :rules="[isRequired]"
-            placeholder="Company Documents"
-            :options="[
-              { value: '1', label: 'Certificate template' },
-              { value: '2', label: 'Policy Wordings' },
-            ]"
             class="w-full"
+            placeholder="Select Insurance Provider"
           />
         </x-field>
 
-        <x-field label="Pricing Type" required>
-          <x-select
-            v-model="embeddedProductsForm.pricing_type"
+        <x-field label="Product Name" required>
+          <x-input
+            v-model="form.product_name"
+            maxLength="255"
             :rules="[isRequired]"
-            placeholder="Pricing Type"
-            :options="[
-              { value: '1', label: 'Single' },
-              { value: '2', label: 'Multiple' },
-            ]"
             class="w-full"
+            :error="form.errors.product_name"
+            placeholder="Actual name of the product as per the agreement"
           />
         </x-field>
-        <x-field label="Removal Confirmation" required>
-          <x-textarea
-            v-model="embeddedProductsForm.removal_confirmation"
+
+        <x-field label="Product Display Name" required>
+          <x-input
+            v-model="form.display_name"
+            maxLength="100"
             :rules="[isRequired]"
             class="w-full"
-            :error="embeddedProductsForm.errors.removal_confirmation"
-            :adjust-to-text="false"
+            :error="form.errors.display_name"
+            placeholder="This name will be displayed to the customer"
+          />
+        </x-field>
+
+        <x-field label="Product Shortcode" required>
+          <x-input
+            v-model="form.short_code"
+            maxLength="3"
+            minLength="3"
+            :rules="[isRequired]"
+            class="w-full"
+            placeholder="This adds to the original Reference ID as an identifier."
+            :error="form.errors.short_code"
           />
         </x-field>
       </div>
 
-      <div class="p-4 rounded shadow mb-6 bg-primary-50/25 mt-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Placement</h3>
+      <x-divider class="my-4" />
 
-        <x-divider class="mb-4 mt-1" />
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div class="sm:col-span-2">
+          <x-field label="Product Description">
+            <x-markdown-editor
+              id="product_description"
+              v-model="form.description"
+              height="max-h-72"
+              placeholder="The text added here will be shown to the customer as a guide to understand basic details of the product."
+            />
+          </x-field>
+        </div>
 
-        <template
-          v-for="(i, index) in embeddedProductsForm.positions"
-          :key="index"
-        >
-          <div class="flex flex-wrap gap-4 mb-4">
-            <div class="grid sm:grid-cols-2 gap-4 flex-auto">
-              <x-field label="LOB" required>
-                <x-select
-                  v-model="embeddedProductsForm.positions[index].quote_type_id"
-                  :rules="[isRequired]"
-                  placeholder="Select LOB"
-                  :options="quoteTypesOptions"
-                  class="w-full"
+        <div>
+          <x-field label="Product Wordings">
+            <template v-for="(f, index) in form.company_documents">
+              <template v-if="index === 0">
+                <div
+                  v-if="isEdit && form.company_documents[index].path"
+                  class="flex gap-2 my-3"
+                >
+                  <x-button
+                    size="sm"
+                    outlined
+                    color="success"
+                    :href="tempfileUrl + form.company_documents[index].path"
+                    target="_blank"
+                    download
+                    class="flex-1"
+                  >
+                    View PDF
+                  </x-button>
+                  <x-button
+                    size="sm"
+                    outlined
+                    color="error"
+                    @click="removeDoc(index)"
+                  >
+                    Remove
+                  </x-button>
+                  <!-- {{ form.company_documents[index].path }} -->
+                </div>
+                <FileUploader
+                  v-else
+                  v-model="form.company_documents[index].path"
+                  upload-route="embedded-products.upload-document"
+                  accept=".pdf"
+                  title="product_wordings"
                 />
-              </x-field>
-
-              <x-field label="Position" required>
-                <x-select
-                  v-model="embeddedProductsForm.positions[index].position"
-                  :rules="[isRequired]"
-                  placeholder="Select Position"
-                  :options="positionOptions"
+              </template>
+              <template v-else>
+                <x-divider class="my-4" />
+                <x-input
+                  v-model="form.company_documents[index].title"
                   class="w-full"
+                  placeholder="Document Type"
                 />
-              </x-field>
-            </div>
-            <div class="mb-3 flex items-end">
-              <x-button
-                :disabled="embeddedProductsForm.positions.length == 1"
-                @click="removePosition(index)"
-                size="sm"
-                outlined
-                color="error"
-              >
-                Remove
-              </x-button>
-            </div>
-          </div>
-        </template>
-        <div class="w-full">
-          <x-button @click="addPosition" size="sm" outlined color="success">
-            Add another position
+                <FileUploader
+                  v-model="form.company_documents[index].path"
+                  upload-route="embedded-products.upload-document"
+                  accept=".pdf"
+                  :title="form.company_documents[index].title"
+                />
+                <x-button
+                  size="xs"
+                  outlined
+                  block
+                  color="error"
+                  class="mb-4"
+                  @click="removeDoc(index)"
+                >
+                  Remove Attachment
+                </x-button>
+              </template>
+            </template>
+          </x-field>
+          <x-button
+            size="sm"
+            outlined
+            block
+            color="primary"
+            @click="addMoreDocs"
+          >
+            Attach more Documents
           </x-button>
         </div>
       </div>
 
-      <div class="p-4 rounded shadow mb-6 bg-primary-50/25 mt-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Pricing</h3>
+      <x-divider class="my-4" label="PLACEMENT" />
 
-        <x-divider class="mb-4 mt-1" />
+      <template v-for="(f, index) in form.placements" :key="index">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <x-field label="LOB" required>
+            <x-select
+              v-model="form.placements[index].quote_type_id"
+              :rules="[isRequired]"
+              placeholder="Select LOB"
+              :options="quoteTypesOptions"
+              class="w-full"
+            />
+          </x-field>
 
-        <template
-          v-for="(i, index) in embeddedProductsForm.pricings"
-          :key="index"
-        >
-          <div class="flex flex-wrap gap-4 mb-4">
-            <div
-              :class="
-                embeddedProductsForm.pricing_type == 2 ? 'sm:grid-cols-2' : ''
-              "
-              class="grid gap-4 flex-auto"
-            >
-              <x-field
-                v-if="embeddedProductsForm.pricing_type == 2"
-                label="Variant"
-              >
-                <x-input
-                  v-model="embeddedProductsForm.pricings[index].variant"
-                  class="w-full"
-                />
-              </x-field>
-              <x-field label="Price" required>
-                <x-input
-                  v-model="embeddedProductsForm.pricings[index].price"
-                  type="number"
-                  :rules="[isRequired]"
-                  class="w-full"
-                />
-              </x-field>
-            </div>
-            <div class="mb-3 flex items-end">
+          <div class="flex gap-3 items-start">
+            <x-field label="Position" class="flex-1" required>
+              <x-select
+                v-model="form.placements[index].position"
+                :rules="[isRequired]"
+                placeholder="Select Position"
+                :options="positionOptions"
+                class="w-full"
+              />
+            </x-field>
+            <div class="mt-[23px]">
               <x-button
-                :disabled="embeddedProductsForm.pricings.length == 1"
-                @click="removePricing(index)"
-                size="sm"
-                outlined
+                :disabled="form.placements.length == 1"
+                @click="removePosition(index)"
+                ghost
                 color="error"
-              >
-                Remove
-              </x-button>
+                icon="xc"
+              />
             </div>
           </div>
-        </template>
+        </div>
+      </template>
 
-        <div class="w-full" v-if="embeddedProductsForm.pricing_type == 2">
-          <x-button @click="addPricing" size="sm" outlined color="success">
-            Add another pricing
+      <div class="w-full mt-1">
+        <x-button size="sm" outlined color="primary" @click="addPosition">
+          Add LOB
+        </x-button>
+      </div>
+
+      <x-divider class="my-4" label="PRICING" />
+
+      <div>
+        <x-field label="Type">
+          <x-select
+            v-model="form.pricing_type"
+            :rules="[isRequired]"
+            placeholder="Select LOB"
+            :options="[
+              { value: '1', label: 'Single' },
+              { value: '2', label: 'Multiple' },
+              { value: '3', label: 'Dynamic' },
+            ]"
+            class="w-full"
+            @update:model-value="updatePricingType"
+          />
+        </x-field>
+
+        <template v-for="(f, index) in form.pricings" :key="index">
+          <div
+            :class="
+              form.pricing_type == 2 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'
+            "
+            class="grid gap-4"
+          >
+            <x-field v-if="form.pricing_type == '2'" label="Variant" required>
+              <x-input
+                v-model="form.pricings[index].variant"
+                class="w-full"
+                :rules="[isRequired]"
+              />
+            </x-field>
+
+            <x-field label="Price without VAT" required>
+              <x-input
+                v-model="form.pricings[index].price"
+                type="number"
+                :rules="[isRequired]"
+                class="w-full"
+              />
+            </x-field>
+
+            <div class="flex gap-3 items-center">
+              <x-field label="Price with 5% VAT" class="flex-1">
+                <x-input
+                  :value="(form.pricings[index].price * 1.05).toFixed(2)"
+                  class="w-full"
+                  readonly
+                />
+              </x-field>
+
+              <x-field label="Status">
+                <x-toggle
+                  v-model="form.pricings[index].is_active"
+                  class="w-full"
+                />
+              </x-field>
+
+              <div v-if="form.pricing_type == 2">
+                <x-button
+                  :disabled="form.pricings.length == 1"
+                  size="sm"
+                  outlined
+                  color="error"
+                  icon="xc"
+                  @click="removePricing(index)"
+                />
+              </div>
+            </div>
+          </div>
+          <x-divider
+            v-if="
+              form.pricing_type == 2 &&
+              form.pricings.length > 1 &&
+              index != form.pricings.length - 1
+            "
+            class="my-4 sm:col-span-3"
+          />
+        </template>
+      </div>
+
+      <div class="w-full" v-if="form.pricing_type == 2">
+        <x-button @click="addPricing" size="sm" outlined color="primary">
+          Add Variant
+        </x-button>
+      </div>
+
+      <x-divider
+        class="my-4"
+        :label="
+          form.product_type === 'insurance'
+            ? 'Commission Type'
+            : 'Fees to myAlfred'
+        "
+      />
+
+      <div class="grid gap-4 sm:grid-cols-2">
+        <x-field label="Type" required>
+          <x-select
+            v-model="form.commission_type"
+            :rules="[isRequired]"
+            placeholder="Select Type"
+            :options="[
+              { value: '1', label: 'Flat Amount' },
+              { value: '2', label: '% of Price' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="Amount" required>
+          <x-input
+            v-model="form.commission_value"
+            :rules="[isRequired]"
+            class="w-full"
+          />
+        </x-field>
+      </div>
+
+      <x-divider class="my-4" />
+
+      <div class="grid gap-4 sm:grid-cols-3">
+        <div class="sm:col-span-1 flex flex-col">
+          <template v-for="(f, index) in form.email_template_ids" :key="index">
+            <x-field label="Email Template ID">
+              <div class="flex gap-2">
+                <x-input
+                  v-model="form.email_template_ids[index].id"
+                  class="w-full"
+                />
+                <x-button
+                  :disabled="form.email_template_ids.length == 1"
+                  @click="removeEmailTemplate(index)"
+                  ghost
+                  color="error"
+                  icon="xc"
+                  class="mb-3"
+                />
+              </div>
+            </x-field>
+          </template>
+          <x-button
+            size="sm"
+            outlined
+            color="primary"
+            @click="addEmailTemplate"
+          >
+            Add Email Template ID
           </x-button>
+        </div>
+
+        <div class="sm:col-span-2">
+          <x-field label="Uncheck Message">
+            <x-markdown-editor
+              id="uncheck_message"
+              v-model="form.uncheck_message"
+              placeholder="The text added here will be shown to the customer when He/She unticks the checkbox to purchase this product at the time of checkout."
+            />
+          </x-field>
         </div>
       </div>
 
       <x-divider class="my-4" />
-      <div class="flex justify-end gap-3 mb-4">
+
+      <x-field
+        label="Complete Logic Description"
+        :required="form.pricing_type == 3"
+      >
+        <x-textarea
+          v-model="form.logic_description"
+          class="w-full"
+          rows="5"
+          :adjust-to-text="false"
+          placeholder="The text added here will be used as a reference to build any additional logic for this particular product. Example : Tyre insurance should be displayed only to customers insuring brand new vehicle."
+        />
+      </x-field>
+
+      <div class="flex justify-end gap-3 my-4">
         <x-button
           size="md"
           color="emerald"
           type="submit"
-          :loading="embeddedProductsForm.processing"
+          class="px-6"
+          :loading="form.processing"
         >
           Save
         </x-button>
@@ -429,3 +592,9 @@ function onSubmit(isValid) {
     </x-form>
   </div>
 </template>
+
+<style>
+.x-divider div {
+  @apply !text-base !text-primary-600 !font-semibold;
+}
+</style>
