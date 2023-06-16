@@ -148,7 +148,7 @@ class TransactionController extends Controller
             'email' => 'required|email',
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
-            'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
+            'amount_paid' => 'required|numeric|regex:/^\d{1,10}(\.\d{1,2})?$/',
             'risk_detail' => 'required|max:2000',
         ]);
 
