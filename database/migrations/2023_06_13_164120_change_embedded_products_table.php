@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class ChangeEmbeddedProductsTable extends Migration
 {
@@ -13,6 +14,7 @@ class ChangeEmbeddedProductsTable extends Migration
      */
     public function up()
     {
+
         if (Schema::hasTable('embedded_products')) {
             Schema::table('embedded_products', function (Blueprint $table) {
                 if (! Schema::hasColumn('embedded_products', 'product_category')) {
@@ -31,7 +33,7 @@ class ChangeEmbeddedProductsTable extends Migration
                     $table->tinyInteger('is_active')->default(1);
                 }
 
-                if (Schema::hasColumn('embedded_products', 'description')) {
+                if (Schema::hasColumn('embedded_products', 'description') && DB::getSchemaBuilder()->getColumnType('embedded_products', 'description') == \App\Enums\GenericRequestEnum::TypeString) {
                     $table->text('description')->change();
                 }
 
