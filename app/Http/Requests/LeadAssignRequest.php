@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
-use http\Env\Request;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Models\PersonalQuote;
+use App\Repositories\UserRepository;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Validator;
 
 class LeadAssignRequest extends FormRequest
 {
@@ -26,18 +28,51 @@ class LeadAssignRequest extends FormRequest
     public function rules()
     {
         return [
-            'assigned_to_id_new' => 'required|exists:App\Models\User,id',
-            'selectTmLeadId' => 'sometimes|required',
-            'entityId' => 'sometimes|required'
+            'assigned_advisor_id' => 'required',
+            'assigned_lead_id' => 'required'
         ];
     }
 
-    public function attributes()
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $leadsIds = array_map('intval', explode(',', request()->assigned_lead_id));
+            $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle];
+            $model = (in_array(ucfirst(request()->modelType), $personalQuotes) && in_array(ucfirst(request()->modelType), newUi())) ?
+                PersonalQuote::class : (ucfirst(request()->modelType).'Quote');
+
+            /**
+             * check if assigned advisor exist in system.
+             */
+            $assignedAdvisorId = UserRepository::getUserById( (int) request()->assigned_advisor_id );
+            if (! $assignedAdvisorId) {
+                $validator->errors()->add('assigned_advisor_id', 'Selected advisor does not exist in the system!');
+            }
+
+            /**
+             * check if the lead status is transaction approved.
+             */
+            foreach ($leadsIds as $leadId) {
+                $getQuoteLead = $model::findOrfail($leadId);
+                if(!$getQuoteLead){
+                    $validator->errors()->add('assigned_lead_id', 'Manual Lead Assignment Failed for '. ucfirst(request()->modelType) .', selected id was ' .$leadId);
+                    break;
+                }
+
+                if (isset($getQuoteLead->quote_status_id) && $getQuoteLead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                    $validator->errors()->add('assigned_lead_id', 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.');
+                    break;
+                }
+
+            }
+        });
+    }
+
+    public function messages()
     {
         return [
-            'assigned_to_id_new' => 'user to assign leads',
-            'selectTmLeadId' => 'lead(s) to assign',
-            'entityId' => 'lead(s) to assign',
+            'assigned_advisor_id.required' => 'Please select user to assign leads',
+            'assigned_lead_id.required' => 'Please select lead(s) to assign'
         ];
     }
 }

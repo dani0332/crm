@@ -8,10 +8,6 @@ defineProps({
     quoteType: {
         type: String,
         default: 'cycle',
-    },
-    errors: {
-        type: [Object, Array],
-        default : () => [],
     }
 });
 

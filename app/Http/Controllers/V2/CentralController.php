@@ -51,13 +51,8 @@ class CentralController extends Controller
 
     public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)
     {
-        $response = (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
-        $advisor = UserRepository::getUserById( (int) $leadAssignRequest->assigned_to_id_new );
+        (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
 
-        if(!isset($response['is_valid_response']))
-            return redirect()->back()->with('error', $response['message'] ?? 'something went wrong');
-
-        return redirect()->back()->with('success',
-            empty($response['message']) ? ucfirst($leadAssignRequest->modelType).' Leads has been Assigned To '.$advisor->name : $response['message']);
+        return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
 }

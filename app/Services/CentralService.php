@@ -3,15 +3,14 @@
 namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
-use App\Repositories\UserRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Log;
 
 class CentralService
@@ -131,8 +130,9 @@ class CentralService
 
     public function assignLeadToAdvisor($request)
     {
+        $leadsIds = $request->assigned_lead_id;
         $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle];
-        $leadsIds = $request->selectTmLeadId ?? $request->entityId;
+        Log::info('Leads ids to assign: '.json_encode($leadsIds));
 
         if (str_starts_with($leadsIds, ',')) {
             $leadsIds = substr($leadsIds, 1);
@@ -143,58 +143,40 @@ class CentralService
             PersonalQuote::class : (ucfirst($request->modelType).'Quote');
 
         if (! class_exists($model)) {
-            return ['message' => 'something went wrong'];
+            vAbort('Something went wrong');
         }
 
-        foreach ($leadsIds as $leadId) {
-            $getQuoteLead = $model::where('id', $leadId)->first();
-            if (isset($getQuoteLead->quote_status_id) && $getQuoteLead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
-                return ['message' => 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.'];
+        try {
+            DB::beginTransaction();
+            foreach ($leadsIds as $leadId) {
+                $getQuoteLead = $model::findOrfail($leadId);
+
+                if ($getQuoteLead) {
+                    $getQuoteLead->advisor_id = (int) $request->assigned_to_id_new;
+                    $getQuoteLead->save();
+                    $childRecord = PersonalQuoteDetail::where('personal_quote_id', $getQuoteLead->id)->first();
+
+                    if (empty($childRecord)) {
+                        PersonalQuoteDetail::create([
+                            'personal_quote_id' => $getQuoteLead->id,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now(),
+                        ]);
+                    }
+
+                    $childRecord->advisor_assigned_by_id = auth()->user()->id;
+                    $childRecord->advisor_assigned_date = Carbon::now();
+                    $childRecord->save();
+                }else{
+                    Log::warning('Manual Lead Assignment Failed for '.$model.' , selected id was '. $leadId);
+                }
             }
+            DB::commit();
+        }catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error($e->getMessage());
+            DB::rollback();
         }
 
-        $assignedUser = UserRepository::getUserById( (int) $request->assigned_to_id_new );
-        if (! $assignedUser) {
-            return ['message' => 'Selected advisor does not exist in the system!'];
-        }
-
-        return $this->processLeadAssignment($leadsIds, $assignedUser, $model);
-    }
-
-    protected function processLeadAssignment($leadsIds, $advisor, $model)
-    {
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
-        $message = '';
-
-        foreach ($leadsIds as $leadId) {
-            $lead = $model::findOrfail($leadId);
-            if ($lead) {
-                $lead->advisor_id = $advisor->id;
-                $lead->save();
-                $this->updateChildRecord($lead->id);
-            }else{
-                $message .= $message . 'Manual Lead Assignment Failed for '.$model.' , selected id was '.$leadId.' <br>';
-                Log::warning('Manual Lead Assignment Failed for '.$model.' , selected id was '. $leadId);
-            }
-        }
-
-        return ['is_valid_response' => true, 'message' => $message];
-    }
-
-    protected function updateChildRecord($id)
-    {
-        $childRecord = PersonalQuoteDetail::where('personal_quote_id', $id)->first();
-
-        if (empty($childRecord)) {
-            PersonalQuoteDetail::create([
-                'personal_quote_id' => $id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
-        }
-
-        $childRecord->advisor_assigned_by_id = auth()->user()->id;
-        $childRecord->advisor_assigned_date = Carbon::now();
-        $childRecord->save();
+        return [];
     }
 }
