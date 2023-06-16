@@ -48,6 +48,7 @@ class HomeQuoteService extends BaseService
             'hqr.policy_number',
             'hqr.ilivein_accommodation_type_id',
             'hqr.quote_status_id',
+            'hqr.additional_notes',
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
@@ -445,6 +446,7 @@ class HomeQuoteService extends BaseService
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_premium' => 'input|number|title',
             'parent_duplicate_quote_id' => 'input|title',
+            'additional_notes' => 'readonly',
             'renewal_import_code' => 'input|text',
         ];
     }
@@ -514,10 +516,10 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code',
-            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,address,iam_possesion_type_id,next_followup_date,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,renewal_expiry_date,renewal_import_code',
-            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code',
-            'show' => 'source,is_renewal,id,next_followup_date,lost_reason,quote_status_id,previous_quote_id',
+            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,additional_notes',
+            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,address,iam_possesion_type_id,next_followup_date,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,renewal_expiry_date,renewal_import_code,additional_notes',
+            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,additional_notes',
+            'show' => 'source,is_renewal,next_followup_date,lost_reason,quote_status_id,previous_quote_id',
         ];
     }
 
