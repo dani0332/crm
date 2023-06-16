@@ -2,8 +2,6 @@
 defineProps({
   embeddedProduct: Object,
 });
-
-const page = usePage();
 </script>
 
 <template>
