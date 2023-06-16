@@ -115,7 +115,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="Amount Paid">Amount Paid <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="number" id="amount_paid" name="amount_paid" class="form-control" value="{{ old('amount_paid') }}"/>
+                            <input type="text" id="amount_paid" name="amount_paid" class="form-control" value="{{ old('amount_paid') }}"/>
                             <small class="text-muted">Please enter the Amount Paid</small><br/>
                             @if ($errors->has('amount_paid'))
                                 <span class="text-danger">{{ $errors->first('amount_paid') }}</span>
