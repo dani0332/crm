@@ -17,7 +17,7 @@ class ChangeEmbeddedProductPricings extends Migration
 
             Schema::table('embedded_product_options', function ($table) {
                 if (! Schema::hasColumn('embedded_product_options', 'is_active')) {
-                    $table->tinyInteger('is_active')->default(1)->after('variant');
+                    $table->tinyInteger('is_active')->default(1);
                 }
             });
         }

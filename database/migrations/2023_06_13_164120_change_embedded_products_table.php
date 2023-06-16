@@ -16,11 +16,11 @@ class ChangeEmbeddedProductsTable extends Migration
         if (Schema::hasTable('embedded_products')) {
             Schema::table('embedded_products', function (Blueprint $table) {
                 if (! Schema::hasColumn('embedded_products', 'product_category')) {
-                    $table->string('product_category')->after('product_type');
+                    $table->string('product_category');
                 }
 
                 if (! Schema::hasColumn('embedded_products', 'product_validity')) {
-                    $table->bigInteger('product_validity')->nullable()->after('product_category');
+                    $table->bigInteger('product_validity')->nullable();
                 }
 
                 if (! Schema::hasColumn('embedded_products', 'uncheck_message')) {
@@ -28,7 +28,7 @@ class ChangeEmbeddedProductsTable extends Migration
                 }
 
                 if (! Schema::hasColumn('embedded_products', 'is_active')) {
-                    $table->tinyInteger('is_active')->default(1)->after('uncheck_message');
+                    $table->tinyInteger('is_active')->default(1);
                 }
 
                 if (Schema::hasColumn('embedded_products', 'description')) {
