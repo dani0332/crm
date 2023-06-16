@@ -152,7 +152,7 @@ class CentralService
                 $getQuoteLead = $model::findOrfail($leadId);
 
                 if ($getQuoteLead) {
-                    $getQuoteLead->advisor_id = (int) $request->assigned_to_id_new;
+                    $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
                     $getQuoteLead->save();
                     $childRecord = PersonalQuoteDetail::where('personal_quote_id', $getQuoteLead->id)->first();
 

@@ -1,4 +1,6 @@
 <script setup>
+import {router} from "@inertiajs/vue3";
+
 const props = defineProps({
     selected: {
         type: Array,
@@ -49,6 +51,9 @@ function onAssignLead(isValid) {
                 onSuccess: () => {
                     assignForm.processing = false;
                     emit('success');
+                    router.reload({
+                        preserveScroll:true,
+                    });
                 },
                 onError: () => {
                     assignForm.processing = false;
