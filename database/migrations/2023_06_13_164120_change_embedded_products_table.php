@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ChangeEmbeddedProductsTable extends Migration
 {
@@ -14,7 +14,6 @@ class ChangeEmbeddedProductsTable extends Migration
      */
     public function up()
     {
-
         if (Schema::hasTable('embedded_products')) {
             Schema::table('embedded_products', function (Blueprint $table) {
                 if (! Schema::hasColumn('embedded_products', 'product_category')) {
@@ -26,7 +25,7 @@ class ChangeEmbeddedProductsTable extends Migration
                 }
 
                 if (! Schema::hasColumn('embedded_products', 'uncheck_message')) {
-                    $table->text('uncheck_message')->after('pricing_type');
+                    $table->text('uncheck_message')->nullable();
                 }
 
                 if (! Schema::hasColumn('embedded_products', 'is_active')) {
