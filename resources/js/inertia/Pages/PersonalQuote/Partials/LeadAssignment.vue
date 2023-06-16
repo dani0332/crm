@@ -97,6 +97,18 @@ function onAssignLead(isValid) {
                     </div>
                 </div>
             </x-form>
+            <x-alert
+                v-if="Object.keys($page.props.errors).length > 0"
+                color="error"
+                outlined
+                light
+            >
+                <ul class="list-disc list-inside">
+                    <li v-for="error in $page.props.errors" :key="error">
+                        {{ error }}
+                    </li>
+                </ul>
+            </x-alert>
         </div>
     </section>
 </template>
