@@ -5,6 +5,8 @@ namespace App\Http\Controllers\V2;
 use App\Exports\LifeQuotesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DuplicateLobRequest;
+use App\Http\Requests\LeadAssignRequest;
+use App\Repositories\UserRepository;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -45,5 +47,17 @@ class CentralController extends Controller
             default:
                 return false;
         }
+    }
+
+    public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)
+    {
+        $response = (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
+        $advisor = UserRepository::getUserById( (int) $leadAssignRequest->assigned_to_id_new );
+
+        if(!isset($response['is_valid_response']))
+            return redirect()->back()->with('error', $response['message'] ?? 'something went wrong');
+
+        return redirect()->back()->with('success',
+            empty($response['message']) ? ucfirst($leadAssignRequest->modelType).' Leads has been Assigned To '.$advisor->name : $response['message']);
     }
 }

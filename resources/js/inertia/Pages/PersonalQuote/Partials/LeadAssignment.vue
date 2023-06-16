@@ -14,7 +14,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['success', 'error']);
-
+const notification = useNotifications('toast');
 
 if (!String.prototype.hasOwnProperty('capitalizeFirstChar')) {
   Object.defineProperty(String.prototype, 'capitalizeFirstChar', {
@@ -44,12 +44,24 @@ function onAssignLead(isValid) {
         selectTmLeadId: `${props.selected}`,
         assignment_type: assignForm.manual_assignment_email_flag,
       }))
-      .post(`/quotes/${props.quoteType}/manualLeadAssign`, {
+      .post(`/quotes/${props.quoteType}/leadAssign`, {
         preserveScroll: true,
         preserveState: true,
-        onSuccess: () => {
+        onSuccess: (response) => {
             assignForm.processing = false;
             emit('success');
+            if(response.props.flash.success){
+                notification.success({
+                    title: response.props.flash.success,
+                    position: 'top',
+                });
+            }
+            if(response.props.flash.error){
+                notification.error({
+                    title: response.props.flash.error,
+                    position: 'top',
+                });
+            }
         },
         onError: () => {
             assignForm.processing = false;

@@ -1,8 +1,18 @@
 <script setup>
+import LeadAssignment from "../PersonalQuote/Partials/LeadAssignment.vue";
+
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+    quoteType: {
+        type: String,
+        default: 'cycle',
+    },
+    errors: {
+        type: [Object, Array],
+        default : () => [],
+    }
 });
 
 const page = usePage();
@@ -27,17 +37,6 @@ let availableFilters = {
   quote_status_id: '',
   page: 1,
 };
-
-const assignForm = useForm({
-    assign_team: null,
-    assigned_to_id_new: null,
-    assignment_type: '1',
-    modelType: 'Cycle',
-    selectTmLeadId: '',
-    isManagerOrDeputy: 1,
-    isLeadPool: null,
-    isManualAllocationAllowed: 1,
-});
 
 const filters = reactive(availableFilters);
 const quotesSelected = ref([]);
@@ -80,29 +79,6 @@ function onReset() {
     onBefore: () => (loader.table = true),
     onSuccess: () => (loader.table = false),
   });
-}
-
-function onAssignLead(isValid) {
-    if (isValid) {
-        const selected = quotesSelected.value.map(e => e.id);
-        const url = '/quotes/cycle/manualLeadAssign';
-        assignForm
-            .transform(data => ({
-                ...data,
-                selectTmLeadId: `${selected}`,
-            }))
-            .post(url, {
-                preserveScroll: true,
-                preserveState: true,
-                onSuccess: () => {
-                    quotesSelected.value = [];
-                    notification.success({
-                        title: 'Cycle Leads Assigned',
-                        position: 'top',
-                    });
-                },
-            });
-    }
 }
 
 function setQueryStringFilters() {
@@ -260,47 +236,14 @@ const permissionsEnum = page.props.permissionsEnum;
         </x-button>
       </div>
     </x-form>
+
       <Transition name="fade">
           <div v-if="quotesSelected.length > 0" class="mb-4">
-              <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
-                  <x-form @submit="onAssignLead" :auto-focus="false">
-                      <div class="w-full flex flex-col md:flex-row gap-4">
-                          <x-select
-                              v-model="assignForm.assign_team"
-                              label="Assign Subteam"
-                              :options="[
-                                  { value: 'Wow-Call', label: 'Wow-Call' },
-                                  { value: 'RM-NB', label: 'RM-NB' },
-                                  { value: 'RM-Speed', label: 'RM-Speed' },
-                                  { value: 'EBP', label: 'EBP' },
-                                  { value: 'No-Type', label: 'No-Type' },
-                                ]"
-                              placeholder="Select Subteam"
-                              class="flex-1 w-auto"
-                              :rules="[isRequired]"
-                          />
-                          <x-select
-                              v-model="assignForm.assigned_to_id_new"
-                              label="Assign Advisor"
-                              :options="advisorOptions"
-                              placeholder="Select Advisor"
-                              class="flex-1 w-auto"
-                              :rules="[isRequired]"
-                          />
-
-                          <div class="mb-3 md:pt-6">
-                              <x-button
-                                  color="orange"
-                                  size="sm"
-                                  type="submit"
-                                  :loading="assignForm.processing"
-                              >
-                                  Assign
-                              </x-button>
-                          </div>
-                      </div>
-                  </x-form>
-              </div>
+              <LeadAssignment
+                  :selected="quotesSelected.map(e => e.id)"
+                  :advisors="advisorOptions"
+                  :quoteType="quoteType"
+              />
           </div>
       </Transition>
     <DataTable

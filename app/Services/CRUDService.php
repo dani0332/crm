@@ -33,7 +33,6 @@ class CRUDService extends BaseService
     protected $homeQuoteService;
     protected $businessQuoteService;
     protected $petQuoteService;
-    protected $cycleQuoteService;
     protected $quoteTypes;
     protected $insuranceproviderService;
     protected $carplancoverageService;
@@ -55,7 +54,6 @@ class CRUDService extends BaseService
         HomeQuoteService $homeQuoteService,
         BusinessQuoteService $businessQuoteService,
         PetQuoteService $petQuoteService,
-        CycleQuoteService $cycleQuoteService,
         InsuranceProviderService $insuranceproviderService,
         CarPlanService $carplanService,
         CarPlanCoverageService $carplancoverageService,
@@ -75,7 +73,6 @@ class CRUDService extends BaseService
         $this->homeQuoteService = $homeQuoteService;
         $this->businessQuoteService = $businessQuoteService;
         $this->petQuoteService = $petQuoteService;
-        $this->cycleQuoteService = $cycleQuoteService;
         $this->insuranceproviderService = $insuranceproviderService;
         $this->carplanService = $carplanService;
         $this->carplancoverageService = $carplancoverageService;
@@ -85,7 +82,7 @@ class CRUDService extends BaseService
         $this->tierService = $tierService;
         $this->quadrantService = $quadrantService;
         $this->ruleService = $ruleService;
-        $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car', 'pet', 'cycle'];
+        $this->quoteTypes = ['home', 'health', 'life', 'business', 'travel', 'car', 'pet'];
     }
 
     public function getGridData(GenericModel $model, Request $request)

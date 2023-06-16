@@ -27,4 +27,9 @@ class UserRepository extends BaseRepository
                 $q->whereIn('name', $roles);  //todo: add required roles here
             })->get();
     }
+
+    public function fetchGetUserById($user_id)
+    {
+        return $this->where('id', $user_id)->first();
+    }
 }

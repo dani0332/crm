@@ -3,10 +3,16 @@
 namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
+use App\Repositories\UserRepository;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
+use Log;
 
 class CentralService
 {
@@ -121,5 +127,74 @@ class CentralService
 
             return $resp;
         }
+    }
+
+    public function assignLeadToAdvisor($request)
+    {
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle];
+        $leadsIds = $request->selectTmLeadId ?? $request->entityId;
+
+        if (str_starts_with($leadsIds, ',')) {
+            $leadsIds = substr($leadsIds, 1);
+        }
+
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+            PersonalQuote::class : (ucfirst($request->modelType).'Quote');
+
+        if (! class_exists($model)) {
+            return ['message' => 'something went wrong'];
+        }
+
+        foreach ($leadsIds as $leadId) {
+            $getQuoteLead = $model::where('id', $leadId)->first();
+            if (isset($getQuoteLead->quote_status_id) && $getQuoteLead->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+                return ['message' => 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.'];
+            }
+        }
+
+        $assignedUser = UserRepository::getUserById( (int) $request->assigned_to_id_new );
+        if (! $assignedUser) {
+            return ['message' => 'Selected advisor does not exist in the system!'];
+        }
+
+        return $this->processLeadAssignment($leadsIds, $assignedUser, $model);
+    }
+
+    protected function processLeadAssignment($leadsIds, $advisor, $model)
+    {
+        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        $message = '';
+
+        foreach ($leadsIds as $leadId) {
+            $lead = $model::findOrfail($leadId);
+            if ($lead) {
+                $lead->advisor_id = $advisor->id;
+                $lead->save();
+                $this->updateChildRecord($lead->id);
+            }else{
+                $message .= $message . 'Manual Lead Assignment Failed for '.$model.' , selected id was '.$leadId.' <br>';
+                Log::warning('Manual Lead Assignment Failed for '.$model.' , selected id was '. $leadId);
+            }
+        }
+
+        return ['is_valid_response' => true, 'message' => $message];
+    }
+
+    protected function updateChildRecord($id)
+    {
+        $childRecord = PersonalQuoteDetail::where('personal_quote_id', $id)->first();
+
+        if (empty($childRecord)) {
+            PersonalQuoteDetail::create([
+                'personal_quote_id' => $id,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ]);
+        }
+
+        $childRecord->advisor_assigned_by_id = auth()->user()->id;
+        $childRecord->advisor_assigned_date = Carbon::now();
+        $childRecord->save();
     }
 }
