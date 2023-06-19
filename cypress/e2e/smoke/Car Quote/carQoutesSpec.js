@@ -15,7 +15,7 @@ describe('Car qoutes', () => {
   })
 
   beforeEach(() => {
-    cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
+    cy.loginByCookies()
     cy.runRoutes()
   })
 

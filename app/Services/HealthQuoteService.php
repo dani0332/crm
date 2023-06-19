@@ -55,6 +55,7 @@ class HealthQuoteService extends BaseService
             'hqr.preference',
             'hqr.details',
             'hqr.source',
+            'hqr.additional_notes',
             DB::raw('DATE_FORMAT(hqr.dob, "%d-%m-%Y") as dob'),
             'hqr.gender',
             'hqr.has_dental',

@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CRUDService extends BaseService
@@ -194,6 +195,15 @@ class CRUDService extends BaseService
         return $audits;
     }
 
+    public function getLeadHistoryLogs($quoteTypeId, $recordId)
+    {
+        return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $recordId)
+            ->orderBy('created_at', 'DESC')
+            ->with(['currentQuoteStatus', 'createdBy', 'previousQuoteStatus'])
+            ->get();
+    }
+
     public function updateQuoteStatus(Request $request)
     {
         $quoteDetailEntity = $this->{strtolower($request->modelType).'QuoteService'}->getDetailEntity($request->leadId);
@@ -266,6 +276,8 @@ class CRUDService extends BaseService
             'previous_quote_status_id' => $previousQuoteStatus,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
+            'notes' => $request->notes,
+            'created_by' => Auth::user()->id,
         ]);
 
         return $entity;
