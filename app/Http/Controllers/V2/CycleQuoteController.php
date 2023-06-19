@@ -48,7 +48,6 @@ class CycleQuoteController extends Controller
 
     /**
      * @param $quoteTypeCode
-     * @param  CycleQuoteRequest  $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function store(CycleQuoteRequest $request)
@@ -59,7 +58,7 @@ class CycleQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect("personal-quotes/cycle/".$response->quoteUID)->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/cycle/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     /**
@@ -80,14 +79,13 @@ class CycleQuoteController extends Controller
     /**
      * @param $quoteTypeCode
      * @param $quoteId
-     * @param  CycleQuoteRequest  $request
      * @return void
      */
     public function update($uuid, CycleQuoteRequest $request)
     {
         CycleQuoteRepository::update($uuid, $request->validated());
 
-        return redirect("personal-quotes/cycle/".$uuid)->with('message', 'Quote updated successfully');
+        return redirect('personal-quotes/cycle/'.$uuid)->with('message', 'Quote updated successfully');
 
     }
 

@@ -6,7 +6,6 @@ use App\Exports\LifeQuotesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
-use App\Repositories\UserRepository;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;

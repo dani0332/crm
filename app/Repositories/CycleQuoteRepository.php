@@ -57,10 +57,10 @@ class CycleQuoteRepository extends BaseRepository
     public function fetchGetData()
     {
         return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
-            ->when( \auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query){
-                $query->where(function ($query){
+            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+                $query->where(function ($query) {
                     $query->where('advisor_id', \auth()->user()->id)
-                            ->orWhereNull('advisor_id');
+                        ->orWhereNull('advisor_id');
                 });
             })
             ->filter()

@@ -5,7 +5,6 @@ namespace App\Http\Requests;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\PersonalQuote;
-use App\Repositories\UserRepository;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LeadAssignRequest extends FormRequest
@@ -29,7 +28,7 @@ class LeadAssignRequest extends FormRequest
     {
         return [
             'assigned_advisor_id' => 'required|exists:App\Models\User,id',
-            'assigned_lead_id' => 'required'
+            'assigned_lead_id' => 'required',
         ];
     }
 
@@ -46,8 +45,8 @@ class LeadAssignRequest extends FormRequest
              */
             foreach ($leadsIds as $leadId) {
                 $getQuoteLead = $model::find($leadId);
-                if(! $getQuoteLead){
-                    $validator->errors()->add('assigned_lead_id', 'Manual Lead Assignment Failed for '. ucfirst(request()->modelType) .', selected id was ' .$leadId);
+                if (! $getQuoteLead) {
+                    $validator->errors()->add('assigned_lead_id', 'Manual Lead Assignment Failed for '.ucfirst(request()->modelType).', selected id was '.$leadId);
                     break;
                 }
 
@@ -64,7 +63,7 @@ class LeadAssignRequest extends FormRequest
     {
         return [
             'assigned_advisor_id.required' => 'Please select user to assign leads',
-            'assigned_lead_id.required' => 'Please select lead(s) to assign'
+            'assigned_lead_id.required' => 'Please select lead(s) to assign',
         ];
     }
 }

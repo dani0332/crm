@@ -56,7 +56,7 @@ class BikeQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect("personal-quotes/bike/".$response->quoteUID)->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/bike/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     /**
@@ -123,6 +123,6 @@ class BikeQuoteController extends Controller
     {
         BikeQuoteRepository::update($uuid, $request->validated());
 
-        return redirect("personal-quotes/bike/".$uuid)->with('message', 'Quote updated successfully');
+        return redirect('personal-quotes/bike/'.$uuid)->with('message', 'Quote updated successfully');
     }
 }

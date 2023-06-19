@@ -6,7 +6,6 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
-use App\Models\CarQuoteRequestDetail;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Traits\GenericQueriesAllLobs;
@@ -148,14 +147,14 @@ class CentralService
             vAbort('Something went wrong');
         }
 
-        return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes){
+        return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes) {
             foreach ($leadsIds as $leadId) {
                 $getQuoteLead = $model['parent']::findOrfail($leadId);
                 $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
                 $getQuoteLead->save();
 
                 $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
-                    'personal_quote_id' : strtolower($request->modelType). '_quote_request_id';
+                    'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
 
                 $model['child']::updateOrCreate(
                     [$parentFieldName => $getQuoteLead->id],
