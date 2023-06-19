@@ -57,7 +57,7 @@ class JetskiQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/jetski/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     /**
@@ -126,6 +126,6 @@ class JetskiQuoteController extends Controller
     {
         JetskiQuoteRepository::update($uuid, $request->validated());
 
-        return back();
+        return redirect('personal-quotes/jetski/'.$uuid)->with('message', 'Quote updated successfully');
     }
 }
