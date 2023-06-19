@@ -343,7 +343,7 @@
 
 @endphp
 
-<img src="{{public_path('images/quote_plans_pages/P1-1.png')}}" class="full-page-image" />
+<img src="{{public_path('images/quote_plans_pages/P1-1.jpg')}}" class="full-page-image" />
 
 <footer>
     <table class="tbl-footer">
@@ -520,7 +520,7 @@
                                     @else
                                         {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
                                     @endif
-                                    
+
                                 @elseif($feature['type'] == 'prop')
 
                                     {!!  $plans[$planId]->{$feature['code']} !!}
