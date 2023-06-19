@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Exports\LifeQuotesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DuplicateLobRequest;
+use App\Http\Requests\LeadAssignRequest;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -45,5 +46,12 @@ class CentralController extends Controller
             default:
                 return false;
         }
+    }
+
+    public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)
+    {
+        (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
+
+        return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
 }
