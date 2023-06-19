@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Traits\GenericQueriesAllLobs;
@@ -156,14 +157,10 @@ class CentralService
                 $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
                     'personal_quote_id' : strtolower($request->modelType). '_quote_request_id';
 
-                $childRecord = $model['child']::where($parentFieldName, $getQuoteLead->id)->first();
-                if (empty($childRecord)){
-                    $model['child']::create([$parentFieldName => $getQuoteLead->id]);
-                }else{
-                    $childRecord->advisor_assigned_by_id = auth()->user()->id;
-                    $childRecord->advisor_assigned_date = Carbon::now();
-                    $childRecord->save();
-                }
+                $model['child']::updateOrCreate(
+                    [$parentFieldName => $getQuoteLead->id],
+                    ['advisor_assigned_by_id' => auth()->user()->id, 'advisor_assigned_date' => Carbon::now()]
+                );
             }
         });
     }
