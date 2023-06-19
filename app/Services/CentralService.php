@@ -6,7 +6,12 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
+use App\Models\PersonalQuote;
+use App\Models\PersonalQuoteDetail;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Log;
 
 class CentralService
 {
@@ -121,5 +126,41 @@ class CentralService
 
             return $resp;
         }
+    }
+
+    public function assignLeadToAdvisor($request)
+    {
+        $leadsIds = $request->assigned_lead_id;
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle];
+        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+
+        if (str_starts_with($leadsIds, ',')) {
+            $leadsIds = substr($leadsIds, 1);
+        }
+
+        $leadsIds = array_map('intval', explode(',', $leadsIds));
+        $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+            ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
+            ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
+
+        if (! class_exists($model['parent'])) {
+            vAbort('Something went wrong');
+        }
+
+        return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes) {
+            foreach ($leadsIds as $leadId) {
+                $getQuoteLead = $model['parent']::findOrfail($leadId);
+                $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
+                $getQuoteLead->save();
+
+                $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+                    'personal_quote_id' : strtolower($request->modelType).'_quote_request_id';
+
+                $model['child']::updateOrCreate(
+                    [$parentFieldName => $getQuoteLead->id],
+                    ['advisor_assigned_by_id' => auth()->user()->id, 'advisor_assigned_date' => Carbon::now()]
+                );
+            }
+        });
     }
 }
