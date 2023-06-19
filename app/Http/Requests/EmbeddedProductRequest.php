@@ -26,7 +26,7 @@ class EmbeddedProductRequest extends FormRequest
         $id = request()->route()->parameter('embedded_product');
 
         return [
-            'insurance_provider_id' => 'required|int|exists:insurance_provider,id',
+            'insurance_provider_id' => 'nullable|int|exists:insurance_provider,id',
             'product_name' => 'required',
             'display_name' => 'required',
             'product_type' => 'required',
