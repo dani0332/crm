@@ -28,7 +28,7 @@ class LeadAssignRequest extends FormRequest
     public function rules()
     {
         return [
-            'assigned_advisor_id' => 'required',
+            'assigned_advisor_id' => 'required|exists:App\Models\User,id',
             'assigned_lead_id' => 'required'
         ];
     }
@@ -42,19 +42,11 @@ class LeadAssignRequest extends FormRequest
                 PersonalQuote::class : (ucfirst(request()->modelType).'Quote');
 
             /**
-             * check if assigned advisor exist in system.
-             */
-            $assignedAdvisorId = UserRepository::getUserById( (int) request()->assigned_advisor_id );
-            if (! $assignedAdvisorId) {
-                $validator->errors()->add('assigned_advisor_id', 'Selected advisor does not exist in the system!');
-            }
-
-            /**
              * check if the lead status is transaction approved.
              */
             foreach ($leadsIds as $leadId) {
-                $getQuoteLead = $model::findOrfail($leadId);
-                if(!$getQuoteLead){
+                $getQuoteLead = $model::find($leadId);
+                if(! $getQuoteLead){
                     $validator->errors()->add('assigned_lead_id', 'Manual Lead Assignment Failed for '. ucfirst(request()->modelType) .', selected id was ' .$leadId);
                     break;
                 }

@@ -140,43 +140,31 @@ class CentralService
 
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         $model = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
-            PersonalQuote::class : (ucfirst($request->modelType).'Quote');
+            ['parent' => PersonalQuote::class, 'child' => PersonalQuoteDetail::class] :
+            ['parent' => (ucfirst($request->modelType).'Quote'), 'child' => (ucfirst($request->modelType).'QuoteRequestDetail')];
 
-        if (! class_exists($model)) {
+        if (! class_exists($model['parent'])) {
             vAbort('Something went wrong');
         }
 
-        try {
-            DB::beginTransaction();
+        return DB::transaction(function () use ($leadsIds, $model, $request, $personalQuotes){
             foreach ($leadsIds as $leadId) {
-                $getQuoteLead = $model::findOrfail($leadId);
+                $getQuoteLead = $model['parent']::findOrfail($leadId);
+                $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
+                $getQuoteLead->save();
 
-                if ($getQuoteLead) {
-                    $getQuoteLead->advisor_id = (int) $request->assigned_advisor_id;
-                    $getQuoteLead->save();
-                    $childRecord = PersonalQuoteDetail::where('personal_quote_id', $getQuoteLead->id)->first();
+                $parentFieldName = (in_array(ucfirst($request->modelType), $personalQuotes) && in_array(ucfirst($request->modelType), newUi())) ?
+                    'personal_quote_id' : strtolower($request->modelType). '_quote_request_id';
 
-                    if (empty($childRecord)) {
-                        PersonalQuoteDetail::create([
-                            'personal_quote_id' => $getQuoteLead->id,
-                            'created_at' => Carbon::now(),
-                            'updated_at' => Carbon::now(),
-                        ]);
-                    }
-
+                $childRecord = $model['child']::where($parentFieldName, $getQuoteLead->id)->first();
+                if (empty($childRecord)){
+                    $model['child']::create([$parentFieldName => $getQuoteLead->id]);
+                }else{
                     $childRecord->advisor_assigned_by_id = auth()->user()->id;
                     $childRecord->advisor_assigned_date = Carbon::now();
                     $childRecord->save();
-                }else{
-                    Log::warning('Manual Lead Assignment Failed for '.$model.' , selected id was '. $leadId);
                 }
             }
-            DB::commit();
-        }catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error($e->getMessage());
-            DB::rollback();
-        }
-
-        return [];
+        });
     }
 }
