@@ -1607,14 +1607,13 @@ onMounted(() => {
             Download PDF
           </x-button> -->
 
-          <!-- hide create quote button for rm deployment -->
           <x-button
             size="sm"
             color="primary"
-            v-show="false"
+            v-show="true"
             @click.prevent="modals.createPlan = true"
           >
-            Create Quote
+            Add Plan
           </x-button>
 
           <x-button
@@ -1699,7 +1698,7 @@ onMounted(() => {
       </x-modal>
 
       <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
-        <template #header> Create Heath Quote </template>
+        <template #header> Add Plan </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
           @success="onCreatePlan"

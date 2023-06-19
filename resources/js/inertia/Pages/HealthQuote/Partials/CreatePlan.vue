@@ -12,15 +12,14 @@ const options = reactive({
 
 const createForm = reactive({
   provider_id: null,
+  network_id: null,
   plan_id: null,
+  deductibles: null,
   premium: null,
   loading: false,
 });
 
-const rules = {
-  isRequired: v => !!v || 'This field is required',
-  isNumber: v => !isNaN(v) || 'This field must be a number',
-};
+const { isRequired, isNumber } = useRules();
 
 const onSubmit = isValid => {
   if (!isValid) {
@@ -73,8 +72,8 @@ watch(
 
 <template>
   <x-form @submit="onSubmit" :auto-focus="false">
-    <div class="grid gap-5">
-      <x-select
+    <div class="grid gap-4">
+      <ComboBox
         v-model="createForm.provider_id"
         :options="
           $page.props.insuranceProviders?.map(item => ({
@@ -85,8 +84,26 @@ watch(
         label="Provider"
         placeholder="Select Provider"
         :disabled="$page.props.insuranceProviders?.length == 0"
-        class="w-full"
+        single
       />
+
+      <x-select
+        v-model="createForm.network_id"
+        label="Network"
+        placeholder="Select Network"
+        :disabled="!createForm.provider_id"
+        class="w-full"
+        :helper="!createForm.provider_id ? 'Select a provider first' : ''"
+        :options="
+          options.insurancePlans?.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        :loading="options.loading"
+        :rules="[isRequired]"
+      />
+
       <x-select
         v-model="createForm.plan_id"
         label="Plan"
@@ -101,15 +118,32 @@ watch(
           }))
         "
         :loading="options.loading"
-        :rules="[rules.isRequired]"
+        :rules="[isRequired]"
+      />
+
+      <x-select
+        v-model="createForm.deductibles"
+        label="Deductibles and Co-pay"
+        placeholder="Select Deductibles and Co-pay"
+        :disabled="!createForm.provider_id"
+        class="w-full"
+        :helper="!createForm.provider_id ? 'Select a provider first' : ''"
+        :options="
+          options.insurancePlans?.map(item => ({
+            value: item.id,
+            label: item.text,
+          }))
+        "
+        :loading="options.loading"
+        :rules="[isRequired]"
       />
       <x-input
         v-model="createForm.premium"
         type="text"
-        label="Premium"
-        placeholder="Enter Premium (inclusive of VAT, Basmah and Policy fee)"
+        label="Base Price"
+        placeholder="Enter Base Price exclusive of VAT, Basmah and Policy fee"
         class="w-full"
-        :rules="[rules.isRequired, rules.isNumber]"
+        :rules="[isRequired, isNumber]"
       />
       <x-button
         type="submit"
