@@ -121,7 +121,7 @@ class AjaxController extends Controller
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
 
-            $description = (get_class($quoteModel) == PersonalQuote::class) ? $payment->personalPlan->text : ($quoteModel->plan->text ?? '');
+            $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
 
             $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
