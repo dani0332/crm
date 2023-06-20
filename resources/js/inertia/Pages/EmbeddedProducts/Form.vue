@@ -224,7 +224,11 @@ const tempfileUrl = 'https://insurancemarket.blob.core.windows.net/imcrmdev/';
           />
         </x-field>
 
-        <x-field label="Insurance Provider" required>
+        <x-field
+          v-if="form.product_type == 'insurance'"
+          label="Insurance Provider"
+          required
+        >
           <x-select
             v-model="form.insurance_provider_id"
             :options="insuranceProviderOptions"
