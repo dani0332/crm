@@ -47,9 +47,9 @@ const dateFormat = date =>
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
-    return number;
+    return number.toLocaleString();
   } else {
-    return number.toFixed(2);
+    return number.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 };
 
@@ -1511,7 +1511,7 @@ onMounted(() => {
           </div>
         <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
-            <dd>{{ ecomDetails.priceWithVAT }}</dd>
+            <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
         </div>
         </dl>
       </div>
