@@ -22,11 +22,11 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
-use Auth;
 use Carbon\Carbon;
-use DB;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use PDF;
 
 class HealthQuoteService extends BaseService
@@ -184,7 +184,7 @@ class HealthQuoteService extends BaseService
             'referenceUrl' => config('constants.APP_URL'),
             'dob' => $request->dob,
             'gender' => $request->gender,
-            'is_ebp_renewal' => $request->is_ebp_renewal == 'on' ? true : false,
+            'is_ebp_renewal' => $request->is_ebp_renewal == 'on',
             'coverForId' => $request->cover_for_id,
             'nationalityId' => $request->nationality_id,
             'hasDental' => $request->has_dental == 'on' ? true : false,
@@ -1113,7 +1113,7 @@ class HealthQuoteService extends BaseService
                 foreach ($planPayload['plans'] as $plan) {
                     if ($plan['id'] == $data->plan_id) {
                         $response['providerName'] = $plan['providerName'];
-                        $response['priceWithVAT'] = $plan['actualPremium'] + $plan['vat'];
+                        $response['priceWithVAT'] = $plan['actualPremium'] + $plan['policyFee'] + $plan['basmah'] + $plan['vat'];
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];

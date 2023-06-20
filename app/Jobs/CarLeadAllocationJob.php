@@ -17,7 +17,7 @@ use Symfony\Component\HttpClient\Exception\TimeoutException as ExceptionTimeoutE
 use Throwable;
 
 //Scheduled to delete, job moved to console command
-class LeadAllocationJob implements ShouldQueue
+class CarLeadAllocationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, GetUserTreeTrait;
 

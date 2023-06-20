@@ -10,11 +10,10 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
-use App\Jobs\CammyJob;
-use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -65,20 +64,22 @@ class LeadAllocationService extends BaseService
                 ->whereNotNull('u.sub_team_id')
                 ->where('t.name', '=', quoteTypeCode::Health);
 
-            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
-                $query = $query->where('u.manager_id', auth()->user()->id);
+            if (!auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+                $query->where('u.manager_id', auth()->user()->id);
             }
 
             return $query->get();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error($e->getMessage());
         }
+
     }
 
     public function createLeadAllocationRecord($userId)
     {
         try {
             DB::beginTransaction();
+
             $leadAllocation = new LeadAllocation();
             $leadAllocation->user_id = $userId;
             $leadAllocation->allocation_count = 0;
@@ -86,9 +87,15 @@ class LeadAllocationService extends BaseService
             $leadAllocation->max_capacity = 0;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
+
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error($e->getMessage());
+
+            if (isset($leadAllocation)) {
+                $leadAllocation->delete(); // Rollback the record creation
+            }
+
             DB::rollback();
         }
     }
@@ -97,154 +104,151 @@ class LeadAllocationService extends BaseService
     {
         try {
             DB::beginTransaction();
-            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-            if (! $leadAllocation) {
-                DB::commit();
 
+            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+
+            if (!$leadAllocation) {
+                DB::commit();
                 return false;
             }
-            if (isset($allocationCount)) {
-                $leadAllocation->allocation_count = $allocationCount;
-            }
-            if (isset($max_capacity)) {
-                $leadAllocation->max_capacity = $maxCapacity;
-            }
-            if (isset($isAvailable)) {
-                $leadAllocation->is_available = $isAvailable;
-            }
+
+            $leadAllocation->allocation_count = $allocationCount ?? $leadAllocation->allocation_count;
+            $leadAllocation->max_capacity = $maxCapacity ?? $leadAllocation->max_capacity;
+            $leadAllocation->is_available = $isAvailable ?? $leadAllocation->is_available;
             $leadAllocation->save();
+
             DB::commit();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error($e->getMessage());
             DB::rollback();
         }
+
     }
 
     public function getHealthUnallocatedLeads()
     {
         try {
-            $unAllocatedLeads = [];
-            $to = now();
-            $from = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
-            info('Health Unallocated Leads from date : '.$from.' to date : '.$to);
+            $startDate = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+            $endDate = now();
+
+            info('Health Unallocated Leads from date: ' . $startDate . ' to date: ' . $endDate);
+
             $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
                 ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
                 ->where('quote_status.id', QuoteStatusEnum::Qualified)
-                ->whereNotNull('health_quote_request.health_team_type')
+                ->whereNotNull('health_quote_request.price_starting_from')
+                ->where('health_quote_request.is_error_email_sent', false)
                 ->whereNull('health_quote_request.advisor_id')
-                ->whereBetween('health_quote_request.created_at', [$from, $to])->skip(0)->take(20)->get();
+                ->whereBetween('health_quote_request.created_at', [$startDate, $endDate])
+                ->skip(0)
+                ->take(20)
+                ->get();
 
             return $unAllocatedLeads;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error($e->getMessage());
         }
     }
 
     public function assignLead($lead, $advisorId, $isManualAssignment)
     {
-        info('assignLead -- started with lead : '.$lead->uuid.' , advisorId : '.$advisorId.' , isManualAssignment : '.$isManualAssignment);
-        if ($this->checkIfAdvisorCanTakeLead($advisorId)) {
-            if ($lead->advisor_id != null) {
-                $this->removeLeadAllocationForOldAdvisor($lead);
-            }
-            info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
-            try {
-                DB::beginTransaction();
-                if ($isManualAssignment && $lead->advisor_id != null && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
-                    info('Manual Lead and Advisor Null Check '.$lead->uuid);
-                    $lead->quote_status_id = QuoteStatusEnum::Qualified;
-                }
+        info('assignLead -- started with lead: ' . $lead->uuid . ', advisorId: ' . $advisorId . ', isManualAssignment: ' . $isManualAssignment);
 
-                if (str_contains(strtolower($lead->code), strtolower(quoteTypeCode::Car))) {
-                    $lead->auto_assigned = $isManualAssignment ? false : true;
-                }
-
-                $lead->advisor_id = $advisorId;
-                $lead->save();
-                info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
-                if ($lead->source != LeadSourceEnum::REFERRAL) {
-                    $this->updateLeadAllocationRecord($advisorId, $isManualAssignment);
-                }
-                $this->updateLeadDetailRecord($lead->id, $lead->uuid);
-                $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
-                $leadCreated = Carbon::parse($lead->created_at)->timestamp;
-                if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-                    SyncSIBContactJob::dispatch($lead);
-                }
-                //Disabling - Enable for RM Deployment
-                // if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-                // && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-                //     CammyJob::dispatch($lead, 'intro');
-                // }
-                GetQuotePlansJob::dispatch($lead);
-                DB::commit();
-
-                return true;
-            } catch (\Exception $e) {
-                Log::error($e->getMessage());
-                DB::rollback();
-            }
-        } else {
+        if (!$this->checkIfAdvisorCanTakeLead($advisorId)) {
             return false;
         }
-    }
 
-    public function autoAssignment($advisorId, $lead)
-    {
-        $lead->advisor_id = $advisorId;
-        $lead->save();
+        if ($lead->advisor_id !== null) {
+            $this->removeLeadAllocationForOldAdvisor($lead);
+        }
 
-        return true;
-    }
+        info('Assigning lead ' . $lead->uuid . ' to advisor ' . $advisorId);
 
-    public function manualAssignment($advisorId, $lead)
-    {
-        if ($this->checkIfAdvisorCanTakeLead($advisorId)) {
-            if ($lead->advisor_id != null) {
-                $this->removeLeadAllocationForOldAdvisor($lead);
-            }
-            if ($lead->advisor_id != null) {
+        try {
+            DB::beginTransaction();
+
+            if ($isManualAssignment && $lead->advisor_id !== null && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
+                info('Manual Lead and Advisor Null Check ' . $lead->uuid);
                 $lead->quote_status_id = QuoteStatusEnum::Qualified;
             }
+
+            if (strcasecmp($lead->code, quoteTypeCode::Car) === 0) {
+                $lead->auto_assigned = !$isManualAssignment;
+            }
+
             $lead->advisor_id = $advisorId;
             $lead->save();
+            info('Lead Id ' . $lead->uuid . ' assigned to advisor ' . $advisorId);
+
+            if ($lead->source !== LeadSourceEnum::REFERRAL) {
+                $this->updateLeadAllocationRecord($advisorId, $isManualAssignment);
+            }
+
+            $this->updateLeadDetailRecord($lead->id, $lead->uuid);
+
+            $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
+            $leadCreated = Carbon::parse($lead->created_at)->timestamp;
+            if ($lead->health_team_type === HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id === QuoteStatusEnum::Quoted) {
+                SyncSIBContactJob::dispatch($lead);
+            }
+
+            // Disabling - Enable for RM Deployment
+            // if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+            //     && $leadCreated > $releaseDate && $lead->quote_status_id === QuoteStatusEnum::Quoted) {
+            //     CammyJob::dispatch($lead, 'intro');
+            // }
+
+            GetQuotePlansJob::dispatch($lead);
+
+            DB::commit();
 
             return true;
-        } else {
-            return false;
+        } catch (\Throwable $e) {
+            Log::error($e->getMessage());
+            DB::rollback();
         }
+
+        return false;
     }
 
     public function updateLeadDetailRecord($leadId, $leadUId)
     {
-        info('updateLeadDetailRecord -- started for lead UUID: '.$leadUId);
-        $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
-        if ($leadDetail) {
-            $leadDetail->advisor_assigned_date = now();
-            $leadDetail->advisor_assigned_by_id = auth()->id();
-            $leadDetail->save();
-        }
-        info('updateLeadDetailRecord -- completed for lead uuid: '.$leadUId);
+        info('updateLeadDetailRecord -- started for lead UUID: ' . $leadUId);
+
+        HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)
+            ->update([
+                'advisor_assigned_date' => now(),
+                'advisor_assigned_by_id' => auth()->id()
+            ]);
+
+        info('updateLeadDetailRecord -- completed for lead UUID: ' . $leadUId);
+
     }
 
     public function removeLeadAllocationForOldAdvisor($lead)
     {
         try {
-            DB::beginTransaction();
             info('removeLeadAllocationForOldAdvisor -- started');
-            info('Removing lead allocation record for lead id: '.$lead->id.' and advisor id: '.$lead->advisor_id);
+            info('Removing lead allocation record for lead ID: ' . $lead->id . ' and advisor ID: ' . $lead->advisor_id);
+
             $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $lead->id)->first();
+
             if ($leadDetail) {
-                if ($leadDetail->advisor_assigned_date != null) {
-                    if (Carbon::parse($leadDetail->advisor_assigned_date)->startOfDay() == now()->startOfDay()) {
-                        LeadAllocation::where('user_id', $lead->advisor_id)->where('allocation_count', '>', 0)->decrement('allocation_count', 1);
-                        info('Lead allocation count decremented for advisor id: '.$lead->advisor_id);
-                    }
+                DB::beginTransaction();
+
+                if ($leadDetail->advisor_assigned_date !== null && Carbon::parse($leadDetail->advisor_assigned_date)->isSameDay(now())) {
+                    LeadAllocation::where('user_id', $lead->advisor_id)
+                        ->where('allocation_count', '>', 0)
+                        ->decrement('allocation_count', 1);
+
+                    info('Lead allocation count decremented for advisor ID: ' . $lead->advisor_id);
                 }
+
+                DB::commit();
             }
 
-            DB::commit();
-        } catch (\Exception $e) {
+            info('removeLeadAllocationForOldAdvisor -- completed');
+        } catch (\Throwable $e) {
             Log::error($e->getMessage());
             DB::rollback();
         }
@@ -253,38 +257,35 @@ class LeadAllocationService extends BaseService
     public function checkIfAdvisorCanTakeLead($advisorId)
     {
         try {
-            $advisor = User::where('id', $advisorId)->first();
-
             $byPassUsersForAssignment = $this->getAppStorageValueByKey(ApplicationStorageEnums::HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS);
 
+            $advisor = User::where('id', $advisorId)->first();
             if (in_array($advisor->email, explode(',', $byPassUsersForAssignment))) {
                 return true;
             }
 
             info('checkIfAdvisorCanTakeLead -- started');
-            $leadAllocation = LeadAllocation::where('user_id', $advisorId)->first();
-            if ($leadAllocation != null) {
-                if ($leadAllocation->is_available == 0) {
-                    info('Advisor '.$advisorId.' cannot take lead while he/she is not available');
 
+            $leadAllocation = LeadAllocation::where('user_id', $advisorId)->first();
+
+            if ($leadAllocation) {
+                if ($leadAllocation->is_available === false) {
+                    info('Advisor ' . $advisorId . ' cannot take lead while he/she is not available');
                     return false;
                 }
-                if ($leadAllocation->max_capacity == -1 || $leadAllocation->allocation_count < $leadAllocation->max_capacity) {
-                    info('Advisor '.$advisorId.' can take lead');
-
+                if ($leadAllocation->max_capacity === -1 || $leadAllocation->allocation_count < $leadAllocation->max_capacity) {
+                    info('Advisor ' . $advisorId . ' can take lead');
                     return true;
                 }
-                if ($leadAllocation->max_capacity == $leadAllocation->allocation_count && $leadAllocation->max_capacity != -1) {
-                    info('Advisor '.$advisorId.' cannot take lead. Max capacity reached');
-
+                if ($leadAllocation->max_capacity === $leadAllocation->allocation_count && $leadAllocation->max_capacity !== -1) {
+                    info('Advisor ' . $advisorId . ' cannot take lead. Max capacity reached');
                     return false;
                 }
             } else {
-                info('Advisor '.$advisorId.' has no allocation record');
-
+                info('Advisor ' . $advisorId . ' has no allocation record');
                 return false;
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error($e->getMessage());
         }
     }
@@ -294,152 +295,110 @@ class LeadAllocationService extends BaseService
         try {
             DB::beginTransaction();
             info('updateLeadAllocationRecord -- started');
+
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-            info('Max capacity for user '.$userId.' is '.$leadAllocation->max_capacity.' and allocation count is '.$leadAllocation->allocation_count);
-            $leadAllocation->allocation_count += 1;
-            if ($isManualAssignment) {
-                $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count + 1;
-            } else {
-                $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count + 1;
-            }
+            info('Max capacity for user ' . $userId . ' is ' . $leadAllocation->max_capacity . ' and allocation count is ' . $leadAllocation->allocation_count);
+
+            $leadAllocation->increment('allocation_count');
+            $leadAllocation->increment($isManualAssignment ? 'manual_assignment_count' : 'auto_assignment_count');
             $leadAllocation->last_allocated = now()->timestamp;
             $leadAllocation->save();
+
             DB::commit();
-            info('Lead allocation record for user '.$userId.' updated. Current allocation count is '.$leadAllocation->allocation_count);
+
+            info('Lead allocation record for user ' . $userId . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollback();
-        }
-    }
-
-    public function getHealthUserSubTeamName($userId)
-    {
-        try {
-            info('getHealthUserSubTeamName -- started');
-            $user = User::where('id', $userId)->first();
-            if ($user) {
-                if ($user->sub_team_id != null) {
-                    info('User '.$user->name.' has sub-team '.$user->sub_team_id);
-                    $userSubTeam = Team::where('id', $user->sub_team_id)->first();
-                    info('User '.$user->name.' belongs to sub team '.$userSubTeam->name);
-
-                    return strtolower($userSubTeam->name);
-                } else {
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
         }
     }
 
     public function setAdvisorsToUnavailable()
     {
         try {
-            DB::beginTransaction();
             info('setAdvisorsToUnavailable -- started');
 
             $dateTimeNow = now()->toTimeString();
-
             info('Current time before unavailable is '.$dateTimeNow);
 
             $currentDayUsers = LeadAllocation::join('users', 'users.id', 'lead_allocation.user_id')
                 ->where('allocation_count', '>', 1)->get();
 
             foreach ($currentDayUsers as $currentDayUser) {
-                info(' Current Time is : '.now().' user : '.$currentDayUser->name.' allocation_count :'.$currentDayUser->allocation_count.' , manual_allocation : '.$currentDayUser->manual_allocation.' , auto_allocation : '.$currentDayUser->auto_allocation);
+                info('Current Time is: '.now().' User: '.$currentDayUser->name.' Allocation Count: '.$currentDayUser->allocation_count.' Manual Allocation: '.$currentDayUser->manual_allocation.' Auto Allocation: '.$currentDayUser->auto_allocation);
             }
 
-            LeadAllocation::whereNotNull('is_available')->update([
-                'is_available' => 0,
-                'allocation_count' => 0,
-                'manual_assignment_count' => 0,
-                'auto_assignment_count' => 0,
-            ]);
+            LeadAllocation::query()
+                ->update([
+                    'is_available' => false,
+                    'allocation_count' => 0,
+                    'manual_assignment_count' => 0,
+                    'auto_assignment_count' => 0,
+                ]);
 
-            info('Advisors are now unavailable and allocation count is set to 0');
-            DB::commit();
+            info('Advisors are now unavailable and allocation counts are reset');
         } catch (\Exception $e) {
             Log::error($e->getMessage());
-            DB::rollback();
         }
     }
 
     public function updateUserMaxCapacity()
     {
-        $users = User::join('tier_users as tu', 'tu.user_id', 'users.id')
-            ->join('tiers as t', 't.id', 'tu.tier_id')
-            ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
-            ->leftJoin('quadrants as q', 'q.id', 'qu.quad_id')
-            ->join('lead_allocation as la', 'la.user_id', 'users.id')
-            ->where('users.is_active', 1)
-            ->groupBy('users.name', 'users.id', 'la.id')
-            ->select(
-                'users.id as userId',
-                'users.name as userName',
-                'users.email as userEmail',
-                DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
-                DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
-                'la.allocation_count as allocationCount',
-                'la.last_allocated as lastAllocation',
-                'la.max_capacity as maxCapacity',
-                'la.is_available as isAvailable',
-                'users.last_login as lastLogin',
-                'la.id as id'
-            )->get();
-        foreach ($users as $user) {
-            $leadAllocationRecord = LeadAllocation::where('user_id', $user->userId)->first();
+        try {
+            DB::beginTransaction();
 
-            if ($leadAllocationRecord) {
-                // updating the max capacity if the quad is 1 then we should reset all the user to 4 otherwise everything should be 5
-                $leadAllocationRecord->max_capacity = str_contains($user->quads, '1') ? 4 : 5;
+            $users = User::join('tier_users as tu', 'tu.user_id', 'users.id')
+                ->join('tiers as t', 't.id', 'tu.tier_id')
+                ->leftJoin('quad_users as qu', 'qu.user_id', 'users.id')
+                ->leftJoin('quadrants as q', 'q.id', 'qu.quad_id')
+                ->join('lead_allocation as la', 'la.user_id', 'users.id')
+                ->where('users.is_active', 1)
+                ->groupBy('users.name', 'users.id', 'la.id')
+                ->select(
+                    'users.id as userId',
+                    'users.name as userName',
+                    'users.email as userEmail',
+                    DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
+                    DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
+                    'la.allocation_count as allocationCount',
+                    'la.last_allocated as lastAllocation',
+                    'la.max_capacity as maxCapacity',
+                    'la.is_available as isAvailable',
+                    'users.last_login as lastLogin',
+                    'la.id as id'
+                )->get();
 
-                $leadAllocationRecord->updated_at = now();
-                $leadAllocationRecord->save();
+            $maxCapacityUpdates = [];
+            foreach ($users as $user) {
+                // Determine the updated max capacity based on the presence of quad 1
+                $maxCapacity = str_contains($user->quads, '1') ? 4 : 5;
+
+                $maxCapacityUpdates[] = [
+                    'id' => $user->id,
+                    'max_capacity' => $maxCapacity,
+                    'updated_at' => now(),
+                ];
             }
+
+            if (!empty($maxCapacityUpdates)) {
+                LeadAllocation::query()->update($maxCapacityUpdates);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e->getMessage());
         }
     }
 
-    public function carLeadAllocationSwitchStatus()
-    {
-        return $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH') ? $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH') : 0;
-    }
-
-    public function leadAllocationSwitchStatus()
+    public function leadAllocationSwitchStatus(): bool
     {
         return $this->getAppStorageValueByKey('LEAD_ALLOCATION_JOB_SWITCH') == '1';
     }
 
     public function getLeadAllocationRecordByUserId($userId)
     {
-        try {
-            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-
-            return $leadAllocation;
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-        }
-    }
-
-    public function getNextAssignableUserId($lead)
-    {
-        try {
-            $availableUserId = LeadAllocation::join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                ->join('teams as t', 't.id', '=', 'u.sub_team_id')
-                ->where('lead_allocation.is_available', 1)
-                ->where(function ($query) {
-                    $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
-                        ->orWhere('lead_allocation.max_capacity', '=', -1);
-                })
-                ->where(strtolower('t.name'), strtolower($lead->health_team_type))
-                ->orderBy('lead_allocation.last_allocated', 'asc');
-
-            return $availableUserId->first();
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-        }
+        return LeadAllocation::findOrFail($userId);
     }
 
     public function getAvailableAdvisors()
@@ -477,13 +436,6 @@ class LeadAllocationService extends BaseService
 
                 if ($this->checkIfLeadIsRenewal($carLead)) {
                     info('Renewal found against quote Id : '.$carLead->uuid.' skipping it now');
-
-                    // if (! $carLead->is_renewal_tier_email_sent) {
-                    //     info('About to send Renewal Tier R email for quote Id : '.$carLead->uuid);
-
-                    //     CarRenewalEmailJob::dispatch($carLead);
-                    // }
-
                     continue; // since we found renewal against current lead we will skip advisor assignment
                 }
                 info('trying to check tier against the current lead : '.$carLead->code);
@@ -557,7 +509,7 @@ class LeadAllocationService extends BaseService
                             info('updating user record in lead allocation table with count increment userId: '.$userId);
                             $this->updateLeadAllocationOnCarAutoAssignment($userId); // updating lead allocation record for user
 
-                            $emailData = $this->buildEmailDateForLMSIntroEmail($userId, $carQuote); // create email body for intro email
+                            $emailData = $this->buildEmailDataForLMSIntroEmail($userId, $carQuote); // create email body for intro email
 
                             $emailTemplateId = (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
 
@@ -589,13 +541,14 @@ class LeadAllocationService extends BaseService
         }
     }
 
-    public function buildEmailDateForLMSIntroEmail($userId, $carQuote)
+    public function buildEmailDataForLMSIntroEmail($userId, $carQuote): object
     {
-        $user = User::where('id', $userId)->first();
+        $user = User::findOrFail($userId);
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-        $emailData = (object) [
+
+        $emailData = [
             'customerEmail' => $carQuote->email,
-            'documentUrl' => [$documentUrl], // this will be replace with a generic URL once document upload section is done
+            'documentUrl' => [$documentUrl], // Replace with a generic URL once document upload section is done
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'advisorName' => $user->name,
             'landLine' => $user->landline_no,
@@ -605,28 +558,38 @@ class LeadAllocationService extends BaseService
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
         ];
 
-        return $emailData;
+        return (object) $emailData;
     }
 
     public function updateLeadAllocationOnCarAutoAssignment($userId)
     {
-        $leadAllocationRecord = LeadAllocation::where('user_id', $userId)->first();
-        info('Count before update for user Id : '.$userId.' , total count = '.$leadAllocationRecord->allocation_count.' and auto count = '.$leadAllocationRecord->auto_assignment_count);
-        DB::statement("UPDATE lead_allocation SET allocation_count = allocation_count + 1 , auto_assignment_count = auto_assignment_count + 1 ,
-             last_allocated = '".Carbon::now()->timestamp."' , updated_at = now() where user_id = ".$userId);
+        try {
+            $leadAllocationRecord = LeadAllocation::where('user_id', $userId)->firstOrFail();
+            info('Count before update for user ID: '.$userId.', total count = '.$leadAllocationRecord->allocation_count.' and auto count = '.$leadAllocationRecord->auto_assignment_count);
+
+            $query = "UPDATE lead_allocation SET allocation_count = allocation_count + 1, auto_assignment_count = auto_assignment_count + 1, last_allocated = ".Carbon::now()->timestamp.", updated_at = NOW() WHERE user_id = ".$userId;
+            DB::statement($query);
+
+            info('Lead allocation updated for user ID: '.$userId);
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+        }
     }
 
     public function updateCarLeadDetailRecord($leadId)
     {
         info('---- Inside updateCarLeadDetailRecord');
+
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
+
         if ($carQuoteDetail) {
             $carQuoteDetail->advisor_assigned_date = now();
             $carQuoteDetail->advisor_assigned_by_id = auth()->id();
             $carQuoteDetail->save();
             info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
         } else {
-            info('---- updateCarLeadDetailRecord - record not found creating new entry');
+            info('---- updateCarLeadDetailRecord - record not found, creating new entry');
+
             CarQuoteRequestDetail::create([
                 'car_quote_request_id' => $leadId,
                 'advisor_assigned_date' => now(),
@@ -640,27 +603,25 @@ class LeadAllocationService extends BaseService
     public function getCarUnallocatedLeads()
     {
         $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
-
         $to = now()->subMinutes(2)->toDateTimeString();
-
         $carLeadPickupLimit = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_LIMIT');
-
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
 
-        info('Car leads fetch start date is :'.$from.'  and end datetime is : '.$to.' and pickup limit is : '.$carLeadPickupLimit.' and Pickup direction FIFO is : '.$isFIFO);
+        info('Car leads fetch start date is: ' . $from . ' and end datetime is: ' . $to . ' and pickup limit is: ' . $carLeadPickupLimit . ' and Pickup direction FIFO is: ' . $isFIFO);
 
         return CarQuote::whereNull('advisor_id')
-            ->where('is_renewal_tier_email_sent', 0) // this check make sure that Tier R leads are excluded bcz we only send email for Tier R and not assign advisor
+            ->where('is_renewal_tier_email_sent', 0)
             ->whereBetween('created_at', [$from, $to])
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]) // excluding all Fake leads
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]) // leads created from IMCRM are excluded because they get assigned to the creator right away
-            ->orderBy('created_at', $isFIFO ? 'asc' : 'desc') // pickup order
-            ->skip(0)->take($carLeadPickupLimit)->get();
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
+            ->take($carLeadPickupLimit)
+            ->get();
     }
 
     public function getRulesByLeadSource($source)
     {
-        $records = LeadSource::join('rule_lead_sources', 'rule_lead_sources.lead_source_id', 'lead_sources.id')
+        return LeadSource::join('rule_lead_sources', 'rule_lead_sources.lead_source_id', 'lead_sources.id')
             ->join('users', 'users.id', 'rule_lead_sources.user_id')
             ->join('rules', 'rule_lead_sources.rule_id', 'rules.id')
             ->where('lead_sources.name', $source)
@@ -671,9 +632,7 @@ class LeadAllocationService extends BaseService
                 'lead_sources.name AS leadSourceName',
                 'lead_sources.id AS leadSourceId',
                 DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers')
-            );
-
-        return $records->get();
+            )->get();
     }
 
     public function checkIfLeadIsRenewal($lead)
@@ -798,18 +757,13 @@ class LeadAllocationService extends BaseService
         return $query->get()->pluck('id')->toArray();
     }
 
-    public function getAppStorageValueByKey($keyName)
+    public function getAppStorageValueByKey($keyName): bool
     {
-        $query = ApplicationStorage::select('value')
-            ->where('key_name', $keyName)
-            ->first();
+        $appStorageValue = ApplicationStorage::where('key_name', $keyName)->value('value');
 
-        if (! $query) {
-            return false;
-        }
-
-        return $query->value;
+        return $appStorageValue ?? false;
     }
+
 
     public function updateAppStorageValueByKey($keyName, $value)
     {
@@ -846,41 +800,54 @@ class LeadAllocationService extends BaseService
 
     public function shouldCarAllocationProceed()
     {
-        $shouldProcess = true;
         $masterSwitchConfigValue = (int) config('constants.CAR_LEAD_ALLOCATION_MASTER_SWITCH');
         $masterSwitchValue = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
         $normalSwitchValue = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
-        if ($masterSwitchConfigValue == 0) {
-            // if car lead allocation master switch is OFF then we shouldn't proceed further
-            $shouldProcess = false;
-            info('shouldCarAllocationProceed -- Doppler -- output is : '.json_encode($shouldProcess));
 
+        if ($masterSwitchConfigValue == 0 || ! $masterSwitchValue || ! $normalSwitchValue) {
+            // If any of the conditions are true, we shouldn't proceed further
+            info('shouldCarAllocationProceed -- output is: false');
             return false;
         }
 
-        if (! $masterSwitchValue || ! $normalSwitchValue) {
-            // if car lead allocation normal switch is OFF then we shouldn't proceed further
-            $shouldProcess = false;
-        }
+        info('shouldCarAllocationProceed -- output is: true');
 
-        info('shouldCarAllocationProceed -- output is : '.json_encode($shouldProcess).'config value is : '.$masterSwitchConfigValue.' and app storage value is'.$normalSwitchValue.' and '.! $masterSwitchValue);
-
-        return $shouldProcess;
+        return true;
     }
 
-    public function shouldResetUserAssignmentCountAndAvailability()
+    public function shouldResetUserAssignmentCountAndAvailability(): bool
     {
-        $shouldProcess = false;
         $totalResetTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET');
 
-        info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
+        info('time now is: '.now()->toTimeString().', total reset time is: '.$totalResetTime);
+
         if (now()->toTimeString() >= $totalResetTime) {
             info('should total reset is true');
-            $shouldProcess = true;
-        } else {
-            info('should total reset is false');
+            return true;
         }
 
-        return $shouldProcess;
+        info('should total reset is false');
+        return false;
+    }
+
+    public function assignHealthTeamBasedOnStartingPrice($healthQuote)
+    {
+        $priceStartingFrom = $healthQuote->price_starting_from;
+
+        $healthTeam = Team::where('allocation_threshold_enabled', true)
+            ->where('min_price', '<=', $priceStartingFrom)
+            ->where('max_price', '>=', $priceStartingFrom)
+            ->first();
+
+        if ($healthTeam) {
+            $healthQuote->update([
+                'health_team_type' => strtolower($healthTeam->name)
+            ]);
+        } else {
+            $healthQuote->update([
+                'is_error_email_sent' => true
+            ]);
+            dispatch(new HealthAssignmentIssueEmail($healthQuote->code, $priceStartingFrom));
+        }
     }
 }

@@ -14,21 +14,21 @@ class LeadAllocation extends Model implements AuditableContract
 
     protected $table = 'lead_allocation';
 
-    public function getCreatedAtAttribute($table)
+    public function getCreatedAtAttribute($table): string
     {
-        $date_time_format = Config::get('constants.datetime_format');
+        $date_time_format = config('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
-    public function getUpdatedAtAttribute($table)
+    public function getUpdatedAtAttribute($table): string
     {
-        $date_time_format = Config::get('constants.datetime_format');
+        $date_time_format = config('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
-    public function leadAllocationUser()
+    public function leadAllocationUser(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(User::class, 'id', 'user_id');
     }
