@@ -4,7 +4,6 @@ namespace App\Mail;
 
 use App\Enums\ApplicationStorageEnums;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 
@@ -34,10 +33,10 @@ class HealthAssignmentIssueEmail extends Mailable
     public function build()
     {
         return $this->subject(env('APP_ENV').' - Health Sub Team assignment Failed')
-        ->to(explode(',', ApplicationStorageEnums::JOB_FAILED_EMAIL_RECIPIENTS))
-        ->view('email.health_assignment_issue', [
-            'quoteCode' => $this->quoteCode,
-            'priceStartingFrom' => $this->priceStartingFrom,
-        ]);
+            ->to(explode(',', ApplicationStorageEnums::JOB_FAILED_EMAIL_RECIPIENTS))
+            ->view('email.health_assignment_issue', [
+                'quoteCode' => $this->quoteCode,
+                'priceStartingFrom' => $this->priceStartingFrom,
+            ]);
     }
 }

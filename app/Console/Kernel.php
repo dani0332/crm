@@ -2,8 +2,8 @@
 
 namespace App\Console;
 
-use App\Jobs\HealthLeadAllocationJob;
 use App\Jobs\CarLeadAllocationJob;
+use App\Jobs\HealthLeadAllocationJob;
 use App\Jobs\TierAssignmentJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -30,34 +30,34 @@ class Kernel extends ConsoleKernel
 
         // Schedule CarLeadAllocationJob to run every minute without overlapping on one server
         $schedule->job(new CarLeadAllocationJob)
-        ->everyMinute()
-        ->withoutOverlapping(1)
-        ->onOneServer();
+            ->everyMinute()
+            ->withoutOverlapping(1)
+            ->onOneServer();
 
         // Schedule HealthLeadAllocationJob to run every minute without overlapping on one server
         $schedule->job(new HealthLeadAllocationJob)
-        ->everyMinute()
-        ->withoutOverlapping(1)
-        ->onOneServer();
+            ->everyMinute()
+            ->withoutOverlapping(1)
+            ->onOneServer();
 
         // Schedule TierAssignmentJob to run every two minutes without overlapping on one server
         $schedule->job(new TierAssignmentJob)
-        ->everyTwoMinutes()
-        ->withoutOverlapping(1)
-        ->onOneServer();
+            ->everyTwoMinutes()
+            ->withoutOverlapping(1)
+            ->onOneServer();
 
         // Schedule AddBatchNumber:cron command to run every Monday at midnight in Asia/Dubai timezone without overlapping on one server
         $schedule->command('AddBatchNumber:cron')
-        ->timezone('Asia/Dubai')
-        ->weeklyOn(1, '0:00')
-        ->onOneServer()
-        ->withoutOverlapping(1);
+            ->timezone('Asia/Dubai')
+            ->weeklyOn(1, '0:00')
+            ->onOneServer()
+            ->withoutOverlapping(1);
 
         // Schedule telescope:prune command to run daily without overlapping on one server
         $schedule->command('telescope:prune --hours=48')
-        ->daily()
-        ->onOneServer()
-        ->withoutOverlapping(1);
+            ->daily()
+            ->onOneServer()
+            ->withoutOverlapping(1);
     }
 
     /**

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;

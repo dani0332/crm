@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\LeadAllocation;
 use App\Services\LeadAllocationService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -44,10 +43,10 @@ class HealthLeadAllocationJob implements ShouldQueue
             $availableUsers = $leadAllocationService->getAvailableAdvisors();
 
             $availableUsersString = $availableUsers->map(function ($user) {
-                return $user->name . '|' . $user->last_allocated;
+                return $user->name.'|'.$user->last_allocated;
             })->implode(',');
 
-            info('availableUsers: ' . $availableUsersString);
+            info('availableUsers: '.$availableUsersString);
 
             $unAllocatedLeads = $leadAllocationService->getHealthUnallocatedLeads();
 
@@ -58,12 +57,12 @@ class HealthLeadAllocationJob implements ShouldQueue
             if (count($unAllocatedLeads) > 0) {
                 $currentIteration = now();
 
-                info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR ' . $currentIteration . ' -----------------------');
+                info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR '.$currentIteration.' -----------------------');
 
                 $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];
 
                 foreach ($healthTeams as $healthTeam) {
-                    info('Health Lead Allocation Started for health team: ' . $healthTeam);
+                    info('Health Lead Allocation Started for health team: '.$healthTeam);
 
                     $filteredLeadsByHealthTeam = $this->getFilteredLeadsByHealthTeam($unAllocatedLeads, $healthTeam)->count();
                     $filteredUsersByHealthTeam = $this->getUsersByHealthTeam($availableUsers, $healthTeam)->count();
@@ -71,34 +70,31 @@ class HealthLeadAllocationJob implements ShouldQueue
                     if ($filteredLeadsByHealthTeam > 0 && $filteredUsersByHealthTeam > 0) {
 
                         foreach ($filteredLeadsByHealthTeam as $lead) {
-                            info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR LEAD ' . $lead->uuid . ' -----------------------');
+                            info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR LEAD '.$lead->uuid.' -----------------------');
 
-                            list($filteredUsersByHealthTeam, $advisor) = $this->sortUsersByLastAllocatedTime($filteredUsersByHealthTeam, $leadAllocationService, $lead);
-                            info('-------> Health Lead Allocation Done for lead: ' . $lead->uuid . ' and advisor: ' . $advisor->name);
+                            [$filteredUsersByHealthTeam, $advisor] = $this->sortUsersByLastAllocatedTime($filteredUsersByHealthTeam, $leadAllocationService, $lead);
+                            info('-------> Health Lead Allocation Done for lead: '.$lead->uuid.' and advisor: '.$advisor->name);
 
                             $this->updateLastAllocatedForAdvisor($filteredUsersByHealthTeam, $advisor);
                             sleep(1);
-                            info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR LEAD ' . $lead->uuid . ' -----------------------');
+                            info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR LEAD '.$lead->uuid.' -----------------------');
                         }
                         foreach ($filteredUsersByHealthTeam as $user) {
                             LeadAllocation::where('user_id', $user->id)->update(['last_allocated' => (float) $user->last_allocated]);
                         }
                     } else {
-                        info($healthTeam . ' Leads count is ' . $filteredLeadsByHealthTeam->count() . ' and available users count is ' . $filteredUsersByHealthTeam->count());
+                        info($healthTeam.' Leads count is '.$filteredLeadsByHealthTeam->count().' and available users count is '.$filteredUsersByHealthTeam->count());
                     }
                 }
-                info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR ' . $currentIteration . ' -----------------------');
-            } else info('No Unallocated Leads');
+                info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR '.$currentIteration.' -----------------------');
+            } else {
+                info('No Unallocated Leads');
+            }
 
         }
-        return;
+
     }
 
-    /**
-     * @param $unAllocatedLeads
-     * @param string $healthTeam
-     * @return mixed
-     */
     public function getFilteredLeadsByHealthTeam($unAllocatedLeads, string $healthTeam): mixed
     {
         return $unAllocatedLeads->filter(function ($lead) use ($healthTeam) {
@@ -106,11 +102,6 @@ class HealthLeadAllocationJob implements ShouldQueue
         });
     }
 
-    /**
-     * @param $availableUsers
-     * @param string $healthTeam
-     * @return mixed
-     */
     public function getUsersByHealthTeam($availableUsers, string $healthTeam): mixed
     {
         return $availableUsers->filter(function ($user) use ($healthTeam) {
@@ -118,11 +109,6 @@ class HealthLeadAllocationJob implements ShouldQueue
         });
     }
 
-    /**
-     * @param $filteredUsersByHealthTeam
-     * @param $advisor
-     * @return void
-     */
     public function updateLastAllocatedForAdvisor($filteredUsersByHealthTeam, $advisor): void
     {
         // Update last_allocated time for the user
@@ -133,12 +119,6 @@ class HealthLeadAllocationJob implements ShouldQueue
         });
     }
 
-    /**
-     * @param mixed $filteredUsersByHealthTeam
-     * @param LeadAllocationService $leadAllocationService
-     * @param $lead
-     * @return array
-     */
     public function sortUsersByLastAllocatedTime(mixed $filteredUsersByHealthTeam, LeadAllocationService $leadAllocationService, $lead): array
     {
         // Sort users by last_allocated time
@@ -149,6 +129,7 @@ class HealthLeadAllocationJob implements ShouldQueue
 
         // Assign lead to the user
         $leadAllocationService->assignLead($lead, $advisor->id, false);
-        return array($filteredUsersByHealthTeam, $advisor);
+
+        return [$filteredUsersByHealthTeam, $advisor];
     }
 }

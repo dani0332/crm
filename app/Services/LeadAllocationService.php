@@ -64,7 +64,7 @@ class LeadAllocationService extends BaseService
                 ->whereNotNull('u.sub_team_id')
                 ->where('t.name', '=', quoteTypeCode::Health);
 
-            if (!auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
+            if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $query->where('u.manager_id', auth()->user()->id);
             }
 
@@ -107,8 +107,9 @@ class LeadAllocationService extends BaseService
 
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
 
-            if (!$leadAllocation) {
+            if (! $leadAllocation) {
                 DB::commit();
+
                 return false;
             }
 
@@ -131,7 +132,7 @@ class LeadAllocationService extends BaseService
             $startDate = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
             $endDate = now();
 
-            info('Health Unallocated Leads from date: ' . $startDate . ' to date: ' . $endDate);
+            info('Health Unallocated Leads from date: '.$startDate.' to date: '.$endDate);
 
             $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
                 ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
@@ -152,9 +153,9 @@ class LeadAllocationService extends BaseService
 
     public function assignLead($lead, $advisorId, $isManualAssignment)
     {
-        info('assignLead -- started with lead: ' . $lead->uuid . ', advisorId: ' . $advisorId . ', isManualAssignment: ' . $isManualAssignment);
+        info('assignLead -- started with lead: '.$lead->uuid.', advisorId: '.$advisorId.', isManualAssignment: '.$isManualAssignment);
 
-        if (!$this->checkIfAdvisorCanTakeLead($advisorId)) {
+        if (! $this->checkIfAdvisorCanTakeLead($advisorId)) {
             return false;
         }
 
@@ -162,23 +163,23 @@ class LeadAllocationService extends BaseService
             $this->removeLeadAllocationForOldAdvisor($lead);
         }
 
-        info('Assigning lead ' . $lead->uuid . ' to advisor ' . $advisorId);
+        info('Assigning lead '.$lead->uuid.' to advisor '.$advisorId);
 
         try {
             DB::beginTransaction();
 
             if ($isManualAssignment && $lead->advisor_id !== null && $lead->quote_status_id != QuoteStatusEnum::Quoted) {
-                info('Manual Lead and Advisor Null Check ' . $lead->uuid);
+                info('Manual Lead and Advisor Null Check '.$lead->uuid);
                 $lead->quote_status_id = QuoteStatusEnum::Qualified;
             }
 
             if (strcasecmp($lead->code, quoteTypeCode::Car) === 0) {
-                $lead->auto_assigned = !$isManualAssignment;
+                $lead->auto_assigned = ! $isManualAssignment;
             }
 
             $lead->advisor_id = $advisorId;
             $lead->save();
-            info('Lead Id ' . $lead->uuid . ' assigned to advisor ' . $advisorId);
+            info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
 
             if ($lead->source !== LeadSourceEnum::REFERRAL) {
                 $this->updateLeadAllocationRecord($advisorId, $isManualAssignment);
@@ -213,15 +214,15 @@ class LeadAllocationService extends BaseService
 
     public function updateLeadDetailRecord($leadId, $leadUId)
     {
-        info('updateLeadDetailRecord -- started for lead UUID: ' . $leadUId);
+        info('updateLeadDetailRecord -- started for lead UUID: '.$leadUId);
 
         HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)
             ->update([
                 'advisor_assigned_date' => now(),
-                'advisor_assigned_by_id' => auth()->id()
+                'advisor_assigned_by_id' => auth()->id(),
             ]);
 
-        info('updateLeadDetailRecord -- completed for lead UUID: ' . $leadUId);
+        info('updateLeadDetailRecord -- completed for lead UUID: '.$leadUId);
 
     }
 
@@ -229,7 +230,7 @@ class LeadAllocationService extends BaseService
     {
         try {
             info('removeLeadAllocationForOldAdvisor -- started');
-            info('Removing lead allocation record for lead ID: ' . $lead->id . ' and advisor ID: ' . $lead->advisor_id);
+            info('Removing lead allocation record for lead ID: '.$lead->id.' and advisor ID: '.$lead->advisor_id);
 
             $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $lead->id)->first();
 
@@ -241,7 +242,7 @@ class LeadAllocationService extends BaseService
                         ->where('allocation_count', '>', 0)
                         ->decrement('allocation_count', 1);
 
-                    info('Lead allocation count decremented for advisor ID: ' . $lead->advisor_id);
+                    info('Lead allocation count decremented for advisor ID: '.$lead->advisor_id);
                 }
 
                 DB::commit();
@@ -270,19 +271,23 @@ class LeadAllocationService extends BaseService
 
             if ($leadAllocation) {
                 if ($leadAllocation->is_available === false) {
-                    info('Advisor ' . $advisorId . ' cannot take lead while he/she is not available');
+                    info('Advisor '.$advisorId.' cannot take lead while he/she is not available');
+
                     return false;
                 }
                 if ($leadAllocation->max_capacity === -1 || $leadAllocation->allocation_count < $leadAllocation->max_capacity) {
-                    info('Advisor ' . $advisorId . ' can take lead');
+                    info('Advisor '.$advisorId.' can take lead');
+
                     return true;
                 }
                 if ($leadAllocation->max_capacity === $leadAllocation->allocation_count && $leadAllocation->max_capacity !== -1) {
-                    info('Advisor ' . $advisorId . ' cannot take lead. Max capacity reached');
+                    info('Advisor '.$advisorId.' cannot take lead. Max capacity reached');
+
                     return false;
                 }
             } else {
-                info('Advisor ' . $advisorId . ' has no allocation record');
+                info('Advisor '.$advisorId.' has no allocation record');
+
                 return false;
             }
         } catch (\Throwable $e) {
@@ -297,7 +302,7 @@ class LeadAllocationService extends BaseService
             info('updateLeadAllocationRecord -- started');
 
             $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-            info('Max capacity for user ' . $userId . ' is ' . $leadAllocation->max_capacity . ' and allocation count is ' . $leadAllocation->allocation_count);
+            info('Max capacity for user '.$userId.' is '.$leadAllocation->max_capacity.' and allocation count is '.$leadAllocation->allocation_count);
 
             $leadAllocation->increment('allocation_count');
             $leadAllocation->increment($isManualAssignment ? 'manual_assignment_count' : 'auto_assignment_count');
@@ -306,7 +311,7 @@ class LeadAllocationService extends BaseService
 
             DB::commit();
 
-            info('Lead allocation record for user ' . $userId . ' updated. Current allocation count is ' . $leadAllocation->allocation_count);
+            info('Lead allocation record for user '.$userId.' updated. Current allocation count is '.$leadAllocation->allocation_count);
         } catch (\Exception $e) {
             Log::error($e->getMessage());
             DB::rollback();
@@ -380,7 +385,7 @@ class LeadAllocationService extends BaseService
                 ];
             }
 
-            if (!empty($maxCapacityUpdates)) {
+            if (! empty($maxCapacityUpdates)) {
                 LeadAllocation::query()->update($maxCapacityUpdates);
             }
 
@@ -436,6 +441,7 @@ class LeadAllocationService extends BaseService
 
                 if ($this->checkIfLeadIsRenewal($carLead)) {
                     info('Renewal found against quote Id : '.$carLead->uuid.' skipping it now');
+
                     continue; // since we found renewal against current lead we will skip advisor assignment
                 }
                 info('trying to check tier against the current lead : '.$carLead->code);
@@ -567,7 +573,7 @@ class LeadAllocationService extends BaseService
             $leadAllocationRecord = LeadAllocation::where('user_id', $userId)->firstOrFail();
             info('Count before update for user ID: '.$userId.', total count = '.$leadAllocationRecord->allocation_count.' and auto count = '.$leadAllocationRecord->auto_assignment_count);
 
-            $query = "UPDATE lead_allocation SET allocation_count = allocation_count + 1, auto_assignment_count = auto_assignment_count + 1, last_allocated = ".Carbon::now()->timestamp.", updated_at = NOW() WHERE user_id = ".$userId;
+            $query = 'UPDATE lead_allocation SET allocation_count = allocation_count + 1, auto_assignment_count = auto_assignment_count + 1, last_allocated = '.Carbon::now()->timestamp.', updated_at = NOW() WHERE user_id = '.$userId;
             DB::statement($query);
 
             info('Lead allocation updated for user ID: '.$userId);
@@ -607,7 +613,7 @@ class LeadAllocationService extends BaseService
         $carLeadPickupLimit = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_LIMIT');
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
 
-        info('Car leads fetch start date is: ' . $from . ' and end datetime is: ' . $to . ' and pickup limit is: ' . $carLeadPickupLimit . ' and Pickup direction FIFO is: ' . $isFIFO);
+        info('Car leads fetch start date is: '.$from.' and end datetime is: '.$to.' and pickup limit is: '.$carLeadPickupLimit.' and Pickup direction FIFO is: '.$isFIFO);
 
         return CarQuote::whereNull('advisor_id')
             ->where('is_renewal_tier_email_sent', 0)
@@ -764,7 +770,6 @@ class LeadAllocationService extends BaseService
         return $appStorageValue ?? false;
     }
 
-
     public function updateAppStorageValueByKey($keyName, $value)
     {
         ApplicationStorage::where('key_name', $keyName)->update(['value' => $value]);
@@ -807,6 +812,7 @@ class LeadAllocationService extends BaseService
         if ($masterSwitchConfigValue == 0 || ! $masterSwitchValue || ! $normalSwitchValue) {
             // If any of the conditions are true, we shouldn't proceed further
             info('shouldCarAllocationProceed -- output is: false');
+
             return false;
         }
 
@@ -823,10 +829,12 @@ class LeadAllocationService extends BaseService
 
         if (now()->toTimeString() >= $totalResetTime) {
             info('should total reset is true');
+
             return true;
         }
 
         info('should total reset is false');
+
         return false;
     }
 
@@ -841,11 +849,11 @@ class LeadAllocationService extends BaseService
 
         if ($healthTeam) {
             $healthQuote->update([
-                'health_team_type' => strtolower($healthTeam->name)
+                'health_team_type' => strtolower($healthTeam->name),
             ]);
         } else {
             $healthQuote->update([
-                'is_error_email_sent' => true
+                'is_error_email_sent' => true,
             ]);
             dispatch(new HealthAssignmentIssueEmail($healthQuote->code, $priceStartingFrom));
         }
