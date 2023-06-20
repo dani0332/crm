@@ -56,7 +56,7 @@ class PetQuoteRepository extends BaseRepository
             $dataArr['advisorId'] = Auth::user()->id;
         }
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
-
+        
         if (isset($response->quoteUID)) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $response->quoteUID)->firstOrFail();
 
@@ -95,13 +95,16 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::PET->id())
+        $quote =  $this->byQuoteTypeId(QuoteTypes::PET->id())
             ->where($column, $value)
             ->with(['petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text','plans:id,text', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod','paymentStatusLogs']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();
+        $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+        return  $quote;
+
     }
 
     /**

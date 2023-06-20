@@ -36,11 +36,7 @@ const rules = {
   },
 };
 
-const collectionTypes = [
-  { value: '', label: 'Select Collection Type' },
-  { value: 'broker', label: 'Broker' },
-  { value: 'insurer', label: 'Insurer' },
-];
+const collectionTypes = [{ value: 'broker', label: 'Broker' }];
 
 const paymentMethodOptions = computed(() => {
   return page.props.paymentMethods
@@ -79,8 +75,8 @@ const paymentForm = useForm({
 
 const addPaymentModal = () => {
   paymentForm.reset();
-  paymentForm.payment_method_code = '';
-  paymentForm.collection_type = '';
+  paymentForm.payment_methods_code = 'CC';
+  paymentForm.collection_type = 'broker';
   paymentForm.amount = '';
   paymentForm.payment_reference = '';
   paymentForm.paymentCode = '';
@@ -107,10 +103,12 @@ const addPayment = isValid => {
   paymentForm.clearErrors();
   let url = '/personal-quotes/' + page.props.quote.id + '/payments';
   let method = 'post';
+  let messageTitle = 'Payment created successfully';
 
   if (paymentForm.status == 'edit') {
     url += '/' + paymentForm.paymentCode;
     method = 'patch';
+    messageTitle = 'Payment updated successfully';
   }
 
   paymentForm.submit(method, url, {
@@ -120,7 +118,7 @@ const addPayment = isValid => {
     },
     onSuccess: () => {
       notification.success({
-        title: 'Payment Added',
+        title: messageTitle,
         position: 'top',
       });
       paymentModal.value = false;
@@ -320,6 +318,7 @@ const rolesEnum = page.props.rolesEnum;
             v-model="paymentForm.collection_type"
             :options="collectionTypes"
             label="Collection Type*"
+            disabled
             :rules="[rules.isRequired]"
             :error="paymentForm.errors.collection_type"
           >
@@ -330,30 +329,22 @@ const rolesEnum = page.props.rolesEnum;
             v-model="paymentForm.payment_methods_code"
             :options="paymentMethodOptions"
             label="Payment Method*"
+            disabled
             :rules="[rules.isRequired]"
             :error="paymentForm.errors.payment_methods_code"
           >
           </x-select>
 
           <x-select
-            class="w-full"
+            class="w-full md:col-span-2"
             v-model="paymentForm.insurance_provider_id"
             :options="insuranceProviderOptions"
-            label="Insurance Provider*"
+            label="Provider Name*"
             :rules="[rules.isRequired]"
             :error="paymentForm.errors.insurance_provider_id"
           >
           </x-select>
 
-          <x-select
-            class="w-full"
-            v-model="paymentForm.plan_id"
-            :options="personalPlanOptions"
-            label="Plan*"
-            :rules="[rules.isRequired]"
-            :error="paymentForm.errors.plan_id"
-          >
-          </x-select>
           <div
             class="w-full md:col-span-2 flex justify-end"
             v-if="

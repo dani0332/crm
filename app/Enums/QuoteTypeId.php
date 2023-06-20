@@ -21,6 +21,7 @@ final class QuoteTypeId extends Enum
     const Yacht = 7;
     const Travel = 8;
     const Pet = 9;
+    const Cycle = 10;
 
     public static function getOptions()
     {
