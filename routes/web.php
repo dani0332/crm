@@ -107,6 +107,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/lead-distribution', [ReportsController::class, 'renderLeadDistributionReport'])->name('lead-distribution-report-view');
         Route::get('/reports/advisor-distribution', [ReportsController::class, 'renderAdvisorDistributionReport'])->name('advisor-distribution-report-view');
         Route::get('/reports/advisor-performance', [ReportsController::class, 'renderAdvisorPerformanceReport'])->name('advisor-performance-report-view');
+        Route::get('/reports/utm-report', [ReportsController::class, 'utmLeadsSaleReport'])->name('utm-leads-sales-report');
 
         Route::get('/personal-quotes/car/car-quotes-search', [\App\Http\Controllers\V2\CarQuoteController::class, 'index'])->name('car-quotes-search');
 
@@ -139,10 +140,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
         });
-
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
+    Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
+
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
         Artisan::call('view:cache');
@@ -249,6 +251,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
+        Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
 
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
