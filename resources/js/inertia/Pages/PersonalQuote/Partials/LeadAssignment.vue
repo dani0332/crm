@@ -38,14 +38,17 @@ const assignForm = useForm({
 });
 
 function onAssignLead(isValid) {
+    const postUrl = props.quoteType.toLowerCase() == 'car' ? `/quotes/car/manualLeadAssign` : `/quotes/${props.quoteType}/leadAssign`;
     if (isValid) {
         assignForm
             .transform(data => ({
                 ...data,
+                selectTmLeadId: `${props.selected}`,
                 assigned_lead_id: `${props.selected}`,
+                assigned_to_id_new: assignForm.assigned_advisor_id,
                 assignment_type: assignForm.manual_assignment_email_flag,
             }))
-            .post(`/quotes/${props.quoteType}/leadAssign`, {
+            .post(postUrl, {
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => {
