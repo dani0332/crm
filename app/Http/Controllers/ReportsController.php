@@ -88,7 +88,9 @@ class ReportsController extends Controller
             'reportsData' => $reportData,
         ]);
     }
-    public function demo(){
+    public function demo(Request $request){
+
+        Log::info('inbound email request '.json_encode($request->toArray()));
         $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
         $subject =$inbound->Subject();
 
