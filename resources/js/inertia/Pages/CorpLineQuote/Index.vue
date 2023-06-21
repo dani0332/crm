@@ -189,6 +189,9 @@ function setQueryFilters() {
   }
 }
 
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 onMounted(() => {
   setQueryFilters();
 });
@@ -200,7 +203,7 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/business/cards">
+        <Link href="/quotes/business/cards/view">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
         </Link>
         <Link href="/quotes/business/create">
@@ -335,6 +338,7 @@ onMounted(() => {
         </div>
 
         <ExportExcel
+            v-if="can(permissionsEnum.DATA_EXTRACTION)"
           :data="quotesSelected"
           :columns="tableHeader"
           :filename="'Business-List'"

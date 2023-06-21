@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
+use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\User;
 use App\Traits\TeamHierarchyTrait;
@@ -39,10 +40,12 @@ class CarLeadAllocationDashboardService extends BaseService
                     'users.name as userName', DB::RAW('GROUP_CONCAT(DISTINCT (t.name)) AS tiers'),
                     DB::RAW('GROUP_CONCAT(DISTINCT (q.name)) AS quads'),
                     DB::RAW('(la.manual_assignment_count  + la.auto_assignment_count) as allocationCount'),
-                    'la.last_allocated as lastAllocation',
+                    DB::RAW("DATE_FORMAT(FROM_UNIXTIME(la.last_allocated), '%d-%m-%Y %H:%i:%s') as lastAllocation"),
                     'la.max_capacity as maxCapacity',
                     'la.is_available as isAvailable',
-                    'users.last_login as lastLogin', 'la.id as id', 'la.manual_assignment_count as manualAllocationCount', 'la.auto_assignment_count as autoAllocationCount'
+                    DB::RAW("DATE_FORMAT(users.last_login, '%d-%m-%Y %H:%i:%s') as lastLogin"),
+                    'la.id as id', 'la.manual_assignment_count as manualAllocationCount',
+                    'la.auto_assignment_count as autoAllocationCount'
                 );
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();
@@ -92,10 +95,11 @@ class CarLeadAllocationDashboardService extends BaseService
         $from = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
         $to = now()->subMinutes(2)->toDateTimeString();
 
-        return CarQuote::whereBetween('created_at', [$from, $to])
-            ->where('quote_status_id', '!=', QuoteStatusEnum::Fake)
-            ->where('is_renewal_tier_email_sent', 0)
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+        return CarQuote::leftJoin('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->whereBetween('car_quote_request.created_at', [$from, $to])
+            ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->where('tiers.name', '!=', TiersEnum::TIER_R)
+            ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereNull('advisor_id')
             ->count();
     }

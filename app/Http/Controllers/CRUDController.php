@@ -225,6 +225,7 @@ class CRUDController extends Controller
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
+                'isManualAllocationAllowed' => $isManualAllocationAllowed,
             ]);
         }
 
@@ -269,7 +270,7 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HealthQuote/Create', [
+            return inertia('HealthQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -465,8 +466,7 @@ class CRUDController extends Controller
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $tiers = $this->lookupService->getTierR();
 
-        if($this->genericModel->modelType == quoteTypeCode::Car && str_contains(request()->url(), 'carrevival')){
-
+        if ($this->genericModel->modelType == quoteTypeCode::Car && str_contains(request()->url(), 'carrevival')) {
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
             $documentTypes = collect($documentTypes)->groupBy('category');
             $listQuotePlans = $this->carQuoteService->getPlans($id);
@@ -492,7 +492,7 @@ class CRUDController extends Controller
                 'paymentMethods' => $paymentMethods,
                 'listQuotePlans' => $listQuotePlans,
                 'quoteDocuments' => $quoteDocuments,
-                'sendPolicy' => (boolean) $displaySendPolicyButton,
+                'sendPolicy' => (bool) $displaySendPolicyButton,
                 'cdnPath' => $cdnPath,
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
@@ -512,6 +512,14 @@ class CRUDController extends Controller
             $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
             $this->carQuoteService->addOrUpdateQuoteViewCount($record);
 
+            $daysAfterCapturedPayment = null;
+            if (($capturedPaymentDate = PaymentStatusLog::where(['quote_type_id' => QuoteTypeId::Car,
+                'quote_request_id' => $record->id,
+                'current_payment_status_id' => PaymentStatusEnum::CAPTURED,
+            ])->first())) {
+                $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
+            }
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
@@ -519,7 +527,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers',
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment',
             ]));
         }
 
@@ -719,7 +727,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HealthQuote/Edit', [
+            return inertia('HealthQuote/Form', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'dropdownSource' => $dropdownSource,
@@ -766,20 +774,12 @@ class CRUDController extends Controller
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
         // dd($request->all(), $validateArray);
         // $this->validate($request, $validateArray);
-        $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+        $response = $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+        if (! is_null($response) && ! $response) {
+            return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id.'/edit')->with('error', json_decode($request->modelType, true).' has not been updated');
+        }
 
         return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 
     public function cardsViewHome(Request $request)
@@ -1145,7 +1145,7 @@ class CRUDController extends Controller
         if ($response == 200 || $response == 201) {
             return redirect()->back()->with('success', 'Car Plan has been saved');
         } else {
-            return redirect()->back()->with('message', $response);
+            return redirect()->back()->with('error', $response);
         }
     }
 
@@ -1500,5 +1500,15 @@ class CRUDController extends Controller
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'is_renewal_tier_email_sent' => 0,
         ]);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\ClaimsStatus  $claimsStatus
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy()
+    {
     }
 }

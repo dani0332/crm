@@ -4,7 +4,6 @@ namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CarRevivalQuoteRequest;
-use App\Repositories\CarQuoteRepository;
 use App\Repositories\CarRevivalQuoteRepository;
 
 class CarRevivalQuoteController extends Controller
@@ -19,7 +18,7 @@ class CarRevivalQuoteController extends Controller
 
         return inertia('CarRevivalQuote/Index', [
             'quotes' => $carRevivalQuotes,
-            'leadStatuses' => $formOptionsData
+            'leadStatuses' => $formOptionsData,
         ]);
     }
 
@@ -34,7 +33,7 @@ class CarRevivalQuoteController extends Controller
         return inertia('CarRevivalQuote/Form',
             [
                 'form_options' => $formOptionsData,
-                'quote' => $quote
+                'quote' => $quote,
             ]
         );
     }

@@ -98,7 +98,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 DttRevival::insert([
                     'quote_type_id' => QuoteTypes::CAR->id(),
                     'quote_id' => $quote->id,
-                    'uuid' =>$capiResponse->quoteUID,
+                    'uuid' => $capiResponse->quoteUID,
                     'email_sent' => true,
                 ]);
 

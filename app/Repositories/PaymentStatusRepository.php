@@ -11,5 +11,4 @@ class PaymentStatusRepository extends BaseRepository
         return PaymentStatus::class;
     }
 
-
 }

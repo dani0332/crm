@@ -73,7 +73,7 @@ class ActivitesController extends Controller
             $record = $this->crudService->getEntity($request->modelType, $request->entityUId);
         }
         $this->activitiesService->createActivity($request, $record);
-        if(isset($request->is_car_revival)){
+        if (isset($request->is_car_revival)) {
             $quoteType = quoteTypeCode::Car_Revival;
         }
 

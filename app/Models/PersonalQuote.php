@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use App\Enums\FilterTypes;
-use App\Models\QuoteStatusLog;
 use App\Traits\FilterCriteria;
-use OwenIt\Auditing\Auditable;
 use App\Traits\QuoteModelTrait;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Config;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PersonalQuote extends Model implements AuditableContract
@@ -31,6 +30,7 @@ class PersonalQuote extends Model implements AuditableContract
         'quote_status_id' => FilterTypes::IN,
         'is_ecommerce' => FilterTypes::EXACT,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
+        'advisor_id' => FilterTypes::IN,
     ];
 
     /**
@@ -90,6 +90,7 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(CycleQuote::class);
     }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */

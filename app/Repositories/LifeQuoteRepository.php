@@ -85,7 +85,7 @@ class LifeQuoteRepository extends BaseRepository
     }
 
     /**
-     * get all dropdown options required for form
+     * get all dropdown options required for form.
      *
      * @return array
      */
@@ -102,10 +102,18 @@ class LifeQuoteRepository extends BaseRepository
 
         ];
     }
-    
+
     public function fetchgetDuplicateEntityByCode($code)
     {
         return $this->where('parent_duplicate_quote_id', $code)->first();
     }
 
+    public function fetchExportData()
+    {
+        return $this->with(['advisor', 'quoteStatus', 'nationality'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
 }

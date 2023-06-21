@@ -17,7 +17,7 @@ class CheckRouteAccess
     public function handle(Request $request, Closure $next)
     {
         if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering])) {
-        return $next($request);
+            return $next($request);
         }
 
         $routeName = $request->route()->getName();

@@ -52,3 +52,13 @@ This repository use Laravel Mix to build assets like CSS and JavaScript, use the
 ## Contributing
 - ```develop``` branch is the main coding branch where new branches will be generated from, and PRs will be merged into. Same branch is connected with stage for testing and QA.
 - ```main``` branch is used for production deployments. 
+
+## Cypress test instructions
+
+To run Cypress tests on local machine:
+- Make sure you have cypress installed, if not install cypress using command ```yarn add cypress --dev``` (BTW it is already added in package.json file, so just do ```yarn```)
+- Change baseUrl i.e. localhost, beta, prod etc in cypress.config.js file (residing at home directory)
+- Run cypress runner using command ```yarn cypress open```
+- Select e2e tests and then any browser i.e. chrome. 
+- Try running your desired test. 
+- After running "hover" over the ran cypress commands in order to see what test the cypress exactly ran. 

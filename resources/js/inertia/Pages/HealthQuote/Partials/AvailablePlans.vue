@@ -113,6 +113,7 @@ const onTogglePlans = () => {
       });
       router.reload({
         preserveScroll: true,
+        preserveState: true,
       });
     })
     .catch(error => {
