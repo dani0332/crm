@@ -1104,6 +1104,7 @@ class CarQuoteService extends BaseService
         info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
 
         return 'Plan Modification is not allowed';
+        }
     }
 
     public function getDuplicateEntityByCode($code)
