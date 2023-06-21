@@ -167,7 +167,7 @@ const getPlanName = computed(() => {
 
 const paymentTableHeaders = [
   { text: 'Payment ID', value: 'code', align: 'center' },
-  { text: 'Payment Status', value: 'payment_status.code' },
+  { text: 'Payment Status', value: 'payment_status.text' },
   { text: 'Plan Name', value: 'plan_name' },
   { text: 'Authorize Amount', value: 'captured_amount', sortable: true },
   { text: 'Status Change Date', value: 'change_date' },
@@ -308,7 +308,7 @@ const rolesEnum = page.props.rolesEnum;
           <x-input
             class="w-full"
             :rules="[rules.isRequired]"
-            label="Capture Amount*"
+            label="Price Including VAT*"
             v-model="paymentForm.captured_amount"
             :error="paymentForm.errors.captured_amount"
           />
