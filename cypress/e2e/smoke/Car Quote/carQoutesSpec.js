@@ -66,7 +66,7 @@ describe('Car qoutes', () => {
     commonPage.getLastNameField("Abdullah Updated")
     commonPage.getDOB("Feb", "1999", "15")
     commonPage.getNationalityId("Pakistani")
-    carLeadPage.getUaeLicenseHeldFor("10")
+    carLeadPage.getUaeLicenseHeldFor("5 years and above")
     carLeadPage.getBackHomeLicense("3")
     carLeadPage.getCarMakeId("AUDI")
     carLeadPage.getCarModelId("A4")
