@@ -77,9 +77,10 @@ const addPaymentModal = () => {
   paymentForm.reset();
   paymentForm.payment_methods_code = 'CC';
   paymentForm.collection_type = 'broker';
-  paymentForm.amount = '';
+  paymentForm.captured_amount = '';
   paymentForm.payment_reference = '';
   paymentForm.paymentCode = '';
+  paymentForm.insurance_provider_id = '';
   paymentForm.status = 'create';
   paymentModal.value = true;
 };
