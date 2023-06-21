@@ -196,7 +196,7 @@ class SendEmailCustomerService extends BaseService
             }
 
             $body['replyTo'] = [
-                'email' => '3c25a79e0e19c9e61f2050af5c74e925@inbound.postmarkapp.com',
+                'email' => 'b6eb50415ef5751212bee3b17240ee7c@inbound.postmarkapp.com',
                 'name' => 'Post Mark',
             ];
             $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
