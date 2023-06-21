@@ -1,11 +1,19 @@
 <script setup>
+import LeadAssignment from "../PersonalQuote/Partials/LeadAssignment.vue";
+
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+    quoteType: {
+        type: String,
+        default: 'cycle',
+    }
 });
 
 const page = usePage();
+const notification = useToast();
+const { isRequired } = useRules();
 const loader = reactive({
   table: false,
   export: false,
@@ -27,6 +35,14 @@ let availableFilters = {
 };
 
 const filters = reactive(availableFilters);
+const quotesSelected = ref([]);
+
+const advisorOptions = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
+});
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -80,7 +96,6 @@ const tableHeader = [
   { text: 'CDB ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DOB', value: 'dob_formatted' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
@@ -88,7 +103,6 @@ const tableHeader = [
   { text: 'PREMIUM', value: 'premium' },
   { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
@@ -219,7 +233,17 @@ const permissionsEnum = page.props.permissionsEnum;
       </div>
     </x-form>
 
+      <Transition name="fade">
+          <div v-if="quotesSelected.length > 0" class="mb-4">
+              <LeadAssignment
+                  :selected="quotesSelected.map(e => e.id)"
+                  :advisors="advisorOptions"
+                  :quoteType="quoteType"
+              />
+          </div>
+      </Transition>
     <DataTable
+        v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
@@ -245,10 +269,6 @@ const permissionsEnum = page.props.permissionsEnum;
 
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.text }}
-      </template>
-
-      <template #item-currently_insured_with="{ currently_insured_with }">
-        {{ currently_insured_with?.text }}
       </template>
 
       <template #item-is_ecommerce="{ is_ecommerce }">

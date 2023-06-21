@@ -1,4 +1,4 @@
-+<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -249,6 +249,7 @@
 
 @php
 
+
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
 
@@ -318,7 +319,7 @@
         ["code" => "emergencyMedicalExpenses", "title" => "Emergency Medical Expenses", "type" => ["inclusion", "exclusion"]],
         ["code" => "personalBelongings", "title" => "Personal belongings", "type" => ["inclusion", "exclusion"]],
         ["code" => "omanCover", "title" => "Oman Cover (Orange card not Included)", "type" => ["inclusion", "exclusion"]],//also exists in addons, discussed with mujeeb to show from include/exclusion
-        ["code" => "offRoadCover", "title" => "Off-road Cover", "type" => "roadSideAssistance"],
+        ["code" => "offRoadCover", "title" => "Off-road Cover", "type" => ["addons", "inclusion", "inclusion", "roadSideAssistance"]],
         ["code" => "guaranteedRepairs", "title" => "Guaranteed Repairs", "type" => ["inclusion", "exclusion"]],
         ["code" => "breakdownCover", "title" => "24 Hour Accident and Breakdown Recovery", "type" => "addons"],
         ["code" => "ambulanceCover", "title" => "Ambulance Cover", "type" => ["inclusion", "exclusion"]],
@@ -520,7 +521,7 @@
                                     @else
                                         {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
                                     @endif
-                                    
+
                                 @elseif($feature['type'] == 'prop')
 
                                     {!!  $plans[$planId]->{$feature['code']} !!}

@@ -139,10 +139,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('update', [RenewalsUploadController::class, 'updateRenewals'])->name('renewals-upload-update');
             Route::get('batches', [RenewalsUploadController::class, 'listRenewalBatches'])->name('renewals-batches');
         });
-
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
+    Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
+
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
         Artisan::call('view:cache');
@@ -249,6 +250,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
         Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
+        Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
 
         Route::get('getvalues/{modelType}/{propertyName}/{recordId}', [CRUDController::class, 'getDropdownSourceNameForDisplay']);
         Route::get('car/{quoteId}/plan_details/{planId}', [CRUDController::class, 'carQuotePlanDetails']);
@@ -290,7 +292,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         Route::post('car/change-insurer', [\App\Http\Controllers\V2\CarQuoteController::class, 'changeInsurer'])->name('change-car-insurer');
-
     });
 
     Route::get('personal-plans/list', [PersonalPlanController::class, 'getList']);
