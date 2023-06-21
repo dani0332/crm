@@ -84,7 +84,7 @@ Route::get('/', function () {
 });
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
-Route::get('/demo', [ReportsController::class, 'demo']);
+Route::post('/demo', [ReportsController::class, 'demo']);
 
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
