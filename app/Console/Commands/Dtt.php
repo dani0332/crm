@@ -50,18 +50,18 @@ class Dtt extends Command
     public function handle()
     {
         try {
-            $sameDayBeforeOneYear = Carbon::now()->subYear(1)->toDateString();
-            $sameDayBeforeTwoYear = Carbon::now()->subYear(2)->toDateString();
+            $dateOne = Carbon::now()->subYear(1)->subDays(15)->toDateString();
+            $dateTwo = Carbon::now()->subYear(2)->subDays(15)->toDateString();
 
-            $datethirtyDaysBefore = Carbon::now()->addDays(-30)->toDateString();
+            $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
             $jobs = [];
 
             $leads = CarQuote::where('is_revived', '=', false)
 
-            ->where(function ($q) use ($sameDayBeforeOneYear, $sameDayBeforeTwoYear) {
-                $q->whereDate('created_at', '=', $sameDayBeforeOneYear);
-                $q->orWhereDate('created_at', '=', $sameDayBeforeTwoYear);
+            ->where(function ($q) use ($dateOne, $dateTwo) {
+                $q->whereDate('created_at', '=', $dateOne);
+                $q->orWhereDate('created_at', '=', $dateTwo);
             })
 
                 ->whereNotNull(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture', 'payment_status_id'])
@@ -80,7 +80,10 @@ class Dtt extends Command
                         ->orWhere('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
                 })
                 ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
-                ->orderBy('id', 'DESC')->get();
+                ->orderBy('id', 'DESC')
+                ->take(1)
+                    ->get();
+
 
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
@@ -108,6 +111,8 @@ class Dtt extends Command
                     ->allowFailures()
                     ->withDelay(2)
                     ->dispatch();
+            }else{
+                info('------No lead Found------');
             }
         } catch (\Exception $exception) {
             info('DTT Exception : '.$exception->getMessage());

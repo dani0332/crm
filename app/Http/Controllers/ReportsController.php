@@ -6,6 +6,7 @@ use App\Repositories\CarRevivalQuoteRepository;
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ReportsController extends Controller
 {
@@ -69,5 +70,13 @@ class ReportsController extends Controller
         return inertia('Reports/RevivalConversion', [
             'reportsData'=>$reportData,
         ]);
+    }
+
+    public function demo(){
+        $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
+        $subject =$inbound->Subject();
+
+
+        Log::info('inbound email subject'.$subject);
     }
 }

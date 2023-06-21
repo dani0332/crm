@@ -143,8 +143,10 @@ class SendEmailCustomerService extends BaseService
 
             $body = [
                 'sender' => [
-                    'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
-                    'name' => $emailData->advisorName,
+//                    'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
+//                    'name' => $emailData->advisorName,
+                    'email' => 'nouman.hussain@insurancemarket.ae',
+                    'name' => 'nouman.hussain',
                 ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
@@ -185,12 +187,16 @@ class SendEmailCustomerService extends BaseService
                     'email' => $emailData->advisorEmailAddress,
                     'name' => $emailData->advisorName,
                 ]];
-                $body['replyTo'] = [
-                    'email' => $emailData->advisorEmailAddress,
-                    'name' => $emailData->advisorName,
-                ];
+//                $body['replyTo'] = [
+//                    'email' => $emailData->advisorEmailAddress,
+//                    'name' => $emailData->advisorName,
+//                ];
             }
 
+            $body['replyTo'] = [
+                'email' => '3c25a79e0e19c9e61f2050af5c74e925@inbound.postmarkapp.com',
+                'name' => 'Post Mark',
+            ];
             $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
             $ccAdditional = [];
             if ($customer) {
