@@ -25,9 +25,6 @@ class CarLeadAllocationJob implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @param  LeadAllocationService  $leadAllocationService
-     * @return void
      */
     public function handle(LeadAllocationService $leadAllocationService): void
     {
@@ -48,8 +45,8 @@ class CarLeadAllocationJob implements ShouldQueue
             }
 
         } catch (Throwable $exception) {
-            info('**************** Lead Allocation Job is timed out now at: ' . now() . ' **************** ');
-            info('Exception: ' . $exception->getMessage());
+            info('**************** Lead Allocation Job is timed out now at: '.now().' **************** ');
+            info('Exception: '.$exception->getMessage());
             Log::error($exception);
             Mail::sendNow(new MailLeadAllocationFailedNotification($exception));
             $this->delete();
@@ -58,7 +55,7 @@ class CarLeadAllocationJob implements ShouldQueue
 
     public function failed(Throwable $exception)
     {
-        Log::error('Exception in lead allocation: ' . $exception->getMessage());
+        Log::error('Exception in lead allocation: '.$exception->getMessage());
         Mail::sendNow(new MailLeadAllocationFailedNotification($exception));
     }
 

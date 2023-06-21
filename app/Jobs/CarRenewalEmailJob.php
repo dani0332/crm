@@ -27,7 +27,6 @@ class CarRenewalEmailJob implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param  mixed  $lead
      * @return void
      */
     public function __construct(mixed $lead)
@@ -37,10 +36,6 @@ class CarRenewalEmailJob implements ShouldQueue
 
     /**
      * Execute the job.
-     *
-     * @param  EmailDataService  $emailDataService
-     * @param  LeadAllocationService  $leadAllocationService
-     * @return void
      */
     public function handle(EmailDataService $emailDataService, LeadAllocationService $leadAllocationService): void
     {
@@ -49,7 +44,7 @@ class CarRenewalEmailJob implements ShouldQueue
         $renewalEmailRecipients = $leadAllocationService->getAppStorageValueByKey('RENEWAL_ALLOCATION_LEAD_EMAIL_RECIPIENTS');
 
         if (isset($this->lead->advisor_id)) {
-            $renewalEmailRecipients .= ',' . User::where('id', $this->lead->advisor_id)->first()->email;
+            $renewalEmailRecipients .= ','.User::where('id', $this->lead->advisor_id)->first()->email;
         }
 
         $renewalEmailCcRecipients = $leadAllocationService->getAppStorageValueByKey('RENEWAL_ALLOCATION_LEAD_EMAIL_CC');
@@ -58,13 +53,13 @@ class CarRenewalEmailJob implements ShouldQueue
 
         $templateId = (int) $leadAllocationService->getAppStorageValueByKey('CAR_RENEWAL_ALLOCATION_LEAD_EMAIL_TEMPLATE_ID');
 
-        $tag = config('constants.APP_ENV') . ' - motor allocation renewal';
+        $tag = config('constants.APP_ENV').' - motor allocation renewal';
 
-        info('sendRenewalLeadEmail -- start sending email for lead : ' . $this->lead->uuid);
+        info('sendRenewalLeadEmail -- start sending email for lead : '.$this->lead->uuid);
 
         SIBService::sendEmailUsingSIB($templateId, $emailData, $tag, $renewalEmailRecipients, $renewalEmailCcRecipients);
 
-        info('sendRenewalLeadEmail -- email sending done for lead : ' . $this->lead->uuid);
+        info('sendRenewalLeadEmail -- email sending done for lead : '.$this->lead->uuid);
 
         CarQuote::where('id', $this->lead->id)->update([
             'is_renewal_tier_email_sent' => 1,
@@ -73,12 +68,12 @@ class CarRenewalEmailJob implements ShouldQueue
 
         $tier = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
         if ($tier) {
-            info('setting tier : ' . $tier->name . ' against car lead : ' . $this->lead->uuid);
+            info('setting tier : '.$tier->name.' against car lead : '.$this->lead->uuid);
             $this->lead->tier_id = $tier->id;
             $this->lead->save();
         } else {
             info('tier R for sending email is not found');
         }
-        info('Renewal Email sent for quote : ' . $this->lead->uuid . ' and tier is update with id : ' . $tier->id);
+        info('Renewal Email sent for quote : '.$this->lead->uuid.' and tier is update with id : '.$tier->id);
     }
 }
