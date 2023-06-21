@@ -16,7 +16,6 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Commands\LeadAllocation::class,
         Commands\AddBatchNumber::class,
     ];
 
