@@ -40,6 +40,7 @@ class HealthLeadAllocationJob implements ShouldQueue
             info('Health Lead Allocation Job Switch is OFF');
 
         } else {
+            info('--------- Health Lead Allocation Started ---------');
             $availableUsers = $leadAllocationService->getAvailableAdvisors();
 
             $availableUsersString = $availableUsers->map(function ($user) {
@@ -90,6 +91,9 @@ class HealthLeadAllocationJob implements ShouldQueue
             } else {
                 info('No Unallocated Leads');
             }
+
+
+            info('--------- Health Lead Allocation Ended ---------');
 
         }
 

@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Mail\LeadAllocationFailedNotification as MailLeadAllocationFailedNotification;
 use App\Services\LeadAllocationService;
 use App\Traits\GetUserTreeTrait;
+use Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -29,7 +30,7 @@ class CarLeadAllocationJob implements ShouldQueue
     public function handle(LeadAllocationService $leadAllocationService): void
     {
         try {
-            info('Lead Allocation Job Started');
+            info('--------- CAR Lead Allocation Job Started --------');
 
             if ($leadAllocationService->shouldResetUserAssignmentCountAndAvailability()) {
                 $leadAllocationService->setAdvisorsToUnavailable();
@@ -44,11 +45,14 @@ class CarLeadAllocationJob implements ShouldQueue
                 $leadAllocationService->processCarLeads();
             }
 
-        } catch (Throwable $exception) {
+            info("--------- CAR Lead Allocation Job Ended --------");
+
+        } catch (Exception $exception) {
+            info('complete exception :  '. json_encode($exception));
             info('**************** Lead Allocation Job is timed out now at: '.now().' **************** ');
             info('Exception: '.$exception->getMessage());
             Log::error($exception);
-            Mail::sendNow(new MailLeadAllocationFailedNotification($exception));
+            Mail::send(new MailLeadAllocationFailedNotification($exception));
             $this->delete();
         }
     }
@@ -56,7 +60,7 @@ class CarLeadAllocationJob implements ShouldQueue
     public function failed(Throwable $exception)
     {
         Log::error('Exception in lead allocation: '.$exception->getMessage());
-        Mail::sendNow(new MailLeadAllocationFailedNotification($exception));
+        Mail::send(new MailLeadAllocationFailedNotification($exception));
     }
 
     public function middleware(): array

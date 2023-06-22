@@ -763,11 +763,17 @@ class LeadAllocationService extends BaseService
         return $query->get()->pluck('id')->toArray();
     }
 
-    public function getAppStorageValueByKey($keyName): bool
+    public function getAppStorageValueByKey($keyName): mixed
     {
-        $appStorageValue = ApplicationStorage::where('key_name', $keyName)->value('value');
+        $query = ApplicationStorage::select('value')
+        ->where('key_name', $keyName)
+        ->first();
 
-        return $appStorageValue ?? false;
+        if (! $query) {
+            return false;
+        }
+
+        return $query->value;
     }
 
     public function updateAppStorageValueByKey($keyName, $value)
@@ -778,16 +784,19 @@ class LeadAllocationService extends BaseService
     public function updateAllocationStatusIfNeeded()
     {
         $currentDay = Carbon::parse(now())->format('l');
+        info('current Day . '. $currentDay);
 
-        $resetKeyTime = $currentDay == DaysNameEnum::SATURDAY ? 'SATURDAY_CAP_RESET_TIME' : 'NORMAL_CAP_RESET_TIME';
+        $resetTimeKey = $currentDay == DaysNameEnum::SATURDAY ? 'SATURDAY_CAP_RESET_TIME' : 'NORMAL_CAP_RESET_TIME';
 
-        $endTimeForAllocation = Carbon::parse($this->getAppStorageValueByKey($resetKeyTime))->toTimeString();
+        $resetTimeValue = $this->getAppStorageValueByKey($resetTimeKey);
+
+        $endTimeForAllocation = Carbon::parse($resetTimeValue)->toTimeString();
 
         $carLeadAllocationSwitch = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH');
 
         $carLeadAllocationStartTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME');
         info('updateAllocationStatusIfNeeded -- current time is : '.now()->toTimeString().' , endTime is : '.$endTimeForAllocation.' , Switch is : '.$carLeadAllocationSwitch);
-
+        info('current Day . '. $currentDay);
         if (now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
             // stopping car lead allocation if the end time for allocation is reached and allocation is still ON
             info('updateAllocationStatusIfNeeded -- Inside reset case');
