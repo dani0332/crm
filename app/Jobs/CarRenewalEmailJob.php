@@ -32,6 +32,7 @@ class CarRenewalEmailJob implements ShouldQueue
     public function __construct(mixed $lead)
     {
         $this->lead = $lead;
+        $this->onQueue('lmsEmails');
     }
 
     /**

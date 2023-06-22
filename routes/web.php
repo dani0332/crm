@@ -144,13 +144,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('embedded-products', EmbeddedProductController::class);
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
 
-    Route::get('/clear-cache', function () {
-        Artisan::call('cache:clear');
-        Artisan::call('view:cache');
-        Artisan::call('config:cache');
-
-        return '<h1>All cache cleared and optimized</h1>';
-    });
+    Route::get('/clear-cache', [FailedJobsController::class, 'clearCache']);
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
 

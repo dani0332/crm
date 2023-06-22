@@ -24,6 +24,11 @@ class CarLeadAllocationJob implements ShouldQueue
     public int $timeout = 55;
     public int $backoff = 20;
 
+    public function __construct()
+    {
+        $this->onQueue('lms');
+    }
+
     /**
      * Execute the job.
      */

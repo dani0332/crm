@@ -26,7 +26,7 @@ class HealthLeadAllocationJob implements ShouldQueue
      */
     public function __construct()
     {
-        //
+        $this->onQueue('lms');
     }
 
     /**
