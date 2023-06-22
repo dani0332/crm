@@ -766,8 +766,8 @@ class LeadAllocationService extends BaseService
     public function getAppStorageValueByKey($keyName): mixed
     {
         $query = ApplicationStorage::select('value')
-        ->where('key_name', $keyName)
-        ->first();
+            ->where('key_name', $keyName)
+            ->first();
 
         if (! $query) {
             return false;
@@ -784,7 +784,7 @@ class LeadAllocationService extends BaseService
     public function updateAllocationStatusIfNeeded()
     {
         $currentDay = Carbon::parse(now())->format('l');
-        info('current Day . '. $currentDay);
+        info('current Day . '.$currentDay);
 
         $resetTimeKey = $currentDay == DaysNameEnum::SATURDAY ? 'SATURDAY_CAP_RESET_TIME' : 'NORMAL_CAP_RESET_TIME';
 
@@ -796,7 +796,7 @@ class LeadAllocationService extends BaseService
 
         $carLeadAllocationStartTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME');
         info('updateAllocationStatusIfNeeded -- current time is : '.now()->toTimeString().' , endTime is : '.$endTimeForAllocation.' , Switch is : '.$carLeadAllocationSwitch);
-        info('current Day . '. $currentDay);
+        info('current Day . '.$currentDay);
         if (now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
             // stopping car lead allocation if the end time for allocation is reached and allocation is still ON
             info('updateAllocationStatusIfNeeded -- Inside reset case');

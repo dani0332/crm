@@ -92,7 +92,6 @@ class HealthLeadAllocationJob implements ShouldQueue
                 info('No Unallocated Leads');
             }
 
-
             info('--------- Health Lead Allocation Ended ---------');
 
         }

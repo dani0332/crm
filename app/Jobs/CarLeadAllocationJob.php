@@ -45,10 +45,10 @@ class CarLeadAllocationJob implements ShouldQueue
                 $leadAllocationService->processCarLeads();
             }
 
-            info("--------- CAR Lead Allocation Job Ended --------");
+            info('--------- CAR Lead Allocation Job Ended --------');
 
         } catch (Exception $exception) {
-            info('complete exception :  '. json_encode($exception));
+            info('complete exception :  '.json_encode($exception));
             info('**************** Lead Allocation Job is timed out now at: '.now().' **************** ');
             info('Exception: '.$exception->getMessage());
             Log::error($exception);
