@@ -90,12 +90,23 @@ class ReportsController extends Controller
     }
     public function demo(Request $request){
 
-        Log::info('inbound email request '.json_encode($request->toArray()));
+//        Log::info('inbound email request '.json_encode($request->toArray()));
         $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
-        $subject =$inbound->Subject();
 
-
-        Log::info('inbound email subject'.$subject);
+        $data['Subject'] =$inbound->Subject();
+        $data['FromEmail']=  $inbound->FromEmail();
+        $data['FromFull']=  $inbound->FromFull();
+        $data['FromName']= $inbound->FromName();
+        $data['Date']=   $inbound->Date();
+        $data['OriginalRecipient']=  $inbound->OriginalRecipient();
+        $data['ReplyTo']=  $inbound->ReplyTo();
+        $data['MailboxHash']=  $inbound->MailboxHash();
+        $data['Tag']=  $inbound->Tag();
+        $data['MessageID']=  $inbound->MessageID();
+        $data['TextBody']=  $inbound->TextBody();
+        $data['HtmlBody']=  $inbound->HtmlBody();
+        $data['StrippedTextReply']=  $inbound->StrippedTextReply();
+        Log::info('inbound email data '.json_encode($data));
     }
 
     public function fetchAdvisorListByTeam(Request $request)
