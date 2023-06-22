@@ -15,11 +15,4 @@ class InsuranceProviderRepository extends BaseRepository
     {
         return $this->withActive()->orderBy('sort_order')->get();
     }
-
-    public function fetchByQuoteTypeMapping($quoteTypeId)
-    {
-        return $this->whereHas('quoteTypes', function ($quoteType) use ($quoteTypeId){
-            $quoteType->where('quote_type_id', $quoteTypeId);
-        })->withActive()->orderBy('sort_order')->get();
-    }
 }
