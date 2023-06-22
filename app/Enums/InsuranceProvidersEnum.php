@@ -40,5 +40,15 @@ final class InsuranceProvidersEnum extends Enum
     public const TE = 'TE';
     public const TM = 'TM';
     public const UI = 'UI';
+    public const OUNB = 'OUNB';
+    public const ASCANA = 'ASCANA';
+    public const EI = 'EI';
+    public const MOPT = 'MOPT';
+    public const NTPJSC = 'NTPJSC';
+    public const ASI = 'ASI';
+    public const MDG = 'MDG';
+    public const MTL = 'MTL';
+    public const SAICO = 'SAICO';
+    public const NLGIC = 'NLGIC';
 
 }

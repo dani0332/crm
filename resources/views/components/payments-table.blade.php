@@ -271,7 +271,7 @@ use App\Enums\QuoteTypes;
                         </div>
 
                         <br />
-                        @if($modeltype == quoteTypeCode::Car || $modeltype == quoteTypeCode::Travel)
+                        @if($modeltype == quoteTypeCode::Car)
                             <div class="item form-group">
                                 <div class="col">
                                     <div class="input-group">
@@ -305,8 +305,6 @@ use App\Enums\QuoteTypes;
                                 <span class="col-form-label col-md-6 col-sm-6">Provider Name<span
                                         class="required">*</span></span>
                                     <select  class="form-control" name='insurance_provider_id'>
-                                        @php
-                                            @endphp
                                         @foreach ($insuranceProviders as $item)
                                             <option value="{{ $item->id }}">{{ $item->text }}</option>
                                         @endforeach

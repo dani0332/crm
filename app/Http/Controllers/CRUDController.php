@@ -26,6 +26,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
@@ -396,7 +397,7 @@ class CRUDController extends Controller
         $mainPayment =  $paymentEntityModel->payments()->where('code','=', $paymentEntityModel->code)->first();
 
         $paymentMethods = $this->lookupService->getPaymentMethods();
-        $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
         $isRenewalUser = false;
         $isNewBusinessUser = false;
         $model = $this->genericModel;
@@ -516,7 +517,6 @@ class CRUDController extends Controller
 
             $membersDetail = $this->travelQuoteService->getMembersDetail($record->id);
 
-
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'leadStatuses', 'lostReasons', 'selectedLostReasonId', 'membersDetail', 'model_name',
@@ -590,7 +590,7 @@ class CRUDController extends Controller
 
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
-            $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
+            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
 
             $notProductionApproval = !auth()->user()->hasRole(RolesEnum::PA);
             $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod']);

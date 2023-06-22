@@ -21,6 +21,20 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
     {
 
         if( Schema::hasTable('insurer_quote_type_mapping') ){
+
+            InsuranceProvider::create([
+                ['code' => 'OUNB', 'text' => 'Orient UNB', 'text_lms' => 'Orient UNB'],
+                ['code' => 'ASCANA', 'text' => 'ASCANA Takaful', 'text_lms' => 'ASCANA Takaful'],
+                ['code' => 'EI', 'text' => 'Emirates Insurance', 'text_lms' => 'Emirates Insurance'],
+                ['code' => 'MOPT', 'text' => 'Moopet', 'text_lms' => 'Moopet'],
+                ['code' => 'NTPJSC', 'text' => 'Noor Takaful General PJSC', 'text_lms' => 'Noor Takaful General PJSC'],
+                ['code' => 'ASI', 'text' => 'Al Sagr Insurance', 'text_lms' => 'Al Sagr Insurance'],
+                ['code' => 'MDG', 'text' => 'Medgulf', 'text_lms' => 'Medgulf'],
+                ['code' => 'MTL', 'text' => 'Metlife', 'text_lms' => 'Metlife'],
+                ['code' => 'SAICO', 'text' => 'Saico', 'text_lms' => 'Saico'],
+                ['code' => 'NLGIC', 'text' => 'NLGIC', 'text_lms' => 'NLGIC'],
+            ]);
+
             $insurenceProviders = InsuranceProvider::get();
             $quoteTypes = QuoteType::get();
 
@@ -171,6 +185,67 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
                         if(in_array($quoteType['id'], [QuoteTypeId::Health]))
                             $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
                     endif;
+
+                    // Orient UNB
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::OUNB):
+                        if(in_array($quoteType['id'], [QuoteTypeId::Business]))
+                            $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
+                    endif;
+
+                    // ASCANA Takaful
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::ASCANA):
+                        if(in_array($quoteType['id'], [QuoteTypeId::Business, QuoteTypeId::Car]))
+                        $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
+                    endif;
+
+                    // Emirates Insurance
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::EI):
+                        if(in_array($quoteType['id'], [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Car]))
+                        $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
+                    endif;
+
+                    // Moopet
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::MOPT):
+                        if(in_array($quoteType['id'], [QuoteTypeId::Pet]))
+                        $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
+                    endif;
+
+                    // Noor Takaful General PJSC
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::NTPJSC):
+                        if(in_array($quoteType['id'], []))
+                        $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
+                    endif;
+
+                    // Al Sagr Insurance
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::ASI):
+                        if(in_array($quoteType['id'], [QuoteTypeId::Business, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Travel, QuoteTypeId::Health]))
+                        $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
+                    endif;
+
+                    // Medgulf
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::MDG):
+                        if(in_array($quoteType['id'], []))
+                            $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
+                    endif;
+
+                    // Metlife
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::MTL):
+                        if(in_array($quoteType['id'], []))
+                            $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
+                    endif;
+
+                    // Saico
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::SAICO):
+                        if(in_array($quoteType['id'], []))
+                            $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
+                    endif;
+
+                    // NLGIC
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::NLGIC):
+                        if(in_array($quoteType['id'], []))
+                            $this->insertMappingRecords($quoteType['id'], $insurenceProvider['id']);
+                    endif;
+
                 }
             }
         }

@@ -14,6 +14,7 @@ class CreateInsurerQuoteTypeMappingTable extends Migration
     public function up()
     {
         Schema::create('insurer_quote_type_mapping', function (Blueprint $table) {
+            $table->id();
             $table->integer('quote_type_id');
             $table->foreign('quote_type_id')->references('id')->on('quote_type');
 
