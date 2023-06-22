@@ -215,6 +215,7 @@ class SendEmailCustomerService extends BaseService
             if (count($cc)) {
                 $body['cc'] = $cc;
             }
+            $body['attributes'] = array('quoteId' => $emailData['quoteId']);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
