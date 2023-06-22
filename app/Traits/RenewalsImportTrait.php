@@ -18,6 +18,9 @@ trait RenewalsImportTrait
 
         $quoteData = [];
         foreach ($columns as $key => $column) {
+
+            if(empty($row[$column['index']]))  {$quoteData[$key] = null; continue;};
+
             if (! empty($column['type']) && $column['type'] == 'date') {
                 if (strpos($row[$column['index']], '/')) {
                     $quoteData[$key] = Carbon::createFromFormat('d/m/Y', $row[$column['index']])->format('d/m/Y');
@@ -25,7 +28,7 @@ trait RenewalsImportTrait
                     $quoteData[$key] = Carbon::instance(Date::excelToDateTimeObject((float) $row[$column['index']]))->format('d/m/Y');
                 }
             } else {
-                $quoteData[$key] = isset($row[$column['index']]) ? $row[$column['index']] : null;
+                $quoteData[$key] = $row[$column['index']];
             }
         }
 
