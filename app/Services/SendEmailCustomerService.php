@@ -129,6 +129,8 @@ class SendEmailCustomerService extends BaseService
                 'Accept' => 'application/json',
                 'api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
+                'quoteId' => $emailData['quoteId']
+
             ];
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
@@ -223,6 +225,7 @@ class SendEmailCustomerService extends BaseService
                     'headers' => $headers,
                     'body' => json_encode($body),
                     'timeout' => 10000,
+//                    'metadata_quoteId' => $emailData['quoteId']
                 ]
             );
 
