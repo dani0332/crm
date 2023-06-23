@@ -161,7 +161,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
             'notes' => ['index' => 40, 'title' => 'Notes', 'rules' => 'max:500'],
         ];
 
-        if($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
+        if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
             $columns['make']['rules'][] = 'required';
             $columns['model']['rules'][] = 'required';
             $columns['year']['rules'][] = 'required';

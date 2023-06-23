@@ -83,7 +83,6 @@ class ReportService extends BaseService
             }
             $records = $query->get();
 
-
             $records->map(function ($item) use ($groupBy) {
 
                 $item['utm_source'] = in_array('utm_source', $groupBy) ? $item['utm_source'] : '';
