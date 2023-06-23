@@ -119,10 +119,11 @@
                             'max_cap': maxCap,
                             'aid': aid,
                             'id': id,
+                            'team_type' : 'health',
                             '_token': $('meta[name="csrf-token"]').attr('content')
                         };
                         $.ajax({
-                            url: '/lead-allocation/updateAvailability',
+                            url: '/lead-allocation/update-availability',
                             type: 'POST',
                             data: data,
                             success: function(data) {
@@ -167,7 +168,7 @@
                 $(this).addClass('danger');
             }
             $.ajax({
-                url: '/lead-allocation/updateAvailability',
+                url: '/lead-allocation/update-availability',
                 type: 'POST',
                 data: {
                     'aid': $(this).data('aid'),

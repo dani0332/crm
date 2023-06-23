@@ -38,7 +38,7 @@ class EmbeddedProductController extends Controller
     {
         EmbeddedProductRepository::create($request->validated());
 
-        return back()->with('message', 'Embedded Product created successfully');
+        return redirect()->route('embedded-products.index')->with('message', 'Embedded Product created successfully');
     }
 
     /**
@@ -80,5 +80,15 @@ class EmbeddedProductController extends Controller
         $product->delete();
 
         return back()->with('message', 'Embedded Product has been deleted');
+    }
+
+    public function uploadDocument()
+    {
+        $file = request()->file('file');
+        $title = request()->input('title');
+
+        $data = EmbeddedProductRepository::uploadDocument($file, $title);
+
+        return response()->json($data);
     }
 }
