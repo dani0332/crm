@@ -81,7 +81,8 @@ class ReportService extends BaseService
 
                 $query->whereBetween($quoteRequestTable.'.created_at', [$dateFrom, $dateTo]);
             }
-            $records = $query->simplePaginate(10)->withQueryString();
+            $records = $query->get();
+
 
             $records->map(function ($item) use ($groupBy) {
 

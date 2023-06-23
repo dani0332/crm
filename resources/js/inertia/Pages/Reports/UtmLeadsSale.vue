@@ -166,21 +166,11 @@ onMounted(() => {
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
-      :items="reportData.data || []"
+      :items="reportData || []"
       border-cell
       hide-rows-per-page
       hide-footer
     >
     </DataTable>
-
-    <Pagination
-      :links="{
-        next: reportData.next_page_url,
-        prev: reportData.prev_page_url,
-        current: reportData.current_page,
-        from: reportData.from,
-        to: reportData.to,
-      }"
-    />
   </div>
 </template>
