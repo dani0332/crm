@@ -43,19 +43,9 @@ class TierAssignmentJob implements ShouldQueue
 
             $from = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_PROCESS_START_DATE);
 
-            // $weekBeforeDateTime = now()->subWeek(1)->startOfDay();
-
-            // if (Carbon::parse($from)->startOfDay() < $weekBeforeDateTime) {
-            //     $from = $weekBeforeDateTime;
-            // }
-
             $isFIFO = $applicationStorageService->getValueByKey(ApplicationStorageEnums::CAR_LEAD_PICKUP_FIFO);
 
-            $lmsStartDate = $applicationStorageService->getValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS);
-
             $to = now()->subMinutes(2)->toDateTimeString();
-
-            $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
 
             $carLeads = CarQuote::whereNull('tier_id')
                 ->whereBetween('created_at', [$from, $to])
@@ -70,38 +60,22 @@ class TierAssignmentJob implements ShouldQueue
 
                 info('------------------- Processing Lead : '.$carLead->code.' -------------------');
 
-                if ($leadAllocationService->checkIfLeadIsRenewal($carLead)) {
-                    info('Renewal found against quote Id : '.$carLead->uuid);
+                $tier = $leadAllocationService->getTierForValue($carLead);
 
-                    $leadCreationDate = Carbon::parse($carLead->created_at);
+                if ($tier != null) {
 
-                    if (! $carLead->is_renewal_tier_email_sent && $leadCreationDate->gt($lmsStartDate)) {
+                    info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code.' , uuid : '.$carLead->uuid);
 
-                        info('About to send Renewal Tier R email for quote Id : '.$carLead->uuid);
+                    $carLead->tier_id = $tier->id;
 
-                        $lead = CarQuote::where('uuid', $carLead->uuid)->first();
+                    $carLead->cost_per_lead = $tier->cost_per_lead;
 
-                        CarRenewalEmailJob::dispatch($lead);
-                    } else {
-                        info('Renewal email not sent created_at for lead : '.$carLead->uuid.' is : '.$carLead->created_at.' and email flag for renewal is : '.$carLead->is_renewal_tier_email_sent);
-                    }
+                    $carLead->save();
 
+                    info('Tier : Assignment done '.$tier->name.' against car lead : '.$carLead->code.' , uuid : '.$carLead->uuid);
                 } else {
-                    $tier = $leadAllocationService->getTierForValue($carLead);
 
-                    if ($tier != null) {
-
-                        info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code.' , uuid : '.$carLead->uuid);
-
-                        $carLead->tier_id = $tier->id;
-
-                        $carLead->cost_per_lead = $tier->cost_per_lead;
-
-                        $carLead->save();
-                    } else {
-
-                        info('No tier found to car lead : '.$carLead->code);
-                    }
+                    info('No tier found to car lead : '.$carLead->code);
                 }
 
             }
@@ -113,7 +87,6 @@ class TierAssignmentJob implements ShouldQueue
         } else {
             info('Tier Assignment Job is turned Off');
             info('------------------- Tier Assignment Job Finished for '.$currentIteration.' -------------------');
-
             return;
         }
     }
