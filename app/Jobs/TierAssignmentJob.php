@@ -8,7 +8,6 @@ use App\Mail\TierAssignmentFailedNotification;
 use App\Models\CarQuote;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -87,6 +86,7 @@ class TierAssignmentJob implements ShouldQueue
         } else {
             info('Tier Assignment Job is turned Off');
             info('------------------- Tier Assignment Job Finished for '.$currentIteration.' -------------------');
+
             return;
         }
     }

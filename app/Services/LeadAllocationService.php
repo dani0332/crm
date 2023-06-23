@@ -11,7 +11,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
-use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
