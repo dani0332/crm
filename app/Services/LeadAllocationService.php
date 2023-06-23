@@ -439,11 +439,6 @@ class LeadAllocationService extends BaseService
             foreach ($carUnAllocatedLead as $carLead) {
                 info('----------------------- CAR LEAD ALLOCATION STARTED FOR LEAD '.$carLead->uuid.' -----------------------');
 
-                if ($this->checkIfLeadIsRenewal($carLead)) {
-                    info('Renewal found against quote Id : '.$carLead->uuid.' skipping it now');
-
-                    continue; // since we found renewal against current lead we will skip advisor assignment
-                }
                 info('trying to check tier against the current lead : '.$carLead->code);
 
                 // we will find tier as per the value of the lead and if already assigned then we will simply find the tier,

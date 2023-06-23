@@ -361,12 +361,12 @@ class RenewalsUploadService
 
             $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
                 foreach ($leads as $lead) {
-                    if ($lead->renewalUploadLead->skip_plans) {
+                    if (! $lead->renewalUploadLead->skip_plans) {
+                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
+                    } else {
                         info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                         $totalSkipped++;
-                    } else {
-                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
                     }
                 }
             });
@@ -1410,9 +1410,8 @@ class RenewalsUploadService
                             if ($leadData->claim_history && ! ClaimHistory::where('text', $leadData->claim_history)->first()) {
                                 $leadValidationErrors->push('Invalid Claim History');
                             }
-                            if (! $leadData->driving_experience) {
-                                $leadValidationErrors->push('Driving Experience is required');
-                            } elseif (! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
+
+                            if (! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                 $leadValidationErrors->push('Invalid Driving Experience');
                             }
 
@@ -1516,9 +1515,7 @@ class RenewalsUploadService
                                     }
                                 }
                             }
-                            if (! $leadData->registration_location) {
-                                $leadValidationErrors->push('Registration Location is required');
-                            } elseif (! Emirate::where('text', $leadData->registration_location)->first()) {
+                            if (! empty($leadData->registration_location) && ! Emirate::where('text', $leadData->registration_location)->first()) {
                                 $leadValidationErrors->push('Invalid Registration Location');
                             }
                             if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
