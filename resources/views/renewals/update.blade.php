@@ -61,6 +61,7 @@
                                     <select class="form-control" id="skip_plans" name="skip_plans" data-toggle="tooltip" data-placement="top" required>
                                         <option value="0" selected="selected">No</option>
                                         <option value="1">Yes</option>
+                                        <option value="2">Skip Plans for Non GCC, Bike, Company Vehicles</option>
                                     </select><br/>
                                     <span class="text-sm"><strong>Skip Plans - No</strong> - Plans will be fetched/refreshed during fetch plans process.</span><br/>
                                     <span class="text-sm"><strong>Skip Plans - Yes</strong> - <span class="text-danger">Plans will be not be refreshed during fetch plans process. make sure plans are already fetched for the batch being uploaded.</span></span>
