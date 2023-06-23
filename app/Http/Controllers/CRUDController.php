@@ -397,7 +397,8 @@ class CRUDController extends Controller
         $mainPayment =  $paymentEntityModel->payments()->where('code','=', $paymentEntityModel->code)->first();
 
         $paymentMethods = $this->lookupService->getPaymentMethods();
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($quoteTypeId);
+        $mappedQuoteTypeId = ($quoteTypeId == QuoteTypeId::Business) ? QuoteTypeId::Corpline : $quoteTypeId;
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping($mappedQuoteTypeId);
         $isRenewalUser = false;
         $isNewBusinessUser = false;
         $model = $this->genericModel;

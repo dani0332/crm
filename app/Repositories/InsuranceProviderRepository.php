@@ -18,8 +18,17 @@ class InsuranceProviderRepository extends BaseRepository
 
     public function fetchByQuoteTypeMapping($quoteTypeId)
     {
-        return $this->whereHas('quoteTypes', function ($quoteType) use ($quoteTypeId){
-            $quoteType->where('quote_type_id', $quoteTypeId);
-        })->withActive()->orderBy('sort_order')->get();
+        return \DB::table('insurer_quote_type_mapping')
+            ->select([
+                'insurance_provider.id',
+                'insurance_provider.code',
+                'insurance_provider.text',
+                'insurance_provider.text_lms',
+                'insurer_quote_type_mapping.insurance_provider_id',
+                'insurer_quote_type_mapping.quote_type_id'
+            ])
+            ->where('quote_type_id', $quoteTypeId)
+            ->join('insurance_provider', 'insurance_provider.id', '=', 'insurer_quote_type_mapping.insurance_provider_id')
+            ->get();
     }
 }
