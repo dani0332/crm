@@ -14,8 +14,6 @@ let availableFilters = {
   quote_type_id: '',
   group_by_one: '',
   group_by_two: '',
-
-  page: 1,
 };
 const { isRequired, isEmail } = useRules();
 const filters = reactive(availableFilters);
@@ -64,8 +62,6 @@ const tableHeader = [
 
 function onSubmit(isValid) {
   if (isValid) {
-    filters.page = 1;
-
     Object.keys(filters).forEach(
       key => filters[key] === '' && delete filters[key],
     );
@@ -85,7 +81,7 @@ function onSubmit(isValid) {
 function onReset() {
   router.visit('/reports/utm-report', {
     method: 'get',
-    data: { page: 1 },
+    data: {},
     preserveScroll: true,
     onBefore: () => (loader.table = true),
     onSuccess: () => (loader.table = false),
