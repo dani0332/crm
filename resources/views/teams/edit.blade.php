@@ -31,8 +31,16 @@ use App\Enums\GenericRequestEnum;
 
     $(document).ready(function(){
         var products  = JSON.parse('<?php echo json_encode($products); ?>');
-        $('#type').on('change', function (item, index){
+        $('#type').on('change', function (item, index){ 
             renderParentOptions(products);
+        });
+
+        var $allocationPriceSection = $('.allocation-price-section');
+        if($('#allocation_threshold_enabled').is(':checked')) {
+            $('.allocation-price-section').show();
+        }
+        $('#allocation_threshold_enabled').on('change', function() {
+            $allocationPriceSection.toggle(this.checked);
         });
     });
 
