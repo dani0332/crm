@@ -21,10 +21,11 @@ trait RenewalsImportTrait
 
             if ($row[$column['index']] == '') {
                 $quoteData[$key] = null;
+
                 continue;
             }
 
-            if (!empty($column['type']) && $column['type'] == 'date') {
+            if (! empty($column['type']) && $column['type'] == 'date') {
                 if (strpos($row[$column['index']], '/')) {
                     $quoteData[$key] = Carbon::createFromFormat('d/m/Y', $row[$column['index']])->format('d/m/Y');
                 } else {
@@ -74,7 +75,7 @@ trait RenewalsImportTrait
         $columns = collect($this->getColumns())->pluck('rules', 'index');
 
         $columns->each(function ($item, $index) use (&$rules) {
-            $rules['*.' . $index] = $item;
+            $rules['*.'.$index] = $item;
         });
 
         return $rules;
@@ -95,7 +96,7 @@ trait RenewalsImportTrait
 
             return true;
         } catch (\Exception $exception) {
-            info('Date Issue value: ' . $value . ' Error: ' . $exception->getMessage());
+            info('Date Issue value: '.$value.' Error: '.$exception->getMessage());
 
             return false;
         }
