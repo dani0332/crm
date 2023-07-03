@@ -19,7 +19,7 @@ trait RenewalsImportTrait
         $quoteData = [];
         foreach ($columns as $key => $column) {
 
-            if (empty($row[$column['index']])) {
+            if ($row[$column['index']] == '') {
                 $quoteData[$key] = null;
 
                 continue;

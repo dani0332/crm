@@ -90,6 +90,9 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
+    if (hasRole(rolesEnum.CycleAdvisor)) {
+        quotesSelected.value = null;
+    }
 });
 
 const tableHeader = [
@@ -109,6 +112,9 @@ const tableHeader = [
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
+
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 
 </script>
 
@@ -233,8 +239,8 @@ const permissionsEnum = page.props.permissionsEnum;
       </div>
     </x-form>
 
-      <Transition name="fade">
-          <div v-if="quotesSelected.length > 0" class="mb-4">
+      <Transition name="fade" >
+          <div v-if="quotesSelected?.length > 0" class="mb-4">
               <LeadAssignment
                   :selected="quotesSelected.map(e => e.id)"
                   :advisors="advisorOptions"
