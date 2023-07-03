@@ -122,6 +122,9 @@
         .text-sm {
             font-size: 14px;
         }
+        .text-xl {
+            font-size: 16px;
+        }
         .blue-box {
             background: #ddfdfc;
         }
@@ -218,7 +221,7 @@
             text-align: center;
             position: fixed;
             bottom: 0px;
-            height: 160px;
+            height: 145px;
             z-index: 1500;
         }
 
@@ -354,58 +357,42 @@
     {{-- PDF Page Footer --}}
     <footer>
         <table class="tbl-footer">
-            <tr>
-                <td colspan="4" class="text-right">
-                    <h2>InsuranceMarket.ae™</h2>
-                </td>
-            </tr>
-            <tr>
-                <td rowspan="4">
-                    <img style="
-                        height: 100px;
-                        " src="{{ public_path('images/advisors/sample_1.png') }}">
-                </td>
+            <div style="float: left">
+                <img style="height: 125px;" src="{{ public_path('images/advisors/sample_1.png') }}">
+            </div>
+            <div style="float: left; margin-left: 10px; margin-top: 20px">
                 @php
                     $advisorName = isset($quote->advisor->name) && !empty($quote->advisor->name);
                 @endphp
                 @if($advisorName)
-                    <td colspan="2" class="text-left">Advisor Name: {{ $quote->advisor?->name ?? '' }}</td>
+                    <p class="text-left text-white text-xl">Advisor Name: {{ $quote->advisor?->name }}</p>
                 @endif
-                <td colspan="{{ $advisorName ?: 3 }}" class="text-right">Tel: <a href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a href="https://insurancemarket.ae">www.insurancemarket.ae</a> </td>
-            </tr>
-            <tr>
                 @php
                     $advisorMobile = isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no);
                 @endphp
                 @if($advisorMobile)
-                    <td colspan="2" class="text-left">
-                        Mobile/Whatsapp: <a href="tel:{{$quote->advisor->mobile_no}}">{{$quote->advisor->mobile_no}}</a>
-                    </td>
+                    <p class="text-left text-white text-xl">Mobile/Whatsapp: <a class="text-white" href="tel:{{ $quote->advisor->mobile_no }}">{{ $quote->advisor->mobile_no }}</a></p>
                 @endif
-                <td colspan="{{ $advisorMobile ?: 3 }}" class="text-right">27th Floor, Control Tower, Motor City, Dubai, United Arab Emirates, P.O Box 26423</td>
-            </tr>
-            <tr>
                 @php
                     $advisorLandLine = isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no);
                 @endphp
                 @if($advisorLandLine)
-                    <td colspan="2" class="text-left">
-                        Direct Line: <a href="tel:{{$quote->advisor->landline_no}}">{{$quote->advisor->landline_no}}</a>
-                    </td>
+                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white" href="tel:{{ $quote->advisor->landline_no }}">{{ $quote->advisor->landline_no }}</a></p>
                 @endif
-                <td colspan="{{ $advisorLandLine ?: 3 }}" class="text-right">Registration No. 85 under Central Bank of UAE (UAE Insurance Authority)</td>
-            </tr>
-            <tr>
                 @php
                     $advisorEmail = isset($quote->advisor->email) && !empty($quote->advisor->email);
                 @endphp
                 @if($advisorEmail)
-                    <td colspan="2" class="text-left">
-                        Email: <a href="mailto:{{$quote->advisor->email}}">{{$quote->advisor->email}}</a>
-                    </td>
+                    <p class="text-left text-white text-xl">Email: <a class="text-white" href="mailto:{{ $quote->advisor->email }}">{{ $quote->advisor->email }}</a></p>
                 @endif
-                <td colspan="{{ $advisorEmail ?: 3 }}" class="text-right">Holder of HIIP from HA, Intermediary ID No. BRK-00003</td>
-            </tr>
+            </div>
+            <div>
+                <h4 class="text-right text-white">InsuranceMarket.ae™</h4>
+                <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a class="text-white" href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
+                <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai, United Arab Emirates, P.O Box 26423</p>
+                <p class="text-right text-white text-xl">Registration No. 85 under Central Bank of UAE (UAE Insurance Authority)</p>
+                <p class="text-right text-white text-xl">Holder of HIIP from HA, Intermediary ID No. BRK-00003</p>
+            </div>
         </table>
     </footer>
 
@@ -426,7 +413,7 @@
                                     if(!file_exists($providerLogoImage)) {
                                         $providerLogoImage = public_path('images/insurance_providers/default.png');
                                     }
-//                                @endphp
+                               @endphp
                                 <img class="provider-logo" alt="" src="{{$providerLogoImage}}" />
                             </p>
                         </div>
