@@ -24,7 +24,7 @@ class AllocationThresholdController extends Controller
     {
         $teams = $request->teams;
         foreach ($teams as $team) {
-            Team::where('id', $team['id'])->update(['min_price' => $team['min'], 'max_price' => $team['max']]);
+            Team::where('id', $team['id'])->update(['min_price' => $team['min'], 'max_price' => $team['max'], 'allocation_threshold_enabled' => true]);
         }
 
         return true;
