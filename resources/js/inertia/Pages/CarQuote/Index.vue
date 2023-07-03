@@ -33,7 +33,7 @@ let availableFilters = {
   first_name: '',
   last_name: '',
   email: '',
-  policy_number: '',
+  previous_quote_policy_number: '',
   page: 1,
 };
 
@@ -91,47 +91,20 @@ onMounted(() => {
 
 const tableHeader = [
   { text: 'CDB ID', value: 'code' },
-  { text: 'BATCH', value: 'batch' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DOB', value: 'dob' },
   { text: 'SOURCE', value: 'source' },
   { text: 'NATIONALITY', value: 'nationality' },
-  { text: 'UAR LICENSE HELD FOR', value: 'uae_license_held_for_id' },
   { text: 'CAR MAKE', value: 'car_make' },
   { text: 'CAR MODEL', value: 'car_model' },
   { text: 'CAR MODEL YEAR', value: 'year_of_manufacture' },
-  { text: 'FIRST REGISTRATION YEAR', value: 'year_of_first_registration' },
-  { text: 'CAR VALUE', value: 'car_value' },
-  { text: 'VEHICLE TYPE', value: 'vehicle_type' },
   { text: 'TYPE OF CAR INSURANCE', value: 'car_type_insurance_id' },
   { text: 'CURRENTLY INSURED WITH', value: 'insurance_provider' },
-  { text: 'CLAIM HISTORY', value: 'claim_history_id' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  {
+  { text: 'CREATED DATE', value: 'created_at' },  {
     text: 'ADVISOR ASSIGNED DATE',
     value: 'advisor_assigned_date',
   },
-  { text: 'LEAD STATUS', value: 'quote_status' },
-  { text: 'PAYMENT STATUS', value: 'payment_status_id' },
-  { text: 'ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'TIER NAME', value: 'tier' },
-  { text: 'VISIT COUNT', value: 'quote_view_count' },
-  {
-    text: 'FOLLOW UP DATE',
-    value: 'followupDate',
-  },
-  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'UPDATED BY', value: 'updated_by' },
-  { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
   { text: 'ADVISOR', value: 'advisor' },
-  { text: 'POLICY NO', value: 'policy_number' },
-  { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
-  { text: 'GCC STANDARD', value: 'is_gcc_standard' },
-  { text: 'VEHICLE MODIFIED', value: 'is_modified' },
-  { text: 'PREMIUM', value: 'premium' },
-  { text: 'LOST REASON', value: 'lost' },
-  { text: 'QUOTE LINK', value: 'quote_link' },
 ];
 
 const can = permission => useCan(permission);
@@ -160,10 +133,10 @@ const manualAssignmentError = () => {
 
 <template>
   <div>
-    <Head title="Car Quotes Search" />
+    <Head title="Car Search" />
 
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Car Quotes Search</h2>
+      <h2 class="text-xl font-semibold">Search</h2>
       <x-button
         v-if="can(permissionsEnum.CarQuotesCreate)"
         size="sm"
@@ -195,9 +168,9 @@ const manualAssignmentError = () => {
           placeholder="Search by Email"
         />
         <x-input
-          v-model="filters.policy_number"
+          v-model="filters.previous_quote_policy_number"
           type="search"
-          name="policy_number"
+          name="previous_quote_policy_number"
           label="Policy Number"
           class="w-full"
           placeholder="Search by Policy Number"
@@ -254,31 +227,8 @@ const manualAssignmentError = () => {
         {{ insurance_provider?.text }}
       </template>
 
-      <template #item-advisor_assigned_date="item">
-        {{ item?.car_quote_request_detail?.advisor_assigned_date }}
-      </template>
-      <template #item-followupDate="item">
-        {{ item?.car_quote_request_detail?.next_followup_date }}
-      </template>
-
-      <template #item-lost="item">
-        {{ item?.car_quote_request_detail?.lost_reason?.text }}
-      </template>
-
-      <template #item-claim_history_id="{ claim_history_id }">
-        {{ claim_history_id?.text }}
-      </template>
-
       <template #item-car_type_insurance_id="{ car_type_insurance_id }">
         {{ car_type_insurance_id?.text }}
-      </template>
-
-      <template #item-vehicle_type="{ vehicle_type }">
-        {{ vehicle_type?.text }}
-      </template>
-
-      <template #item-quote_view_count="{ quote_view_count }">
-        {{ quote_view_count?.visit_count }}
       </template>
 
       <template #item-car_make="{ car_make }">
@@ -289,67 +239,14 @@ const manualAssignmentError = () => {
         {{ car_model?.text }}
       </template>
 
-      <template #item-uae_license_held_for_id="{ uae_license_held_for_id }">
-        {{ uae_license_held_for_id?.text }}
-      </template>
-
-      <template #item-quote_status="{ quote_status }">
-        {{ quote_status?.text }}
-      </template>
-
-      <template #item-payment_status_id="{ payment_status_id }">
-        {{ payment_status_id?.text }}
-      </template>
-
-      <template #item-tier="{ tier }">
-        {{ tier?.name }}
-      </template>
-
-      <template #item-batch="{ batch }">
-        {{ batch?.name }}
-      </template>
-
       <template #item-nationality="{ nationality }">
         {{ nationality?.text }}
       </template>
 
-      <template #item-dob="{ dob }">
-        {{ dateFormat(dob) }}
+      <template #item-advisor_assigned_date="item">
+        {{ item?.car_quote_request_detail?.advisor_assigned_date }}
       </template>
 
-      <template #item-updated_at="{ updated_at }">
-        {{ updated_at }}
-      </template>
-
-      <template #item-updated_by="{ updated_by }">
-        {{ updated_by?.name }}
-      </template>
-
-      <template #item-policy_number="{ policy_number }">
-        {{ policy_number != 'NULL' ? policy_number : 'N/A' }}
-      </template>
-
-      <template #item-is_ecommerce="{ is_ecommerce }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
-            {{ is_ecommerce ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
-      </template>
-      <template #item-is_gcc_standard="{ is_gcc_standard }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_gcc_standard ? 'success' : 'error'">
-            {{ is_gcc_standard ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
-      </template>
-      <template #item-is_modified="{ is_modified }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_modified ? 'success' : 'error'">
-            {{ is_modified ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
-      </template>
     </DataTable>
 
     <Pagination

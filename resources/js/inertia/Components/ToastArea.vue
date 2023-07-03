@@ -1,57 +1,53 @@
 <script setup>
 const toast = useToast();
 
-const flash = reactive({
-  message: usePage().props.flash?.message || '',
-  error: usePage().props.flash?.error || '',
-  success: usePage().props.flash?.success || '',
-  warning: usePage().props.flash?.warning || '',
-  info: usePage().props.flash?.info || '',
-});
+const onceDone = ref(false);
 
-watchOnce(
-  flash,
-  flash => {
-    if (
-      !flash.message &&
-      !flash.error &&
-      !flash.success &&
-      !flash.warning &&
-      !flash.info
-    )
-      return;
+const notification = flash => {
+  if (onceDone.value) return;
 
-    if (flash.message) {
-      toast.success({
-        title: flash.message,
-        position: 'top',
-      });
-    } else if (flash.error) {
-      toast.error({
-        title: flash.error,
-        position: 'top',
-      });
-    } else if (flash.success) {
-      toast.success({
-        title: flash.success,
-        position: 'top',
-      });
-    } else if (flash.warning) {
-      toast.warning({
-        title: flash.warning,
-        position: 'top',
-      });
-    } else if (flash.info) {
-      toast.info({
-        title: flash.info,
-        position: 'top',
-      });
-    }
-  },
-  { deep: true, immediate: true },
-);
+  if (flash.message) {
+    toast.success({
+      title: flash.message,
+      position: 'top',
+    });
+  } else if (flash.error) {
+    toast.error({
+      title: flash.error,
+      position: 'top',
+    });
+  } else if (flash.success) {
+    toast.success({
+      title: flash.success,
+      position: 'top',
+    });
+  } else if (flash.warning) {
+    toast.warning({
+      title: flash.warning,
+      position: 'top',
+    });
+  } else if (flash.info) {
+    toast.info({
+      title: flash.info,
+      position: 'top',
+    });
+  }
+
+  onceDone.value = true;
+};
 </script>
 
 <template>
-  <div class="hidden"></div>
+  <div
+    v-if="
+      $page.props.flash.message ||
+      $page.props.flash.error ||
+      $page.props.flash.success ||
+      $page.props.flash.warning ||
+      $page.props.flash.info
+    "
+    class="hidden"
+  >
+    {{ notification($page.props.flash) }}
+  </div>
 </template>

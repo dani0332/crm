@@ -267,7 +267,7 @@
                                                 @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
                                                 @if(explode("|", $value)[1] != 'date') type={{ explode("|", $value)[1] }} @endif
                                                 id={{$property}} name={{$property}}
-                                                @if($property == DatabaseColumnsString::EMAIL || $property == DatabaseColumnsString::MOBILE || $property == DatabaseColumnsString::CAR_VALUE_TIER) style="background-color: #e9ecef !important;" disabled="disabled" @endif
+                                                @if($property == DatabaseColumnsString::EMAIL || $property == DatabaseColumnsString::MOBILE || ($property == DatabaseColumnsString::CAR_VALUE_TIER && !Auth::user()->hasRole(RolesEnum::LeadPool))) style="background-color: #e9ecef !important;" disabled="disabled" @endif
                                                 value="{{ old($property, $record->$property) }}" class="form-control"
                                                 value="{{ old($property, $record->$property) }}" class="form-control"
                                                 @if(strpos($value, 'max') !== false) maxlength="{{explode(":", $value)[1]}}" @endif
