@@ -38,7 +38,9 @@ class TierAssignmentJob implements ShouldQueue
 
         $tierAssignmentSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_SWITCH);
 
-        if ($tierAssignmentSwitch != 0) {
+        $masterSwitchConfigValue = (int) config('constants.TIER_ASSIGNMENT_MASTER_SWITCH');
+
+        if ($tierAssignmentSwitch != 0 && $masterSwitchConfigValue != 0) {
 
             $from = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_PROCESS_START_DATE);
 
