@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\QuoteType;
@@ -66,7 +67,8 @@ class ReportService extends BaseService
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' THEN premium  ELSE 0 END) as authorized_sum'),
                 DB::raw('sum(CASE WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN premium  ELSE 0 END) as captured_sum'),
             )
-                ->join($quoteRequestTable.'_detail', $quoteRequestTable.'.id', $quoteRequestTable.'_detail.'.$quoteRequestTable.'_id')->groupBy($groupBy);
+                ->join($quoteRequestTable.'_detail', $quoteRequestTable.'.id', $quoteRequestTable.'_detail.'.$quoteRequestTable.'_id')->groupBy($groupBy)
+                ->whereNotIn($quoteRequestTable.'.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
 
             if ($isGroupMedical) {
                 $query->where('business_type_of_insurance_id', QuoteTypeId::Business);
