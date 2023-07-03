@@ -301,6 +301,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'generic'], function () {
+        Route::resource('allocation-threshold', TeamController::class);
         Route::resource('team', TeamController::class);
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);
