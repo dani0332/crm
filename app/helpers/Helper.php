@@ -424,7 +424,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::CORPLINE,
             quoteTypeCode::Business,
             quoteTypeCode::Cycle,
-            quoteTypeCode::Bike
+            quoteTypeCode::Bike,
         ];
     }
 }
