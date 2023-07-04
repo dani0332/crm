@@ -76,6 +76,7 @@
         }
         .header {
             background: #1d83bc;
+            /*background-image: linear-gradient(275deg, #1d83bc, transparent);*/
             color: #ffffff;
             font-size: 16px;
             text-align: center;
@@ -391,7 +392,7 @@
                 <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a class="text-white" href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
                 <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai, United Arab Emirates, P.O Box 26423</p>
                 <p class="text-right text-white text-xl">Registration No. 85 under Central Bank of UAE (UAE Insurance Authority)</p>
-                <p class="text-right text-white text-xl">Holder of HIIP from HA, Intermediary ID No. BRK-00003</p>
+                <p class="text-right text-white text-xl">Holder of HIIP from DHA, Intermediary ID No. BRK-00003</p>
             </div>
         </table>
     </footer>
@@ -514,7 +515,7 @@
                  @endforeach
                 <tr>
                     <td colspan="{{sizeof($planIds) + 1}}" class="no-border text-center" >
-                        <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid )}}" >Compare all your Quotes</a>
+                        <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid )}}" >See all your Quotes</a>
                     </td>
                 </tr>
             </tbody>
