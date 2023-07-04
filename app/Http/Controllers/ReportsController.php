@@ -8,6 +8,7 @@ use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
 use App\Services\AdvisorPerformanceReportService;
 use App\Services\LeadDistributionReportService;
+use App\Services\ReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
@@ -103,5 +104,15 @@ class ReportsController extends Controller
             ->where('is_active', 1)
             ->get()
             ->toArray();
+    }
+
+    public function utmLeadsSaleReport(Request $request, ReportService $reportService)
+    {
+        $resp = $reportService->utmReport($request);
+
+        return inertia('Reports/UtmLeadsSale', [
+            'quoteTypes' => $resp['lobs'],
+            'reportData' => $resp['records'],
+        ]);
     }
 }

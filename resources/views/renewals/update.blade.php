@@ -42,7 +42,7 @@
                     @if(session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
-                    <form id="demo-form2" method='post' action="{{ url('renewals/upload-update') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                    <form id="demo-form2" method='post' action="{{ route('upload-update') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                         {{csrf_field()}}
                         <div class="item form-group">
                             <div class="col-lg-6 offset-lg-3">
@@ -61,6 +61,7 @@
                                     <select class="form-control" id="skip_plans" name="skip_plans" data-toggle="tooltip" data-placement="top" required>
                                         <option value="0" selected="selected">No</option>
                                         <option value="1">Yes</option>
+                                        <option value="2">Skip Plans for Non GCC, Bike, Company Vehicles</option>
                                     </select><br/>
                                     <span class="text-sm"><strong>Skip Plans - No</strong> - Plans will be fetched/refreshed during fetch plans process.</span><br/>
                                     <span class="text-sm"><strong>Skip Plans - Yes</strong> - <span class="text-danger">Plans will be not be refreshed during fetch plans process. make sure plans are already fetched for the batch being uploaded.</span></span>

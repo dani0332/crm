@@ -28,6 +28,7 @@ enum QuoteTypes: string
             QuoteTypes::PET => 9,
             QuoteTypes::YACHT => 7,
             QuoteTypes::JETSKI => 11,
+            QuoteTypes::CAR => 1,
         };
     }
 }

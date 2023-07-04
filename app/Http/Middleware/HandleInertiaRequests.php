@@ -85,6 +85,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::TPL_DASHBOARD_VIEW,
             PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW,
             PermissionsEnum::MAIN_DASHBOARD_VIEW,
+            PermissionsEnum::UtmLeadsSalesReport,
         ])) {
             $nav = $nav->add('Dashboard', '', function (Section $section) {
                 $section
@@ -116,6 +117,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW,
             PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
             PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
+            PermissionsEnum::UtmLeadsSalesReport,
         ])) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
@@ -123,13 +125,15 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW), 'Advisor Performance', route('advisor-performance-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW), 'Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->add('Revival Conversion', route('revival-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->add('Revival Conversion', route('revival-conversion-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::CAR_LEAD_ALLOCATION_DASHBOARD,
             PermissionsEnum::HEALTH_LEAD_ALLOCATION_DASHBOARD,
+            PermissionsEnum::UtmLeadsSalesReport,
         ])) {
             $nav = $nav->add('Lead Allocation', '', function (Section $section) {
                 $section
@@ -152,61 +156,64 @@ class HandleInertiaRequests extends Middleware
             $nav = $nav->add('Activities', url('/activities'));
         }
 
-        if (auth()->user()->hasAnyPermission([
-            PermissionsEnum::CarQuotesList, PermissionsEnum::HealthQuotesList,
-            PermissionsEnum::TravelQuotesList, PermissionsEnum::LifeQuotesList,
-            PermissionsEnum::HomeQuotesList, PermissionsEnum::PetQuotesList,
-        ])) {
-            $nav = $nav->add('Personal Quotes', '', function (Section $section) {
-                $section
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CarQuotesList),
-                        'Car Quotes',
-                        '/quotes/car',
-                        fn ($s) => $s->attributes(['icon' => 'car'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::HealthQuotesList),
-                        'Health Quotes',
-                        '/quotes/health',
-                        fn ($s) => $s->attributes(['icon' => 'health'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::TravelQuotesList),
-                        'Travel Quotes',
-                        '/quotes/travel',
-                        fn ($s) => $s->attributes(['icon' => 'travel'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::LifeQuotesList),
-                        'Life Quotes',
-                        '/quotes/life',
-                        fn ($s) => $s->attributes(['icon' => 'life'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::HomeQuotesList),
-                        'Home Quotes',
-                        '/quotes/home',
-                        fn ($s) => $s->attributes(['icon' => 'home'])
-                    )
-                    ->addIf(
-                        auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering]),
-                        'Car Revival Quotes',
-                        '/quotes/carrevival',
-                        fn ($s) => $s->attributes(['icon' => 'car'])
-                    )
-
-                    ->addIf(in_array(quoteTypeCode::Pet, newUi()) && auth()->user()->can(PermissionsEnum::PetQuotesList), 'Pet Quotes', '/personal-quotes/pet', fn ($s) => $s->attributes(['icon' => 'pet']))
-                    ->addIf(in_array(quoteTypeCode::Bike, newUi()) && auth()->user()->can(PermissionsEnum::BikeQuotesList), 'Bike Quotes', '/personal-quotes/bike', fn ($s) => $s->attributes(['icon' => 'bike']))
-                    ->addIf(in_array(quoteTypeCode::Cycle, newUi()) && auth()->user()->can(PermissionsEnum::CycleQuotesList), 'Cycle Quotes', '/personal-quotes/cycle', fn ($s) => $s->attributes(['icon' => 'cycle']))
-                    ->addIf(in_array(quoteTypeCode::Yacht, newUi()) && auth()->user()->can(PermissionsEnum::YachtQuotesList), 'Yacht Quotes', '/personal-quotes/yacht', fn ($s) => $s->attributes(['icon' => 'yacht']))
-                    ->addIf(in_array(quoteTypeCode::Jetski, newUi()) && auth()->user()->can(PermissionsEnum::JetskiQuotesList), 'Jetski Quotes', '/personal-quotes/jetski', fn ($s) => $s->attributes(['icon' => 'jetski']));
-            });
-        }
+        /* personal quotes section */
+        $nav = $nav->add('Personal Quotes', '', function (Section $section) {
+            $section
+                ->addIf(
+                    auth()->user()->hasAnyPermission([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch]),
+                    'Car',
+                    '/quotes/car',
+                    fn ($s) => $s
+                        ->attributes(['icon' => 'car'])
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::CarQuoteSearch),
+                            'Search',
+                            '/personal-quotes/car/car-quotes-search',
+                            fn ($s) => $s->attributes(['icon' => 'car'])
+                        )
+                        ->addIf(
+                            auth()->user()->can(PermissionsEnum::CarQuotesList),
+                            'Lead List',
+                            '/quotes/car',
+                            fn ($s) => $s->attributes(['icon' => 'car'])
+                        ),
+                )
+                ->addIf(
+                    auth()->user()->can(PermissionsEnum::HealthQuotesList),
+                    'Health Quotes',
+                    '/quotes/health',
+                    fn ($s) => $s->attributes(['icon' => 'health'])
+                )
+                ->addIf(
+                    auth()->user()->can(PermissionsEnum::TravelQuotesList),
+                    'Travel Quotes',
+                    '/quotes/travel',
+                    fn ($s) => $s->attributes(['icon' => 'travel'])
+                )
+                ->addIf(
+                    auth()->user()->can(PermissionsEnum::LifeQuotesList),
+                    'Life Quotes',
+                    '/quotes/life',
+                    fn ($s) => $s->attributes(['icon' => 'life'])
+                )
+                ->addIf(
+                    auth()->user()->can(PermissionsEnum::HomeQuotesList),
+                    'Home Quotes',
+                    '/quotes/home',
+                    fn ($s) => $s->attributes(['icon' => 'home'])
+                )
+                ->addIf(in_array(quoteTypeCode::Pet, newUi()) && auth()->user()->can(PermissionsEnum::PetQuotesList), 'Pet Quotes', '/personal-quotes/pet', fn ($s) => $s->attributes(['icon' => 'pet']))
+                ->addIf(in_array(quoteTypeCode::Bike, newUi()) && auth()->user()->can(PermissionsEnum::BikeQuotesList), 'Bike Quotes', '/personal-quotes/bike', fn ($s) => $s->attributes(['icon' => 'bike']))
+                ->addIf(in_array(quoteTypeCode::Cycle, newUi()) && auth()->user()->can(PermissionsEnum::CycleQuotesList), 'Cycle Quotes', '/personal-quotes/cycle', fn ($s) => $s->attributes(['icon' => 'cycle']))
+                ->addIf(in_array(quoteTypeCode::Yacht, newUi()) && auth()->user()->can(PermissionsEnum::YachtQuotesList), 'Yacht Quotes', '/personal-quotes/yacht', fn ($s) => $s->attributes(['icon' => 'yacht']))
+                ->addIf(in_array(quoteTypeCode::Jetski, newUi()) && auth()->user()->can(PermissionsEnum::JetskiQuotesList), 'Jetski Quotes', '/personal-quotes/jetski', fn ($s) => $s->attributes(['icon' => 'jetski']));
+        });
+        /* personal quotes section end */
 
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::GMQuotesList,
             PermissionsEnum::CorpLineQuotesList,
+            PermissionsEnum::UtmLeadsSalesReport,
         ])) {
             $nav = $nav->add('Business Quotes', '', function (Section $section) {
                 $section
@@ -318,18 +325,13 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->hasAnyRole([RolesEnum::Renewals, RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (auth()->user()->canAny([PermissionsEnum::RenewalsUpload, PermissionsEnum::RenewalsUploadedLeadList, PermissionsEnum::RenewalsUploadUpdate, PermissionsEnum::RenewalsBatches])) {
             $nav = $nav->add('Renewals', '', function (Section $section) {
                 $section
-                    ->add('Upload & Create', url('renewals/upload'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Uploaded Leads', url('renewals/uploaded-leads'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Upload & Update', url('renewals/upload'), fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(
-                        auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering]),
-                        'Batches',
-                        url('renewals/batches'),
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    );
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUpload), 'Upload & Create', route('renewals-upload-create'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadedLeadList), 'Uploaded Leads', route('renewals-uploaded-leads-list'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsUploadUpdate), 'Upload & Update', route('renewals-upload-update'), fn ($s) => $s->attributes(['icon' => 'box']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalsBatches), 'Batches', route('renewals-batches'), fn ($s) => $s->attributes(['icon' => 'box']));
             });
         }
 
