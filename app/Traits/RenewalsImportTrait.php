@@ -21,6 +21,7 @@ trait RenewalsImportTrait
 
             if ($row[$column['index']] == '') {
                 $quoteData[$key] = null;
+
                 continue;
             }
 
