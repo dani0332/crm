@@ -253,7 +253,7 @@
 </head>
 <body>
     {{-- First Page --}}
-    <img src="{{public_path('images/quote_plans_pages/rm-p1.jpg')}}" class="full-page-image" />
+    <img src="{{public_path('images/quote_plans_pages/rm-p1-1.png')}}" class="full-page-image" />
     @php
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
@@ -538,6 +538,6 @@
     </main>
 
     {{-- Last Page --}}
-    <img src="{{public_path('images/quote_plans_pages/rm-p3.jpg')}}" class="full-page-image"  />
+    <img src="{{public_path('images/quote_plans_pages/rm-p3-1.png')}}" class="full-page-image"  />
 </body>
 </html>
