@@ -100,6 +100,7 @@ const tableHeader = [
   {
     text: 'Net Conversion',
     value: 'net_conversion',
+    sortable: true,
   },
 ];
 
@@ -576,12 +577,14 @@ watch(
       :rows-per-page="10"
       :empty-message="'No Records Available'"
       hide-footer
+      :sort-by="'net_conversion'"
+      :sort-type="'desc'"
     >
       <template #item-gross_conversion="item">
-        {{ calculateGrossConversion(item) }}
+        {{ item.gross_conversion }} %
       </template>
       <template #item-net_conversion="item">
-        {{ calculateNetConversion(item) }}
+        {{ item.net_conversion }} %
       </template>
       <template #item-total_leads="item">
         <p v-if="item.total_leads == 0">{{ item.total_leads }}</p>

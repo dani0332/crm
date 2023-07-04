@@ -12175,7 +12175,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       value: 'gross_conversion'
     }, {
       text: 'Net Conversion',
-      value: 'net_conversion'
+      value: 'net_conversion',
+      sortable: true
     }];
     var totalLeads = (0,vue__WEBPACK_IMPORTED_MODULE_1__.reactive)({
       modal: false,
@@ -33194,14 +33195,16 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "rows-items": [10, 25, 50, 100],
     "rows-per-page": 10,
     "empty-message": 'No Records Available',
-    "hide-footer": ""
+    "hide-footer": "",
+    "sort-by": 'net_conversion',
+    "sort-type": 'desc'
   }, {
     "item-gross_conversion": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateGrossConversion(item)), 1 /* TEXT */)];
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.gross_conversion) + " % ", 1 /* TEXT */)];
     }),
 
     "item-net_conversion": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.calculateNetConversion(item)), 1 /* TEXT */)];
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.net_conversion) + " % ", 1 /* TEXT */)];
     }),
 
     "item-total_leads": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
