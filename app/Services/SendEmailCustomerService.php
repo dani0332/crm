@@ -353,7 +353,7 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
-            info('sendLMSIntroEmail ---- emailAttachments : '.$emailAttachments);
+            info('sendLMSIntroEmail ---- emailAttachments : '. json_encode($emailAttachments));
             if ($emailAttachments) {
                 $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
@@ -375,7 +375,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalContact,
                 ];
             }
-            info('sendLMSIntroEmail ---- bcc : '.$emailAttachments);
+            info('sendLMSIntroEmail ---- additional : '.  json_encode($additionalBcc));
             $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
 
             info('advisor custom email is : '.$advisorCustomEmail.' for lead : '.$emailData->carQuoteId);
