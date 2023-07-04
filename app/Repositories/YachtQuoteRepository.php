@@ -44,6 +44,10 @@ class YachtQuoteRepository extends BaseRepository
             'createdById' => Auth::user()->id,
         ];
 
+        if ( ! auth()->user()->hasRole('ADMIN') ) {
+            $quoteData['advisorId'] = auth()->user()->id;
+        }
+
         info('YachtQuote create data : '.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);

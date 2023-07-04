@@ -46,6 +46,10 @@ class CycleQuoteRepository extends BaseRepository
             'createdById' => Auth::user()->id,
         ];
 
+        if ( ! auth()->user()->hasRole('ADMIN') ) {
+            $quoteData['advisorId'] = auth()->user()->id;
+        }
+
         info('cycleQuote:'.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
