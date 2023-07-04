@@ -132,4 +132,9 @@ class Payment extends Model
     {
         return $this->hasOne('App\Models\PaymentStatusLog', 'payment_code', 'code')->latest();
     }
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo('App\Models\InsuranceProvider', 'insurance_provider_id');
+    }
 }

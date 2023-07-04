@@ -109,11 +109,20 @@ class CycleQuoteRepository extends BaseRepository
     {
         $quote = $this->byQuoteTypeId(QuoteTypes::CYCLE->id())
             ->where($column, $value)
-            ->with(['cycleQuote', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs']);
-            }, 'createdBy', 'updatedBy', 'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            }])->firstOrFail();
+            ->with([
+                'cycleQuote',
+                'advisor',
+                'nationality',
+                'quoteDetail.lostReason',
+                'payments' => function ($q) {
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                },
+                'createdBy',
+                'updatedBy',
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                }
+            ])->firstOrFail();
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         return $quote;
