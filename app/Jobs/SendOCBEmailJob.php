@@ -23,6 +23,7 @@ class SendOCBEmailJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $quoteUuid;
+    protected $isDtt;
     protected $carQuoteService;
     protected $renewalUploadService;
     protected $crudService;
@@ -38,9 +39,10 @@ class SendOCBEmailJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($quoteUuid)
+    public function __construct($quoteUuid,$isDtt=false)
     {
         $this->quoteUuid = $quoteUuid;
+        $this->isDtt = $isDtt;
         $this->onQueue('renewals');
     }
 
@@ -104,7 +106,7 @@ class SendOCBEmailJob implements ShouldQueue
                 'quotePlansCount' => $quotePlansCount ?? 0,
             ];
 
-            $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
+            $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch', $this->isDtt);
 
             if (in_array($responseCode, [200, 201])) {
                 Log::info('SendOCBEmailJob - OCB Email Sent: '.$responseCode.' Customer Email Address: '.$carQuote->email.' Quote UuId: '.$this->quoteUuid);

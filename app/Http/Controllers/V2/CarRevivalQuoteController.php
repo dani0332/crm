@@ -5,6 +5,8 @@ namespace App\Http\Controllers\V2;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CarRevivalQuoteRequest;
 use App\Repositories\CarRevivalQuoteRepository;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CarRevivalQuoteController extends Controller
 {
@@ -48,6 +50,12 @@ class CarRevivalQuoteController extends Controller
         CarRevivalQuoteRepository::where(['uuid' => $uuid])->update($carRevivalQuoteRequest->validated());
 
         return back()->with('message', 'Quote updated successfully');
+    }
+
+    public function updateQuote(Request $request){
+
+        CarRevivalQuoteRepository::updateQuote($request);
+
     }
 
 }

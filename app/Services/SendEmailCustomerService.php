@@ -120,7 +120,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendOcbEmail($emailTemplateId, $emailData, $tag)
+    public function sendOcbEmail($emailTemplateId, $emailData, $tag,$isDtt=false)
     {
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
@@ -129,7 +129,6 @@ class SendEmailCustomerService extends BaseService
                 'Accept' => 'application/json',
                 'api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
-                'quoteId' => $emailData['quoteId']
 
             ];
 
@@ -145,12 +144,11 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
+
             $body = [
                 'sender' => [
-//                    'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
-//                    'name' => $emailData->advisorName,
-                    'email' => 'nouman.hussain@insurancemarket.ae',
-                    'name' => 'nouman.hussain',
+                    'email' => $isDtt  ? 'buy@insurancemarket.ae' : strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
+                    'name' => $isDtt  ? "insurance market" : $emailData->advisorName,
                 ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
@@ -186,38 +184,43 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $ccAdvisor = [];
-            if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
-                $ccAdvisor = [[
+            if ($isDtt){
+                $body['replyTo'] = [
+                    'email' => 'b6eb50415ef5751212bee3b17240ee7c@inbound.postmarkapp.com',
+                    'name' => 'Post Mark',
+                ];
+
+            }else{
+
+                if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
+                    $ccAdvisor = [[
+                        'email' => $emailData->advisorEmailAddress,
+                        'name' => $emailData->advisorName,
+                    ]];
+                $body['replyTo'] = [
                     'email' => $emailData->advisorEmailAddress,
                     'name' => $emailData->advisorName,
-                ]];
-//                $body['replyTo'] = [
-//                    'email' => $emailData->advisorEmailAddress,
-//                    'name' => $emailData->advisorName,
-//                ];
-            }
-
-            $body['replyTo'] = [
-                'email' => 'b6eb50415ef5751212bee3b17240ee7c@inbound.postmarkapp.com',
-                'name' => 'Post Mark',
-            ];
-            $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
-            $ccAdditional = [];
-            if ($customer) {
-                $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
-                foreach ($additionalContacts as $additionalContact) {
-                    $ccAdditional[] = [
-                        'email' => $additionalContact->value,
-                        'name' => $emailData->customerName,
-                    ];
+                ];
                 }
             }
+            if (!$isDtt){
+                $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
+                $ccAdditional = [];
+                if ($customer) {
+                    $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
+                    foreach ($additionalContacts as $additionalContact) {
+                        $ccAdditional[] = [
+                            'email' => $additionalContact->value,
+                            'name' => $emailData->customerName,
+                        ];
+                    }
+                }
 
-            $cc = array_merge($ccAdditional, $ccAdvisor);
-            if (count($cc)) {
-                $body['cc'] = $cc;
+                $cc = array_merge($ccAdditional, $ccAdvisor);
+                if (count($cc)) {
+                    $body['cc'] = $cc;
+                }
             }
-
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
@@ -225,7 +228,6 @@ class SendEmailCustomerService extends BaseService
                     'headers' => $headers,
                     'body' => json_encode($body),
                     'timeout' => 10000,
-//                    'metadata_quoteId' => $emailData['quoteId']
                 ]
             );
 

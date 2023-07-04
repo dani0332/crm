@@ -9,6 +9,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CarRevivalQuoteRepository extends BaseRepository
 {
@@ -145,43 +146,74 @@ class CarRevivalQuoteRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchGetReportsData()
+    public function fetchupdateQuote($data){
+
+        $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
+
+        $payload['Subject'] =$inbound->Subject();
+//        $subject ='Re: test test’s car insurance renewal with Alfred-S5Z5RMMM';
+//        $strings = explode('-',$subject);
+//        Log::info('inbound email Subject '.json_encode($strings[1]));
+        Log::info('inbound email Subject '.json_encode($payload));
+
+
+
+//        $uuid =$strings[1];
+//        $this->where('uuid',$uuid)->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+
+
+
+    }
+    public function fetchGetReportsData($request)
     {
-        $groups = $this->where('source', '=', LeadSourceEnum::REVIVAL)->whereNotNull(['quote_batch_id', 'payment_status_id'])->with(['dtt_revival'])->filter()->simplePaginate();
+        $source=[LeadSourceEnum::REVIVAL,LeadSourceEnum::REVIVAL_REPLIED,LeadSourceEnum::REVIVAL_PAID];
 
-        $groups->setCollection($groups->groupBy('quote_batch_id'));
+        $carInsurancetypeId = $request->car_type_insurance_id;
+        $leadSource = $request->lead_source;
 
-        $data['leadConversionReport'] = $groups->map(function ($group) {
-            $capture = $group->where('payment_status_id', '=', PaymentStatusEnum::CAPTURED)->where('quote_status_id', '=', QuoteStatusEnum::TransactionApproved)->count();
-            $authorized = $group->where('payment_status_id', '=', PaymentStatusEnum::AUTHORISED)->where('quote_status_id', '=', QuoteStatusEnum::PaymentPending)->count();
+        $query = $this
+            ->select(
+                'quote_batch_id',
+            DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as conversion_captured'),
+            DB::raw('COUNT(CASE  WHEN source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE NULL END) as total_revived'),
+            DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' and  quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE NULL END) as captured'),
+            DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' and  quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE NULL END) as authorized'),
+            DB::raw('COUNT(CASE  WHEN email_sent = 1 THEN 1 ELSE NULL END) as email_sent_count'),
+            DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
+        )
+            ->leftjoin('dtt_revivals', 'dtt_revivals.quote_id', 'car_quote_request.id')
+            ->whereNotNull(['quote_batch_id', 'payment_status_id']);
 
-            return [
-                'quote_batch_id' => $group->first()['quote_batch_id'],
-                'captured' => $capture,
-                'authorized' => $authorized,
-                'ratio' => $authorized > 0 ? round(($capture / $authorized) * 100, 2).'%' : null,
-            ];
-        })->values()
-            ->all();
-        foreach ($groups as $key => $value) {
-            $revivalData = [];
-            $revivalData['quote_batch_id'] = $key;
-            $eamil_sent_count = $reply_received_count = 0;
-            foreach ($value as $group) {
-                if (! empty($group['dtt_revival']) && $group['dtt_revival']['email_sent'] == 1) {
-                    $eamil_sent_count++;
-                }
-
-                if (! empty($group['dtt_revival']) && $group['dtt_revival']['reply_received'] == 1) {
-                    $reply_received_count++;
-                }
-            }
-            $revivalData['eamil_sent_count'] = $eamil_sent_count;
-            $revivalData['reply_received_count'] = $reply_received_count;
-            $revivalData['ratio'] = $eamil_sent_count > 0 ? round(($reply_received_count / $eamil_sent_count) * 100, 2).'%' : null;
-            $data['emailConversionReport'][] = $revivalData;
+        if (!empty($leadSource)) {
+            $query->where('source', $leadSource);
+        }else{
+            $query->whereIn('source',$source);
         }
+        if (!empty($carInsurancetypeId)) {
+            $query->where('car_type_insurance_id', $carInsurancetypeId);
+        }
+        $record= $query ->groupBy('quote_batch_id')->get()->toArray();
+        $data=[];
+        foreach ($record as $item){
+            $c['quote_batch_id']=$item['quote_batch_id'];
+            $c['conversion_captured']=$item['conversion_captured'];
+            $c['total_revived']=$item['total_revived'] ;
+            $c['ratio']=$item['conversion_captured'] > 0 ? round(($item['conversion_captured']  / $item['total_revived'] ) * 100, 2).'%' : null;
+            $data['conversionRate'][]=$c;
 
-        return $groups->setCollection(collect($data));
+            $ac['quote_batch_id']=$item['quote_batch_id'];
+            $ac['authorized']=$item['authorized'];
+            $ac['captured']=$item['captured'] ;
+            $ac['ratio']=$item['authorized'] > 0 ? round(($item['captured']  / $item['authorized'] ) * 100, 2).'%' : null;
+            $data['leadConversionReport'][]=$ac;
+
+            $rs['quote_batch_id'] = $item['quote_batch_id'];
+            $rs['email_sent_count'] = $item['email_sent_count'];
+            $rs['reply_received_count'] = $item['reply_received_count'];
+
+            $rs['ratio'] =  $item['email_sent_count'] > 0 ? round(($item['reply_received_count'] /  $item['email_sent_count']) * 100, 2).'%' : null;
+            $data['emailConversionReport'][]=$rs;
+        }
+        return $data;
     }
 }

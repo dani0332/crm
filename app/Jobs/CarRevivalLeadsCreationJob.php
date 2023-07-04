@@ -89,7 +89,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
 //                Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
 
-                dispatch(new SendOCBEmailJob($capiResponse->quoteUID));
+                dispatch(new SendOCBEmailJob($capiResponse->quoteUID,1));
 
                 info('CarRevivalLeadsCreationJob - UUID - '.$capiResponse->quoteUID.' - OCB Email Sent');
 
@@ -106,8 +106,10 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
 //                CarQuote::find($this->lead->id)->update(['is_revived' => true]);
             }
+        }else{
+
+            info('CarRevivalLeadsCreationJob - Lead Not generated - capi response'.json_encode($capiResponse));
         }
-        info('CarRevivalLeadsCreationJob - Lead Not generated - capi response'.json_encode($capiResponse));
     }
 
     private function payLoadForPlans($quoteUuId)
