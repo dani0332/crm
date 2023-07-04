@@ -345,7 +345,7 @@ class SendEmailCustomerService extends BaseService
     {
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
-            info('sendLMSIntroEmail ---- Tag : '. $tag);
+            info('sendLMSIntroEmail ---- Tag : '.$tag);
             $headers = [
                 'Accept' => 'application/json',
                 'api-key' => $this->apiKey,
@@ -353,7 +353,7 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
-            info('sendLMSIntroEmail ---- emailAttachments : '. $emailAttachments);
+            info('sendLMSIntroEmail ---- emailAttachments : '.$emailAttachments);
             if ($emailAttachments) {
                 $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
@@ -375,7 +375,7 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalContact,
                 ];
             }
-            info('sendLMSIntroEmail ---- bcc : '. $emailAttachments);
+            info('sendLMSIntroEmail ---- bcc : '.$emailAttachments);
             $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
 
             info('advisor custom email is : '.$advisorCustomEmail.' for lead : '.$emailData->carQuoteId);
@@ -403,7 +403,7 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
 
-            info('sendLMSIntroEmail ---- body :  '. json_encode($body));
+            info('sendLMSIntroEmail ---- body :  '.json_encode($body));
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
@@ -415,7 +415,7 @@ class SendEmailCustomerService extends BaseService
             );
             info('sendLMSIntroEmail ---- Request Sent');
             $responseCode = $clientRequest->getStatusCode();
-            info('sendLMSIntroEmail ---- Received Code : '. $responseCode);
+            info('sendLMSIntroEmail ---- Received Code : '.$responseCode);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();

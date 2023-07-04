@@ -1411,7 +1411,7 @@ class RenewalsUploadService
                                 $leadValidationErrors->push('Invalid Claim History');
                             }
 
-                            if ( !empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
+                            if (! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                 $leadValidationErrors->push('Invalid Driving Experience');
                             }
 
@@ -1515,7 +1515,7 @@ class RenewalsUploadService
                                     }
                                 }
                             }
-                            if (!empty($leadData->registration_location) && ! Emirate::where('text', $leadData->registration_location)->first()) {
+                            if (! empty($leadData->registration_location) && ! Emirate::where('text', $leadData->registration_location)->first()) {
                                 $leadValidationErrors->push('Invalid Registration Location');
                             }
                             if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {
