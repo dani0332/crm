@@ -581,10 +581,12 @@ watch(
       :sort-type="'desc'"
     >
       <template #item-gross_conversion="item">
-        {{ item.gross_conversion }} %
+        <p v-if="item.gross_conversion == 0"> NaN </p>
+        <p v-else>{{ item.gross_conversion }} %</p>
       </template>
       <template #item-net_conversion="item">
-        {{ item.net_conversion }} %
+        <p v-if="item.net_conversion == 0"> NaN </p>
+        <p v-else>{{ item.net_conversion }} %</p>
       </template>
       <template #item-total_leads="item">
         <p v-if="item.total_leads == 0">{{ item.total_leads }}</p>
