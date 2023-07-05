@@ -202,7 +202,6 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
         } else {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)->count();
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)->sum('premium');
-            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)->paginate(10);
         }
     }
