@@ -28,6 +28,7 @@ class CentralService
             quoteTypeCode::Travel,
             quoteTypeCode::Car,
             quoteTypeCode::Pet,
+            quoteTypeCode::Cycle
         ];
 
         if (strtolower($quoteType) == strtolower(quoteTypeCode::Business)) {
