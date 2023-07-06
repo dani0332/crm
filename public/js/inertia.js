@@ -33128,7 +33128,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             label: $props.filterOptions.batches[key]
           };
         }),
-        "max-limit": 5,
+        "max-limit": 8,
         "deselect-all": ""
       }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
         modelValue: $setup.filters.tiers,
@@ -33217,7 +33217,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "border-cell": "",
     "rows-per-page-message": 'Records per page',
     "rows-items": [10, 25, 50, 100],
-    "rows-per-page": 10,
+    "rows-per-page": 100,
     "empty-message": 'No Records Available',
     "hide-footer": "",
     "sort-by": 'net_conversion',

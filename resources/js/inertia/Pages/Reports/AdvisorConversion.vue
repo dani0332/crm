@@ -487,7 +487,7 @@ watch(
               label: filterOptions.batches[key],
             }))
           "
-          :max-limit="5"
+          :max-limit="8"
           deselect-all
         />
 
@@ -574,7 +574,7 @@ watch(
       border-cell
       :rows-per-page-message="'Records per page'"
       :rows-items="[10, 25, 50, 100]"
-      :rows-per-page="10"
+      :rows-per-page="100"
       :empty-message="'No Records Available'"
       hide-footer
       :sort-by="'net_conversion'"
