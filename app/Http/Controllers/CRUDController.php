@@ -398,6 +398,7 @@ class CRUDController extends Controller
         $isNewBusinessUser = false;
         $model = $this->genericModel;
         $model_name = $this->genericModel->modelType.'Quote';
+
         $customTitles = $customTableList = [];
         if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
             $isRenewalUser = true;
@@ -475,6 +476,7 @@ class CRUDController extends Controller
             $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
             $this->carQuoteService->addOrUpdateQuoteViewCount($record);
 
+            $access= $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel,$record);
             $daysAfterCapturedPayment = null;
             if (($capturedPaymentDate = PaymentStatusLog::where(['quote_type_id' => QuoteTypeId::Car,
                 'quote_request_id' => $record->id,
@@ -490,7 +492,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment',
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment','access',
             ]));
         }
 
@@ -861,11 +863,16 @@ class CRUDController extends Controller
     public function carQuotePlanDetails($quoteId, $planId)
     {
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
+        $record = $this->crudService->getEntity($this->genericModel->modelType, $quoteId);
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
+
+        $access= $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel,$record);
+
         $isPlanUpdateActive = $this->applicationStorageService->getIsActiveByKey('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
 
-            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive']));
+            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive','access']));
         }
     }
 

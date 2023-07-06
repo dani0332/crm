@@ -353,6 +353,35 @@ class CarQuoteService extends BaseService
         return $oldAdvisorAssignedDate;
     }
 
+    public function updatedAccessAgainstPaymentStatus($paymentEntityModel,$record){
+        $carPayment = $paymentEntityModel->payments()->where('code', '=',$record->code)->first();
+        $quoteStatusArray =[QuoteStatusEnum::PolicyIssued,QuoteStatusEnum::TransactionApproved];
+
+        $access['carAdvisorCanEdit']=false;
+        $access['carManagerCanEdit']=false;
+        if ($carPayment && $carPayment['payment_status_id'] == PaymentStatusEnum::PARTIAL_CAPTURED && ! in_array($record->quote_status_id , $quoteStatusArray)){
+            $paymentCapturedAt =$carPayment->captured_at;
+            $today=Carbon::today();
+
+            $dateLimitForAdvisor= Carbon::parse($paymentCapturedAt)->addDays(7);
+            $dateLimitForManager= Carbon::parse($dateLimitForAdvisor)->addDays(7);
+
+            if (auth()->user()->hasRole(RolesEnum::CarAdvisor) && $today->lte($dateLimitForAdvisor)){
+                $access['carAdvisorCanEdit']=true;
+
+            }elseif (auth()->user()->hasRole(RolesEnum::CarManager) && ($today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager))){
+                $access['carManagerCanEdit']=true;
+            }
+
+        }
+        if ($carPayment && in_array($carPayment['payment_status_id'],[PaymentStatusEnum::PARTIAL_CAPTURED,PaymentStatusEnum::CAPTURED])  && in_array($record->quote_status_id , $quoteStatusArray)){
+
+            $access['carAdvisorCanEdit']=false;
+            $access['carManagerCanEdit']=false;
+        }
+        return $access;
+    }
+
     public function getSelectedLostReason($id)
     {
         $entity = CarQuoteRequestDetail::where('car_quote_request_id', $id)->first();
