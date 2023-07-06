@@ -132,4 +132,9 @@ class LookupService extends BaseService
 
         return $paymentOptions;
     }
+
+    public function getNationalities()
+    {
+        return Nationality::select('id', 'text')->where('is_active', true)->orderBy('text')->get();
+    }
 }

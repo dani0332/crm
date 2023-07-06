@@ -6,6 +6,10 @@ defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  quoteType: {
+    type: String,
+    default: 'bike',
+  },
 });
 
 const page = usePage();
@@ -102,6 +106,8 @@ const quotesSelected = ref([]),
   assignAdvisor = ref(null),
   assignmentType = ref(null),
   isDisabled = ref(false);
+
+
 </script>
 
 <template>
@@ -236,8 +242,10 @@ const quotesSelected = ref([]),
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisors"
+          :quoteType="quoteType"
         />
         <ExportExcel
+            v-if="can(permissionsEnum.DATA_EXTRACTION)"
           :data="quotesSelected"
           :columns="tableHeader"
           :filename="'Home-List'"

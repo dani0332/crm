@@ -6,7 +6,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class EmbeddedProduct extends Model
 {
-    protected $fillable = ['insurance_provider_id', 'product_name', 'short_code', 'display_name', 'product_type', 'logic', 'description', 'description2', 'commission_type', 'commission_value', 'email_template_id', 'company_documents', 'pricing_type', 'removal_confirmation'];
+    protected $fillable = [
+        'insurance_provider_id',
+        'product_name',
+        'product_type',
+        'product_category',
+        'product_validity',
+        'short_code',
+        'display_name',
+        'description',
+        'pricing_type',
+        'commission_type',
+        'commission_value',
+        'email_template_ids',
+        'uncheck_message',
+        'logic_description',
+        'company_documents',
+        'is_active',
+    ];
 
     public function insuranceProvider()
     {
@@ -20,6 +37,6 @@ class EmbeddedProduct extends Model
 
     public function prices()
     {
-        return $this->hasMany(EmbeddedProductPricing::class);
+        return $this->hasMany(EmbeddedProductOption::class);
     }
 }

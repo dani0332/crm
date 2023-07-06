@@ -1,10 +1,14 @@
 <script setup>
 defineProps({
   quotes: Object,
-  dropdownSource: Object,
-  permissions: Object,
-  advisors: Object,
+  quoteStatuses: Array,
+  advisors: Array,
 });
+
+const page = usePage();
+
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -22,9 +26,16 @@ const rules = {
   },
 };
 
-const notification = useNotifications('toast');
+const role = [rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.LifeManager];
+const roleLeadPool = [rolesEnum.LeadPool];
+const hasAnyRole = role => useHasAnyRole(role);
 
-const page = usePage();
+const isManualAllocationAllowed = ref(false);
+const isLeadPool = ref(false);
+
+isManualAllocationAllowed.value = hasAnyRole(role);
+isLeadPool.value = hasAnyRole(roleLeadPool);
+const notification = useNotifications('toast');
 
 const filters = reactive({
   code: '',
@@ -50,35 +61,25 @@ const tableHeader = [
   { text: 'CDB ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'LEAD STATUS', value: 'quote_status' },
+  { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'NATIONALITY', value: '' },
+  { text: 'NATIONALITY', value: 'nationality' },
   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'PREMIUM', value: 'premium' },
 ];
 
-const advisorsOptions = computed(() => {
-  return page.props.dropdownSource.advisor_id.map(item => {
-    return {
-      value: item.id,
-      label: item.name,
-    };
-  });
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.roles[0].name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
+      : advisor.name,
+  }));
 });
-
-const leadsStatusOptions = computed(() => {
-  return page.props.dropdownSource.quote_status_id.map(item => {
-    return {
-      value: item.id,
-      label: item.text,
-    };
-  });
-});
-
 function filterQuotes(isValid) {
   if (!isValid) {
     return;
@@ -134,23 +135,12 @@ function setQueryFilters() {
     });
   }
 }
-
 const quotesSelected = ref([]);
-
-const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
-});
 
 const assignForm = useForm({
   assigned_to_id_new: null,
   modelType: 'life',
   selectTmLeadId: '',
-  isManagerOrDeputy: page.props.permissions.isManagerOrDeputy,
-  isLeadPool: page.props.permissions.isLeadPool,
-  isManualAllocationAllowed: page.props.permissions.isManualAllocationAllowed,
 });
 
 function onAssignLead(isValid) {
@@ -179,6 +169,33 @@ function onAssignLead(isValid) {
   }
 }
 
+
+const canExport = ref(false);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
+const onExport = () => {
+  const data = { ...filters };
+  delete data.page;
+  Object.keys(data).forEach(
+    key => (data[key] === '' || data[key].length === 0) && delete data[key],
+  );
+  const url = route('data-extraction', 'life');
+  window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+watch(
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end && can(permissionsEnum.DATA_EXTRACTION)) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
+
 onMounted(() => {
   setQueryFilters();
 });
@@ -190,7 +207,7 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/life-cards">
+        <Link href="/quotes/life/cards">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
         <Link href="/quotes/life/create">
@@ -256,14 +273,19 @@ onMounted(() => {
           label="Lead Status"
           name="quote_status_id"
           placeholder="Search by Lead Status"
-          :options="leadsStatusOptions"
+          :options="
+            quoteStatuses.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
         />
         <ComboBox
-          v-if="!permissions.travelAdvisor"
+          v-if="!hasRole(rolesEnum.TravelAdvisor)"
           v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="advisorsOptions"
+          :options="advisorOptions"
         />
 
         <x-select
@@ -277,11 +299,34 @@ onMounted(() => {
           ]"
         />
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="resetFilters">
-          Reset
-        </x-button>
+
+      <div class="flex justify-between gap-3 mb-4 mt-1">
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            class="justify-self-start"
+            @click.prevent="onExport"
+          >
+            Export
+          </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
+        <div class="flex justify-self-end gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="resetFilters">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
 
@@ -289,7 +334,7 @@ onMounted(() => {
       <div v-if="quotesSelected.length > 0" class="mb-4">
         <div
           class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
-          v-if="permissions.isManualAllocationAllowed"
+          v-if="isManualAllocationAllowed"
         >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
@@ -314,20 +359,6 @@ onMounted(() => {
             </div>
           </x-form>
         </div>
-
-        <ExportExcel
-          :data="quotesSelected"
-          :columns="tableHeader"
-          :filename="'Health-List'"
-          :sheetname="'Leads'"
-        >
-          <x-button size="sm" color="emerald">
-            Export -
-            <span class="lining-nums">
-              Selected: {{ quotesSelected.length }}
-            </span>
-          </x-button>
-        </ExportExcel>
       </div>
     </Transition>
 
@@ -350,13 +381,22 @@ onMounted(() => {
           {{ code }}
         </Link>
       </template>
-      <template #item-is_ecommerce="{ is_ecommerce }">
+      <template #item-advisor="{ advisor }">
+        {{ advisor?.name }}
+      </template>
+      <template #item-quote_status="{ quote_status }">
+        {{ quote_status?.code }}
+      </template>
+      <template #item-nationality="{ nationality }">
+        {{ nationality?.code }}
+      </template>
+      <!-- <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
-      </template>
+      </template> -->
     </DataTable>
 
     <Pagination

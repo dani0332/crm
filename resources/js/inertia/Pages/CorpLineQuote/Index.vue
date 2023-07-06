@@ -1,15 +1,29 @@
 <script setup>
-
 defineProps({
   quotes: Object,
   dropdownSource: Object,
   session: Object,
+  isManualAllocationAllowed: Boolean,
 });
 
 const page = usePage();
 
 const notification = useNotifications('toast');
 const { isRequired } = useRules();
+
+const created_at_rule = v => {
+  if (filters.created_at_end) {
+    return isRequired(v);
+  }
+  return true;
+};
+
+const created_at_end_rule = v => {
+  if (filters.created_at) {
+    return isRequired(v);
+  }
+  return true;
+};
 
 const quotesSelected = ref([]);
 
@@ -28,7 +42,8 @@ const filters = reactive({
   created_at_end: '',
   quote_status_id: '',
   advisor_id: '',
-  insurance_type: '',
+  business_type_of_insurance_id: '',
+  company_name: '',
   page: 1,
 });
 
@@ -59,27 +74,40 @@ const tableHeader = [
   { text: 'CDB ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
-  { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'PREMIUM', value: 'premium' },
   { text: 'Company Name', value: 'company_name' },
+  { text: 'TRANSAPP CODE', value: 'transapp_code' },
+  { text: 'SOURCE', value: 'source' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'LEAD STATUS', value: 'quote_status_id_text' },
+  { text: 'CREATED DATE', value: 'created_at' },
+  { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  { text: 'PREMIUM', value: 'premium' },
+  { text: 'NUMBER OF EMPLOYEES', value: 'number_of_employees' },
   {
     text: 'BUSINESS INSURANCE TYPE',
     value: 'business_type_of_insurance_id_text',
   },
-  { text: 'NUMBER OF EMPLOYEES', value: 'number_of_employees' },
-  { text: 'SOURCE', value: 'source' },
-  { text: 'CREATED DATE', value: 'created_at' },
-  { text: 'Updated Date', value: 'updated_at' },
+  { text: 'GENDER', value: 'gender' },
 ];
 
 function resetFilters() {
   for (const key in filters) {
     filters[key] = '';
   }
-  filterQuotes(true);
+  router.visit('/quotes/business', {
+    method: 'get',
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => {
+      loader.table = false;
+    },
+    onBefore: () => {
+      filters.page = 1;
+      loader.table = true;
+    },
+  });
 }
 
 function filterQuotes(isValid) {
@@ -91,11 +119,16 @@ function filterQuotes(isValid) {
       delete filters[key];
     }
   }
+  if (filters.created_at) {
+    filters.created_at = filters.created_at.split('T')[0];
+  }
+  if (filters.created_at_end) {
+    filters.created_at_end = filters.created_at_end.split('T')[0];
+  }
+
   router.visit('/quotes/business', {
     method: 'get',
-    data: {
-      ...filters,
-    },
+    data: filters,
     preserveState: true,
     preserveScroll: true,
     onFinish: () => {
@@ -145,23 +178,19 @@ function displayNotification() {
 }
 
 function setQueryFilters() {
-  let query = router.page.url.split('?')[1];
-  if (query) {
-    query = query.split('&');
-    query.forEach(item => {
-      const [key, value] = item.split('=');
-
-      if (key === 'quote_status_id[]' || key === 'advisor_id[]') {
-        let id = key.slice(0, -2);
-        if (filters[id]) {
-          filters[id].push(parseInt(value));
-        }
-      } else {
-        filters[key] = value;
-      }
-    });
+  let urlParams = new URLSearchParams(window.location.search);
+  for (const [key, value] of urlParams) {
+    if (key.includes('[')) {
+      let index = key.replace('[]', '');
+      filters[index] = urlParams.getAll(key).map(item => parseInt(item));
+    } else {
+      filters[key] = value.match(/^\d+$/) ? parseInt(value) : value;
+    }
   }
 }
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 onMounted(() => {
   setQueryFilters();
@@ -174,11 +203,11 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/business/cards">
-          <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
+        <Link href="/quotes/business/cards/view">
+          <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
         </Link>
         <Link href="/quotes/business/create">
-          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
+          <x-button size="sm" color="#ff5e00" tag="div"> Create Lead</x-button>
         </Link>
       </div>
     </div>
@@ -225,15 +254,27 @@ onMounted(() => {
           class="w-full"
           placeholder="Search by Mobile Number"
         />
+
+        <x-input
+          v-model="filters.company_name"
+          type="search"
+          name="company_name"
+          label="Company Name"
+          class="w-full"
+          placeholder="Search by Company Name"
+        />
+
         <DatePicker
           v-model="filters.created_at"
           name="created_at"
           label="Created Date Start"
+          :rules="[created_at_rule]"
         />
         <DatePicker
           v-model="filters.created_at_end"
           name="created_at_end"
           label="Created Date End"
+          :rules="[created_at_end_rule]"
         />
 
         <x-select
@@ -245,7 +286,7 @@ onMounted(() => {
         />
 
         <x-select
-          v-model="filters.insurance_type"
+          v-model="filters.business_type_of_insurance_id"
           label="BUSINESS INSURANCE TYPE"
           placeholder="INSURANCE TYPE"
           :options="insuranceTypeOptions"
@@ -268,7 +309,10 @@ onMounted(() => {
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
-        <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
+        <div
+          class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
+          v-if="isManualAllocationAllowed == true"
+        >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
               <x-select
@@ -294,6 +338,7 @@ onMounted(() => {
         </div>
 
         <ExportExcel
+            v-if="can(permissionsEnum.DATA_EXTRACTION)"
           :data="quotesSelected"
           :columns="tableHeader"
           :filename="'Business-List'"
@@ -320,12 +365,13 @@ onMounted(() => {
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <Link
+        <a
           :href="`/quotes/business/${uuid}`"
+          target="_blank"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
-        </Link>
+        </a>
       </template>
 
       <template #item-source="{ source }">

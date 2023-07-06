@@ -12,7 +12,6 @@
         "arielmejiadev/larapex-charts": "^5.2",
         "barryvdh/laravel-dompdf": "^2.0",
         "bensampo/laravel-enum": "^v4.2.0",
-        "calebporzio/sushi": "^2.4",
         "doctrine/dbal": "^3.3",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
@@ -40,6 +39,7 @@
         "spatie/laravel-fractal": "^5.8",
         "spatie/laravel-navigation": "^1.2",
         "spatie/laravel-permission": "^4.0",
+        "tightenco/ziggy": "^1.5",
         "yajra/laravel-datatables-oracle": "^9.18"
     },
     "require-dev": {

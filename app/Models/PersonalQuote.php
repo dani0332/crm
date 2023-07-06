@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PersonalQuote extends Model implements AuditableContract
 {
-    use HasFactory, FilterCriteria, Auditable;
+    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
 
     protected $appends = ['dob_formatted'];
     protected $guarded = [];
@@ -29,6 +30,8 @@ class PersonalQuote extends Model implements AuditableContract
         'quote_status_id' => FilterTypes::IN,
         'is_ecommerce' => FilterTypes::EXACT,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
+        'advisor_id' => FilterTypes::IN,
+        'policy_number' => FilterTypes::EXACT,
     ];
 
     /**
@@ -88,6 +91,7 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(CycleQuote::class);
     }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
@@ -231,5 +235,10 @@ class PersonalQuote extends Model implements AuditableContract
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function leadHistory()
+    {
+        return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
     }
 }

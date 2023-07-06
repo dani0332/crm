@@ -67,7 +67,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							<input type="hidden" id="plan_ids" name="plan_ids" value="">
 							<input type="hidden" id="quote_uuid" name="quote_uuid" value="{{$record->uuid}}">
 						</form>
-						<form method="post" action="{{route('manualPlanToggle')}}" class="form-horizontal form-label-left"
+						<form method="post" action="{{route('manualPlanToggle', $quoteType)}}" class="form-horizontal form-label-left"
 							role="form" id="togglePlanForm" data-parsley-validate="" novalidate="" autocomplete="off">
 							{{ csrf_field() }}
 							<div class="row" id="toggle-plans-div">
@@ -99,6 +99,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 									</div>
 								</div>
 							</div>
+							<input type="hidden" id="modelType" name="modelType" value="Car">
 							<input type="hidden" id="planIds" name="planIds" value="">
 							<input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{$record->uuid}}">
 						</form>
@@ -263,7 +264,8 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 								{{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
 							</td>
 							<td>{{ isset($quotePlan->excess) ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
-							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
+							<td>
+                                <a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal"
 									class="btn btn-warning btn-sm quotePlanModalPopup">View</a>
                                 @if($totalPremium > 0)
@@ -275,7 +277,35 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                     data-websiteURL="{{$websiteURL}}"
                                     >Copy</button>
                                 @endif
-                                </td>
+
+                                @php
+                                    $allowChangeInsurer = (auth()->user()->hasRole(RolesEnum::CarAdvisor)) ? true : false;
+                                    
+                                    if($record->payment_status_id == \App\Enums\PaymentStatusEnum::CAPTURED)
+                                    {
+                                        $allowChangeInsurer = false;
+                                        if((auth()->user()->hasRole(RolesEnum::CarAdvisor) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment <= 7)) {
+                                            $allowChangeInsurer = true;
+                                        }
+                                        elseif((auth()->user()->hasRole(RolesEnum::CarManager) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment > 7 && $daysAfterCapturedPayment <= 14))
+                                        {
+                                            $allowChangeInsurer = true;
+                                        }
+                                    }
+
+                                @endphp
+
+                                @if($allowChangeInsurer)
+                                    <button class="btn btn-info btn-sm btn-change-insurer"
+                                            data-planId="{{$quotePlan->id}}"
+                                            data-uuid="{{$record->uuid}}"
+                                            data-providerCode="{{$quotePlan->providerCode}}"
+                                    >
+                                        Change Insurer
+                                    </button>
+                                @endif
+
+                            </td>
 						</tr>
 						@endforeach
 					</tbody>

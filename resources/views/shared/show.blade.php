@@ -464,7 +464,9 @@ use App\Enums\GenericRequestEnum;
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" />
+
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
+
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
@@ -530,15 +532,6 @@ use App\Enums\GenericRequestEnum;
                 </div>
             </div>
         </div>
-        <x-health-quote-ecom-details :data="$ecomDetails" />
-        <x-health-quote-plans
-            :record="$record"
-            :listQuotePlans="$listQuotePlans"
-            :uuidModal="$record->uuid"
-            :quoteRequestId="$record->id"
-            :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
-            <x-health-quote-members-detail :members="$membersDetail" />
-        <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
@@ -559,20 +552,21 @@ use App\Enums\GenericRequestEnum;
                 </div>
                 <div class="x_content">
                     <div id="lead-history-div">
-                        <table id="leadhistorydatatable" class="table table-striped jambo_table" style="width:100%">
+                        <table id="quoteStatusLogsTable" class="table table-striped jambo_table" style="width:100%">
                             <thead>
-                                <tr>
-                                    <th>Modified At</th>
-                                    <th>Modified By</th>
-                                    <th>Notes</th>
-                                    <th>Lead Status</th>
-                                </tr>
+                            <tr>
+                                <th>Modified At</th>
+                                <th>Modified By</th>
+                                <th>Lead Status From</th>
+                                <th>Lead Status To</th>
+                                <th>Notes</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn"
-                                            class="btn btn-success btn-sm">Load History Data</button></td>
-                                </tr>
+                            <tr>
+                                <td colspan="5" style="text-align: center"> <button id="loadQuoteStatusLog" data-quote-type-id="{{$quoteTypeId}}"
+                                                                                    class="btn btn-success btn-sm">Load History Data</button></td>
+                            </tr>
                             </tbody>
                         </table>
                     </div>

@@ -40,6 +40,11 @@ const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY');
 };
 
+const dateTimeFormat = date => {
+  if (!date) return '';
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss');
+};
+
 const notification = useNotifications('toast');
 
 const {
@@ -49,6 +54,7 @@ const {
   renewal_expiry_date,
   policy_start_date,
   isEmail,
+  isMobileNo,
 } = useRules();
 
 const confirmDeleteData = reactive({
@@ -1124,11 +1130,11 @@ onMounted(() => {
         <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
 
         <template #item-created_at="{ created_at }">
-          {{ dateFormat(created_at).value }}
+          {{ dateTimeFormat(created_at).value }}
         </template>
 
         <template #item-updated_at="{ updated_at }">
-          {{ dateFormat(updated_at).value }}
+          {{ dateTimeFormat(updated_at).value }}
         </template>
 
         <template #item-action="item">
@@ -1218,6 +1224,7 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+        03
         <x-divider class="mb-4 mt-1" />
       </div>
       <x-form @submit="submitPolicyDetails" :auto-focus="false">
@@ -1447,7 +1454,15 @@ onMounted(() => {
         </x-button>
       </div>
 
-      <div v-if="listQuotePlans.length > 0">
+      <div v-if="listQuotePlans && typeof listQuotePlans == 'string'">
+        <p
+          class="text-center text-primary-600"
+          v-if="typeof listQuotePlans == 'string'"
+        >
+          {{ listQuotePlans?.toUpperCase() }}
+        </p>
+      </div>
+      <div v-else>
         <DataTable
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
@@ -1482,14 +1497,6 @@ onMounted(() => {
             </div>
           </template>
         </DataTable>
-      </div>
-      <div v-else>
-        <p
-          class="text-center text-primary-600"
-          v-if="typeof listQuotePlans == 'string'"
-        >
-          {{ listQuotePlans?.toUpperCase() }}
-        </p>
       </div>
 
       <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>
@@ -1702,7 +1709,7 @@ onMounted(() => {
               v-if="additionalContact.additional_contact_type === 'mobile_no'"
               v-model="additionalContact.additional_contact_val"
               label="Value"
-              :rules="[isRequired]"
+              :rules="[isRequired, isMobileNo]"
               class="w-full"
             />
 

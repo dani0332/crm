@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CRUDService extends BaseService
@@ -100,16 +101,6 @@ class CRUDService extends BaseService
     public function getLeadAssignmentRecords($teamName)
     {
         return $this->{$teamName.'QuoteService'}->getLeadsForAssignment();
-    }
-
-    public function getAdvisorLeads($request, $leadType)
-    {
-        return $this->{strtolower($leadType).'QuoteService'}->{'get'.ucwords($leadType).'LeadsForAdvisor'}($request);
-    }
-
-    public function getOverDueFollowups($request, $leadType)
-    {
-        return $this->{strtolower($leadType).'QuoteService'}->{'get'.ucwords($leadType).'OverDueFollowups'}($request);
     }
 
     public function getEntityByUUID($uuid, $leadType)
@@ -204,6 +195,15 @@ class CRUDService extends BaseService
         return $audits;
     }
 
+    public function getLeadHistoryLogs($quoteTypeId, $recordId)
+    {
+        return QuoteStatusLog::where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $recordId)
+            ->orderBy('created_at', 'DESC')
+            ->with(['currentQuoteStatus', 'createdBy', 'previousQuoteStatus'])
+            ->get();
+    }
+
     public function updateQuoteStatus(Request $request)
     {
         $quoteDetailEntity = $this->{strtolower($request->modelType).'QuoteService'}->getDetailEntity($request->leadId);
@@ -278,6 +278,8 @@ class CRUDService extends BaseService
             'previous_quote_status_id' => $previousQuoteStatus,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
+            'notes' => $request->notes,
+            'created_by' => Auth::user()->id,
         ]);
 
         return $entity;
@@ -366,8 +368,12 @@ class CRUDService extends BaseService
     public function updateModelByType($modelType, Request $request, $id)
     {
         $lowerCaseModelType = strtolower($modelType);
-        $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
+        $response = $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)}($request, $id);
+
+        if ((in_array($lowerCaseModelType, $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)) == 'update'.ucwords($modelType).'Quote') {
+            return $response;
+        }
     }
 
     public function getEntity($modelType, $id)

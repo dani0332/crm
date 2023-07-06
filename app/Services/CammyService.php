@@ -95,6 +95,8 @@ class CammyService
                     'emailAddress' => $lead->email,
                 ];
                 break;
+            default:
+                break;
         }
 
         try {

@@ -204,10 +204,8 @@ class ClaimController extends Controller
      */
     public function show(Claim $claim)
     {
-        if (Auth::user()->hasRole('CLAIMS_ADVISOR')) {
-            if (Auth::user()->id != $claim->assigned_to_id) {
-                return redirect()->route('claims.index')->with('message', 'Access Forbidden');
-            }
+        if (Auth::user()->hasRole('CLAIMS_ADVISOR') && Auth::user()->id != $claim->assigned_to_id) {
+            return redirect()->route('claims.index')->with('message', 'Access Forbidden');
         }
 
         return view('claim.show', compact('claim'));
@@ -220,10 +218,8 @@ class ClaimController extends Controller
      */
     public function edit(Claim $claim)
     {
-        if (Auth::user()->hasRole('CLAIMS_ADVISOR')) {
-            if (Auth::user()->id != $claim->assigned_to_id) {
-                return redirect()->route('claims.index')->with('message', 'Access Forbidden');
-            }
+        if (Auth::user()->hasRole('CLAIMS_ADVISOR') && Auth::user()->id != $claim->assigned_to_id) {
+            return redirect()->route('claims.index')->with('message', 'Access Forbidden');
         }
         $typeofinsurances = TypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $subtypeofinsurances = SubTypeOfInsurance::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
@@ -332,7 +328,6 @@ class ClaimController extends Controller
                 $nps_delay = 345600;
             } elseif ($dayOfWeek == 'Saturday') {
                 $nps_delay = 259200;
-            } else {
             }
 
             $data_d = [];
@@ -458,17 +453,5 @@ class ClaimController extends Controller
         return DataTables::of([])
             ->addIndexColumn()
             ->make(true);
-        $allowedTypes = ['car', 'home', 'business', 'health', 'life', 'travel'];
-        if (! in_array(strtolower($request->teamName), $allowedTypes)) {
-            return DataTables::of([])
-                ->addIndexColumn()
-                ->make(true);
-        } else {
-            $gridData = $this->crudService->getOverDueFollowups($request, $request->teamName)->get();
-
-            return DataTables::of($gridData)
-                ->addIndexColumn()
-                ->make(true);
-        }
     }
 }

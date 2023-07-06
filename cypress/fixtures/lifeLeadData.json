@@ -1,0 +1,15 @@
+{
+    "lfieLeadData": {
+        "leadStatus": "New Lead",
+        "leadStatusNotes": "Lorem Ipsum is simply dummy text",
+        "currency": "AED",
+        "purpose": "Personal Cover",
+        "martialStatus": "Single",
+        "children": "None",
+        "InsuranceType": "Fixed Term Insurance",
+        "tenure": "5 years",
+        "gender": "Male",
+        "smoker": "No",
+        "othersInfo": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s"
+    }
+}

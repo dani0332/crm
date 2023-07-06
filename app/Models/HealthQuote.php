@@ -97,11 +97,6 @@ class HealthQuote extends Model implements AuditableContract
         return $this->hasMany(HealthMemberDetail::class, 'health_quote_request_id');
     }
 
-    public function availablePlans()
-    {
-        return $this->hasMany(HealthAvailablePlan::class, 'uuid', 'uuid');
-    }
-
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
@@ -110,5 +105,15 @@ class HealthQuote extends Model implements AuditableContract
     public function plan()
     {
         return $this->belongsTo(HealthPlan::class, 'plan_id');
+    }
+
+    public function lostReason()
+    {
+        return $this->belongsTo(LostReason::class, 'lost_reason_id');
+    }
+
+    public function healthLeadType()
+    {
+        return $this->belongsTo(HealthLeadType::class, 'lead_type_id');
     }
 }

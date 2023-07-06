@@ -18,7 +18,7 @@ class CarLeadAllocationController extends Controller
     protected $userService;
     protected $tierService;
     public function __construct(CarLeadAllocationDashboardService $carLeadAllocationService, ApplicationStorageService $applicationStorageService,
-     CacheService $cacheService)
+        CacheService $cacheService)
     {
         $this->carLeadAllocationService = $carLeadAllocationService;
         $this->applicationStorageService = $applicationStorageService;

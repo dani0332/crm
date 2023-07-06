@@ -148,7 +148,7 @@ class TransactionController extends Controller
             'email' => 'required|email',
             'assigned_to_id' => 'required',
             'paymentmode' => 'required',
-            'amount_paid' => "required|max:12|regex:/^\d*(\.\d{1,2})?$/",
+            'amount_paid' => 'required|numeric|regex:/^\d{1,10}(\.\d{1,2})?$/',
             'risk_detail' => 'required|max:2000',
         ]);
 
@@ -170,10 +170,8 @@ class TransactionController extends Controller
     {
         $isTransappNonAdmin = $this->transactionService->checkTransappNonAdmin();
 
-        if ($isTransappNonAdmin == '1') {
-            if (Auth::user()->id != $transaction->assigned_to_id) {
-                return redirect()->route('transaction.index')->with('message', 'Access Forbidden');
-            }
+        if ($isTransappNonAdmin == '1' && Auth::user()->id != $transaction->assigned_to_id) {
+            return redirect()->route('transaction.index')->with('message', 'Access Forbidden');
         }
 
         $transaction = $this->transactionService->getTransactionDetailById($transaction->id);
@@ -193,10 +191,8 @@ class TransactionController extends Controller
         $paymentModes = $this->transactionService->getPaymentModes();
         $handlers = $this->transactionService->getHandlers();
 
-        if ($isTransappNonAdmin == '1') {
-            if (Auth::user()->id != $transaction->assigned_to_id) {
-                return redirect()->route('transaction.index')->with('message', 'Access Forbidden');
-            }
+        if ($isTransappNonAdmin == '1' && Auth::user()->id != $transaction->assigned_to_id) {
+            return redirect()->route('transaction.index')->with('message', 'Access Forbidden');
         }
 
         return view('transaction.edit', compact('transaction', 'insuranceCompanies', 'handlers', 'paymentmodes'));
@@ -338,11 +334,9 @@ class TransactionController extends Controller
             $route_to = 'cancel_view';
         }
 
-        if ($isTransappNonAdmin == '1') {
-            if (Auth::user()->id != $transappAssignedToId) {
-                return redirect()->route($route_to)->withErrors([
-                    'approval_code' => [__('Access Forbidden')], ]);
-            }
+        if ($isTransappNonAdmin == '1' && Auth::user()->id != $transappAssignedToId) {
+            return redirect()->route($route_to)->withErrors([
+                'approval_code' => [__('Access Forbidden')], ]);
         }
 
         if ($isCancelled == '1') {
