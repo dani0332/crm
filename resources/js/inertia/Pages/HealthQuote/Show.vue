@@ -998,7 +998,7 @@ onMounted(() => {
     <x-divider class="my-4" />
     <div
       v-if="!$page.props.can.isAdvisor"
-      class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
+      class="p-4 rounded shadow mb-6 bg-primary-50/50"
     >
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2 flex gap-2 items-end">
