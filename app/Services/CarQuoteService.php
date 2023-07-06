@@ -359,7 +359,7 @@ class CarQuoteService extends BaseService
 
         $access['carAdvisorCanEdit']=false;
         $access['carManagerCanEdit']=false;
-        if ($carPayment && $carPayment['payment_status_id'] == PaymentStatusEnum::PARTIAL_CAPTURED && ! in_array($record->quote_status_id , $quoteStatusArray)){
+        if ($carPayment && $record['payment_status_id'] == PaymentStatusEnum::PARTIAL_CAPTURED && ! in_array($record->quote_status_id , $quoteStatusArray)){
             $paymentCapturedAt =$carPayment->captured_at;
             $today=Carbon::today();
 
@@ -374,7 +374,7 @@ class CarQuoteService extends BaseService
             }
 
         }
-        if ($carPayment && in_array($carPayment['payment_status_id'],[PaymentStatusEnum::PARTIAL_CAPTURED,PaymentStatusEnum::CAPTURED])  && in_array($record->quote_status_id , $quoteStatusArray)){
+        if ($carPayment && in_array($record['payment_status_id'],[PaymentStatusEnum::PARTIAL_CAPTURED,PaymentStatusEnum::CAPTURED])  && in_array($record->quote_status_id , $quoteStatusArray)){
 
             $access['carAdvisorCanEdit']=false;
             $access['carManagerCanEdit']=false;
