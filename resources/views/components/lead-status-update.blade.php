@@ -237,7 +237,7 @@ use App\Enums\LeadSourceEnum;
                         </div>
                         <div class="col">
                             @cannot(PermissionsEnum::ApprovePayments)
-                            <button type="submit" style="float: right;" @if(($lead->quote_status_id == QuoteStatusEnum::TransactionApproved && !auth()->user()->hasAnyRole([RolesEnum::LeadPool]))
+                            <button type="submit" style="float: right;" @if(($lead->quote_status_id == QuoteStatusEnum::TransactionApproved && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin]))
                                 || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
                                 || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)) disabled @endif class="btn btn-success
                                 btn-sm" id="lead-change-status-btn">Change Status</button>
