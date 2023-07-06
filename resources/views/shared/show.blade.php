@@ -368,7 +368,7 @@ use App\Enums\GenericRequestEnum;
                                     class='btn btn-warning btn-sm'>Edit</a>
                             @endcan
                         @endif
-                            @if(( $access['carManagerCanEdit']) || $access['carAdvisorCanEdit']) )
+                            @if( $access['carManagerCanEdit'] || $access['carAdvisorCanEdit'])
                                 <a id="texta"
                                    href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
                                    class='btn btn-warning btn-sm'>Edit</a>
