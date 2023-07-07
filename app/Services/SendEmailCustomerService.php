@@ -143,6 +143,14 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
+
+            if(!empty($emailData->pdfAttachment->pdf) && !empty($emailData->pdfAttachment->name)) {
+                $attachments[] = [
+                    'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
+                    'name' => $emailData->pdfAttachment->name
+                ];
+            }
+
             $body = [
                 'sender' => [
                     'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',

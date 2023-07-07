@@ -1219,6 +1219,11 @@ class RenewalsUploadService
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
             $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
+            $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, [
+                'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
+                'quote_uuid' => $carQuote->uuid
+            ]);
+
             if (isset($carQuote->advisor_id)) {
                 $advisor = $this->userService->getUserById($carQuote->advisor_id);
                 $advisorName = $advisor->name;
@@ -1251,6 +1256,7 @@ class RenewalsUploadService
                 'listQuotePlans' => $listQuotePlans,
                 'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
                 'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
+                'pdfAttachment' => (object) $pdf
             ];
 
             $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
