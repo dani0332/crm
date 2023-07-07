@@ -39,7 +39,7 @@ class LookupService extends BaseService
 
     public function getBackHomeLicensed()
     {
-        return UAELicenseHeldFor::isBackHomeActive()->get();
+        return UAELicenseHeldFor::isBackHomeActive()->where('is_active', true)->get();
     }
 
     public function getMemberCategories()

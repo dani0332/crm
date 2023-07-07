@@ -48,6 +48,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
