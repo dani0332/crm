@@ -669,7 +669,7 @@ class HealthQuoteService extends BaseService
                 $title = 'Marital Status';
                 break;
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref ID';
                 break;
             case 'cover_for_id':
                 $title = 'Who would you like cover for?';
@@ -750,7 +750,7 @@ class HealthQuoteService extends BaseService
                 $title = 'Currently Insured With';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref ID';
                 break;
             case 'device':
                 $title = 'Device';

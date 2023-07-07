@@ -466,7 +466,7 @@ const policyDetails = useForm({
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
+            <dt class="font-medium">Ref ID</dt>
             <dd>{{ quote.code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -486,7 +486,7 @@ const policyDetails = useForm({
             <dd>{{ quote.updated_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Parent Cdb Id</dt>
+            <dt class="font-medium">Parent Ref Id</dt>
             <dd>{{ quote.parent_duplicate_quote_id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">

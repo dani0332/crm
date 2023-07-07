@@ -432,7 +432,7 @@ const onAssignLead = () => {
             <dd>{{ quote.id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
+            <dt class="font-medium">Ref ID</dt>
             <dd>{{ quote.code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -531,7 +531,7 @@ const onAssignLead = () => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT CDB ID</dt>
+            <dt class="font-medium">PARENT Ref ID</dt>
             <dd>{{ quote.parent_duplicate_quote_id }}</dd>
           </div>
 

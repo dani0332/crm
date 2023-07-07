@@ -25,7 +25,7 @@ class HealthQuotesExport implements FromQuery, WithHeadings, WithMapping, Should
     public function headings(): array
     {
         return [
-            'CDB ID',
+            'Ref ID',
             'FIRST NAME',
             'LAST NAME',
             'LEAD STATUS',

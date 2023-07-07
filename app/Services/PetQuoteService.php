@@ -470,7 +470,7 @@ class PetQuoteService extends BaseService
         $title = '';
         switch ($propertyName) {
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref ID';
                 break;
             case 'dob':
                 $title = 'Date Of Birth';
@@ -527,7 +527,7 @@ class PetQuoteService extends BaseService
                 $title = 'Age Of Pet';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref ID';
                 break;
             default:
                 break;

@@ -27,8 +27,8 @@
                             @endif
                         </div>
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">CDB ID <span class="required">*</span></span>
-                            <input type="text" id="cdb_id" name="cdb_id" value="{{ old('cdb_id') }}" class="form-control form-control-sm" placeholder="CDB ID" />
+                            <span class="col-form-label col-md-6 col-sm-6">Ref ID <span class="required">*</span></span>
+                            <input type="text" id="cdb_id" name="cdb_id" value="{{ old('cdb_id') }}" class="form-control form-control-sm" placeholder="Ref ID" />
                             @if ($errors->has('cdb_id'))
                                 <span class="text-danger">{{ $errors->first('cdb_id') }}</span>
                             @endif

@@ -71,7 +71,7 @@ const insuranceTypeOptions = computed(() => {
 });
 
 const tableHeader = [
-  { text: 'CDB ID', value: 'code' },
+  { text: 'Ref ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'Company Name', value: 'company_name' },
@@ -218,9 +218,9 @@ onMounted(() => {
           v-model="filters.code"
           type="search"
           name="code"
-          label="CDB ID"
+          label="Ref ID"
           class="w-full"
-          placeholder="Search by CDB ID"
+          placeholder="Search by Ref ID"
         />
         <x-input
           v-model="filters.first_name"

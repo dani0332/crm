@@ -492,7 +492,7 @@ class TravelQuoteService extends BaseService
                 $title = 'Lead Status';
                 break;
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref ID';
                 break;
             case 'created_at':
                 $title = 'Created Date';
@@ -552,7 +552,7 @@ class TravelQuoteService extends BaseService
                 $title = 'Premium';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref ID';
                 break;
             default:
                 break;

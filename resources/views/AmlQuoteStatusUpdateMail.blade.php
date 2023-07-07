@@ -9,7 +9,7 @@
             <table width="100%" cellpadding="3" cellspacing="3">
                 <tr><td width="10%">Name:</td><td>{!! $clientFullName !!}</td></tr>
                 <tr><td width="10%">Type Name:</td><td>{!! $quoteTypeName !!}</td></tr>
-                <tr><td width="10%">CDB Id:</td><td>{!! $quoteCdbId !!}</td></tr>
+                <tr><td width="10%">Ref Id:</td><td>{!! $quoteCdbId !!}</td></tr>
             </table>
         </td>
     <tr>

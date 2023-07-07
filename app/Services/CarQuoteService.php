@@ -519,7 +519,7 @@ class CarQuoteService extends BaseService
                 $title = 'Claim History';
                 break;
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref ID';
                 break;
             case 'advisor_id':
                 $title = 'Advisor';
@@ -591,7 +591,7 @@ class CarQuoteService extends BaseService
                 $title = 'Can you provide no-claims letter from your previous insurers?';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref ID';
                 break;
             case 'quote_link':
                 $title = 'Quote Link';

@@ -66,7 +66,7 @@ function onReset() {
 onMounted(() => {});
 
 const tableHeader = [
-  { text: 'CDB ID', value: 'uuid' },
+  { text: 'Ref ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status' },
@@ -178,9 +178,9 @@ function onAssignLead(isValid) {
           v-model="filters.code"
           type="search"
           name="code"
-          label="CDB ID"
+          label="Ref ID"
           class="w-full"
-          placeholder="Search by CDB ID"
+          placeholder="Search by Ref ID"
         />
         <x-input
           v-model="filters.first_name"

@@ -1082,7 +1082,7 @@ onMounted(() => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
+            <dt class="font-medium">Ref ID</dt>
             <dd>{{ quote.code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1106,7 +1106,7 @@ onMounted(() => {
             <dd>{{ quote.updated_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT CDB ID</dt>
+            <dt class="font-medium">PARENT Ref ID</dt>
             <dd>{{ quote.parent_duplicate_quote_id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">

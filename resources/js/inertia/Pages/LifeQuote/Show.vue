@@ -303,7 +303,7 @@ const onCreateDuplicate = isValid => {
             <dd>{{ quote.id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
+            <dt class="font-medium">Ref ID</dt>
             <dd>{{ quote.code }}</dd>
           </div>
 
@@ -435,7 +435,7 @@ const onCreateDuplicate = isValid => {
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT CDB ID</dt>
+            <dt class="font-medium">PARENT Ref ID</dt>
             <dd></dd>
           </div>
         </dl>

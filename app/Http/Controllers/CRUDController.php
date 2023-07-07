@@ -957,7 +957,7 @@ class CRUDController extends Controller
         if (count($result) > 0) {
             $msg = '';
             foreach ($result as $item) {
-                $msg = $msg.'Lead with CDBID '.$item['leadId'].' is not assigned. <span style="color:black;">Reason : '.$item['msg'].'</span> <br>';
+                $msg = $msg.'Lead with Ref ID '.$item['leadId'].' is not assigned. <span style="color:black;">Reason : '.$item['msg'].'</span> <br>';
             }
             Log::warning('WCU Assignment Failed for '.$request->modelType.' Quote , selected id was '.$request->selectTmLeadId);
 
@@ -982,7 +982,7 @@ class CRUDController extends Controller
         if (count($assignmentResult) > 0) {
             $msg = '';
             foreach ($assignmentResult as $assignmentResultItem) {
-                $msg = $msg.' Lead with CDBID'.$assignmentResultItem['leadId'].' is not assigned, Reason : '.$assignmentResultItem['msg'].' <br>';
+                $msg = $msg.' Lead with Ref ID'.$assignmentResultItem['leadId'].' is not assigned, Reason : '.$assignmentResultItem['msg'].' <br>';
             }
             Log::warning('Manual Lead Assignment Failed for '.$request->modelType.' Quote , selected id was '.$request->selectTmLeadId);
 
