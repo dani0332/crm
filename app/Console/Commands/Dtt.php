@@ -58,11 +58,10 @@ class Dtt extends Command
             $jobs = [];
 
             $leads = CarQuote::where('is_revived', '=', false)
-
-            ->where(function ($q) use ($dateOne, $dateTwo) {
-                $q->whereDate('created_at', '=', $dateOne);
-                $q->orWhereDate('created_at', '=', $dateTwo);
-            })
+                ->where(function ($q) use ($dateOne, $dateTwo) {
+                    $q->whereDate('created_at', '=', $dateOne);
+                    $q->orWhereDate('created_at', '=', $dateTwo);
+                })
 
                 ->whereNotNull(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture', 'payment_status_id'])
                 ->where(function ($q) use ($datethirtyDaysBefore) {
@@ -110,7 +109,7 @@ class Dtt extends Command
                     ->allowFailures()
                     ->withDelay(2)
                     ->dispatch();
-            }else{
+            } else {
                 info('------No lead Found------');
             }
         } catch (\Exception $exception) {

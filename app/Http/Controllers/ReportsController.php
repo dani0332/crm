@@ -12,7 +12,6 @@ use App\Services\ReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class ReportsController extends Controller
 {

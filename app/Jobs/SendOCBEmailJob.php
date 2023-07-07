@@ -39,7 +39,7 @@ class SendOCBEmailJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($quoteUuid,$isDtt=false)
+    public function __construct($quoteUuid, $isDtt = false)
     {
         $this->quoteUuid = $quoteUuid;
         $this->isDtt = $isDtt;

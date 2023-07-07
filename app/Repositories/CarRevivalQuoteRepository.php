@@ -146,27 +146,24 @@ class CarRevivalQuoteRepository extends BaseRepository
         return $result;
     }
 
-    public function fetchupdateQuote($data){
+    public function fetchupdateQuote($data)
+    {
 
         $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
 
-        $payload['Subject'] =$inbound->Subject();
-//        $subject ='Re: test test’s car insurance renewal with Alfred-S5Z5RMMM';
-//        $strings = explode('-',$subject);
-//        Log::info('inbound email Subject '.json_encode($strings[1]));
+        $payload['Subject'] = $inbound->Subject();
+        //        $subject ='Re: test test’s car insurance renewal with Alfred-S5Z5RMMM';
+        //        $strings = explode('-',$subject);
+        //        Log::info('inbound email Subject '.json_encode($strings[1]));
         Log::info('inbound email Subject '.json_encode($payload));
 
-
-
-//        $uuid =$strings[1];
-//        $this->where('uuid',$uuid)->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-
-
+        //        $uuid =$strings[1];
+        //        $this->where('uuid',$uuid)->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
 
     }
     public function fetchGetReportsData($request)
     {
-        $source=[LeadSourceEnum::REVIVAL,LeadSourceEnum::REVIVAL_REPLIED,LeadSourceEnum::REVIVAL_PAID];
+        $source = [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID];
 
         $carInsurancetypeId = $request->car_type_insurance_id;
         $leadSource = $request->lead_source;
@@ -174,46 +171,47 @@ class CarRevivalQuoteRepository extends BaseRepository
         $query = $this
             ->select(
                 'quote_batch_id',
-            DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as conversion_captured'),
-            DB::raw('COUNT(CASE  WHEN source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE NULL END) as total_revived'),
-            DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' and  quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE NULL END) as captured'),
-            DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' and  quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE NULL END) as authorized'),
-            DB::raw('COUNT(CASE  WHEN email_sent = 1 THEN 1 ELSE NULL END) as email_sent_count'),
-            DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
-        )
+                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' THEN 1 ELSE NULL END) as conversion_captured'),
+                DB::raw('COUNT(CASE  WHEN source = "'.LeadSourceEnum::REVIVAL.'" THEN 1 ELSE NULL END) as total_revived'),
+                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::CAPTURED.' and  quote_status_id = '.QuoteStatusEnum::TransactionApproved.' THEN 1 ELSE NULL END) as captured'),
+                DB::raw('COUNT(CASE  WHEN payment_status_id = '.PaymentStatusEnum::AUTHORISED.' and  quote_status_id = '.QuoteStatusEnum::PaymentPending.' THEN 1 ELSE NULL END) as authorized'),
+                DB::raw('COUNT(CASE  WHEN email_sent = 1 THEN 1 ELSE NULL END) as email_sent_count'),
+                DB::raw('COUNT(CASE  WHEN reply_received = 1 THEN 1 ELSE NULL END) as reply_received_count'),
+            )
             ->leftjoin('dtt_revivals', 'dtt_revivals.quote_id', 'car_quote_request.id')
             ->whereNotNull(['quote_batch_id', 'payment_status_id']);
 
-        if (!empty($leadSource)) {
+        if (! empty($leadSource)) {
             $query->where('source', $leadSource);
-        }else{
-            $query->whereIn('source',$source);
+        } else {
+            $query->whereIn('source', $source);
         }
-        if (!empty($carInsurancetypeId)) {
+        if (! empty($carInsurancetypeId)) {
             $query->where('car_type_insurance_id', $carInsurancetypeId);
         }
-        $record= $query ->groupBy('quote_batch_id')->get()->toArray();
-        $data=[];
-        foreach ($record as $item){
-            $c['quote_batch_id']=$item['quote_batch_id'];
-            $c['conversion_captured']=$item['conversion_captured'];
-            $c['total_revived']=$item['total_revived'] ;
-            $c['ratio']=$item['conversion_captured'] > 0 ? round(($item['conversion_captured']  / $item['total_revived'] ) * 100, 2).'%' : null;
-            $data['conversionRate'][]=$c;
+        $record = $query->groupBy('quote_batch_id')->get()->toArray();
+        $data = [];
+        foreach ($record as $item) {
+            $c['quote_batch_id'] = $item['quote_batch_id'];
+            $c['conversion_captured'] = $item['conversion_captured'];
+            $c['total_revived'] = $item['total_revived'];
+            $c['ratio'] = $item['conversion_captured'] > 0 ? round(($item['conversion_captured'] / $item['total_revived']) * 100, 2).'%' : null;
+            $data['conversionRate'][] = $c;
 
-            $ac['quote_batch_id']=$item['quote_batch_id'];
-            $ac['authorized']=$item['authorized'];
-            $ac['captured']=$item['captured'] ;
-            $ac['ratio']=$item['authorized'] > 0 ? round(($item['captured']  / $item['authorized'] ) * 100, 2).'%' : null;
-            $data['leadConversionReport'][]=$ac;
+            $ac['quote_batch_id'] = $item['quote_batch_id'];
+            $ac['authorized'] = $item['authorized'];
+            $ac['captured'] = $item['captured'];
+            $ac['ratio'] = $item['authorized'] > 0 ? round(($item['captured'] / $item['authorized']) * 100, 2).'%' : null;
+            $data['leadConversionReport'][] = $ac;
 
             $rs['quote_batch_id'] = $item['quote_batch_id'];
             $rs['email_sent_count'] = $item['email_sent_count'];
             $rs['reply_received_count'] = $item['reply_received_count'];
 
-            $rs['ratio'] =  $item['email_sent_count'] > 0 ? round(($item['reply_received_count'] /  $item['email_sent_count']) * 100, 2).'%' : null;
-            $data['emailConversionReport'][]=$rs;
+            $rs['ratio'] = $item['email_sent_count'] > 0 ? round(($item['reply_received_count'] / $item['email_sent_count']) * 100, 2).'%' : null;
+            $data['emailConversionReport'][] = $rs;
         }
+
         return $data;
     }
 }

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CarRevivalQuoteRequest;
 use App\Repositories\CarRevivalQuoteRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class CarRevivalQuoteController extends Controller
 {
@@ -52,7 +51,8 @@ class CarRevivalQuoteController extends Controller
         return back()->with('message', 'Quote updated successfully');
     }
 
-    public function updateQuote(Request $request){
+    public function updateQuote(Request $request)
+    {
 
         CarRevivalQuoteRepository::updateQuote($request);
 

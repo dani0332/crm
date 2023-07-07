@@ -120,7 +120,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendOcbEmail($emailTemplateId, $emailData, $tag,$isDtt=false)
+    public function sendOcbEmail($emailTemplateId, $emailData, $tag, $isDtt = false)
     {
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
@@ -144,11 +144,10 @@ class SendEmailCustomerService extends BaseService
                 }
             }
 
-
             $body = [
                 'sender' => [
-                    'email' => $isDtt  ? 'buy@insurancemarket.ae' : strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
-                    'name' => $isDtt  ? "insurance market" : $emailData->advisorName,
+                    'email' => $isDtt ? 'buy@insurancemarket.ae' : strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
+                    'name' => $isDtt ? 'insurance market' : $emailData->advisorName,
                 ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
@@ -184,26 +183,26 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $ccAdvisor = [];
-            if ($isDtt){
+            if ($isDtt) {
                 $body['replyTo'] = [
                     'email' => 'b6eb50415ef5751212bee3b17240ee7c@inbound.postmarkapp.com',
                     'name' => 'Post Mark',
                 ];
 
-            }else{
+            } else {
 
                 if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
                     $ccAdvisor = [[
                         'email' => $emailData->advisorEmailAddress,
                         'name' => $emailData->advisorName,
                     ]];
-                $body['replyTo'] = [
-                    'email' => $emailData->advisorEmailAddress,
-                    'name' => $emailData->advisorName,
-                ];
+                    $body['replyTo'] = [
+                        'email' => $emailData->advisorEmailAddress,
+                        'name' => $emailData->advisorName,
+                    ];
                 }
             }
-            if (!$isDtt){
+            if (! $isDtt) {
                 $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
                 $ccAdditional = [];
                 if ($customer) {

@@ -1109,25 +1109,25 @@ class CarQuoteService extends BaseService
 
         if ($quote->payment_status_id == PaymentStatusEnum::CANCELLED && Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
             info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' payment status '.$quote->paymentStatus->text.' to role '.RolesEnum::CarAdvisor);
-        if ($quote->payment_status_id == PaymentStatusEnum::CANCELLED && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager])) {
-            info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
+            if ($quote->payment_status_id == PaymentStatusEnum::CANCELLED && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager])) {
+                info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
 
-            return true;
-        }
+                return true;
+            }
 
-        if (
-            $quote->payment_status_id == '' || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
+            if (
+                $quote->payment_status_id == '' || $quote->payment_status_id == null || (in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT])
         && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager]))
-        ) {
-            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid.' payment status '.$quote->paymentStatus->text.' to '.RolesEnum::CarAdvisor);
-            info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
+            ) {
+                info($logPrefix.' plan modify allowed for uuid '.$quote->uuid.' payment status '.$quote->paymentStatus->text.' to '.RolesEnum::CarAdvisor);
+                info($logPrefix.' plan modify allowed for uuid '.$quote->uuid);
 
-            return true;
-        }
+                return true;
+            }
 
-        info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
+            info($logPrefix.' plan modification is not allowed for uuid '.$quote->uuid);
 
-        return 'Plan Modification is not allowed';
+            return 'Plan Modification is not allowed';
         }
     }
 
@@ -1344,7 +1344,7 @@ class CarQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && !($isLeadPool)) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! ($isLeadPool)) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }

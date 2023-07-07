@@ -6,7 +6,6 @@ use BenSampo\Enum\Enum;
 
 final class PermissionsEnum extends Enum
 {
-
     const RoleList = 'role-list';
     const RoleCreate = 'role-create';
     const RoleEdit = 'role-edit';
@@ -208,7 +207,6 @@ final class PermissionsEnum extends Enum
     const JetskiQuotesEdit = 'jetski-quotes-edit';
     const JetskiQuotesShow = 'jetski-quotes-show';
     const RenewalBatchUpdate = 'renewal-batch-update';
-
     public const CarRevivalQuoteList = 'carrevival-quotes-list';
     const ActivitiesAssignedToView = 'activities-assigned-to-view';
     const RenewalsUploadedLeadList = 'renewals-uploaded-leads-list';
