@@ -197,7 +197,7 @@ const permissionsEnum = page.props.permissionsEnum;
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
 
@@ -228,7 +228,7 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ quote.policy_issuance_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
+            <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">

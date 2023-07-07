@@ -501,7 +501,7 @@ class HomeQuoteService extends BaseService
                 $title = 'Is Property Rented Holiday Home ?';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Quote Premium';
+                $title = 'Previous Quote Price';
                 break;
             case 'parent_duplicate_quote_id':
                 $title = 'Parent Ref ID';

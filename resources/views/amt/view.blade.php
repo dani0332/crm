@@ -517,7 +517,7 @@
 
                             <div class="item form-group">
                                 <div class="col">
-                                    <label class="col-form-label col-md-2 col-sm-2" for="searchfield">PREVIOUS POLICY PREMIUM</label>
+                                    <label class="col-form-label col-md-2 col-sm-2" for="searchfield">PREVIOUS POLICY PRICE</label>
                                     <div class="col-md-6 col-sm-6">
                                         <div class="input-group">
                                         <input type="text" class="form-control" name="previous_quote_policy_premium" id="previous_quote_policy_premium" >

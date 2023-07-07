@@ -546,10 +546,10 @@ class TravelQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'premium':
-                $title = 'Premium';
+                $title = 'Price';
                 break;
             case 'parent_duplicate_quote_id':
                 $title = 'Parent Ref ID';

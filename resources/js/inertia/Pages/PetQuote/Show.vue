@@ -294,7 +294,7 @@ const onCreateDuplicate = isValid => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
 

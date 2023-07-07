@@ -457,7 +457,7 @@ const plansTable = reactive({
       value: 'eligibilityName',
     },
     {
-      text: 'Base Premium',
+      text: 'Base Price',
       value: 'actualPremium',
     },
     {
@@ -469,7 +469,7 @@ const plansTable = reactive({
       value: 'policyFee',
     },
     {
-      text: 'Total Indicative Premium (with VAT)',
+      text: 'Total Indicative Price (with VAT)',
       value: 'total',
     },
     {
@@ -1240,7 +1240,7 @@ onMounted(() => {
             <dd>{{ quote.previous_quote_policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1640,14 +1640,14 @@ onMounted(() => {
             Download PDF
           </x-button> -->
 
-          <!-- hide create quote button for rm deployment -->
+          <!-- hide add plan button for rm deployment -->
           <x-button
             size="sm"
             color="primary"
             v-show="false"
             @click.prevent="modals.createPlan = true"
           >
-            Create Quote
+            Add Plan
           </x-button>
 
           <x-button

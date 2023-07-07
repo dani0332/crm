@@ -48,7 +48,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 								</span>
 							@can('car-quotes-plans-create')
 								<a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
-									class="btn btn-primary btn-sm">Create Quote</a>
+									class="btn btn-primary btn-sm">Add Plan</a>
 							@endcan
 							@if(gettype($listQuotePlans) != GenericRequestEnum::TypeString)
 								@if(count($listQuotePlans) > 0)
@@ -118,9 +118,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							<th>PAB cover</th>
 							<th>Roadside assistance</th>
 							<th>Oman cover TPL</th>
-							<th>Actual Premium</th>
-							<th>Discounted Premium</th>
-							<th>Premium with VAT.</th>
+							<th>Actual Price</th>
+							<th>Discounted Price</th>
+							<th>Price with VAT.</th>
 							<th>Excess</th>
 							<th>Action</th>
 						</tr>
@@ -280,7 +280,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 
                                 @php
                                     $allowChangeInsurer = (auth()->user()->hasRole(RolesEnum::CarAdvisor)) ? true : false;
-                                    
+
                                     if($record->payment_status_id == \App\Enums\PaymentStatusEnum::CAPTURED)
                                     {
                                         $allowChangeInsurer = false;
@@ -325,9 +325,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							<th>PAB cover</th>
 							<th>Roadside assistance</th>
 							<th>Oman cover TPL</th>
-							<th>Actual Premium</th>
-							<th>Discounted Premium</th>
-							<th>Premium with VAT.</th>
+							<th>Actual Price</th>
+							<th>Discounted Price</th>
+							<th>Price with VAT.</th>
 							<th>Excess</th>
 							<th>Action</th>
 						</tr>

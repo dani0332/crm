@@ -512,10 +512,10 @@ class PetQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'type':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'type_of_pet1':
                 $title = 'Type Of Pet';

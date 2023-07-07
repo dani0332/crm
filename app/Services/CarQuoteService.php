@@ -582,7 +582,7 @@ class CarQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'back_home_license_held_for_id':
                 $title = 'Home country driving license held for';
