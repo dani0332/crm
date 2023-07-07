@@ -76,7 +76,6 @@
         }
         .header {
             background: #1d83bc;
-            /*background-image: linear-gradient(275deg, #1d83bc, transparent);*/
             color: #ffffff;
             font-size: 16px;
             text-align: center;
@@ -347,19 +346,16 @@
 
     {{-- PDF Page Header --}}
     <header>
-        <div class="header">
-            <div class="logo">
-                <img class="im-logo" src="{{public_path('images/im_logo.png')}}" />
-            </div>
-            <h3>Your Tailor Made <br />Health Insurance Comparison Table</h3>
+        <div>
+            <img src="{{public_path('images/header.png')}}">
         </div>
     </header>
 
     {{-- PDF Page Footer --}}
     <footer>
         <table class="tbl-footer">
-            <div style="float: left">
-                <img style="height: 125px;" src="{{ public_path('images/advisors/sample_1.png') }}">
+            <div style="float: left;">
+                <img style="height: 110px;" src="{{ public_path('images/advisors/sample_1.png') }}">
             </div>
             <div style="float: left; margin-left: 10px; margin-top: 20px">
                 @php
