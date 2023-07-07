@@ -2,8 +2,8 @@
 
 namespace App\Console;
 
-use App\Console\Commands\UpdateHealthStatus;
-use App\Jobs\LeadAllocationJob;
+use App\Jobs\CarLeadAllocationJob;
+use App\Jobs\HealthLeadAllocationJob;
 use App\Jobs\TierAssignmentJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -16,7 +16,6 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Commands\LeadAllocation::class,
         Commands\AddBatchNumber::class,
     ];
 
@@ -28,18 +27,26 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
-        $schedule
-            ->command('LeadAllocation:cron')
+        // Schedule CarLeadAllocationJob to run every minute without overlapping on one server
+        $schedule->job(new CarLeadAllocationJob)
             ->everyMinute()
-            ->onOneServer()
-            ->withoutOverlapping(1);
+            ->withoutOverlapping(1)
+            ->onOneServer();
 
-        //$schedule->job(new LeadAllocationJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
+        // Schedule HealthLeadAllocationJob to run every minute without overlapping on one server
+        $schedule->job(new HealthLeadAllocationJob)
+            ->everyMinute()
+            ->withoutOverlapping(1)
+            ->onOneServer();
 
-        $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
+        // Schedule TierAssignmentJob to run every two minutes without overlapping on one server
+        $schedule->job(new TierAssignmentJob)
+            ->everyTwoMinutes()
+            ->withoutOverlapping(1)
+            ->onOneServer();
 
-        $schedule
-            ->command('AddBatchNumber:cron')
+        // Schedule AddBatchNumber:cron command to run every Monday at midnight in Asia/Dubai timezone without overlapping on one server
+        $schedule->command('AddBatchNumber:cron')
             ->timezone('Asia/Dubai')
             ->weeklyOn(1, '0:00')
             ->onOneServer()
@@ -50,7 +57,9 @@ class Kernel extends ConsoleKernel
             ->dailyAt('01:00')->onOneServer()
             ->withoutOverlapping(1);
 
-        $schedule->command('telescope:prune --hours=48')->daily()
+        // Schedule telescope:prune command to run daily without overlapping on one server
+        $schedule->command('telescope:prune --hours=48')
+            ->daily()
             ->onOneServer()
             ->withoutOverlapping(1);
     }

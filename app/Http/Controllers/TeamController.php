@@ -70,13 +70,22 @@ class TeamController extends Controller
             'name' => 'required',
             'type' => 'required',
         ];
-        if (isset($request->type) && TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
+
+        $allocationPricesEnabled = isset($request->allocation_threshold_enabled) && $request->allocation_threshold_enabled == 'on';
+
+        if ($allocationPricesEnabled) {
+            $validateArray['min_price'] = 'numeric|min:0';
+            $validateArray['max_price'] = 'numeric|min:1';
+        }
+
+        if (isset($request->type) && $request->type != TeamTypeEnum::PRODUCT) {
             $validateArray['parent_team_id'] = 'required';
         }
+
         $this->validate($request, $validateArray);
 
         $team = new Team();
-        if (isset($request->type) && TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
+        if (isset($request->type) && $request->type != TeamTypeEnum::PRODUCT) {
             $team->parent_team_id = $request->parent_team_id;
         }
         $team->name = $request->name;
@@ -84,6 +93,11 @@ class TeamController extends Controller
         $team->is_active = 1;
         $team->created_at = now();
         $team->updated_at = now();
+        if ($allocationPricesEnabled) {
+            $team->allocation_threshold_enabled = true;
+            $team->min_price = $request->min_price;
+            $team->max_price = $request->max_price;
+        }
         $team->save();
 
         if (isset($request->return_to_view)) {
@@ -129,16 +143,24 @@ class TeamController extends Controller
             'name' => 'required',
             'type' => 'required',
         ];
-        if (isset($request->type) && $request->type == TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
+        $allocationPricesEnabled = isset($request->allocation_threshold_enabled) && $request->allocation_threshold_enabled == 'on';
+
+        if ($allocationPricesEnabled) {
+            $validateArray['min_price'] = 'numeric|min:0';
+            $validateArray['max_price'] = 'numeric|min:1';
+        }
+
+        if (isset($request->type) && $request->type != TeamTypeEnum::PRODUCT) {
             $validateArray['parent_team_id'] = 'required';
         }
+
         $this->validate($request, $validateArray);
 
         $team = Team::where('id', $id)->first();
         if (! $team) {
             return redirect('generic/team/'.$team->id)->with('message', 'Team not found');
         }
-        if (isset($request->type) && $request->type == TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
+        if (isset($request->type) && $request->type != TeamTypeEnum::PRODUCT) {
             $team->parent_team_id = $request->parent_team_id;
         }
         $team->name = $request->name;
@@ -146,6 +168,13 @@ class TeamController extends Controller
         $team->is_active = $request->is_active == 'on' ? 1 : 0;
         $team->created_at = now();
         $team->updated_at = now();
+        if ($allocationPricesEnabled) {
+            $team->allocation_threshold_enabled = true;
+            $team->min_price = $request->min_price;
+            $team->max_price = $request->max_price;
+        } else {
+            $team->allocation_threshold_enabled = false;
+        }
         $team->save();
 
         if (isset($request->return_to_view)) {

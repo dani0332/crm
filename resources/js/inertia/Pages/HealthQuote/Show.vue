@@ -1505,6 +1505,10 @@ onMounted(() => {
             <dt class="font-medium">NETWORK</dt>
             <dd>{{ ecomDetails.network }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
+            <dd>{{ ecomDetails.premium }}</dd>
+          </div>
         </dl>
       </div>
     </div>
