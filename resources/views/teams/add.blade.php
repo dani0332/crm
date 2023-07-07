@@ -11,9 +11,9 @@ use App\Enums\TeamTypeEnum;
     {
         var selectedType = $('#type option:selected').val();
         $('#parent_team_id').empty();
-        if( selectedType == 1) {
+        if ( selectedType == 1) {
             $('#parent_team_id').prop('disabled', true);
-        }else{
+        } else {
             $('#parent_team_id').prop('disabled', false);
             for (let index = 0; index < products.length; index++) {
             const element = products[index];
@@ -31,6 +31,14 @@ use App\Enums\TeamTypeEnum;
         var products  = JSON.parse('<?php echo json_encode($products); ?>');
         $('#type').on('change', function (item, index){
             renderParentOptions(products);
+        });
+
+        var $allocationPriceSection = $('.allocation-price-section');
+        if($('#allocation_threshold_enabled').is(':checked')) {
+            $('.allocation-price-section').show();
+        }
+        $('#allocation_threshold_enabled').on('change', function() {
+            $allocationPriceSection.toggle(this.checked);
         });
         renderParentOptions(products);
     });
@@ -84,8 +92,29 @@ use App\Enums\TeamTypeEnum;
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Is Active
                                 <br />
-                                <input type="checkbox"  style="margin-top:12px" checked id='is_active' name='is_active'>
+                                <input type="checkbox" style="margin-top:12px" {{ old('is_active', 'on') == 'on' ? 'checked' : '' }} id="is_active" name="is_active">
                             </span>
+                            <span class="col-form-label col-md-6 col-sm-6">Enable Lead Allocation Threshold
+                                <br />
+                                <input type="checkbox" style="margin-top:12px" {{ old('allocation_threshold_enabled') == 'on' ? 'checked' : '' }} id="allocation_threshold_enabled" name="allocation_threshold_enabled">
+                            </span>
+                        </div>
+
+                    </div>
+                    <div class="item form-group allocation-price-section" style="display: none;">
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Min Price </span>
+                            <input type="text" id="min_price" value="0" name="min_price" value="{{ old('min_price') }}" class="form-control">
+                            @if ($errors->has('min_price'))
+                                <span class="text-danger">{{ $errors->first('min_price') }}</span>
+                            @endif
+                        </div>
+                        <div class="col">
+                            <span class="col-form-label col-md-6 col-sm-6">Max Price </span>
+                            <input type="text" id="max_price" value="1" name="max_price" value="{{ old('max_price') }}" class="form-control">
+                            @if ($errors->has('max_price'))
+                                <span class="text-danger">{{ $errors->first('max_price') }}</span>
+                            @endif
                         </div>
                     </div>
                     <div id='redirect_to_view_div'></div>

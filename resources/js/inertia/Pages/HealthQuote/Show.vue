@@ -58,6 +58,7 @@ const modals = reactive({
   member: false,
   memberConfirm: false,
   doc: false,
+  docConfirm: false,
   plan: false,
   createPlan: false,
   activity: false,
@@ -99,6 +100,7 @@ const onCreateDuplicate = isValid => {
 };
 
 const confirmDeleteData = reactive({
+  docs: null,
   member: null,
   activity: null,
   contact: null,
@@ -608,8 +610,39 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by_name',
     },
+    {
+      text: 'Action',
+      value: 'action',
+    },
   ],
 });
+
+const onDocDelete = name => {
+  modals.docConfirm = true;
+  confirmDeleteData.docs = name;
+};
+
+const confirmDeleteDoc = () => {
+  quoteDocumentsTable.isLoading = true;
+  router.post(
+    `/documents/delete`,
+    {
+      docName: confirmDeleteData.docs,
+      quoteId: page.props.quote.id,
+    },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        modals.docConfirm = false;
+        quoteDocumentsTable.isLoading = false;
+        notification.error({
+          title: 'File Deleted',
+          position: 'top',
+        });
+      },
+    },
+  );
+};
 
 //activities
 const activityTable = [
@@ -998,7 +1031,7 @@ onMounted(() => {
     <x-divider class="my-4" />
     <div
       v-if="!$page.props.can.isAdvisor"
-      class="p-4 rounded shadow mb-6 bg-primary-50/50"
+      class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
     >
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2 flex gap-2 items-end">
@@ -1186,10 +1219,10 @@ onMounted(() => {
             <dt class="font-medium">DETAILS</dt>
             <dd>{{ quote.details }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Additional Notes</dt>
-            <dd>{{ quote.additional_notes }}</dd>
-          </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Additional Notes</dt>
+                <dd>{{ quote.additional_notes }}</dd>
+            </div>
         </dl>
       </div>
 
@@ -1472,11 +1505,15 @@ onMounted(() => {
             <dt class="font-medium">NETWORK</dt>
             <dd>{{ ecomDetails.network }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
+            <dd>{{ ecomDetails.premium }}</dd>
+          </div>
         </dl>
       </div>
     </div>
 
-    <!-- <PaymentTable
+    <PaymentTable
       v-if="isBetaUser"
       :payments="payments"
       :can="can"
@@ -1484,7 +1521,7 @@ onMounted(() => {
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"
       :quote="quote"
-    /> -->
+    />
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -1597,7 +1634,7 @@ onMounted(() => {
             </x-button>
           </x-button-group>
 
-          <!-- <x-button
+          <x-button
             v-if="selectedPlans.length > 0"
             size="sm"
             color="emerald"
@@ -1605,7 +1642,15 @@ onMounted(() => {
             :loading="exportLoader"
           >
             Download PDF
-          </x-button> -->
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="modals.createPlan = true"
+          >
+            Create Quote
+          </x-button>
 
           <x-button
             v-if="listQuotePlans.length > 0"
@@ -1616,15 +1661,6 @@ onMounted(() => {
             "
           >
             Copy Link
-          </x-button>
-
-          <x-button
-            size="sm"
-            color="primary"
-            v-show="true"
-            @click.prevent="modals.createPlan = true"
-          >
-            Add Plan
           </x-button>
         </div>
       </div>
@@ -1697,12 +1733,10 @@ onMounted(() => {
         <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
       </x-modal>
 
-      <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
-        <template #header> Add Plan </template>
+      <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
+        <template #header> Create Heath Quote </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
-          :members="membersDetail"
-          :genders="genderOptions"
           @success="onCreatePlan"
           @error="onPlanError"
         />
@@ -1747,6 +1781,18 @@ onMounted(() => {
             {{ item.original_name }}
           </a>
         </template>
+        <template #item-action="{ doc_name }">
+          <div>
+            <x-button
+              size="xs"
+              color="error"
+              outlined
+              @click.prevent="onDocDelete(doc_name)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
       </DataTable>
 
       <x-modal v-model="modals.doc" size="xl" show-close backdrop>
@@ -1757,6 +1803,29 @@ onMounted(() => {
           :docs="quoteDocuments || []"
           :cdn="cdnPath"
         />
+      </x-modal>
+      <x-modal v-model="modals.docConfirm" show-close backdrop>
+        <template #header> Delete Document </template>
+        <p>Are you sure you want to delete this document?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.docConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="error"
+              @click.prevent="confirmDeleteDoc"
+              :loading="quoteDocumentsTable.isLoading"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
       </x-modal>
     </div>
 
