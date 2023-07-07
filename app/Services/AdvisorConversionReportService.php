@@ -74,7 +74,20 @@ class AdvisorConversionReportService extends BaseService
 
         $query = $this->applyFilters($query, $filters);
 
-        return $query->get();
+        $query = $query->get();
+
+        // map operation to calculate gross and net conversions of records
+        $extendedQuery = $query->map(function ($row) {
+            $netDenominator = $row->total_leads - $row->bad_leads;
+            $grossDenominator = $row->total_leads;
+            $row->net_conversion = (float) $netDenominator > 0 ?  round(($row->sale_leads / $netDenominator) * 100, 2) : 0;
+            $row->gross_conversion = (float) $grossDenominator > 0 ?  round(($row->sale_leads / $grossDenominator) * 100, 2) : 0;
+
+            return $row;
+        });
+
+        return $extendedQuery;
+
     }
 
     public function getFilterOptions()
