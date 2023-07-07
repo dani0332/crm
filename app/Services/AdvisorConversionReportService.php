@@ -48,6 +48,7 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
 
@@ -74,7 +75,20 @@ class AdvisorConversionReportService extends BaseService
 
         $query = $this->applyFilters($query, $filters);
 
-        return $query->get();
+        $query = $query->get();
+
+        // map operation to calculate gross and net conversions of records
+        $extendedQuery = $query->map(function ($row) {
+            $netDenominator = $row->total_leads - $row->bad_leads;
+            $grossDenominator = $row->total_leads;
+            $row->net_conversion = (float) $netDenominator > 0 ?  round(($row->sale_leads / $netDenominator) * 100, 2) : 0;
+            $row->gross_conversion = (float) $grossDenominator > 0 ?  round(($row->sale_leads / $grossDenominator) * 100, 2) : 0;
+
+            return $row;
+        });
+
+        return $extendedQuery;
+
     }
 
     public function getFilterOptions()

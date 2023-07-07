@@ -1009,7 +1009,7 @@ class CRUDController extends Controller
     {
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
         if ($isValidRequest != 'true') {
-            return redirect()->back()->with('message', $isValidRequest);
+            return redirect()->back()->with('error', $isValidRequest);
         }
         $assignedUser = $this->userService->getUserById((int) $request->assigned_to_id_new);
         if (! $assignedUser) {
