@@ -48,7 +48,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 									<button id="btn_download_plan_pdf" type="button" class="btn btn-success btn-sm">Download PDF</button>
 								</span>
 
-                            @if(($access['carManagerCanEdit'] || $access['carAdvisorCanEdit']  ))
+                            @if(($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'] || $access['carAdvisorCanEditPaymentCancelledRefund'] ))
                                 <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
                                    class="btn btn-primary btn-sm">Create Quote</a>
                             @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager]) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate) )
@@ -284,24 +284,8 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                     >Copy</button>
                                 @endif
 
-                                @php
-                                    $allowChangeInsurer = (auth()->user()->hasRole(RolesEnum::CarAdvisor)) ? true : false;
 
-                                    if($record->payment_status_id == \App\Enums\PaymentStatusEnum::CAPTURED)
-                                    {
-                                        $allowChangeInsurer = false;
-                                        if((auth()->user()->hasRole(RolesEnum::CarAdvisor) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment <= 7)) {
-                                            $allowChangeInsurer = true;
-                                        }
-                                        elseif((auth()->user()->hasRole(RolesEnum::CarManager) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment > 7 && $daysAfterCapturedPayment <= 14))
-                                        {
-                                            $allowChangeInsurer = true;
-                                        }
-                                    }
-
-                                @endphp
-
-                                @if($allowChangeInsurer || ($access['carManagerCanEdit'] || $access['carAdvisorCanEdit']  ) )
+                                @if(($access['carAdvisorCanEditPaymentCancelledRefund'] || $access['carManagerCanEdit'] || $access['carAdvisorCanEdit']) )
                                     <button class="btn btn-info btn-sm btn-change-insurer"
                                             data-planId="{{$quotePlan->id}}"
                                             data-uuid="{{$record->uuid}}"
