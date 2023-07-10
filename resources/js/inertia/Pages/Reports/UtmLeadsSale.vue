@@ -165,7 +165,7 @@ onMounted(() => {
       :items="reportData || []"
       border-cell
       hide-rows-per-page
-      :rows-per-page="-1"
+      :rows-per-page="999"
       hide-footer
     >
     </DataTable>
