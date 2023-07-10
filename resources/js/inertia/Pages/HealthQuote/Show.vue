@@ -610,10 +610,6 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by_name',
     },
-    {
-      text: 'Action',
-      value: 'action',
-    },
   ],
 });
 
@@ -1219,10 +1215,10 @@ onMounted(() => {
             <dt class="font-medium">DETAILS</dt>
             <dd>{{ quote.details }}</dd>
           </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Additional Notes</dt>
-                <dd>{{ quote.additional_notes }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Additional Notes</dt>
+            <dd>{{ quote.additional_notes }}</dd>
+          </div>
         </dl>
       </div>
 
@@ -1645,14 +1641,6 @@ onMounted(() => {
           </x-button>
 
           <x-button
-            size="sm"
-            color="primary"
-            @click.prevent="modals.createPlan = true"
-          >
-            Create Quote
-          </x-button>
-
-          <x-button
             v-if="listQuotePlans.length > 0"
             size="sm"
             color="orange"
@@ -1661,6 +1649,14 @@ onMounted(() => {
             "
           >
             Copy Link
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="modals.createPlan = true"
+          >
+            Add Plan
           </x-button>
         </div>
       </div>
@@ -1733,10 +1729,12 @@ onMounted(() => {
         <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
       </x-modal>
 
-      <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
+      <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Heath Quote </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
+          :members="membersDetail"
+          :genders="genderOptions"
           @success="onCreatePlan"
           @error="onPlanError"
         />
