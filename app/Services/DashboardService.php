@@ -135,6 +135,7 @@ class DashboardService extends BaseService
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('car_quote_request.source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->where('users.is_active', true)
             ->groupBy('users.name');
 
         if (isset($filters['startDate']) && isset($filters['endDate'])) {

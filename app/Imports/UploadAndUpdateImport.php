@@ -132,7 +132,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
                     $onFailure('Invalid value provided for '.$attribute);
                 }
             }], 'type' => 'date'],
-            'driving_experience' => ['index' => 14, 'title' => 'Driving Experience', 'rules' => ['max:10']],
+            'driving_experience' => ['index' => 14, 'title' => 'Driving Experience', 'rules' => ['max:50']],
             'nationality' => ['index' => 15, 'title' => 'Nationality', 'rules' => ['max:50']],
             'provider_name' => ['index' => 16, 'title' => 'Provider Name', 'rules' => 'max:100'],
             'plan_name' => ['index' => 17, 'title' => 'Plan Name', 'rules' => 'max:100'],
