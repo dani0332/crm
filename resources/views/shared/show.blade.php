@@ -294,7 +294,14 @@ use App\Enums\GenericRequestEnum;
                             @endif
                             <div class="col">
                                 @if (strpos($value, 'title'))
-                                    <label class="col-form-label col-md-6 col-sm-6"
+                                    @php
+                                        $textDecorations = $tooltip = "";
+                                        if(in_array(strtoupper($customTitles[$property]), ['REF ID', 'PARENT REF ID'])){
+                                            $textDecorations = 'text-decoration: underline; text-decoration-style: dotted;';
+                                            $tooltip = strtoupper($customTitles[$property]) == 'REF ID' ? 'Reference ID' : 'Parent Reference ID';
+                                        }
+                                    @endphp
+                                    <label style="{{$textDecorations}}" class="col-form-label col-md-6 col-sm-6" data-toggle="tooltip" data-placement="top" title="{{$tooltip}}"
                                         for="Status Description"><b>{{ strtoupper($customTitles[$property]) }}</b></label>
                                 @else
                                     <label class="col-form-label col-md-6 col-sm-6"

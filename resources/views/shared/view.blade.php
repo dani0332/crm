@@ -718,8 +718,15 @@
                                         @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Team')
                                             @if ($property != 'id')
                                                 @if (!in_array($property, explode(',', $skipProperties['list'])))
-                                                    <th data-type="{{ explode('|', $value)[1] }}"
-                                                        style="width: 180px !important">
+                                                    @php
+                                                        $textDecorations = $tooltip = "";
+                                                        if((strpos($value, 'title') && strtoupper($customTitles[$property]) == 'REF ID')){
+                                                            $textDecorations = 'text-decoration: underline; text-decoration-style: dotted;';
+                                                            $tooltip = 'Reference ID';
+                                                        }
+                                                    @endphp
+                                                    <th data-type="{{ explode('|', $value)[1] }}" data-toggle="tooltip" data-placement="top" title="{{$tooltip}}"
+                                                        style="width: 180px !important; {{$textDecorations}}">
                                                         @if (strpos($value, 'title'))
                                                             {{ strtoupper($customTitles[$property]) }}
                                                         @else

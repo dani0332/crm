@@ -105,7 +105,7 @@
                         <tr>
                         <th>AML Id</th>
                         <th>Quote Type</th>
-                        <th>Ref Id</th>
+                        <th data-toggle="tooltip" data-align="center" title="Reference ID" style="text-decoration: underline; text-decoration-style: dotted;">Ref Id</th>
                         <th>Input</th>
                         <th>Screenshot</th>
                         <th>Created At</th>
