@@ -43,10 +43,13 @@ class IntroEmailJob implements ShouldQueue
     public function handle(SendEmailCustomerService $sendEmailCustomerService)
     {
         if (! $this->quoteType || ! $this->emailTemplateId) {
+            info('Parameter data not found . QuoteType : '.$this->quoteType.' , EmailTemplateId : '.$this->emailTemplateId);
+
             return false;
         }
         switch ($this->quoteType) {
             case quoteTypeCode::Car:
+                info('Inside car check for sending email');
                 $sendEmailCustomerService->sendLMSIntroEmail($this->emailTemplateId, $this->emailData, 'send-lms-intro-email');
                 break;
             default:
