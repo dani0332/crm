@@ -731,7 +731,7 @@ class CRUDController extends Controller
             $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);
 
             foreach ($modelPropertiesList as $property => $value) {
-                $strPosUpdateCheck = (is_null($jsonDecodeSkipProps)) || !strpos($modelSkipPropertiesList['update'], $property);
+                $strPosUpdateCheck = (is_null($jsonDecodeSkipProps)) || ! strpos($modelSkipPropertiesList['update'], $property);
                 if (is_null($jsonDecodeSkipProps) && in_array($property, $modelSkipPropertiesList)) {
                     continue;
                 }
