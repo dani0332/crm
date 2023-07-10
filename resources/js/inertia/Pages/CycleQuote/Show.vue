@@ -227,6 +227,11 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ quote?.cycle_quote?.year_of_manufacture?.text }}</dd>
           </div>
 
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Purchased value(AED)</dt>
+                <dd>{{ quote?.asset_value}}</dd>
+            </div>
+
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Accessories</dt>
             <dd>{{ quote?.cycle_quote?.accessories }}</dd>

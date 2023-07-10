@@ -8,6 +8,7 @@ use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
+use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,7 @@ class CentralService
             quoteTypeCode::Travel,
             quoteTypeCode::Car,
             quoteTypeCode::Pet,
+            quoteTypeCode::Cycle
         ];
 
         if (strtolower($quoteType) == strtolower(quoteTypeCode::Business)) {
@@ -102,7 +104,10 @@ class CentralService
                     return false;
                 }
 
-                $response = in_array(quoteTypeCode::Pet, newUi()) && method_exists($repository, 'fetchCreateDuplicate') ? $repository::createDuplicate($dataArr) : Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
+                $response = in_array(ucfirst($lob), newUi()) ?
+                    ( method_exists($repository, 'fetchCreateDuplicate') ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
+                    Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
+
                 if (isset($response->message) && str_contains($response->message, 'Error')) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
                 } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
