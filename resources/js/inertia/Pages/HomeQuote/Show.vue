@@ -466,8 +466,15 @@ const policyDetails = useForm({
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Ref ID</dt>
-            <dd>{{ quote.code }}</dd>
+              <div>
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          Ref ID
+                      </label>
+                      <template #tooltip> Reference ID </template>
+                  </x-tooltip>
+              </div>
+              <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Advisor</dt>
@@ -486,8 +493,15 @@ const policyDetails = useForm({
             <dd>{{ quote.updated_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Parent Ref Id</dt>
-            <dd>{{ quote.parent_duplicate_quote_id }}</dd>
+              <div>
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          PARENT Ref ID
+                      </label>
+                      <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+              </div>
+              <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Renewal Batch</dt>

@@ -132,14 +132,21 @@ const rolesEnum = page.props.rolesEnum;
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-input
-          v-model="filters.code"
-          type="search"
-          name="code"
-          label="Ref ID"
-          class="w-full"
-          placeholder="Search by Ref ID"
-        />
+          <div>
+              <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
+                      Ref ID
+                  </label>
+                  <template #tooltip> Reference ID </template>
+              </x-tooltip>
+              <x-input
+                  v-model="filters.code"
+                  type="search"
+                  name="code"
+                  class="w-full"
+                  placeholder="Search by Ref ID"
+              />
+          </div>
         <x-input
           v-model="filters.first_name"
           type="search"
