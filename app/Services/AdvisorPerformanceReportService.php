@@ -43,6 +43,7 @@ class AdvisorPerformanceReportService extends BaseService
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id')
             ->orderBy('users.email');
 
