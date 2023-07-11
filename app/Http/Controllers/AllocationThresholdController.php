@@ -15,8 +15,13 @@ class AllocationThresholdController extends Controller
      */
     public function index(Request $request)
     {
-        $teams = Team::whereIn('name', [quoteTypeCode::RM_NB, quoteTypeCode::RM_SPEED, quoteTypeCode::EBP])->get();
-
+        $teams = Team::whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB])->get();
+        $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB];
+        $sortedTeams = $teams->sortBy(function ($team) use ($customSequence) {
+            $index = array_search($team['name'], $customSequence);
+            return $index === false ? PHP_INT_MAX : $index;
+        });
+        $teams = $sortedTeams;
         return view('allocationthreshold.view', compact('teams'));
     }
 
