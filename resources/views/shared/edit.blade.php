@@ -205,6 +205,11 @@
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
                 <div class="x_title">
+
+                    @if($model->modelType == quoteTypeCode::Car && \Illuminate\Support\Facades\Auth::user()->hasRole(RolesEnum::CarManager))
+                        <div class="alert alert-info"> Only Renewal Batch # field will be updated </div>
+                    @endif
+
                     <h2>{{'Edit '.(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType))}}</h2>
                     <ul class="nav navbar-right panel_toolbox">
                         <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)).' List'}}</a></li>
