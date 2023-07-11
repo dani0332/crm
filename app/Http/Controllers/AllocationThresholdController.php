@@ -19,9 +19,11 @@ class AllocationThresholdController extends Controller
         $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB];
         $sortedTeams = $teams->sortBy(function ($team) use ($customSequence) {
             $index = array_search($team['name'], $customSequence);
+
             return $index === false ? PHP_INT_MAX : $index;
         });
         $teams = $sortedTeams;
+
         return view('allocationthreshold.view', compact('teams'));
     }
 
