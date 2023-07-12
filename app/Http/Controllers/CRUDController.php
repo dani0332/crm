@@ -720,6 +720,7 @@ class CRUDController extends Controller
      */
     public function update(Request $request, $id)
     {
+
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $modelType = json_decode($request->all()['modelType'], true);
         $validateArray = [];
@@ -727,16 +728,20 @@ class CRUDController extends Controller
             $modelSkipPropertiesList = (json_decode($request->get('modelSkipProperties'), true)) ? json_decode($request->get('modelSkipProperties'), true) : $request->get('modelSkipProperties');
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
-            $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
-            $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);
+            if ($modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarManager)) {
+                $validateArray['renewal_batch'] = 'required';
+            } else {
+                $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
+                $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);
 
-            foreach ($modelPropertiesList as $property => $value) {
-                $strPosUpdateCheck = (is_null($jsonDecodeSkipProps)) || ! strpos($modelSkipPropertiesList['update'], $property);
-                if (is_null($jsonDecodeSkipProps) && in_array($property, $modelSkipPropertiesList)) {
-                    continue;
-                }
-                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $property != 'car_value_tier' && $modelSkipPropertiesList != null && $strPosUpdateCheck) {
-                    $validateArray[$property] = 'required';
+                foreach ($modelPropertiesList as $property => $value) {
+                    $strPosUpdateCheck = (is_null($jsonDecodeSkipProps)) || ! strpos($modelSkipPropertiesList['update'], $property);
+                    if (is_null($jsonDecodeSkipProps) && in_array($property, $modelSkipPropertiesList)) {
+                        continue;
+                    }
+                    if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $property != 'car_value_tier' && $modelSkipPropertiesList != null && $strPosUpdateCheck) {
+                        $validateArray[$property] = 'required';
+                    }
                 }
             }
         }

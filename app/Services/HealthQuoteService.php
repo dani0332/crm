@@ -1106,6 +1106,7 @@ class HealthQuoteService extends BaseService
         $response['paymentStatus'] = '';
         $response['paidAt'] = '';
         $response['planName'] = '';
+        $response['priceWithVAT'] = '';
 
         $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
         if ($planData) {
@@ -1118,6 +1119,7 @@ class HealthQuoteService extends BaseService
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
+                        $response['priceWithVAT'] = $plan['actualPremium'] + $plan['basmah'] + $plan['policyFee'] + $plan['vat'];
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
