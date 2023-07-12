@@ -5,6 +5,10 @@
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     $(function(){
+        $('.range-input').on("blur", function(){
+            var clickedInput = $(this);
+            debugger;
+        });
         $('#update-allocation-btn').on('click', function(){
             var inputs = $('.form-group').find('input');
             var containErrors = false;
@@ -14,12 +18,12 @@
                 const minPrice = inputs[index];
                 const maxPrice = inputs[index + 1];
                 if(index == 0) {
-                    if(minPriceValue < 1){
-                        $('#' + minPrice.id + 'error').show().html('Minimum value cannot be zero').delay(2000).fadeOut();
+                    if(minPriceValue < 0){
+                        $('#' + minPrice.id + 'error').show().html('Minimum value cannot be less than zero');
                         containErrors = true;
                     }
                     if(maxPriceValue < 2 ){
-                        $('#' + maxPrice.id + 'error').show().html('Max value cannot be 1').delay(2000).fadeOut();
+                        $('#' + maxPrice.id + 'error').show().html('Max value cannot be 1');
                         containErrors = true;
                     }
                 }
@@ -27,18 +31,18 @@
                     var lastMax = inputs[index - 1];
                     var lastMaxValue = parseFloat(inputs[index - 1].value  == '' ? 0 : inputs[index -1].value);
                     if(minPriceValue <= lastMaxValue || minPriceValue > (lastMaxValue + 1)){
-                        $('#' + minPrice.id + 'error').show().html('Please correct min value').delay(2000).fadeOut();
+                        $('#' + minPrice.id + 'error').show().html('Invalid min range configuration. Please review the values for other teams.');
                         containErrors = true;
                     }
                     if(maxPriceValue < 2 || maxPriceValue <= minPriceValue ){
-                        $('#' + maxPrice.id + 'error').show().html('Please correct max value').delay(2000).fadeOut();
+                        $('#' + maxPrice.id + 'error').show().html('Invalid max range configuration. Please review the values for other teams.');
                         containErrors = true;
                     }
                 }
                 index++;
             }
             if(containErrors) return false;
-            else{
+            else {
 
                 var teams = [];
                 for (let index = 0; index < inputs.length; index++) {
@@ -111,7 +115,7 @@
                                 </div>
                                 <div class="col-sm-4">
                                     <label>Max Price</label>
-                                    <input type="number" class="form-control maxprice" id={{$team->id . '-maxprice'}}
+                                    <input type="number" class="form-control maxprice range-input" id={{$team->id . '-maxprice'}}
                                     value="{{$team->max_price}}">
                                     <label style="font: 15px;color:red;display:none;" id={{$team->id .
                                         '-maxpriceerror'}}></label>
