@@ -100,6 +100,7 @@ const tableHeader = [
   {
     text: 'Net Conversion',
     value: 'net_conversion',
+    sortable: true,
   },
 ];
 
@@ -486,7 +487,7 @@ watch(
               label: filterOptions.batches[key],
             }))
           "
-          :max-limit="5"
+          :max-limit="8"
           deselect-all
         />
 
@@ -573,15 +574,19 @@ watch(
       border-cell
       :rows-per-page-message="'Records per page'"
       :rows-items="[10, 25, 50, 100]"
-      :rows-per-page="10"
+      :rows-per-page="100"
       :empty-message="'No Records Available'"
       hide-footer
+      :sort-by="'net_conversion'"
+      :sort-type="'desc'"
     >
       <template #item-gross_conversion="item">
-        {{ calculateGrossConversion(item) }}
+        <p v-if="item.gross_conversion == 0"> NaN </p>
+        <p v-else>{{ item.gross_conversion }} %</p>
       </template>
       <template #item-net_conversion="item">
-        {{ calculateNetConversion(item) }}
+        <p v-if="item.net_conversion == 0"> NaN </p>
+        <p v-else>{{ item.net_conversion }} %</p>
       </template>
       <template #item-total_leads="item">
         <p v-if="item.total_leads == 0">{{ item.total_leads }}</p>

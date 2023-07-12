@@ -40,7 +40,7 @@ class LeadDistributionReportService extends BaseService
             ->orderBy('tiers.name');
 
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-            $query->where('users.id', auth()->user()->id);
+            $query->where('car_quote_request.advisor_id', auth()->user()->id);
         } else {
             if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
                 $userIds = $this->walkTree(auth()->user()->id);
