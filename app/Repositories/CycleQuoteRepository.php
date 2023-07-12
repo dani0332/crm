@@ -43,8 +43,12 @@ class CycleQuoteRepository extends BaseRepository
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
-            'createdById' => Auth::user()->id,
+            'createdById' => auth()->user()->id,
         ];
+
+        if ( ! auth()->user()->hasRole(RolesEnum::Admin) ) {
+            $quoteData['advisorId'] = auth()->user()->id;
+        }
 
         info('cycleQuote:'.json_encode($quoteData));
 
