@@ -360,7 +360,22 @@ class CarQuoteService extends BaseService
         $access['carAdvisorCanEdit']=false;
         $access['carManagerCanEdit']=false;
         $access['carAdvisorCanEditPaymentCancelledRefund']=false;
+        $access['carAdvisorCanEditInsurer']=false;
+        $access['carManagerCanEditInsurer']=false;
         info('lead uuid '.$record->uuid .'- payment status is  '.$record->payment_status_id.' and quote status is '.$record->quote_status_id);
+
+        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)){
+            if ($record->payment_status_id == PaymentStatusEnum::AUTHORISED){
+                $access['carAdvisorCanEditInsurer']=true;
+            }
+        }
+
+        if (auth()->user()->hasRole(RolesEnum::CarManager)){
+            if ($record->payment_status_id == PaymentStatusEnum::AUTHORISED){
+                $access['carManagerCanEditInsurer']=true;
+            }
+        }
+
         if (!empty($carPayment->captured_at)){
 
             $paymentCapturedAt =$carPayment->captured_at;
@@ -371,18 +386,16 @@ class CarQuoteService extends BaseService
 
             if (auth()->user()->hasRole(RolesEnum::CarAdvisor)){
 
-                if ($record->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED && $today->lte($dateLimitForAdvisor) && ! in_array($record->quote_status_id , $quoteStatusArray)){
+                if (in_array($record->payment_status_id,[PaymentStatusEnum::PARTIAL_CAPTURED,PaymentStatusEnum::CAPTURED]) && $today->lte($dateLimitForAdvisor) && ! in_array($record->quote_status_id , $quoteStatusArray)){
                     $access['carAdvisorCanEdit']=true;
-                }
-
-                if ($record->payment_status_id == PaymentStatusEnum::CAPTURED  && $today->lte($dateLimitForAdvisor)){
-                    $access['carAdvisorCanEdit']=true;
+                    $access['carAdvisorCanEditInsurer']=true;
                 }
             }
 
             if (auth()->user()->hasRole(RolesEnum::CarManager)){
-                if ($record->payment_status_id == PaymentStatusEnum::PARTIAL_CAPTURED  && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager) && ! in_array($record->quote_status_id , $quoteStatusArray)){
+                if (in_array($record->payment_status_id,[PaymentStatusEnum::PARTIAL_CAPTURED,PaymentStatusEnum::CAPTURED]) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager) && ! in_array($record->quote_status_id , $quoteStatusArray)){
                     $access['carManagerCanEdit']=true;
+                    $access['carManagerCanEditInsurer']=true;
                 }
             }
 
@@ -399,7 +412,6 @@ class CarQuoteService extends BaseService
             $access['carManagerCanEdit']=false;
         }
         info('access is '.json_encode($access));
-
         return $access;
     }
 

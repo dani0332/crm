@@ -4,6 +4,7 @@ use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanType;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
@@ -284,8 +285,15 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                     >Copy</button>
                                 @endif
 
-
-                                @if(($access['carAdvisorCanEditPaymentCancelledRefund'] || $access['carManagerCanEdit'] || $access['carAdvisorCanEdit']) )
+                                @if(($access['carAdvisorCanEditInsurer'] || $access['carManagerCanEditInsurer']) && $record->payment_status_id == PaymentStatusEnum::AUTHORISED)
+                                    <button class="btn btn-info btn-sm btn-change-insurer"
+                                            data-planId="{{$quotePlan->id}}"
+                                            data-uuid="{{$record->uuid}}"
+                                            data-providerCode="{{$quotePlan->providerCode}}"
+                                    >
+                                        Change Insurer
+                                    </button>
+                                @elseif($record->plan_id !=$quotePlan->id &&  $quotePlan->actualPremium > 0 && ($access['carAdvisorCanEditPaymentCancelledRefund'] || $access['carAdvisorCanEditInsurer'] || $access['carManagerCanEditInsurer']) )
                                     <button class="btn btn-info btn-sm btn-change-insurer"
                                             data-planId="{{$quotePlan->id}}"
                                             data-uuid="{{$record->uuid}}"
