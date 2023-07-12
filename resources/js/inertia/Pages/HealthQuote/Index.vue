@@ -181,9 +181,9 @@ const fixedValue = numberString => {
   if (isNaN(number)) {
     return "Invalid number";
   } else if (number === Math.floor(number)) {
-    return number.toLocaleString();
+    return number.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");;
   } else {
-    return number.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return parseFloat(number.toFixed(2)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 };
 const can = permission => useCan(permission);
