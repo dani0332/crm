@@ -159,7 +159,7 @@ $halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC'];
 									data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{
 									ucwords($quotePlan->name) }}</a></td>
 							<td>{{ $quotePlan->repairType == CarPlanType::COMP ?
-									(in_array($quotePlan->providerCode, $coreInsurer) ? 'Premium Workshop' : (in_array($quotePlan->providerCode, $halfLiveInsurer) ? 'Non-Agency Workshop' : 'NON-AGENCY'))
+									(in_array($quotePlan->providerCode, $coreInsurer) ? 'Premium workshop' : (in_array($quotePlan->providerCode, $halfLiveInsurer) ? 'Non-Agency workshop' : 'NON-AGENCY'))
 									 : $quotePlan->repairType
 								}}</td>
 							<td>
