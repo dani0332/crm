@@ -844,6 +844,8 @@ class LeadAllocationService extends BaseService
 
     public function assignHealthTeamBasedOnStartingPrice($healthQuote)
     {
+        info('Inside assignHealthTeamBasedOnStartingPrice for quote : '. $healthQuote->uuid);
+
         $priceStartingFrom = $healthQuote->price_starting_from;
 
         $healthTeam = Team::where('allocation_threshold_enabled', true)
@@ -852,10 +854,12 @@ class LeadAllocationService extends BaseService
             ->first();
 
         if ($healthTeam) {
+            info('assignHealthTeamBasedOnStartingPrice filtered team is : '. $healthTeam->name);
             $healthQuote->update([
                 'health_team_type' => strtolower($healthTeam->name),
             ]);
         } else {
+            info('assignHealthTeamBasedOnStartingPrice team not found against : '. $healthQuote->uuid);
             $healthQuote->update([
                 'is_error_email_sent' => true,
             ]);
