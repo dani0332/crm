@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use OwenIt\Auditing\Auditable;
+use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+
+class RenewalBatch extends Model implements AuditableContract
+{
+    use HasFactory, Auditable;
+
+    /**
+     * @var mixed
+     */
+    const RENEWALS_VOLUME    =   'Renewals Volume';
+    const RENEWALS_VALUE     =   'Renewals Value';
+    const BDM                =   'BDM';
+
+    /**
+     * @var mixed
+     */
+    const SEGMENT_TYPE_VOLUME   =   'volume';
+    const SEGMENT_TYPE_VALUE    =   'value';
+
+    /**
+     * Const teams list
+     *
+     * @var array
+     */
+    const RENEWAL_BATCH_TEAMS_LIST =
+    [
+        self::RENEWALS_VALUE,
+        self::RENEWALS_VOLUME,
+        self::BDM
+    ];
+
+    /**
+     * Const segments type list
+     *
+     * @var array
+     */
+    const SGEMENT_TYPES_LIST =
+    [
+        self::SEGMENT_TYPE_VOLUME,
+        self::SEGMENT_TYPE_VALUE,
+    ];
+
+    /**
+     * Fillables array
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name',
+        'start_date',
+        'end_date'
+    ];
+
+
+    /**
+     * RELATIONS
+     */
+
+    /**
+     * get renewal batch team wise slabs function
+     *
+     * @return BelongsToMany
+     */
+
+    public function slabs():BelongsToMany
+    {
+        return $this->belongsToMany(
+            Slab::class,
+            'renewal_batch_slabs',
+            'renewal_batch_id',
+            'slab_id',
+            'id',
+            'id',
+            'slabs'
+        )->withTimestamps()->withPivot('team_id', 'max', 'min');
+    }
+
+    /**
+     * get renewal batch segment wise advisors function
+     *
+     * @return BelongsToMany
+     */
+    public function segmentAdvisors():BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'renewal_batch_segment_user',
+            'renewal_batch_id',
+            'advisor_id',
+            'id',
+            'id',
+            'segmentAdvisors'
+        )->withTimestamps()->withPivot('segment_type');
+    }
+}

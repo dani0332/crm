@@ -363,6 +363,9 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/team') }}">Teams</a></li>
                             @endcan
+                            @can(PermissionsEnum::RenewalBatchConfigs)
+                            <li><a href="{{ route('renewal-batch.index') }}">Renewal Batchs</a></li>
+                            @endcan
                             @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST])
                             <li><a>Allocation Config<span class="fa fa-chevron-down" style="color: white;"></span></a>
                                 <ul class="nav child_menu">
