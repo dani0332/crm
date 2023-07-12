@@ -65,10 +65,10 @@ class HealthLeadAllocationJob implements ShouldQueue
                 foreach ($healthTeams as $healthTeam) {
                     info('Health Lead Allocation Started for health team: '.$healthTeam);
 
-                    $filteredLeadsByHealthTeam = $this->getFilteredLeadsByHealthTeam($unAllocatedLeads, $healthTeam)->count();
+                    $filteredLeadsByHealthTeam = $this->getFilteredLeadsByHealthTeam($unAllocatedLeads, $healthTeam);
                     $filteredUsersByHealthTeam = $this->getUsersByHealthTeam($availableUsers, $healthTeam)->count();
 
-                    if ($filteredLeadsByHealthTeam > 0 && $filteredUsersByHealthTeam > 0) {
+                    if ($filteredLeadsByHealthTeam->count() > 0 && $filteredUsersByHealthTeam > 0) {
 
                         foreach ($filteredLeadsByHealthTeam as $lead) {
                             info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR LEAD '.$lead->uuid.' -----------------------');
